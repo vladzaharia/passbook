@@ -307,6 +307,10 @@
     "resource": "deliveries",
     "method": "list"
   },
+  "developer.deleteSandbox": {
+    "resource": "developer.sandbox",
+    "method": "close"
+  },
   "developer.getSandbox": {
     "resource": "developer.sandbox",
     "method": "retrieve"

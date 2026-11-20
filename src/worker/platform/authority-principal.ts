@@ -228,6 +228,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       // A platform or system principal that names an org acts on it only while the org is active.
       if (p.orgId === undefined)
         return `SELECT NULL AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, 1 AS org_ok, NULL AS limit_key`;
+      const noLive = developerTestOnly('o', b.bind(p.mode ?? null));
       const closed = `(o.status = 'deleted' AND o.purge_started_at IS NOT NULL
             AND NOT EXISTS (SELECT 1 FROM retention_holds h WHERE h.org_id = o.id AND h.released_at IS NULL))`;
       const inactive = () =>
@@ -241,7 +242,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
           : p.kind === 'system' && p.inactiveOk
             ? inactive()
             : orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
-      return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, ${flag(org)} AS org_ok, NULL AS limit_key
+      return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(`${actor} AND ${noLive}`)} AS actor_ok, ${flag(org)} AS org_ok, NULL AS limit_key
         FROM orgs o WHERE o.id = ${b.bind(p.orgId)}`;
     }
   }

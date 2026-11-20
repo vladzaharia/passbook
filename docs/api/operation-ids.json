@@ -67,6 +67,7 @@
   "connectors.getConnectors",
   "connectors.getConnectorsByType",
   "delivery.getDelivery",
+  "developer.deleteSandbox",
   "developer.getSandbox",
   "developer.postSandbox",
   "entitlements.getOrgsByIdEntitlements",

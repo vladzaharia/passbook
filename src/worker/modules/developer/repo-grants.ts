@@ -83,12 +83,31 @@ export async function insertSandbox(ctx: ServiceContext, s: NewSandbox): Promise
 }
 
 /**
- * `platform.job.developer_sandbox.close`: the idle sweep closes an active sandbox org and records why. False
- * when the org was no longer active.
+ * `platform.job.developer_sandbox.close`: closes an active sandbox org and records why. The idle sweep passes no
+ * `by`; the owner's own close passes their live session, which the grant checks, and also revokes the sandbox's
+ * keys. False when the org was no longer active.
  */
-export async function closeSandbox(ctx: ServiceContext, orgId: string): Promise<boolean> {
+export async function closeSandbox(
+  ctx: ServiceContext,
+  orgId: string,
+  by?: { userId: string; sessionIdHash: string },
+): Promise<boolean> {
   const now = ctx.clock.now();
-  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.close', [], orgId);
+  const checks = by
+    ? [
+        rawCheck(
+          'actor',
+          `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
+            WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
+              AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+          [by.sessionIdHash, by.userId, now, now],
+        ),
+        rawCheck('config', 'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.user_id = ?)', [
+          by.userId,
+        ]),
+      ]
+    : [];
+  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.close', checks, orgId);
   g.update('orgs', {
     set: {
       status: 'deleted',
@@ -100,17 +119,22 @@ export async function closeSandbox(ctx: ServiceContext, orgId: string): Promise<
     where: { id: orgId, status: 'active', kind: 'developer' },
     returning: ['id'],
   });
+  if (by)
+    g.update('api_keys', { set: { revoked_at: now }, where: { org_id: orgId, revoked_at: null } });
   g.update('developer_sandboxes', {
-    set: { closed_at: now, close_reason: 'idle' },
-    where: { org_id: orgId, closed_at: null },
+    set: { closed_at: now, close_reason: by ? 'user' : 'idle' },
+    where: by
+      ? { org_id: orgId, user_id: by.userId, closed_at: null }
+      : { org_id: orgId, closed_at: null },
   });
   grantedAudit(g, ctx, {
     orgId,
-    actorType: 'system',
+    actorType: by ? 'user' : 'system',
+    ...(by ? { actorId: by.userId } : {}),
     action: 'developer_sandbox.close',
     targetType: 'org',
     targetId: orgId,
-    detail: { reason: 'idle' },
+    detail: { reason: by ? 'user' : 'idle' },
   });
   const [closed] = await g.commit();
   return (closed?.results.length ?? 0) > 0;

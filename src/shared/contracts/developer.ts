@@ -20,14 +20,20 @@ export const DeveloperSandboxSchema = z.object({
 });
 export type DeveloperSandbox = z.infer<typeof DeveloperSandboxSchema>;
 
-/** The create response: the sandbox and its test key, whose secret is shown once. */
+/**
+ * The create response: the sandbox and its test key, whose secret is shown once. A retry that finds the key already
+ * made has no secret to show: `key` is null and `previousKey` names it, so the page offers "Roll key".
+ */
 export const CreatedDeveloperSandboxSchema = DeveloperSandboxSchema.extend({
-  key: z.object({
-    id: IdSchema,
-    name: z.string(),
-    secret: z.string(),
-    mode: z.literal('test'),
-    expiresAt: TimestampSchema,
-  }),
+  key: z
+    .object({
+      id: IdSchema,
+      name: z.string(),
+      secret: z.string(),
+      mode: z.literal('test'),
+      expiresAt: TimestampSchema,
+    })
+    .nullable(),
+  previousKey: z.object({ id: IdSchema, name: z.string() }).nullable(),
 });
 export type CreatedDeveloperSandbox = z.infer<typeof CreatedDeveloperSandboxSchema>;

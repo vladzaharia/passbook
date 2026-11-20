@@ -26127,7 +26127,10 @@
                       "minimum": 0
                     },
                     "key": {
-                      "type": "object",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "properties": {
                         "id": {
                           "type": "string",
@@ -26158,6 +26161,26 @@
                         "mode",
                         "expiresAt"
                       ]
+                    },
+                    "previousKey": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
                     }
                   },
                   "required": [
@@ -26168,7 +26191,8 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
-                    "key"
+                    "key",
+                    "previousKey"
                   ]
                 }
               }
@@ -26287,6 +26311,94 @@
         "x-sdk": {
           "resource": "developer.sandbox",
           "method": "retrieve"
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Close your developer sandbox: its keys stop and it goes read-only",
+        "operationId": "developer.deleteSandbox",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgSlug": {
+                      "type": "string"
+                    },
+                    "templateId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "previewOnly": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "closedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "orgSlug",
+                    "templateId",
+                    "previewOnly",
+                    "createdAt",
+                    "closedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "close"
         }
       }
     },

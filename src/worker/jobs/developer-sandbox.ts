@@ -43,7 +43,7 @@ export function developerSandboxGrant(
     tables:
       purpose === 'platform.job.developer_sandbox.create'
         ? SANDBOX_CREATE_TABLES
-        : ['orgs', 'developer_sandboxes'],
+        : ['orgs', 'api_keys', 'developer_sandboxes'],
     ...(orgId === undefined ? {} : { orgId }),
   });
 }

@@ -52,3 +52,45 @@ export const quickstartTemplateOf = async (db: D1Database, orgId: string, name: 
       name,
     ])
   )?.id ?? null;
+
+/** The sandbox's ticket template and the version it opens from. */
+export const ticketOf = (db: D1Database, orgId: string, name: string) =>
+  first<{ id: string; version: string | null }>(
+    db,
+    `SELECT t.id, COALESCE(t.active_version, (SELECT v.version FROM template_versions v WHERE v.template_id = t.id ORDER BY v.rowid LIMIT 1)) AS version
+     FROM templates t WHERE t.org_id = ? AND t.name = ?`,
+    [orgId, name],
+  );
+
+export const hasTestRelease = async (db: D1Database, templateId: string, orgId: string) =>
+  (await first<{ n: number }>(
+    db,
+    `SELECT 1 AS n FROM template_releases WHERE template_id = ? AND org_id = ? AND mode = 'test' AND provider = 'apple' LIMIT 1`,
+    [templateId, orgId],
+  )) !== null;
+
+export const candidateOf = (db: D1Database, templateId: string, orgId: string, version: string) =>
+  first<{ id: string; candidate_hash: string }>(
+    db,
+    `SELECT id, candidate_hash FROM template_candidates
+     WHERE template_id = ? AND org_id = ? AND mode = 'test' AND provider = 'apple' AND version = ?
+     ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+    [templateId, orgId, version],
+  );
+
+export const approvalOf = async (db: D1Database, candidateId: string) =>
+  (
+    await first<{ id: string }>(
+      db,
+      'SELECT id FROM template_approvals WHERE candidate_id = ? LIMIT 1',
+      [candidateId],
+    )
+  )?.id ?? null;
+
+/** The key the sandbox made for its person, revoked or not: it is minted once. */
+export const sandboxKeyOf = (db: D1Database, orgId: string, userId: string, name: string) =>
+  first<{ id: string; name: string }>(
+    db,
+    `SELECT id, name FROM api_keys WHERE org_id = ? AND created_by = ? AND name = ? AND kind = 'personal' ORDER BY created_at LIMIT 1`,
+    [orgId, userId, name],
+  );

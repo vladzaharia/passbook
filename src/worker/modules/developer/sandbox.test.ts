@@ -15,6 +15,7 @@ import {
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -79,7 +80,9 @@ async function sandboxOf() {
   const p = await person();
   const res = await send('POST', '/developer/sandbox', p.headers, { turnstileToken: 'ok' });
   expect(res.status, await res.clone().text()).toBe(201);
-  const made = CreatedDeveloperSandboxSchema.parse(await res.json());
+  const parsed = CreatedDeveloperSandboxSchema.parse(await res.json());
+  if (!parsed.key) throw new Error('A new sandbox returns its key.');
+  const made = { ...parsed, key: parsed.key };
   return { ...p, made, key: { authorization: `Bearer ${made.key.secret}` } };
 }
 
@@ -160,10 +163,14 @@ describe('POST /developer/sandbox', () => {
     expect(await none.json()).toEqual({ sandbox: null });
   });
 
-  it('makes one sandbox per person', async () => {
+  it('makes one sandbox per person: a repeat finishes it and never shows a second secret', async () => {
     const s = await sandboxOf();
     const again = await send('POST', '/developer/sandbox', s.headers, { turnstileToken: 'ok' });
-    await expectProblem(again, 409, 'SANDBOX_EXISTS');
+    expect(again.status).toBe(201);
+    const body = CreatedDeveloperSandboxSchema.parse(await again.json());
+    expect(body.orgId).toBe(s.made.orgId);
+    expect(body.key).toBeNull();
+    expect(body.previousKey?.id).toBe(s.made.key.id);
     const n = await first<{ n: number }>(
       kit.env.DB,
       'SELECT count(*) AS n FROM developer_sandboxes WHERE user_id = ?',
@@ -216,6 +223,49 @@ describe('POST /developer/sandbox', () => {
     const s = await sandboxOf();
     const res = await send('POST', '/developer/sandbox', s.key, { turnstileToken: 'ok' });
     expect([401, 403]).toContain(res.status);
+  });
+});
+
+describe('DELETE /developer/sandbox', () => {
+  it("closes the owner's sandbox: read-only, keys revoked, closed_at set", async () => {
+    const s = await sandboxOf();
+    const noCsrf = { cookie: s.headers.cookie ?? '', 'sec-fetch-site': 'cross-site' };
+    expect((await send('DELETE', '/developer/sandbox', noCsrf)).status).toBe(403);
+    expect((await send('DELETE', '/developer/sandbox', s.key)).status).toBeGreaterThanOrEqual(401);
+    expect((await send('GET', '/passes', s.key)).status).toBe(200);
+
+    const res = await send('DELETE', '/developer/sandbox', s.headers);
+    expect(res.status, await res.clone().text()).toBe(200);
+    const closed = DeveloperSandboxSchema.parse(await res.json());
+    expect(closed.closedAt).toBe(kit.clock.now());
+    const state = await first<{ status: string; reason: string; revoked: number }>(
+      kit.env.DB,
+      `SELECT o.status, d.close_reason AS reason,
+        (SELECT count(*) FROM api_keys k WHERE k.org_id = o.id AND k.revoked_at IS NULL) AS revoked
+       FROM orgs o JOIN developer_sandboxes d ON d.org_id = o.id WHERE o.id = ?`,
+      [s.made.orgId],
+    );
+    expect(state).toEqual({ status: 'deleted', reason: 'user', revoked: 0 });
+    expect((await send('GET', '/passes', s.key)).status).toBeGreaterThanOrEqual(401);
+    // Closed for good: no second sandbox, and closing again changes nothing.
+    await expectProblem(
+      await send('POST', '/developer/sandbox', s.headers, { turnstileToken: 'ok' }),
+      409,
+      'SANDBOX_EXISTS',
+    );
+    const twice = await send('DELETE', '/developer/sandbox', s.headers);
+    expect(twice.status).toBe(200);
+    expect(DeveloperSandboxSchema.parse(await twice.json()).closedAt).toBe(closed.closedAt);
+    const audit = await first<{ actor_type: string }>(
+      kit.env.DB,
+      "SELECT actor_type FROM audit_log WHERE org_id = ? AND action = 'developer_sandbox.close'",
+      [s.made.orgId],
+    );
+    expect(audit?.actor_type).toBe('user');
+  });
+
+  it('is 404 for a person with no sandbox', async () => {
+    expect((await send('DELETE', '/developer/sandbox', (await person()).headers)).status).toBe(404);
   });
 });
 
@@ -286,6 +336,48 @@ describe('a developer org never holds Live', () => {
     const std = await kit.member(kit.org.id, ['org_admin']);
     expect(await actorOk(kit.org.id, std.userId, 'live')).toBe(1);
     expect(await actorOk(kit.org.id, std.userId, 'test')).toBe(1);
+  });
+
+  it('refuses a platform admin and a system job acting in Live, and every table holding per-mode rows', async () => {
+    const s = await sandboxOf();
+    const { actorSql, Binds } = await import('../../platform/authority-principal.ts');
+    const admin = await makeUser(kit.f);
+    const adminSession = await makeSession(kit.f, { userId: admin.id, roles: ['admin', 'user'] });
+    const sessionIdHash = await sha256Hex(adminSession.cookieValue);
+    const actorOk = async (principal: Parameters<typeof actorSql>[0]) => {
+      const b = new Binds(false);
+      const sql = actorSql(principal, kit.clock.now(), b);
+      return (
+        await first<{ actor_ok: number }>(kit.env.DB, `SELECT actor_ok FROM (${sql})`, b.params)
+      )?.actor_ok;
+    };
+    const platform = (orgId: string, mode: 'live' | 'test') =>
+      ({ kind: 'platform', userId: admin.id, sessionIdHash, orgId, mode }) as const;
+    const system = (orgId: string, mode: 'live' | 'test') =>
+      ({ kind: 'system', job: 'probe', orgId, mode }) as const;
+    expect(await actorOk(platform(s.made.orgId, 'test'))).toBe(1);
+    expect(await actorOk(platform(s.made.orgId, 'live'))).toBe(0);
+    expect(await actorOk(system(s.made.orgId, 'test'))).toBe(1);
+    expect(await actorOk(system(s.made.orgId, 'live'))).toBe(0);
+    // A standard org is unchanged.
+    expect(await actorOk(platform(kit.org.id, 'live'))).toBe(1);
+    expect(await actorOk(system(kit.org.id, 'live'))).toBe(1);
+
+    // Triggers: every table with an org and a mode refuses a Live row of a developer org, before any other check.
+    const tables = await all<{ name: string }>(
+      kit.env.DB,
+      `SELECT m.name FROM sqlite_master m
+       WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%' AND m.name NOT LIKE '_cf_%'
+         AND m.name NOT IN ('connections')
+         AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) WHERE name = 'org_id')
+         AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) WHERE name = 'mode')`,
+    );
+    expect(tables.length).toBeGreaterThan(50);
+    for (const { name } of tables)
+      await expect(
+        run(kit.env.DB, `INSERT INTO ${name} (org_id, mode) VALUES (?, 'live')`, [s.made.orgId]),
+        name,
+      ).rejects.toThrow(/Live/);
   });
 
   it('refuses a write the owner makes in Live, and allows it in Test', async () => {

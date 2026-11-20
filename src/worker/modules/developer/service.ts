@@ -18,8 +18,18 @@ import { createApiKey } from '../api-keys/service-create.ts';
 import { approveCandidate, publishRelease } from '../templates/releases.ts';
 import { createCandidate } from '../templates/releases-create.ts';
 import { useBlueprint as forkBlueprint } from '../templates/use-blueprint.ts';
-import { primaryEmailOf, quickstartTemplateOf, type SandboxRow, sandboxOfUser } from './repo.ts';
-import { insertSandbox } from './repo-grants.ts';
+import {
+  approvalOf,
+  candidateOf,
+  hasTestRelease,
+  primaryEmailOf,
+  quickstartTemplateOf,
+  type SandboxRow,
+  sandboxKeyOf,
+  sandboxOfUser,
+  ticketOf,
+} from './repo.ts';
+import { closeSandbox, insertSandbox } from './repo-grants.ts';
 
 /** The quickstart's blueprint, and how long its test key lives. */
 const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';
@@ -40,37 +50,75 @@ const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbox => ({
   closedAt: row.closed_at,
 });
 
-/** The quickstart ticket: a copy of the event-ticket blueprint, released in Test. Its id, or null if it could not be made. */
+/** The steps of provisioning, in order. A test fails the request after one to prove a retry completes the rest. */
+export type SandboxStep = 'org' | 'template' | 'candidate' | 'approval' | 'release' | 'key';
+export interface SandboxHooks {
+  after?: (step: SandboxStep) => Promise<void>;
+}
+
+/** An error a hook threw: it ends the request, where a real template failure is logged and skipped. */
+class HookAbort extends Error {
+  readonly error: unknown;
+  constructor(error: unknown) {
+    super('hook');
+    this.error = error;
+  }
+}
+
+/**
+ * The quickstart ticket: a copy of the event-ticket blueprint, released in Test. Each step reads what is already
+ * there, so a retry after a failure does only what is missing. Its id, or null if it could not be made.
+ */
 async function quickstartTemplate(
   ctx: ServiceContext,
   auth: SessionAuth,
   orgId: string,
+  tick: (step: SandboxStep) => Promise<void>,
 ): Promise<string | null> {
+  const db = ctx.env.DB;
   const scope = { orgId, mode: 'test', provider: 'apple' } as const;
   try {
-    const made = await forkBlueprint(ctx, auth, QUICKSTART_BLUEPRINT, {
-      orgId,
-      name: SANDBOX_TEMPLATE_NAME,
-    });
-    if (!('versions' in made)) throw new Error('The blueprint copy has no template.');
-    const version = made.activeVersion ?? made.versions[0]?.version ?? '';
-    const candidate = await createCandidate(ctx, auth, made.id, { ...scope, version });
+    let ticket = await ticketOf(db, orgId, SANDBOX_TEMPLATE_NAME);
+    if (!ticket) {
+      const made = await forkBlueprint(ctx, auth, QUICKSTART_BLUEPRINT, {
+        orgId,
+        name: SANDBOX_TEMPLATE_NAME,
+      });
+      if (!('versions' in made)) throw new Error('The blueprint copy has no template.');
+      ticket = { id: made.id, version: made.activeVersion ?? made.versions[0]?.version ?? null };
+    }
+    await tick('template');
+    if (await hasTestRelease(db, ticket.id, orgId)) return ticket.id;
+    const version = ticket.version ?? '';
+    let candidate = await candidateOf(db, ticket.id, orgId, version);
+    if (!candidate) {
+      const made = await createCandidate(ctx, auth, ticket.id, { ...scope, version });
+      candidate = { id: made.id, candidate_hash: made.candidateHash };
+    }
+    await tick('candidate');
     // The person is the only member, so they approve their own work: Test mode allows it alone.
-    const approval = await approveCandidate(ctx, auth, made.id, candidate.id, {
-      ...scope,
-      candidateHash: candidate.candidateHash,
-      alone: true,
-    });
-    await publishRelease(ctx, auth, made.id, {
+    let approvalId = await approvalOf(db, candidate.id);
+    if (!approvalId)
+      approvalId = (
+        await approveCandidate(ctx, auth, ticket.id, candidate.id, {
+          ...scope,
+          candidateHash: candidate.candidate_hash,
+          alone: true,
+        })
+      ).id;
+    await tick('approval');
+    await publishRelease(ctx, auth, ticket.id, {
       ...scope,
       candidateId: candidate.id,
-      approvalId: approval.id,
-      candidateHash: candidate.candidateHash,
+      approvalId,
+      candidateHash: candidate.candidate_hash,
       expectedGeneration: 0,
     });
-    return made.id;
+    await tick('release');
+    return ticket.id;
   } catch (error) {
-    // The sandbox is still usable: the person can start from a blueprint themselves.
+    if (error instanceof HookAbort) throw error;
+    // The sandbox is still usable: the person can start from a blueprint themselves, or retry.
     ctx.log.error('developer.sandbox_template_failed', {
       orgId,
       code: 'SANDBOX_TEMPLATE_FAILED',
@@ -81,59 +129,103 @@ async function quickstartTemplate(
 }
 
 /**
- * Makes the caller's sandbox: a developer org, their admin membership, a Test personal key (30 days, shown once)
- * and the Quickstart ticket template released in Test. One per person.
+ * Makes the caller's sandbox, or finishes it: a developer org, their admin membership, the Quickstart ticket
+ * released in Test and a Test personal key (30 days, shown once). One per person. A retry after a failure
+ * completes what is missing and returns the sandbox; the key is minted once, so a retry that finds it already
+ * made returns `key: null` and `previousKey`, and the person rolls it.
  */
 export async function createSandbox(
   ctx: ServiceContext,
   session: SessionAuth,
+  hooks: SandboxHooks = {},
 ): Promise<CreatedDeveloperSandbox> {
   const db = ctx.env.DB;
-  if (await sandboxOfUser(db, session.userId))
-    throw new ConflictError(SANDBOX_EXISTS_COPY, 'SANDBOX_EXISTS');
-  const email = await primaryEmailOf(db, session.userId);
-  if (!email) throw new NotFoundError('Account not found.', 'USER_NOT_FOUND');
-  const now = ctx.clock.now();
-  const orgId = ctx.ids.id();
-  const slug = `dev-${ctx.ids.id().replaceAll('-', '').slice(-12)}`;
-  const sandboxId = ctx.ids.id();
-  await insertSandbox(ctx, {
-    id: sandboxId,
-    orgId,
-    slug,
-    name: `Sandbox ${slug.slice(4)}`,
-    userId: session.userId,
-    email,
-    sessionIdHash: session.sessionId,
-    membershipId: ctx.ids.id(),
-    invitationId: ctx.ids.id(),
-    invitationHash: await sha256Hex(ctx.ids.token(32)),
-    now,
-  });
-  // Everything in the sandbox is Test: the person acts in it as a Test session.
-  const test: SessionAuth = { ...session, mode: 'test' };
-  const templateId = await quickstartTemplate(ctx, test, orgId);
-  const authority = await authorizeApiKeys(ctx, test, orgId, 'org:read');
-  const key = await createApiKey(ctx, authority, {
-    orgId,
-    name: SANDBOX_KEY_NAME,
-    kind: 'personal',
-    mode: 'test',
-    scopes: KEY_SCOPES,
-    expiresAt: now + KEY_TTL_MS,
-  });
-  const row = await sandboxOfUser(db, session.userId);
-  if (!row) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
-  return {
-    ...dto(row, templateId),
-    key: {
-      id: key.id,
-      name: key.name,
-      secret: key.secret,
-      mode: 'test',
-      expiresAt: key.expiresAt ?? now + KEY_TTL_MS,
-    },
+  const tick = async (step: SandboxStep) => {
+    try {
+      await hooks.after?.(step);
+    } catch (error) {
+      throw new HookAbort(error);
+    }
   };
+  try {
+    let row = await sandboxOfUser(db, session.userId);
+    // A closed sandbox is not remade: one per person, for good.
+    if (row?.closed_at != null) throw new ConflictError(SANDBOX_EXISTS_COPY, 'SANDBOX_EXISTS');
+    const now = ctx.clock.now();
+    if (!row) {
+      const email = await primaryEmailOf(db, session.userId);
+      if (!email) throw new NotFoundError('Account not found.', 'USER_NOT_FOUND');
+      const orgId = ctx.ids.id();
+      const slug = `dev-${ctx.ids.id().replaceAll('-', '').slice(-12)}`;
+      await insertSandbox(ctx, {
+        id: ctx.ids.id(),
+        orgId,
+        slug,
+        name: `Sandbox ${slug.slice(4)}`,
+        userId: session.userId,
+        email,
+        sessionIdHash: session.sessionId,
+        membershipId: ctx.ids.id(),
+        invitationId: ctx.ids.id(),
+        invitationHash: await sha256Hex(ctx.ids.token(32)),
+        now,
+      });
+      row = await sandboxOfUser(db, session.userId);
+      await tick('org');
+    }
+    if (!row) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
+    // Everything in the sandbox is Test: the person acts in it as a Test session.
+    const test: SessionAuth = { ...session, mode: 'test' };
+    const templateId = await quickstartTemplate(ctx, test, row.org_id, tick);
+    const prior = await sandboxKeyOf(db, row.org_id, session.userId, SANDBOX_KEY_NAME);
+    if (prior) return { ...dto(row, templateId), key: null, previousKey: prior };
+    const authority = await authorizeApiKeys(ctx, test, row.org_id, 'org:read');
+    const key = await createApiKey(ctx, authority, {
+      orgId: row.org_id,
+      name: SANDBOX_KEY_NAME,
+      kind: 'personal',
+      mode: 'test',
+      scopes: KEY_SCOPES,
+      expiresAt: now + KEY_TTL_MS,
+    });
+    await tick('key');
+    return {
+      ...dto(row, templateId),
+      key: {
+        id: key.id,
+        name: key.name,
+        secret: key.secret,
+        mode: 'test',
+        expiresAt: key.expiresAt ?? now + KEY_TTL_MS,
+      },
+      previousKey: null,
+    };
+  } catch (error) {
+    if (error instanceof HookAbort) throw error.error;
+    throw error;
+  }
+}
+
+/** Closes the caller's own sandbox: read-only, its keys revoked, a 30-day window to export. */
+export async function closeOwnSandbox(
+  ctx: ServiceContext,
+  session: SessionAuth,
+): Promise<DeveloperSandbox> {
+  const row = await sandboxOfUser(ctx.env.DB, session.userId);
+  if (!row) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
+  if (row.closed_at === null) {
+    const closed = await closeSandbox(ctx, row.org_id, {
+      userId: session.userId,
+      sessionIdHash: session.sessionId,
+    });
+    if (!closed)
+      throw new ConflictError('The sandbox changed. Reload and retry.', 'SANDBOX_CONFLICT');
+  }
+  const after = await sandboxOfUser(ctx.env.DB, session.userId);
+  return dto(
+    after ?? row,
+    await quickstartTemplateOf(ctx.env.DB, row.org_id, SANDBOX_TEMPLATE_NAME),
+  );
 }
 
 /** The caller's sandbox, or null. */

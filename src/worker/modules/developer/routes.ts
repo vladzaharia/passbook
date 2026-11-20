@@ -11,7 +11,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
-import { createSandbox, getSandbox } from './service.ts';
+import { closeOwnSandbox, createSandbox, getSandbox } from './service.ts';
 
 export const developerRoutes = createRouter();
 developerRoutes.use('*', limitBody(8 * 1024));
@@ -67,5 +67,23 @@ register(
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     return c.json({ sandbox: await getSandbox(serviceContext(c), auth) });
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'delete',
+    path: '/sandbox',
+    summary: 'Close your developer sandbox: its keys stop and it goes read-only',
+    operationId: 'developer.deleteSandbox',
+    auth: { human: true },
+    response: DeveloperSandboxSchema,
+  },
+  async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    return c.json(await closeOwnSandbox(serviceContext(c), auth));
   },
 );
