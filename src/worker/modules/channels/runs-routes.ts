@@ -7,7 +7,8 @@ import { modeOf } from '../../platform/auth.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { authOf, svc } from '../passes/http.ts';
 import type { TemplateRef } from './repo.ts';
-import { listRuns } from './repo-runs.ts';
+import { listRuns, rotating } from './repo-runs.ts';
+import { blockingWindow, openWindows } from './windows.ts';
 
 type Router = ReturnType<typeof createRouter>;
 type Ctx = Parameters<typeof authOf>[0];
@@ -34,7 +35,15 @@ export function registerChannelRunRoutes(
     },
     async (c) => {
       const { template } = await templateFor(c, 'templates:read', c.req.valid('query').orgId);
-      const runs = await listRuns(svc(c).env.DB, template.orgId, modeOf(authOf(c)), template.id);
+      const ctx = svc(c);
+      const mode = modeOf(authOf(c));
+      const runs = await listRuns(ctx.env.DB, template.orgId, mode, template.id);
+      // The same windows that hold the gate: a running replace run is waiting while one is open.
+      const holding = runs.some((r) => r.state === 'running' && rotating(r))
+        ? blockingWindow(
+            await openWindows(ctx, template.orgId, mode, template.id, ctx.clock.now(), 1),
+          )
+        : undefined;
       return c.json(
         runs.map((r) => ({
           id: r.id,
@@ -44,6 +53,10 @@ export function registerChannelRunRoutes(
           finishedAt: r.finishedAt,
           counts: { ...r.counts },
           errorCode: r.errorCode,
+          waiting:
+            holding && r.state === 'running' && rotating(r)
+              ? { name: holding.name, until: holding.closesAt }
+              : null,
         })),
       );
     },

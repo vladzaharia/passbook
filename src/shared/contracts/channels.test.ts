@@ -55,6 +55,9 @@ describe('channel contracts', () => {
     expect(PutPassChannelsSchema.safeParse({ channels: { fax: 'on' } }).success).toBe(false);
     const replace = {
       supported: true,
+      owed: true,
+      blocked: null,
+      lastDigital: [],
       windows: [
         {
           kind: 'event',

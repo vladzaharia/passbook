@@ -634,5 +634,158 @@
     "name": "scan-admin-designer-scan-screen",
     "filterOrg": "northwindId",
     "click": "text=Scan screen"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-dark",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:text-is(\"Dark\"), [role=radio]:text-is(\"Dark\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-role-desk",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:text-is(\"Desk\"), [role=radio]:text-is(\"Desk\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-role-manager",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:text-is(\"Manager\"), [role=radio]:text-is(\"Manager\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-device-ipad",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:text-is(\"iPad\"), [role=radio]:text-is(\"iPad\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-device-landscape",
+    "filterOrg": "northwindId",
+    "click": [
+      "text=Scan screen",
+      "button:text-is(\"Landscape\"), [role=radio]:text-is(\"Landscape\")"
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-device-operator",
+    "filterOrg": "northwindId",
+    "click": [
+      "text=Scan screen",
+      "button:text-is(\"Operator\"), [role=radio]:text-is(\"Operator\")"
+    ]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-state-card",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:has-text(\"Card\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-state-guest-in",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:has-text(\"Checked in\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-state-heads-up",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:has-text(\"Heads-up\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-state-refused",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "button:has-text(\"Refused\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}/design",
+    "name": "scan-admin-designer-pass-tab",
+    "filterOrg": "northwindId",
+    "click": ["text=Scan screen", "[role=tab]:text-is(\"Pass\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/sessions/{frontDoorId}",
+    "name": "scan-admin-session-edit-dialog",
+    "filterOrg": "northwindId",
+    "click": "button:has-text(\"Edit\")"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/sessions/{frontDoorId}",
+    "name": "scan-admin-session-dates",
+    "filterOrg": "northwindId",
+    "click": ["button:has-text(\"Edit\")", "legend:text-is(\"Dates\")"]
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning/sessions/{frontDoorId}",
+    "name": "scan-admin-session-add-device",
+    "filterOrg": "northwindId",
+    "click": "button:has-text(\"Add device\")"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning",
+    "name": "scan-admin-new-session-dialog",
+    "filterOrg": "northwindId",
+    "click": "button:has-text(\"New session\")"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=zones",
+    "name": "scan-admin-new-zone-dialog",
+    "filterOrg": "northwindId",
+    "click": "button:has-text(\"New zone\")"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=staff",
+    "name": "scan-admin-add-staff-dialog",
+    "filterOrg": "northwindId",
+    "click": "button:has-text(\"Add staff\")"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=scans",
+    "name": "scan-admin-scans-status-dropdown",
+    "filterOrg": "northwindId",
+    "click": "[aria-haspopup]:has-text(\"Status\"), button:has-text(\"Status\")"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=scans",
+    "name": "scan-admin-scan-row-detail",
+    "filterOrg": "northwindId",
+    "click": "tbody tr a, tbody tr"
+  },
+  {
+    "role": "org",
+    "path": "/admin/scanning?tab=scans",
+    "name": "scan-admin-scan-customer-row",
+    "filterOrg": "northwindId",
+    "click": "tbody tr:has-text(\"accepted\"), tbody tr"
+  },
+  {
+    "role": "org",
+    "path": "/admin/templates/{memberTemplateId}",
+    "name": "scan-admin-template-channels",
+    "filterOrg": "northwindId",
+    "click": "[role=tab]:text-is(\"Channels\")"
   }
 ]

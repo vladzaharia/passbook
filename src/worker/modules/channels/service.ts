@@ -1,4 +1,9 @@
-import { type ChannelInputs, effectiveChannels } from '../../../shared/channels.ts';
+import {
+  anyDigitalOn,
+  type ChannelInputs,
+  DIGITAL_CHANNELS,
+  effectiveChannels,
+} from '../../../shared/channels.ts';
 import type {
   Channel,
   ChannelReason,
@@ -12,7 +17,8 @@ import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { walletProviderDisabledReason } from '../wallet-providers/provider-policy.ts';
 import { passReplaceable } from './replaceable.ts';
 import * as repo from './repo.ts';
-import { openWindows } from './windows.ts';
+import { rotationOwed } from './repo-replace.ts';
+import { openWindows, splitWindows } from './windows.ts';
 
 type Per<T> = Partial<Record<Channel, T>>;
 
@@ -127,15 +133,38 @@ export async function passChannels(
   ctx: ServiceContext,
   pass: Parameters<typeof loadPass>[1],
 ): Promise<PassChannelsDto> {
-  const { inputs } = await loadPass(ctx, pass);
+  const { inputs, rows } = await loadPass(ctx, pass);
+  const now = ctx.clock.now();
   const [supported, windows] = await Promise.all([
     passReplaceable(ctx, pass),
-    openWindows(ctx, pass.orgId, pass.mode, pass.templateId, ctx.clock.now()),
+    openWindows(ctx, pass.orgId, pass.mode, pass.templateId, now),
   ]);
+  // A code is owed when a digital channel with a copy goes off and the last code predates it.
+  const copies = rows.copies.filter((c) => DIGITAL_CHANNELS.includes(c));
+  const owed =
+    supported &&
+    copies.length > 0 &&
+    (await rotationOwed(
+      ctx.env.DB,
+      pass.orgId,
+      pass.id,
+      { ...rows.retired, ...Object.fromEntries(copies.map((c) => [c, now])) },
+      copies,
+    ));
+  const split = splitWindows(windows);
   return {
     effective: effectiveChannels(inputs),
     overrides: inputs.pass,
-    replace: { supported, windows },
+    replace: {
+      supported,
+      owed,
+      windows: split.windows,
+      blocked: owed ? split.blocked : null,
+      lastDigital: DIGITAL_CHANNELS.filter(
+        (c) =>
+          !anyDigitalOn(effectiveChannels({ ...inputs, pass: { ...inputs.pass, [c]: 'off' } })),
+      ),
+    },
   };
 }
 

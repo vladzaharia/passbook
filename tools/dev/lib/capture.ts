@@ -140,13 +140,13 @@ async function shoot(
         .catch(() => {
           note = [note, 'skeleton still showing'].filter(Boolean).join('; ');
         });
-      if (route.click) {
+      for (const sel of [route.click ?? []].flat()) {
         await page
-          .locator(route.click)
+          .locator(sel)
           .first()
           .click({ timeout: 10_000 })
           .catch(() => {
-            note = `click ${route.click} not found`;
+            note = [note, `click ${sel} not found`].filter(Boolean).join('; ');
           });
         await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
       }

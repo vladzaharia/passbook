@@ -104,6 +104,26 @@ describe('replace codes: windows', () => {
     expect((await put(t, { revision: 0, channels: { apple: 'off' } })).status).toBe(200);
   });
 
+  it('the dry run says what blocks and whether no digital channel stays on, so clients render only', async () => {
+    const t = await scanKit();
+    const dryOf = async (channels: Record<string, string>) =>
+      (await (
+        await put(t, { revision: 0, channels, dryRun: true, replaceCodes: true })
+      ).json()) as {
+        blocked: { name: string; closesAt: number | null } | null;
+        allOff: boolean;
+        windows: unknown[];
+      };
+    expect(await dryOf({ apple: 'off' })).toMatchObject({ blocked: null, allOff: false });
+    await at(t, {});
+    const open = await dryOf({ apple: 'off' });
+    expect(open.blocked).toEqual({ name: 'Event', closesAt: expect.any(Number) });
+    expect(open.windows).toEqual([]);
+    expect(
+      (await dryOf({ apple: 'off', mobile: 'off', google: 'off', samsung: 'off' })).allOff,
+    ).toBe(true);
+  });
+
   it('warns about a window inside 48 hours but saves; one past 48 hours is not listed', async () => {
     const t = await scanKit();
     const now = t.kit.clock.now();

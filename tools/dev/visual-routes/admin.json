@@ -413,5 +413,23 @@
     "role": "platform",
     "path": "/admin/users/{userId}",
     "name": "legacy-user-detail"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/wallet-accounts",
+    "name": "admin-wallet-accounts-migration",
+    "click": "[role=tab]:text-is(\"Migration\")"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/passes/{passId}",
+    "name": "admin-pass-print-card",
+    "click": "text=Print"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/passes",
+    "name": "admin-passes-bulk-print",
+    "click": "input[aria-label^=\"Select \"]"
   }
 ]

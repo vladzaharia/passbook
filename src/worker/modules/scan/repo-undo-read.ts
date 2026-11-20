@@ -75,7 +75,10 @@ export async function readUndo(
     exactStmt(
       db,
       `SELECT g.action_id,g.scope,g.template_id,g.kind,g.state,g.count,g.first_at,g.last_at,g.prev_state,g.prev_last_at,g.prev_scan_id,
-         g.visit_at,g.prev_visit_at,q.visit AS visit
+         g.visit_at,g.prev_visit_at,q.visit AS visit,
+         (SELECT json_extract(e.data, '$.actionIdRef') FROM pass_events e WHERE e.pass_id = q.pass_id
+           AND e.org_id = q.org_id AND e.mode = q.mode
+           AND (CASE WHEN json_valid(e.data) THEN json_extract(e.data, '$.scanId') END) = q.id LIMIT 1) AS action_id_ref
        FROM scans q JOIN scan_gates g ON g.org_id = q.org_id AND g.mode = q.mode AND g.pass_id = q.pass_id
          AND g.action_id = CASE WHEN q.access_plan IS NOT NULL THEN 'access' ELSE q.action_id END
          AND g.last_scan_id = q.id
