@@ -259,12 +259,13 @@ describe('tenant alternative-scope middleware', () => {
 
   it.each(alternatives)('accepts and tags a key holding only %s', async (scope) => {
     const key = await makeApiKey(fx, { orgId, scopes: [scope] });
-    const response = await request(
-      { ...key.headers, 'sec-fetch-site': 'cross-site' },
-      {
-        method: 'POST',
-      },
+    // A key is never held to CSRF: it comes from a server. Sent from a browser it is refused outright (PX8).
+    await expectProblem(
+      await request({ ...key.headers, 'sec-fetch-site': 'cross-site' }, { method: 'POST' }),
+      403,
+      'KEY_IN_BROWSER',
     );
+    const response = await request(key.headers, { method: 'POST' });
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       authKind: 'api_key',
@@ -303,27 +304,36 @@ describe('tenant alternative-scope middleware', () => {
 
   it('forbids a real key holding neither alternative even alongside a valid session', async () => {
     const key = await makeApiKey(fx, { orgId, scopes: ['passes:write', 'holders:write'] });
+    // Beside a session cookie the key is a browser's, refused before lookup (PX8); it never falls back to the session.
     await expectProblem(
       await request({ ...session.headers, ...key.headers }),
       403,
-      'MISSING_SCOPE',
+      'KEY_IN_BROWSER',
     );
+    await expectProblem(await request(key.headers), 403, 'MISSING_SCOPE');
   });
 
   it('rejects invalid and revoked bearer keys rather than falling back to a valid session', async () => {
     const key = await makeApiKey(fx, { orgId, scopes: ['templates:read'] });
     const tampered = `${key.secret.slice(0, -1)}${key.secret.endsWith('A') ? 'B' : 'A'}`;
+    // Beside a session cookie any key bearer is refused before lookup (PX8), so the session is never used.
     await expectProblem(
       await request({ ...session.headers, authorization: `Bearer ${tampered}` }),
+      403,
+      'KEY_IN_BROWSER',
+    );
+    await expectProblem(
+      await request({ authorization: `Bearer ${tampered}` }),
       401,
       'INVALID_API_KEY',
     );
     await run(env.DB, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [clock.now(), key.id]);
     await expectProblem(
       await request({ ...session.headers, ...key.headers }),
-      401,
-      'INVALID_API_KEY',
+      403,
+      'KEY_IN_BROWSER',
     );
+    await expectProblem(await request(key.headers), 401, 'INVALID_API_KEY');
   });
 
   it('denies a foreign org and fences foreign pass rows for sessions and org-bound keys', async () => {

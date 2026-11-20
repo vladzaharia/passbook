@@ -60,7 +60,8 @@ const send = (method: string, path: string, headers: Record<string, string>, bod
       method,
       headers: {
         ...headers,
-        origin: ORIGIN,
+        // A browser sends Origin; a key call comes from a server, which does not (KEY_IN_BROWSER).
+        ...(headers.cookie ? { origin: ORIGIN } : {}),
         'content-type': 'application/json',
         'idempotency-key': kit.f.ids.token(),
       },

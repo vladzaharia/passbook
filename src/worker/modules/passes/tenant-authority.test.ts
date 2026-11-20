@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
@@ -172,7 +173,7 @@ async function issue(headers: Record<string, string>, body: object, key: string)
       method: 'POST',
       headers: {
         ...headers,
-        origin: ORIGIN,
+        ...originUnlessKey(headers, ORIGIN),
         'content-type': 'application/json',
         'idempotency-key': key,
       },
@@ -189,7 +190,7 @@ async function patch(headers: Record<string, string>, id: string, body: object) 
       method: 'PATCH',
       headers: {
         ...headers,
-        origin: ORIGIN,
+        ...originUnlessKey(headers, ORIGIN),
         'content-type': 'application/json',
         'if-match': '"1"',
       },
@@ -204,7 +205,11 @@ async function bulk(path: 'bulk' | 'bulk-reissue', headers: Record<string, strin
     `${ORIGIN}/api/v1/passes/${path}`,
     {
       method: 'POST',
-      headers: { ...headers, origin: ORIGIN, 'content-type': 'application/json' },
+      headers: {
+        ...headers,
+        ...originUnlessKey(headers, ORIGIN),
+        'content-type': 'application/json',
+      },
       body: JSON.stringify(body),
     },
     kit.env,

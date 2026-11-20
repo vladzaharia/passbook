@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { unzipSync } from 'fflate';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   type ApiKeyFixture,
@@ -362,7 +363,7 @@ async function issue(headers: Record<string, string>, data: object, key: string)
       method: 'POST',
       headers: {
         ...headers,
-        origin: ORIGIN,
+        ...originUnlessKey(headers, ORIGIN),
         'content-type': 'application/json',
         'idempotency-key': key,
       },
