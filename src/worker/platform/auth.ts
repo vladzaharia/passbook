@@ -9,12 +9,13 @@ import {
   type RoleSchema,
 } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
-import { type PlatformScope, scopeExercises } from './api-scopes.ts';
+import { scopeExercises } from './api-scopes.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
-import { enforceFeatures, type FeatureRule, trackFeatures } from './feature-guard.ts';
+import { enforceFeatures, trackFeatures } from './feature-guard.ts';
+import type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
 import { serviceContext } from './service-context.ts';
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
@@ -177,43 +178,12 @@ function requireAdminRole(c: Context<AppBindings>, session: SessionAuth): void {
   throw new ForbiddenError('Admin access is required.');
 }
 
-/** Scopes that let a key in: one, any of several, or one for reads (GET, HEAD) and one for the rest. */
-export type ScopeRule = ApiScope | readonly ApiScope[] | { read: ApiScope; write: ApiScope };
-
 /** Reads (GET, HEAD) need `read`, everything else `write`. */
 export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeRule {
   return scopes;
 }
 
-/**
- * Who may call a route. Declared once per route (`RouteSpec.auth`); `requireCaller` enforces it and
- * `openapi-security.ts` writes it into the document, so the two cannot disagree.
- */
-export type RouteAuth =
-  /**
-   * A bearer API key holding the scope, or else a tenant cookie session. `capability` is what the
-   * handler must prove with tenantAuthorityOf for the org it acts on (a session's membership, a
-   * key's scope): `register` turns a success response without that proof into a 500
-   * AUTHORITY_UNPROVEN. `session: 'admin'` takes an admin session instead of any tenant session.
-   */
-  | {
-      scope: ScopeRule;
-      capability?: OrgCapability;
-      session?: 'admin';
-      feature?: FeatureRule;
-      /** A `scans:write` key acts as a terminal here (`scanning.devices` governs it): skips `api`. */
-      tillKey?: true;
-      /**
-       * The handler enforces a key's template and style limits: through grants (the builder adds them) and reads
-       * (`authorityPredicate` with `tenantFilter`). Without this a limited key is refused (403 API_KEY_RESTRICTED_ROUTE).
-       * Set it per route, never on a router guard, and only where every read and write goes through those two.
-       */
-      templateScoped?: true;
-    }
-  /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
-  | { human: true; requestMode?: boolean; feature?: FeatureRule }
-  /** A platform admin session. Keys never pass until a platform key kind exists. */
-  | { platform: PlatformScope };
+export type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
 
 // Only requireCaller tags the scope it verified, so a handler can trust it.
 const verifiedScopes = new WeakMap<AuthContext, ApiScope>();

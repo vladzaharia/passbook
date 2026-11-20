@@ -26,7 +26,14 @@ export function assertTableAllowed(
   tables: ReadonlySet<string> | undefined,
   table: string,
   op: 'insert' | 'change' = 'change',
+  /** Parts reach tables the builder does not type, so the grant must list its tables. */
+  listed = false,
 ): string {
+  if (listed && !tables)
+    throw new AuthorityError(
+      'GRANT_TABLE_NOT_ALLOWED',
+      `${purpose} lists no tables: a grant that includes writes names them.`,
+    );
   const refused = restrictedWriteRefusal(table, purpose, op);
   if (refused) throw new AuthorityError('GRANT_TABLE_NOT_ALLOWED', refused);
   if (tables && !tables.has(table.toLowerCase()))

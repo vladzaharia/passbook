@@ -116,12 +116,7 @@ export class Grant {
 
   /** Parts reach tables the builder does not type, so the grant must list its tables. */
   #need(table: string): string {
-    if (!this.#tables)
-      throw new AuthorityError(
-        'GRANT_TABLE_NOT_ALLOWED',
-        `${this.purpose} lists no tables: a grant that includes writes names them.`,
-      );
-    return this.#allow(table);
+    return assertTableAllowed(this.purpose, this.#tables, table, 'change', true);
   }
 
   #push(built: BuiltStatement): GrantedStatement {
