@@ -5,7 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { loadUserAccessRevision } from '../passes/repo-access-revision.ts';
 import { hasTemplateAuthority } from './repo-authority.ts';
-import { creatorMembership, keyCreator } from './repo-key-creator.ts';
+import { creatorMembership, keyActor } from './repo-key-creator.ts';
 
 export type PlatformSessionAuthority = {
   kind: 'platform';
@@ -74,9 +74,9 @@ async function keyTemplateAuthority(
     );
   const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
   if (authority.kind !== 'api_key') throw new ForbiddenError();
-  const userId = await keyCreator(ctx.env.DB, auth.keyId);
+  const { userId, membershipId: named } = await keyActor(ctx.env.DB, auth.keyId);
   const membershipId =
-    userId === null ? null : await creatorMembership(ctx.env.DB, orgId, userId, capability);
+    userId === null ? null : await creatorMembership(ctx.env.DB, orgId, userId, capability, named);
   if (userId === null || membershipId === null)
     throw new ForbiddenError(
       userId === null
