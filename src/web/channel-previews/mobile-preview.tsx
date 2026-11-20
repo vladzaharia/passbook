@@ -3,6 +3,7 @@ import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import type { WalletOffer } from '@/shared/contracts/me.ts';
 import { PREVIEW_COPY } from '@/shared/copy/previews.ts';
 import type { DeviceInfo } from '@/shared/device.ts';
+import '../wallet-previews/wallet-previews.css';
 import { usePassView } from '../admin/passes/pass-preview.tsx';
 import { PassCardStage } from '../pass-card/index.tsx';
 import { passHeading } from '../portal/add/heading.ts';

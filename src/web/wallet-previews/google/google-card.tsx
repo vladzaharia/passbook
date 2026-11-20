@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { isDarkBackground } from '@/shared/pass-view/color.ts';
 import { WalletCode } from '../barcode.tsx';
 import '../wallet-previews.css';
+import './google.css';
 import { googleModel } from './model.ts';
 
 /** A logo that fails to load leaves the issuer's initial, as Wallet does. */

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { WalletCode } from '../barcode.tsx';
 import '../wallet-previews.css';
+import './samsung.css';
 import { type SamsungModel, samsungModel } from './model.ts';
 
 function Img({ src, className }: { src: string | undefined; className: string }) {
