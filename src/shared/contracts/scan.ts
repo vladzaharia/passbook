@@ -27,6 +27,9 @@ export {
   TimeZoneSchema,
   UuidV7Schema,
 } from './scan-base.ts';
+
+import { ScanBundleSchema, ScanGroupMemberSchema } from './scan-group.ts';
+
 export { type ScanOccupancy, ScanOccupancySchema } from './scan-occupancy.ts';
 export { ScanValueSchema } from './scan-value.ts';
 
@@ -238,14 +241,7 @@ export const ScanCardSchema = z.object({
       }),
     )
     .max(3),
-  bundle: z
-    .object({
-      id: IdSchema,
-      name: z.string(),
-      size: z.number().int(),
-      checkedIn: z.number().int().nullable(),
-    })
-    .nullable(),
+  bundle: ScanBundleSchema.nullable(),
   door: z.object({ state: z.enum(['in', 'out']).nullable() }).nullable(),
   access: ScanAccessSchema.nullable().default(null),
   /** The tag this was read from. Desk and up only; never on a customer screen. */
@@ -305,8 +301,11 @@ export const ScanOutcomeSchema = z.object({
       done: z.number().int(),
       already: z.number().int(),
       refused: z.number().int(),
+      members: z.array(ScanGroupMemberSchema).max(10).optional(),
     })
     .nullable(),
+  /** The bundle behind the scanned pass: the "Check in all" chip. Also on `card` for a ready card. */
+  bundle: ScanBundleSchema.nullable().optional(),
   counts: ScanCountsSchema,
   milestone: ScanMilestoneSchema.nullable(),
   undoUntil: TimestampSchema.nullable(),

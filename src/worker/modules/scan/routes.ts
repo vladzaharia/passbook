@@ -23,8 +23,8 @@ import {
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { act } from './act.ts';
 import { deepFreeze } from './freeze.ts';
+import { actGroup, undoGroup, withBundle } from './group.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
@@ -46,7 +46,6 @@ import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { buildSession } from './session.ts';
 import { sessionActivityFor } from './session-activity.ts';
 import { statsFor } from './stats.ts';
-import { undo } from './undo.ts';
 
 /** Device API: /api/v1/scan. */
 
@@ -186,10 +185,12 @@ register(
       actor = cloneObservedScanActor(scanActorOf(c)),
       req = c.req.valid('json');
     const input = req.input;
-    const { outcome, evaluatedSnapshot, credentialContext } =
+    const evaluation =
       'tag' in input
         ? await resolveTag(ctx, actor, { ...req, input })
         : await resolveOutcome(ctx, actor, { ...req, input });
+    const { evaluatedSnapshot, credentialContext } = evaluation;
+    const outcome = evaluation.outcome;
     publishScan(
       ctx,
       actor,
@@ -200,7 +201,7 @@ register(
       false,
       'code' in input,
     );
-    return c.json(outcome);
+    return c.json(await withBundle(ctx, actor, evaluation));
   },
 );
 
@@ -220,10 +221,11 @@ register(
       actor = deepFreeze(cloneObservedScanActor(scanActorOf(c))),
       req = deepFreeze(c.req.valid('json'));
     const input = req.input;
-    const { outcome, evaluatedSnapshot, credentialContext } =
+    const evaluation =
       'tag' in input
         ? await actTag(ctx, actor, { ...req, input })
-        : await act(ctx, actor, { ...req, input });
+        : await actGroup(ctx, actor, { ...req, input });
+    const { outcome, evaluatedSnapshot, credentialContext } = evaluation;
     if (!outcome.replay)
       publishScan(
         ctx,
@@ -235,7 +237,12 @@ register(
         false,
         'code' in input,
       );
-    return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
+    const hinted = {
+      ...evaluation,
+      outcome: await withParentHint(ctx.env.DB, actor.orgId, outcome),
+    };
+    // The chip costs a read, so only a fresh check-in pays it; held and refused scans keep their budget.
+    return c.json(outcome.kind === 'ok' ? await withBundle(ctx, actor, hinted) : hinted.outcome);
   },
 );
 
@@ -308,7 +315,7 @@ register(
   async (c) => {
     const ctx = capturingContext(serviceContext(c)),
       actor = deepFreeze(cloneObservedScanActor(scanActorOf(c)));
-    const { outcome, evaluatedSnapshot, credentialContext } = await undo(
+    const { outcome, evaluatedSnapshot, credentialContext } = await undoGroup(
       ctx,
       actor,
       c.req.valid('param').scanId,

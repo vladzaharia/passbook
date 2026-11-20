@@ -153,7 +153,9 @@ export function ScanPreviewScreen({
             onError={() => undefined}
           />
         }
-        card={<ResultCard outcome={outcome} phase={phase} onPass={onPass} />}
+        card={
+          <ResultCard outcome={outcome} phase={phase} onPass={onPass} onGroup={() => undefined} />
+        }
       />
     </ScanStoreContext.Provider>
   );

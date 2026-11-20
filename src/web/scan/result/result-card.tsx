@@ -12,6 +12,7 @@ import { admitLine } from '../machine/admit-line.ts';
 import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
 import { ApprovalSheet } from './approval-sheet.tsx';
+import { GroupChip } from './group-chip.tsx';
 import { IdentityRow } from './identity-row.tsx';
 import { ValuePicker } from './value-picker.tsx';
 import { VerdictGlyph } from './verdict-glyph.tsx';
@@ -23,6 +24,7 @@ export function ResultCard({
   outcome: o,
   phase,
   onAction,
+  onGroup,
   eventNote,
   holdMs,
   onPass,
@@ -35,6 +37,7 @@ export function ResultCard({
   outcome: ScanOutcome;
   phase?: string;
   onAction?: (actionId: string) => void;
+  onGroup?: () => void;
   eventNote?: string | null;
   holdMs?: number | null;
   onPass?: (card: ScanCard | null) => void;
@@ -66,6 +69,7 @@ export function ResultCard({
   }, [refused]);
   const d = o.display;
   const ok = o.kind === 'ok';
+  const chip = (ok || o.kind === 'heads_up') && Boolean(o.bundle || o.group);
   const ready = o.kind === 'ready';
   const noExit =
     o.reason === 'not_accepted' && o.checkIn?.direction === 'out' && o.checkIn.mode !== 'in_out';
@@ -203,7 +207,7 @@ export function ResultCard({
           Choose an action
         </h1>
       )}
-      {d || o.card || o.tag || notes.length ? (
+      {d || o.card || o.tag || notes.length || chip ? (
         <div className="scan-result-body">
           <IdentityRow
             outcome={o}
@@ -221,7 +225,7 @@ export function ResultCard({
               refused={o.kind === 'refused'}
             />
           ) : null}
-          {d && !denied && !desk?.picker ? <DisplayPanels display={d} /> : null}
+          {d && !denied && !desk?.picker && !o.group ? <DisplayPanels display={d} /> : null}
           {notes.length ? (
             <div className="scan-result-notes">
               <Info size={18} aria-hidden />
@@ -255,6 +259,7 @@ export function ResultCard({
               </Button>
             ))
           )}
+          {chip ? <GroupChip outcome={o} onGroup={onGroup} /> : null}
           {o.reason === 'needs_approval' && desk && o.approvals ? (
             pin ? (
               <ApprovalSheet

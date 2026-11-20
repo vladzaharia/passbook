@@ -207,6 +207,7 @@ export function ScanLoop({
               eventNote={session.event?.note}
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
+              onGroup={() => dispatch({ type: 'group' })}
               desk={deskOf(l, session, dispatch)}
               tagRead={'input' in l && Boolean(l.input.tag)}
             />

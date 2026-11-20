@@ -32,6 +32,8 @@ export interface Draft {
   /** A `set`: the card's version the staff read, so a card that moved answers `stale`. */
   expectedVersion?: number;
   override?: boolean;
+  /** Check in every pass of the scanned pass's bundle. */
+  group?: boolean;
   overrideOf?: string;
   confirmed?: boolean;
   /** A Manager's PIN approval for this one action. The PIN sheet re-sends the draft under a new key. */
@@ -187,6 +189,8 @@ export type ScanEvent =
   | { type: 'switch' }
   | { type: 'keep' }
   | { type: 'override'; actionId: string }
+  /** "Check in all N": the same scan with `group: 'bundle'` under a new key. */
+  | { type: 'group' }
   /** The Manager PIN sheet's Approve: re-sends the same draft under a new key with `approval`. */
   | { type: 'approve'; staffId?: string; pin: string }
   | { type: 'arm'; actionId: string; amount: number | null; sticky: boolean }
