@@ -14,7 +14,11 @@ import type { RetentionKit } from '../retention/retention-test-fixtures.ts';
 import { credential } from '../wallet-providers/repo-wallet-credentials-test-fixtures.ts';
 
 /** A workflow step that runs its callback in place; `crashAfter` throws on the next step after that many. */
-export function fakeStep(crashAfter?: number) {
+/** `clock` moves to a `sleepUntil` time, as a waiting workflow would find it on waking. */
+export function fakeStep(
+  crashAfter?: number,
+  clock?: { advance(ms: number): void; now(): number },
+) {
   let n = 0;
   const step = {
     async do(_name: string, a: unknown, b?: unknown) {
@@ -22,8 +26,11 @@ export function fakeStep(crashAfter?: number) {
       return ((typeof a === 'function' ? a : b) as () => unknown)();
     },
     async sleep() {},
+    async sleepUntil(_name: string, until: Date) {
+      if (clock && until.getTime() > clock.now()) clock.advance(until.getTime() - clock.now());
+    },
   };
-  return step as unknown as Pick<WorkflowStep, 'do' | 'sleep'>;
+  return step as unknown as Pick<WorkflowStep, 'do' | 'sleep' | 'sleepUntil'>;
 }
 
 export interface Populated {
@@ -68,6 +75,14 @@ export async function populateOrg(rk: RetentionKit, label: string): Promise<Popu
     env.DB,
     "INSERT INTO workflow_runs (instance_id, kind, org_id, started_at) VALUES (?, 'bulk_reissue', ?, ?)",
     [`run-${label}`, orgId, clock.now()],
+  );
+  await env.BUCKET.put(`member-photos/${orgId}/pending/x.png`, new Uint8Array([1]));
+  await env.BUCKET.put(`uploads/up-${label}.zip`, new Uint8Array([1]));
+  await env.BUCKET.put(`uploads/up-${label}/x/tooling.json`, new Uint8Array([1]));
+  await run(
+    env.DB,
+    'INSERT INTO template_imports (upload_id, org_id, object_key, created_at, updated_at) VALUES (?, ?, ?, 1, 1)',
+    [`up-${label}`, orgId, `uploads/up-${label}.zip`],
   );
   await credential({ orgId, scope: 'org' });
   const blob = new Uint8Array(16).fill(7);

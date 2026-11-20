@@ -4,6 +4,8 @@
 ALTER TABLE orgs ADD COLUMN closed_at INTEGER CHECK (closed_at IS NULL OR closed_at > 0);
 ALTER TABLE orgs ADD COLUMN purge_after INTEGER CHECK (purge_after IS NULL OR purge_after > 0);
 ALTER TABLE orgs ADD COLUMN purge_started_at INTEGER CHECK (purge_started_at IS NULL OR purge_started_at > 0);
+-- Every pass was voided and pushed at this time; rows go only a grace period later.
+ALTER TABLE orgs ADD COLUMN purge_voided_at INTEGER CHECK (purge_voided_at IS NULL OR purge_voided_at > 0);
 ALTER TABLE orgs ADD COLUMN purged_at INTEGER CHECK (purged_at IS NULL OR purged_at > 0);
 -- The default signing identity at close (closing clears the live one), so a reopen can restore it.
 ALTER TABLE orgs ADD COLUMN closed_identity_id TEXT;

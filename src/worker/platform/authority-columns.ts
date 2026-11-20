@@ -73,6 +73,7 @@ export const EPOCH_TABLES: EpochTable[] = [
       'closed_identity_id',
       'purge_after',
       'purge_started_at',
+      'purge_voided_at',
       'purged_at',
     ],
     fixed: ['id', 'created_at'],

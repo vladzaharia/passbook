@@ -10,6 +10,7 @@ export interface LifecycleRow {
   closed_at: number | null;
   purge_after: number | null;
   purge_started_at: number | null;
+  purge_voided_at: number | null;
   purged_at: number | null;
   closed_identity_id: string | null;
   held: number;
@@ -17,7 +18,7 @@ export interface LifecycleRow {
 
 const HELD = `EXISTS (SELECT 1 FROM retention_holds h WHERE h.org_id = orgs.id AND h.released_at IS NULL)`;
 const SELECT = `SELECT id, slug, name, status, default_identity_id, closed_at, purge_after, purge_started_at,
-  purged_at, closed_identity_id, ${HELD} AS held FROM orgs`;
+  purge_voided_at, purged_at, closed_identity_id, ${HELD} AS held FROM orgs`;
 
 export const lifecycleRow = (db: D1Database, id: string) =>
   first<LifecycleRow>(db, `${SELECT} WHERE id = ?`, [id]);
@@ -36,7 +37,8 @@ export const purgeDue = (db: D1Database, now: number, limit: number) =>
   all<LifecycleRow>(
     db,
     `${SELECT} WHERE status = 'deleted' AND purge_after IS NOT NULL AND purge_after <= ?
-       AND purged_at IS NULL AND NOT ${HELD} ORDER BY purge_after, id LIMIT ?`,
+       AND purged_at IS NULL AND NOT ${HELD}
+     ORDER BY (purge_started_at IS NOT NULL), purge_after, id LIMIT ?`,
     [now, limit],
   );
 
@@ -213,4 +215,14 @@ export async function exportOrgId(db: D1Database, id: string): Promise<string | 
     (await first<{ org_id: string }>(db, 'SELECT org_id FROM org_exports WHERE id = ?', [id]))
       ?.org_id ?? null
   );
+}
+
+/** A purge started: an archive still being built can only end in files the purge would have to chase. */
+export async function failOpenExports(db: D1Database, orgId: string, now: number): Promise<void> {
+  await stmt(
+    db,
+    `UPDATE org_exports SET state = 'failed', error_code = 'ORG_PURGING', finished_at = ?
+     WHERE org_id = ? AND state IN ('queued', 'running')`,
+    [now, orgId],
+  ).run();
 }

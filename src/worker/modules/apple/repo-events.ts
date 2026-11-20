@@ -1,5 +1,6 @@
 import { first, stmt } from '../../platform/db.ts';
 import type { EventRow } from '../events/repo.ts';
+import { ORG_SERVES_SQL } from '../orgs/repo.ts';
 
 export interface AppleEventCredential {
   serial: string;
@@ -19,7 +20,7 @@ export function appleEventStmt(
     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     WHERE EXISTS (SELECT 1 FROM passes p WHERE p.id = ? AND p.org_id = ? AND p.mode = ?
       AND p.serial = ? AND p.credential_generation = ? AND p.test_data_quarantined = 0
-      AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND o.status = 'active')
+      AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND ${ORG_SERVES_SQL})
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
         WHERE t.pass_id = p.id AND t.state = 'pending'))`,
     [
@@ -56,7 +57,7 @@ export async function pendingAppleFetchDevice(
     JOIN passes p ON p.id = l.pass_id
     WHERE l.pass_id = ? AND p.serial = ? AND p.credential_generation = ?
       AND p.test_data_quarantined = 0
-      AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND o.status = 'active')
+      AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = p.org_id AND ${ORG_SERVES_SQL})
       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
         WHERE t.pass_id = p.id AND t.state = 'pending')
       AND l.kind = 'device.fetched' AND l.at >= ? AND l.device IS NOT NULL

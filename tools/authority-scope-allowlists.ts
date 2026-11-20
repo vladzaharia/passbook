@@ -118,7 +118,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/apple/repo-events.ts': {
     reason:
       'device.fetched ledger rows from the Apple device protocol, fenced in SQL by the credential serial and generation; the device principal has no ledger purpose',
-    writes: ['pass_events:9f58dbf16fba'],
+    writes: ['pass_events:93fa910529e3'],
   },
   'src/worker/modules/passes/repo-remove-compensate.ts': {
     reason:
@@ -241,7 +241,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/delivery/repo-devices.ts': {
     reason:
       'push device outcomes (outbox cancel, pass_events) written while delivering a leased push',
-    writes: ['outbox:4599402ca096', 'outbox:d8027ae6e23e', 'pass_events:8194770a5634'],
+    writes: ['outbox:965be41de4bd', 'outbox:ea24d4f8a142', 'pass_events:a5300ed933c7'],
   },
   'src/worker/modules/delivery/repo-issuance-recovery.ts': {
     reason:

@@ -83,18 +83,24 @@ export async function buildArchive(
     pending.push(chunk);
     size += chunk.length;
   });
+  /** R2 wants equal parts except the last: send PART_BYTES at a time, keep the rest. */
   const flush = async (force: boolean) => {
     if (size === 0 || (!force && size < PART_BYTES)) return;
-    const body = new Uint8Array(size);
+    const all = new Uint8Array(size);
     let at = 0;
     for (const c of pending) {
-      body.set(c, at);
+      all.set(c, at);
       at += c.length;
     }
-    parts.push(await upload.uploadPart(parts.length + 1, body));
-    total += size;
-    pending = [];
-    size = 0;
+    let from = 0;
+    while (size - from >= PART_BYTES || (force && from < size)) {
+      const body = all.subarray(from, Math.min(from + PART_BYTES, size));
+      parts.push(await upload.uploadPart(parts.length + 1, body));
+      total += body.length;
+      from += body.length;
+    }
+    pending = from < size ? [all.slice(from)] : [];
+    size -= from;
   };
   const counts: Record<string, number> = {};
   try {
@@ -131,9 +137,15 @@ export async function buildArchive(
     }
     zip.end();
     await flush(true);
+    // A purge deletes the export row and sweeps the org's files: never complete an archive it did not see.
+    if (!(await exportRunning(ctx.env.DB, id))) throw new Error('ORG_EXPORT_GONE');
     await upload.complete(parts);
+    if (!(await exportRunning(ctx.env.DB, id))) {
+      await bucket.delete(exportKey(orgId, id));
+      throw new Error('ORG_EXPORT_GONE');
+    }
   } catch (error) {
-    await upload.abort();
+    await upload.abort().catch(() => undefined);
     throw error;
   }
   counts.template_files = (await listAll(bucket, templateFilesPrefix(orgId))).length;

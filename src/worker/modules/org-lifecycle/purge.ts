@@ -3,20 +3,26 @@ import { maxNow } from '../../platform/authority-expr.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { deliverPush } from '../delivery/push.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
+import { removePass } from '../passes/remove.ts';
 import { deleteObjects, deletePassRows } from '../passes/repo-ops-retention.ts';
 import { softDeletePass } from '../passes/repo-pass-trusted.ts';
+import { pendingPushId } from '../passes/repo-read-pass.ts';
 import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import { writeReceipt } from '../retention/receipt-service.ts';
 import { prepareScanRetentionDelete } from '../scan/scan-retention-proof.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
-import { lifecycleRow } from './repo.ts';
+import { failOpenExports, lifecycleRow } from './repo.ts';
 import { orgPrefixes, PASSES_AT, PURGE_STEPS, type PurgeStep } from './repo-plan.ts';
-import { deleteGroup, deleteStep, orgPasses, remaining } from './repo-purge.ts';
+import { deleteGroup, deleteStep, orgPasses, remaining, uploadIds } from './repo-purge.ts';
 
 export type PurgeStart = 'started' | 'resumed' | 'held' | 'not_due' | 'skipped' | 'done';
 
 const PAGE = 50;
+/** Devices get this long to fetch the voided pass before any row goes. */
+export const GRACE_MS = 7 * 86_400_000;
+const SYSTEM = { type: 'system', id: null } as const;
 /** Receipt class of a purge, on the org's own chain. */
 export const PURGE_RECEIPT_CLASS = 'org_purge';
 
@@ -29,7 +35,10 @@ export async function beginPurge(ctx: ServiceContext, orgId: string): Promise<Pu
   if (row?.status !== 'deleted' || row.purge_after === null) return 'skipped';
   if (row.purged_at !== null) return 'done';
   if (row.held) return 'held';
-  if (row.purge_started_at !== null) return 'resumed';
+  if (row.purge_started_at !== null) {
+    await failOpenExports(ctx.env.DB, orgId, ctx.clock.now());
+    return 'resumed';
+  }
   if (row.purge_after > ctx.clock.now()) return 'not_due';
   const g = jobGrant(ctx, {
     job: 'org-purge',
@@ -43,7 +52,9 @@ export async function beginPurge(ctx: ServiceContext, orgId: string): Promise<Pu
   });
   try {
     const [result] = await g.commit();
-    return (result?.results.length ?? 0) > 0 ? 'started' : 'skipped';
+    if ((result?.results.length ?? 0) === 0) return 'skipped';
+    await failOpenExports(ctx.env.DB, orgId, ctx.clock.now());
+    return 'started';
   } catch (error) {
     if (classifyD1Error(error)?.kind === 'abort') return 'held';
     throw error;
@@ -62,8 +73,53 @@ export async function stillPurging(ctx: ServiceContext, orgId: string): Promise<
   );
 }
 
-/** Soft-deletes one page of live passes, so Wallet providers start to retire them. Returns the last id. */
+/**
+ * Voids one page of the org's passes the way a removal does (a last voided, expired version) and pushes it, so
+ * devices fetch it. Apple serves a closed org's voided passes only. `failed` counts passes that could not be
+ * voided now; the purge does not go on until none is left.
+ */
 export async function voidPage(ctx: ServiceContext, orgId: string, after: string) {
+  const passes = await orgPasses(ctx.env.DB, orgId, after, PAGE, true);
+  let voided = 0;
+  let failed = 0;
+  for (const pass of passes) {
+    if (pass.removedAt !== null && pass.status === 'voided') continue;
+    try {
+      await removePass(ctx, SYSTEM, pass.id, {}, null, undefined, undefined, true);
+      const pushId = await pendingPushId(ctx.env.DB, pass.id);
+      if (pushId) await deliverPush(ctx, pushId);
+      voided++;
+    } catch (error) {
+      failed++;
+      ctx.log.warn('org.purge_void_failed', {
+        orgId,
+        passId: pass.id,
+        code: 'ORG_PURGE_VOID',
+        error,
+      });
+    }
+  }
+  return { voided, failed, last: passes.at(-1)?.id ?? null, more: passes.length === PAGE };
+}
+
+/** Starts the grace period once every pass is voided. Returns when it ends. */
+export async function markVoided(ctx: ServiceContext, orgId: string): Promise<number> {
+  const row = await lifecycleRow(ctx.env.DB, orgId);
+  if (row?.purge_voided_at) return row.purge_voided_at + GRACE_MS;
+  const now = ctx.clock.now();
+  const g = jobGrant(ctx, { job: 'org-purge', purpose: 'platform.job.org.purge', target: orgId });
+  g.update('orgs', {
+    set: { purge_voided_at: now, updated_at: maxNow(now) },
+    where: { id: orgId, status: 'deleted', purge_voided_at: null },
+    returning: ['id'],
+  });
+  await g.commit();
+  const after = await lifecycleRow(ctx.env.DB, orgId);
+  return (after?.purge_voided_at ?? now) + GRACE_MS;
+}
+
+/** Soft-deletes one page of passes, so Wallet providers start to retire them. */
+export async function softDeletePage(ctx: ServiceContext, orgId: string, after: string) {
   const passes = await orgPasses(ctx.env.DB, orgId, after, PAGE, true);
   let done = 0;
   for (const pass of passes) if (await softDeletePass(ctx.env.DB, pass, ctx.clock.now())) done++;
@@ -75,6 +131,7 @@ export async function voidPage(ctx: ServiceContext, orgId: string, after: string
  * pending transfer or a legal hold stays; `left` counts what is still there after `after`.
  */
 export async function deletePassesPage(ctx: ServiceContext, orgId: string, after: string) {
+  if (!(await graceOver(ctx, orgId))) return { deleted: 0, last: null, more: false };
   const keyset = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const passes = await orgPasses(ctx.env.DB, orgId, after, PAGE, false);
   let deleted = 0;
@@ -87,6 +144,12 @@ export async function deletePassesPage(ctx: ServiceContext, orgId: string, after
     deleted++;
   }
   return { deleted, last: passes.at(-1)?.id ?? null, more: passes.length === PAGE };
+}
+
+/** Every pass was voided and the devices have had their grace period. */
+export async function graceOver(ctx: ServiceContext, orgId: string): Promise<boolean> {
+  const row = await lifecycleRow(ctx.env.DB, orgId);
+  return row?.purge_voided_at != null && row.purge_voided_at + GRACE_MS <= ctx.clock.now();
 }
 
 /** Passes still in the org. */
@@ -110,38 +173,62 @@ export async function runRows(
   steps: PurgeStep[],
 ): Promise<number> {
   const [only] = steps;
-  if (steps.length === 1 && only) return deleteStep(ctx.env.DB, only, orgId);
-  return deleteGroup(ctx.env.DB, steps, orgId);
+  const cutoff = ctx.clock.now() - GRACE_MS;
+  if (steps.length === 1 && only) return deleteStep(ctx.env.DB, only, orgId, cutoff);
+  return deleteGroup(ctx.env.DB, steps, orgId, cutoff);
 }
 
-/** Tables a step list would still delete rows from: empty when the purge removed everything. */
+/** What the purge has not removed yet: tables with rows, and org prefixes in R2 with objects. */
 export async function leftovers(ctx: ServiceContext, orgId: string): Promise<string[]> {
   const out: string[] = [];
   for (const s of PURGE_STEPS)
     for (const step of Array.isArray(s) ? s : [s as PurgeStep])
       if ((await remaining(ctx.env.DB, step, orgId)) > 0) out.push(step.table);
+  for (const prefix of orgPrefixes(orgId))
+    if ((await ctx.env.BUCKET.list({ prefix, limit: 1 })).objects.length > 0)
+      out.push(`r2:${prefix}`);
   return out;
 }
 
-/** Org-prefixed files in R2, a page of up to 500 at a time; true once none are left. */
+async function deletePrefix(ctx: ServiceContext, prefix: string): Promise<number> {
+  let removed = 0;
+  let cursor: string | undefined;
+  do {
+    const page = await ctx.env.BUCKET.list({ prefix, ...(cursor ? { cursor } : {}), limit: 500 });
+    if (page.objects.length > 0) {
+      await ctx.env.BUCKET.delete(page.objects.map((o) => o.key));
+      removed += page.objects.length;
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  return removed;
+}
+
+/** Staged template uploads are keyed by upload id, so they go before the rows that name them. */
+export async function purgeUploads(ctx: ServiceContext, orgId: string): Promise<number> {
+  let removed = 0;
+  for (const id of await uploadIds(ctx.env.DB, orgId)) {
+    await ctx.env.BUCKET.delete(`uploads/${id}.zip`);
+    removed += await deletePrefix(ctx, `uploads/${id}/`);
+  }
+  return removed;
+}
+
+/** Org-prefixed files in R2. A hold placed meanwhile stops it before the next prefix. */
 export async function purgeFiles(ctx: ServiceContext, orgId: string): Promise<number> {
   let removed = 0;
   for (const prefix of orgPrefixes(orgId)) {
-    let cursor: string | undefined;
-    do {
-      const page = await ctx.env.BUCKET.list({ prefix, ...(cursor ? { cursor } : {}), limit: 500 });
-      if (page.objects.length > 0) {
-        await ctx.env.BUCKET.delete(page.objects.map((o) => o.key));
-        removed += page.objects.length;
-      }
-      cursor = page.truncated ? page.cursor : undefined;
-    } while (cursor);
+    if (!(await stillPurging(ctx, orgId))) return removed;
+    removed += await deletePrefix(ctx, prefix);
   }
   await purgeOrgWalletArt(ctx, orgId);
   return removed;
 }
 
-/** The receipt and the stub. A repeat after the stub is written does nothing. */
+/**
+ * The stub, then the receipt and the audit row, by whichever run claims the stub first: a repeat or a parallel
+ * run finds it claimed and writes nothing.
+ */
 export async function finishPurge(
   ctx: ServiceContext,
   orgId: string,
@@ -149,6 +236,15 @@ export async function finishPurge(
 ): Promise<boolean> {
   const row = await lifecycleRow(ctx.env.DB, orgId);
   if (!row || row.purged_at !== null || !(await stillPurging(ctx, orgId))) return false;
+  const now = ctx.clock.now();
+  const g = jobGrant(ctx, { job: 'org-purge', purpose: 'platform.job.org.purge', target: orgId });
+  g.update('orgs', {
+    set: { name: 'Closed organization', branding: '{}', purged_at: now, updated_at: maxNow(now) },
+    where: { id: orgId, status: 'deleted', purged_at: null },
+    returning: ['id'],
+  });
+  const [result] = await g.commit();
+  if ((result?.results.length ?? 0) === 0) return false;
   await writeReceipt(ctx, {
     orgId,
     cls: PURGE_RECEIPT_CLASS,
@@ -156,15 +252,6 @@ export async function finishPurge(
     cutoffAt: row.purge_after,
     deleted,
   });
-  const now = ctx.clock.now();
-  const g = jobGrant(ctx, { job: 'org-purge', purpose: 'platform.job.org.purge', target: orgId });
-  g.update('orgs', {
-    set: { name: 'Closed organization', branding: '{}', purged_at: now, updated_at: maxNow(now) },
-    where: { id: orgId, status: 'deleted' },
-    returning: ['id'],
-  });
-  const [result] = await g.commit();
-  if ((result?.results.length ?? 0) === 0) return false;
   await recordAudit(ctx, {
     orgId,
     actorType: 'system',
@@ -175,4 +262,14 @@ export async function finishPurge(
     detail: { deleted },
   });
   return true;
+}
+
+/** Why `finishPurge` did nothing: another run finished it, a hold stands, or something else. */
+export async function endState(
+  ctx: ServiceContext,
+  orgId: string,
+): Promise<'done' | 'held' | 'incomplete'> {
+  const row = await lifecycleRow(ctx.env.DB, orgId);
+  if (row?.purged_at != null) return 'done';
+  return row?.held ? 'held' : 'incomplete';
 }

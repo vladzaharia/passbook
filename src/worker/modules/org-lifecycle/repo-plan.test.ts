@@ -143,6 +143,41 @@ describe('the purge plan against the migrated schema', () => {
   });
 });
 
+const GATED_TRIGGERS = [
+  'org_memberships_no_delete',
+  'org_invitations_no_delete',
+  'template_candidates_no_delete',
+  'template_approvals_no_delete',
+  'template_releases_no_delete',
+  'template_version_extras_no_delete',
+  'template_version_extra_sets_no_delete',
+  'template_version_hashes_no_delete',
+  'wallet_provider_credentials_no_delete',
+  'wallet_provider_account_events_no_delete',
+  'wallet_samsung_tombstones_no_delete',
+  'wallet_provider_projection_evidence_history_no_delete',
+  'wallet_provider_accounts_no_delete',
+  'wallet_credential_versions_no_delete',
+  'wallet_credential_events_no_delete',
+  'wallet_credential_checks_no_delete',
+  'wallet_enrolment_events_no_delete',
+  'wallet_credentials_no_delete',
+  'connection_webhook_unresolved_item_no_delete',
+  'pass_credential_transfer_pending_no_pass_delete',
+  'pass_credential_transfer_payload_no_delete',
+];
+
+describe('the purge gates of 0136', () => {
+  it('every history trigger it rewrote still holds the purge clause (a later migration must keep it)', async () => {
+    const rows = await all<{ name: string; sql: string }>(
+      env.DB,
+      `SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name IN (${GATED_TRIGGERS.map((n) => `'${n}'`).join(',')})`,
+    );
+    expect(rows.map((r) => r.name).sort()).toEqual([...GATED_TRIGGERS].sort());
+    for (const r of rows) expect(r.sql, r.name).toContain('o.purge_started_at IS NOT NULL');
+  });
+});
+
 function steps(table: string, cascaded: Map<string, Fk[]>): boolean {
   return positionOf(table) >= 0 || cascaded.has(table);
 }

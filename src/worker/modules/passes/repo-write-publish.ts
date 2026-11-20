@@ -54,6 +54,7 @@ export interface PublishWrite {
   connectionState?: ConnectionStateWrite | undefined;
   authority?: TenantPassWrite | undefined;
   holder?: HolderPrincipal | undefined;
+  closedOk?: true | undefined;
   /** A scan's grant in place of a tenant's: its rows commit in this write's batch. */
   commit?: PublishCommit | undefined;
   /** Required with authority, so its expiry is checked immediately before the batch. */
@@ -157,6 +158,7 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
           context: w.connectionContext,
           authority: w.authority,
           holder: w.holder,
+          ...(w.closedOk ? { closedOk: true as const } : {}),
         });
   }
 }

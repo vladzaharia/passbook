@@ -2,12 +2,16 @@ import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloud
 import {
   beginPurge,
   deletePassesPage,
+  endState,
   finishPurge,
   leftovers,
+  markVoided,
   passesLeft,
   phases,
   purgeFiles,
+  purgeUploads,
   runRows,
+  softDeletePage,
   stillPurging,
   voidPage,
 } from '../modules/org-lifecycle/purge.ts';
@@ -24,7 +28,7 @@ const MAX_PAGES = 2000;
 /** Wallet providers retire a pass in their own time: 28 waits of six hours before the run gives up. */
 export const PROVIDER_ROUNDS = 28;
 
-type StepLike = Pick<WorkflowStep, 'do' | 'sleep'>;
+type StepLike = Pick<WorkflowStep, 'do' | 'sleep' | 'sleepUntil'>;
 export type PurgeOutcome =
   | 'purged'
   | 'held'
@@ -35,8 +39,8 @@ export type PurgeOutcome =
   | 'incomplete';
 
 /**
- * Removes a closed org: its passes (after Wallet providers let go), every row of the plan, its files, then
- * the receipt and the stub. A legal hold stops it at any step and leaves the rows that remain. Every step
+ * Removes a closed org. First every pass is voided and pushed, and devices get seven days to fetch it. Then
+ * the passes (after Wallet providers let go), every row of the plan, its files, the receipt and the stub. A legal hold stops it at any step and leaves the rows that remain. Every step
  * is safe to repeat. Owner: org-lifecycle module.
  */
 export async function runOrgPurge(
@@ -58,6 +62,24 @@ export async function runOrgPurge(
     return { state: started, deleted: 0 };
   let deleted = 0;
   const alive = (name: string) => step.do(name, () => stillPurging(ctx, orgId));
+  if (!(await alive('alive-void'))) return { state: 'held', deleted };
+  let failed = 0;
+  let from = '';
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const at = from;
+    const page = await step.do(`void-${i}`, RETRY, () => voidPage(ctx, orgId, at));
+    failed += page.failed;
+    if (!page.more || !page.last) break;
+    from = page.last;
+  }
+  if (failed > 0) {
+    ctx.log.error('org.purge_void_blocked', { orgId, code: 'ORG_PURGE_VOID', passes: failed });
+    return { state: 'blocked', deleted };
+  }
+  const graceEnds = await step.do('voided', () => markVoided(ctx, orgId));
+  await step.sleepUntil('grace', new Date(graceEnds));
+  if (!(await alive('alive-grace'))) return { state: 'held', deleted };
+  await step.do('uploads', RETRY, () => purgeUploads(ctx, orgId));
   for (const phase of phases()) {
     if (phase.kind === 'rows') {
       if (!(await alive(`alive-${phase.name}`))) return { state: 'held', deleted };
@@ -66,8 +88,8 @@ export async function runOrgPurge(
     }
     let after = '';
     for (let i = 0; i < MAX_PAGES; i++) {
-      const from = after;
-      const page = await step.do(`void-${i}`, RETRY, () => voidPage(ctx, orgId, from));
+      const cursor = after;
+      const page = await step.do(`retire-${i}`, RETRY, () => softDeletePage(ctx, orgId, cursor));
       if (!page.more || !page.last) break;
       after = page.last;
     }
@@ -101,7 +123,9 @@ export async function runOrgPurge(
   }
   const total = deleted;
   const finished = await step.do('finish', () => finishPurge(ctx, orgId, total));
-  return { state: finished ? 'purged' : 'held', deleted };
+  if (finished) return { state: 'purged', deleted };
+  // Another run claimed the stub, or a hold appeared at the last moment.
+  return { state: await step.do('end-state', () => endState(ctx, orgId)), deleted };
 }
 
 export class OrgPurge extends WorkflowEntrypoint<AppEnv, OrgPurgeParams> {

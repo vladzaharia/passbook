@@ -128,11 +128,15 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   wallet_samsung_auth_replays: 'replay guard of the platform callback',
 };
 
-/** R2 prefixes that belong to one org. Pass files go with the pass rows. */
+/**
+ * R2 prefixes that belong to one org: prints, branding, template files, pass import sheets, exports and member
+ * photos. Pass files go with the pass rows, staged template uploads by upload id (`purgeUploads`).
+ */
 export const orgPrefixes = (orgId: string): string[] => [
   `prints/${orgId}/`,
   `orgs/${orgId}/`,
   `templates/${orgId}/`,
   `uploads/pass-imports/${orgId}/`,
   `exports/${orgId}/`,
+  `member-photos/${orgId}/`,
 ];

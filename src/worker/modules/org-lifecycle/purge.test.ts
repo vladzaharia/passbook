@@ -17,7 +17,7 @@ beforeAll(async () => {
   kit = rk.kit;
 }, 30_000);
 
-const purge = (orgId: string, step = fakeStep()) =>
+const purge = (orgId: string, step = fakeStep(undefined, kit.clock)) =>
   runOrgPurge(kit.env, { orgId }, step, undefined, kit.clock, 2);
 /** A fresh admin session each time: the tests move the clock past a session's life. */
 const close = async (orgId: string) =>
@@ -145,7 +145,7 @@ describe('org purge', () => {
   it('a hold placed while the purge runs stops it and keeps the rest; a rerun finishes it', async () => {
     const org = await closed('mid');
     let held = false;
-    const step = fakeStep();
+    const step = fakeStep(undefined, kit.clock);
     const inner = step.do.bind(step) as (n: string, ...a: unknown[]) => Promise<unknown>;
     (step as { do: unknown }).do = async (name: string, ...rest: unknown[]) => {
       if (!held && name.startsWith('rows-') && name.includes('connections')) {
@@ -165,7 +165,7 @@ describe('org purge', () => {
 
   it('a run that crashes part way is finished by the next one, with one receipt', async () => {
     const org = await closed('crash');
-    await expect(purge(org.orgId, fakeStep(12))).rejects.toThrow('crash');
+    await expect(purge(org.orgId, fakeStep(12, kit.clock))).rejects.toThrow('crash');
     expect(Object.keys(await rowsOf(org.orgId)).length).toBeGreaterThan(6);
     expect((await purge(org.orgId)).state).toBe('purged');
     expect(await readReceipts(kit.ctx, org.orgId, 'org_purge')).toHaveLength(1);

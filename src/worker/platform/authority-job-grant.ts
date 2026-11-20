@@ -10,6 +10,8 @@ export interface JobGrantInput extends Omit<GrantInput, 'principal'> {
   mode?: Mode;
   orgAccessRevision?: number;
   inactiveOk?: true;
+  /** A closed org too (status deleted): see CLOSED_OK_PURPOSES. */
+  closedOk?: true;
 }
 
 /** The purposes that may act while the org is suspended, with the tables each may write. */
@@ -33,6 +35,14 @@ const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
   ],
 };
 
+/**
+ * The purposes that may act while the org is closed, with the tables each may write. The org purge voids a
+ * closed org's passes (the last version devices fetch) before it removes them.
+ */
+const CLOSED_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
+  'org_mode.job.pass.publish': ['passes', 'scan_code_rotations'],
+};
+
 /** The checked input of a `system:` grant: a job purpose, `inactiveOk` only where allowlisted, the job principal. */
 export function jobGrantInputOf(input: JobGrantInput): GrantInput {
   if (!JOB_PURPOSE.test(input.purpose))
@@ -45,7 +55,12 @@ export function jobGrantInputOf(input: JobGrantInput): GrantInput {
     if (!allowed || !input.tables?.every((t) => allowed.includes(t)))
       throw new AuthorityError('GRANT_BAD_PURPOSE', 'inactiveOk is for allowlisted purposes.');
   }
-  const { job, orgId, mode, orgAccessRevision, inactiveOk, ...rest } = input;
-  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision, inactiveOk });
+  if (input.closedOk) {
+    const allowed = CLOSED_OK_PURPOSES[input.purpose];
+    if (!allowed || !input.tables?.every((t) => allowed.includes(t)))
+      throw new AuthorityError('GRANT_BAD_PURPOSE', 'closedOk is for allowlisted purposes.');
+  }
+  const { job, orgId, mode, orgAccessRevision, inactiveOk, closedOk, ...rest } = input;
+  const principal = jobPrincipal({ job, orgId, mode, orgAccessRevision, inactiveOk, closedOk });
   return { ...rest, principal };
 }
