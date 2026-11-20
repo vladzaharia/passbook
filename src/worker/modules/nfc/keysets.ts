@@ -12,10 +12,10 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { randomBytes } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { KEY_BYTES, type KeyScope, openVersion, sealVersion } from './keyset-seal.ts';
+import { assertKeysUnused, type Keys, pickKeys, slug } from './keyset-input.ts';
+import { type KeyScope, openVersion, sealVersion } from './keyset-seal.ts';
 import {
   type KeyRow,
   type KeysetRow,
@@ -23,7 +23,6 @@ import {
   keysetsOf,
   keyVersionsOf,
   liveKeysetCount,
-  orgVersionEnvelopes,
   versionEnvelopes,
 } from './repo-keysets.ts';
 import {
@@ -33,16 +32,13 @@ import {
   retireKeyGrant,
   rotateKeysetGrant,
 } from './repo-keysets-write.ts';
-import { bytesToHex, constantTimeEqual, hexToBytes } from './sun.ts';
 
 /** Live (not disabled) keysets per org and mode. */
 export const KEYSETS_PER_ORG_MODE = 4;
 const MAX_VERSION = 255;
 const SLUG_TRIES = 3;
-const SLUG_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
 export type KeysetView = z.infer<typeof TagKeysetViewSchema>;
-type Keys = { metaKey: string; fileKey: string };
 export type MadeKeyset = KeysetView & { keys: Keys | null };
 
 /** The captured console session holds scanning:manage for this org. */
@@ -53,13 +49,14 @@ export function keysetAuthorityOf(authority: TenantPassWrite): KeysetAuthority {
 }
 
 const notFound = () => new NotFoundError('Keyset not found.', 'KEYSET_NOT_FOUND');
-const conflict = (message: string, code: string) => new ConflictError(message, code);
+export const conflict = (message: string, code: string) => new ConflictError(message, code);
 
 const viewOf = (k: KeysetRow, versions: KeyRow[]): KeysetView => ({
   id: k.id,
   name: k.name,
   slug: k.slug,
   diversify: k.diversify,
+  perTag: k.perTag,
   createdAt: k.createdAt,
   disabledAt: k.disabledAt,
   versions,
@@ -75,7 +72,11 @@ export async function listKeysets(ctx: ServiceContext, orgId: string, mode: Keys
 }
 
 /** A keyset of the caller's org and mode; anything else is the same 404. */
-async function keysetIn(ctx: ServiceContext, a: KeysetAuthority, id: string): Promise<KeysetRow> {
+export async function keysetIn(
+  ctx: ServiceContext,
+  a: KeysetAuthority,
+  id: string,
+): Promise<KeysetRow> {
   const row = await keysetById(ctx.env.DB, id);
   if (!row || row.orgId !== a.orgId || row.mode !== a.mode) throw notFound();
   return row;
@@ -86,48 +87,16 @@ export async function keysetView(ctx: ServiceContext, a: KeysetAuthority, id: st
   return viewOf(row, (await keyVersionsOf(ctx.env.DB, [id])).get(id) ?? []);
 }
 
-/** Keys the caller entered or the server generates. A factory-default (all zero) key or one key for both roles is refused. */
-function pickKeys(input: { generate: true } | { metaKey: string; fileKey: string }): {
-  meta: Uint8Array;
-  file: Uint8Array;
-  shown: Keys | null;
-} {
-  if ('generate' in input) {
-    const meta = randomBytes(KEY_BYTES);
-    const file = randomBytes(KEY_BYTES);
-    return { meta, file, shown: { metaKey: bytesToHex(meta), fileKey: bytesToHex(file) } };
-  }
-  const meta = hexToBytes(input.metaKey);
-  const file = hexToBytes(input.fileKey);
-  if (meta?.length !== KEY_BYTES || file?.length !== KEY_BYTES)
-    throw new ValidationError('A key is 32 hex digits.', [], 'KEYSET_KEY_INVALID');
-  if (!meta.some(Boolean) || !file.some(Boolean) || bytesToHex(meta) === bytesToHex(file))
-    throw new ValidationError(
-      'Use two different keys, and not the factory default.',
-      [],
-      'KEYSET_KEY_WEAK',
-    );
-  return { meta, file, shown: null };
-}
-
-function slug(): string {
-  let out = '';
-  // 252 = 7 x 36: bytes above it are dropped so every character is equally likely.
-  while (out.length < 8)
-    for (const b of randomBytes(16)) if (b < 252 && out.length < 8) out += SLUG_CHARS[b % 36];
-  return out;
-}
-
-const scopeOf = (k: Pick<KeysetRow, 'id' | 'orgId' | 'mode'>): KeyScope => ({
+export const scopeOf = (k: Pick<KeysetRow, 'id' | 'orgId' | 'mode'>): KeyScope => ({
   orgId: k.orgId,
   mode: k.mode,
   keysetId: k.id,
 });
 
 /** Turns the keyset triggers' refusals into stable answers. */
-async function commitKeyset(g: { commit(): Promise<unknown> }): Promise<void> {
+export async function commitKeyset(g: { commit(): Promise<D1Result[]> }): Promise<D1Result[]> {
   try {
-    await g.commit();
+    return await g.commit();
   } catch (error) {
     const text = error instanceof Error ? error.message : '';
     if (text.includes('keyset_limit'))
@@ -139,7 +108,11 @@ async function commitKeyset(g: { commit(): Promise<unknown> }): Promise<void> {
       throw conflict('This keyset is disabled.', 'KEYSET_DISABLED');
     if (text.includes('tag_key_in_use'))
       throw conflict('Tags still use this version.', 'KEYSET_KEY_IN_USE');
-    if (classifyD1Error(error)?.kind === 'unique' || text.includes('tag_key_version'))
+    if (
+      classifyD1Error(error)?.kind === 'unique' ||
+      text.includes('tag_key_version') ||
+      text.includes('tag_sun_move')
+    )
       throw conflict('The keyset changed. Reload and retry.', 'KEYSET_CHANGED');
     throw error;
   }
@@ -161,6 +134,7 @@ export async function createKeyset(
     );
   const { meta, file, shown } = pickKeys(input);
   if (shown === null) await assertKeysUnused(ctx, a.orgId, meta, file);
+  const perTag = 'perTag' in input;
   const ring = await loadKekRing(ctx.env);
   const id = ctx.ids.id();
   const keyId = ctx.ids.id();
@@ -179,7 +153,8 @@ export async function createKeyset(
       id,
       name: input.name,
       slug: slug(),
-      diversify: input.diversify,
+      diversify: perTag ? false : input.diversify,
+      perTag,
       first,
     });
     try {
@@ -193,32 +168,6 @@ export async function createKeyset(
   return { ...(await keysetView(ctx, a, id)), keys: shown };
 }
 
-/**
- * Entered keys must be new to the org: a key any keyset of it, in either mode, has ever used (retired and
- * disabled ones included) is not a rotation, and one key in two keysets lets a tap's slug be swapped for the other.
- */
-async function assertKeysUnused(
-  ctx: ServiceContext,
-  orgId: string,
-  meta: Uint8Array,
-  file: Uint8Array,
-): Promise<void> {
-  const ring = await loadKekRing(ctx.env);
-  for (const v of await orgVersionEnvelopes(ctx.env.DB, orgId)) {
-    const old = await openVersion(
-      ring,
-      { orgId, mode: v.mode, keysetId: v.keysetId, keyId: v.id, version: v.version },
-      v.envelope,
-    );
-    if ([old.meta, old.file].some((k) => constantTimeEqual(k, meta) || constantTimeEqual(k, file)))
-      throw new ValidationError(
-        'Enter keys this organization has not used.',
-        [],
-        'KEYSET_KEY_REUSED',
-      );
-  }
-}
-
 /** Adds version n+1 as active; n keeps verifying as retiring until it is retired. One old version at a time. */
 export async function rotateKeyset(
   ctx: ServiceContext,
@@ -229,10 +178,19 @@ export async function rotateKeyset(
   const row = await keysetIn(ctx, a, id);
   if (row.disabledAt !== null) throw conflict('This keyset is disabled.', 'KEYSET_DISABLED');
   const versions = (await keyVersionsOf(ctx.env.DB, [id])).get(id) ?? [];
+  // A revoked active version leaves none: the new one is simply added.
   const active = versions.find((v) => v.state === 'active');
-  if (!active) throw conflict('This keyset has no active key.', 'KEYSET_CHANGED');
   const old = versions.find((v) => v.state === 'retiring');
-  if (old) throw conflict(`Retire version ${old.version} first.`, 'KEYSET_RETIRE_FIRST');
+  if (active && old) throw conflict(`Retire version ${old.version} first.`, 'KEYSET_RETIRE_FIRST');
+  const metaOnly = !('generate' in input) && !('fileKey' in input);
+  if (metaOnly !== row.perTag)
+    throw new ValidationError(
+      row.perTag
+        ? 'This keyset takes a meta key only.'
+        : 'Enter both keys, or have them generated.',
+      [],
+      'KEYSET_KEY_INVALID',
+    );
   const next = Math.max(...versions.map((v) => v.version)) + 1;
   if (next > MAX_VERSION)
     throw conflict('This keyset has used every key version.', 'KEYSET_VERSIONS_USED');
@@ -242,7 +200,7 @@ export async function rotateKeyset(
   if (shown === null) await assertKeysUnused(ctx, row.orgId, meta, file);
   const keyId = ctx.ids.id();
   await commitKeyset(
-    rotateKeysetGrant(ctx, a, id, active.version, {
+    rotateKeysetGrant(ctx, a, id, active?.version ?? null, {
       id: keyId,
       version: next,
       envelope: await sealVersion(ring, { ...scope, keyId, version: next }, meta, file),
@@ -289,6 +247,8 @@ export interface VerifyKey {
   fileKey: Uint8Array;
   /** The file key is the master of an AN10922 keyset. */
   diversified: boolean;
+  /** The keyset's active version, not a retiring one. */
+  active: boolean;
 }
 
 /**
@@ -309,6 +269,7 @@ export async function verifyingKeys(ctx: ServiceContext, keyset: KeysetRow): Pro
       metaKey: keys.meta,
       fileKey: keys.file,
       diversified: keyset.diversify,
+      active: v.state === 'active',
     });
   }
   return out;

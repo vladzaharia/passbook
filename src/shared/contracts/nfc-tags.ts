@@ -283,15 +283,18 @@ export const TagKeysetSchema = z.object({
   /** The 8-character path of the tag URL, `/t/{slug}`. */
   slug: z.string().regex(/^[a-z0-9]{8}$/),
   diversify: z.boolean(),
+  /** The tags carry their own file keys, imported from the supplier. */
+  perTag: z.boolean(),
   createdAt: TimestampSchema,
   disabledAt: TimestampSchema.nullable(),
 });
 export const KeyHexSchema = z.string().regex(/^[0-9a-fA-F]{32}$/, 'A key is 32 hex digits.');
 const keysetName = { name: PlainLineSchema(40), diversify: z.boolean().default(true) };
-/** Entered keys, or `generate: true` (recommended). */
+/** Entered keys, `generate: true` (recommended), or `perTag`: the shared meta key only, each tag's own file key comes by import. */
 export const CreateTagKeysetSchema = z.union([
   z.strictObject({ ...keysetName, generate: z.literal(true) }),
   z.strictObject({ ...keysetName, metaKey: KeyHexSchema, fileKey: KeyHexSchema }),
+  z.strictObject({ name: PlainLineSchema(40), perTag: z.literal(true), metaKey: KeyHexSchema }),
 ]);
 /** The generated keys are shown once, in this response. */
 export const CreatedTagKeysetSchema = TagKeysetSchema.extend({
