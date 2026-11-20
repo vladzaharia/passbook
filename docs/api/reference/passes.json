@@ -4,8 +4,13 @@
     "request": {
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "input": {
-        "name": "Ada Example",
-        "seat": "Row 4, seat 12"
+        "eventName": "Harbor Night",
+        "venueName": "Harbor Hall",
+        "venueRegion": "Cupertino, CA",
+        "startsAt": "2030-06-01T19:00:00-07:00",
+        "endsAt": "2030-06-01T22:00:00-07:00",
+        "attendee": "Ada Example",
+        "ticketId": "TICKET-0001"
       },
       "holderEmail": "ada@example.com",
       "externalId": "booking_8841",
@@ -18,8 +23,8 @@
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Ada Example",
-      "subtitle": "Row 4, seat 12",
+      "title": "Harbor Night",
+      "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "active",
       "mode": "live",
@@ -38,12 +43,22 @@
       "ownerName": null,
       "ownerEmail": null,
       "personalization": {
-        "name": "Ada Example",
-        "seat": "Row 4, seat 12"
+        "eventName": "Harbor Night",
+        "venueName": "Harbor Hall",
+        "venueRegion": "Cupertino, CA",
+        "startsAt": "2030-06-01T19:00:00-07:00",
+        "endsAt": "2030-06-01T22:00:00-07:00",
+        "attendee": "Ada Example",
+        "ticketId": "TICKET-0001"
       },
       "fieldSources": {
-        "name": "manual",
-        "seat": "manual"
+        "eventName": "manual",
+        "venueName": "manual",
+        "venueRegion": "manual",
+        "startsAt": "manual",
+        "endsAt": "manual",
+        "attendee": "manual",
+        "ticketId": "manual"
       },
       "registrations": 0,
       "lastRefreshedAt": null,
@@ -70,9 +85,9 @@
         "eventTicket": {
           "primaryFields": [
             {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
+              "key": "event",
+              "label": "Event",
+              "value": "Harbor Night"
             }
           ]
         }

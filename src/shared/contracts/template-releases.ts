@@ -12,6 +12,11 @@ export const TemplateReleaseScopeSchema = z.strictObject({
 });
 export type TemplateReleaseScope = z.infer<typeof TemplateReleaseScopeSchema>;
 
+/** The scope as a read's query: an org key leaves `orgId` out and reads its own org. */
+export const TemplateReleaseQueryScopeSchema = TemplateReleaseScopeSchema.extend({
+  orgId: IdSchema.optional(),
+});
+
 export const TemplateApprovalSchema = z.object({
   id: IdSchema,
   candidateId: IdSchema,
@@ -194,13 +199,14 @@ export const EligibleTemplateListSchema = z.object({
 });
 export type EligibleTemplateList = z.infer<typeof EligibleTemplateListSchema>;
 
-export const EligibleTemplateQuerySchema = TemplateReleaseScopeSchema.extend({
+export const EligibleTemplateQuerySchema = TemplateReleaseQueryScopeSchema.extend({
   /** `issue` lists templates a pass can be made from; `scan` also lists blueprints the org has live passes on. */
   purpose: z.enum(['issue', 'scan']).default('issue'),
   cursor: IdSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
 });
-export type EligibleTemplateQuery = z.infer<typeof EligibleTemplateQuerySchema>;
+/** The query once the route has resolved `orgId`. */
+export type EligibleTemplateQuery = z.infer<typeof EligibleTemplateQuerySchema> & { orgId: string };
 
 /** One semantic difference between two versions, with display text for both sides. */
 export const ReleaseChangeSchema = z.object({
@@ -211,11 +217,13 @@ export const ReleaseChangeSchema = z.object({
 });
 export type ReleaseChange = z.infer<typeof ReleaseChangeSchema>;
 
-export const TemplateReleaseImpactQuerySchema = TemplateReleaseScopeSchema.extend({
+export const TemplateReleaseImpactQuerySchema = TemplateReleaseQueryScopeSchema.extend({
   /** The version a publish or rollback would make current. */
   version: z.string().min(1).max(64),
 });
-export type TemplateReleaseImpactQuery = z.infer<typeof TemplateReleaseImpactQuerySchema>;
+export type TemplateReleaseImpactQuery = z.infer<typeof TemplateReleaseImpactQuerySchema> & {
+  orgId: string;
+};
 
 /** What a publish or rollback to `toVersion` changes, and for how many passes. */
 export const TemplateReleaseImpactSchema = z.object({

@@ -11662,7 +11662,7 @@
               "properties": {
                 "idempotencyKey": {
                   "type": "string",
-                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+                  "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
                 },
                 "outcome": {
                   "$ref": "#/components/schemas/ScanOutcome"
@@ -19390,7 +19390,7 @@
         "properties": {
           "idempotencyKey": {
             "type": "string",
-            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "input": {
             "anyOf": [
@@ -19572,7 +19572,7 @@
         "properties": {
           "idempotencyKey": {
             "type": "string",
-            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "input": {
             "anyOf": [
@@ -19815,7 +19815,7 @@
         "properties": {
           "idempotencyKey": {
             "type": "string",
-            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           },
           "scope": {
             "type": "object",
@@ -22567,7 +22567,7 @@
         "properties": {
           "idempotencyKey": {
             "type": "string",
-            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
           }
         },
         "required": [
@@ -38141,7 +38141,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -42578,7 +42578,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -43691,7 +43691,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -44434,7 +44434,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -45367,8 +45367,13 @@
               "example": {
                 "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
                 "input": {
-                  "name": "Ada Example",
-                  "seat": "Row 4, seat 12"
+                  "eventName": "Harbor Night",
+                  "venueName": "Harbor Hall",
+                  "venueRegion": "Cupertino, CA",
+                  "startsAt": "2030-06-01T19:00:00-07:00",
+                  "endsAt": "2030-06-01T22:00:00-07:00",
+                  "attendee": "Ada Example",
+                  "ticketId": "TICKET-0001"
                 },
                 "holderEmail": "ada@example.com",
                 "externalId": "booking_8841",
@@ -45392,8 +45397,8 @@
                   "templateVersion": "3",
                   "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-                  "title": "Ada Example",
-                  "subtitle": "Row 4, seat 12",
+                  "title": "Harbor Night",
+                  "subtitle": "Ada Example",
                   "externalId": "booking_8841",
                   "status": "active",
                   "mode": "live",
@@ -45412,12 +45417,22 @@
                   "ownerName": null,
                   "ownerEmail": null,
                   "personalization": {
-                    "name": "Ada Example",
-                    "seat": "Row 4, seat 12"
+                    "eventName": "Harbor Night",
+                    "venueName": "Harbor Hall",
+                    "venueRegion": "Cupertino, CA",
+                    "startsAt": "2030-06-01T19:00:00-07:00",
+                    "endsAt": "2030-06-01T22:00:00-07:00",
+                    "attendee": "Ada Example",
+                    "ticketId": "TICKET-0001"
                   },
                   "fieldSources": {
-                    "name": "manual",
-                    "seat": "manual"
+                    "eventName": "manual",
+                    "venueName": "manual",
+                    "venueRegion": "manual",
+                    "startsAt": "manual",
+                    "endsAt": "manual",
+                    "attendee": "manual",
+                    "ticketId": "manual"
                   },
                   "registrations": 0,
                   "lastRefreshedAt": null,
@@ -45444,9 +45459,9 @@
                     "eventTicket": {
                       "primaryFields": [
                         {
-                          "key": "name",
-                          "label": "Guest",
-                          "value": "Ada Example"
+                          "key": "event",
+                          "label": "Event",
+                          "value": "Harbor Night"
                         }
                       ]
                     }
@@ -52338,7 +52353,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -52523,7 +52538,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -58560,6 +58575,16 @@
     },
     "/api/v1/pass-imports/{id}/results.csv": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "What happened to each row, with the pass and its links",
         "tags": [
           "pass-imports"
@@ -58607,16 +58632,6 @@
           "resource": "passImports",
           "method": "downloadResults"
         },
-        "security": [
-          {
-            "apiKey": [
-              "passes:read"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -60832,7 +60847,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -60935,7 +60950,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -68339,7 +68354,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -68689,7 +68704,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -68824,7 +68839,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -68980,7 +68995,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -69136,7 +69151,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -69235,7 +69250,7 @@
               "minLength": 1,
               "maxLength": 64
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -81729,7 +81744,7 @@
                 }
               ]
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -81862,7 +81877,7 @@
                 }
               ]
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -81976,7 +81991,7 @@
                 }
               ]
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -82129,7 +82144,7 @@
                 }
               ]
             },
-            "required": true,
+            "required": false,
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -89731,7 +89746,7 @@
                 "properties": {
                   "idempotencyKey": {
                     "type": "string",
-                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
                   },
                   "passId": {
                     "type": "string",
@@ -90014,7 +90029,7 @@
                 "properties": {
                   "idempotencyKey": {
                     "type": "string",
-                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
                   },
                   "overrideOf": {
                     "type": "string",
@@ -90898,7 +90913,7 @@
                 "properties": {
                   "idempotencyKey": {
                     "type": "string",
-                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
                   },
                   "passId": {
                     "type": "string",
@@ -91815,7 +91830,7 @@
                 "properties": {
                   "idempotencyKey": {
                     "type": "string",
-                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
                   },
                   "tag": {
                     "type": "object",
@@ -93969,7 +93984,7 @@
                       "properties": {
                         "idempotencyKey": {
                           "type": "string",
-                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"
+                          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
                         },
                         "code": {
                           "type": "string",

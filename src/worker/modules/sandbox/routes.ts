@@ -15,6 +15,7 @@ import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import {
   authOf,
   type C,
+  orgIdOf,
   requireTenantSessionOrApiKey,
   svc,
   tenantAuthorityOf,
@@ -92,8 +93,9 @@ register(
     const mode = modeOf(authOf(c));
     c.header('cache-control', 'no-store');
     try {
-      const authority = await readerAuthority(c, q.orgId, mode, false);
-      return c.json(await listCapturedEmails(svc(c), { ...q, mode }, authority));
+      const orgId = orgIdOf(authOf(c), q.orgId);
+      const authority = await readerAuthority(c, orgId, mode, false);
+      return c.json(await listCapturedEmails(svc(c), { ...q, orgId, mode }, authority));
     } catch (error) {
       if (error instanceof ForbiddenError && authOf(c).kind === 'session')
         return c.json({ items: [], nextCursor: null });
@@ -115,7 +117,8 @@ register(
   },
   async (c) => {
     const q = c.req.valid('query');
-    const authority = await readerAuthority(c, q.orgId, q.mode ?? modeOf(authOf(c)), true);
+    const orgId = orgIdOf(authOf(c), q.orgId);
+    const authority = await readerAuthority(c, orgId, q.mode ?? modeOf(authOf(c)), true);
     const email = await getCapturedEmail(svc(c), c.req.valid('param').id, authority);
     c.header('cache-control', 'no-store');
     return c.json(email);

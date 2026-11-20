@@ -37,40 +37,6 @@ const name = (path: string) =>
     .at(-1)
     ?.replace(/\.(ts|sh)$/, '') ?? path;
 
-/**
- * Operations whose snippet the API refuses today, with why. The test fails when one starts working,
- * so the entry is removed with the fix.
- */
-const NEEDS_ORG_ID = 'the route requires orgId from a key; the contract hides it (PX2)';
-const REFUSED: Record<string, string> = {
-  'pass-imports.getPassImportsByIdResultsCsv':
-    'contract says passes:read; the route needs passes:operate',
-  ...Object.fromEntries(
-    [
-      'api-keys.deleteApiKeysById',
-      'api-keys.getApiKeys',
-      'api-keys.getApiKeysById',
-      'api-keys.getApiKeysByIdActivity',
-      'connectors.getConnectors',
-      'connectors.getConnectorsByType',
-      'offboard.postOffboard',
-      'passes.getPassesBulkPrintByJobId',
-      'passes.getPassesBulkPrintByJobIdPdf',
-      'sandbox.getTestInbox',
-      'sandbox.getTestInboxById',
-      'templates.getTemplatesByIdCandidates',
-      'templates.getTemplatesByIdReleases',
-      'templates.getTemplatesByIdReleasesImpact',
-      'templates.getTemplatesEligible',
-      'visitors.getVisitors',
-      'visitors.getVisitorsHosts',
-      'visitors.postVisitorsByIdCancel',
-      'visitors.postVisitorsByIdCheckOut',
-      'visitors.postVisitorsByIdHostEmail',
-    ].map((id) => [id, NEEDS_ORG_ID]),
-  ),
-};
-
 /** Refusals that say the example's entity does not exist in this organization, not that the snippet is wrong. */
 const ABSENT = new Set(['DNS_FAILED', 'VISITOR_HOST_UNKNOWN']);
 
@@ -78,12 +44,12 @@ const ABSENT = new Set(['DNS_FAILED', 'VISITOR_HOST_UNKNOWN']);
 const reached = (c: Call) =>
   ABSENT.has(c.code ?? '') || (c.status < 500 && ![400, 401, 403, 405, 422].includes(c.status));
 
-/** One line per call the API refused, none for an operation listed in REFUSED. */
+/** One line per call the API refused. */
 function failures(id: string, calls: Call[]): string[] {
   if (calls.length === 0) return [`${id}: made no request`];
-  const bad = calls.filter((c) => !reached(c));
-  if (id in REFUSED) return bad.length > 0 ? [] : [`${id} works now: remove it from REFUSED`];
-  return bad.map((c) => `${id}: ${c.method} ${c.path} ${c.status} ${c.code} ${c.detail ?? ''}`);
+  return calls
+    .filter((c) => !reached(c))
+    .map((c) => `${id}: ${c.method} ${c.path} ${c.status} ${c.code} ${c.detail ?? ''}`);
 }
 
 /** The request a curl snippet makes, as `fetch` arguments. */

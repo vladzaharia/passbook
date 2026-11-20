@@ -14,8 +14,8 @@ export class PrintJobsResource {
   }
 
   /** The combined PDF of a finished bulk Print job `GET /api/v1/passes/bulk-print/{jobId}/pdf` */
-  downloadPdf(jobId: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/passes/bulk-print/${encodeURIComponent(jobId)}/pdf` }, options);
+  downloadPdf(jobId: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/passes/bulk-print/${encodeURIComponent(jobId)}/pdf`, raw: true }, options);
   }
 
   /** State of a bulk Print job `GET /api/v1/passes/bulk-print/{jobId}` */

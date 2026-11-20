@@ -40,6 +40,16 @@ describe('the committed TypeScript SDK', () => {
     expect(ids.length).toBeLessThan(10);
   });
 
+  it('returns the Response of a download, and nothing for a call with no body', () => {
+    const ops = sdkOperations(doc, names);
+    const downloads = ops.filter((o) => o.http === 'GET' && o.result === 'Response');
+    expect(downloads.map((o) => `${o.resource.join('.')}.${o.method}`)).toContain(
+      'passImports.downloadResults',
+    );
+    expect(downloads.every((o) => o.raw)).toBe(true);
+    expect(ops.filter((o) => o.http === 'GET' && o.result === 'void')).toEqual([]);
+  });
+
   it('paginates lists that return items and nextCursor, by cursor or after', () => {
     const paged = Object.fromEntries(
       sdkOperations(doc, names)

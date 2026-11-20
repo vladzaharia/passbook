@@ -123,8 +123,8 @@ export class PassesMemberPhotoResource {
   }
 
   /** Private member photo `GET /api/v1/passes/{id}/member-photo/image` */
-  download(id: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/member-photo/image` }, options);
+  download(id: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/member-photo/image`, raw: true }, options);
   }
 
   /** Member photo settings `GET /api/v1/passes/{id}/member-photo` */
@@ -155,13 +155,13 @@ export class PassesPrintsResource {
   }
 
   /** A template image of the print page, for staff `GET /api/v1/passes/{id}/print/assets/{name}` */
-  downloadAsset(id: string, name: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/print/assets/${encodeURIComponent(name)}` }, options);
+  downloadAsset(id: string, name: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/print/assets/${encodeURIComponent(name)}`, raw: true }, options);
   }
 
   /** The PDF of the active print, for staff `GET /api/v1/passes/{id}/print/pdf` */
-  downloadPdf(id: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/print/pdf` }, options);
+  downloadPdf(id: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/print/pdf`, raw: true }, options);
   }
 
   /** A pass's prints, newest first; codes are never listed `GET /api/v1/passes/{id}/prints` */
@@ -170,8 +170,8 @@ export class PassesPrintsResource {
   }
 
   /** The print page of the active print, for staff `GET /api/v1/passes/{id}/print` */
-  retrievePage(id: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/print` }, options);
+  retrievePage(id: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/passes/${encodeURIComponent(id)}/print`, raw: true }, options);
   }
 
   /** Void a printed ticket `POST /api/v1/passes/{id}/prints/{printId}/void` */

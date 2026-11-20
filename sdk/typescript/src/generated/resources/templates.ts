@@ -70,8 +70,8 @@ export class TemplatesVersionsResource {
   }
 
   /** Template asset bytes `GET /api/v1/templates/{id}/versions/{version}/assets/{name}` */
-  downloadAsset(id: string, version: string, name: string, query?: TemplatesVersionsDownloadAssetQuery, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/templates/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}/assets/${encodeURIComponent(name)}`, query }, options);
+  downloadAsset(id: string, version: string, name: string, query?: TemplatesVersionsDownloadAssetQuery, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/templates/${encodeURIComponent(id)}/versions/${encodeURIComponent(version)}/assets/${encodeURIComponent(name)}`, query, raw: true }, options);
   }
 
   /** Template version with its validation report `GET /api/v1/templates/{id}/versions/{version}` */
@@ -95,8 +95,8 @@ export class TemplatesResource {
   }
 
   /** The active version or unpublished draft as an uploadable zip `GET /api/v1/templates/{id}/package` */
-  downloadPackage(id: string, options?: RequestOptions): Promise<void> {
-    return this.core.request({ method: 'GET', path: `/api/v1/templates/${encodeURIComponent(id)}/package` }, options);
+  downloadPackage(id: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/templates/${encodeURIComponent(id)}/package`, raw: true }, options);
   }
 
   /** List templates `GET /api/v1/templates` */

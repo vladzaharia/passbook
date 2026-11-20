@@ -11,6 +11,7 @@ import {
   actorFor,
   assertOrg,
   authOf,
+  orgIdOf,
   passScopeOf,
   svc,
   tenantAuthorityOf,
@@ -52,9 +53,9 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
     },
   );
 
-  const whoOf = async (c: Parameters<typeof svc>[0], orgId: string) => {
-    assertOrg(c, orgId);
+  const whoOf = async (c: Parameters<typeof svc>[0], named: string | undefined) => {
     const auth = authOf(c);
+    const orgId = orgIdOf(auth, named);
     // A key reads with passes:read (the guard picks the scope by method); a session needs the operate right it started with.
     await tenantAuthorityOf(
       svc(c),

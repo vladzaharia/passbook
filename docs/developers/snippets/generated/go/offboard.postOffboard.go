@@ -9,7 +9,11 @@ import (
 )
 
 func main() {
-	body := strings.NewReader(`{}`)
+	body := strings.NewReader(`{
+  "holderEmail": "ada@example.com",
+  "passes": "void",
+  "dryRun": true
+}`)
 	req, err := http.NewRequest("POST", "https://passbook.mobile/api/v1/offboard", body)
 	if err != nil {
 		panic(err)

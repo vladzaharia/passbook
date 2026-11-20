@@ -17,6 +17,7 @@ res = httpx.post(
         },
         "holderEmail": "ada@example.com",
         "externalId": "booking_8841",
+        "sendEmail": True,
     },
 )
 res.raise_for_status()
