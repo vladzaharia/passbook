@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { formatDateTime } from '@/web/lib/format.ts';
 import { json } from '@/web/lib/test-utils.tsx';
 import { calls, renderTags } from '../../tags/test-fixtures.tsx';
 import { TemplateChannelsPanel } from './channels-panel.tsx';
@@ -254,7 +255,9 @@ describe('Template channels', () => {
       }),
     );
     expect(await screen.findByText('Running')).toBeInTheDocument();
-    expect(screen.getByText('Waiting for Gala to end, Jan 15, 2027, 1:00 AM')).toBeInTheDocument();
+    expect(
+      screen.getByText(`Waiting for Gala to end, ${formatDateTime(1_800_003_600_000)}`),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('7 passes changed · 7 new codes')).toHaveLength(3);
     expect(
       screen.getByText('Codes were not replaced: you no longer can publish.'),
