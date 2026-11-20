@@ -59,9 +59,22 @@ export const EXPORT_ENTITIES: readonly ExportEntity[] = [
     'id, mode, url, description, event_types, template_ids, status, created_at, updated_at',
   ),
   inOrg('bundles', 'id, mode, name, holder_email, created_at'),
+  {
+    name: 'bundle_passes',
+    select: page(
+      'bp.bundle_id, bp.pass_id, bp.position',
+      'bundle_passes bp JOIN bundles b ON b.id = bp.bundle_id',
+      'b.org_id = ?1',
+      'bp.rowid',
+    ),
+  },
   inOrg(
     'scan_events',
-    'id, mode, name, opens_at, closes_at, time_zone, capacity, created_at, archived_at',
+    'id, mode, name, opens_at, closes_at, time_zone, capacity, setup_key, created_at, archived_at',
+  ),
+  inOrg(
+    'scanning_sessions',
+    'id, mode, name, status, accepts, settings, time_zone, hours, hold, setup_template_id, created_at, updated_at, created_by',
   ),
   inOrg('scan_zones', 'id, key, name, parent_id, time_zone, capacity, created_at, archived_at'),
   inOrg('scanners', 'id, mode, kind, name, event_id, paired_at, created_at, revoked_at'),
@@ -70,6 +83,53 @@ export const EXPORT_ENTITIES: readonly ExportEntity[] = [
     'scans',
     'id, mode, pass_id, template_id, scanner_id, event_id, actor_type, actor_id, staff_id, method, state, outcome, reason, action_kind, direction, amount, at, zone_id, session_id',
   ),
+  inOrg('scan_group_members', 'group_scan_id, scan_id'),
+  inOrg(
+    'visitors',
+    'id, mode, pass_id, name, host_name, host_email, window_from, window_until, note, left_at, left_by, cancelled_at, created_by, created_at',
+  ),
+  inOrg(
+    'roll_calls',
+    'id, mode, scope_key, places, snapshot, started_by, started_by_id, scanner_id, started_at, ended_at, ended_by, rev',
+  ),
+  inOrg(
+    'roll_call_marks',
+    'roll_call_id, pass_id, mode, status, by_name, scanner_id, late, exit_scan_id, marked_at',
+  ),
+  // Tag keys and counters never leave; `tag_ref` is a keyed hash of the tag, so only its 4-character hint does.
+  inOrg(
+    'nfc_tags',
+    'id, mode, system, type_id, hint, label, status, status_at, created_at, last_seen_at, lost_at, lost_by',
+  ),
+  inOrg(
+    'nfc_tag_types',
+    'id, name, system, use, scopes, per_pass, binding_days, confirm, typed, version, created_at, created_by, updated_at, archived_at',
+  ),
+  inOrg(
+    'nfc_tag_keysets',
+    'id, mode, name, slug, diversify, type_id, created_at, created_by, disabled_at',
+  ),
+  {
+    name: 'nfc_tag_type_templates',
+    select: page(
+      'tt.type_id, tt.template_id',
+      'nfc_tag_type_templates tt JOIN nfc_tag_types t ON t.id = tt.type_id',
+      't.org_id = ?1',
+      'tt.rowid',
+    ),
+  },
+  {
+    name: 'tag_bindings',
+    select: page(
+      'b.id, b.tag_id, b.scope, b.pass_id, b.user_id, b.source, b.bound_at, b.bound_by_type, b.bound_by, b.scanner_id, b.ended_at, b.ended_by_type, b.ended_by, b.end_cause',
+      'tag_bindings b JOIN nfc_tags t ON t.id = b.tag_id',
+      't.org_id = ?1',
+      'b.rowid',
+    ),
+  },
+  inOrg('member_photos', 'pass_id, include_in_pass, size, version, updated_at'),
+  inOrg('org_entitlements', 'preset, trial_ends_at, revision, updated_at, updated_by'),
+  inOrg('org_entitlement_overrides', 'key, value, note, expires_at, updated_at, updated_by'),
   inOrg('pass_events', 'id, mode, pass_id, kind, device, actor_type, actor_id, data, at'),
   inOrg(
     'audit_log',
