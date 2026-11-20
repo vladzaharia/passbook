@@ -9,6 +9,9 @@ import { describe, expect, it } from 'vitest';
 const SLOT_READS: Record<string, string> = {
   'repo-accounts.ts':
     'retirement target: pinned by instance id, and now by channel_epoch (successor shares pass, release, generation)',
+  'repo-instance-current.ts':
+    'epoch fence: compares the instance generation to the pass of the operation, never selects a slot',
+  'repo-instance-desired.ts': 'reconcile write: by instance id and desired version',
   'repo-instance.ts': 'getInstanceByPass: ORDER BY channel_epoch DESC LIMIT 1',
   'repo-offers.ts':
     'current_instance proof reads all rows of the generation (each must hold a valid op); offer join is by instance id',
