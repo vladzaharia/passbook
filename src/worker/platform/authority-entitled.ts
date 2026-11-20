@@ -127,15 +127,21 @@ export async function limitHitOf(
     const sql = `WITH actor AS MATERIALIZED (${actor})
       SELECT (SELECT ent_v.value FROM org_entitlement_values ent_v
           WHERE ent_v.org_id = a.org_id AND ent_v.key = ${key}) AS value,
-        (${check.limit.count.render(b, scope, 'a')}) AS used
+        (${check.limit.count.render(b, scope, 'a')}) AS used,
+        (SELECT o.kind = 'developer' FROM orgs o WHERE o.id = a.org_id) AS sandbox
       FROM actor a`;
     const row = await db
       .prepare(sql)
       .bind(...b.params)
-      .first<{ value: string | null; used: number | null }>();
+      .first<{ value: string | null; used: number | null; sandbox: number | null }>();
     const max = row?.value == null ? Number.NaN : Number(row.value);
     if (!Number.isInteger(max) || row?.used == null || row.used < max) continue;
-    return { key: check.limit.key, limit: max, used: row.used };
+    return {
+      key: check.limit.key,
+      limit: max,
+      used: row.used,
+      ...(row.sandbox ? { sandbox: true as const } : {}),
+    };
   }
   return null;
 }

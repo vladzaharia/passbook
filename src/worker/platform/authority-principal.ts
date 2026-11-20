@@ -125,6 +125,13 @@ const adminSession = (b: Binds, now: number, idHash: string, userId: string) =>
       AND json_type(s.roles) = 'array'
       AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin'))`;
 
+/**
+ * A developer org never holds Live (PX7): a person or a key acting in it in Live mode is not a live actor.
+ * `modeSql` is the request mode (membership, which may be unnamed) or the key's own.
+ */
+export const developerTestOnly = (orgAlias: string, modeSql: string) =>
+  `(${orgAlias}.kind IS NOT 'developer' OR COALESCE(${modeSql}, 'test') != 'live')`;
+
 const orgOk = (b: Binds, revision: number | undefined) =>
   revision === undefined
     ? `o.status = 'active'`
@@ -169,9 +176,10 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
           : '';
       const userEpoch =
         p.via === 'deferred' ? ` AND u.access_revision = ${b.bind(p.userAccessRevision)}` : '';
+      const noLive = developerTestOnly('o', b.bind(p.mode ?? null));
       const org = orgOk(b, p.orgAccessRevision);
       return `SELECT m.org_id AS org_id, ${mode} AS mode,
-        ${flag(`m.revoked_at IS NULL AND u.status = 'active'${session}${userEpoch}`)} AS actor_ok,
+        ${flag(`m.revoked_at IS NULL AND u.status = 'active'${session}${userEpoch} AND ${noLive}`)} AS actor_ok,
         ${flag(org)} AS org_ok, NULL AS limit_key
         FROM org_memberships m JOIN users u ON u.id = m.user_id JOIN orgs o ON o.id = m.org_id
         WHERE m.id = ${b.bind(p.membershipId)}`;
@@ -182,7 +190,8 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       const orgCol = `COALESCE(k.org_id, ${b.bind(named)})`;
       const live = `${withParams(b.params, keyLive('k', now, true))}
         AND (k.org_id IS NULL OR ${b.bind(named)} IS NULL OR k.org_id = ${b.bind(named)})
-        AND ${withParams(b.params, keyHoldsScope('k', p.scope))}`;
+        AND ${withParams(b.params, keyHoldsScope('k', p.scope))}
+        AND ${developerTestOnly('o', 'k.mode')}`;
       const orgNone = `COALESCE(k.org_id, ${b.bind(named)}) IS NULL`;
       const org = orgOk(b, p.orgAccessRevision);
       return `SELECT ${orgCol} AS org_id, k.mode AS mode, ${flag(live)} AS actor_ok,

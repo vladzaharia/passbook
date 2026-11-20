@@ -1,7 +1,8 @@
 import { HTTPException } from 'hono/http-exception';
 import { ZodError } from 'zod';
 import type { EntitlementKey } from '../../shared/contracts/entitlements.ts';
-import { limitRefusal } from '../../shared/copy/entitlements.ts';
+import { sandboxQuota } from '../../shared/copy/developer.ts';
+import { ENTITLEMENT_LABEL, limitRefusal } from '../../shared/copy/entitlements.ts';
 
 export interface FieldIssue {
   path: string;
@@ -142,6 +143,8 @@ export interface LimitHit {
   key: EntitlementKey;
   limit: number;
   used: number;
+  /** The org is a developer sandbox: the refusal is SANDBOX_QUOTA. */
+  sandbox?: true;
 }
 
 /**
@@ -151,6 +154,17 @@ export interface LimitHit {
 export class FeatureLimitError extends ForbiddenError {
   constructor({ key, limit, used }: LimitHit) {
     super(limitRefusal(key, limit, used), 'FEATURE_LIMIT_REACHED', { feature: key, limit, used });
+  }
+}
+
+/** 403 `SANDBOX_QUOTA`: a create at a developer sandbox's cap. Same problem fields as `FeatureLimitError`. */
+export class SandboxQuotaError extends ForbiddenError {
+  constructor({ key, limit, used }: LimitHit) {
+    super(sandboxQuota(ENTITLEMENT_LABEL[key], used, limit), 'SANDBOX_QUOTA', {
+      feature: key,
+      limit,
+      used,
+    });
   }
 }
 

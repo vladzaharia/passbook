@@ -233,7 +233,7 @@ export async function applyChunk(
       await writeRowResult(ctx, s, { row: row.row_no, state: 'done', result, code: null });
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
-      if (error.code === 'FEATURE_LIMIT_REACHED') {
+      if (error.code === 'FEATURE_LIMIT_REACHED' || error.code === 'SANDBOX_QUOTA') {
         limited = true;
         ctx.log.info('pass_import.limit_reached', { importId: imp.id, code: error.code });
         await skipCreateRows(ctx, s, error.code);
