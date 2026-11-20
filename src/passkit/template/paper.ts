@@ -159,7 +159,10 @@ function shapeIssues(error: z.ZodError): ValidationIssue[] {
   return out;
 }
 
-/** The template declares its lookup value public (a plate): paper may print it. */
+/**
+ * The template declares its `scan.lookup` value public (a plate, on the windscreen anyway): paper may
+ * print it. Never set it for an order number, member id or anything else a holder keeps private.
+ */
 export const lookupIsPublic = (manifest: Pick<TemplateManifest, 'scan'>): boolean =>
   (manifest.scan as { lookup?: { public?: unknown } } | undefined)?.lookup?.public === true;
 

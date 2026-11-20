@@ -272,7 +272,8 @@
       }
     ],
     "lookup": {
-      "input": "plate"
+      "input": "plate",
+      "public": true
     },
     "window": {
       "from": "validFrom",
@@ -330,5 +331,11 @@
         "refused": "Send them to the parking office."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "half",
+    "barcode": "qr",
+    "kind": "permit"
   }
 }

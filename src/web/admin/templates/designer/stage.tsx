@@ -48,6 +48,8 @@ export function DesignerStage({
           manifest={manifest}
           templateId={templateId}
           orgId={orgId}
+          assets={card.assets}
+          assetBase={card.assetBase}
           onEdit={onPaper}
         />
       )}

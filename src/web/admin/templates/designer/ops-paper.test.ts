@@ -47,4 +47,34 @@ describe('paper op', () => {
     const d = applyOp(doc(), { op: 'paper', patch: { fields: ['order'] } });
     expect(issues(d).map((i) => i.code)).toEqual(['PAPER_LOOKUP_FIELD']);
   });
+
+  it('writes kind, mono ink, the buddy, fold marks off and bring, and drops them when reset', () => {
+    let d = applyOp(doc(), {
+      op: 'paper',
+      patch: {
+        size: 'a4',
+        kind: 'permit',
+        ink: 'mono',
+        buddy: true,
+        fold: false,
+        bring: 'Water\nHat',
+      },
+    });
+    expect(d.manifest.paper).toEqual({
+      schema: 1,
+      size: 'a4',
+      barcode: 'qr',
+      kind: 'permit',
+      ink: 'mono',
+      fold: false,
+      bring: 'Water\nHat',
+      buddy: true,
+    });
+    expect(issues(d)).toEqual([]);
+    d = applyOp(d, {
+      op: 'paper',
+      patch: { kind: null, ink: 'colour', buddy: false, fold: true, bring: '  ' },
+    });
+    expect(d.manifest.paper).toEqual({ schema: 1, size: 'a4', barcode: 'qr' });
+  });
 });

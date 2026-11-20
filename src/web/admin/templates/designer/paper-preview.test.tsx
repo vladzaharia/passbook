@@ -34,6 +34,19 @@ const stage = (paper?: unknown, onPaper?: (p: unknown) => void) => (
 beforeAll(() => setBarcodeEngine(toSvg));
 
 describe('designer Paper tab', () => {
+  it('previews the sheet in greyscale on request', async () => {
+    const user = userEvent.setup();
+    const { container } = renderTags(stage({ schema: 1, size: 'a4', barcode: 'qr' }), {
+      '/api/v1/templates/t1/channels': channels(on),
+    });
+    await user.click(await screen.findByRole('radio', { name: 'Paper' }));
+    await waitFor(() => expect(container.querySelector('.pp-sheet')).not.toBeNull());
+    const wrap = () => container.querySelector('.pp-fit')?.parentElement as HTMLElement;
+    expect(wrap().style.filter).toBe('');
+    await user.click(screen.getByRole('checkbox', { name: 'Greyscale preview' }));
+    expect(wrap().style.filter).toBe('grayscale(1)');
+  });
+
   it('shows the wallet card first, then the printed ticket in the block size, switchable per size', async () => {
     const user = userEvent.setup();
     const { container } = renderTags(stage({ schema: 1, size: 'letter', barcode: 'qr' }), {
@@ -107,6 +120,12 @@ describe('designer Paper tab', () => {
     expect(onPaper).toHaveBeenLastCalledWith({ holder: false });
     await user.click(screen.getByRole('radio', { name: 'Letter' }));
     expect(onPaper).toHaveBeenLastCalledWith({ size: 'letter' });
+    await user.click(screen.getByRole('radio', { name: 'Mono' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ ink: 'mono' });
+    await user.click(screen.getByRole('switch', { name: 'PassBook buddy' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ buddy: true });
+    await user.click(screen.getByRole('checkbox', { name: 'Fold marks' }));
+    expect(onPaper).toHaveBeenLastCalledWith({ fold: false });
     await user.click(screen.getByRole('button', { name: 'Use derived layout' }));
     expect(onPaper).toHaveBeenLastCalledWith(null);
     second.unmount();

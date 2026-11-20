@@ -148,10 +148,13 @@ describe('credential guards', () => {
       const lookup = (passJson as { barcodes?: { altText?: string }[] }).barcodes?.[0]?.altText;
       expect(json).not.toContain(SCAN_CODE);
       expect(json).not.toContain('SER-0001');
-      if (lookup) expect(json).not.toContain(lookup);
       const { manifest } = await blueprintPass(slug);
-      const input = (manifest.scan as { lookup?: { input?: string } } | undefined)?.lookup?.input;
-      const value = input ? String(personalization[input] ?? '') : '';
+      const scan = (manifest.scan as { lookup?: { input?: string; public?: boolean } } | undefined)
+        ?.lookup;
+      // A template that declares its lookup public (a permit's plate) may print it; no other does.
+      if (scan?.public) return;
+      if (lookup) expect(json).not.toContain(lookup);
+      const value = scan?.input ? String(personalization[scan.input] ?? '') : '';
       if (value.length > 2) expect(json).not.toContain(value);
     },
   );

@@ -285,5 +285,12 @@
         "panel": null
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "a4",
+    "barcode": "qr",
+    "kind": "admission",
+    "bring": "Photo ID if asked"
   }
 }

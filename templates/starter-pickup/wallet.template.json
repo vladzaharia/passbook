@@ -310,5 +310,12 @@
         "refused": "Ask at the counter."
       }
     }
+  },
+  "paper": {
+    "schema": 1,
+    "size": "a4",
+    "barcode": "qr",
+    "kind": "pickup",
+    "ink": "mono"
   }
 }
