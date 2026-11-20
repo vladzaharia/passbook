@@ -63,7 +63,8 @@ export function loadInputs(root: string, apiDir = 'docs/api'): Inputs {
     for (const f of readdirSync(dir)
       .filter((f) => f.endsWith('.json'))
       .sort())
-      Object.assign(reference, read(join(dir, f)));
+      for (const [id, entry] of Object.entries(read<Record<string, ReferenceEntry>>(join(dir, f))))
+        reference[id] = { ...reference[id], ...entry };
   return {
     doc,
     reference,
@@ -71,6 +72,6 @@ export function loadInputs(root: string, apiDir = 'docs/api'): Inputs {
     versions: optional<{ versions: ApiVersion[] }>(join(api, 'versions.json'))?.versions ?? [],
     errors: optional(join(api, 'errors.json')),
     guide: optional<Record<string, Dict>>(join(api, 'error-guide.json')),
-    examples: guideExamples(join(root, docsDir, 'snippets/guides')),
+    examples: guideExamples(join(root, 'docs/developers/snippets/guides')),
   };
 }

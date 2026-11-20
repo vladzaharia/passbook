@@ -155,6 +155,16 @@
       "covers": true,
       "breaking": true,
       "version": "2026-11-20"
+    },
+    {
+      "kind": "Changed",
+      "text": "Sample events carry sample: true, so a test event is never mistaken for a real one.",
+      "ops": [
+        "events.getEvents",
+        "events.getEventsById",
+        "webhooks.getWebhookEndpointsByIdDeliveriesByEventId"
+      ],
+      "covers": true
     }
   ]
 }
