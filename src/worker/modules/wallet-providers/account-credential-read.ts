@@ -25,7 +25,7 @@ import {
   type SamsungPromotedRefreshProof,
   type WalletProviderRetirementProof,
 } from './repo-accounts.ts';
-import { findEnrolmentGateRow } from './repo-enrolment-gate.ts';
+import { findEnrolmentGateRow, walletEntitled } from './repo-enrolment-gate.ts';
 
 export {
   readSamsungIssuedRefVerification,
@@ -66,6 +66,10 @@ export async function readConfiguredWalletProviderCredentials(
   }
   // The one enrolment gate (provider-policy.ts): a new-model row issues only while On and not held.
   if (!walletEnrolmentIssues(row)) {
+    return null;
+  }
+  // A probe is a provider call: an org whose plan lacks the wallet gets none.
+  if (!(await walletEntitled(ctx.env.DB, parsed.data.provider, parsed.data.orgId))) {
     return null;
   }
   const stored = await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
@@ -186,12 +190,14 @@ export async function readSamsungPromotedRefreshCredentials(
     throw new ValidationError();
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const row = await findSamsungPromotedRefreshAccount(ctx.env.DB, pinned, ctx.clock.now());
-  // A refresh is an outbound call: an Off or held enrolment stops it like any other issuance.
+  // A refresh is an outbound call: an Off or held enrolment, or a plan without Samsung Wallet, stops it
+  // like any other issuance.
   if (
     row &&
-    !walletEnrolmentIssues(
+    (!walletEnrolmentIssues(
       await findEnrolmentGateRow(ctx.env.DB, 'samsung', pinned.orgId, pinned.mode),
-    )
+    ) ||
+      !(await walletEntitled(ctx.env.DB, 'samsung', pinned.orgId)))
   ) {
     return null;
   }
