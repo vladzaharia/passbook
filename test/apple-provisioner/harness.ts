@@ -8,11 +8,13 @@ import type { ProvisionerEnv } from '../../workers/apple-provisioner/src/types.t
 
 export const NOW = Date.UTC(2026, 10, 20, 12, 0, 0);
 
-const ec = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+const ec = (await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
   'sign',
   'verify',
-]);
-const pkcs8 = new Uint8Array(await crypto.subtle.exportKey('pkcs8', ec.privateKey));
+])) as CryptoKeyPair;
+const pkcs8 = new Uint8Array(
+  (await crypto.subtle.exportKey('pkcs8', ec.privateKey)) as ArrayBuffer,
+);
 export const P8_BODY = btoa(String.fromCharCode(...pkcs8));
 export const ascPublicKey = ec.publicKey;
 const P8 = `-----BEGIN PRIVATE KEY-----\n${P8_BODY}\n-----END PRIVATE KEY-----`;
@@ -74,7 +76,7 @@ export function stubApple(handler: Handler, clock = { now: NOW }) {
   return { seen, deps, api: createApi(provisionerEnv, deps), clock };
 }
 
-const rsa = await crypto.subtle.generateKey(
+const rsa = (await crypto.subtle.generateKey(
   {
     name: 'RSASSA-PKCS1-v1_5',
     modulusLength: 2048,
@@ -83,7 +85,7 @@ const rsa = await crypto.subtle.generateKey(
   },
   true,
   ['sign', 'verify'],
-);
+)) as CryptoKeyPair;
 
 export async function makeCsr(cn: string, keys: CryptoKeyPair = rsa): Promise<Uint8Array> {
   const csr = new pkijs.CertificationRequest();
