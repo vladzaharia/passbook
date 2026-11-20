@@ -1,6 +1,10 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WalletInstance } from './instance.ts';
-import type { EligibleWalletProvider } from './offers-eligibility.ts';
+import {
+  type EligibleWalletProvider,
+  MAX_CHANNEL_EPOCH,
+  type WalletOfferHold,
+} from './offers-eligibility.ts';
 import { getProjectionRetirementMetadata } from './repo-projection.ts';
 
 /** An existing provider object retains its original class/account identity across revisions. */
@@ -44,4 +48,23 @@ export async function instanceMatches(
     origin.accountId === instance.accountId &&
     origin.providerIdentityHash === eligible.runtimeScope.providerIdentityHash
   );
+}
+
+/**
+ * A copy retired by a channel-off is replaced by a successor at the holder's next tap. The hold applies
+ * while the channel is on: the revoke has not settled, or the epoch limit is reached. Null means the
+ * slot is free for a successor.
+ */
+export function channelOffSuccessor(instance: WalletInstance): {
+  hold: WalletOfferHold | null;
+  epoch: number;
+} | null {
+  if (instance.retirementCause !== 'channel_off') return null;
+  const settled = instance.lifecycle === 'revoked' || instance.lifecycle === 'retired';
+  const hold = !settled
+    ? 'provider_retiring'
+    : instance.channelEpoch >= MAX_CHANNEL_EPOCH
+      ? 'provider_epoch_limit'
+      : null;
+  return { hold, epoch: instance.channelEpoch + 1 };
 }

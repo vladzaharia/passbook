@@ -57,6 +57,9 @@ interface WalletInstanceBase extends WalletScope {
   passId: string;
   /** Immutable credential lineage used to derive provider object identity. */
   credentialGeneration: number;
+  /** Identity within a generation: a successor after a channel-off retirement is epoch + 1. */
+  channelEpoch: number;
+  retirementCause: 'channel_off' | null;
   desiredVersion: number;
   installationState: WalletInstallation;
   installationObservedAt: null;
@@ -94,6 +97,8 @@ export interface WalletOperation extends WalletInstanceProof {
   identityProjectionReleaseId: string;
   /** Original instance generation; may differ from passCredentialGeneration during cleanup. */
   credentialGeneration: number;
+  /** The instance's own epoch, which selects the Google object id. */
+  channelEpoch: number;
   version: number;
   kind: WalletOperationKind;
   state: WalletOperationState;

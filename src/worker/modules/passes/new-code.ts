@@ -8,6 +8,20 @@ import { publishPass } from './publish.ts';
 import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
 
+/** Refuses when the pass is at its New code limit for this hour; also counted by "replace codes". */
+export async function assertNewCodeAllowed(ctx: ServiceContext, passId: string): Promise<void> {
+  const now = ctx.clock.now();
+  const window = now - (now % HOUR);
+  if ((await read(ctx.env.DB, `passes:newcode:${passId}`, window)) >= NEW_CODES_PER_HOUR)
+    throw new RateLimitedError(Math.ceil((window + HOUR - now) / 1000));
+}
+
+/** Counts a New code issued outside `newPassCode` (a channel replace) against the same hourly limit. */
+export async function countNewCode(ctx: ServiceContext, passId: string): Promise<void> {
+  const now = ctx.clock.now();
+  await bump(ctx.env.DB, `passes:newcode:${passId}`, now - (now % HOUR));
+}
+
 const causeOf = (actor: Actor) => (actor.type === 'api_key' ? 'api' : 'admin');
 const HOUR = 3_600_000;
 export const NEW_CODES_PER_HOUR = 3;

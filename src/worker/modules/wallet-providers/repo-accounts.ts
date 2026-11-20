@@ -24,6 +24,8 @@ export type WalletProviderRetirementProof = {
       passId: string;
       identityProjectionReleaseId: string;
       credentialGeneration: number;
+      /** Absent means 1; the SQL target fails closed for a successor. */
+      channelEpoch: number;
     }
   | { provider: 'samsung'; refHash: string }
 );
@@ -118,7 +120,7 @@ export function findAccountWithCredentialKeyset(
 
 /** Pin cleanup to one immutable object generation; the surrounding query proves the claim. */
 export const googleRetirementTargetSql =
-  'i.pass_id = ? AND i.identity_projection_release_id = ? AND i.credential_generation = ?';
+  'i.pass_id = ? AND i.identity_projection_release_id = ? AND i.credential_generation = ? AND i.channel_epoch = ?';
 
 /** Only the current claimed revoke can read credentials for its exact external target. */
 export function findRetirementAccount(
@@ -133,7 +135,12 @@ export function findRetirementAccount(
         AND ref.credential_keyset_commitment = i.credential_keyset_commitment)`;
   const targetValues =
     proof.provider === 'google'
-      ? [proof.passId, proof.identityProjectionReleaseId, proof.credentialGeneration]
+      ? [
+          proof.passId,
+          proof.identityProjectionReleaseId,
+          proof.credentialGeneration,
+          proof.channelEpoch,
+        ]
       : [proof.refHash];
   // The claim is necessarily a revoke. Omitting the unreachable upsert branch keeps
   // D1's expression depth bounded while all fences still share this read's snapshot.

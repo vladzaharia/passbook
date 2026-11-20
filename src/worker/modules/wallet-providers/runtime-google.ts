@@ -37,12 +37,14 @@ interface GoogleRuntimeClassInput {
 interface GoogleRuntimeObjectInput extends GoogleRuntimeClassInput {
   passId: string;
   credentialGeneration: number;
+  channelEpoch: number;
 }
 
 interface GoogleRuntimeObjectIdentity {
   releaseId: string;
   passId: string;
   credentialGeneration: number;
+  channelEpoch: number;
   assertCurrent?: () => Promise<void>;
 }
 
@@ -74,6 +76,7 @@ export async function googleRuntimeIdHashes(
       releaseId: input.releaseId,
       passId: input.passId,
       credentialGeneration: input.credentialGeneration,
+      channelEpoch: input.channelEpoch,
     });
     const [classIdHash, objectIdHash] = await Promise.all([
       sha256Hex(ids.classId),
@@ -104,6 +107,7 @@ export async function createGoogleRuntimeOffer(
         releaseId: input.releaseId,
         passId: input.passId,
         credentialGeneration: input.credentialGeneration,
+        channelEpoch: input.channelEpoch,
       },
       {
         origins: input.origins,
@@ -227,6 +231,7 @@ export async function upsertGoogleRuntimeObject(
           releaseId: input.releaseId,
           passId: input.passId,
           credentialGeneration: input.credentialGeneration,
+          channelEpoch: input.channelEpoch,
         },
         input.projection,
       ),
@@ -254,6 +259,7 @@ export async function patchGoogleRuntimeObject(
           releaseId: input.releaseId,
           passId: input.passId,
           credentialGeneration: input.credentialGeneration,
+          channelEpoch: input.channelEpoch,
         },
         input.projection,
       ),
@@ -271,6 +277,7 @@ export async function inactivateGoogleRuntimeObject(
     releaseId,
     passId,
     credentialGeneration,
+    channelEpoch,
     retirement: claim,
     assertCurrent,
     onProviderResponse,
@@ -280,6 +287,7 @@ export async function inactivateGoogleRuntimeObject(
     passId,
     identityProjectionReleaseId: releaseId,
     credentialGeneration,
+    channelEpoch,
   });
   await withGoogleRest(
     ctx,
@@ -294,6 +302,7 @@ export async function inactivateGoogleRuntimeObject(
         releaseId,
         passId,
         credentialGeneration,
+        channelEpoch,
       }),
     retirement,
   );

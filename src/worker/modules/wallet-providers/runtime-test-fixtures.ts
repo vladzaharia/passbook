@@ -51,6 +51,7 @@ export const googleInput = {
   releaseId: 'release-1',
   passId: 'pass-1',
   credentialGeneration: 1,
+  channelEpoch: 1,
   origins: ['https://passbook.mobile'],
 };
 export const cardProjection: SamsungCardProjection = {

@@ -277,6 +277,7 @@ describe('existing provider instance runtime', () => {
       passId: f.pass.id,
       identityProjectionReleaseId: f.releaseId,
       credentialGeneration: f.credentialGeneration,
+      channelEpoch: 1,
     };
     expect(await readWalletProviderRetirementCredentials(f.kit.ctx, proof)).toMatchObject({
       provider: 'google',
@@ -393,6 +394,7 @@ describe('existing provider instance runtime', () => {
       passId: f.pass.id,
       releaseId: f.releaseId,
       credentialGeneration: f.credentialGeneration,
+      channelEpoch: 1,
     };
     const old = await googleObjectIds(
       f.verification.issuerId,
@@ -402,6 +404,7 @@ describe('existing provider instance runtime', () => {
     const next = await googleObjectIds(f.verification.issuerId, f.verification.objectIdHmacKey, {
       ...identity,
       credentialGeneration: identity.credentialGeneration + 1,
+      channelEpoch: 1,
     });
     const calls: { url: string; method: string; body: unknown }[] = [];
     vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -431,6 +434,7 @@ describe('existing provider instance runtime', () => {
       releaseId: f.releaseId,
       passId: f.pass.id,
       credentialGeneration: f.credentialGeneration,
+      channelEpoch: 1,
       retirement,
       onProviderResponse: f.onProviderResponse,
     };
@@ -438,6 +442,7 @@ describe('existing provider instance runtime', () => {
       inactivateGoogleRuntimeObject(f.kit.ctx, f.scope, {
         ...input,
         credentialGeneration: f.credentialGeneration + 1,
+        channelEpoch: 1,
       }),
     ).rejects.toMatchObject({ code: 'account_unavailable' });
     await expect(
@@ -483,6 +488,7 @@ describe('existing provider instance runtime', () => {
         passId: f.pass.id,
         releaseId: f.releaseId,
         credentialGeneration: f.credentialGeneration,
+        channelEpoch: 1,
       });
       const urls: string[] = [];
       vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -509,6 +515,7 @@ describe('existing provider instance runtime', () => {
         releaseId: f.releaseId,
         passId: f.pass.id,
         credentialGeneration: f.credentialGeneration,
+        channelEpoch: 1,
         retirement: {
           instanceId: f.instanceId,
           operationId: f.operationId,
@@ -540,6 +547,7 @@ describe('existing provider instance runtime', () => {
       passId: f.pass.id,
       releaseId: f.releaseId,
       credentialGeneration: f.credentialGeneration,
+      channelEpoch: 1,
     });
     let tokens = 0;
     let patchStatus = 200;
@@ -558,6 +566,7 @@ describe('existing provider instance runtime', () => {
       releaseId: f.releaseId,
       passId: f.pass.id,
       credentialGeneration: f.credentialGeneration,
+      channelEpoch: 1,
       retirement: {
         instanceId: f.instanceId,
         operationId: f.operationId,
@@ -597,6 +606,7 @@ describe('existing provider instance runtime', () => {
         releaseId: f.releaseId,
         passId: f.pass.id,
         credentialGeneration: f.credentialGeneration,
+        channelEpoch: 1,
         retirement: {
           instanceId: f.instanceId,
           operationId: f.operationId,

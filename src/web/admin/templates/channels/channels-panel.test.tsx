@@ -26,6 +26,8 @@ const handlers = (passes: number, cleared = 0) => ({
           effective,
           impact: impact(passes, cleared),
           workflowInstanceId: null,
+          replaceSupported: true,
+          windows: [],
         })
       : json({ channels: null, revision: 0, effective }),
 });
@@ -121,6 +123,8 @@ describe('Template channels', () => {
             effective,
             impact: impact(0, dryCleared),
             workflowInstanceId: null,
+            replaceSupported: true,
+            windows: [],
           });
         puts += 1;
         dryCleared = 5;
