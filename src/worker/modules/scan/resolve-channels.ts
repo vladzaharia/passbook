@@ -22,8 +22,9 @@ export async function channelVerdict(
   const nfc = input.method === 'nfc' && 'passId' in input;
   const picked = input.method === 'manual' && 'passId' in input;
   if ((!nfc && !picked && !matchedBy) || matchedBy === 'print') return null;
-  // A camera or wedge read that matched the lookup value alone (the barcode is something else) is a typed number.
-  const alone = matchedBy === 'lookup' && input.method !== 'manual';
+  // A camera read that matched the lookup value alone (the barcode is something else) is a typed
+  // number. A keyboard wedge types into the desk field, which is already the typed path.
+  const alone = matchedBy === 'lookup' && input.method === 'camera';
   if (one.channelRules === false) return alone ? { kind: 'typed' } : null;
   const lookup = matchedBy === 'lookup' || matchedBy === 'serial';
   const typed = picked || (input.method === 'manual' && lookup);
