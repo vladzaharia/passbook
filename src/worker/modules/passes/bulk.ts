@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import {
+  AppError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
@@ -15,6 +16,7 @@ import type { ReissueParams } from './bulk-reissue-page.ts';
 import { depsOf } from './deps.ts';
 import type { TenantPassWrite } from './http.ts';
 import {
+  activeBulkRun,
   insertPlatformAdminBulkWorkflowRun,
   insertTenantBulkWorkflowRun,
   insertWorkflowRun,
@@ -23,6 +25,8 @@ import {
 import { reissuePrincipalOf } from './repo-bulk-principal.ts';
 import { reserveWorkflowReleases } from './repo-workflow-releases.ts';
 import type { Actor } from './service.ts';
+
+const ACTIVE_RUN_WINDOW_MS = 60 * 60_000;
 
 async function resolveUnscoped(ctx: ServiceContext, id: string, version: string) {
   try {
@@ -107,6 +111,22 @@ export async function startBulkReissue(
   }
 
   const targetId = templateId ?? body.identityId ?? orgId ?? '';
+  // A key may not stack rebuilds: one active run per org, mode and target. A stuck run frees the target after an hour.
+  if (options?.authority?.kind === 'api_key' && orgId !== null && options.mode) {
+    const running = await activeBulkRun(ctx.env.DB, {
+      orgId,
+      targetId,
+      mode: options.mode,
+      since: ctx.clock.now() - ACTIVE_RUN_WINDOW_MS,
+    });
+    if (running)
+      throw new AppError(
+        'BULK_RUN_ACTIVE',
+        409,
+        `A rebuild of this target is already running (${running}). Wait for it to finish.`,
+        { issues: [{ path: 'workflowInstanceId', message: running }] },
+      );
+  }
   const instanceId = `bulk-${ctx.ids.id()}`;
   if (cause === 'template_upgrade') {
     const reserved = await reserveWorkflowReleases(ctx.env.DB, {

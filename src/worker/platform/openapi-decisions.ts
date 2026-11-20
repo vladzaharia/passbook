@@ -58,7 +58,8 @@ function decide(app: OpenAPIHono<AppBindings>, method: string, docPath: string):
       .map((r, i) => ({ r, i }))
       .filter(({ r }) => r.method.toLowerCase() === method && toRegex(r.path).test(sample))
       .at(-1);
-  if (!last) return 'public';
+  // No route behind a documented operation: fail closed, never read as open.
+  if (!last) return 'session';
   if (isPublicHandler(last.r.handler)) return 'public';
   const covered = routes.some(
     (r, i) =>

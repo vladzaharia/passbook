@@ -32,7 +32,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | Scope | Allows |
 |---|---|
 | `passes:read` | GET passes, assets, versions, delivery, events, devices, bundles |
-| `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles, `POST /passes/bulk-reissue` (your own org; `orgId` defaults to the key's) |
+| `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles, `POST /passes/bulk-reissue` (an org key rebuilds its own org, `orgId` defaults to it; a platform key must name the org; a test key rebuilds test mode; one active run per target, else 409 `BULK_RUN_ACTIVE` with the run id; 6 starts per key per hour, then 429) |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |

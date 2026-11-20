@@ -225,3 +225,20 @@ export async function liveVersions(
   );
   return rows.map((r) => r.v);
 }
+
+/** A bulk rebuild of the target that is still queued or running in this mode (a run with no snapshot has no recorded mode, so it counts). */
+export async function activeBulkRun(
+  db: D1Database,
+  q: { orgId: string; targetId: string; mode: string; since: number },
+): Promise<string | null> {
+  const row = await first<{ instance_id: string }>(
+    db,
+    `SELECT r.instance_id FROM workflow_runs r
+     WHERE r.kind = 'bulk_reissue' AND r.org_id = ? AND r.target_id = ?
+       AND r.status IN ('queued', 'running') AND r.started_at > ?
+       AND NOT EXISTS (SELECT 1 FROM workflow_release_snapshots s WHERE s.instance_id = r.instance_id AND s.mode <> ?)
+     ORDER BY r.started_at DESC LIMIT 1`,
+    [q.orgId, q.targetId, q.since, q.mode],
+  );
+  return row?.instance_id ?? null;
+}
