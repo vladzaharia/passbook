@@ -4,6 +4,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordCopy } from '../channels/gate.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { passForToken } from '../public/service.ts';
 import { ensureSamsungFetchRef } from './callbacks-ref.ts';
@@ -98,6 +99,7 @@ export async function issueWalletOffer(
   assertWalletProviderEnabled(provider);
   ctx = captureOfferContext(ctx);
   const pass = await passForToken(ctx, token);
+  await assertNotPreviewOnly(ctx.env.DB, pass.orgId);
   const snapshot = await offerPassSnapshot(ctx, pass);
   if (!snapshot) throw notFound();
   const eligible = await eligibleWalletProvider(ctx, snapshot, provider);
@@ -224,6 +226,7 @@ export async function redeemSamsungOffer(ctx: ServiceContext, ref: string): Prom
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const binding = await consumeWalletOfferRef(ctx.env.DB, ref, ctx.clock.now());
   if (binding?.provider !== 'samsung') throw notFound();
+  await assertNotPreviewOnly(ctx.env.DB, binding.orgId);
   let delivered = false;
   let fenceLost = false;
   try {

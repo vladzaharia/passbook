@@ -12,6 +12,12 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
 import { holderChannels, recordCopy } from '../channels/gate.ts';
+import {
+  assertNotPreviewOnly,
+  assertSignedObject,
+  isPreviewOnlyOrg,
+  testPreviewUrl,
+} from '../developer/fence.ts';
 import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
@@ -163,7 +169,10 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     fromName,
     downloadUrl: channels.effective.apple.on ? `${base}/p/${plainToken}/pass.pkpass` : null,
     printUrl: channels.holderPrint ? `${base}/p/${plainToken}/print` : null,
-    manageUrl: `${base}/p/${plainToken}`,
+    // A developer org's holder has no wallet to add the pass to: the link is its TEST preview page.
+    manageUrl: (await isPreviewOnlyOrg(db, pass.orgId))
+      ? testPreviewUrl(base, plainToken)
+      : `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     publicBaseUrl: base,
     walletOffers,
@@ -207,6 +216,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   let attachments: { filename: string; type: string; content: Uint8Array }[] | undefined;
   try {
     if (attachApple) {
+      assertSignedObject(pass.objectKey);
       const object = await ctx.env.BUCKET.get(pass.objectKey);
       if (!object) throw new PermanentEmailError('Pass object is missing.');
       attachments = [
@@ -249,6 +259,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     );
     return;
   }
+  await assertNotPreviewOnly(db, pass.orgId);
   let messageId: string;
   try {
     ({ messageId } = await depsOf(ctx.env).mailer.send({

@@ -7,6 +7,7 @@ import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../../pl
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { holderChannels } from '../channels/gate.ts';
 import { listOutboxForPass } from '../delivery/repo.ts';
+import { isPreviewOnlyOrg, testPreviewUrl } from '../developer/fence.ts';
 import { seesAccountEmails } from './account-email.ts';
 import { replacedBy } from './assets.ts';
 import { resolveTemplate } from './builder.ts';
@@ -84,9 +85,11 @@ export async function linksOf(ctx: ServiceContext, pass: Pass, token?: string) {
   const base = baseUrl(ctx.env);
   const plain =
     token ?? (await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken));
+  // A developer org's pass has no file to add: its download link is the TEST preview page.
+  const previewOnly = await isPreviewOnlyOrg(ctx.env.DB, pass.orgId);
   return {
     publicUrl: `${base}/p/${plain}`,
-    downloadUrl: `${base}/p/${plain}/pass.pkpass`,
+    downloadUrl: previewOnly ? testPreviewUrl(base, plain) : `${base}/p/${plain}/pass.pkpass`,
     assetBaseUrl: `${base}/p/${plain}/assets/`,
   };
 }

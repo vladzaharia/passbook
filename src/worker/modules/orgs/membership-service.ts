@@ -21,6 +21,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createInviteSignInLink } from '../auth/invite-link.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import {
   membershipCapability,
   platformAdminSessionParams,
@@ -151,6 +152,7 @@ export async function inviteOrgMember(
   });
   const acceptLink = `${baseUrl(ctx.env)}${accept}`;
   const org = await repo.orgName(ctx.env.DB, orgId);
+  await assertNotPreviewOnly(ctx.env.DB, orgId);
   try {
     await createEmailBindingMailer(ctx.env).send({
       to: row.email,
