@@ -355,7 +355,7 @@ describe('wallet sync of unissued transfer targets', () => {
       { provider: 'samsung', lifecycle: 'ready' },
     ]);
     for (const instance of instances) await dirtyGeneration(db, instance.id);
-    await drainWalletProviderSync(kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(kit));
     expect(
       await all(
         db,
@@ -374,7 +374,7 @@ describe('wallet sync of unissued transfer targets', () => {
     ).toEqual([]);
 
     await run(db, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [kit.clock.now(), pass.id]);
-    await drainWalletProviderSync(kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(kit));
     const retired = await all(
       db,
       `SELECT provider, lifecycle, retirement_reason AS reason FROM wallet_provider_instances
@@ -393,7 +393,7 @@ describe('wallet sync of unissued transfer targets', () => {
         [pass.id],
       ),
     ).toEqual([]);
-    await drainWalletProviderSync(kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(kit));
     expect(
       await all(
         db,

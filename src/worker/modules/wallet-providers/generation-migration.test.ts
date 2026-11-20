@@ -416,7 +416,7 @@ describe('0043 provider generation fences', () => {
     ]);
   });
 
-  it('fences stale revoke snapshots and allows retirement work only under current pass authority', async () => {
+  it('stores a revoke without pinning the pass snapshot (D6) and keeps retirement work under the pending-transfer lineage', async () => {
     const historical = await runtimeSamsungLegacyFixture('refresh');
     const { kit, pass, instanceId } = historical;
     const db = kit.env.DB;
@@ -431,7 +431,6 @@ describe('0043 provider generation fences', () => {
         [instanceId],
       ),
     ).toEqual({ lifecycle: 'active', retirement_requested_at: null });
-    const nextGeneration = oldGeneration + 1;
     const operationId = crypto.randomUUID();
     const insertRevoke = (generation: number) =>
       run(
@@ -447,9 +446,6 @@ describe('0043 provider generation fences', () => {
       JOIN template_releases r ON r.id = i.identity_projection_release_id WHERE i.id = ?`,
         [operationId, 'f'.repeat(64), generation, kit.clock.now(), instanceId],
       );
-    await expect(insertRevoke(oldGeneration)).rejects.toThrow(
-      /provider operation is not authorized/,
-    );
     await statements[1]!.run();
     expect(
       await first(
@@ -458,22 +454,15 @@ describe('0043 provider generation fences', () => {
         [instanceId],
       ),
     ).toEqual({ lifecycle: 'active', retirement_requested_at: kit.clock.now() });
-    await expect(insertRevoke(oldGeneration)).rejects.toThrow(
-      /provider operation is not authorized/,
-    );
-    expect(
-      await first(db, 'SELECT id FROM wallet_provider_instance_operations WHERE id = ?', [
-        operationId,
-      ]),
-    ).toBeNull();
-    await insertRevoke(nextGeneration);
+    // D6: a revoke pins no pass content, so the snapshot generation is data; the lineage guard is what remains.
+    await insertRevoke(oldGeneration);
     expect(
       await first(
         db,
         `SELECT pass_credential_generation, kind FROM wallet_provider_instance_operations WHERE id = ?`,
         [operationId],
       ),
-    ).toEqual({ pass_credential_generation: nextGeneration, kind: 'revoke' });
+    ).toEqual({ pass_credential_generation: oldGeneration, kind: 'revoke' });
     await expect(finish(db, pass.id, transferId, kit.clock.now() + 1)).rejects.toThrow(
       /credential transfer is not ready to complete/,
     );
@@ -541,10 +530,11 @@ describe('0043 provider generation fences', () => {
           `INSERT OR REPLACE INTO wallet_provider_instance_operations
         (id, instance_id, version, kind, request_hash, pass_version, pass_revision, pass_credential_generation,
          lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-         policy_revision, state, created_at, credential_keyset_commitment)
+         policy_revision, state, created_at, credential_keyset_commitment, pass_row_version, account_epoch)
         SELECT ?, instance_id, ?, kind, ?, pass_version, pass_revision, pass_credential_generation,
           lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-          policy_revision, 'pending', created_at, credential_keyset_commitment FROM wallet_provider_instance_operations WHERE id = ?`,
+          policy_revision, 'pending', created_at, credential_keyset_commitment, pass_row_version, account_epoch
+          FROM wallet_provider_instance_operations WHERE id = ?`,
           [id, version, hash, upsertId],
         ),
       ).rejects.toThrow(/provider operation history is immutable/);
@@ -567,10 +557,12 @@ describe('0043 provider generation fences', () => {
         `INSERT OR REPLACE INTO wallet_provider_instance_operations
       (id, instance_id, version, kind, request_hash, pass_version, pass_revision, pass_credential_generation,
        lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-       policy_revision, state, claim_hash, claim_expires_at, created_at, credential_keyset_commitment)
+       policy_revision, state, claim_hash, claim_expires_at, created_at, credential_keyset_commitment,
+       pass_row_version, account_epoch)
       SELECT ?, instance_id, 3, kind, ?, pass_version, pass_revision, pass_credential_generation,
         lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-        policy_revision, 'claimed', ?, ?, created_at, credential_keyset_commitment FROM wallet_provider_instance_operations WHERE id = ?`,
+        policy_revision, 'claimed', ?, ?, created_at, credential_keyset_commitment, pass_row_version, account_epoch
+        FROM wallet_provider_instance_operations WHERE id = ?`,
         [crypto.randomUUID(), '6'.repeat(64), '7'.repeat(64), now + 1000, upsertId],
       ),
     ).rejects.toThrow(/provider operation history is immutable/);

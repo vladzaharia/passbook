@@ -21,6 +21,7 @@ import {
 import { reconcileWalletInstance } from '../wallet-providers/lifecycle.ts';
 import { makeProviderTestTemplate } from '../wallet-providers/offers-test-fixtures.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
+import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 
 const makeEnv = installKeysetTestEnv();
 
@@ -55,7 +56,7 @@ describe('a self-remove transfer and an org suspended mid-way', () => {
       claimHandle: newWalletClaimHandle(),
       now: kit.clock.now(),
     };
-    expect(await claimWalletOperation(kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(kit.env.DB), claim)).toBe('claimed');
     await completeWalletOperation(jobCtxOf(kit), {
       ...claim,
       result: { kind: 'success', httpStatus: 200 },

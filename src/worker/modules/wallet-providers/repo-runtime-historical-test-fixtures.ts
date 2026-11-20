@@ -91,9 +91,10 @@ export async function insertHistoricalProviderInstance(
         `INSERT INTO wallet_provider_instance_operations
     (id, instance_id, version, kind, request_hash, pass_version, pass_revision, pass_credential_generation,
      lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-     policy_revision, credential_keyset_commitment, state, attempts, created_at)
+     policy_revision, credential_keyset_commitment, state, attempts, created_at, pass_row_version, account_epoch)
     SELECT ?, i.id, 1, 'upsert', ?, p.version, p.revision, p.credential_generation, p.lifecycle_generation,
-      p.release_id, r.id, a.revision, r.adapter_revision, r.audience_policy_revision, ?, ?, ?, ?
+      p.release_id, r.id, a.revision, r.adapter_revision, r.audience_policy_revision, ?, ?, ?, ?,
+      p.row_version, a.authority_epoch
     FROM wallet_provider_instances i JOIN passes p ON p.id = i.pass_id
       JOIN wallet_provider_accounts a ON a.id = i.account_id
       JOIN template_releases r ON r.id = i.identity_projection_release_id

@@ -47,92 +47,17 @@ import {
   walletOfferFresh,
   walletOperationFresh,
 } from './instance.ts';
-import { setupWalletOfferKit } from './offers-test-fixtures.ts';
+import { fixture, reference } from './instance-test-fixtures.ts';
 import { projectionPolicy } from './projection-contract.ts';
-import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
 import { googleRetirementTargetSql } from './repo-accounts.ts';
 import { consumeOffer, readOffer } from './repo-instance-offers.ts';
 import {
   seedHistoricalSamsungRef as insertHistoricalSamsungRef,
   seedHistoricalOfferRef,
-  seedHistoricalProviderInstance,
 } from './runtime-historical-fixtures.ts';
 import { historicalGoogleRelease } from './runtime-integration-fixtures.ts';
-
-async function fixture() {
-  const f = await setupWalletOfferKit({ google: 'absent' });
-  const scope = {
-    orgId: f.pass.orgId,
-    mode: f.pass.mode,
-    provider: 'samsung' as const,
-    credentialKeysetCommitment: f.credentialKeysetCommitment,
-  };
-  const snapshot = await readWalletPassSnapshot(f.kit.env.DB, { ...scope, passId: f.pass.id });
-  if (!snapshot?.issuingReleaseId) throw new Error('Missing issuing release');
-  const approved = await getApprovedProjection(f.kit.ctx, {
-    ...scope,
-    templateId: snapshot.templateId,
-    templateVersion: snapshot.templateVersion,
-    appleReleaseId: snapshot.issuingReleaseId,
-  });
-  if (!approved) throw new Error('Missing reviewed native projection');
-  const policy = projectionPolicy(scope.provider);
-  const proof: WalletInstanceProof = {
-    ...scope,
-    passId: f.pass.id,
-    passVersion: snapshot.passVersion,
-    passRevision: snapshot.passRevision,
-    passCredentialGeneration: snapshot.credentialGeneration,
-    lifecycleGeneration: snapshot.lifecycleGeneration,
-    issuingReleaseId: snapshot.issuingReleaseId,
-    projectionReleaseId: approved.release.id,
-    accountId: approved.release.accountId,
-    accountRevision: approved.release.accountRevision,
-    adapterRevision: policy.adapterRevision,
-    policyRevision: policy.audiencePolicyRevision,
-  };
-  async function current(): Promise<WalletInstanceProof> {
-    const pass = await readWalletPassSnapshot(f.kit.env.DB, { ...scope, passId: f.pass.id });
-    if (!pass) throw new Error('Pass disappeared');
-    return {
-      ...proof,
-      passVersion: pass.passVersion,
-      passRevision: pass.passRevision,
-      passCredentialGeneration: pass.credentialGeneration,
-      lifecycleGeneration: pass.lifecycleGeneration,
-      issuingReleaseId: pass.issuingReleaseId,
-    };
-  }
-  async function create(target: WalletInstanceProof = proof) {
-    const operationId = crypto.randomUUID();
-    const operation = await seedHistoricalProviderInstance(f.kit.env.DB, {
-      id: crypto.randomUUID(),
-      operationId,
-      passId: target.passId,
-      orgId: target.orgId,
-      mode: target.mode,
-      provider: target.provider,
-      credentialGeneration: target.passCredentialGeneration,
-      credentialKeysetCommitment: f.credentialKeysetCommitment,
-      accountId: target.accountId,
-      releaseId: target.projectionReleaseId,
-      now: f.kit.clock.now(),
-      upsert: { requestHash: await sha256Hex(operationId), state: 'pending' },
-    });
-    if (!operation) throw new Error('Historical operation missing');
-    return operation;
-  }
-  return { ...f, scope, proof, current, create };
-}
-
-const reference = (op: WalletOperation) => ({
-  orgId: op.orgId,
-  mode: op.mode,
-  provider: op.provider,
-  instanceId: op.instanceId,
-  version: op.version,
-});
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 async function seedHistoricalOffer(
   db: D1Database,
@@ -248,7 +173,7 @@ describe('native wallet instance lifecycle', () => {
     ).toBeNull();
     for (const proof of attempts) {
       expect(
-        await queueWalletOperation(db, {
+        await queueWalletOperation(walletJobCtx(db), {
           ...proof,
           instanceId: created.instanceId,
           expectedVersion: created.version,
@@ -262,7 +187,7 @@ describe('native wallet instance lifecycle', () => {
     expect(await getWalletInstance(db, { ...f.scope, passId: f.pass.id })).toMatchObject({
       desiredVersion: created.version,
     });
-    const next = await queueWalletOperation(db, {
+    const next = await queueWalletOperation(walletJobCtx(db), {
       ...f.proof,
       instanceId: created.instanceId,
       expectedVersion: created.version,
@@ -287,9 +212,9 @@ describe('native wallet instance lifecycle', () => {
     const wrongEnv = { ...f.kit.env, KEK_V1: btoa('z'.repeat(32)) };
     expect(await credentialRefKeysetCommitment(wrongEnv)).not.toBe(f.credentialKeysetCommitment);
     const claim = { ...reference(op), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     // Only an uncertain claim can be settled.
-    expect(await settleWalletClaim(db, { ...reference(op), now })).toBe(false);
+    expect(await settleWalletClaim(walletJobCtx(db), { ...reference(op), now })).toBe(false);
     await expect(
       completeWalletOperation(
         { ...f.kit.ctx, env: wrongEnv },
@@ -304,13 +229,13 @@ describe('native wallet instance lifecycle', () => {
       attempts: 1,
     });
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...claim, result: { kind: 'success' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), { ...claim, result: { kind: 'success' } }),
     ).toBe('succeeded');
 
     expect(
       await requestWalletRetirement(db, { ...reference(op), ...(await f.current()), now }),
     ).toBe(true);
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -321,9 +246,12 @@ describe('native wallet instance lifecycle', () => {
     });
     if (!revoke) throw new Error('Retirement revoke not queued');
     const revokeClaim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, revokeClaim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), revokeClaim)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...revokeClaim, result: { kind: 'success' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), {
+        ...revokeClaim,
+        result: { kind: 'success' },
+      }),
     ).toBe('succeeded');
     expect(await getWalletInstanceById(db, reference(op))).toMatchObject({ lifecycle: 'revoked' });
     expect(await retireWalletInstance(db, revokeClaim)).toBe(true);
@@ -508,8 +436,9 @@ describe('native wallet instance lifecycle', () => {
       instanceId: issued.instanceId,
     });
     const claim = { ...reference(issued), claimHandle: newWalletClaimHandle(), now: before };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
-    expect(await walletOperationFresh(db, { ...claim, now: evidence.expires_at })).toBe(false);
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
+    // D8: the evidence expiry no longer gates a claim; offers still read it.
+    expect(await walletOperationFresh(db, { ...claim, now: evidence.expires_at })).toBe(true);
     expect(await readOffer(db, await sha256Hex(ref), evidence.expires_at)).toBeNull();
     expect(await consumeWalletOfferRef(db, ref, evidence.expires_at)).toBeNull();
     const second = await f.kit.pass();
@@ -525,12 +454,12 @@ describe('native wallet instance lifecycle', () => {
       issuingReleaseId: snapshot.issuingReleaseId,
     });
     expect(
-      await claimWalletOperation(db, {
+      await claimWalletOperation(walletJobCtx(db), {
         ...reference(pending),
         claimHandle: newWalletClaimHandle(),
         now: evidence.expires_at,
       }),
-    ).toBe('not_claimable');
+    ).toBe('claimed'); // D8: expired evidence no longer gates the queue; publish and reconcile check it.
     const third = await f.kit.pass();
     const thirdSnapshot = await readWalletPassSnapshot(db, { ...f.scope, passId: third.id });
     if (!thirdSnapshot) throw new Error('Third pass is missing');
@@ -557,17 +486,20 @@ describe('native wallet instance lifecycle', () => {
     const op = await f.create();
     const now = f.kit.clock.now();
     const oldClaim = { ...reference(op), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, oldClaim)).toBe('claimed');
-    expect(await claimWalletOperation(db, oldClaim)).toBe('already_claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), oldClaim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), oldClaim)).toBe('already_claimed');
     expect(
-      await claimWalletOperation(db, { ...oldClaim, claimHandle: newWalletClaimHandle() }),
+      await claimWalletOperation(walletJobCtx(db), {
+        ...oldClaim,
+        claimHandle: newWalletClaimHandle(),
+      }),
     ).toBe('not_claimable');
     await run(
       db,
       'UPDATE passes SET removed_at = ?, lifecycle_generation = lifecycle_generation + 1 WHERE id = ?',
       [now, f.pass.id],
     );
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -600,9 +532,9 @@ describe('native wallet instance lifecycle', () => {
     const revokeClaim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now: now + 1 };
     expect(revoke.version).toBeGreaterThan(op.version);
     expect(await walletOperationFresh(db, oldClaim)).toBe(false);
-    expect(await claimWalletOperation(db, revokeClaim)).toBe('not_claimable');
+    expect(await claimWalletOperation(walletJobCtx(db), revokeClaim)).toBe('not_claimable');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...oldClaim,
         now: now + 2,
         result: { kind: 'success', rawBody: new TextEncoder().encode('stale private data') },
@@ -613,9 +545,9 @@ describe('native wallet instance lifecycle', () => {
         op.id,
       ]),
     ).toEqual([]);
-    expect(await claimWalletOperation(db, revokeClaim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), revokeClaim)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...revokeClaim,
         now: now + 3,
         result: { kind: 'success' },
@@ -635,7 +567,7 @@ describe('native wallet instance lifecycle', () => {
     let now = f.kit.clock.now();
     for (let attempt = 1; attempt <= 8; attempt++) {
       const claim = { ...reference(op), claimHandle: newWalletClaimHandle(), now };
-      expect(await claimWalletOperation(db, claim)).toBe('claimed');
+      expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
       if (attempt === 1) {
         const body = new TextEncoder().encode('private-response-body');
         const event = {
@@ -646,10 +578,10 @@ describe('native wallet instance lifecycle', () => {
           reason: 'rate_limited' as const,
           httpStatus: 429,
         };
-        expect(await recordWalletOperationOutcome(f.kit.ctx, event)).toBe('recorded');
-        expect(await recordWalletOperationOutcome(f.kit.ctx, event)).toBe('replay');
+        expect(await recordWalletOperationOutcome(jobCtxOf(f.kit), event)).toBe('recorded');
+        expect(await recordWalletOperationOutcome(jobCtxOf(f.kit), event)).toBe('replay');
         expect(
-          await recordWalletOperationOutcome(f.kit.ctx, {
+          await recordWalletOperationOutcome(jobCtxOf(f.kit), {
             ...event,
             body: new TextEncoder().encode('different'),
           }),
@@ -661,7 +593,7 @@ describe('native wallet instance lifecycle', () => {
         );
         expect(JSON.stringify(stored)).not.toContain('private-response-body');
       }
-      const state = await completeWalletOperation(f.kit.ctx, {
+      const state = await completeWalletOperation(jobCtxOf(f.kit), {
         ...claim,
         result: {
           kind: 'failure',
@@ -681,7 +613,7 @@ describe('native wallet instance lifecycle', () => {
       now = (stored?.nextAttemptAt ?? now) + 1;
     }
     expect(
-      await claimWalletOperation(db, {
+      await claimWalletOperation(walletJobCtx(db), {
         ...reference(op),
         now,
         claimHandle: newWalletClaimHandle(),
@@ -694,12 +626,12 @@ describe('native wallet instance lifecycle', () => {
     const db = f.kit.env.DB;
     const op = await f.create();
     const claim = { ...reference(op), claimHandle: newWalletClaimHandle(), now: f.kit.clock.now() };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
-    expect(await markWalletClaimUncertain(db, claim)).toBe(true);
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
+    expect(await markWalletClaimUncertain(walletJobCtx(db), claim)).toBe(true);
     await run(db, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [f.pass.id]);
     const dirty = await listDirtyWalletInstances(db, claim.now, 100);
     expect(dirty.some((row) => row.instanceId === op.instanceId)).toBe(true);
-    const next = await queueWalletOperation(db, {
+    const next = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -710,17 +642,17 @@ describe('native wallet instance lifecycle', () => {
     });
     if (!next) throw new Error('Updated operation not queued');
     expect(
-      await claimWalletOperation(db, {
+      await claimWalletOperation(walletJobCtx(db), {
         ...reference(next),
         claimHandle: newWalletClaimHandle(),
         now: claim.now,
       }),
     ).toBe('not_claimable');
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...claim, result: { kind: 'success' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), { ...claim, result: { kind: 'success' } }),
     ).toBe('superseded');
     expect(
-      await claimWalletOperation(db, {
+      await claimWalletOperation(walletJobCtx(db), {
         ...reference(next),
         claimHandle: newWalletClaimHandle(),
         now: claim.now,
@@ -732,9 +664,9 @@ describe('native wallet instance lifecycle', () => {
     const f = await fixture();
     const op = await f.create();
     const claim = { ...reference(op), claimHandle: newWalletClaimHandle(), now: f.kit.clock.now() };
-    expect(await claimWalletOperation(f.kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(f.kit.env.DB), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),
@@ -792,7 +724,7 @@ describe('native wallet instance lifecycle', () => {
       'UPDATE passes SET removed_at = ?, lifecycle_generation = lifecycle_generation + 1 WHERE id = ?',
       [now, f.pass.id],
     );
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -803,7 +735,7 @@ describe('native wallet instance lifecycle', () => {
     });
     if (!revoke) throw new Error('Revocation not queued');
     const claim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     await run(
       db,
       'UPDATE passes SET removed_at = NULL, lifecycle_generation = lifecycle_generation + 1 WHERE id = ?',
@@ -818,11 +750,12 @@ describe('native wallet instance lifecycle', () => {
       newId: () => crypto.randomUUID(),
       now,
     };
-    expect(await queueWalletOperation(db, restore)).toBeNull();
+    expect(await queueWalletOperation(walletJobCtx(db), restore)).toBeNull();
+    // D6: a revoke pins no pass content, so the restore after it does not void the in-flight revoke.
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...claim, result: { kind: 'success' } }),
-    ).toBe('superseded');
-    const next = await queueWalletOperation(db, restore);
+      await completeWalletOperation(jobCtxOf(f.kit), { ...claim, result: { kind: 'success' } }),
+    ).toBe('succeeded');
+    const next = await queueWalletOperation(walletJobCtx(db), restore);
     expect(next).toMatchObject({
       instanceId: op.instanceId,
       version: revoke.version + 1,
@@ -853,7 +786,7 @@ describe('native wallet instance lifecycle', () => {
       issuingReleaseId: snapshot.issuingReleaseId,
     };
     const otherOp = await f.create(otherProof);
-    const existing = await queueWalletOperation(db, {
+    const existing = await queueWalletOperation(walletJobCtx(db), {
       ...otherProof,
       instanceId: otherOp.instanceId,
       expectedVersion: otherOp.version,
@@ -864,7 +797,7 @@ describe('native wallet instance lifecycle', () => {
     });
     if (!existing) throw new Error('Control revocation not queued');
     const claim = { ...reference(existing), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
 
     // Model the reservation statement before START's credential CAS, without advancing either pass.
     async function reserve(passId: string) {
@@ -896,7 +829,7 @@ describe('native wallet instance lifecycle', () => {
       state: 'pending',
     });
     expect(
-      await queueWalletOperation(db, {
+      await queueWalletOperation(walletJobCtx(db), {
         ...f.proof,
         instanceId: op.instanceId,
         expectedVersion: op.version,
@@ -920,7 +853,7 @@ describe('native wallet instance lifecycle', () => {
       ),
     ).toEqual([{ version: op.version }]);
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...claim, result: { kind: 'success' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), { ...claim, result: { kind: 'success' } }),
     ).toBe('succeeded');
     expect(await getWalletOperation(db, reference(existing))).toMatchObject({ state: 'succeeded' });
   });
@@ -934,7 +867,7 @@ describe('native wallet instance lifecycle', () => {
     const now = f.kit.clock.now();
     const ref = await seedHistoricalOffer(db, op, now, now + 60_000);
     const oldClaim = { ...reference(op), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, oldClaim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), oldClaim)).toBe('claimed');
     await expect(run(db, 'DELETE FROM passes WHERE id = ?', [f.pass.id])).rejects.toThrow(
       /provider retirement incomplete/,
     );
@@ -991,18 +924,8 @@ describe('native wallet instance lifecycle', () => {
         f.pass.id,
       ]),
     ).rejects.toThrow(/pending credential transfer is locked/);
-    expect(
-      await queueWalletOperation(db, {
-        ...f.proof,
-        instanceId: op.instanceId,
-        expectedVersion: op.version,
-        kind: 'revoke',
-        requestKey: crypto.randomUUID(),
-        newId: () => crypto.randomUUID(),
-        now,
-      }),
-    ).toBeNull();
-    const revoke = await queueWalletOperation(db, {
+    // D6: a revoke pins no pass content, so a proof from before the transfer is not a reason to refuse one.
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -1013,16 +936,19 @@ describe('native wallet instance lifecycle', () => {
     });
     if (!revoke) throw new Error('Historical revoke not queued');
     const revokeClaim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, revokeClaim)).toBe('not_claimable');
+    expect(await claimWalletOperation(walletJobCtx(db), revokeClaim)).toBe('not_claimable');
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...oldClaim, result: { kind: 'success' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), { ...oldClaim, result: { kind: 'success' } }),
     ).toBe('superseded');
     expect(await finishCredentialTransfer(jobCtxOf(f.kit), transfer.transferId)).toMatchObject({
       state: 'pending',
     });
-    expect(await claimWalletOperation(db, revokeClaim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), revokeClaim)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...revokeClaim, result: { kind: 'not_issued' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), {
+        ...revokeClaim,
+        result: { kind: 'not_issued' },
+      }),
     ).toBe('succeeded');
     expect(await finishCredentialTransfer(jobCtxOf(f.kit), transfer.transferId)).toMatchObject({
       state: 'pending',
@@ -1109,7 +1035,7 @@ describe('native wallet instance lifecycle', () => {
       'UPDATE passes SET removed_at = ?, lifecycle_generation = lifecycle_generation + 1 WHERE id = ?',
       [now, f.pass.id],
     );
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -1121,7 +1047,7 @@ describe('native wallet instance lifecycle', () => {
     if (!revoke) throw new Error('Revocation not queued');
     const claim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now };
     const revokeScope = { ...refScope, operationVersion: revoke.version };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(await inspectSamsungRefRetirement(f.kit.ctx, revokeScope)).toBe('pending');
     f.kit.clock.advance(1_001);
     expect(
@@ -1131,7 +1057,7 @@ describe('native wallet instance lifecycle', () => {
       }),
     ).toBe('no_external_card');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...claim,
         now: f.kit.clock.now(),
         result: { kind: 'not_issued' },
@@ -1142,7 +1068,7 @@ describe('native wallet instance lifecycle', () => {
       'UPDATE passes SET removed_at = NULL, lifecycle_generation = lifecycle_generation + 1 WHERE id = ?',
       [f.pass.id],
     );
-    const restored = await queueWalletOperation(db, {
+    const restored = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: revoke.version,
@@ -1185,7 +1111,7 @@ describe('native wallet instance lifecycle', () => {
       'UPDATE passes SET removed_at = ?, lifecycle_generation = lifecycle_generation + 1 WHERE id = ?',
       [now, f.pass.id],
     );
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...(await f.current()),
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -1197,7 +1123,7 @@ describe('native wallet instance lifecycle', () => {
     if (!revoke) throw new Error('Revocation not queued');
     const claim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now };
     const revokeScope = { ...refScope, operationVersion: revoke.version };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     f.kit.clock.advance(1_001);
     expect(await inspectSamsungRefRetirement(f.kit.ctx, revokeScope)).toBe('needs_notification');
     expect(
@@ -1207,7 +1133,7 @@ describe('native wallet instance lifecycle', () => {
       }),
     ).toBe('needs_notification');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...claim,
         now: f.kit.clock.now(),
         result: { kind: 'not_issued' },
@@ -1243,7 +1169,7 @@ describe('native wallet instance lifecycle', () => {
     ).toBe(false);
     const snapshot = await f.current();
     expect(await requestWalletRetirement(db, { ...reference(op), ...snapshot, now })).toBe(true);
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...snapshot,
       instanceId: op.instanceId,
       expectedVersion: op.version,
@@ -1254,16 +1180,16 @@ describe('native wallet instance lifecycle', () => {
     });
     if (!revoke) throw new Error('Retirement revoke not queued');
     const claim = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
       (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(false);
-    expect(await markWalletClaimUncertain(db, claim)).toBe(true);
+    expect(await markWalletClaimUncertain(walletJobCtx(db), claim)).toBe(true);
     expect(
       (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(false);
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...claim,
         result: { kind: 'failure', reason: 'unavailable', retryable: true },
       }),
@@ -1272,9 +1198,9 @@ describe('native wallet instance lifecycle', () => {
       (await deletePassRows(db, deletedPass, retention, f.credentialKeysetCommitment)).deleted,
     ).toBe(false);
     const retry = { ...reference(revoke), claimHandle: newWalletClaimHandle(), now: now + 1_001 };
-    expect(await claimWalletOperation(db, retry)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), retry)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, { ...retry, result: { kind: 'success' } }),
+      await completeWalletOperation(jobCtxOf(f.kit), { ...retry, result: { kind: 'success' } }),
     ).toBe('succeeded');
     expect(await retireWalletInstance(db, { ...reference(revoke), now: now + 1_002 })).toBe(true);
     expect((await expiredDeletedPasses(db, now + 1, '', 100)).some((p) => p.id === f.pass.id)).toBe(

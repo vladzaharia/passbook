@@ -41,6 +41,7 @@ import {
   seedHistoricalSamsungRef,
 } from './runtime-historical-fixtures.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
 beforeAll(() => {
@@ -79,7 +80,7 @@ describe('Samsung tombstone retention', () => {
     ).toBe(true);
     expect(
       (
-        await onWalletPassRetired(t.kit.ctx, {
+        await onWalletPassRetired(jobCtxOf(t.kit), {
           orgId: scope.orgId,
           mode: scope.mode,
           passId: pass.passId,
@@ -99,9 +100,9 @@ describe('Samsung tombstone retention', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(t.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),
@@ -261,7 +262,7 @@ describe('Samsung tombstone retention', () => {
     });
     const release = await t.publish('samsung', 1);
     const current = await getWalletProviderReadiness(t.kit.ctx, providerScope);
-    const updated = await queueWalletOperation(db, {
+    const updated = await queueWalletOperation(walletJobCtx(db), {
       ...t.operation,
       kind: 'upsert',
       expectedVersion: t.operation.version,
@@ -278,7 +279,7 @@ describe('Samsung tombstone retention', () => {
       "UPDATE wallet_provider_instance_operations SET state = 'succeeded', completed_at = ? WHERE id = ?",
       [t.kit.clock.now(), updated.id],
     );
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...updated,
       kind: 'revoke',
       expectedVersion: updated.version,
@@ -295,9 +296,9 @@ describe('Samsung tombstone retention', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(t.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),
@@ -371,7 +372,7 @@ describe('Samsung tombstone retention', () => {
     ).toBe(true);
     expect(
       (
-        await onWalletPassRetired(t.kit.ctx, {
+        await onWalletPassRetired(jobCtxOf(t.kit), {
           orgId: scope.orgId,
           mode: scope.mode,
           passId: pass.passId,
@@ -391,9 +392,9 @@ describe('Samsung tombstone retention', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(t.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),
@@ -511,7 +512,7 @@ describe('Samsung tombstone retention', () => {
 
     const old = await getWalletInstanceById(db, scope);
     if (!old) throw new Error('Missing previous incarnation');
-    expect(await reconcileWalletInstance(t.kit.ctx, old)).toBe('scheduled');
+    expect(await reconcileWalletInstance(jobCtxOf(t.kit), old)).toBe('scheduled');
     const retiring = await getWalletInstanceById(db, scope);
     if (!retiring) throw new Error('Missing revoke operation');
     const claim = {
@@ -520,9 +521,9 @@ describe('Samsung tombstone retention', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(t.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),

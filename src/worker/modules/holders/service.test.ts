@@ -23,6 +23,7 @@ import {
 } from '../wallet-providers/instance.ts';
 import { reconcileWalletInstance } from '../wallet-providers/lifecycle.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
+import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 import { getHolderPass, listSweepWaitingPasses, waitingHolderSweepUpper } from './repo.ts';
 import {
   assignHolder,
@@ -230,7 +231,7 @@ describe('hook B: a user verifies an address', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(t.kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(t.kit.env.DB), claim)).toBe('claimed');
     expect(
       await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,

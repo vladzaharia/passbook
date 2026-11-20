@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { credentialRefKeysetCommitment } from '../passes/credential-keyset.ts';
 import {
   ensureSamsungFetchRef,
@@ -21,6 +22,7 @@ import {
   inspectSamsungRetirement,
   retireSamsungUnpromotedRef,
 } from './repo-callbacks-retirement.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
 beforeAll(() => {
@@ -31,7 +33,7 @@ describe('Samsung unpromoted reference retirement', () => {
   it('requires the captured keyset to prove an empty reference set and complete retirement', async () => {
     const t = await setupSamsungCallbacks({ reference: false });
     const db = t.kit.env.DB;
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...t.operation,
       kind: 'revoke',
       expectedVersion: t.operation.version,
@@ -58,7 +60,7 @@ describe('Samsung unpromoted reference retirement', () => {
       now: t.kit.clock.now(),
     };
     expect(await inspectSamsungRefRetirement(t.kit.ctx, scope)).toBe('no_external_card');
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     const claimHash = await walletClaimHash(claim.claimHandle);
     const oldKey = t.kit.env.KEK_V1;
     const newKey = btoa('z'.repeat(32));
@@ -80,7 +82,7 @@ describe('Samsung unpromoted reference retirement', () => {
       await retireExpiredUnpromotedRef(t.kit.ctx, { ...scope, claimHandle: claim.claimHandle }),
     ).toBe('no_external_card');
     expect(
-      await completeWalletOperation(t.kit.ctx, { ...claim, result: { kind: 'not_issued' } }),
+      await completeWalletOperation(jobCtxOf(t.kit), { ...claim, result: { kind: 'not_issued' } }),
     ).toBe('succeeded');
     expect(await persistSamsungTombstone(t.kit.ctx, scope)).toBe(true);
     try {
@@ -97,7 +99,7 @@ describe('Samsung unpromoted reference retirement', () => {
     const t = await setupSamsungCallbacks({ promoted: false });
     const db = t.kit.env.DB;
     const initial = t.operation;
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...initial,
       kind: 'revoke',
       expectedVersion: initial.version,
@@ -126,7 +128,7 @@ describe('Samsung unpromoted reference retirement', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     const oldKey = t.kit.env.KEK_V1;
     const newKey = btoa('z'.repeat(32));
     const newCommitment = await credentialRefKeysetCommitment({ ...t.kit.env, KEK_V1: newKey });
@@ -159,7 +161,7 @@ describe('Samsung unpromoted reference retirement', () => {
       await retireExpiredUnpromotedRef(t.kit.ctx, { ...scope, claimHandle: claim.claimHandle }),
     ).toBe('no_external_card');
     expect(
-      await completeWalletOperation(t.kit.ctx, { ...claim, result: { kind: 'not_issued' } }),
+      await completeWalletOperation(jobCtxOf(t.kit), { ...claim, result: { kind: 'not_issued' } }),
     ).toBe('succeeded');
     expect(await persistSamsungTombstone(t.kit.ctx, scope)).toBe(true);
     expect((await t.call({ token: await t.token() })).status).toBe(204);
@@ -175,7 +177,7 @@ describe('Samsung unpromoted reference retirement', () => {
     });
     if (!pass) throw new Error('Missing restored pass');
     await t.renewEvidence();
-    const restored = await queueWalletOperation(db, {
+    const restored = await queueWalletOperation(walletJobCtx(db), {
       ...initial,
       kind: 'upsert',
       expectedVersion: revoke.version,
@@ -212,7 +214,7 @@ describe('Samsung unpromoted reference retirement', () => {
   it('preserves an existing promoted ref across a same-holder revoke and restore', async () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...t.operation,
       kind: 'revoke',
       expectedVersion: t.operation.version,
@@ -231,9 +233,9 @@ describe('Samsung unpromoted reference retirement', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(t.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),
@@ -262,7 +264,7 @@ describe('Samsung unpromoted reference retirement', () => {
       passId: t.pass.id,
     });
     if (!pass) throw new Error('Missing restored pass');
-    const restored = await queueWalletOperation(db, {
+    const restored = await queueWalletOperation(walletJobCtx(db), {
       ...t.operation,
       kind: 'upsert',
       expectedVersion: revoke.version,

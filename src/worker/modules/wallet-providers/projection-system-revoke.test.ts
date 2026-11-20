@@ -24,6 +24,7 @@ import { SYSTEM_AUTHOR, SYSTEM_REVIEWER } from './projection-system-authority.ts
 import { updateCompiler } from './projection-v2-test-fixtures.ts';
 import { selectProjectionCandidates } from './repo-projection-store.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 const holderLoss: FidelityItem = {
   capability: 'field.back',
@@ -190,7 +191,7 @@ describe('revoke claims on a system release', () => {
     expect(
       await requestWalletRetirement(db, { ...ref, version: issued.version, ...proof, now }),
     ).toBe(true);
-    const revoke = await queueWalletOperation(db, {
+    const revoke = await queueWalletOperation(walletJobCtx(db), {
       ...proof,
       instanceId,
       expectedVersion: issued.version,
@@ -201,7 +202,7 @@ describe('revoke claims on a system release', () => {
     });
     if (!revoke) throw new Error('Revoke not queued');
     expect(
-      await claimWalletOperation(db, {
+      await claimWalletOperation(walletJobCtx(db), {
         ...ref,
         version: revoke.version,
         claimHandle: newWalletClaimHandle(),
