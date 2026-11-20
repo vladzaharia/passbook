@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`build keys of the baked templates > are unchanged by the wallets extension (snapshot taken before it existed) 1`] = `
+exports[`build keys of the baked templates > are pinned (snapshot) 1`] = `
 {
   "henrys-blue": "15834f9d93b05f91b7c2d23f6be4f8676e97503583bff3e7a52469715042d722",
   "henrys-copper": "f054c14cfd1888638c7fdc970f397c7a96a8d5c5d43d88503dc2b1339a8b0584",

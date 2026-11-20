@@ -8,12 +8,6 @@ import {
 } from './projection-contract.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
-export {
-  insertProjectionApprovalStmt,
-  insertProjectionCandidateStmt,
-  insertProjectionReleaseStmt,
-} from './repo-projection-write.ts';
-
 export interface ProjectionCandidate extends Omit<CandidateRow, 'orgId' | 'provider'> {
   orgId: string;
   /** The keyset the candidate was authored under; the insert guard requires it to be the pinned one. */
@@ -24,6 +18,8 @@ export interface ProjectionCandidate extends Omit<CandidateRow, 'orgId' | 'provi
   sourceReleaseHash: string;
   accountId: string;
   accountRevision: number;
+  /** The account `authority_epoch` the candidate was authored under; approvals and releases follow it. */
+  accountEpoch: number;
   providerIdentityHash: string;
   projection: NativeProjection;
 }
@@ -43,7 +39,8 @@ const candidateColumns = `id, template_id AS templateId, org_id AS orgId, mode, 
   author_id AS authorId, version_author_id AS versionAuthorId, created_at AS createdAt,
   source_release_id AS sourceReleaseId, source_release_generation AS sourceReleaseGeneration,
   source_release_hash AS sourceReleaseHash, provider_account_id AS accountId,
-  provider_account_revision AS accountRevision, provider_identity_hash AS providerIdentityHash,
+  provider_account_revision AS accountRevision, provider_account_epoch AS accountEpoch,
+  provider_identity_hash AS providerIdentityHash,
   projection_json AS projectionJson, credential_keyset_commitment AS credentialKeysetCommitment`;
 function decode(row: StoredCandidate): ProjectionCandidate | null {
   try {

@@ -11,6 +11,7 @@ export interface ProjectionApprovalBinding {
   provider: NativeProvider;
   accountId: string;
   accountRevision: number;
+  accountEpoch?: number | undefined;
   providerIdentityHash: string;
   releaseId: string;
 }
@@ -30,7 +31,9 @@ export async function isCurrentApprovedProjection(
     metadata.mode !== binding.mode ||
     metadata.provider !== binding.provider ||
     metadata.accountId !== binding.accountId ||
-    metadata.accountRevision !== binding.accountRevision ||
+    (binding.accountEpoch === undefined
+      ? metadata.accountRevision !== binding.accountRevision
+      : metadata.accountEpoch !== binding.accountEpoch) ||
     metadata.providerIdentityHash !== binding.providerIdentityHash
   )
     return false;

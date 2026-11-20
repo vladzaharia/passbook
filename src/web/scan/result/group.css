@@ -31,7 +31,7 @@
 }
 .scan-group li[data-state="refused"] > span:last-child {
   font-weight: 600;
-  color: var(--scan-refused);
+  color: color-mix(in oklab, var(--scan-refused) 62%, var(--sd-strong));
 }
 .scan-group li[data-state="already"] > span:last-child {
   color: var(--scan-heads);
@@ -46,4 +46,69 @@
   bottom: 0;
   padding-bottom: 8px;
   background: var(--scan-card);
+}
+
+/* Handheld: one disc per person under the identity (handheld design 5, bundle). */
+.scan-group-people {
+  display: grid;
+  gap: 10px;
+}
+.scan-group-people ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scan-group-people li {
+  display: grid;
+  flex: 1 1 0;
+  justify-items: center;
+  gap: 6px;
+  min-width: 56px;
+  max-width: 78px;
+}
+.scan-group-disc {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font: 700 15px / 1 var(--pk-font-sans);
+  letter-spacing: 0.02em;
+}
+.scan-group-people li[data-state="in"] .scan-group-disc {
+  background: var(--scan-ok);
+  color: var(--scan-ok-on);
+}
+.scan-group-people li[data-state="already"] .scan-group-disc {
+  background: var(--scan-heads);
+  color: var(--scan-heads-on);
+}
+.scan-group-people li[data-state="refused"] .scan-group-disc {
+  background: var(--scan-refused);
+  color: var(--scan-refused-on);
+}
+.scan-group-people li[data-state="pending"] .scan-group-disc {
+  border: 2px dashed var(--sd-muted);
+  color: var(--sd-muted);
+}
+.scan-group-name {
+  max-width: 100%;
+  overflow: hidden;
+  min-height: 20px;
+  color: var(--sd-strong);
+  font: 600 15px / 20px var(--pk-font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-group-people li[data-state="pending"] .scan-group-name {
+  color: var(--sd-muted);
+}
+.scan-group-why {
+  margin: 0;
+  /* Toward the card's own text colour, so the red holds on the dark card too. */
+  color: color-mix(in oklab, var(--scan-refused) 62%, var(--sd-strong));
+  font: 600 16px / 20px var(--pk-font-sans);
 }

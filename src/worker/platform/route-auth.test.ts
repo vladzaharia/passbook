@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { type FakeAuth, fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { CreateApiKeySchema, MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
@@ -21,6 +21,7 @@ import {
   verifiedScopeOf,
 } from './auth.ts';
 import { type AppBindings, requestContext } from './context.ts';
+import { run as runSql } from './db.ts';
 import type { AppEnv } from './env.ts';
 import { handleError } from './error-handler.ts';
 import { createRouter, register } from './openapi.ts';
@@ -38,6 +39,19 @@ import {
 } from './route-auth-legacy.ts';
 
 const ORIGIN = 'https://wallet.test';
+
+// The keys below name org-1. A key's `api` entitlement is checked against its org, and an org with no
+// entitlements row is refused (fail closed), so org-1 exists here as a legacy org (all on: nothing changes).
+beforeAll(async () => {
+  await runSql(
+    env.DB,
+    "INSERT OR IGNORE INTO orgs (id, slug, name, created_at, updated_at) VALUES ('org-1', 'org-1', 'Org 1', 1, 1)",
+  );
+  await runSql(
+    env.DB,
+    "INSERT OR IGNORE INTO org_entitlements (org_id, preset, updated_at) VALUES ('org-1', 'legacy', 1)",
+  );
+});
 type Headers = Record<string, string>;
 type Guard = MiddlewareHandler<AppBindings>;
 type Principal = (fake: FakeAuth) => Headers;
@@ -261,8 +275,13 @@ describe('scope map', () => {
 
 describe('mintable scopes', () => {
   const body = { orgId: 'org-1', name: 'k', scopes: ['passes:read'] };
-  it('are a subset of the scopes, and today they are exactly the ones that existed, plus the brand kit one', () => {
-    expect([...MINTABLE_SCOPES]).toEqual([...Object.keys(LEGACY_SCOPE_CAPABILITY), 'brand:manage']);
+  // `scanning:write` joined when POST /templates/{id}/scan-setup began to accept it (WP4).
+  it('are a subset of the scopes, and today they are exactly the ones that existed, plus the brand kit and scanning setup ones', () => {
+    expect([...MINTABLE_SCOPES]).toEqual([
+      ...Object.keys(LEGACY_SCOPE_CAPABILITY),
+      'brand:manage',
+      'scanning:write',
+    ]);
   });
   it('are all a key can be created with: any other scope is a validation error', () => {
     expect(CreateApiKeySchema.safeParse(body).success).toBe(true);

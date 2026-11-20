@@ -6,6 +6,7 @@ import { AuthorityError } from './authority-error.ts';
 import { identifier, type SetValue, type WhereValue } from './authority-expr.ts';
 import { holderTable, pinWhere } from './authority-pin.ts';
 import type { GrantScope } from './authority-principal.ts';
+import { setRestriction } from './authority-restrict.ts';
 import {
   assignments,
   type BuiltStatement,
@@ -55,6 +56,7 @@ export function buildJoined(
   table: string,
   o: JoinedOptions,
   pin?: string,
+  keyed = false,
 ): BuiltStatement {
   const edge = pick(table, o.via);
   holderTable(tableScope(table), table, pin);
@@ -73,13 +75,16 @@ export function buildJoined(
     throw new AuthorityError('GRANT_BAD_PURPOSE', 'A joined delete takes no set.');
   const cond = Object.keys(o.where).length > 0 ? `${conditions(o.where, params, '')} AND ` : '';
   if (cond === '') throw new AuthorityError('GRANT_BAD_PURPOSE', 'A write needs a where clause.');
-  const sub = scopePredicate(grantId, scope, edge.parent, 'p', params, o.when, table, pin);
+  const sub = scopePredicate(grantId, scope, edge.parent, 'p', params, o.when, table, pin, keyed);
   const exists = `EXISTS (SELECT 1 FROM ${edge.parent} p WHERE p.${edge.key} = ${table}.${edge.column} AND ${sub})`;
   const head = o.delete ? `DELETE FROM ${table}` : `UPDATE ${table} SET ${set}`;
+  // A reference column of the child (one that is not an edge) cannot be re-pointed by a limited key.
+  const refused = keyed && !o.delete && setRestriction(table, o).refuse;
   return {
     sql: `${head} WHERE ${cond}${exists}${returningSql(o.returning)}`,
     params,
     ...(o.require === 'one' ? { lineage: exactlyOne(table, o.where, edge.column) } : {}),
+    ...(refused ? { limitRefused: true as const } : {}),
   };
 }
 
@@ -100,6 +105,7 @@ export function buildInsertJoined(
   table: string,
   o: InsertJoinedOptions,
   pin?: string,
+  keyed = false,
 ): BuiltStatement {
   const edges = edgesOf(table);
   holderTable(tableScope(table), table, pin);
@@ -125,7 +131,7 @@ export function buildInsertJoined(
   const params: SqlValue[] = rows.flat();
   const where = edges.map((e, i) => {
     params.push(o.parents[e.column] ?? null);
-    return `p${i}.${e.key} = ? AND ${scopePredicate(grantId, scope, e.parent, `p${i}`, params, undefined, undefined, pin)}`;
+    return `p${i}.${e.key} = ? AND ${scopePredicate(grantId, scope, e.parent, `p${i}`, params, undefined, undefined, pin, keyed)}`;
   });
   if ((o as InsertOptions).from)
     throw new AuthorityError(

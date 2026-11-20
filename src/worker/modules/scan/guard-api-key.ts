@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
-import type { ScannerAuth } from '../../platform/auth.ts';
+import { API_KEY_LABEL } from '../../platform/api-key-token.ts';
+import { keyCaller, type ScannerAuth } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { reportDenied } from '../../platform/denied.ts';
 import {
@@ -16,7 +17,7 @@ import { apiKeyActs, keyBoundTo, orgAccessRevisionOf } from './repo-api-key.ts';
 import { getScanner, type ScannerRow } from './repo-device.ts';
 
 export const DEVICE_HEADER = 'x-passbook-device';
-export const API_KEY_TOKEN = /^wlt_/;
+export const API_KEY_TOKEN = API_KEY_LABEL;
 
 /** A key opens only these calls: read a code, act on it, undo its own scan. */
 const KEY_ROUTE = /^\/api\/v1\/scan\/(?:resolve|actions|scans\/[^/]+\/undo)$/;
@@ -31,12 +32,12 @@ export interface KeyTerminal {
 }
 
 /**
- * `Bearer wlt_` plus `x-passbook-device`: the key names the terminal it acts as. Org-bound keys
+ * `Bearer` key (`pb_`, `pbp_`, `pbo_` or the older `wlt_`) plus `x-passbook-device`: the key names the terminal it acts as. Org-bound keys
  * only, listing `scans:write`; the terminal must be in the key's own org and mode (anything else
  * is "not found", so the header cannot probe another tenant), live, and a terminal.
  */
 export async function keyTerminalOf(c: Context<AppBindings>, token: string): Promise<KeyTerminal> {
-  const key = await c.var.stores.apiKeys.resolve(token);
+  const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
   if (!key) throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
   if (!key.scopes.includes('scans:write')) {
     reportDenied(c, 'MISSING_SCOPE', key);

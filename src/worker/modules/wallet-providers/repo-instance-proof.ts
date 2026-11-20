@@ -1,4 +1,22 @@
+import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
+
+/**
+ * D2: on the send path (`byEpoch`) an operation that recorded an account epoch follows the epoch, so a same-identity
+ * rotation (which moves the revision only) does not stale it; inbound callbacks and offers keep the revision (PE5c).
+ */
+function accountPin(
+  byEpoch: boolean,
+  op: string,
+  row: string,
+  revision: string,
+  opRevision: string,
+  epoch: string,
+): string {
+  if (!byEpoch) return `${row}.${revision} = ${op}.${opRevision}`;
+  return `((${op}.account_epoch IS NULL AND ${row}.${revision} = ${op}.${opRevision})
+    OR (${op}.account_epoch IS NOT NULL AND ${row}.${epoch} IS ${op}.account_epoch))`;
+}
 
 function alias(value: string): string {
   if (!/^[a-z][a-z0-9_]*$/i.test(value)) throw new Error('Invalid trusted SQL alias');
@@ -15,6 +33,7 @@ export function walletInstanceProofSql(
   nowSql: string,
   allowRestore = false,
   requiredKind?: 'revoke',
+  byEpoch = false,
 ): string {
   const i = alias(instanceAlias);
   const op = alias(operationAlias);
@@ -48,7 +67,8 @@ export function walletInstanceProofSql(
       JOIN orgs owner ON owner.id = p.org_id
       JOIN wallet_provider_accounts account ON account.id = ${i}.account_id
         AND account.org_id = ${i}.org_id AND account.mode = ${i}.mode AND account.provider = ${i}.provider
-        AND account.revision = ${op}.account_revision AND account.credential_id IS NOT NULL
+        AND ${accountPin(byEpoch, op, 'account', 'revision', 'account_revision', 'authority_epoch')}
+        AND account.credential_id IS NOT NULL
         AND account.revoked_at IS NULL
       WHERE ((p.id = ${i}.pass_id AND p.org_id = ${i}.org_id AND p.mode = ${i}.mode)
         AND (p.version = ${op}.pass_version AND p.revision = ${op}.pass_revision
@@ -90,7 +110,7 @@ export function walletInstanceProofSql(
                 AND exact_projection.adapter_revision = ${op}.adapter_revision
                 AND exact_projection.audience_policy_revision = ${op}.policy_revision)
                 AND ((exact_candidate.provider_account_id = ${i}.account_id
-                  AND exact_candidate.provider_account_revision = ${op}.account_revision)
+                  AND ${accountPin(byEpoch, op, 'exact_candidate', 'provider_account_revision', 'account_revision', 'provider_account_epoch')})
                   AND EXISTS (SELECT 1 FROM template_releases original_identity
                     JOIN template_candidates initial_candidate ON initial_candidate.id = original_identity.candidate_id
                     JOIN template_approvals initial_approval ON initial_approval.id = original_identity.approval_id
@@ -134,7 +154,7 @@ export function walletInstanceProofSql(
                 AND (evidence.testing_mode_off = 'Y' AND evidence.verified_at <= original.created_at
                   AND original.created_at < evidence.expires_at))))
               AND (approval.reviewer_id != candidate.author_id
-                AND (candidate.version_author_id IS NULL OR approval.reviewer_id != candidate.version_author_id)
+                AND ${versionAuthorIndependentSql('candidate', 'approval.reviewer_id')}
                 AND original.adapter_revision = ${op}.adapter_revision
                 AND original.audience_policy_revision = ${op}.policy_revision)))))
     )
@@ -147,9 +167,10 @@ export function walletInstanceOperationCurrentSql(
   operationAlias: string,
   nowSql: string,
   requiredKind?: 'revoke',
+  byEpoch = false,
 ): string {
   const i = alias(instanceAlias);
   const op = alias(operationAlias);
   return `((${op}.instance_id = ${i}.id AND ${op}.id = ${i}.desired_operation_id
-    AND ${op}.version = ${i}.desired_version) AND ${walletInstanceProofSql(i, op, nowSql, false, requiredKind)})`;
+    AND ${op}.version = ${i}.desired_version) AND ${walletInstanceProofSql(i, op, nowSql, false, requiredKind, byEpoch)})`;
 }

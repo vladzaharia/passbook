@@ -75,7 +75,10 @@ export function walletRetirementIntentStatements(
   ];
 }
 
-/** The dirty marker survives a crash between requesting retirement and queuing its revoke. */
+/**
+ * The dirty marker survives a crash between requesting retirement and queuing its revoke. D6: the request pins no
+ * pass content, so an edit after reconcile's read does not block the retirement; the pass of the instance is the lineage.
+ */
 export async function requestRetirement(
   db: D1Database,
   p: WalletOperationRef & {
@@ -95,24 +98,9 @@ export async function requestRetirement(
         AND i.desired_version = ? AND i.lifecycle IN ('active', 'revoking', 'revoked')
         AND i.credential_keyset_commitment = ${pinnedKeysetSql}
         AND ${desiredOperationKeysetSql('i')} AND ${retirementProjectionSql('i')}
-        AND EXISTS (SELECT 1 FROM passes p WHERE p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode
-          AND p.version = ? AND p.revision = ? AND p.lifecycle_generation = ?
-          AND p.credential_generation = ? AND p.release_id IS ?)
+        AND EXISTS (SELECT 1 FROM passes p WHERE p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode)
         RETURNING id`,
-      [
-        p.now,
-        p.now,
-        p.instanceId,
-        p.orgId,
-        p.mode,
-        p.provider,
-        p.version,
-        p.passVersion,
-        p.passRevision,
-        p.lifecycleGeneration,
-        p.passCredentialGeneration,
-        p.issuingReleaseId,
-      ],
+      [p.now, p.now, p.instanceId, p.orgId, p.mode, p.provider, p.version],
     ),
     stmt(
       db,
@@ -122,22 +110,9 @@ export async function requestRetirement(
         AND i.lifecycle IN ('active', 'revoking', 'revoked')
         AND i.credential_keyset_commitment = ${pinnedKeysetSql}
         AND ${desiredOperationKeysetSql('i')} AND ${retirementProjectionSql('i')}
-        AND EXISTS (SELECT 1 FROM passes p WHERE p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode
-          AND p.version = ? AND p.revision = ? AND p.lifecycle_generation = ?
-          AND p.credential_generation = ? AND p.release_id IS ?)
+        AND EXISTS (SELECT 1 FROM passes p WHERE p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode)
       ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0`,
-      [
-        p.instanceId,
-        p.orgId,
-        p.mode,
-        p.provider,
-        p.version,
-        p.passVersion,
-        p.passRevision,
-        p.lifecycleGeneration,
-        p.passCredentialGeneration,
-        p.issuingReleaseId,
-      ],
+      [p.instanceId, p.orgId, p.mode, p.provider, p.version],
     ),
   ]);
   return results[0]?.results.length === 1;

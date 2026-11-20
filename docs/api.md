@@ -9,7 +9,7 @@ page covers what it does not: conventions, headers, common tasks.
 
 1. Ask your operator for an organization. Sign in, switch the console to Test mode.
 2. API keys, Create: Test, scopes `passes:read passes:write templates:read`. Copy the secret.
-3. `export KEY=wlt_...  BASE=https://passbook.mobile/api/v1`
+3. `export KEY=pb_test_...  BASE=https://passbook.mobile/api/v1`
 4. `curl -H "Authorization: Bearer $KEY" $BASE/api-keys/me` shows the key's org, mode and scopes.
 5. `curl -H "Authorization: Bearer $KEY" $BASE/templates` and pick a `templateId`.
 6. A template needs an approved release; a second person approves it in Templates.
@@ -20,8 +20,8 @@ page covers what it does not: conventions, headers, common tasks.
 
 ## Authenticate
 
-1. Admin console, API keys, Create. Pick an org (or none for all orgs), scopes, optional expiry.
-2. Copy the secret (`wlt_<prefix>_<secret>`). It is shown once; only a hash is stored.
+1. Admin console, API keys, Create. Pick an org (or none for all orgs), a type, scopes or a role, expiry.
+2. Copy the secret (`pb_live_<prefix>_<secret>`). It is shown once; only a hash is stored.
 3. Send it as a bearer token. No cookie, no CSRF header.
 
 ```
@@ -42,6 +42,39 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
+| `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
+
+### Token types
+
+| Type | Owner | Secret starts | Rules |
+|---|---|---|---|
+| Service | the org | `pb_live_` / `pb_test_` | made by a member with `integrations:manage`; expiry optional |
+| Personal | one member | `pbp_live_` / `pbp_test_` | made by any member for themself; expiry required, at most 90 days; works only while the membership and user are active, and within the member's current roles; no `scans:write` |
+| Platform | the operator, no org | `pbo_live_` / `pbo_test_` | made by a platform admin; expiry required (at most 90 days), IP allowlist required, no roles |
+
+Keys made before this carry `wlt_` and keep working as service (org) or platform (no org) keys, with the same scopes. An older platform key has no expiry or IP list: it is not expired, the console marks it, and each use logs `API_KEY_PLATFORM_UNBOUNDED`.
+A secret scanner can match the labels. Keys are never logged: the logger and audit rows redact every label.
+
+**Personal keys and sessions.** A personal key is its own credential, bounded by the membership and the user, not by a browser session: signing out or revoking a session does not end it. Revoke it, retire it, or remove the membership.
+
+**Roles.** `roles` holds role presets: `org_admin`, `integration_admin`, `template_author`, `template_reviewer`,
+`template_publisher`, `pass_operator`, `read_only`. The role's scopes are copied into the key's `scopes` when it is made and the role stays as a label: a bundle that gains a scope later never reaches an existing key. A creator can give a role only if every scope in it is within their own roles
+(`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` is never in a role.
+
+**Expiry and retirement.** `expiresAt` is fixed when the key is made. `POST /api-keys/{id}/retire` with
+`{"orgId": ..., "retireAt": <ms>}` ends the key at that instant, once, never after `expiresAt`
+(`409 API_KEY_RETIRE_SET` for a second call). Revoking is immediate and permanent.
+
+**IP allowlist.** `ipAllow` lists addresses or CIDR ranges (`203.0.113.0/24`, `2001:db8::/32`), set when the key is made
+and never changed; ranges wider than an IPv4 /8 or IPv6 /32, or lists that cover every address, are refused (`422 API_KEY_IP_TOO_BROAD`). A request from any other address, or with none, is `401 INVALID_API_KEY`, the same as a wrong key.
+Only `cf-connecting-ip` is read. The key list shows the network of the last use.
+
+**Template and style limits.** `templateIds` and `passStyles` are stored with the key and never change. A limited key reaches
+only passes (and their events, scans, prints and webhook endpoints) of its templates: with `passStyles` a template counts when every
+one of its styles is allowed, so a template that gains a style drops out; with both, a template must pass both. Limits only narrow:
+the key holds no more than the same key without them. A route takes a limited key only where it enforces the limit and answers every
+other one `403 API_KEY_RESTRICTED_ROUTE`. Today only `GET /api-keys/me` takes one; the pass, holder, template and webhook routes
+adopt the limit as they move to the grant builder's reads and writes. Only pass, holder, template and NFC scopes can be limited.
 
 Tenant list requests name an organization with `orgId`. An org-bound key may omit it (on pass create
 and on pass, holder and bundle lists it defaults to the key's org) and must otherwise send exactly
@@ -66,7 +99,7 @@ only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanne
 | Header | Where | Meaning |
 |---|---|---|
 | `Authorization: Bearer <key>` | all key routes | the API key |
-| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result |
+| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
 | `If-Match: <version>` | pass update | optimistic concurrency; stale is `412 VERSION_CONFLICT` |
 | `x-passbook-mode` | console sessions | `test` selects Test mode; keys use their own mode |
 
@@ -74,14 +107,14 @@ Scans use the body's `idempotencyKey` (a UUIDv7), not the header.
 
 ### Who am I
 
-`GET /api-keys/me` (any valid key) returns `id`, `name`, `prefix`, `scopes`, `orgId` (null for a
-platform key), `mode`, `createdAt`, `lastUsedAt` and `expiresAt`. Never the secret or its hash.
+`GET /api-keys/me` (any valid key) returns `id`, `name`, `prefix`, `scopes`, `kind`, `roles`, `orgId` (null for a
+platform key), `mode`, `createdAt`, `lastUsedAt`, `expiresAt` and `retireAt`. Never the secret or its hash.
 
 ### Test mode
 
 A key is live or test. It takes the mode the console is in when it is created (the dialog's mode is
-the console's mode; a `mode` in the request body is ignored for a session). The secret is
-`wlt_<prefix>_<secret>` either way and carries no mode marker: the console shows a Test badge, and
+the console's mode; a `mode` in the request body is ignored for a session). The secret says which:
+`pb_test_...` or `pb_live_...` (older keys: `wlt_`, no marker). The console shows a Test badge, and
 `GET /api-keys/me` returns `mode`. An admin session is test when it sends `x-passbook-mode: test`. Lists and
 counts show only the caller's mode. A key reads and changes only its own mode; another mode's pass or bundle is
 `404`. A session reads either mode by id (`mode` is returned) but changes only the mode it is in: otherwise
@@ -127,7 +160,8 @@ The pass wizard selects Apple releases through `/templates/eligible` and pins th
 
 API keys are managed with a session; a key cannot list, create or revoke keys. Platform keys
 (`orgId=null`) need a platform admin and no membership. An organization's keys need membership with
-`integrations:read` (list) or `integrations:manage` (create, revoke) in that org; a platform
+`integrations:read` (list) or `integrations:manage` (create, revoke) in that org; any member can create and
+revoke their own personal key; a platform
 admin without membership cannot manage them. A creator can delegate only scopes their own roles
 grant (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`); a platform admin can delegate any. Overview and audit `orgId` values are explicit platform
 filters and never grant tenant authority.
@@ -213,6 +247,10 @@ will use this scheme.
 ```
 
 Branch on `code`, not `detail`. Quote `requestId` when asking for help.
+
+`FEATURE_NOT_INCLUDED` (403) carries `feature`: the organization's plan lacks it, so ask PassBook to turn it on. Every key call of an organization also needs its `api` feature: `off` refuses all, `read` allows only GET and HEAD (so `POST` reads such as `/broadcasts/preview` and `/scan/lookup` are refused too), `full` allows all. Platform-wide keys are not limited by it. Operations that need a feature carry `x-feature` in the OpenAPI document.
+
+Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google`, `wallet.samsung`), `print` and `nfc` (Basic to bind tags, Secure to create keysets). A channel the plan lacks reads `{ "on": false, "source": "platform", "reason": "not_included" }`, creating a print, binding a tag or turning `nfc.tags` on answers `FEATURE_NOT_INCLUDED`, and the settings entry for `nfc.tags` carries `blockedByPlan`. A downgrade only pauses: passes, copies, prints and tag bindings stay, and an upgrade turns them back on.
 
 ## Approved template releases
 
@@ -388,7 +426,7 @@ effective approved release is used (see Changes for existing clients).
 
 - `input` is validated against the template's `inputs` schema. See `GET /api/v1/templates/{id}`.
 - `Idempotency-Key` (1 to 200 chars): a retry with the same key and body returns the first result.
-  The same key with a different body is 409 `IDEMPOTENCY_KEY_REUSED`.
+  The same key with a different body is 422 `IDEMPOTENCY_KEY_REUSED`.
 - `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
   (`docs/design/blueprints-and-templates.md`).
 - Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
@@ -681,7 +719,7 @@ feed takes `?apiVersion=` and defaults to the newest.
 
 ## Scanner console
 
-Console routes need a session and `scanning:manage`. They act on the console mode (`x-passbook-mode`); a scanner, setup or event of the other mode is a 404.
+Console routes need a session and `scanning:manage`. They act on the console mode (`x-passbook-mode`); a scanner, setup or event of the other mode is a 404. The one exception is `POST /templates/{id}/scan-setup`, which a key with `scanning:write` also calls: it acts in the key's org and mode, its events and session have no user creator, and the audit rows name the key.
 
 - `POST /scanners/{id}/pairing`, `/pair-here`, `/token` on a removed scanner answer 409 `SCANNER_REVOKED`. Send `?restore=true` to restore it; the audit log records `scanner.restore`.
 - `GET /scan-staff?orgId=&q=&limit=&cursor=` returns `items`, and `hasMore` with `nextCursor` when there are more. Pass `nextCursor` as `cursor` for the next page.
@@ -776,7 +814,7 @@ Session only: no API key reaches these routes (an export hands over every holder
 - `POST /orgs/{orgId}/close`: a platform admin, or an org admin with `{ "confirmSlug": "<slug>" }`. 409 `ORG_HELD` under a legal hold. Passes stop updating; 30 days to export.
 - `POST /orgs/{orgId}/reopen`: platform admin, inside the 30 days (409 `ORG_REOPEN_WINDOW`, `ORG_PURGING`).
 - `GET /orgs/{orgId}/lifecycle`: `status` (`active`, `suspended`, `closed`), `closedAt`, `purgeAfter`, `held`, `canReopen`. `GET /platform/closed-orgs` lists closed orgs.
-- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (24 hours): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template files, without secrets.
+- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (24 hours): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template, brand and member photo files, without secrets or key material. `repo-export.ts` lists the entities and `repo-export-excluded.ts` the tables left out, each with its reason.
 
 ## Brand kit
 

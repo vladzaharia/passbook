@@ -6,7 +6,7 @@ import type {
   TemplateScanSetupBodySchema,
 } from '../../../shared/contracts/scan-template-setup.ts';
 import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
-import type { SessionAuth } from '../../platform/auth.ts';
+import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -14,8 +14,6 @@ import { resolveTemplate } from '../passes/builder.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { getTemplate } from '../templates/repo.ts';
 import { storedAdmits } from './admits.ts';
-import { captureEventAuthority } from './events.ts';
-import { archiveEvent, createEvent } from './events-mutations.ts';
 import {
   listedEventValues,
   ownEventValues,
@@ -23,12 +21,8 @@ import {
   setupEvent,
   setupSession,
 } from './repo-template-setup.ts';
-import { captureConsoleSessionCountAuthority } from './scanning-session-dto.ts';
-import {
-  createScanningSession,
-  loadScanningSession,
-  updateScanningSession,
-} from './scanning-sessions.ts';
+import { loadScanningSession } from './scanning-sessions.ts';
+import { setupActor } from './template-setup-actor.ts';
 import {
   checkInOf,
   eventSource,
@@ -51,7 +45,7 @@ const DAY = 86_400_000;
  */
 export async function setupTemplateScan(
   ctx: ServiceContext,
-  auth: SessionAuth,
+  auth: SessionAuth | ApiKeyAuth,
   mode: Mode,
   templateId: string,
   input: Input,
@@ -65,20 +59,23 @@ export async function setupTemplateScan(
   const [own, listed] = await Promise.all([
     source.own
       ? ownEventValues(db, orgId, mode, templateId, source.own, now - 2 * DAY)
-      : { values: [], more: false },
+      : { values: [], more: false, unparsed: 0 },
     source.list
       ? listedEventValues(db, orgId, mode, templateId, source.list, now - 2 * DAY)
-      : { values: [], more: false },
+      : { values: [], more: false, unparsed: 0 },
   ]);
+  if (own.unparsed + listed.unparsed > 0)
+    ctx.log.warn('scan.template_setup.start_skipped', {
+      orgId,
+      code: 'START_NOT_ISO',
+      count: own.unparsed + listed.unparsed,
+    });
   const plan = planEvents(templateId, source, [...own.values, ...listed.values], now);
   const planned = plan.events;
   const truncated = plan.more || own.more || listed.more;
   const eventStyle = source.own !== null || source.list !== null;
   const timeZone = input.timeZone ?? planned.find((e) => e.timeZone)?.timeZone ?? 'UTC';
-  const read = await tenantAuthorityOf(ctx, auth, orgId, 'scanning:read');
-  const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, read);
-
-  const eventAuthority = async () => captureEventAuthority(ctx, auth, authority);
+  const actor = await setupActor(ctx, auth, authority, mode);
   const ensureEvent = async (e: PlannedEvent): Promise<Made | null> => {
     const found = await setupEvent(db, orgId, mode, e.key);
     if (found) return { id: found.id, name: e.name, created: false };
@@ -97,14 +94,7 @@ export async function setupTemplateScan(
       return null;
     }
     try {
-      const made = await createEvent(
-        ctx,
-        auth.userId,
-        mode,
-        body.data,
-        await eventAuthority(),
-        e.key,
-      );
+      const made = await actor.createEvent(body.data, e.key);
       return { id: made.id, name: made.name, created: true };
     } catch (error) {
       // A concurrent call may hold the key: take its event. Anything else is the caller's error.
@@ -113,12 +103,14 @@ export async function setupTemplateScan(
       return { id: winner.id, name: e.name, created: false };
     }
   };
-  /** Archive what this call made and nothing holds, so no stray event is left. */
+  /** Archive what this call made and no session or scanner uses, so no stray event is left and no one else's is dropped. */
   const discard = async (events: readonly Made[]) => {
     for (const e of events.filter((made) => made.created)) {
       try {
-        await archiveEvent(ctx, auth.userId, e.id, await eventAuthority());
+        await actor.archiveEvent(e.id, { unattached: true });
       } catch (cleanup) {
+        // Another call attached it: it is that call's event now.
+        if (cleanup instanceof AppError && cleanup.code === 'EVENT_IN_USE') continue;
         ctx.log.error('scan.template_setup.cleanup_failed', {
           orgId,
           code: 'SETUP_CLEANUP_FAILED',
@@ -136,13 +128,16 @@ export async function setupTemplateScan(
     made: Made[] = [],
   ): Promise<TemplateScanSetup> => {
     let row = await loadScanningSession(ctx, sessionId, mode, orgId);
-    const unchanged = (): TemplateScanSetup => ({
-      session: { id: row.id, name: row.name },
-      created: false,
-      events: [],
-      noEvents: false,
-      truncated,
-    });
+    const unchanged = async (): Promise<TemplateScanSetup> => {
+      await discard(made);
+      return {
+        session: { id: row.id, name: row.name },
+        created: false,
+        events: [],
+        noEvents: false,
+        truncated,
+      };
+    };
     // A session that admits every pass type, or one whose scope no longer reads, is left as it is.
     if (!storedAdmits(row.accepts)) return unchanged();
     const room = MAX_EVENTS - (storedAdmits(row.accepts)?.eventIds.length ?? 0);
@@ -164,7 +159,10 @@ export async function setupTemplateScan(
         row.setup_template_id === templateId && !admits.templateIds.includes(templateId)
           ? [...admits.templateIds, templateId]
           : admits.templateIds;
-      if (attach.length === 0 && templateIds === admits.templateIds)
+      // Events this call made beyond the session's room stay unattached: archive them.
+      const over = () => made.filter((e) => !have.has(e.id) && !attach.includes(e));
+      if (attach.length === 0 && templateIds === admits.templateIds) {
+        await discard(over());
         return {
           session: { id: row.id, name: row.name },
           created: false,
@@ -172,15 +170,13 @@ export async function setupTemplateScan(
           noEvents: eventStyle && have.size === 0,
           truncated,
         };
+      }
       try {
-        await updateScanningSession(
-          ctx,
-          auth.userId,
-          sessionId,
-          { accepts: { templateIds, eventIds: [...have, ...attach.map((e) => e.id)] } },
-          authority,
-          countAuthority,
-        );
+        await actor.updateSession(sessionId, {
+          templateIds,
+          eventIds: [...have, ...attach.map((e) => e.id)],
+        });
+        await discard(over());
         return {
           session: { id: row.id, name: row.name },
           created: false,
@@ -224,15 +220,7 @@ export async function setupTemplateScan(
           : { templateIds: [templateId] },
       ...(checkIn ? { settings: { checkIn } } : {}),
     });
-    const session = await createScanningSession(
-      ctx,
-      auth.userId,
-      mode,
-      body,
-      authority,
-      countAuthority,
-      templateId,
-    );
+    const session = await actor.createSession(body, templateId);
     return {
       session: { id: session.id, name: session.name },
       created: true,

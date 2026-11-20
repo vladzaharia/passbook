@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { countD1 } from '../../../../test/helpers/index.ts';
+import { run } from '../../platform/db.ts';
 import { putPassCheckIn } from '../passes/check-in.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { clearSettingsCache } from '../settings/service.ts';
@@ -35,6 +36,36 @@ export function registerRoundTrips() {
     const loser = (await trips(() => act(s.headers, codeOf(pass)))) - base;
     expect(winner).toBeLessThanOrEqual(5);
     expect(loser).toBeLessThanOrEqual(5);
+  });
+
+  it('flags a bundled pass on the act answer within the same five trips, and no other', async () => {
+    const s = await kit.scanner({ templateIds: [tpl] });
+    await act(s.headers, codeOf(await kit.scanPass(tpl)));
+    const a = await kit.scanPass(tpl);
+    const b = await kit.scanPass(tpl);
+    const plain = await kit.scanPass(tpl);
+    const id = kit.fx.ids.id();
+    await run(
+      kit.env.DB,
+      `INSERT INTO bundles (id, org_id, mode, name, token, created_at) VALUES (?, ?, 'live', 'Pair', ?, ?)`,
+      [id, kit.org.id, `h1:${kit.fx.ids.token()}`, kit.clock.now()],
+    );
+    for (const [i, p] of [a, b].entries())
+      await run(
+        kit.env.DB,
+        'INSERT INTO bundle_passes (bundle_id, pass_id, position) VALUES (?, ?, ?)',
+        [id, p.id, i],
+      );
+    const base = await guardTrips(s.headers);
+    let bundled: Awaited<ReturnType<typeof out>> | null = null;
+    const n =
+      (await trips(async () => {
+        bundled = await out(await act(s.headers, codeOf(a)));
+      })) - base;
+    expect(n).toBeLessThanOrEqual(5);
+    expect(bundled).toMatchObject({ kind: 'ok', inBundle: true });
+    const alone = await out(await act(s.headers, codeOf(plain)));
+    expect(alone.inBundle).toBeUndefined();
   });
 
   it('keeps a cold policy-and-photo admission within five trips after the guard', async () => {

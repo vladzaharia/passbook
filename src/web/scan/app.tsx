@@ -35,6 +35,7 @@ export interface ScanAppViewProps {
     staff?: string | null;
     state: CapsuleState;
     mode?: string;
+    direction?: string;
     chips?: ReactNode;
     menu?: ReactNode;
     onTitle?: () => void;
@@ -52,6 +53,8 @@ export interface ScanAppViewProps {
   card?: ReactNode;
   buddy?: ReactNode;
   tint?: Tint;
+  /** A tap on the tint outside the card dismisses the verdict. */
+  onTint?: () => void;
   announcement?: Announcement | null;
   on?: {
     pair?: (code: string) => void;
@@ -63,6 +66,8 @@ export interface ScanAppViewProps {
     blockAction?: () => void;
     openRecent?: () => void;
     undo?: () => void;
+    /** The queue line's View: This shift, scrolled to what is waiting. */
+    viewQueue?: () => void;
   };
 }
 
@@ -82,6 +87,7 @@ export function ScanAppView({
   card,
   buddy,
   tint = 'none',
+  onTint,
   announcement = null,
   branding,
   on = {},
@@ -124,6 +130,7 @@ export function ScanAppView({
       sidebar={screen.s === 'loop' ? sidebar : null}
       camera={screen.s === 'loop' ? camera : null}
       tint={tint}
+      {...(onTint ? { onTint } : {})}
       cardMode={screen.s === 'loop' ? 'result' : 'boot'}
       card={body}
       dock={
@@ -134,6 +141,7 @@ export function ScanAppView({
                 entry={strip}
                 {...(on.openRecent ? { onOpen: on.openRecent } : {})}
                 {...(on.undo ? { onUndo: on.undo } : {})}
+                {...(on.viewQueue ? { onView: on.viewQueue } : {})}
               />
             }
           >
@@ -151,6 +159,7 @@ export function ScanAppView({
             staff={capsule.staff ?? null}
             state={capsule.state}
             {...(capsule.mode ? { mode: capsule.mode } : {})}
+            {...(capsule.direction ? { direction: capsule.direction } : {})}
             chips={capsule.chips}
             menu={capsule.menu}
             {...(capsule.onTitle ? { onTitle: capsule.onTitle } : {})}

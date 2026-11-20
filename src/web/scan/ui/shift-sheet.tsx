@@ -1,136 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import type { z } from 'zod';
-import type { ScanReason } from '@/shared/contracts/scan.ts';
-import type { ScanSummarySchema } from '@/shared/contracts/scan-session.ts';
-import { SCAN_REASON_COPY } from '@/shared/copy/scan.ts';
-import { formatCount, formatTime } from '../../lib/format.ts';
+import { useCallback, useState } from 'react';
+import { formatTime } from '../../lib/format.ts';
+import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { Button } from '../../ui/button.tsx';
 import { ErrorState } from '../../ui/error-state.tsx';
 import { Sheet, SheetContent } from '../../ui/sheet.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
-import type { ScanState } from '../machine/types.ts';
+import type { Counts, ScanState } from '../machine/types.ts';
+import type { QueueView } from '../offline/queue-view.ts';
 import { OfflineStatus } from './offline-status.tsx';
-
-type Summary = z.infer<typeof ScanSummarySchema>;
-type Scope = 'device' | 'session';
-
-const VALUE_LABEL = { add: 'Added', take: 'Taken', set: 'Set', use_up: 'Used up' } as const;
-
-const reasonLabel = (reason: string) =>
-  SCAN_REASON_COPY[reason as ScanReason]?.headline.replace(/\s*\{.*$/, '') ?? reason;
-
-function Rows({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: { key: string; label: string; value: string }[];
-}) {
-  if (!rows.length) return null;
-  return (
-    <section className="flex flex-col gap-2" aria-label={title}>
-      <h3 className="text-sm font-semibold text-fg-muted">{title}</h3>
-      <ul className="flex flex-col gap-1">
-        {rows.map((row) => (
-          <li key={row.key} className="flex justify-between gap-3">
-            <span>{row.label}</span>
-            <strong className="tabular-nums">{row.value}</strong>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function Totals({ summary, timeZone }: { summary: Summary; timeZone: string | null }) {
-  return (
-    <>
-      <dl className="grid grid-cols-2 gap-4">
-        {[
-          ['Scans', summary.total],
-          ['Done', summary.ok],
-          ['Heads-up', summary.headsUp],
-          ['Refused', summary.refused],
-        ].map(([label, value]) => (
-          <div key={label}>
-            <dt className="text-sm text-fg-muted">{label}</dt>
-            <dd className="text-3xl font-semibold tabular-nums">{value}</dd>
-          </div>
-        ))}
-      </dl>
-      <Rows
-        title="By action"
-        rows={summary.byAction.map((a) => ({
-          key: a.actionId,
-          label: a.label,
-          value: formatCount(a.count),
-        }))}
-      />
-      <Rows
-        title="Value"
-        rows={summary.byValue.map((v) => ({
-          key: v.kind,
-          label: `${VALUE_LABEL[v.kind]} (${formatCount(v.count)})`,
-          value: formatCount(v.amount),
-        }))}
-      />
-      <Rows
-        title="By hour"
-        rows={summary.byHour.map((h) => ({
-          key: String(h.start),
-          label: formatTime(h.start, timeZone ?? undefined),
-          value: formatCount(h.count),
-        }))}
-      />
-      <Rows
-        title="Not accepted"
-        rows={summary.byReason.map((r) => ({
-          key: r.reason,
-          label: reasonLabel(r.reason),
-          value: formatCount(r.count),
-        }))}
-      />
-      <Rows
-        title="By staff"
-        rows={summary.byStaff.map((s) => ({
-          key: s.staffId ?? 'none',
-          label: s.name ?? 'No one signed in',
-          value: `${formatCount(s.count)}${s.overrides ? ` · ${s.overrides} overrides` : ''}`,
-        }))}
-      />
-    </>
-  );
-}
-
-/** What the next person should know: the overrides of this shift, newest first. */
-function Handover({ summary, timeZone }: { summary: Summary; timeZone: string | null }) {
-  const { count, latest } = summary.overrides;
-  return (
-    <section className="flex flex-col gap-2" aria-label="Handover">
-      <h3 className="text-sm font-semibold text-fg-muted">Handover</h3>
-      {count ? (
-        <>
-          <p>
-            {count} {count === 1 ? 'override' : 'overrides'} this shift.
-          </p>
-          <ul className="flex flex-col gap-1 text-sm">
-            {latest.map((o) => (
-              <li key={o.scanId}>
-                {formatTime(o.at, timeZone ?? undefined)} ·{' '}
-                {o.approvedBy ?? o.staffName ?? 'Unknown'}
-                {o.reason ? ` · ${reasonLabel(o.reason)}` : ''}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <p>No overrides this shift.</p>
-      )}
-    </section>
-  );
-}
+import { Handover, type Scope, Totals } from './shift-parts.tsx';
+import { ShiftTray } from './shift-tray.tsx';
 
 export function ShiftSheet({
   open,
@@ -142,9 +23,18 @@ export function ShiftSheet({
   onEnd,
   pending,
   offline,
+  focus,
+  counts,
+  onEnding,
 }: {
+  /** The door's count, for the tray's bar. */
+  counts?: Counts | null;
+  /** The tray's End shift: asks to end (the confirm is this sheet with `ending`). */
+  onEnding?: () => void;
   open: boolean;
   ending: boolean;
+  /** `queue`: scrolled to the offline queue when it opens (the strip's View). */
+  focus?: 'queue';
   api: ScanApi;
   since: number;
   /** A Manager in a session may switch to the whole session's totals. */
@@ -153,7 +43,13 @@ export function ShiftSheet({
   onEnd: () => void;
   pending: number;
   /** The offline mode, the list's age and what is queued; absent in tests that do not care. */
-  offline?: { state: ScanState['offline']; queue: ScanState['queue']; onSync: () => void };
+  offline?: {
+    state: ScanState['offline'];
+    queue: ScanState['queue'];
+    onSync: () => void;
+    /** What is saved on the device, read through the offline helpers. */
+    rows?: () => Promise<QueueView[]>;
+  };
 }) {
   const [scope, setScope] = useState<Scope>('device');
   const query = useQuery({
@@ -163,8 +59,62 @@ export function ShiftSheet({
     staleTime: 0,
     gcTime: 0,
   });
+  const toQueue = useCallback(
+    (el: HTMLElement | null) => {
+      if (el && focus === 'queue') el.scrollIntoView?.({ block: 'start' });
+    },
+    [focus],
+  );
   const summary = query.data;
   const timeZone = summary?.timeZone ?? null;
+  const phone = useMediaQuery(PHONE);
+  const scopeNode = sessionTotals ? (
+    <fieldset className="flex gap-2">
+      <legend className="sr-only">Totals for</legend>
+      {(['device', 'session'] as const).map((value) => (
+        <Button
+          key={value}
+          variant={scope === value ? 'primary' : 'secondary'}
+          aria-pressed={scope === value}
+          className={phone ? 'min-h-14 pointer-coarse:min-h-14' : ''}
+          onClick={() => setScope(value)}
+        >
+          {value === 'device' ? 'This device' : 'This session'}
+        </Button>
+      ))}
+    </fieldset>
+  ) : null;
+  const offlineNode = offline ? (
+    <div ref={toQueue} className="scroll-mt-4">
+      <OfflineStatus
+        offline={offline.state}
+        queue={offline.queue}
+        {...(timeZone ? { timeZone } : {})}
+        {...(offline.rows ? { rows: offline.rows } : {})}
+        onSync={offline.onSync}
+      />
+    </div>
+  ) : null;
+  const errorNode = query.isError ? (
+    <ErrorState error={query.error} onRetry={() => query.refetch()} />
+  ) : null;
+  if (phone && open)
+    return (
+      <ShiftTray
+        ending={ending}
+        since={since}
+        summary={summary}
+        timeZone={timeZone}
+        counts={counts ?? null}
+        pending={pending}
+        scope={scopeNode}
+        offline={offlineNode}
+        error={errorNode}
+        onClose={onClose}
+        onEnd={onEnd}
+        {...(onEnding ? { onEnding } : {})}
+      />
+    );
   return (
     <Sheet
       open={open}
@@ -176,32 +126,9 @@ export function ShiftSheet({
         <div className="flex flex-col gap-5 p-5">
           <Buddy scene="scan" pose="count" size="lg" mood="happy" />
           <p className="text-sm text-fg-muted">Since {formatTime(since, timeZone ?? undefined)}</p>
-          {sessionTotals ? (
-            <fieldset className="flex gap-2">
-              <legend className="sr-only">Totals for</legend>
-              {(['device', 'session'] as const).map((value) => (
-                <Button
-                  key={value}
-                  variant={scope === value ? 'primary' : 'secondary'}
-                  aria-pressed={scope === value}
-                  onClick={() => setScope(value)}
-                >
-                  {value === 'device' ? 'This device' : 'This session'}
-                </Button>
-              ))}
-            </fieldset>
-          ) : null}
-          {offline ? (
-            <OfflineStatus
-              offline={offline.state}
-              queue={offline.queue}
-              {...(timeZone ? { timeZone } : {})}
-              onSync={offline.onSync}
-            />
-          ) : null}
-          {query.isError ? (
-            <ErrorState error={query.error} onRetry={() => query.refetch()} />
-          ) : null}
+          {scopeNode}
+          {offlineNode}
+          {errorNode}
           {summary ? <Totals summary={summary} timeZone={timeZone} /> : null}
           {ending ? (
             <>

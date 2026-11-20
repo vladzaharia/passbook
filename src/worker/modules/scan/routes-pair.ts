@@ -35,7 +35,7 @@ const ipOf = (c: Context<AppBindings>) => ipPrefix(c.req.header('cf-connecting-i
 export const scanPairRoutes = createRouter();
 // This router is mounted over the whole scan API. A terminal's or a till's bearer is no ambient
 // credential (a cross-site page cannot set it), so only those requests skip the origin check.
-const BEARER = /^Bearer\s+(?:wls|wlt)_\S+$/i;
+const BEARER = /^Bearer\s+(?:wls|wlt|pb|pbp|pbo)_\S+$/i;
 scanPairRoutes.use('*', (c, next) =>
   BEARER.test(c.req.header('authorization') ?? '') ? next() : sameOriginOnly(c, next),
 );

@@ -12,8 +12,9 @@ import { setupTemplateScan } from './template-setup.ts';
 type Router = ReturnType<typeof createRouter>;
 
 /**
- * POST /{id}/scan-setup on the templates router, which already takes a session for every write.
- * Scanning management has no API-key scope, so a key never reaches this route.
+ * POST /{id}/scan-setup on the templates router. A console session with `scanning:manage`, or a key with
+ * the `scanning:write` scope, calls it; the router's session-only write guard steps aside for this path.
+ * The org must have scanning (`scanning.devices` not 0), refused as FEATURE_NOT_INCLUDED.
  */
 export function registerTemplateScanSetup(router: Router): void {
   register(
@@ -23,13 +24,14 @@ export function registerTemplateScanSetup(router: Router): void {
       method: 'post',
       path: '/{id}/scan-setup',
       summary: 'Set up scanning for a template: its events and a session, once',
+      auth: { scope: 'scanning:write', capability: 'scanning:manage', feature: 'scanning.devices' },
       params: IdParamSchema,
       body: TemplateScanSetupBodySchema,
       response: TemplateScanSetupSchema,
     },
     async (c) => {
       const auth = c.var.auth;
-      if (auth?.kind !== 'session') throw new UnauthenticatedError();
+      if (auth?.kind !== 'session' && auth?.kind !== 'api_key') throw new UnauthenticatedError();
       return c.json(
         await setupTemplateScan(
           serviceContext(c),

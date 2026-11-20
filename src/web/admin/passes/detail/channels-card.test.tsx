@@ -67,6 +67,25 @@ describe('Channels card', () => {
     expect(screen.queryByText(CHANNEL_COPY.nothingOn)).toBeNull();
   });
 
+  it('says a channel the plan does not include is not available, with the reason in its tooltip', async () => {
+    renderTags(
+      <ChannelsCard pass={pass()} readOnly={false} />,
+      handlers(
+        effective({
+          paper: off('not_included', 'platform'),
+          nfc: off('not_included', 'platform'),
+        }),
+      ),
+    );
+    await screen.findByRole('switch', { name: 'Apple Wallet' });
+    expect(screen.queryByRole('switch', { name: 'Paper' })).toBeNull();
+    const why = screen.getAllByLabelText(
+      'Not available. Not included for this organization. Ask PassBook to turn it on. Copies stay as they are.',
+    );
+    expect(why).toHaveLength(2);
+    expect(why[0]).toHaveTextContent('Not available');
+  });
+
   it('asks before turning a channel off, then overrides this pass only', async () => {
     const { fetchMock } = renderTags(
       <ChannelsCard pass={pass()} readOnly={false} />,

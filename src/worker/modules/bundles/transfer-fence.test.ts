@@ -23,6 +23,7 @@ import {
 } from '../wallet-providers/instance.ts';
 import { reconcileWalletInstance } from '../wallet-providers/lifecycle.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
+import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 import { bundleEmailSnapshot } from './email-binding.ts';
 import { bundleArchive, bundleForToken, bundleMembers, bundlePass } from './public-service.ts';
 import { bundleChecks } from './repo-delivery-fence.ts';
@@ -179,7 +180,7 @@ describe('bundle credential transfer fences', () => {
       claimHandle: newWalletClaimHandle(),
       now: kit.clock.now(),
     };
-    expect(await claimWalletOperation(kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(kit.env.DB), claim)).toBe('claimed');
     expect(
       await completeWalletOperation(jobCtxOf(kit), {
         ...claim,

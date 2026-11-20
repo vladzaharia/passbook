@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
-import { first } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { key, setupTillKit } from './guard-api-key-test-fixtures.ts';
 import type { ScanKit } from './test-kit.ts';
 
@@ -49,6 +49,22 @@ describe('a scans:write key acting as a terminal', () => {
       idempotencyKey: key(),
     });
     expect(undone.status).toBe(200);
+  });
+
+  it('keeps working when the org has api off: doors are scanning, not API', async () => {
+    const k = await t.till();
+    await run(
+      kit.env.DB,
+      "INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'api', '\"off\"', 1)",
+      [kit.org.id],
+    );
+    try {
+      const pass = await kit.scanPass(t.templateId);
+      expect((await t.call(k.headers, '/resolve', t.read(pass.id))).status).toBe(200);
+      expect((await t.call(k.headers, '/actions', t.request(pass.id))).status).toBe(200);
+    } finally {
+      await run(kit.env.DB, 'DELETE FROM org_entitlement_overrides WHERE org_id = ?', [kit.org.id]);
+    }
   });
 
   it("is capped at the terminal's own role: Desk on a Desk terminal, Door on a Door terminal", async () => {

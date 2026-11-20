@@ -1,4 +1,5 @@
 import { handleCapabilityChange } from '../modules/channels/capability.ts';
+import { handleEntitlementApply } from '../modules/channels/entitlement-apply.ts';
 import { handleAppleBump, handleReplaceCode } from '../modules/channels/jobs.ts';
 import { handleConnectionWebhook, handlePassRefresh } from '../modules/connections/jobs.ts';
 import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts';
@@ -11,6 +12,7 @@ import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
 import { handleCredentialCheck } from '../modules/wallet-providers/account-check-job.ts';
 import { handleCredentialMigrate } from '../modules/wallet-providers/credential-migrate-job.ts';
 import { handleEnrolmentHold } from '../modules/wallet-providers/enrolment-hold-job.ts';
+import { handleProjectionSystem } from '../modules/wallet-providers/projection-system-job.ts';
 import { handleWebhookDeliver } from '../modules/webhooks/jobs.ts';
 import type { ServiceContext } from '../platform/service-context.ts';
 import type { Job, JobKind, JobOf } from './types.ts';
@@ -32,8 +34,10 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'wallet.enrolment_hold': handleEnrolmentHold,
   'wallet.credential_migrate': handleCredentialMigrate,
   'wallet.credential_check': handleCredentialCheck,
+  'wallet.projection_system': handleProjectionSystem,
   'channel.apple_bump': handleAppleBump,
   'channel.capability': handleCapabilityChange,
+  'channel.entitlement': handleEntitlementApply,
   'channel.replace_code': handleReplaceCode,
   'prints.bulk': handlePrintsBulk,
 };
@@ -67,9 +71,13 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.credential_check':
       return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.projection_system':
+      return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.apple_bump':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.capability':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'channel.entitlement':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'channel.replace_code':
       return JOB_HANDLERS[job.kind](job, ctx);

@@ -1,9 +1,12 @@
+import type { MiddlewareHandler } from 'hono';
+import { Hono } from 'hono';
+import type { RouterRoute } from 'hono/types';
 import { expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { createApp } from '../app.ts';
 import { isKnownGuard } from './auth.ts';
 import { isPublicHandler } from './openapi.ts';
-import { hasKeyAccess } from './openapi-security.ts';
+import { declareKeyAccess, enforcesKeyAccess } from './openapi-security.ts';
 
 // Every route needs a decision: a guard the inventory recognises (requireCaller from `auth`,
 // requireSession, requireAdmin, or a guard declaring key access), `public: true`, or a line below.
@@ -68,8 +71,47 @@ const PUBLIC = [
 
 /** Scanner principal or pairing code, checked by modules/scan/guard*.ts. */
 const SCANNER = [
+  'DELETE /api/v1/scan/staff',
+  'GET /api/v1/scan/activity',
+  'GET /api/v1/scan/branding/logo',
+  'GET /api/v1/scan/live',
+  'GET /api/v1/scan/live/inside',
+  'GET /api/v1/scan/live/passes/:passId/assets/member.png',
+  'GET /api/v1/scan/passes/:passId/assets/:name',
+  'GET /api/v1/scan/roll-call',
+  'GET /api/v1/scan/roll-call/:id',
+  'GET /api/v1/scan/roster',
+  'GET /api/v1/scan/scans',
+  'GET /api/v1/scan/session',
+  'GET /api/v1/scan/staff',
+  'GET /api/v1/scan/stats',
+  'GET /api/v1/scan/summary',
+  'GET /api/v1/scan/tag-enrollments/pending',
+  'GET /api/v1/scan/visitors',
+  'POST /api/v1/scan/actions',
+  'POST /api/v1/scan/batch',
+  'POST /api/v1/scan/device',
+  'POST /api/v1/scan/lookup',
+  'POST /api/v1/scan/mark-out',
+  'POST /api/v1/scan/overrides',
+  'POST /api/v1/scan/overrides/:scanId/note',
   'POST /api/v1/scan/pair',
+  'POST /api/v1/scan/passes/:passId/photo',
   'POST /api/v1/scan/pair/preview',
+  'POST /api/v1/scan/resolve',
+  'POST /api/v1/scan/roll-call',
+  'POST /api/v1/scan/roll-call/:id/end',
+  'POST /api/v1/scan/roll-call/:id/marks',
+  'POST /api/v1/scan/role',
+  'POST /api/v1/scan/scans/:scanId/undo',
+  'POST /api/v1/scan/session/open-now',
+  'POST /api/v1/scan/sign-out',
+  'POST /api/v1/scan/staff',
+  'POST /api/v1/scan/tag-enrollments/:id/complete',
+  'POST /api/v1/scan/tag-enrollments/:id/decline',
+  'POST /api/v1/scan/tags/bind',
+  'POST /api/v1/scan/tags/bindings/:bindingId/undo',
+  'POST /api/v1/scan/tags/inspect',
   'POST /api/v1/scan/unpair',
 ];
 
@@ -101,8 +143,9 @@ const toRegex = (path: string) =>
   );
 
 /** Routes (method and path) that no recognised guard covers and that are not declared public. */
-function undecidedRoutes(): string[] {
-  const routes = createApp({ stores: fakeAuth().stores }).routes;
+function undecidedRoutes(
+  routes: readonly RouterRoute[] = createApp({ stores: fakeAuth().stores }).routes,
+): string[] {
   const groups = new Map<string, number[]>();
   routes.forEach((r, i) => {
     if (r.method === 'ALL') return;
@@ -124,7 +167,7 @@ function undecidedRoutes(): string[] {
     );
     const decided =
       isPublicHandler(route.handler) ||
-      covering.some((g) => isKnownGuard(g.handler) || hasKeyAccess(g.handler));
+      covering.some((g) => isKnownGuard(g.handler) || enforcesKeyAccess(g.handler));
     if (!decided) found.push(key);
   }
   return found.sort();
@@ -143,4 +186,24 @@ it("has a decision for every route, and only today's undecided ones are listed",
 it('leaves no /api/v1 route open except the API document and "who am I"', () => {
   const open = PUBLIC.filter((route) => route.includes(' /api/v1/')).sort();
   expect(open).toEqual(['GET /api/v1/docs', 'GET /api/v1/openapi.json', 'GET /api/v1/session']);
+});
+
+it('names a scanner route that only a document-only key declaration covers', () => {
+  const noop: MiddlewareHandler = (_c, next) => next();
+  const app = new Hono();
+  app.use('/api/v1/scan/resolve', declareKeyAccess(noop, { read: [], documentOnly: true }));
+  app.post('/api/v1/scan/resolve', (c) => c.text('x'));
+  app.post('/api/v1/scan/whatever', (c) => c.text('x'));
+  expect(undecidedRoutes(app.routes)).toEqual([
+    'POST /api/v1/scan/resolve',
+    'POST /api/v1/scan/whatever',
+  ]);
+});
+
+it('counts a guard that enforces key access as a decision', () => {
+  const noop: MiddlewareHandler = (_c, next) => next();
+  const app = new Hono();
+  app.use('/api/v1/x', declareKeyAccess(noop, { read: ['passes:read'] }));
+  app.get('/api/v1/x', (c) => c.text('x'));
+  expect(undecidedRoutes(app.routes)).toEqual([]);
 });

@@ -39,7 +39,8 @@ const OrgQuerySchema = z.object({
  */
 export const rollCallRoutes = createRouter();
 const read = requireTenantSessionOrApiKey(['scans:read']);
-const write = requireTenantSessionOrApiKey(['scans:write']);
+// A till key starts, confirms and ends a roll call for its terminals: `scanning.devices`, not `api`, governs it.
+const write = requireTenantSessionOrApiKey(['scans:write'], { tillKey: true });
 rollCallRoutes.use(
   '*',
   declareKeyAccess(
@@ -62,6 +63,7 @@ async function callerOf(c: C, q: z.infer<typeof OrgQuerySchema>, write: boolean)
     auth,
     orgId,
     write ? 'passes:operate' : 'scanning:read',
+    { tillKey: true },
   );
   const who =
     auth.kind === 'session'

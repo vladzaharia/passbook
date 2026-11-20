@@ -32,7 +32,7 @@ export interface EventValues {
 export const addEventInsert = (
   g: Grant,
   e: EventValues,
-  createdBy: string,
+  createdBy: string | null,
   now: number,
 ): GrantedStatement =>
   g.insertSelect(

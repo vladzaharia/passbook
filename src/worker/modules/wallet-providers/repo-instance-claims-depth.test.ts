@@ -11,6 +11,7 @@ import {
   markUncertain,
   settleClaim,
 } from './repo-instance-claims.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 type CapturedStatement = { sql: string; params: unknown[] };
 
@@ -90,8 +91,8 @@ describe('wallet operation claim SQL and atomicity', () => {
     const seen: CapturedStatement[] = [];
     const captured = interceptDatabase(db, seen);
 
-    expect(await claimOperation(db, claim)).toBe('claimed');
-    expect(await markUncertain(db, claim)).toBe(true);
+    expect(await claimOperation(walletJobCtx(db), claim)).toBe('claimed');
+    expect(await markUncertain(walletJobCtx(db), claim)).toBe(true);
     await run(
       db,
       `INSERT INTO wallet_provider_sync_targets
@@ -105,9 +106,9 @@ describe('wallet operation claim SQL and atomicity', () => {
        BEGIN SELECT RAISE(ABORT, 'forced target failure'); END`,
     );
     try {
-      await expect(settleClaim(captured, { ...claim, now: settledAt })).rejects.toThrow(
-        'forced target failure',
-      );
+      await expect(
+        settleClaim(walletJobCtx(captured), { ...claim, now: settledAt }),
+      ).rejects.toThrow('forced target failure');
     } finally {
       await run(db, 'DROP TRIGGER test_claim_settlement_rollback');
     }
@@ -118,7 +119,7 @@ describe('wallet operation claim SQL and atomicity', () => {
         [operation.id],
       ),
     ).toEqual({ state: 'uncertain', last_result_at: null });
-    expect(await settleClaim(captured, { ...claim, now: settledAt })).toBe(true);
+    expect(await settleClaim(walletJobCtx(captured), { ...claim, now: settledAt })).toBe(true);
     expect(
       await first(
         db,
@@ -154,7 +155,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       "UPDATE wallet_provider_sync_targets SET state = 'inflight', next_attempt_at = NULL WHERE operation_id = ?",
       [operation.id],
     );
-    expect(await settleClaim(captured, { ...claim, now: settledAt })).toBe(false);
+    expect(await settleClaim(walletJobCtx(captured), { ...claim, now: settledAt })).toBe(false);
     expect(
       await first(db, 'SELECT state FROM wallet_provider_sync_targets WHERE operation_id = ?', [
         operation.id,
@@ -167,9 +168,9 @@ describe('wallet operation claim SQL and atomicity', () => {
     );
 
     const replacement = { ...claim, hash: 'b'.repeat(64), now: settledAt + 1000 };
-    expect(await claimOperation(db, replacement)).toBe('claimed');
+    expect(await claimOperation(walletJobCtx(db), replacement)).toBe('claimed');
     // A settlement intended for the previous uncertain claim cannot settle a new claimed attempt.
-    expect(await settleClaim(captured, replacement)).toBe(false);
+    expect(await settleClaim(walletJobCtx(captured), replacement)).toBe(false);
     const raw = await outcome(fixture.kit.env, operation.orgId);
     const finish = {
       ...replacement,
@@ -184,17 +185,22 @@ describe('wallet operation claim SQL and atomicity', () => {
       },
       raw,
     };
-    expect(await finishOperation(captured, { ...finish, hash: claim.hash })).toBeNull();
-    expect(await finishOperation(captured, { ...finish, attempt: 1 })).toBeNull();
     expect(
-      await finishOperation(captured, { ...finish, operationId: crypto.randomUUID() }),
+      await finishOperation(walletJobCtx(captured), { ...finish, hash: claim.hash }),
+    ).toBeNull();
+    expect(await finishOperation(walletJobCtx(captured), { ...finish, attempt: 1 })).toBeNull();
+    expect(
+      await finishOperation(walletJobCtx(captured), {
+        ...finish,
+        operationId: crypto.randomUUID(),
+      }),
     ).toBeNull();
     await run(
       db,
       "UPDATE wallet_provider_sync_targets SET state = 'inflight' WHERE operation_id = ?",
       [operation.id],
     );
-    expect(await finishOperation(captured, finish)).toBeNull();
+    expect(await finishOperation(walletJobCtx(captured), finish)).toBeNull();
     await run(
       db,
       "UPDATE wallet_provider_sync_targets SET state = 'retry' WHERE operation_id = ?",
@@ -217,7 +223,7 @@ describe('wallet operation claim SQL and atomicity', () => {
 
     // A failure in the provenance insert must roll the preceding operation UPDATE back.
     await expect(
-      finishOperation(captured, { ...finish, raw: { ...raw, eventHash: 'invalid' } }),
+      finishOperation(walletJobCtx(captured), { ...finish, raw: { ...raw, eventHash: 'invalid' } }),
     ).rejects.toThrow(
       /CHECK constraint failed: length\(event_hash\) = 64 AND event_hash NOT GLOB '\*\[\^0-9/,
     );
@@ -228,8 +234,8 @@ describe('wallet operation claim SQL and atomicity', () => {
         [operation.id],
       ),
     ).toEqual({ state: 'claimed', attempts: 2, claim_hash: replacement.hash });
-    expect(await finishOperation(captured, finish)).toBe('retry');
-    expect(await finishOperation(captured, finish)).toBeNull();
+    expect(await finishOperation(walletJobCtx(captured), finish)).toBe('retry');
+    expect(await finishOperation(walletJobCtx(captured), finish)).toBeNull();
     expect(
       await first(
         db,
@@ -254,9 +260,9 @@ describe('wallet operation claim SQL and atomicity', () => {
     ).toEqual({ count: 1 });
 
     const third = { ...claim, hash: 'e'.repeat(64), now: replacement.now + 5000 };
-    expect(await claimOperation(db, third)).toBe('claimed');
+    expect(await claimOperation(walletJobCtx(db), third)).toBe('claimed');
     expect(
-      await finishOperation(captured, {
+      await finishOperation(walletJobCtx(captured), {
         ...third,
         operationId: operation.id,
         attempt: 3,
@@ -264,7 +270,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       }),
     ).toBeNull(); // The Samsung not-issued proof is only valid for revoke operations.
     expect(
-      await finishOperation(captured, {
+      await finishOperation(walletJobCtx(captured), {
         ...third,
         operationId: operation.id,
         attempt: 3,
@@ -285,7 +291,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       flat(sql).includes('op.claim_hash = ? AND op.state'),
     );
     const notIssued = operationUpdates.find(({ sql }) =>
-      flat(sql).includes("AND op.kind = 'revoke'"),
+      flat(sql).includes("ni.provider = 'samsung'"),
     );
     const revoke = seen.find(({ sql }) =>
       sql.includes("UPDATE wallet_provider_instances AS i SET lifecycle = 'revoked'"),
@@ -294,7 +300,7 @@ describe('wallet operation claim SQL and atomicity', () => {
       throw new Error('Claim UPDATE was not captured');
     expect(
       [settlement, finalization, notIssued, revoke].map(({ params }) => params.length),
-    ).toEqual([16, 28, 30, 11]);
+    ).toEqual([16, 28, 30, 13]);
     for (const { sql } of [settlement, finalization, notIssued]) {
       expect(sql.match(/FROM current_operation proven/g)).toHaveLength(1);
     }
@@ -315,8 +321,8 @@ describe('wallet operation claim SQL and atomicity', () => {
   it('rechecks the desired operation when settling', async () => {
     const db = (await makeEnv()).DB;
     const { claim, operation } = await claimFixture(db);
-    expect(await claimOperation(db, claim)).toBe('claimed');
-    expect(await markUncertain(db, claim)).toBe(true);
+    expect(await claimOperation(walletJobCtx(db), claim)).toBe('claimed');
+    expect(await markUncertain(walletJobCtx(db), claim)).toBe(true);
     await run(
       db,
       `INSERT INTO wallet_provider_sync_targets
@@ -332,7 +338,9 @@ describe('wallet operation claim SQL and atomicity', () => {
       now: claim.now + 1,
     };
     const switchedOperation = interceptDatabase(db, [], () => insertDesiredOperation(db, next));
-    expect(await settleClaim(switchedOperation, { ...claim, now: next.now })).toBe(true);
+    expect(await settleClaim(walletJobCtx(switchedOperation), { ...claim, now: next.now })).toBe(
+      true,
+    );
     expect(
       await first(
         db,
@@ -363,7 +371,7 @@ describe('wallet operation claim SQL and atomicity', () => {
     const db = (await makeEnv()).DB;
     const fixture = await claimFixture(db);
     const { claim, operation } = fixture;
-    expect(await claimOperation(db, claim)).toBe('claimed');
+    expect(await claimOperation(walletJobCtx(db), claim)).toBe('claimed');
     const finish = {
       ...claim,
       operationId: operation.id,
@@ -374,8 +382,8 @@ describe('wallet operation claim SQL and atomicity', () => {
     const stalePass = interceptDatabase(db, [], async () => {
       await run(db, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [operation.passId]);
     });
-    expect(await finishOperation(stalePass, finish)).toBe('superseded');
-    expect(await finishOperation(db, finish)).toBeNull();
+    expect(await finishOperation(walletJobCtx(stalePass), finish)).toBe('superseded');
+    expect(await finishOperation(walletJobCtx(db), finish)).toBeNull();
     expect(
       await first(
         db,

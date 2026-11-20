@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
+import { NOT_INCLUDED } from '@/shared/copy/entitlements.ts';
 import { formatDay } from '@/web/lib/format.ts';
 import { Callout, Card, CardHeader, DependentSettings, SegmentedControl } from '@/web/ui/index.ts';
 import type { Draft, SettingField } from './fields.ts';
@@ -99,6 +100,7 @@ export function SettingsFormContent({
           ceiling === undefined ? null : `Up to ${ceiling}${field.unit ? ` ${field.unit}` : ''}`,
           unset && !changedField ? 'Default' : null,
           entry?.blockedByPlatform ? 'Off for all organizations.' : null,
+          entry?.blockedByPlan ? NOT_INCLUDED : null,
         ].filter(Boolean);
         const all = [...parts, ...orgParts];
         const source = all.length > 0 ? all.join(' · ') : undefined;
@@ -108,6 +110,7 @@ export function SettingsFormContent({
             (entry.updatedAt !== null || changedField)
           : entry?.default != null &&
             !entry.blockedByPlatform &&
+            !entry.blockedByPlan &&
             !resets.has(field.key) &&
             (entry.source === 'org' || changedField);
         const row = (
@@ -125,7 +128,7 @@ export function SettingsFormContent({
                 ? String(entry.default)
                 : undefined
             }
-            disabled={entry?.blockedByPlatform}
+            disabled={entry?.blockedByPlatform || entry?.blockedByPlan}
             onReset={canReset ? () => reset(field) : undefined}
             onChange={(v) => edit(field.key, v)}
           />

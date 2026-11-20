@@ -38,6 +38,7 @@ import { reconcileWalletInstance } from './lifecycle.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { walletProviderStatusRoutes } from './routes-status.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 const base = 'https://wallet.test/api/v1/wallet-providers/passes';
 const makeEnv = installKeysetTestEnv();
@@ -220,9 +221,9 @@ describe('provider pass status read', () => {
       claimHandle: newWalletClaimHandle(),
       now: f.kit.clock.now(),
     };
-    expect(await claimWalletOperation(f.kit.env.DB, ref)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(f.kit.env.DB), ref)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...ref,
         result: {
           kind: 'failure',
@@ -265,9 +266,9 @@ describe('provider pass status read', () => {
     expect(raw).not.toMatch(/accountId|operationId|httpStatus|token|refId|url|callback|rawBody/i);
     f.kit.clock.advance(5_000);
     const retry = { ...ref, now: f.kit.clock.now(), claimHandle: newWalletClaimHandle() };
-    expect(await claimWalletOperation(f.kit.env.DB, retry)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(f.kit.env.DB), retry)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...retry,
         result: { kind: 'success', httpStatus: 200 },
       }),
@@ -352,7 +353,7 @@ describe('provider pass status read', () => {
     };
     const old = await getWalletInstanceById(f.kit.env.DB, oldScope);
     if (!old) throw new Error('Missing old instance');
-    expect(await reconcileWalletInstance(f.kit.ctx, old)).toBe('scheduled');
+    expect(await reconcileWalletInstance(jobCtxOf(f.kit), old)).toBe('scheduled');
     const retiring = await getWalletInstanceById(f.kit.env.DB, oldScope);
     if (!retiring) throw new Error('Missing retiring instance');
     const claim = {
@@ -361,9 +362,9 @@ describe('provider pass status read', () => {
       claimHandle: newWalletClaimHandle(),
       now: f.kit.clock.now(),
     };
-    expect(await claimWalletOperation(f.kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(f.kit.env.DB), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),

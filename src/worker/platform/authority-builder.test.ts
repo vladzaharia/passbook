@@ -554,10 +554,14 @@ describe('M3 to M6', () => {
       [...p.params, s.pass.id, other.s.pass.id],
     );
     expect(unfiltered).toHaveLength(2);
+    // A table with no template dimension is read by no key limited to templates (authority-restrict.test.ts).
+    const noLimitedKey = ' AND (SELECT limit_key FROM actor_ok) IS NULL';
     expect(tenantFilter('x', 'settings', 'org')).toBe(
-      "x.scope = 'org:' || (SELECT org_id FROM actor_ok)",
+      `x.scope = 'org:' || (SELECT org_id FROM actor_ok)${noLimitedKey}`,
     );
-    expect(tenantFilter('o', 'orgs', 'org')).toBe('o.id = (SELECT org_id FROM actor_ok)');
+    expect(tenantFilter('o', 'orgs', 'org')).toBe(
+      `o.id = (SELECT org_id FROM actor_ok)${noLimitedKey}`,
+    );
     expect(code(() => tenantFilter('x', 'users'))).toBe('GRANT_UNGUARDED_TABLE');
   });
 

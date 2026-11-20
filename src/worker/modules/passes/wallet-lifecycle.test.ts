@@ -22,6 +22,7 @@ import { makeProviderTestTemplate } from '../wallet-providers/offers-test-fixtur
 import { runtimeGoogleLegacyFixture } from '../wallet-providers/runtime-integration-fixtures.ts';
 import { drainWalletProviderSync } from '../wallet-providers/sync.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
+import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 import { approveAppleRelease } from './apple-release-test-fixtures.ts';
 import { applyConnectionRecord } from './connection-passes.ts';
 import { finishCredentialTransfer, startCredentialTransfer } from './credential-transfer.ts';
@@ -206,7 +207,7 @@ describe('pass provider lifecycle', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
       await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,
@@ -434,7 +435,7 @@ describe('pass provider lifecycle', () => {
         claimHandle: newWalletClaimHandle(),
         now: t.kit.clock.now(),
       };
-      expect(await claimWalletOperation(db, claim)).toBe('claimed');
+      expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
       expect(
         await completeWalletOperation(jobCtxOf(t.kit), {
           ...claim,

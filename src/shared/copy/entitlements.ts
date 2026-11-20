@@ -5,6 +5,8 @@ export const FEATURES_LABEL = 'Features';
 /** `{feature}` is an ENTITLEMENT_LABEL. */
 export const FEATURE_NOT_INCLUDED_COPY = "{feature} isn't included for this organization.";
 export const FEATURE_ASK = 'Ask PassBook to turn it on.';
+/** A control or row whose feature the plan lacks. */
+export const NOT_INCLUDED = 'Not included for this organization.';
 /** `{feature}` is an ENTITLEMENT_LABEL. */
 export const LIMIT_REACHED_COPY = '{feature}: limit reached for this organization.';
 export const LIMIT_ASK = 'Ask PassBook for more.';

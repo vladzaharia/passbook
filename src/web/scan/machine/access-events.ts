@@ -4,6 +4,7 @@
  * until then the casts below are the only place that knows.
  */
 import type { AssignEvent } from './assign-state.ts';
+import type { BundleEvent } from './bundle-peek.ts';
 import type { BuddyBeat, Draft, ScanEvent, ScanOutcome } from './types.ts';
 
 export type AccessBeat = 'gate' | 'bye' | 'relent';
@@ -22,7 +23,7 @@ export type AccessEvent =
       by: { staff: string | null; device: string | null };
     };
 
-export type MachineEvent = ScanEvent | AccessEvent | AssignEvent;
+export type MachineEvent = ScanEvent | AccessEvent | AssignEvent | BundleEvent;
 
 export type DirectionDraft = Draft & { direction?: 'in' | 'out' };
 

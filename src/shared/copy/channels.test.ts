@@ -10,6 +10,7 @@ describe('channel reason lines', () => {
     ['not enrolled', 'not_enrolled', 'Organization not enrolled', true],
     ['tags off', 'tags_off', 'Tags off', true],
     ['platform printing off', 'printing_off', 'Printing off for all organizations', false],
+    ['not included', 'not_included', 'Not included for this organization', true],
     ['not released', 'not_released', 'Not available yet', false],
     ['no design', 'no_design', 'No design for this template', false],
   ];
@@ -38,5 +39,17 @@ describe('channelWhy', () => {
     });
     expect(channelWhy('paper', 'printing_off').fix).toBe('platform');
     expect(channelWhy('google', 'not_released').fix).toBeNull();
+    // Tags the platform turned off are fixed in Platform settings.
+    expect(channelWhy('nfc', 'tags_off', 'platform')).toEqual({
+      text: 'Off for the platform',
+      fix: 'platform',
+      copiesStay: true,
+    });
+    expect(channelWhy('nfc', 'tags_off', 'org').fix).toBe('org');
+    expect(channelWhy('paper', 'not_included')).toEqual({
+      text: 'Not included for this organization. Ask PassBook to turn it on.',
+      fix: null,
+      copiesStay: true,
+    });
   });
 });

@@ -6,7 +6,10 @@ import { credentialAad, encryptSecret, loadKekRing } from '../../platform/crypto
 import { all, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { readSamsungPromotedRefreshCredentials } from './account-credential-read.ts';
+import {
+  readConfiguredWalletProviderCredentials,
+  readSamsungPromotedRefreshCredentials,
+} from './account-credential-read.ts';
 import { holdEnrolment } from './enrolment-hold.ts';
 import { disableEnrolment, enableEnrolment } from './enrolment-service.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
@@ -51,6 +54,38 @@ describe('Samsung promoted refresh', () => {
       [f.kit.clock.now(), proof.orgId, proof.mode],
     );
     expect(await readSamsungPromotedRefreshCredentials(f.kit.ctx, proof)).toBeNull();
+  });
+});
+
+describe('Samsung and the plan', () => {
+  it('the refresh and the probe read nothing while the plan lacks Samsung Wallet, and read again on upgrade', async () => {
+    const f = await runtimeSamsungLegacyFixture('refresh');
+    const proof = {
+      orgId: f.scope.orgId,
+      mode: f.scope.mode,
+      accountId: f.scope.accountId,
+      accountRevision: f.scope.accountRevision,
+      projectionReleaseId: f.scope.providerReleaseId,
+      instanceId: f.instanceId,
+      refHash: f.refHash,
+      operationVersion: f.version,
+    };
+    const scope = { orgId: proof.orgId, mode: proof.mode, provider: 'samsung' as const };
+    const expected = { accountId: proof.accountId, accountRevision: proof.accountRevision };
+    const plan = (preset: string) =>
+      run(env.DB, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [preset, proof.orgId]);
+    expect(await readSamsungPromotedRefreshCredentials(f.kit.ctx, proof)).not.toBeNull();
+    expect(
+      await readConfiguredWalletProviderCredentials(f.kit.ctx, scope, expected),
+    ).not.toBeNull();
+    await plan('trial');
+    expect(await readSamsungPromotedRefreshCredentials(f.kit.ctx, proof)).toBeNull();
+    expect(await readConfiguredWalletProviderCredentials(f.kit.ctx, scope, expected)).toBeNull();
+    await plan('legacy');
+    expect(await readSamsungPromotedRefreshCredentials(f.kit.ctx, proof)).not.toBeNull();
+    expect(
+      await readConfiguredWalletProviderCredentials(f.kit.ctx, scope, expected),
+    ).not.toBeNull();
   });
 });
 

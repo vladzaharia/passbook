@@ -51,6 +51,7 @@ export async function originalScope(
       mode: op.mode,
       accountId: op.accountId,
       accountRevision: op.accountRevision,
+      ...(op.accountEpoch === null ? {} : { accountEpoch: op.accountEpoch }),
       providerIdentityHash: original.providerIdentityHash,
       providerReleaseId: op.projectionReleaseId,
     },

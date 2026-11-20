@@ -16,7 +16,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { assertTakesTag } from '../nfc/pass-state.ts';
-import { assertSessionLevel, bindPolicy, tagsEnabled } from '../nfc/policy.ts';
+import { assertSessionLevel, bindPolicy, tagsRefusal } from '../nfc/policy.ts';
 import { activeBinding, type PassFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
 import { addBind, type BindPlan, bindChecks, type TagActor } from '../nfc/repo-tags-write.ts';
@@ -70,8 +70,8 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   const scannerId = rights.scannerId;
   if (req.pool)
     throw new ValidationError('Loaner tags are not available yet.', [], 'TAG_POOL_UNSUPPORTED');
-  if (!(await tagsEnabled(ctx, orgId)))
-    throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
+  const off = await tagsRefusal(ctx, orgId);
+  if (off) throw off;
   await bumpTagCap(db, req.preview ? 'preview' : 'bind', scannerId, ctx.clock.now());
   await ensureCredentialRefKeyset(db, ctx.env);
   const identity = await identifyRead(ctx, actor, req.tag);

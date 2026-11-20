@@ -82,6 +82,8 @@ export const ACCESS_COPY = {
       other: "Couldn't apply that tap.",
     },
     blocked: 'Sync stopped. Sign in again.',
+    stalled: 'Not saving. {n} to sync',
+    retry: 'Try again',
     endedLost: "This roll call ended. {n} marks weren't saved.",
     notSaved: "{n} marks weren't saved.",
     notSavedOne: "1 mark wasn't saved.",

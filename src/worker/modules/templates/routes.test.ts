@@ -1865,3 +1865,43 @@ describe('contract', () => {
     expect(text).not.toContain('templates/');
   });
 });
+
+describe('template uploads feature', () => {
+  const setUploads = (orgId: string, value: 0 | 1) =>
+    run(
+      env.DB,
+      'INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, ?, ?, 1)',
+      [orgId, 'templates.uploads', String(value)],
+    );
+
+  it('refuses the archive upload when the org lacks templates.uploads, and accepts it when on', async () => {
+    const author = await member(org.id, ['template_author']);
+    await setUploads(org.id, 0);
+    try {
+      const before = await all(env.DB, 'SELECT upload_id FROM template_imports WHERE org_id = ?', [
+        org.id,
+      ]);
+      const res = await upload(zipOf(basicPackage()), `orgId=${org.id}`, author.headers);
+      await expectProblem(res, 403, 'FEATURE_NOT_INCLUDED');
+      expect(((await res.json()) as { feature?: string }).feature).toBe('templates.uploads');
+      expect(
+        await all(env.DB, 'SELECT upload_id FROM template_imports WHERE org_id = ?', [org.id]),
+      ).toEqual(before);
+    } finally {
+      await run(env.DB, 'DELETE FROM org_entitlement_overrides WHERE org_id = ?', [org.id]);
+    }
+    expect((await upload(zipOf(basicPackage()), `orgId=${org.id}`, author.headers)).status).toBe(
+      202,
+    );
+  });
+
+  it('leaves a platform admin uploading a platform-owned template alone', async () => {
+    await setUploads(org.id, 0);
+    try {
+      const res = await upload(zipOf(basicPackage()), '', admin);
+      expect(res.status, await res.clone().text()).toBe(202);
+    } finally {
+      await run(env.DB, 'DELETE FROM org_entitlement_overrides WHERE org_id = ?', [org.id]);
+    }
+  });
+});

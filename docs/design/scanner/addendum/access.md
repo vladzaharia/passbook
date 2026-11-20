@@ -1,6 +1,6 @@
 # Access card: blueprint, zones and access types
 
-> **Status: not built.** No `scan_zones`, `scanner_zones`, access plans or `orgs.zones_rev`, and no migration `0020`. Design only. Where this file says `requireAdmin`, read `scanning:manage` on the session's org membership.
+> **Status: built, differently from this file.** Zones (`scan_zones`, `scanning_session_zones`, `0073`), the access manifest and plan decision (`src/passkit/template/access/`) and `scans.zone_id`, `.visit`, `.access_plan` exist. Not built: `scanner_zones`, `orgs.zones_rev`, and the `0020` file; the repository's migrations are numbered differently. Where code and this file differ, the code wins. Where this file says `requireAdmin`, read `scanning:manage` on the session's org membership.
 
 > **Superseded in part 2026-11-05, later** (occupancy, SA §20 wins): X7 and §1.2's "Why not anti-passback" no longer
 > hold. The owner asked for "next entry only allowed after a tap out is recorded", so zones offer **Track who's

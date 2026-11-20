@@ -2,6 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
 import { type Check, rowIs } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
+import { entitled } from '../../platform/authority-entitled.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -119,7 +120,10 @@ export interface BindPlan {
   mode: Mode;
 }
 
-/** The pass is live in the tenant, still has the holder the plan read, and a user binding's owner still owns it. */
+/**
+ * The pass is live in the tenant, still has the holder the plan read, and a user binding's owner still owns
+ * it; and the org's plan still includes NFC (Basic). Ending a binding never needs the plan.
+ */
 export const bindChecks = (
   p: Pick<BindPlan, 'passId' | 'holderGeneration' | 'holderOwner'> &
     Partial<Pick<BindPlan, 'tagId' | 'newTag' | 'sun'>>,
@@ -129,6 +133,7 @@ export const bindChecks = (
     credential_generation: p.holderGeneration,
     owner_user_id: p.holderOwner,
   }),
+  entitled('nfc', 'basic'),
   ...(p.sun
     ? p.tagId && !p.newTag
       ? sunFreshCheck(p.tagId, p.sun)

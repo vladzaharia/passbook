@@ -227,7 +227,8 @@ const HOSTS = `SELECT u.id AS id, u.name AS name, ${knownEmailSql('u.primary_ema
   WHERE m.org_id = ? AND m.revoked_at IS NULL AND ${knownEmailSql('u.primary_email')} IS NOT NULL`;
 const toHost = (r: { id: string; name: string | null; email: string }): HostChoice => ({
   id: r.id,
-  name: r.name?.trim() || r.email,
+  // An email is never shown as a name: /hosts is open to callers who may not see member emails.
+  name: r.name?.trim() || 'Member',
   email: r.email,
 });
 

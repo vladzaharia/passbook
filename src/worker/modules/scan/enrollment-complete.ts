@@ -9,7 +9,7 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { assertBindable } from '../nfc/pass-state.ts';
-import { assertSessionLevel, bindPolicy, tagsEnabled } from '../nfc/policy.ts';
+import { assertSessionLevel, bindPolicy, tagsRefusal } from '../nfc/policy.ts';
 import { requesterHolds } from '../nfc/repo-enrollments.ts';
 import { activeBinding, type PassFacts, passFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
@@ -53,8 +53,8 @@ async function complete(
   const db = ctx.env.DB;
   const row = await ownRequest(ctx, actor, id, scannerId);
   openRequest(row, ctx.clock.now());
-  if (!(await tagsEnabled(ctx, orgId)))
-    throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
+  const off = await tagsRefusal(ctx, orgId);
+  if (off) throw off;
   await bumpTagCap(db, 'bind', scannerId, ctx.clock.now());
   await ensureCredentialRefKeyset(db, ctx.env);
   const identity = await identifyRead(ctx, actor, read);

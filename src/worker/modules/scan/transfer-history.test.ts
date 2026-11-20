@@ -450,7 +450,7 @@ describe('provider-backed transfer and scanner history', () => {
     };
     const instance = await getWalletInstanceById(db, walletScope);
     if (!instance) throw new Error('Missing provider instance.');
-    expect(await reconcileWalletInstance(kit.ctx, instance)).toBe('scheduled');
+    expect(await reconcileWalletInstance(jobCtxOf(kit), instance)).toBe('scheduled');
     const retiring = await getWalletInstanceById(db, walletScope);
     if (!retiring) throw new Error('Missing retiring instance.');
     const revoke = await getWalletOperation(db, {
@@ -459,7 +459,7 @@ describe('provider-backed transfer and scanner history', () => {
     });
     if (!revoke) throw new Error('Missing real provider revoke operation.');
     expect(revoke).toMatchObject({ kind: 'revoke', state: 'pending' });
-    expect(await runWalletProviderOperation(kit.ctx, revoke)).toBe('completed');
+    expect(await runWalletProviderOperation(jobCtxOf(kit), revoke)).toBe('completed');
     expect(await getWalletInstanceById(db, walletScope)).toMatchObject({ lifecycle: 'retired' });
     const retiredCallback = await t.call({ token: await t.token() });
     expect(retiredCallback.status).toBe(204);

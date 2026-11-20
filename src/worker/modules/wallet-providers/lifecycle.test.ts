@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   approved: vi.fn(),
   original: vi.fn(),
   countries: vi.fn(),
+  epoch: vi.fn(async () => 1),
 }));
 vi.mock('./account-service.ts', async () => {
   const actual = await vi.importActual<typeof accountService>('./account-service.ts');
@@ -34,6 +35,7 @@ vi.mock('./repo-instance.ts', () => ({
   readPassSnapshot: mocks.pass,
   getInstanceById: mocks.instance,
   getInstanceByPass: mocks.instanceByPass,
+  readAccountEpoch: mocks.epoch,
 }));
 vi.mock('./repo-sync-targets.ts', () => ({ samsungSyncCountryHints: mocks.countries }));
 
@@ -148,7 +150,7 @@ describe('native wallet holder transitions', () => {
   it('reconciles an active reassigned pass as retirement, never as an update for the new holder', async () => {
     expect(await reconcileWalletInstance(ctx, instance)).toBe('scheduled');
     expect(mocks.queue).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         kind: 'revoke',
         passId: pass.passId,
@@ -173,7 +175,7 @@ describe('native wallet holder transitions', () => {
       }),
     );
     expect(mocks.queue).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         kind: 'revoke',
         passCredentialGeneration: pass.credentialGeneration,
@@ -193,7 +195,7 @@ describe('native wallet holder transitions', () => {
     );
     expect(mocks.requestRetirement).toHaveBeenCalledOnce();
     expect(mocks.queue).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         kind: 'revoke',
         passCredentialGeneration: pass.credentialGeneration,

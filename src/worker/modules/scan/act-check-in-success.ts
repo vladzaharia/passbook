@@ -19,6 +19,7 @@ import type { ScanActor } from './actor.ts';
 import { planCommitCounts } from './counts.ts';
 import type { LedgerFacts } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
+import { viaName } from './occupancy/admission.ts';
 import { ACCESS_GATE, accessCountStmt, accessInputPin, accessZoneChecks } from './repo-access.ts';
 import * as gates from './repo-gates.ts';
 import type { Candidate } from './repo-lookup.ts';
@@ -232,7 +233,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
           rest.slice(bound.stmts.length + (access ? 1 : 0)),
           places.loss,
           wonIt,
-          actor.scanner?.name ?? null,
+          viaName(actor.scanner?.name, actor.staff?.name),
         )
       : null;
   const reason: ScanReason = closed?.reason ?? place?.lost ?? lost;

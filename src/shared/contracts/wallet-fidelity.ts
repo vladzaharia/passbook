@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { CAPABILITY_IDS, SUPPORT_LEVELS, WALLET_TARGETS } from '../../passkit/wallets/vocab.ts';
+import {
+  CAPABILITY_IDS,
+  ITEM_GROUPS,
+  SUPPORT_LEVELS,
+  WALLET_TARGETS,
+} from '../../passkit/wallets/vocab.ts';
 
 export const ReportStatusSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('off') }),
@@ -13,6 +18,7 @@ export const ReportItemSchema = z.object({
   path: z.string(),
   support: z.enum(SUPPORT_LEVELS),
   severity: z.enum(['difference', 'omission', 'blocked']),
+  group: z.enum(ITEM_GROUPS),
   chosen: z.boolean(),
   message: z.string(),
 });

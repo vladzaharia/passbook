@@ -23,6 +23,8 @@ export type WalletProviderCredentialSnapshot =
   | {
       accountId: string;
       revision: number;
+      /** Moves on a revoke or an identity change; a rotation under the same identity keeps it. */
+      authorityEpoch: number;
       provider: 'google';
       credentials: GoogleWalletCredentials;
       objectIdHmacKey: Uint8Array;
@@ -32,6 +34,8 @@ export type WalletProviderCredentialSnapshot =
   | {
       accountId: string;
       revision: number;
+      /** Moves on a revoke or an identity change; a rotation under the same identity keeps it. */
+      authorityEpoch: number;
       provider: 'samsung';
       credentials: SamsungWalletCredentials;
     };
@@ -188,6 +192,7 @@ export function credentialSnapshot(
     return {
       accountId: row.id,
       revision: row.revision,
+      authorityEpoch: row.authority_epoch,
       provider: 'google',
       credentials: stored.credentials,
       objectIdHmacKey: fromBase64Url(stored.objectIdHmacKey),
@@ -196,6 +201,7 @@ export function credentialSnapshot(
   return {
     accountId: row.id,
     revision: row.revision,
+    authorityEpoch: row.authority_epoch,
     provider: 'samsung',
     credentials: stored.credentials,
   };

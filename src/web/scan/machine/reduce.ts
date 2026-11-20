@@ -4,6 +4,7 @@
  */
 import { isAccessEvent, type MachineEvent } from './access-events.ts';
 import { isAssignEvent } from './assign-state.ts';
+import { bundleKnown, isBundleEvent } from './bundle-peek.ts';
 import { pruneIgnore } from './ignore.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { same } from './internal.ts';
@@ -44,6 +45,7 @@ export function reduce(state: ScanState, event: MachineEvent, deps: ScanMachineD
 
 function step(s: MachineState, event: MachineEvent, env: Env): Out {
   if (isAssignEvent(event)) return assignEvent(s, event, env);
+  if (isBundleEvent(event)) return bundleKnown(s, event, env.now);
   if (isAccessEvent(event))
     return event.type === 'turn' ? turn(s, event, env) : resolved(s, event, env);
   switch (event.type) {

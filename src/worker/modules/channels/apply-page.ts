@@ -44,7 +44,13 @@ interface Plan {
 /** What the run's policy change does to one pass, from the pass's live inputs. */
 function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean): Plan {
   const { inputs, rows } = loaded;
-  const before = effectiveChannels({ ...inputs, template: run.from });
+  // An entitlement run starts from the plan as it was: the channels the plan blocked then.
+  const planBefore = run.fromBlocked
+    ? {
+        entitlement: Object.fromEntries(run.fromBlocked.map((c) => [c, 'not_included' as const])),
+      }
+    : {};
+  const before = effectiveChannels({ ...inputs, ...planBefore, template: run.from });
   const after = effectiveChannels({ ...inputs, template: run.to });
   const actions = channelTransition(before, after, {
     copies: new Set(rows.copies),
@@ -94,11 +100,13 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean
   const voidPrints = actions.some((a) => a.kind === 'void_prints');
   // A run that inherited a failed run's start may find passes that run already handled: only a channel
   // whose marker (or print) changes here is news.
-  const events = inherited
-    ? flips.filter(
-        (e) => marks.some((m) => m.channel === e.channel) || (voidPrints && e.channel === 'paper'),
-      )
-    : flips;
+  const events =
+    inherited && run.fromBlocked === null
+      ? flips.filter(
+          (e) =>
+            marks.some((m) => m.channel === e.channel) || (voidPrints && e.channel === 'paper'),
+        )
+      : flips;
   // A pass owed only a new code still gets its mark: it carries the notice and makes a retry safe.
   const empty = events.length === 0 && marks.length === 0 && !voidPrints && !rotate;
   return { write: empty ? null : { rows: marks, events, voidPrints }, cost, appleChanged, rotate };
@@ -264,7 +272,11 @@ export async function applyChannelPage(ctx: ServiceContext, runId: string): Prom
   if (run?.state !== 'running' || !run.to) return { done: true };
   try {
     const begin = await effectiveFrom(ctx, run);
-    return await page(ctx, { ...run, from: begin.from }, begin.viaFailed);
+    return await page(
+      ctx,
+      { ...run, from: begin.from, fromBlocked: begin.fromBlocked },
+      begin.viaFailed,
+    );
   } catch (error) {
     if (isOrgRefusal(error)) return { done: true, failed: ORG_INACTIVE };
     throw error;

@@ -7,6 +7,11 @@ import {
   type PassChannelState,
   type TemplateChannelState,
 } from './contracts/channels.ts';
+import {
+  type EntitlementKey,
+  type EntitlementValue,
+  entitledValue,
+} from './contracts/entitlements.ts';
 
 /** The four wallet and page copies that share one code family. */
 export const DIGITAL_CHANNELS: readonly Channel[] = ['mobile', 'apple', 'google', 'samsung'];
@@ -18,6 +23,8 @@ type Per<T> = Partial<Record<Channel, T>>;
 export interface ChannelInputs {
   /** Channels the platform blocks, with the reason (not_released, printing_off). */
   platform: Per<ChannelReason>;
+  /** Channels the org's plan does not include (not_included). A kill switch like `platform`. */
+  entitlement?: Per<ChannelReason>;
   /** Channels the org blocks or has not enabled (not_enrolled, tags_off, blocked). */
   org: Per<ChannelReason>;
   /** Channels the pass's pinned version cannot serve (no_design). */
@@ -44,8 +51,9 @@ export function templateDefault(channel: Channel): TemplateChannelState {
 }
 
 /**
- * effective(c) = platform ∧ org ∧ template ≠ never ∧ (pass ?? template == on).
- * The first failing level is the reason. A pass may turn on what its template has off.
+ * effective(c) = platform ∧ entitlement ∧ org ∧ template ≠ never ∧ (pass ?? template == on).
+ * The first failing level is the reason. A pass may turn on what its template has off. An entitlement
+ * refusal reports `platform` as its source: like a platform switch it is a kill switch (no retire).
  */
 export function effectiveChannels(i: ChannelInputs): EffectiveChannels {
   const out = {} as EffectiveChannels;
@@ -73,6 +81,8 @@ function off(source: ChannelSource, reason: ChannelReason): EffectiveChannels[Ch
 function statusOf(i: ChannelInputs, c: Channel): EffectiveChannels[Channel] {
   const platform = i.platform[c];
   if (platform) return off('platform', platform);
+  const entitlement = i.entitlement?.[c];
+  if (entitlement) return off('platform', entitlement);
   const org = i.org[c];
   if (org) return off('org', org);
   const capability = i.capability[c];
@@ -83,6 +93,55 @@ function statusOf(i: ChannelInputs, c: Channel): EffectiveChannels[Channel] {
   if (override === 'on') return { on: true, source: 'pass' };
   if (override === 'off') return off('pass', 'pass_off');
   return state === 'on' ? { on: true, source: 'template' } : off('template', 'template_off');
+}
+
+/** The feature of the organization's plan each delivery channel needs; the rest are not plan-gated. */
+const CHANNEL_FEATURE: Partial<Record<Channel, { key: EntitlementKey; want?: string }>> = {
+  google: { key: 'wallet.google' },
+  samsung: { key: 'wallet.samsung' },
+  paper: { key: 'print' },
+  nfc: { key: 'nfc', want: 'basic' },
+};
+
+export type EntitlementValues = Partial<Record<EntitlementKey, EntitlementValue>>;
+
+/** The channels the plan does not include. Fail closed: a missing value blocks. */
+export function blockedByEntitlement(values: EntitlementValues): Per<ChannelReason> {
+  const out: Per<ChannelReason> = {};
+  for (const [channel, feature] of Object.entries(CHANNEL_FEATURE) as [
+    Channel,
+    NonNullable<(typeof CHANNEL_FEATURE)[Channel]>,
+  ][])
+    if (!entitledValue(feature.key, values[feature.key], feature.want))
+      out[channel] = 'not_included';
+  return out;
+}
+
+/** One thing a change of an org's entitlements asks the system to do. */
+export type EntitlementEffect =
+  /** Channels whose plan state changed: a channel-apply run per template converges the passes. No rotation. */
+  { kind: 'channel_apply'; channels: Channel[]; blockedBefore: Channel[] };
+
+/**
+ * The one transition for entitlements (pattern of `channelTransition`). A downgrade pauses and never
+ * deletes: the effect only converges what passes show. An upgrade restores the same way.
+ */
+export function entitlementTransition(
+  before: EntitlementValues,
+  after: EntitlementValues,
+): EntitlementEffect[] {
+  const was = blockedByEntitlement(before);
+  const now = blockedByEntitlement(after);
+  const channels = CHANNELS.filter((c) => (was[c] !== undefined) !== (now[c] !== undefined));
+  return channels.length === 0
+    ? []
+    : [
+        {
+          kind: 'channel_apply',
+          channels,
+          blockedBefore: CHANNELS.filter((c) => was[c] !== undefined),
+        },
+      ];
 }
 
 export const anyDigitalOn = (e: EffectiveChannels): boolean =>

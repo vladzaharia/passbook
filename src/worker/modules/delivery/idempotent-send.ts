@@ -1,4 +1,4 @@
-import { BadRequestError, ConflictError } from '../../platform/errors.ts';
+import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -51,8 +51,9 @@ export async function sendOnce<T>(
     if (!existing)
       throw new ConflictError('The pass or authorization changed. Retry.', 'PASS_CONFLICT');
     if (existing.request_hash !== hash)
-      throw new ConflictError(
+      throw new ValidationError(
         'This Idempotency-Key was used for a different request.',
+        [],
         'IDEMPOTENCY_KEY_REUSED',
       );
     if (existing.resource_id?.startsWith(DONE))

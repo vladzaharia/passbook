@@ -1,9 +1,12 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg, makeUser } from '../../../../test/helpers/index.ts';
 import type { TemplateScanSetup } from '../../../shared/contracts/scan-template-setup.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { DEFAULT_SETTINGS } from './dto-console.ts';
+import { ownEventValues } from './repo-template-setup.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
+import type { EventSource } from './template-setup-plan.ts';
 import { eventTemplate } from './template-setup-test-fixtures.ts';
 import { grantScanMembership, key } from './test-kit.ts';
 
@@ -262,7 +265,10 @@ describe('template scan setup', () => {
     expect(await sessions(id)).toHaveLength(0);
   });
 
-  it('is not open to an API key, scoped or not, or to a signed-out caller', async () => {
+  // Before: no key reached this route (scanning had no key scope), so any key was 401. Now a key with
+  // `scanning:write` may call it (template-setup-key.test.ts); a key without it is still refused,
+  // as 403 MISSING_SCOPE, and a signed-out caller is still 401.
+  it('is not open to a key without scanning:write, or to a signed-out caller', async () => {
     const { kit } = fixture;
     const id = await kit.scanTemplate('Keyed', {
       actions: [{ id: 'enter', label: 'Let in', kind: 'check_in' }],
@@ -271,10 +277,11 @@ describe('template scan setup', () => {
       ['scans:read', 'scans:write', 'templates:read'],
       ['passes:read'],
     ] as const)
-      expect(
-        (await post(id, {}, fixture.fake.apiKey({ orgId: kit.org.id, scopes: [...scopes] })))
-          .status,
-      ).toBe(401);
+      await expectProblem(
+        await post(id, {}, fixture.fake.apiKey({ orgId: kit.org.id, scopes: [...scopes] })),
+        403,
+        'MISSING_SCOPE',
+      );
     expect((await post(id, {}, {})).status).toBe(401);
     expect(await sessions(id)).toHaveLength(0);
   });
@@ -419,5 +426,127 @@ describe('template scan setup', () => {
     );
     expect(live).toEqual([]);
     expect((await setup(id)).events.map((e) => e.name)).toEqual(['Night Three']);
+  });
+
+  it("archives the events a lost race made past the winner's room of ten", async () => {
+    const id = await eventTemplate(fixture.kit, 'Crowded ticket');
+    for (const [n, name] of ['Crowd One', 'Crowd Two', 'Crowd Three'].entries())
+      await ticket(id, {
+        eventName: name,
+        startsAt: iso(now() + n * 24 * HOUR),
+        endsAt: iso(now() + n * 24 * HOUR + 2 * HOUR),
+      });
+    const db = fixture.kit.env.DB;
+    const eventIds: string[] = [];
+    for (let n = 0; n < 9; n++) eventIds.push((await fixture.kit.event({ templateIds: [id] })).id);
+    const accepts = JSON.stringify({ templateIds: [id], eventIds });
+    const settings = JSON.stringify(DEFAULT_SETTINGS);
+    // The third event's insert lands a competing setup session that already admits nine events.
+    await run(
+      db,
+      `CREATE TRIGGER setup_race AFTER INSERT ON scan_events WHEN NEW.name = 'Crowd Three'
+       BEGIN
+         INSERT INTO scanning_sessions (id, org_id, mode, name, status, accepts, settings, time_zone,
+           created_at, updated_at, setup_template_id)
+         VALUES ('race-winner', NEW.org_id, NEW.mode, 'Winner', 'active', '${accepts}', '${settings}', 'UTC', 1, 1, '${id}');
+       END`,
+    );
+    let made: TemplateScanSetup;
+    try {
+      const res = await post(id);
+      if (res.status !== 200) throw new Error(await res.text());
+      made = (await res.json()) as TemplateScanSetup;
+    } finally {
+      await run(db, 'DROP TRIGGER setup_race');
+    }
+    expect(made.session.id).toBe('race-winner');
+    expect(made.events.map((e) => e.name)).toEqual(['Crowd One']);
+    const live = await rows<{ name: string }>(
+      "SELECT name FROM scan_events WHERE org_id = ? AND archived_at IS NULL AND name LIKE 'Crowd%'",
+      fixture.kit.org.id,
+    );
+    expect(live.map((e) => e.name)).toEqual(['Crowd One']);
+  });
+
+  it('logs a start value that is not a date, and skips its event', async () => {
+    const id = await eventTemplate(fixture.kit, 'Loose ticket');
+    const pass = await ticket(id, { eventName: 'Sometime' });
+    await run(
+      fixture.kit.env.DB,
+      "UPDATE passes SET personalization = json_set(personalization, '$.startsAt', 'next Friday evening') WHERE id = ?",
+      [pass.id],
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const made = await setup(id);
+      expect(made).toMatchObject({ events: [], noEvents: true });
+      const lines = warn.mock.calls.map((c) => String(c[0]));
+      expect(lines.some((l) => l.includes('START_NOT_ISO'))).toBe(true);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('reads the newest passes only, and says when older ones were left out', async () => {
+    const id = await eventTemplate(fixture.kit, 'Huge ticket');
+    await ticket(id, { eventName: 'Oldest night' });
+    // Pass ids follow time: a later pass sorts after an earlier one.
+    const same = { startsAt: iso(now() + HOUR), endsAt: iso(now() + 2 * HOUR) };
+    fixture.kit.clock.advance(5);
+    await ticket(id, { eventName: 'Busy night', ...same });
+    fixture.kit.clock.advance(5);
+    await ticket(id, { eventName: 'Busy night', ...same });
+    const own = { name: 'eventName', start: 'startsAt' } as NonNullable<EventSource['own']>;
+    const read = (limit: number) =>
+      ownEventValues(fixture.kit.env.DB, fixture.kit.org.id, 'live', id, own, 0, limit);
+    const bounded = await read(2);
+    expect(bounded.more).toBe(true);
+    expect(bounded.values.map((v) => v.name)).toEqual(['Busy night']);
+    const all3 = await read(3);
+    expect(all3.more).toBe(false);
+    expect(all3.values.map((v) => v.name).sort()).toEqual(['Busy night', 'Oldest night']);
+  });
+
+  it('does not archive an event another session attached while this call failed', async () => {
+    const id = await eventTemplate(fixture.kit, 'Shared ticket');
+    await ticket(id, { eventName: 'Shared One' });
+    const first = await setup(id);
+    await ticket(id, {
+      eventName: 'Shared Two',
+      startsAt: iso(now() + 24 * HOUR),
+      endsAt: iso(now() + 26 * HOUR),
+    });
+    const db = fixture.kit.env.DB;
+    const settings = JSON.stringify(DEFAULT_SETTINGS);
+    // Another call's session takes the new event the moment it exists; this call's own update then fails.
+    await run(
+      db,
+      `CREATE TRIGGER setup_take AFTER INSERT ON scan_events WHEN NEW.name = 'Shared Two'
+       BEGIN
+         INSERT INTO scanning_sessions (id, org_id, mode, name, status, accepts, settings, time_zone, created_at, updated_at)
+         VALUES ('takes-event', NEW.org_id, NEW.mode, 'Other', 'active',
+           json_object('templateIds', json_array(), 'eventIds', json_array(NEW.id)), '${settings}', 'UTC', 1, 1);
+       END`,
+    );
+    await run(
+      db,
+      `CREATE TRIGGER setup_fail2 BEFORE UPDATE OF accepts ON scanning_sessions WHEN OLD.id = '${first.session.id}'
+       BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+    );
+    try {
+      expect((await post(id)).status).toBe(500);
+    } finally {
+      await run(db, 'DROP TRIGGER setup_take');
+      await run(db, 'DROP TRIGGER setup_fail2');
+    }
+    const live = await rows<{ id: string }>(
+      "SELECT id FROM scan_events WHERE org_id = ? AND archived_at IS NULL AND name = 'Shared Two'",
+      fixture.kit.org.id,
+    );
+    expect(live).toHaveLength(1);
+    const [other] = await rows<{ accepts: string }>(
+      "SELECT accepts FROM scanning_sessions WHERE id = 'takes-event'",
+    );
+    expect(JSON.parse(other?.accepts ?? '{}').eventIds).toEqual([live[0]?.id]);
   });
 });

@@ -16,6 +16,7 @@ import {
 import { reconcileWalletInstance } from '../wallet-providers/lifecycle.ts';
 import { makeProviderTestTemplate } from '../wallet-providers/offers-test-fixtures.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
+import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 import { approveAppleRelease, grantKitMembership } from './apple-release-test-fixtures.ts';
 import { createPassRow } from './create.ts';
 import { credentialRefKeysetCommitment, requireCredentialRefKeyset } from './credential-keyset.ts';
@@ -513,7 +514,7 @@ describe('credential transfer', () => {
       claimHandle: newWalletClaimHandle(),
       now: kit.clock.now(),
     };
-    expect(await claimWalletOperation(kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(kit.env.DB), claim)).toBe('claimed');
     expect(
       await completeWalletOperation(jobCtxOf(kit), {
         ...claim,

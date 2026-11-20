@@ -14,6 +14,12 @@ const row = {
   title: 'Member',
   outcome: 'ok' as const,
   direction: null,
+  scanId: null,
+  reason: null,
+  staff: null,
+  method: null,
+  undoable: false,
+  groupSize: null,
 };
 
 describe('SessionActivity', () => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChannelSchema } from '../../shared/contracts/channels.ts';
 import { ModeSchema } from '../../shared/contracts/common.ts';
 import { ConnectionModeSchema } from '../../shared/contracts/connections.ts';
 import { RETENTION_CLASSES } from '../../shared/privacy/data-classes.ts';
@@ -75,6 +76,16 @@ export const JobSchema = z.discriminatedUnion('kind', [
   /** A platform admin's hold on a suspended org's wallet enrolment: a job grant writes it. */
   /** One legacy wallet account onto its credential source, under the migrate job grant. */
   z.object({ kind: z.literal('wallet.credential_migrate'), accountId: z.string().min(1) }),
+  /** An Apple release published: the platform authors the provider candidate (CW7b). */
+  z.object({
+    kind: z.literal('wallet.projection_system'),
+    orgId: z.string().min(1),
+    mode: ModeSchema,
+    templateId: z.string().min(1),
+    sourceReleaseId: z.string().min(1),
+    version: z.string().min(1),
+    provider: z.enum(['google', 'samsung']),
+  }),
   z.object({
     kind: z.literal('wallet.enrolment_hold'),
     orgId: z.string().min(1),
@@ -102,6 +113,16 @@ export const JobSchema = z.discriminatedUnion('kind', [
     passId: z.string().min(1),
     /** The template version the pass was on before the publish. */
     previousVersion: z.string().min(1),
+  }),
+  /** An org's plan changed which delivery channels it includes: converge its passes, one apply run per template. */
+  z.object({
+    kind: z.literal('channel.entitlement'),
+    orgId: z.string().min(1),
+    /** The channels the plan blocked before the change. */
+    blockedBefore: z.array(ChannelSchema),
+    requestedBy: z.string().min(1),
+    /** When the change committed: a retry skips templates that already have a run since. */
+    at: z.number().int().nonnegative(),
   }),
   /** A bulk "turn off and replace codes": the pass gets a new scan code once its windows are closed. */
   z.object({

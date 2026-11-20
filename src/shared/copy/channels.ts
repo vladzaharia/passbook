@@ -1,4 +1,5 @@
-import type { Channel, ChannelReason, OfferHold } from '../contracts/channels.ts';
+import type { Channel, ChannelReason, ChannelSource, OfferHold } from '../contracts/channels.ts';
+import { FEATURE_ASK, NOT_INCLUDED } from './entitlements.ts';
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
   mobile: 'Mobile',
@@ -25,6 +26,7 @@ export const CHANNEL_REASON_COPY: Record<ChannelReason, string> = {
   no_design: '{channel}: no design for this template',
   tags_off: '{channel}: tags off',
   printing_off: '{channel}: printing off for all organizations',
+  not_included: '{channel}: not included for this organization',
   blocked: '{channel}: blocked for this organization',
   never: '{channel}: never on for this template',
   template_off: '{channel}: off for this template',
@@ -41,7 +43,12 @@ export const channelReasonText = (reason: ChannelReason): string => {
 };
 
 /** Only these can leave copies behind; a block of them never retires or replaces copies. */
-const LEAVES_COPIES = new Set<ChannelReason>(['blocked', 'not_enrolled', 'tags_off']);
+const LEAVES_COPIES = new Set<ChannelReason>([
+  'blocked',
+  'not_enrolled',
+  'tags_off',
+  'not_included',
+]);
 
 /** A limit above the template, as a row's second line. */
 export const channelBlocked = (reason: ChannelReason): string =>
@@ -57,10 +64,14 @@ const PROVIDER_ACCOUNT: Partial<Record<Channel, string>> = {
   samsung: 'Samsung account',
 };
 
-/** Why a channel cannot be on, and where to fix it; null `fix` when nothing in the admin can. */
+/**
+ * Why a channel cannot be on, and where to fix it; null `fix` when nothing in the admin can. Tags the
+ * platform turned off (`source: 'platform'`) are fixed in Platform settings, not the organization's.
+ */
 export const channelWhy = (
   channel: Channel,
   reason: ChannelReason,
+  source?: ChannelSource,
 ): { text: string; fix: ChannelFix | null; copiesStay: boolean } => {
   switch (reason) {
     case 'not_released':
@@ -74,10 +85,19 @@ export const channelWhy = (
     case 'no_design':
       return { text: 'No design in this template', fix: 'template', copiesStay: false };
     case 'tags_off':
+      if (source === 'platform')
+        return { text: 'Off for the platform', fix: 'platform', copiesStay: true };
+      return { text: 'Off for this organization', fix: 'org', copiesStay: true };
     case 'blocked':
       return { text: 'Off for this organization', fix: 'org', copiesStay: true };
     case 'printing_off':
       return { text: 'Off for the platform', fix: 'platform', copiesStay: false };
+    case 'not_included':
+      return {
+        text: `${NOT_INCLUDED} ${FEATURE_ASK}`,
+        fix: null,
+        copiesStay: true,
+      };
     case 'never':
       return { text: 'Never for this template', fix: 'template', copiesStay: false };
     case 'template_off':

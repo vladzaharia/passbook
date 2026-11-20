@@ -44,11 +44,14 @@ async function seed() {
 const opSql = `INSERT INTO wallet_provider_instance_operations
   (id, instance_id, version, kind, request_hash, pass_version, pass_revision, pass_credential_generation,
    lifecycle_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision,
-   policy_revision, credential_keyset_commitment, state, attempts, created_at, credential_version_id)
+   policy_revision, credential_keyset_commitment, state, attempts, created_at, credential_version_id,
+   pass_row_version, account_epoch)
   SELECT ?, o.instance_id, (SELECT MAX(v.version) + 1 FROM wallet_provider_instance_operations v WHERE v.instance_id = o.instance_id),
     o.kind, ?, o.pass_version, o.pass_revision, o.pass_credential_generation, o.lifecycle_generation,
     o.issuing_release_id, o.projection_release_id, o.account_revision, o.adapter_revision, o.policy_revision,
-    o.credential_keyset_commitment, 'pending', 0, o.created_at, ?
+    o.credential_keyset_commitment, 'pending', 0, o.created_at, ?,
+    (SELECT p.row_version FROM passes p JOIN wallet_provider_instances i ON i.pass_id = p.id WHERE i.id = o.instance_id),
+    (SELECT a.authority_epoch FROM wallet_provider_accounts a JOIN wallet_provider_instances i ON i.account_id = a.id WHERE i.id = o.instance_id)
   FROM wallet_provider_instance_operations o WHERE o.instance_id = ? AND o.version = 1`;
 const insertOp = (instanceId: string, pin: string | null) =>
   run(db(), opSql, [uid(), ident(), pin, instanceId]);

@@ -26,6 +26,16 @@ describe('redaction', () => {
       'https://x/auth/magic?t=[redacted]&x=1',
     );
     expect(redactString('key wlt_abc_def')).toBe('key wlt_[redacted]');
+    for (const label of ['pb', 'pbp', 'pbo'])
+      expect(redactString(`key ${label}_live_abc12345_${'x'.repeat(43)}`)).toBe(
+        `key ${label}_[redacted]`,
+      );
+    expect(redactString('sub_total and pbx_1')).toBe('sub_total and pbx_1');
+    // Embedded in a field name or a URL-encoded value, where no word boundary stands before the label.
+    const tail = `${'x'.repeat(8)}_${'y'.repeat(43)}`;
+    expect(redactString(`token_pb_live_${tail}`)).not.toContain('yyyy');
+    expect(redactString(`k%3Dpb_test_${tail}`)).not.toContain('yyyy');
+    expect(redactString(`k%3Dwlt_${tail}`)).not.toContain('yyyy');
     expect(redactString('mail me@example.com')).toBe('mail [redacted email]');
     expect(redactString('-----BEGIN PRIVATE KEY-----\nAAA\n-----END PRIVATE KEY-----')).toBe(
       '[redacted pem]',

@@ -112,10 +112,12 @@ register(
     method: 'get',
     path: '/activity',
     summary: 'Recent activity on this scanning session',
+    query: z.object({ problems: z.enum(['1']).optional() }),
     response: SessionActivitySchema,
   },
   async (c) => {
-    return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c)));
+    const { problems } = c.req.valid('query');
+    return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c), problems === '1'));
   },
 );
 
@@ -202,8 +204,10 @@ register(
         false,
         'code' in input,
       );
-    notifyHostOfArrival(ctx, actor, outcome);
-    return c.json(await withParentHint(ctx.env.DB, actor.orgId, outcome));
+    notifyHostOfArrival(ctx, actor, outcome, evaluatedSnapshot);
+    // The door asks which bundle only for a pass that is in one (read with the pass, no extra trip).
+    const shown = evaluatedSnapshot?.inBundle ? { ...outcome, inBundle: true } : outcome;
+    return c.json(await withParentHint(ctx.env.DB, actor.orgId, shown));
   },
 );
 

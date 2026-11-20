@@ -8,6 +8,7 @@ import {
   entitlementJson,
   presetValues,
 } from '../../shared/contracts/entitlements.ts';
+import { templateSyncGrant } from '../jobs/template-sync.ts';
 import { grant } from './authority.ts';
 import type { Check } from './authority-checks.ts';
 import { platformPrincipal, refusal } from './authority-ext-fixtures.ts';
@@ -561,5 +562,45 @@ describe('an org cannot write its own entitlements', () => {
     expect(() => preset.update('entitlement_presets', { set: { value: '1' }, where: {} })).toThrow(
       /written only by/,
     );
+  });
+});
+
+describe('baked-template sync writes entitlements by insert only', () => {
+  // authority-tables INSERT_ONLY_PURPOSES (#272): the sync creates the platform org with its legacy row and
+  // must never change one.
+  it('refuses update, delete and upsert; allows the insert', async () => {
+    const { route } = await setupGrant('sync-insert-only');
+    const g = () => templateSyncGrant(route, []);
+    expect(() =>
+      g().update('org_entitlements', { set: { preset: 'trial' }, where: { org_id: 'x' } }),
+    ).toThrow(/only inserts/);
+    expect(() => g().delete('org_entitlements', { where: { org_id: 'x' } })).toThrow(
+      /only inserts/,
+    );
+    expect(() =>
+      g().upsert('org_entitlements', ['org_id', 'preset', 'updated_at'], ['x', 'trial', 1], {
+        update: ['preset'],
+      }),
+    ).toThrow(/only inserts|written only/);
+    expect(() =>
+      g().insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], ['x', 'legacy', 1]),
+    ).not.toThrow();
+  });
+});
+
+describe('org create writes entitlements by insert only', () => {
+  it('refuses update, delete and upsert of org_entitlements, so create cannot change a preset', async () => {
+    const { s, route } = await setupGrant('create-insert-only');
+    const principal = await platformPrincipal(s);
+    const g = () => grant(route, { purpose: 'platform.org.create', principal });
+    expect(() =>
+      g().update('org_entitlements', { set: { preset: 'trial' }, where: { org_id: 'x' } }),
+    ).toThrow(/only inserts/);
+    expect(() => g().delete('org_entitlements', { where: { org_id: 'x' } })).toThrow(
+      /only inserts/,
+    );
+    expect(() =>
+      g().insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], ['x', 'legacy', 1]),
+    ).not.toThrow();
   });
 });
