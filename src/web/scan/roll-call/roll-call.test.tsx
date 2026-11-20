@@ -93,6 +93,10 @@ const memoryStore = (initial?: QueuedMark[]) => {
   return {
     data,
     set: async (k: string, v: QueuedMark[]) => void data.set(k, v),
+    setMany: async (entries: readonly (readonly [string, QueuedMark[]])[]) => {
+      for (const [k, v] of entries) data.set(k, v);
+    },
+    remove: async (k: string) => void data.delete(k),
     get: async (k: string) => data.get(k),
     all: async () => [...data.values()],
     clear: async () => data.clear(),
