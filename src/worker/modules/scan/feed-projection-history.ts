@@ -75,6 +75,7 @@ export function projectScanRecord(
     passVersion: noPolicy ? null : row.passVersion,
     override: row.override,
     offline: row.offline,
+    unverified: row.unverified,
     actor: { type: row.actorType === 'user' ? 'user' : 'scanner', id: row.actorId },
     undoneAt: row.undoneAt,
     undoneBy: verified ? row.undoneBy : null,

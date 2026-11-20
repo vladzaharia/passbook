@@ -21,14 +21,14 @@ import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { BootCard } from './ui/boot-card.tsx';
 import { CameraLayer } from './ui/camera-layer.tsx';
-import { ReaderChip, SyncChip, TestChip } from './ui/chips.tsx';
+import { ReaderChip, SyncChip, syncChipOf, TestChip } from './ui/chips.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import type { Announcement } from './ui/live-announcer.tsx';
 import { modeLabel } from './ui/mode-label.ts';
 import type { CameraChoice } from './ui/scan-menu.tsx';
 import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
 import { setSessionZone } from './ui/session-time.ts';
-import { dockStrip, savedCount } from './ui/strip-of.ts';
+import { dockStrip } from './ui/strip-of.ts';
 import { useAccessUi } from './ui/use-access-ui.tsx';
 import './buddy/beats.css';
 
@@ -60,6 +60,7 @@ export function ScanLoop({
   const [pass, setPass] = useState<PassInspection | null>(null);
   const [cameraError, setCameraError] = useState('');
   const [shiftStart, setShiftStart] = useState(Date.now);
+  const sync = syncChipOf(s, now);
   const showPanel = (value: typeof panel) => {
     setPanel(value);
     dispatch({
@@ -167,7 +168,7 @@ export function ScanLoop({
             <>
               <TestChip mode={scanner?.mode ?? getMode()} />
               {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
-              {!s.online ? <SyncChip state={{ kind: 'offline', queued: savedCount(s) }} /> : null}
+              {sync ? <SyncChip state={sync} /> : null}
               {access.chips}
               {tags.chip}
             </>

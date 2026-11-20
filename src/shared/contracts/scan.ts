@@ -118,6 +118,7 @@ export const ScannerSettingsSchema = z.object({
   reader: z.enum(['none', 'barcode', 'nfc']),
   lookup: z.boolean(),
   offline: z.boolean(),
+  whenOffline: z.enum(['stop', 'decide', 'list']).optional(),
   dailyAmount: z.number().int().min(1).max(10_000_000).nullable(),
   /** A monitor may act (Let in, Mark as out) when this is on. Off when absent. */
   deskActions: z.boolean().optional(),
@@ -320,7 +321,6 @@ export const ScanOutcomeSchema = z.object({
 export type ScanOutcome = z.infer<typeof ScanOutcomeSchema>;
 export type ScanCard = z.infer<typeof ScanCardSchema>;
 export type ScanCounts = z.infer<typeof ScanCountsSchema>;
-
 /** Shared with broadcasts and the passes list. */
 export const ScanTargetSchema = z.union([
   z.object({ eventId: IdSchema, checkedIn: z.boolean() }),

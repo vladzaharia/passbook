@@ -128,6 +128,8 @@ export interface HistoryRow {
   passVersion: number | null;
   override: boolean;
   offline: boolean;
+  /** Let in on staff's word with no list; the server checked it afterwards. */
+  unverified: boolean;
   actorType: HistoryRaw['actor_type'];
   actorId: string;
   undoneAt: number | null;
@@ -218,6 +220,7 @@ export const toHistoryRow = (r: HistoryRaw): HistoryRow => ({
   passVersion: r.pass_version,
   override: r.override_of !== null,
   offline: on(r.offline),
+  unverified: r.offline === 2,
   actorType: r.actor_type,
   actorId: r.actor_id,
   undoneAt: r.undone_at,

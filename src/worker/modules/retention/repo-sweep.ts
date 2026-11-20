@@ -1,6 +1,8 @@
 import { all, stmt } from '../../platform/db.ts';
 
 export type SweepClass = 'scans' | 'events' | 'delivery' | 'photos';
+/** What a pass deletes from: a class's own table, or a table that ages with it. */
+export type SweepTable = SweepClass | 'scan_offline';
 
 /** Days of failed and partial mail kept for support, whatever the class value. */
 export const FAILED_MAIL_DAYS = 90;
@@ -18,10 +20,15 @@ export type Scope =
   | { kind: 'org'; orgId: string };
 
 const COND: Record<
-  SweepClass,
+  SweepTable,
   { table: string; sql: string; params: (c: Cutoffs) => number[]; idCol?: string }
 > = {
   scans: { table: 'scans', sql: "scans.mode = 'live' AND scans.at < ?", params: (c) => [c.cutoff] },
+  scan_offline: {
+    table: 'scan_offline_reads',
+    sql: "scan_offline_reads.mode = 'live' AND scan_offline_reads.synced_at < ?",
+    params: (c) => [c.cutoff],
+  },
   events: {
     table: 'pass_events',
     sql: "pass_events.mode = 'live' AND pass_events.at < ?",
@@ -46,7 +53,7 @@ const COND: Record<
   },
 };
 
-const idCol = (cls: SweepClass) => COND[cls].idCol ?? 'id';
+const idCol = (cls: SweepTable) => COND[cls].idCol ?? 'id';
 
 /** An org-wide hold, or a hold on this row's pass, keeps the row. */
 const heldSql = (table: string) =>
@@ -63,7 +70,7 @@ function scopeSql(table: string, scope: Scope): { sql: string; params: string[] 
 }
 
 /** The class condition, the scope and "no hold": what a row must satisfy to be deleted, at select and at delete. */
-function eligible(cls: SweepClass, scope: Scope, cutoffs: Cutoffs) {
+function eligible(cls: SweepTable, scope: Scope, cutoffs: Cutoffs) {
   const { table, sql, params } = COND[cls];
   const sc = scopeSql(table, scope);
   return {
@@ -76,7 +83,7 @@ function eligible(cls: SweepClass, scope: Scope, cutoffs: Cutoffs) {
 /** The next row ids past the cutoff in the scope, never a held row. */
 export async function selectChunk(
   db: D1Database,
-  cls: SweepClass,
+  cls: SweepTable,
   scope: Scope,
   cutoffs: Cutoffs,
 ): Promise<string[]> {
@@ -89,7 +96,7 @@ export async function selectChunk(
   return rows.map((r) => r.id);
 }
 
-const IN_IDS = (cls: SweepClass) =>
+const IN_IDS = (cls: SweepTable) =>
   `${COND[cls].table}.${idCol(cls)} IN (SELECT value FROM json_each(?))`;
 
 /**
@@ -97,7 +104,7 @@ const IN_IDS = (cls: SweepClass) =>
  * eligible, so the receipt's count is what the delete in the same batch removes.
  */
 export function receiptGate(
-  cls: SweepClass,
+  cls: SweepTable,
   scope: Scope,
   cutoffs: Cutoffs,
   ids: readonly string[],
@@ -115,7 +122,7 @@ export function receiptGate(
  */
 export function deleteChunkStmt(
   db: D1Database,
-  cls: SweepClass,
+  cls: SweepTable,
   scope: Scope,
   cutoffs: Cutoffs,
   ids: readonly string[],
@@ -127,6 +134,8 @@ export function deleteChunkStmt(
   switch (cls) {
     case 'scans':
       return stmt(db, `DELETE FROM scans WHERE ${where}`, params);
+    case 'scan_offline':
+      return stmt(db, `DELETE FROM scan_offline_reads WHERE ${where}`, params);
     case 'events':
       return stmt(db, `DELETE FROM pass_events WHERE ${where}`, params);
     case 'delivery':

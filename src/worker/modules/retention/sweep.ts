@@ -20,12 +20,14 @@ import {
   receiptGate,
   type Scope,
   type SweepClass,
+  type SweepTable,
   selectChunk,
 } from './repo-sweep.ts';
 
 export const SWEEP_LIMITS = { platformChunks: 50, orgChunks: 50, orgBudgetMs: 15_000 };
 
 interface Target {
+  table: SweepTable;
   scope: Scope;
   /** Receipt chain: null is the platform pass. */
   orgId: string | null;
@@ -55,7 +57,7 @@ async function sweepChunk(
   cutoffs: Cutoffs,
 ): Promise<number> {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const ids = await selectChunk(ctx.env.DB, cls, t.scope, cutoffs);
+    const ids = await selectChunk(ctx.env.DB, t.table, t.scope, cutoffs);
     if (ids.length === 0) return 0;
     const prepared = await prepareReceipt(
       ctx,
@@ -67,12 +69,12 @@ async function sweepChunk(
         cutoffAt: cutoffs.cutoff,
         deleted: ids.length,
       },
-      receiptGate(cls, t.scope, cutoffs, ids),
+      receiptGate(t.table, t.scope, cutoffs, ids),
     );
     const keys = cls === 'photos' ? await photoKeys(ctx.env.DB, ids) : [];
     const [receipt] = await ctx.env.DB.batch([
       prepared.stmt,
-      deleteChunkStmt(ctx.env.DB, cls, t.scope, cutoffs, ids, prepared.receipt.id),
+      deleteChunkStmt(ctx.env.DB, t.table, t.scope, cutoffs, ids, prepared.receipt.id),
       ...(cls === 'photos'
         ? photoRetireStmts(ctx.env.DB, ids, prepared.receipt.id, ctx.clock.now())
         : []),
@@ -116,16 +118,19 @@ export async function sweepClass(
   ctx: ServiceContext,
   cls: SweepClass,
   limits = SWEEP_LIMITS,
+  /** A table that ages with the class (offline reads with scans): same plan, holds and receipt chain. */
+  table: SweepTable = cls,
 ): Promise<{ platform: number; orgs: number }> {
   const plan = await retentionPlan(ctx, cls);
   if (plan.blocked) return { platform: 0, orgs: 0 };
   const { removed: platform } = await sweepTarget(ctx, cls, {
+    table,
     scope: { kind: 'platform', exclude: excludedFromPlatformPass(plan) },
     orgId: null,
     days: plan.platformDays,
     maxChunks: limits.platformChunks,
   });
-  const key = `retention.cursor:${cls}`;
+  const key = `retention.cursor:${table}`;
   const stored = await readSystemValue(ctx.env.DB, key);
   const next = nextBatch(plan.special, typeof stored === 'string' ? stored : null);
   const started = performance.now();
@@ -143,6 +148,7 @@ export async function sweepClass(
     }
     orgs += (
       await sweepTarget(ctx, cls, {
+        table,
         scope: { kind: 'org', orgId: o.orgId },
         orgId: o.orgId,
         days: o.days,

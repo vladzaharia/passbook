@@ -31,11 +31,14 @@ export function storedAdmits(raw: string | null): Admits | null | undefined {
  */
 export const admitsJson = (admits: Admits): string => JSON.stringify(admitsWire(admits));
 
+/** What admission reads of a pass: enough for the offline roster to ask without loading one. */
+export type AdmitsPass = Pick<Pass, 'templateId' | 'personalization'>;
+
 /** An event takes a pass by its org, mode, archive state and pass filter. */
 export function eventAcceptsPass(
   actor: Pick<ScanActor, 'orgId' | 'mode'>,
   event: NonNullable<ScanActor['event']>,
-  pass: Pass,
+  pass: Pick<Pass, 'personalization'>,
 ): boolean {
   if (event.orgId !== actor.orgId || event.mode !== actor.mode || event.archivedAt !== null)
     return false;
@@ -58,7 +61,7 @@ export function eventAcceptsPass(
  */
 function admittingEntry(
   actor: ScanActor,
-  pass: Pass,
+  pass: AdmitsPass,
   now: number,
 ): EventScope | 'templates' | null {
   const open = (scope: EventScope) => scope.event.opensAt <= now && now <= scope.event.closesAt;
@@ -79,7 +82,7 @@ function admittingEntry(
   return entry ? 'templates' : null;
 }
 
-export function matchesEvent(actor: ScanActor, pass: Pass): boolean {
+export function matchesEvent(actor: ScanActor, pass: AdmitsPass): boolean {
   if (actor.events) return admittingEntry(actor, pass, 0) !== null;
   return actor.event ? eventAcceptsPass(actor, actor.event, pass) : true;
 }

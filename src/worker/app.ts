@@ -36,6 +36,7 @@ import { scannersRoutes } from './modules/scan/routes-scanners.ts';
 import { scanningSessionsRoutes } from './modules/scan/routes-scanning-sessions.ts';
 import { scansRoutes } from './modules/scan/routes-scans.ts';
 import { scanSetupsRoutes } from './modules/scan/routes-setups.ts';
+import { scanShellSwRoutes } from './modules/scan/routes-shell-sw.ts';
 import { scanStaffRoutes } from './modules/scan/routes-staff.ts';
 import { scanZonesRoutes } from './modules/scan/routes-zones.ts';
 import { settingsRoutes } from './modules/settings/routes.ts';
@@ -180,6 +181,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/wallet/v1/google', googleCallbackRoutes);
   app.route('/wallet/v1/samsung', samsungCallbackRoutes);
   app.route('/wallet/v1', appleRoutes);
+  app.route('/scan', scanShellSwRoutes);
   app.route('/p', walletOfferRoutes);
   app.route('/w/i', walletImageRoutes);
   app.route('/p', publicRoutes);

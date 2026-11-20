@@ -4,12 +4,15 @@ import type {
   ScanningSession,
   SessionCustomerSettings,
 } from '@/shared/contracts/scanning-sessions.ts';
+import { type OfflineMode, offlineModeOf } from '@/shared/scan-offline.ts';
 import { localZone } from '@/web/lib/timezones.ts';
 import { EMPTY_DRAFT, type ScannerDraft, settingsOf } from '../scanners/scanner-draft.ts';
 import { hoursBody, hoursProblem, weekOf } from './session-hours.ts';
 
 export type SessionDraft = ScannerDraft & {
   timeZone: string;
+  /** What the door does with no connection (O8). */
+  whenOffline: OfflineMode;
   /** Zones this session checks. Absent while the server has not said (a list row). */
   zoneIds?: string[];
   /** The session already stores Desk actions, so Off is sent rather than left out. */
@@ -30,6 +33,7 @@ export const emptySessionDraft = (): SessionDraft => ({
   accepts: 'all',
   eventIds: [],
   lookup: true,
+  whenOffline: 'stop',
   zoneIds: [],
   hoursOn: false,
 });
@@ -43,6 +47,7 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
     accepts: s.accepts ? 'templates' : s.settings.acceptAllTemplates ? 'all' : 'templates',
     templateIds: admits.templateIds,
     eventIds: admits.eventIds,
+    whenOffline: offlineModeOf(s.settings),
     flow: s.settings.flow,
     reader: s.settings.reader === 'barcode' ? 'barcode' : 'none',
     lookup: s.settings.lookup,
@@ -73,6 +78,8 @@ export const sessionBody = (d: SessionDraft) => ({
     d.accepts === 'all' ? null : admitsWire({ templateIds: d.templateIds, eventIds: d.eventIds }),
   settings: {
     ...settingsOf(d),
+    whenOffline: d.whenOffline,
+    offline: d.whenOffline === 'list',
     ...(d.deskActions || d.deskActionsSaved ? { deskActions: d.deskActions } : {}),
     ...(d.customer === undefined ? {} : { customer: cleanCustomer(d.customer) }),
   },

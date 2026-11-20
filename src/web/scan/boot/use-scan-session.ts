@@ -9,6 +9,7 @@ import { isApiError } from '../../lib/errors.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
 import type { ScanState } from '../machine/types.ts';
+import { keepSession, keptSession } from '../offline/shell.ts';
 import { takePairCode } from './pair-link.ts';
 
 const REFETCH_MS = 10_000;
@@ -59,14 +60,26 @@ export function useScanSession(
   machine?: ScanState | null,
 ): ScanSessionHook {
   const client = useQueryClient();
+  const pendingRef = useRef<number | undefined>(undefined);
+  pendingRef.current = machine ? machine.queue.pending + machine.unsure.length : undefined;
   // Read before the first request: the fragment is gone from the address bar by then.
   const [pairCode] = useState(() => takePairCode());
   const query = useQuery({
     queryKey: KEY,
     queryFn: async () => {
-      const session = await api.session();
-      csrf.set(session.csrfToken);
-      return session;
+      try {
+        const session = await api.session(undefined, undefined, pendingRef.current);
+        csrf.set(session.csrfToken);
+        void keepSession(session);
+        return session;
+      } catch (error) {
+        // Cold start with no connection: a door that uses an offline mode opens on its kept session.
+        if (toFail(error).error === 'network') {
+          const kept = await keptSession();
+          if (kept) return kept;
+        }
+        throw error;
+      }
     },
     refetchInterval:
       !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)

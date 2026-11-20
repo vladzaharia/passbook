@@ -15,6 +15,7 @@ import { tenantScanRole } from './actor.ts';
 import { admitsJson } from './admits.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { kickScreen } from './live.ts';
+import { noteSessionChange, savedOfflineSettings } from './offline-policy.ts';
 import {
   adminGrant,
   audited,
@@ -122,16 +123,19 @@ export async function createScanningSession(
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const accepts = input.accepts ? await checkAccepts(ctx, input.orgId, mode, input.accepts) : null;
-  const settings = ScanningSessionSettingsSchema.parse({
-    ...DEFAULT_SETTINGS,
-    lookup: true,
-    showPhoto: true,
-    ...input.settings,
-    acceptAllTemplates: input.accepts === null,
-  });
+  const zoneIds = input.zoneIds ?? [];
+  const settings = savedOfflineSettings(
+    ScanningSessionSettingsSchema.parse({
+      ...DEFAULT_SETTINGS,
+      lookup: true,
+      showPhoto: true,
+      ...input.settings,
+      acceptAllTemplates: input.accepts === null,
+    }),
+    zoneIds.length,
+  );
   if (settings.checkIn?.eventId)
     await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
-  const zoneIds = input.zoneIds ?? [];
   const zoneChecks = await sessionZoneChecks(ctx, input.orgId, zoneIds, eventOnly(accepts));
   const now = ctx.clock.now();
   const id = ctx.ids.id();
@@ -211,16 +215,22 @@ export async function updateScanningSession(
       [],
       'SCANNING_SESSION_SETTINGS_INVALID',
     );
+  const zoneCount = input.zoneIds
+    ? input.zoneIds.length
+    : (await sessionZoneIds(ctx.env.DB, row.org_id, id)).length;
   const settings = settingsChanged
-    ? ScanningSessionSettingsSchema.parse({
-        ...storedCustomer(row.settings),
-        ...previousSettings,
-        ...input.settings,
-        acceptAllTemplates:
-          input.accepts === undefined
-            ? (previousSettings?.acceptAllTemplates ?? false)
-            : input.accepts === null,
-      })
+    ? savedOfflineSettings(
+        ScanningSessionSettingsSchema.parse({
+          ...storedCustomer(row.settings),
+          ...previousSettings,
+          ...input.settings,
+          acceptAllTemplates:
+            input.accepts === undefined
+              ? (previousSettings?.acceptAllTemplates ?? false)
+              : input.accepts === null,
+        }),
+        zoneCount,
+      )
     : null;
   if (input.settings?.checkIn?.eventId)
     await checkAccepts(ctx, row.org_id, row.mode, { eventId: input.settings.checkIn.eventId });
@@ -306,6 +316,7 @@ export async function updateScanningSession(
       );
     throw error;
   }
+  await noteSessionChange(ctx, row, next.status, settings ?? effectiveSessionSettings(row), now);
   await Promise.all(devices.map((d) => kickScreen(ctx, row.org_id, row.mode, d.scanner_id)));
   return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }

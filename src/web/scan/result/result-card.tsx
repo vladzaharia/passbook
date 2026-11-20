@@ -75,6 +75,8 @@ export function ResultCard({
   const d = o.display;
   const ok = o.kind === 'ok';
   const chip = (ok || o.kind === 'heads_up') && Boolean(o.bundle || o.group);
+  // A read saved offline is a check-in the door has taken: it wears the green verdict.
+  const shown = o.kind === 'queued' ? 'ok' : o.kind;
   const ready = o.kind === 'ready';
   const noExit =
     o.reason === 'not_accepted' && o.checkIn?.direction === 'out' && o.checkIn.mode !== 'in_out';
@@ -112,7 +114,7 @@ export function ResultCard({
   const customLine = custom && !noExit && !noReentry ? d?.header.title : null;
   const nameInBand = custom && Boolean(d) && d?.header.title === d?.identity.holder;
   const CustomGlyph = ok && d?.header.icon ? scanIcon(d.header.icon) : null;
-  const layout = custom ? 'custom' : o.kind === 'ok' || o.kind === 'heads_up' ? 'row' : 'stack';
+  const layout = custom ? 'custom' : shown === 'ok' || shown === 'heads_up' ? 'row' : 'stack';
   // A refusal or a hold (gym full, already in) changed nothing: no stamp, balance or staff note
   // for a grant, so the card cannot read as granted.
   const denied =
@@ -143,7 +145,7 @@ export function ResultCard({
     <section
       ref={root}
       className="scan-result"
-      data-kind={o.kind}
+      data-kind={shown}
       data-phase={phase}
       data-screen={d?.screen ?? o.kind}
       data-reason={o.reason}
@@ -156,7 +158,7 @@ export function ResultCard({
           className="scan-result-band"
           data-layout={layout}
           data-testid="scan-verdict"
-          data-kind={o.kind}
+          data-kind={shown}
           data-reason={o.reason}
           data-phase={phase}
           data-screen={d?.screen ?? o.kind}
@@ -170,7 +172,7 @@ export function ResultCard({
                 </span>
               </span>
             ) : (
-              <VerdictGlyph kind={o.kind} />
+              <VerdictGlyph kind={shown} />
             )}
           </div>
           <div className="scan-verdict-text">

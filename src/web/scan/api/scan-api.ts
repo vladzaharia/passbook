@@ -70,6 +70,13 @@ export type { ScanApiDeps } from './scan-api-support.ts';
 
 const BASE = '/api/v1/scan';
 
+const rosterQuery = (cursor: string | undefined, since: number | undefined): string => {
+  const q = new URLSearchParams();
+  if (cursor) q.set('cursor', cursor);
+  if (since !== undefined) q.set('since', String(since));
+  return q.size > 0 ? `?${q}` : '';
+};
+
 export function createScanApi(deps: ScanApiDeps) {
   const doFetch = deps.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
@@ -200,8 +207,15 @@ export function createScanApi(deps: ScanApiDeps) {
     pairPreview: (code: string) =>
       request('POST', '/pair/preview', ScanPairPreviewSchema, { code }),
     pair: (code: string) => request('POST', '/pair', ScanSessionSchema, { code }),
-    session: (scope?: AdminScope, call?: Call) =>
-      request('GET', `/session${scopeQuery(scope)}`, ScanSessionSchema, undefined, call),
+    /** `pending`: reads queued on the device; 0 tells the server this contact is a clean one. */
+    session: (scope?: AdminScope, call?: Call, pending?: number) =>
+      request(
+        'GET',
+        `/session${scopeQuery(scope)}${pending === undefined ? '' : `${scope ? '&' : '?'}pending=${pending}`}`,
+        ScanSessionSchema,
+        undefined,
+        call,
+      ),
     resolve: (body: z.infer<typeof ScanResolveRequestSchema>, call?: Call) =>
       request('POST', '/resolve', ScanOutcomeSchema, body, call),
     act: (body: z.infer<typeof ScanActRequestSchema>, call?: Call) =>
@@ -235,14 +249,8 @@ export function createScanApi(deps: ScanApiDeps) {
     setRole: (body: ScanRoleChange) => request('POST', '/role', ScanSessionSchema, body),
     staffSearch: (q: string, call?: Call) =>
       request('GET', `/staff?q=${encodeURIComponent(q)}`, ScanStaffSearchSchema, undefined, call),
-    roster: (cursor?: string, call?: Call) =>
-      request(
-        'GET',
-        `/roster${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`,
-        ScanRosterSchema,
-        undefined,
-        call,
-      ),
+    roster: (cursor?: string, since?: number, call?: Call) =>
+      request('GET', `/roster${rosterQuery(cursor, since)}`, ScanRosterSchema, undefined, call),
     batch: (body: z.infer<typeof ScanBatchRequestSchema>, call?: Call) =>
       request('POST', '/batch', ScanBatchResultSchema, body, call),
     inside: (query: InsideQuery, call?: Call) => {

@@ -82,7 +82,7 @@ export function exportCells(row: ScanRecordDto, timeZone?: string): (string | nu
     row.method,
     row.amount,
     row.override ? 'Yes' : null,
-    row.offline ? 'Yes' : null,
+    row.unverified ? 'Unverified' : row.offline ? 'Yes' : null,
     row.undoneAt === null ? null : new Date(row.undoneAt).toISOString(),
   ];
   if (timeZone) cells.splice(1, 0, localTime(row.at, timeZone));

@@ -30,6 +30,7 @@ import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
 import { withParentHint } from './occupancy/parent-hint.ts';
+import { touchOnlineAt } from './repo-roster.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
@@ -37,6 +38,7 @@ import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { tillKeyAccess } from './routes-key-access.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
+import { registerScanOfflineRoutes } from './routes-offline.ts';
 import { limitScanBodies, registerScanPhotoRoute } from './routes-photo.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanSessionHoursRoutes } from './routes-session-hours.ts';
@@ -124,15 +126,17 @@ register(
     method: 'get',
     path: '/session',
     summary: 'Scanner session',
-    query: DayStart,
+    query: DayStart.extend({ pending: z.coerce.number().int().nonnegative().optional() }),
     response: ScanSessionSchema,
   },
   async (c) => {
-    const session = await buildSession(
-      serviceContext(c),
-      scanActorOf(c),
-      c.req.valid('query').dayStart,
-    );
+    const { dayStart, pending } = c.req.valid('query');
+    const actor = scanActorOf(c);
+    const ctx = serviceContext(c);
+    // Online with nothing waiting to sync: no queued read may be dated before now (batch.ts).
+    if (pending === 0 && actor.principal === 'scanner' && actor.scanner)
+      await touchOnlineAt(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
+    const session = await buildSession(ctx, actor, dayStart);
     const auth = c.var.auth;
     if (auth?.kind === 'session' || (auth?.kind === 'scanner' && auth.transport === 'cookie'))
       session.csrfToken = auth.csrfSecret;
@@ -146,6 +150,7 @@ registerScanRoleRoutes(scanRoutes);
 registerScanTagRoutes(scanRoutes);
 registerScanSessionHoursRoutes(scanRoutes);
 registerScanEnrollmentRoutes(scanRoutes);
+registerScanOfflineRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 registerScanPhotoRoute(scanRoutes);
 

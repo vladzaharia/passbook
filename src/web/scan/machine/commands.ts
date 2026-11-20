@@ -262,7 +262,7 @@ export function createRunner(deps: ScanDeps, host: Host) {
           deps.unsure.remove(cmd.key).catch((error: unknown) => void error);
           break;
         case 'offline.decide':
-          // Offline check-in is CC.7: until then the reducer never emits this.
+          deps.offline?.decide(cmd.key, cmd.input, cmd.unverified === true);
           break;
         case 'camera':
           deps.camera[cmd.op]();

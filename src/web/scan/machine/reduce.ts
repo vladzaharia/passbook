@@ -106,8 +106,10 @@ function step(s: MachineState, event: MachineEvent, env: Env): Out {
       return approve(s, event, env);
     // The picker is the review: its consequence line shows before and after.
     case 'review':
-    case 'offline':
       return same(s);
+    // The offline controller's verdict is the answer to the read it was asked about.
+    case 'offline':
+      return answer(s, { type: 'answer', key: event.key, outcome: event.outcome }, env);
     default:
       return setter(s, event, env) ?? same(s);
   }
