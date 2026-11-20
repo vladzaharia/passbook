@@ -23,6 +23,7 @@ import { liveRingStaleStmt } from './repo-live-render.ts';
 import {
   DEVICE_TAG,
   deviceTag,
+  doorbellSockets,
   liveContext,
   RING,
   readRing,
@@ -208,8 +209,9 @@ export class ScanHub extends DurableObject<AppEnv> {
     return scannerIds.filter((id) => this.ctx.getWebSockets(deviceTag(id)).length > 0);
   }
 
-  private async toDevice(
-    input: { orgId: string; mode: Mode; scannerId: string; now?: number },
+  /** `scannerId` left out: every device of the org and mode (a roll call's doorbell). */
+  async toDevice(
+    input: { orgId: string; mode: Mode; scannerId?: string; now?: number },
     body: object,
     /** Also the screen sockets tagged with the scanner's own id. Tag requests never go to screens. */
     screens: boolean,
@@ -219,10 +221,7 @@ export class ScanHub extends DurableObject<AppEnv> {
     const message = JSON.stringify(body);
     let sent = 0;
     // The device's own socket, and for `resolved` the screens named by the scanner's id.
-    for (const socket of [
-      ...this.ctx.getWebSockets(deviceTag(input.scannerId)),
-      ...(screens ? this.ctx.getWebSockets(input.scannerId) : []),
-    ]) {
+    for (const socket of doorbellSockets(this.ctx, input.scannerId, screens)) {
       const sealed: unknown = socket.deserializeAttachment();
       const attachment =
         typeof sealed === 'string' ? await openLiveAttachment(ctx.env, sealed) : null;

@@ -36,8 +36,8 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
-| `scans:read` | scoped scanner event and scan-log reads |
-| `scans:write` | scan from a till as one named terminal (see Scan from a till); org-bound keys only |
+| `scans:read` | scoped scanner event and scan-log reads; read a roll call |
+| `scans:write` | scan from a till as one named terminal (see Scan from a till); start, confirm and end a roll call; org-bound keys only |
 | `connections:read` | scoped connection reads |
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
@@ -717,6 +717,20 @@ curl -X POST https://passbook.mobile/api/v1/scan/actions \
 - A key undoes only its own scans, inside the undo window. The terminal's own token and the key cannot undo each other's scans.
 - A key revoked or expired, or an org whose access changed, while a scan is in flight is checked again when the scan commits: 401 `INVALID_API_KEY` or 403 `ORG_ACCESS_CHANGED`, nothing written.
 - Each scan records the key (`api_key_id`); history, the scans CSV (**API key**) and the ledger carry it. Rate limits and miss counts are the key's own (`k:<keyId>:s:<terminalId>`), so a key cannot lock out the physical till.
+
+## Roll call
+
+A roll call freezes who is inside and records who is confirmed present or out. Calls are over one scanning session's places (`sessionId`) or every tracked zone of the org. One call is open per scope; starting again joins it. Names show as the pass title. Max stay and Clear at exits in its places wait until it ends (at most 12 hours).
+
+| | |
+| --- | --- |
+| `GET /roll-calls?orgId=&sessionId=` | the open call, or `{ "rollCall": null }`. `scans:read` |
+| `POST /roll-calls?orgId=&sessionId=` | start, or join the open call. `scans:write` |
+| `GET /roll-calls/{id}` | a call, open or ended. `scans:read` |
+| `POST /roll-calls/{id}/marks` | `{ "marks": [{ "passId", "status": "present" \| "out" \| "none", "at" }] }`, up to 100. The later `at` wins per person. `scans:write` |
+| `POST /roll-calls/{id}/end` | end it; ending twice answers with the record. `scans:write` |
+
+`orgId` is for signed-in users; an org-bound key names its org. Each person carries `presence` (`in`, `left`, `lapsed`), `late` (tapped in after the start) and `notConfirmedOut` (the clock closed the stay and no one confirmed it). Scanners use the same calls under `/scan/roll-call` with the device's own sign-in; a key reaches only `/roll-calls`.
 
 ## Scanner history
 

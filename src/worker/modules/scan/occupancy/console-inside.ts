@@ -56,7 +56,7 @@ async function consoleScope(
   };
 }
 
-const titles =
+export const titles =
   (ctx: ServiceContext, orgId: string, mode: Mode): Identify =>
   async (ids) => {
     const out = new Map<

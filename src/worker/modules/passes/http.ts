@@ -113,7 +113,7 @@ export async function tenantAuthorityOf(
     const permitted =
       (capability === 'passes:read' && scope === 'passes:read') ||
       (capability === 'passes:operate' &&
-        (scope === 'passes:write' || scope === 'holders:write')) ||
+        (scope === 'passes:write' || scope === 'holders:write' || scope === 'scans:write')) ||
       (capability === 'integrations:read' && scope === 'connections:read') ||
       (capability === 'integrations:manage' && scope === 'connections:write') ||
       ((capability === 'integrations:read' || capability === 'integrations:manage') &&
