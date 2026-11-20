@@ -78,7 +78,11 @@
         }
       },
       "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",
@@ -156,7 +160,11 @@
         }
       },
       "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8"
@@ -269,13 +277,157 @@
         }
       },
       "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",
       "email": {
         "outcome": "queued"
       }
+    }
+  },
+  "passes.postPassesByIdVoid": {
+    "description": "Voids a pass. Wallet shows it as void and scans are refused. Undo with unvoid.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+      "title": "Ada Example",
+      "subtitle": "Row 4, seat 12",
+      "externalId": "booking_8841",
+      "status": "voided",
+      "mode": "live",
+      "version": 2,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 0,
+      "removedAt": null,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000
+    }
+  },
+  "passes.postPassesByIdUnvoid": {
+    "description": "Undoes a void.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+      "title": "Ada Example",
+      "subtitle": "Row 4, seat 12",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 3,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 0,
+      "removedAt": null,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000
+    }
+  },
+  "passes.postPassesByIdRemove": {
+    "description": "Removes the pass from Wallet by publishing a voided, expired final version. The record stays; undo with restore. `message` shows on the lock screen.",
+    "request": {
+      "message": "Booking cancelled"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+      "title": "Ada Example",
+      "subtitle": "Row 4, seat 12",
+      "externalId": "booking_8841",
+      "status": "voided",
+      "mode": "live",
+      "version": 2,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 0,
+      "removedAt": 1764000000000,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000
+    }
+  },
+  "passes.postPassesByIdRestore": {
+    "description": "Undoes a removal and publishes the pass again.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
+      "title": "Ada Example",
+      "subtitle": "Row 4, seat 12",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 3,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 0,
+      "removedAt": null,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000
+    }
+  },
+  "passes.deletePassesById": {
+    "description": "Deletes the pass record. To take a pass out of Wallet and keep the record, use remove.",
+    "response": {
+      "ok": true
+    }
+  },
+  "passes.postPassesByIdResendEmail": {
+    "description": "Emails the pass link to the holder, or to `to` when given. Send an `Idempotency-Key` header to retry safely.",
+    "request": {
+      "to": "ada@example.com",
+      "attach": true
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "passes.postPassesByIdRotateLink": {
+    "description": "Replaces the download and public links. The old links stop working.",
+    "response": {
+      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
+      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8"
+    }
+  },
+  "passes.postPassesByIdNewCode": {
+    "description": "Mints a new scan code. The old code stops working.",
+    "response": {
+      "ok": true
     }
   }
 }
