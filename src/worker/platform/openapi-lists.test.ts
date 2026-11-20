@@ -17,13 +17,15 @@ const ops = Object.entries(doc.paths).flatMap(([path, item]) =>
 );
 const queryNames = (op: Op) => (op.parameters ?? []).filter((p) => p.in === 'query');
 
-/** Reads one object, one map or one result: no collection to page. */
+/** Reads one object, one map or one result, or a set with a hard cap (a pass's notes, a session's scanners): no collection to page. */
 const NOT_COLLECTIONS = new Set([
   '/api/v1/orgs/{id}/entitlements',
   '/api/v1/platform/orgs/{id}/entitlements',
   '/api/v1/templates/previews',
   '/api/v1/delivery',
   '/api/v1/settings',
+  '/api/v1/scan/passes/{passId}/notes',
+  '/api/v1/scan/devices',
 ]);
 /** Streams keep `after`: a position in an ordered log, not a page. */
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);
