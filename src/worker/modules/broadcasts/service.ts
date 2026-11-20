@@ -6,7 +6,13 @@ import type {
 } from '../../../shared/contracts/broadcasts.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { batch } from '../../platform/db.ts';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
+import { entitlementsOf } from '../../platform/entitlements.ts';
+import {
+  ConflictError,
+  FeatureLimitError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { orgIsActive } from '../orgs/repo.ts';
@@ -27,6 +33,7 @@ import {
   requireWritableBroadcast,
 } from './guards.ts';
 import * as repo from './repo.ts';
+import { manualBroadcastsToday } from './repo-day-limit.ts';
 import { countTarget } from './repo-target.ts';
 import { launchBroadcast } from './start.ts';
 
@@ -78,7 +85,7 @@ export async function insertBroadcast(
       now,
     ),
   ]);
-  if ((inserted?.meta.changes ?? 0) !== 1) throw new ForbiddenError();
+  if ((inserted?.meta.changes ?? 0) !== 1) throw await insertRefusal(ctx, body.orgId, now);
   await recordAudit(ctx, {
     orgId: body.orgId,
     actorType: actor.type,
@@ -90,6 +97,15 @@ export async function insertBroadcast(
   });
   if (body.send === 'now') await launchBroadcast(ctx, { id, org_id: body.orgId });
   return getBroadcastDto(ctx, id, body.orgId);
+}
+
+/** A refused insert is the plan's daily cap when the org has used it, otherwise the lost authority. */
+async function insertRefusal(ctx: ServiceContext, orgId: string, now: number): Promise<Error> {
+  const limit = (await entitlementsOf(ctx, orgId))['messages.perDay'];
+  const used = await manualBroadcastsToday(ctx.env.DB, orgId, now);
+  return typeof limit === 'number' && used >= limit
+    ? new FeatureLimitError({ key: 'messages.perDay', limit, used })
+    : new ForbiddenError();
 }
 
 /** Sends a draft now, or at `at`. */

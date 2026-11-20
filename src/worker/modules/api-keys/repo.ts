@@ -4,6 +4,7 @@ import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
 import { all, first, run, type SqlValue } from '../../platform/db.ts';
+import { withinLimit } from '../../platform/entitlements.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -102,6 +103,13 @@ export async function createKey(
     // Each scope must be granted by the creator's own stored roles, not by the snapshot's `roles`.
     checks: [
       ...capabilityChecks(authority),
+      // Revoked and expired keys free their slot.
+      withinLimit(
+        'api.keys',
+        `SELECT COUNT(*) FROM api_keys k WHERE k.org_id = {org} AND k.revoked_at IS NULL
+          AND (k.expires_at IS NULL OR k.expires_at > ?)`,
+        [key.created_at],
+      ),
       ...wanted.map((scope) =>
         membershipCapability(authority.membershipId, scopeCapability[scope as TenantScope]),
       ),

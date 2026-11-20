@@ -31,6 +31,7 @@ import { invitationEmail } from './invitation-email.ts';
 import { checkInviteAllowed } from './invitation-limits.ts';
 import {
   insertInvitation,
+  membersLimit,
   revokeActiveMembership,
   revokePendingInvitation,
 } from './repo-member-writes.ts';
@@ -132,7 +133,7 @@ export async function inviteOrgMember(
     now,
     expires: now + TTL,
   };
-  await insertInvitation(ctx, manager.principal, manager.checks, row, {
+  await insertInvitation(ctx, manager.principal, [...manager.checks, membersLimit(now)], row, {
     orgId,
     actorType: 'user',
     actorId: auth.userId,

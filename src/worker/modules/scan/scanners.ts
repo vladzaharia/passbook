@@ -26,7 +26,7 @@ import {
 } from './repo-admin-grant.ts';
 import { addScannerTemplates, replaceScannerTemplates } from './repo-admin-unguarded.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
-import { addScannerInsert, addScannerPatch } from './repo-scanners.ts';
+import { addScannerInsert, addScannerPatch, scannerSlot } from './repo-scanners.ts';
 import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { scanningSessionForDevice } from './repo-scanning-sessions.ts';
 import { nameTaken } from './scanner-name.ts';
@@ -61,6 +61,7 @@ export async function createScanner(
     authority,
     input.orgId,
     [
+      scannerSlot(),
       ...eventsOpen([accepts.eventId, settings.checkIn?.eventId]),
       ...templatesUsable(accepts.templateIds),
     ],

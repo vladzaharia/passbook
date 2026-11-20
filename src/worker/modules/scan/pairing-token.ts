@@ -7,7 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { deviceLabel } from './dto-console.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
-import type { ConsoleScannerRow } from './repo-scanners.ts';
+import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
 import {
   addAdminCredential,
   type Credential,
@@ -131,7 +131,10 @@ export async function pairHere(
       userId,
       authority,
       scanner.orgId,
-      [epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch)],
+      [
+        epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch),
+        ...(restored ? [scannerSlot()] : []),
+      ],
       PAIR_CODES,
       scanner.id,
     );
@@ -172,7 +175,10 @@ export async function replaceTerminalToken(
       userId,
       authority,
       scanner.orgId,
-      [epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch)],
+      [
+        epochIs('scanners', scanner.id, 'credential_epoch', scanner.credentialEpoch),
+        ...(restored ? [scannerSlot()] : []),
+      ],
       PAIR_CODES,
       scanner.id,
     );
