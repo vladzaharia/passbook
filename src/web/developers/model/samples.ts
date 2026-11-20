@@ -1,4 +1,6 @@
 import type { Lang } from './highlight.ts';
+import { pathValue } from './ids.ts';
+import { bodyOf, queryOf, tsSample } from './sample-ts.ts';
 import type { Json, OpView } from './types.ts';
 
 export interface Sample {
@@ -9,26 +11,21 @@ export interface Sample {
 }
 
 const KEY = 'PASSBOOK_KEY';
-const hasBody = (op: OpView) => op.requestExample !== undefined && op.method !== 'get';
-
-/** Path templates as a person fills them: `{id}` becomes `<id>`. */
-const target = (op: OpView, base: string) => `${base}${op.path.replace(/\{(\w+)\}/g, '<$1>')}`;
 const json = (v: Json) => JSON.stringify(v, null, 2);
 
-/** A TypeScript literal for a JSON value: bare keys, single quotes. */
-function tsValue(v: Json, pad = ''): string {
-  if (v === null || typeof v !== 'object')
-    return typeof v === 'string' ? `'${v.replaceAll("'", "\\'")}'` : String(v);
-  const inner = `${pad}  `;
-  if (Array.isArray(v)) {
-    return v.length === 0
-      ? '[]'
-      : `[\n${v.map((x) => inner + tsValue(x, inner)).join(',\n')},\n${pad}]`;
-  }
-  const entries = Object.entries(v);
-  if (entries.length === 0) return '{}';
-  const key = (k: string) => (/^[A-Za-z_$][\w$]*$/.test(k) ? k : `'${k}'`);
-  return `{\n${entries.map(([k, x]) => `${inner}${key(k)}: ${tsValue(x, inner)}`).join(',\n')},\n${pad}}`;
+const hasBody = (op: OpView) => bodyOf(op) !== undefined || op.binary;
+const bodyJson = (op: OpView) => json(bodyOf(op) ?? {});
+
+/** The path with example ids in it, and the query the call needs. */
+function target(op: OpView, base: string): string {
+  const type = (name: string) => op.fields.find((f) => f.where === 'path' && f.name === name)?.type;
+  const path = op.path.replace(/\{(\w+)\}/g, (_, n: string) =>
+    pathValue(op.path, n, type(n) ?? 'string'),
+  );
+  const query = Object.entries(queryOf(op))
+    .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`)
+    .join('&');
+  return `${base}${path}${query ? `?${query}` : ''}`;
 }
 
 function curl(op: OpView, base: string): string {
@@ -37,29 +34,13 @@ function curl(op: OpView, base: string): string {
     `  -H "Authorization: Bearer $${KEY}"`,
   ];
   if (op.idempotent) parts.push('  -H "Idempotency-Key: $(uuidgen)"');
-  if (hasBody(op)) {
-    parts.push('  -H "Content-Type: application/json"');
-    parts.push(`  -d '${json(op.requestExample as Json)}'`);
+  for (const [k, v] of Object.entries(op.sample.headers)) parts.push(`  -H "${k}: ${v}"`);
+  if (op.binary) {
+    parts.push('  -H "Content-Type: image/png"', '  --data-binary @image.png');
+  } else if (hasBody(op)) {
+    parts.push('  -H "Content-Type: application/json"', `  -d '${bodyJson(op)}'`);
   }
   return parts.join(' \\\n');
-}
-
-function ts(op: OpView, base: string): string {
-  const headers = [`    Authorization: \`Bearer \${process.env.${KEY}}\`,`];
-  if (op.idempotent) headers.push("    'Idempotency-Key': crypto.randomUUID(),");
-  if (hasBody(op)) headers.push("    'Content-Type': 'application/json',");
-  const body = hasBody(op)
-    ? `\n  body: JSON.stringify(${tsValue(op.requestExample as Json, '  ')}),`
-    : '';
-  return [
-    `const res = await fetch('${target(op, base)}', {`,
-    `  method: '${op.method.toUpperCase()}',`,
-    '  headers: {',
-    ...headers,
-    `  },${body}`,
-    '})',
-    'console.log(res.status, await res.json())',
-  ].join('\n');
 }
 
 /** A Python literal for a JSON value. */
@@ -82,8 +63,11 @@ function pyValue(v: Json, pad = ''): string {
 function py(op: OpView, base: string): string {
   const headers = [`"Authorization": f"Bearer {os.environ['${KEY}']}"`];
   if (op.idempotent) headers.push('"Idempotency-Key": str(uuid.uuid4())');
+  for (const [k, v] of Object.entries(op.sample.headers)) headers.push(`"${k}": "${v}"`);
+  if (op.binary) headers.push('"Content-Type": "image/png"');
   const args = [`    "${target(op, base)}",`, `    headers={${headers.join(', ')}},`];
-  if (hasBody(op)) args.push(`    json=${pyValue(op.requestExample as Json, '    ')},`);
+  if (op.binary) args.push('    content=open("image.png", "rb").read(),');
+  else if (hasBody(op)) args.push(`    json=${pyValue(bodyOf(op) ?? {}, '    ')},`);
   return [
     `import os${op.idempotent ? ', uuid' : ''}`,
     'import httpx',
@@ -92,7 +76,7 @@ function py(op: OpView, base: string): string {
     ...args,
     ')',
     'res.raise_for_status()',
-    'print(res.json())',
+    op.download ? 'print(res.status_code)' : 'print(res.json())',
   ].join('\n');
 }
 
@@ -106,12 +90,16 @@ function go(op: OpView, base: string): string {
     '\t"io"',
     '\t"net/http"',
     '\t"os"',
-    ...(body ? ['\t"strings"'] : []),
+    ...(body && !op.binary ? ['\t"strings"'] : []),
     ...(op.idempotent ? ['\t"time"'] : []),
     ')',
     '',
     'func main() {',
-    ...(body ? [`\tbody := strings.NewReader(\`${json(op.requestExample as Json)}\`)`] : []),
+    ...(op.binary
+      ? ['\tbody, err := os.Open("image.png")', '\tif err != nil {', '\t\tpanic(err)', '\t}']
+      : body
+        ? [`\tbody := strings.NewReader(\`${bodyJson(op)}\`)`]
+        : []),
     `\treq, err := http.NewRequest("${op.method.toUpperCase()}", "${target(op, base)}", ${body ? 'body' : 'nil'})`,
     '\tif err != nil {',
     '\t\tpanic(err)',
@@ -120,7 +108,10 @@ function go(op: OpView, base: string): string {
     ...(op.idempotent
       ? ['\treq.Header.Set("Idempotency-Key", fmt.Sprint(time.Now().UnixNano()))']
       : []),
-    ...(body ? ['\treq.Header.Set("Content-Type", "application/json")'] : []),
+    ...Object.entries(op.sample.headers).map(([k, v]) => `\treq.Header.Set("${k}", "${v}")`),
+    ...(body
+      ? [`\treq.Header.Set("Content-Type", "${op.binary ? 'image/png' : 'application/json'}")`]
+      : []),
     '\tres, err := http.DefaultClient.Do(req)',
     '\tif err != nil {',
     '\t\tpanic(err)',
@@ -132,11 +123,11 @@ function go(op: OpView, base: string): string {
   ].join('\n');
 }
 
-/** The request in four languages. None needs an SDK: every sample runs as written with a key. */
+/** The request in four languages: TypeScript through @passbook/sdk, the rest plain HTTP until the Python and Go SDKs ship. */
 export function samplesFor(op: OpView, base: string): Sample[] {
   return [
     { lang: 'curl', label: 'curl', file: 'request.sh', code: curl(op, base) },
-    { lang: 'ts', label: 'TypeScript', file: 'request.ts', code: ts(op, base) },
+    { lang: 'ts', label: 'TypeScript', file: 'request.ts', code: tsSample(op) },
     { lang: 'py', label: 'Python', file: 'request.py', code: py(op, base) },
     { lang: 'go', label: 'Go', file: 'main.go', code: go(op, base) },
   ];

@@ -55,6 +55,8 @@ export const DEV_COPY = {
     body: 'Body',
     onThisPage: 'On this page',
     copy: 'Copy',
+    copyAs: 'Copy as',
+    examples: 'Examples',
     sdk: 'SDK',
     tryIt: 'Try it',
     signInToTry: 'Sign in to try',

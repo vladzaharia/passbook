@@ -40,7 +40,8 @@ describe('portal model', () => {
   it('shows no x-codes table until the data exists, then reads status and fix from the catalog', () => {
     const doc = structuredClone(inputs.doc);
     for (const item of Object.values(doc.paths))
-      for (const op of Object.values(item ?? {})) delete (op as Record<string, unknown>)['x-codes'];
+      for (const op of Object.values(item ?? {}))
+        delete (op as unknown as Record<string, unknown>)['x-codes'];
     const bare = buildSite({ ...inputs, doc, errors: [], guide: {} });
     expect(bare.pages.flatMap((p) => p.ops).every((o) => o.errors.length === 0)).toBe(true);
     const op = doc.paths['/api/v1/passes']?.post;
@@ -73,7 +74,8 @@ describe('portal model', () => {
     for (const s of samples) {
       expect(s.code, s.lang).toContain('PASSBOOK_KEY');
       expect(s.code, s.lang).not.toMatch(/pb_(live|test)_/);
-      expect(s.code, s.lang).toContain('/api/v1/passes');
+      // TypeScript goes through the SDK, which owns the path.
+      expect(s.code, s.lang).toContain(s.lang === 'ts' ? 'pb.passes.create(' : '/api/v1/passes');
     }
   });
 

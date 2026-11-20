@@ -1,3 +1,4 @@
+import { minimalExample } from './example.ts';
 import { GROUP_ORDER, groupOf, labelOf, slugOf } from './resources.ts';
 import { bodyFields, paramFields, refName, resolve } from './schema.ts';
 import {
@@ -6,6 +7,7 @@ import {
   type Dict,
   type ErrorEntry,
   type ErrorRow,
+  type Example,
   type Json,
   METHODS,
   type Method,
@@ -27,6 +29,8 @@ export interface Inputs {
   errors?: unknown;
   /** docs/api/error-guide.json (PX4): `{code: {title,when,fix,retryable}}`. */
   guide?: Record<string, Dict>;
+  /** docs/developers/snippets/guides: the hand-written snippets. */
+  examples?: Example[];
 }
 
 const asDict = (v: unknown): Dict => (v && typeof v === 'object' ? (v as Dict) : {});
@@ -90,6 +94,24 @@ function testMode(value: Json | undefined): Json | undefined {
 const exampleOf = (content: Dict | undefined): Json | undefined =>
   testMode(asDict(asDict(content)['application/json']).example as Json | undefined);
 
+/** The query parameters a call cannot leave out, as example values. */
+function requiredQuery(doc: RawDoc, params: Dict[] | undefined): Record<string, Json> {
+  const out: Record<string, Json> = {};
+  for (const raw of params ?? []) {
+    const p = resolve(doc, raw);
+    if (p.in === 'query' && p.required === true && !p['x-platform-only'])
+      out[String(p.name)] = minimalExample(doc, p.schema, String(p.name));
+  }
+  return out;
+}
+
+const isPaged = (example: Json | undefined): boolean =>
+  example !== null &&
+  typeof example === 'object' &&
+  !Array.isArray(example) &&
+  'items' in example &&
+  'nextCursor' in example;
+
 function view(
   doc: RawDoc,
   path: string,
@@ -108,6 +130,10 @@ function view(
     ? asDict(asDict(asDict(ok[1]).content)['application/json']).schema
     : undefined;
   const summary = op.summary ?? op.operationId;
+  const returnsExample = ok
+    ? (exampleOf(asDict(ok[1]).content as Dict) ?? testMode(ref?.response))
+    : undefined;
+  const requestExample = testMode((asDict(body).example as Json | undefined) ?? ref?.request);
   const scopes = [...new Set((op.security ?? []).flatMap((s) => s.apiKey ?? []))];
   const idempotent = /Idempotency-Key/.test(summary);
   return {
@@ -124,18 +150,31 @@ function view(
       ...paramFields(doc, op.parameters),
       ...(body ? bodyFields(doc, asDict(body).schema) : []),
     ],
-    requestExample: testMode((asDict(body).example as Json | undefined) ?? ref?.request),
+    requestExample,
+    examples: (inputs.examples ?? []).filter((e) => e.ops.includes(op.operationId)),
+    sample: {
+      body:
+        ref?.snippet?.request ??
+        (asDict(op.requestBody).required === true && body && requestExample === undefined
+          ? minimalExample(doc, asDict(body).schema)
+          : requestExample),
+      query: { ...requiredQuery(doc, op.parameters), ...ref?.snippet?.query },
+      headers: ref?.snippet?.headers ?? {},
+    },
     returns: ok
       ? {
           status: ok[0],
           schema:
             refName(okSchema) ?? (okSchema ? (refName(resolve(doc, okSchema)) ?? null) : null),
-          example: exampleOf(asDict(ok[1]).content as Dict) ?? testMode(ref?.response),
+          example: returnsExample,
         }
       : null,
     errors: errorRows(op, status, inputs.guide ?? {}),
     deprecated: op.deprecated === true,
     sub,
+    paged: method === 'get' && isPaged(returnsExample),
+    binary: !body && sdk.method === 'upload' && method !== 'get',
+    download: method === 'get' && !okSchema,
   };
 }
 
