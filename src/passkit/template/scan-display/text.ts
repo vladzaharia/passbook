@@ -130,12 +130,22 @@ export function isEmptyValue(value: Json | undefined): boolean {
   );
 }
 
-/** A bare `{{fields.key}}` shows the field as the pass does: its dates, money and numbers formatted. */
+/** A bare `{{fields.key}}` shows the field as the pass does: its dates, money and numbers formatted. A bare `{{inputs.key}}` of a select shows the option's label. */
 function shown(ctx: EvalCtx, path: string, value: Json | undefined): Json | undefined {
+  const split = splitPath(path);
+  if (split?.root === 'inputs' && split.rest.length === 1 && typeof value === 'string') {
+    const labels = (ctx.scope.inputLabels as Record<string, Json> | undefined)?.[
+      split.rest[0] as string
+    ];
+    const label =
+      labels && typeof labels === 'object' && !Array.isArray(labels)
+        ? (labels as Record<string, Json>)[value]
+        : undefined;
+    if (typeof label === 'string' && label !== '') return label;
+  }
   const formats = ctx.scope.fieldFormats;
   if (value === undefined || !formats || typeof formats !== 'object' || Array.isArray(formats))
     return value;
-  const split = splitPath(path);
   const key = split?.root === 'fields' && split.rest.length === 1 ? split.rest[0] : undefined;
   const spec = key === undefined ? undefined : (formats as Record<string, Json>)[key];
   if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return value;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ScanDisplaySchema } from '../../../shared/contracts/scan-display.ts';
 import { loadBaked } from '../baked-fixtures.ts';
+import { inputLabels } from './field-formats.ts';
 import type { ScanDisplayDoc } from './schema.ts';
 import { NOW, renderDoc, scopeOf } from './test-kit.ts';
 import { hasVerdictWord } from './validate-rules.ts';
@@ -545,9 +546,35 @@ describe("Henry's scan display", () => {
   it('shows the access input on the membership card', async () => {
     const { template } = await loadBaked('henrys-blue', { strips: false });
     const display = template.manifest.scan?.display as ScanDisplayDoc;
-    const out = renderDoc(display, scopeOf({ memberName: 'Alex Morgan', access: 'all' }), {
-      role: 'door',
-    });
-    expect(rowsOf(out)).toContainEqual(expect.objectContaining({ label: 'Access', value: 'all' }));
+    const out = renderDoc(
+      display,
+      scopeOf(
+        { memberName: 'Alex Morgan', access: 'all' },
+        { inputLabels: inputLabels(template.manifest.inputs, ['access']) },
+      ),
+      {
+        role: 'door',
+      },
+    );
+    expect(rowsOf(out)).toContainEqual(
+      expect.objectContaining({ label: 'Access', value: 'All clubs' }),
+    );
+  });
+});
+
+describe('select labels', () => {
+  const labels = { tier: { gold: 'Gold member' } };
+  const show = (value: string, inputs: Record<string, string> = { tier: 'gold' }) =>
+    rowsOf(
+      renderDoc(
+        doc({ panels: [panel('p_a', [field('r_a', value)])] }),
+        scopeOf(inputs, { inputLabels: labels }),
+      ),
+    );
+
+  it('shows the option label for a bare input and the raw value otherwise', () => {
+    expect(show('{{inputs.tier}}')).toMatchObject([{ value: 'Gold member' }]);
+    expect(show('{{inputs.tier}}', { tier: 'other' })).toMatchObject([{ value: 'other' }]);
+    expect(show('{{inputs.seat}}', { seat: 'F12' })).toMatchObject([{ value: 'F12' }]);
   });
 });

@@ -40,3 +40,21 @@ export function passFieldFormats(
   }
   return out;
 }
+
+/**
+ * Option labels of select inputs (`x-enumLabels`), by input then value. The scope keeps the raw
+ * `inputs` for conditions; a binding that reads one such input shows its label.
+ */
+export function inputLabels(
+  schema: { properties?: Record<string, unknown> } | undefined,
+  only: Iterable<string>,
+): Record<string, Json> {
+  const out: Record<string, Json> = {};
+  for (const name of only) {
+    const labels = (schema?.properties?.[name] as Record<string, unknown> | undefined)?.[
+      'x-enumLabels'
+    ];
+    if (labels && typeof labels === 'object' && !Array.isArray(labels)) out[name] = labels as Json;
+  }
+  return out;
+}
