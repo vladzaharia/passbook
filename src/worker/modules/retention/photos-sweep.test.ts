@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { stagePendingCredentialTransfer } from '../../../../test/helpers/credential-transfer.ts';
 import { all, run } from '../../platform/db.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { encoded } from '../passes/member-photo-test-fixtures.ts';
+import { sweepTransferAssetGc } from '../passes/transfer-asset-gc.ts';
 import { placeHold } from './holds.ts';
 import { dailyPhotos } from './jobs.ts';
 import { DAY } from './policy.ts';
@@ -77,5 +79,46 @@ describe('photos sweep', () => {
     expect(await rowCount(heldPass.id)).toBe(1);
     expect(await inR2(heldPass.key)).toBe(true);
     expect(await rowCount(freePass.id)).toBe(0);
+  });
+
+  it('keeps the photo deleted and queues the object when the post-commit delete fails', async () => {
+    const o = await rk.org();
+    const old = await photoPass(o.orgId, 60);
+    const bucket = rk.kit.env.BUCKET;
+    const realDelete = bucket.delete.bind(bucket);
+    bucket.delete = async () => {
+      throw new Error('R2 down');
+    };
+    try {
+      await dailyPhotos(ctx());
+    } finally {
+      bucket.delete = realDelete;
+    }
+    expect(await rowCount(old.id)).toBe(0);
+    expect(await inR2(old.key)).toBe(true);
+    const queued = await all(db(), 'SELECT 1 FROM pass_transfer_asset_gc WHERE r2_key = ?', [
+      old.key,
+    ]);
+    expect(queued).toHaveLength(1);
+    expect(
+      await all(db(), 'SELECT 1 FROM pass_transfer_asset_candidates WHERE r2_key = ?', [old.key]),
+    ).toHaveLength(0);
+    // Past every lease: the cleanup job must not restore the photo, and it removes the object.
+    rk.kit.clock.advance(10 * 60_000);
+    await sweepTransferAssetGc(ctx());
+    expect(await rowCount(old.id)).toBe(0);
+    expect(await inR2(old.key)).toBe(false);
+  });
+
+  it('leaves a photo whose pass has a pending credential transfer', async () => {
+    const o = await rk.org();
+    const p = await photoPass(o.orgId, 60);
+    await stagePendingCredentialTransfer(db(), p.id, {
+      id: rk.kit.fx.ids.id(),
+      token: rk.kit.fx.ids.token(),
+      now: rk.kit.clock.now(),
+    });
+    await dailyPhotos(ctx());
+    expect(await rowCount(p.id)).toBe(1);
   });
 });

@@ -5,7 +5,7 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { healHead } from './head-store.ts';
-import { retirePhotoObjects } from './photo-keys.ts';
+import { settlePhotoObjects } from './photo-keys.ts';
 import { retentionPlan } from './plan.ts';
 import { DAY, excludedFromPlatformPass, nextBatch } from './policy.ts';
 import { prepareReceipt, recordHead } from './receipt-service.ts';
@@ -16,6 +16,7 @@ import {
   type Cutoffs,
   deleteChunkStmt,
   FAILED_MAIL_DAYS,
+  photoRetireStmts,
   receiptGate,
   type Scope,
   type SweepClass,
@@ -72,10 +73,13 @@ async function sweepChunk(
     const [receipt] = await ctx.env.DB.batch([
       prepared.stmt,
       deleteChunkStmt(ctx.env.DB, cls, t.scope, cutoffs, ids, prepared.receipt.id),
+      ...(cls === 'photos'
+        ? photoRetireStmts(ctx.env.DB, ids, prepared.receipt.id, ctx.clock.now())
+        : []),
     ]);
     if (receipt?.meta.changes === 1) {
       await recordHead(ctx, prepared.receipt);
-      await retirePhotoObjects(ctx, keys);
+      await settlePhotoObjects(ctx, keys);
       return ids.length;
     }
   }

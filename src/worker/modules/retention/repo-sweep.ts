@@ -39,7 +39,9 @@ const COND: Record<
     idCol: 'pass_id',
     sql: `member_photos.updated_at < ? AND EXISTS (SELECT 1 FROM passes p
       WHERE p.id = member_photos.pass_id AND p.org_id = member_photos.org_id AND p.modified_at < ?
-        AND (p.status = 'voided' OR p.removed_at IS NOT NULL))`,
+        AND (p.status = 'voided' OR p.removed_at IS NOT NULL))
+      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+        WHERE t.pass_id = member_photos.pass_id AND t.state = 'pending')`,
     params: (c) => [c.cutoff, c.cutoff],
   },
 };
@@ -132,4 +134,35 @@ export function deleteChunkStmt(
     case 'photos':
       return stmt(db, `DELETE FROM member_photos WHERE ${where}`, params);
   }
+}
+
+/**
+ * Photos only, in the delete's batch and gated on its receipt: the delete trigger stages a rollback hold for
+ * each object, which a later cleanup job would restore. Move each hold to the deletion queue and drop it, so the
+ * rows, the receipt and the queued object delete commit together or not at all.
+ */
+export function photoRetireStmts(
+  db: D1Database,
+  ids: readonly string[],
+  receiptId: string,
+  now: number,
+): D1PreparedStatement[] {
+  const ofPasses = `c.kind = 'photo' AND c.next_row IS NULL AND c.pass_id IN (SELECT value FROM json_each(?))
+    AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
+  const list = JSON.stringify(ids);
+  return [
+    stmt(
+      db,
+      `INSERT INTO pass_transfer_asset_gc (r2_key, transfer_id, source_pass_id, retired_at, next_attempt_at)
+       SELECT c.r2_key, NULL, NULL, ?, ? FROM pass_transfer_asset_candidates c
+       WHERE ${ofPasses}
+         AND NOT EXISTS (SELECT 1 FROM pass_transfer_asset_gc gc WHERE gc.r2_key = c.r2_key)
+       GROUP BY c.r2_key`,
+      [now, now, list, receiptId],
+    ),
+    stmt(db, `DELETE FROM pass_transfer_asset_candidates AS c WHERE ${ofPasses}`, [
+      list,
+      receiptId,
+    ]),
+  ];
 }

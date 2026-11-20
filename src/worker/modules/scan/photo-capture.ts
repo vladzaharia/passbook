@@ -5,6 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import type { ScanActor } from './actor.ts';
+import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
 import { ROLE_RANK } from './rules.ts';
 
 /**
@@ -38,5 +39,18 @@ export async function captureDeskPhoto(
     throw missing();
   if (pass.status !== 'active' || pass.deletedAt !== null || pass.removedAt !== null)
     throw new ConflictError('This pass is not active.', 'PHOTO_PASS_INACTIVE');
-  return putMemberPhoto(ctx, { type: 'scanner', id: scanner.id }, passId, input, actor.orgId);
+  // Pairing, staff, role (their epochs) and the session are re-checked in the commit batch, not only here.
+  const writer = {
+    principal: scanPrincipal(actor),
+    checks: scanActorChecks(actor, { now: ctx.clock.now(), templateId: pass.templateId }),
+  };
+  return putMemberPhoto(
+    ctx,
+    { type: 'scanner', id: scanner.id },
+    passId,
+    { ...input, includeInPass: false },
+    actor.orgId,
+    undefined,
+    writer,
+  );
 }

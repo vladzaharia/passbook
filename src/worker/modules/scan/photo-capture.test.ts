@@ -4,10 +4,14 @@ import { makeOrg, makeScanner } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { encoded } from '../passes/member-photo-test-fixtures.ts';
+import { scannerActor, withRole } from './actor.ts';
 import { createScannerStore } from './auth-store.ts';
-import { ORIGIN, type ScanKit, setupScanKit } from './test-kit.ts';
+import { captureDeskPhoto } from './photo-capture.ts';
+import { getScanner } from './repo-device.ts';
+import { readScannerScope } from './repo-scope.ts';
+import { ORIGIN, proofedScanActor, type ScanKit, setupScanKit } from './test-kit.ts';
 
 let kit: ScanKit;
 let app: OpenAPIHono<AppBindings>;
@@ -90,6 +94,51 @@ describe('desk Add photo', () => {
     const { headers } = await desk();
     expect((await upload(pass.id, headers, { png: 'not base64!' })).status).toBe(422);
     expect((await upload(pass.id, headers, { png: 'A'.repeat(1_500_000) })).status).toBe(413);
+    expect(await stored(pass.id)).toBe(0);
+  });
+
+  it('refuses at commit when the device is revoked or reconfigured after the guard', async () => {
+    const device = await kit.scanner({
+      templateIds: [templateId],
+      settings: { roleWithoutSignIn: 'desk' },
+    });
+    const row = await getScanner(kit.env.DB, device.id);
+    if (!row?.csrfSecret) throw new Error('Missing scanner');
+    const captured = async () =>
+      proofedScanActor(
+        kit.ctx,
+        withRole(
+          scannerActor(
+            kit.ctx,
+            row,
+            'live',
+            'cookie',
+            await readScannerScope(kit.env.DB, row, null),
+          ),
+          null,
+        ),
+      );
+    const input = { png: encoded, includeInPass: false };
+    const revoked = await captured();
+    // Control: the same captured authority writes while the device is intact.
+    const control = await kit.scanPass(templateId);
+    await expect(
+      captureDeskPhoto(kit.ctx, await captured(), control.id, input),
+    ).resolves.toBeDefined();
+    expect(await stored(control.id)).toBe(1);
+    const pass = await kit.scanPass(templateId);
+    await run(kit.env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
+      kit.clock.now(),
+      device.id,
+    ]);
+    await expect(captureDeskPhoto(kit.ctx, revoked, pass.id, input)).rejects.toBeDefined();
+    expect(await stored(pass.id)).toBe(0);
+    await run(
+      kit.env.DB,
+      'UPDATE scanners SET revoked_at = NULL, config_epoch = config_epoch + 1 WHERE id = ?',
+      [device.id],
+    );
+    await expect(captureDeskPhoto(kit.ctx, revoked, pass.id, input)).rejects.toBeDefined();
     expect(await stored(pass.id)).toBe(0);
   });
 });

@@ -15,6 +15,7 @@ import { saveMemberPhoto } from './member-photo-service-save.ts';
 import { getPassForWrite } from './pass-access.ts';
 import type { Pass } from './repo.ts';
 import { type MemberPhotoRow, memberPhoto } from './repo-member-photo.ts';
+import type { GrantedWriter } from './repo-member-photo-grant.ts';
 import { getPass } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
 import type { Actor } from './service.ts';
@@ -75,6 +76,7 @@ export async function putMemberPhoto(
   input: { png: string; includeInPass: boolean },
   scope: ScopeArg,
   authority?: TenantPassWrite,
+  writer?: GrantedWriter,
 ) {
   const pass = await getPassForWrite(ctx.env.DB, passId, scope);
   const state = await captureImageWriteState(ctx, pass, authority);
@@ -105,7 +107,7 @@ export async function putMemberPhoto(
     updated_at: ctx.clock.now(),
   };
   await putPassImageObject(ctx, state, next.r2_key, bytes, authority);
-  return saveMemberPhoto(ctx, actor, state, scope, previous, next, authority);
+  return saveMemberPhoto(ctx, actor, state, scope, previous, next, authority, writer);
 }
 
 export async function updateMemberPhoto(

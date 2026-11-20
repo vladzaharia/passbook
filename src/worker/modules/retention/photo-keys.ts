@@ -1,19 +1,17 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { retirePassImageObject } from '../passes/asset-service-image-write.ts';
-import { stagedCandidateId } from './repo-photo-keys.ts';
+import { sweepOneTransferAssetGc } from '../passes/transfer-asset-gc.ts';
 
 /**
- * After the rows and their receipt committed: queue each object for deletion and try it now. A failure is
- * logged and the durable tombstone retries it, so a photo never outlives its row unseen.
+ * After the rows, receipt and queued deletes committed together: try each object now. A failure is logged;
+ * the queue entry stays, so the daily transfer-asset job removes the object.
  */
-export async function retirePhotoObjects(
+export async function settlePhotoObjects(
   ctx: ServiceContext,
   keys: readonly { passId: string; key: string }[],
 ): Promise<void> {
-  for (const { passId, key } of keys) {
+  for (const { key } of keys) {
     try {
-      const candidate = await stagedCandidateId(ctx.env.DB, passId, key);
-      await retirePassImageObject(ctx, key, passId, candidate);
+      await sweepOneTransferAssetGc(ctx, key);
     } catch (error) {
       ctx.log.error('retention.photo_object_failed', { code: 'RETENTION_PHOTO_OBJECT', error });
     }
