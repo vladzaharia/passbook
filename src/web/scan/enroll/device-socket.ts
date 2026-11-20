@@ -15,12 +15,17 @@ const Enroll = z.object({
   }),
 });
 const Resolved = z.object({ resolved: ScanLiveResolvedSchema });
+const RollCallNudge = z.object({
+  rollCall: z.object({ id: z.string().min(1).max(100), rev: z.number(), ended: z.boolean() }),
+});
 const Control = z.object({ control: z.literal('reset') });
 export type DeviceNudge =
   | { kind: 'enroll'; id: string }
   | { kind: 'cancelled'; id: string }
   /** A desk let the person in whom this door refused (WP-G). */
   | { kind: 'resolved'; resolved: z.infer<typeof ScanLiveResolvedSchema> }
+  /** A desk started, marked or ended a roll call: read it again. */
+  | { kind: 'rollCall'; id: string; rev: number; ended: boolean }
   /** The hub reset the device: read the request again. */
   | { kind: 'reset' };
 
@@ -93,7 +98,9 @@ export function connectDeviceSocket(deps: DeviceSocketDeps): { close(): void } {
         return;
       }
       const resolved = Resolved.safeParse(json);
+      const roll = RollCallNudge.safeParse(json);
       if (resolved.success) deps.onNudge({ kind: 'resolved', resolved: resolved.data.resolved });
+      else if (roll.success) deps.onNudge({ kind: 'rollCall', ...roll.data.rollCall });
       else if (Control.safeParse(json).success) deps.onNudge({ kind: 'reset' });
     };
     s.onclose = () => {

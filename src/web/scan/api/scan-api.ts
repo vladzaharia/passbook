@@ -27,6 +27,11 @@ import type {
 } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanRoleChange } from '../../../shared/contracts/scan-role.ts';
 import {
+  RollCallCurrentSchema,
+  type RollCallMarksRequestSchema,
+  RollCallSchema,
+} from '../../../shared/contracts/scan-roll-call.ts';
+import {
   type ScanBatchRequestSchema,
   ScanBatchResultSchema,
   type ScanLookupRequestSchema,
@@ -273,6 +278,12 @@ export function createScanApi(deps: ScanApiDeps) {
       request('POST', '/overrides', ScanOutcomeSchema, body, call),
     overrideNote: (id: string, note: z.infer<typeof ScanOverrideNoteSchema>) =>
       request('POST', `/overrides/${encodeURIComponent(id)}/note`, null, { note }),
+    rollCall: (call?: Call) => request('GET', '/roll-call', RollCallCurrentSchema, undefined, call),
+    startRollCall: (call?: Call) => request('POST', '/roll-call', RollCallSchema, {}, call),
+    rollCallMarks: (id: string, body: z.infer<typeof RollCallMarksRequestSchema>, call?: Call) =>
+      request('POST', `/roll-call/${encodeURIComponent(id)}/marks`, RollCallSchema, body, call),
+    endRollCall: (id: string, call?: Call) =>
+      request('POST', `/roll-call/${encodeURIComponent(id)}/end`, RollCallSchema, {}, call),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
   };

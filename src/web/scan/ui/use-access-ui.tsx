@@ -82,6 +82,7 @@ export function useAccessUi({
             open={sheet === 'inside'}
             online={online}
             onClose={() => show(null)}
+            onOpen={() => show('inside')}
             onOpenRow={(row) => {
               show(null);
               runtime.emit({ method: 'manual', passId: row.passId });

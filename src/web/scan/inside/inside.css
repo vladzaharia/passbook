@@ -243,3 +243,16 @@
     transform: translateY(8px);
   }
 }
+
+.scan-in-foot {
+  position: sticky;
+  inset-block-end: 0;
+  margin: auto -16px -16px;
+  padding: 12px 16px;
+  background: var(--pk-surface-raised);
+  border-block-start: 1px solid var(--sd-line);
+}
+.scan-in-start {
+  width: 100%;
+  min-height: 46px;
+}
