@@ -1,7 +1,7 @@
 // The exact text of the generated catalog files, shared by gen-error-catalog and check-developers.
 import { z } from 'zod';
 import { WEBHOOK_EVENT_TYPES, WebhookEventSchema } from '../../src/shared/contracts/webhooks.ts';
-import { SUMMARY } from '../../src/worker/platform/openapi-webhooks.ts';
+import { SUMMARY } from '../../src/worker/platform/openapi-webhook-summary.ts';
 import { buildErrorCatalog } from './error-catalog.ts';
 
 export const buildErrorCatalogFile = (): string =>
