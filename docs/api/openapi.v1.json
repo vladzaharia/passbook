@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "/"
+      "url": "https://passbook.mobile"
     }
   ],
   "components": {
@@ -10167,7 +10167,19 @@
         ]
       }
     },
-    "parameters": {},
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "1 to 200 characters. A retry with the same key and body returns the first result.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
     "securitySchemes": {
       "apiKey": {
         "type": "http",
@@ -10180,6 +10192,17 @@
         "in": "cookie",
         "name": "__Host-wallet_sid",
         "description": "A signed-in console session, checked against the member role."
+      },
+      "passToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "The pass authentication token, sent as `ApplePass <token>`."
+      },
+      "scanner": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A paired scanner device token. The pairing routes take a pairing code."
       }
     }
   },
@@ -10216,7 +10239,9 @@
             }
           }
         },
-        "operationId": "auth.getAuthOidcStart"
+        "operationId": "auth.getAuthOidcStart",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/oidc/callback": {
@@ -10240,7 +10265,9 @@
             }
           }
         },
-        "operationId": "auth.getAuthOidcCallback"
+        "operationId": "auth.getAuthOidcCallback",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/oidc/client-metadata.json": {
@@ -10264,7 +10291,9 @@
             }
           }
         },
-        "operationId": "auth.getAuthOidcClientMetadataJson"
+        "operationId": "auth.getAuthOidcClientMetadataJson",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/no-access": {
@@ -10288,7 +10317,9 @@
             }
           }
         },
-        "operationId": "auth.getAuthNoAccess"
+        "operationId": "auth.getAuthNoAccess",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/magic/request": {
@@ -10366,7 +10397,9 @@
             }
           }
         },
-        "operationId": "auth.postAuthMagicRequest"
+        "operationId": "auth.postAuthMagicRequest",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/magic": {
@@ -10390,7 +10423,9 @@
             }
           }
         },
-        "operationId": "auth.getAuthMagic"
+        "operationId": "auth.getAuthMagic",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/magic/consume": {
@@ -10414,7 +10449,9 @@
             }
           }
         },
-        "operationId": "auth.postAuthMagicConsume"
+        "operationId": "auth.postAuthMagicConsume",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/magic/resend": {
@@ -10438,7 +10475,9 @@
             }
           }
         },
-        "operationId": "auth.postAuthMagicResend"
+        "operationId": "auth.postAuthMagicResend",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/logout": {
@@ -10484,7 +10523,9 @@
             }
           }
         },
-        "operationId": "auth.postAuthLogout"
+        "operationId": "auth.postAuthLogout",
+        "security": [],
+        "x-public": true
       }
     },
     "/auth/breakglass": {
@@ -10508,7 +10549,9 @@
             }
           }
         },
-        "operationId": "auth.getAuthBreakglass"
+        "operationId": "auth.getAuthBreakglass",
+        "security": [],
+        "x-public": true
       },
       "post": {
         "summary": "Break-glass admin sign-in",
@@ -10530,7 +10573,9 @@
             }
           }
         },
-        "operationId": "auth.postAuthBreakglass"
+        "operationId": "auth.postAuthBreakglass",
+        "security": [],
+        "x-public": true
       }
     },
     "/api/v1/session": {
@@ -10659,7 +10704,9 @@
             }
           }
         },
-        "operationId": "session.getSession"
+        "operationId": "session.getSession",
+        "security": [],
+        "x-public": true
       }
     },
     "/api/v1/me/passes": {
@@ -11435,7 +11482,12 @@
             }
           }
         },
-        "operationId": "me.getMePasses"
+        "operationId": "me.getMePasses",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/passes.pkpasses": {
@@ -11481,7 +11533,12 @@
             }
           }
         },
-        "operationId": "me.getMePassesPkpasses"
+        "operationId": "me.getMePassesPkpasses",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/passes/{id}": {
@@ -12134,7 +12191,12 @@
             }
           }
         },
-        "operationId": "me.getMePassesById"
+        "operationId": "me.getMePassesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "delete": {
         "summary": "Remove from my passes (blocks re-attach)",
@@ -12227,7 +12289,12 @@
             }
           }
         },
-        "operationId": "me.deleteMePassesById"
+        "operationId": "me.deleteMePassesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/passes/{id}/barcode": {
@@ -12263,7 +12330,12 @@
             }
           }
         },
-        "operationId": "me.getMePassesByIdBarcode"
+        "operationId": "me.getMePassesByIdBarcode",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/passes/{id}/refresh": {
@@ -12326,7 +12398,12 @@
             }
           }
         },
-        "operationId": "me.postMePassesByIdRefresh"
+        "operationId": "me.postMePassesByIdRefresh",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/passes/{id}/resend": {
@@ -12380,7 +12457,12 @@
             }
           }
         },
-        "operationId": "me.postMePassesByIdResend"
+        "operationId": "me.postMePassesByIdResend",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/passes/{id}/lost-phone": {
@@ -12444,7 +12526,12 @@
             }
           }
         },
-        "operationId": "me.postMePassesByIdLostPhone"
+        "operationId": "me.postMePassesByIdLostPhone",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/pass-removals/{id}": {
@@ -12508,7 +12595,12 @@
             }
           }
         },
-        "operationId": "me.getMePassRemovalsById"
+        "operationId": "me.getMePassRemovalsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/tags/{id}/lost": {
@@ -12562,7 +12654,12 @@
             }
           }
         },
-        "operationId": "me.postMeTagsByIdLost"
+        "operationId": "me.postMeTagsByIdLost",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/emails": {
@@ -12637,7 +12734,12 @@
             }
           }
         },
-        "operationId": "me.getMeEmails"
+        "operationId": "me.getMeEmails",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Add an email and send a verification link",
@@ -12696,7 +12798,12 @@
             }
           }
         },
-        "operationId": "me.postMeEmails"
+        "operationId": "me.postMeEmails",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/emails/{email}": {
@@ -12781,7 +12888,12 @@
             }
           }
         },
-        "operationId": "me.deleteMeEmailsByEmail"
+        "operationId": "me.deleteMeEmailsByEmail",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/emails/{email}/primary": {
@@ -12867,7 +12979,12 @@
             }
           }
         },
-        "operationId": "me.postMeEmailsByEmailPrimary"
+        "operationId": "me.postMeEmailsByEmailPrimary",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/sessions": {
@@ -12940,7 +13057,12 @@
             }
           }
         },
-        "operationId": "me.getMeSessions"
+        "operationId": "me.getMeSessions",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/sessions/revoke-all": {
@@ -12982,7 +13104,12 @@
             }
           }
         },
-        "operationId": "me.postMeSessionsRevokeAll"
+        "operationId": "me.postMeSessionsRevokeAll",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/me/sessions/{id}": {
@@ -13036,7 +13163,12 @@
             }
           }
         },
-        "operationId": "me.deleteMeSessionsById"
+        "operationId": "me.deleteMeSessionsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/entitlements": {
@@ -13210,7 +13342,9 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsInvitationsAccept"
+        "operationId": "organization-memberships.getOrgsInvitationsAccept",
+        "security": [],
+        "x-public": true
       },
       "post": {
         "summary": "Accept an invitation with a verified account email",
@@ -13346,7 +13480,12 @@
             }
           }
         },
-        "operationId": "organization-memberships.postOrgsInvitationsAccept"
+        "operationId": "organization-memberships.postOrgsInvitationsAccept",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/invitations/preview": {
@@ -13405,7 +13544,9 @@
             }
           }
         },
-        "operationId": "organization-memberships.postOrgsInvitationsPreview"
+        "operationId": "organization-memberships.postOrgsInvitationsPreview",
+        "security": [],
+        "x-public": true
       }
     },
     "/api/v1/orgs/memberships/me": {
@@ -13534,7 +13675,12 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsMembershipsMe"
+        "operationId": "organization-memberships.getOrgsMembershipsMe",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/memberships": {
@@ -13689,7 +13835,12 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsByIdMemberships"
+        "operationId": "organization-memberships.getOrgsByIdMemberships",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/invitations": {
@@ -13807,7 +13958,12 @@
             }
           }
         },
-        "operationId": "organization-memberships.getOrgsByIdInvitations"
+        "operationId": "organization-memberships.getOrgsByIdInvitations",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Invite an organization member",
@@ -13949,7 +14105,12 @@
             }
           }
         },
-        "operationId": "organization-memberships.postOrgsByIdInvitations"
+        "operationId": "organization-memberships.postOrgsByIdInvitations",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/invitations/{invitationId}": {
@@ -14013,7 +14174,12 @@
             }
           }
         },
-        "operationId": "organization-memberships.deleteOrgsByIdInvitationsByInvitationId"
+        "operationId": "organization-memberships.deleteOrgsByIdInvitationsByInvitationId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/memberships/{membershipId}": {
@@ -14077,7 +14243,12 @@
             }
           }
         },
-        "operationId": "organization-memberships.deleteOrgsByIdMembershipsByMembershipId"
+        "operationId": "organization-memberships.deleteOrgsByIdMembershipsByMembershipId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs": {
@@ -14220,7 +14391,12 @@
             }
           }
         },
-        "operationId": "orgs.getOrgs"
+        "operationId": "orgs.getOrgs",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create an organization",
@@ -14293,7 +14469,12 @@
             }
           }
         },
-        "operationId": "orgs.postOrgs"
+        "operationId": "orgs.postOrgs",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}": {
@@ -14399,7 +14580,12 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsById"
+        "operationId": "orgs.getOrgsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Update an organization",
@@ -14482,7 +14668,12 @@
             }
           }
         },
-        "operationId": "orgs.patchOrgsById"
+        "operationId": "orgs.patchOrgsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "delete": {
         "summary": "Delete an organization",
@@ -14534,7 +14725,12 @@
             }
           }
         },
-        "operationId": "orgs.deleteOrgsById"
+        "operationId": "orgs.deleteOrgsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/workspace": {
@@ -14577,7 +14773,12 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsByIdWorkspace"
+        "operationId": "orgs.getOrgsByIdWorkspace",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/status": {
@@ -14705,7 +14906,12 @@
             }
           }
         },
-        "operationId": "orgs.postOrgsByIdStatus"
+        "operationId": "orgs.postOrgsByIdStatus",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/branding/{slot}": {
@@ -14786,7 +14992,12 @@
             }
           }
         },
-        "operationId": "orgs.putOrgsByIdBrandingBySlot"
+        "operationId": "orgs.putOrgsByIdBrandingBySlot",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "delete": {
         "summary": "Remove the pass logo or icon",
@@ -14839,7 +15050,12 @@
             }
           }
         },
-        "operationId": "orgs.deleteOrgsByIdBrandingBySlot"
+        "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/branding/{slot}/{scale}": {
@@ -14899,7 +15115,12 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsByIdBrandingBySlotByScale"
+        "operationId": "orgs.getOrgsByIdBrandingBySlotByScale",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{id}/email-preview": {
@@ -14985,7 +15206,12 @@
             }
           }
         },
-        "operationId": "orgs.getOrgsByIdEmailPreview"
+        "operationId": "orgs.getOrgsByIdEmailPreview",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/brand": {
@@ -15495,7 +15721,12 @@
             }
           }
         },
-        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentials"
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentials",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "put": {
         "summary": "Create or rotate the organization wallet credential",
@@ -15756,7 +15987,12 @@
             }
           }
         },
-        "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials"
+        "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke": {
@@ -15908,7 +16144,12 @@
             }
           }
         },
-        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke"
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-credentials/{id}/check": {
@@ -15979,7 +16220,12 @@
             }
           }
         },
-        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdCheck"
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdCheck",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-credentials/{id}/checks/{checkId}": {
@@ -16077,7 +16323,12 @@
             }
           }
         },
-        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentialsByIdChecksByCheckId"
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletCredentialsByIdChecksByCheckId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments": {
@@ -16277,7 +16528,12 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.getOrgsByOrgIdWalletEnrolments"
+        "operationId": "wallet-enrolments.getOrgsByOrgIdWalletEnrolments",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}": {
@@ -16505,7 +16761,12 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider"
+        "operationId": "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}/enable": {
@@ -16725,7 +16986,12 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable"
+        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}/disable": {
@@ -16945,7 +17211,12 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable"
+        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-enrolments/{provider}/revoke": {
@@ -17165,7 +17436,12 @@
             }
           }
         },
-        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke"
+        "operationId": "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/retention/holds": {
@@ -17288,7 +17564,12 @@
             }
           }
         },
-        "operationId": "retention.getOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.getOrgsByOrgIdRetentionHolds",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Place a legal hold on the organization or one pass",
@@ -17369,7 +17650,12 @@
             }
           }
         },
-        "operationId": "retention.postOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.postOrgsByOrgIdRetentionHolds",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/retention/holds/{holdId}/release": {
@@ -17433,7 +17719,12 @@
             }
           }
         },
-        "operationId": "retention.postOrgsByOrgIdRetentionHoldsByHoldIdRelease"
+        "operationId": "retention.postOrgsByOrgIdRetentionHoldsByHoldIdRelease",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/retention/receipts": {
@@ -17569,7 +17860,12 @@
             }
           }
         },
-        "operationId": "retention.getOrgsByOrgIdRetentionReceipts"
+        "operationId": "retention.getOrgsByOrgIdRetentionReceipts",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/retention/receipts/{receiptId}/download": {
@@ -17723,7 +18019,12 @@
             }
           }
         },
-        "operationId": "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload"
+        "operationId": "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/lifecycle": {
@@ -17817,7 +18118,12 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getOrgsByOrgIdLifecycle"
+        "operationId": "org-lifecycle.getOrgsByOrgIdLifecycle",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/close": {
@@ -17929,7 +18235,12 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdClose"
+        "operationId": "org-lifecycle.postOrgsByOrgIdClose",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/reopen": {
@@ -18023,7 +18334,12 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdReopen"
+        "operationId": "org-lifecycle.postOrgsByOrgIdReopen",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/exports": {
@@ -18143,7 +18459,12 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getOrgsByOrgIdExports"
+        "operationId": "org-lifecycle.getOrgsByOrgIdExports",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Export everything the organization holds",
@@ -18250,7 +18571,12 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdExports"
+        "operationId": "org-lifecycle.postOrgsByOrgIdExports",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/exports/{exportId}/link": {
@@ -18316,7 +18642,12 @@
             }
           }
         },
-        "operationId": "org-lifecycle.postOrgsByOrgIdExportsByExportIdLink"
+        "operationId": "org-lifecycle.postOrgsByOrgIdExportsByExportIdLink",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/org-exports/{exportId}/download": {
@@ -18370,7 +18701,9 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getOrgExportsByExportIdDownload"
+        "operationId": "org-lifecycle.getOrgExportsByExportIdDownload",
+        "security": [],
+        "x-public": true
       }
     },
     "/api/v1/platform/wallet-credentials": {
@@ -18492,7 +18825,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletCredentials"
+        "operationId": "wallet-platform.getPlatformWalletCredentials",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "put": {
         "summary": "Create or rotate a platform wallet credential",
@@ -18757,7 +19095,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.putPlatformWalletCredentials"
+        "operationId": "wallet-platform.putPlatformWalletCredentials",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/wallet-credentials/{id}/revoke": {
@@ -18899,7 +19242,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/wallet-credentials/{id}/check": {
@@ -18960,7 +19308,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdCheck"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdCheck",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/wallet-credentials/{id}/checks/{checkId}": {
@@ -19048,7 +19401,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId"
+        "operationId": "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold": {
@@ -19150,7 +19508,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold"
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/release": {
@@ -19231,7 +19594,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease"
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/wallet-enrolments": {
@@ -19394,7 +19762,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletEnrolments"
+        "operationId": "wallet-platform.getPlatformWalletEnrolments",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/wallet-credentials/migrate": {
@@ -19557,7 +19930,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.getPlatformWalletCredentialsMigrate"
+        "operationId": "wallet-platform.getPlatformWalletCredentialsMigrate",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Queue the migration of legacy wallet accounts onto credential sources",
@@ -19596,7 +19974,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrate"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrate",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/wallet-credentials/migrate/resolve": {
@@ -19683,7 +20066,12 @@
             }
           }
         },
-        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrateResolve"
+        "operationId": "wallet-platform.postPlatformWalletCredentialsMigrateResolve",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/orgs/{id}/entitlements": {
@@ -20374,7 +20762,12 @@
             }
           }
         },
-        "operationId": "retention.getPlatformOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.getPlatformOrgsByOrgIdRetentionHolds",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Place a platform legal hold; only a platform administrator releases it",
@@ -20455,7 +20848,12 @@
             }
           }
         },
-        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHolds"
+        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHolds",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/orgs/{orgId}/retention/holds/{holdId}/release": {
@@ -20519,7 +20917,12 @@
             }
           }
         },
-        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHoldsByHoldIdRelease"
+        "operationId": "retention.postPlatformOrgsByOrgIdRetentionHoldsByHoldIdRelease",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/orgs/{orgId}/retention/receipts": {
@@ -20655,7 +21058,12 @@
             }
           }
         },
-        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceipts"
+        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceipts",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/orgs/{orgId}/retention/receipts/{receiptId}/download": {
@@ -20809,7 +21217,12 @@
             }
           }
         },
-        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload"
+        "operationId": "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/retention/receipts": {
@@ -20935,7 +21348,12 @@
             }
           }
         },
-        "operationId": "retention.getPlatformRetentionReceipts"
+        "operationId": "retention.getPlatformRetentionReceipts",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/retention/receipts/{receiptId}/download": {
@@ -21079,7 +21497,12 @@
             }
           }
         },
-        "operationId": "retention.getPlatformRetentionReceiptsByReceiptIdDownload"
+        "operationId": "retention.getPlatformRetentionReceiptsByReceiptIdDownload",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/platform/closed-orgs": {
@@ -21157,7 +21580,12 @@
             }
           }
         },
-        "operationId": "org-lifecycle.getPlatformClosedOrgs"
+        "operationId": "org-lifecycle.getPlatformClosedOrgs",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates": {
@@ -22201,7 +22629,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdShare"
+        "operationId": "templates.postTemplatesByIdShare",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/previews": {
@@ -23348,7 +23781,12 @@
             }
           }
         },
-        "operationId": "templates.patchTemplatesById"
+        "operationId": "templates.patchTemplatesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "delete": {
         "summary": "Delete or archive an uploaded template (baked: 403 TEMPLATE_BAKED)",
@@ -23408,7 +23846,12 @@
             }
           }
         },
-        "operationId": "templates.deleteTemplatesById"
+        "operationId": "templates.deleteTemplatesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/clone": {
@@ -23792,7 +24235,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdClone"
+        "operationId": "templates.postTemplatesByIdClone",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/manifest": {
@@ -24170,7 +24618,12 @@
             }
           }
         },
-        "operationId": "templates.putTemplatesByIdManifest"
+        "operationId": "templates.putTemplatesByIdManifest",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/preview": {
@@ -24308,7 +24761,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdPreview"
+        "operationId": "templates.postTemplatesByIdPreview",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/versions/{version}": {
@@ -25737,7 +26195,12 @@
             }
           }
         },
-        "operationId": "templates.putTemplatesByIdChannels"
+        "operationId": "templates.putTemplatesByIdChannels",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/channels/runs": {
@@ -26472,7 +26935,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdVersions"
+        "operationId": "templates.postTemplatesByIdVersions",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/stamps-impact": {
@@ -27025,7 +27493,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdUse"
+        "operationId": "templates.postTemplatesByIdUse",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/use/check": {
@@ -27631,7 +28104,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdUseCheck"
+        "operationId": "templates.postTemplatesByIdUseCheck",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/scan-setup": {
@@ -28126,7 +28604,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdArchive"
+        "operationId": "templates.postTemplatesByIdArchive",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/restore": {
@@ -28485,7 +28968,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdRestore"
+        "operationId": "templates.postTemplatesByIdRestore",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/package": {
@@ -29079,7 +29567,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdCandidates"
+        "operationId": "templates.postTemplatesByIdCandidates",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/candidates/promote": {
@@ -29336,7 +29829,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdCandidatesPromote"
+        "operationId": "templates.postTemplatesByIdCandidatesPromote",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/candidates/{candidateId}/approve": {
@@ -29479,7 +29977,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdCandidatesByCandidateIdApprove"
+        "operationId": "templates.postTemplatesByIdCandidatesByCandidateIdApprove",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/releases": {
@@ -30126,7 +30629,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdReleases"
+        "operationId": "templates.postTemplatesByIdReleases",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/templates/{id}/releases/impact": {
@@ -30686,7 +31194,12 @@
             }
           }
         },
-        "operationId": "templates.postTemplatesByIdReleasesRollback"
+        "operationId": "templates.postTemplatesByIdReleasesRollback",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/passes": {
@@ -31008,6 +31521,11 @@
           },
           {
             "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ]
       }
@@ -31781,6 +32299,9 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
         "requestBody": {
@@ -33538,12 +34059,17 @@
           {
             "session": []
           }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
         ]
       }
     },
     "/api/v1/passes/bulk-reissue": {
       "post": {
-        "summary": "Rebuild passes of a template",
+        "summary": "Rebuild passes of a template in your org; a key needs passes:write",
         "tags": [
           "passes"
         ],
@@ -33615,7 +34141,17 @@
             }
           }
         },
-        "operationId": "passes.postPassesBulkReissue"
+        "operationId": "passes.postPassesBulkReissue",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/passes/bulk/channels": {
@@ -39953,7 +40489,12 @@
             }
           }
         },
-        "operationId": "pass-imports.postPassImportsByIdRemoveCreated"
+        "operationId": "pass-imports.postPassImportsByIdRemoveCreated",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/pass-imports/{id}/email-rest": {
@@ -40654,6 +41195,9 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
         "requestBody": {
@@ -41100,7 +41644,12 @@
             }
           }
         },
-        "operationId": "join-links.getJoinLinksByTemplateId"
+        "operationId": "join-links.getJoinLinksByTemplateId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "put": {
         "summary": "Create a join link (revision 0) or change it",
@@ -41376,7 +41925,12 @@
             }
           }
         },
-        "operationId": "join-links.putJoinLinksByTemplateId"
+        "operationId": "join-links.putJoinLinksByTemplateId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/join-links/{templateId}/rotate": {
@@ -41616,7 +42170,12 @@
             }
           }
         },
-        "operationId": "join-links.postJoinLinksByTemplateIdRotate"
+        "operationId": "join-links.postJoinLinksByTemplateIdRotate",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/test-inbox": {
@@ -41977,7 +42536,12 @@
             }
           }
         },
-        "operationId": "sandbox.getTestInboxByIdHtml"
+        "operationId": "sandbox.getTestInboxByIdHtml",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/test-inbox/{id}/send-to-me": {
@@ -42038,7 +42602,12 @@
             }
           }
         },
-        "operationId": "sandbox.postTestInboxByIdSendToMe"
+        "operationId": "sandbox.postTestInboxByIdSendToMe",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/broadcasts": {
@@ -62537,7 +63106,12 @@
             }
           }
         },
-        "operationId": "identities.getIdentities"
+        "operationId": "identities.getIdentities",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Upload an Apple identity",
@@ -62870,7 +63444,12 @@
             }
           }
         },
-        "operationId": "identities.postIdentities"
+        "operationId": "identities.postIdentities",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/identities/{id}": {
@@ -63168,7 +63747,12 @@
             }
           }
         },
-        "operationId": "identities.getIdentitiesById"
+        "operationId": "identities.getIdentitiesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Update an Apple identity",
@@ -63494,7 +64078,12 @@
             }
           }
         },
-        "operationId": "identities.patchIdentitiesById"
+        "operationId": "identities.patchIdentitiesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "delete": {
         "summary": "Delete an Apple identity",
@@ -63546,7 +64135,12 @@
             }
           }
         },
-        "operationId": "identities.deleteIdentitiesById"
+        "operationId": "identities.deleteIdentitiesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/identities/{id}/rotate": {
@@ -63874,7 +64468,12 @@
             }
           }
         },
-        "operationId": "identities.postIdentitiesByIdRotate"
+        "operationId": "identities.postIdentitiesByIdRotate",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/identities/{id}/apns-check": {
@@ -63956,7 +64555,12 @@
             }
           }
         },
-        "operationId": "identities.postIdentitiesByIdApnsCheck"
+        "operationId": "identities.postIdentitiesByIdApnsCheck",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/identities/{id}/push-key": {
@@ -64280,7 +64884,12 @@
             }
           }
         },
-        "operationId": "identities.putIdentitiesByIdPushKey"
+        "operationId": "identities.putIdentitiesByIdPushKey",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "delete": {
         "summary": "Remove the APNs push key of the identity team",
@@ -64576,7 +65185,12 @@
             }
           }
         },
-        "operationId": "identities.deleteIdentitiesByIdPushKey"
+        "operationId": "identities.deleteIdentitiesByIdPushKey",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/wallet-providers/accounts/verify": {
@@ -64672,7 +65286,12 @@
             }
           }
         },
-        "operationId": "wallet-providers.postWalletProvidersAccountsVerify"
+        "operationId": "wallet-providers.postWalletProvidersAccountsVerify",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/wallet-providers/accounts": {
@@ -64846,7 +65465,12 @@
             }
           }
         },
-        "operationId": "wallet-providers.getWalletProvidersAccounts"
+        "operationId": "wallet-providers.getWalletProvidersAccounts",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "put": {
         "summary": "Configure or rotate a provider account",
@@ -65151,7 +65775,12 @@
             }
           }
         },
-        "operationId": "wallet-providers.putWalletProvidersAccounts"
+        "operationId": "wallet-providers.putWalletProvidersAccounts",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/wallet-providers/accounts/revoke": {
@@ -65331,7 +65960,12 @@
             }
           }
         },
-        "operationId": "wallet-providers.postWalletProvidersAccountsRevoke"
+        "operationId": "wallet-providers.postWalletProvidersAccountsRevoke",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/wallet-providers/passes/{id}": {
@@ -65880,7 +66514,12 @@
             }
           }
         },
-        "operationId": "users.getUsers"
+        "operationId": "users.getUsers",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/users/{id}": {
@@ -66217,7 +66856,12 @@
             }
           }
         },
-        "operationId": "users.getUsersById"
+        "operationId": "users.getUsersById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Disable or enable a user",
@@ -66336,7 +66980,12 @@
             }
           }
         },
-        "operationId": "users.patchUsersById"
+        "operationId": "users.patchUsersById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/users/{id}/emails": {
@@ -66692,7 +67341,12 @@
             }
           }
         },
-        "operationId": "users.postUsersByIdEmails"
+        "operationId": "users.postUsersByIdEmails",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/users/{id}/emails/{email}": {
@@ -67037,7 +67691,12 @@
             }
           }
         },
-        "operationId": "users.deleteUsersByIdEmailsByEmail"
+        "operationId": "users.deleteUsersByIdEmailsByEmail",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/users/{id}/emails/{email}/primary": {
@@ -67382,7 +68041,12 @@
             }
           }
         },
-        "operationId": "users.postUsersByIdEmailsByEmailPrimary"
+        "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/users/{id}/sessions/revoke": {
@@ -67436,7 +68100,12 @@
             }
           }
         },
-        "operationId": "users.postUsersByIdSessionsRevoke"
+        "operationId": "users.postUsersByIdSessionsRevoke",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/users/{id}/sessions/{sessionId}": {
@@ -67500,7 +68169,12 @@
             }
           }
         },
-        "operationId": "users.deleteUsersByIdSessionsBySessionId"
+        "operationId": "users.deleteUsersByIdSessionsBySessionId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/api-keys/me": {
@@ -67869,7 +68543,12 @@
             }
           }
         },
-        "operationId": "api-keys.getApiKeys"
+        "operationId": "api-keys.getApiKeys",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create an organization or platform API key (secret shown once)",
@@ -68099,7 +68778,12 @@
             }
           }
         },
-        "operationId": "api-keys.postApiKeys"
+        "operationId": "api-keys.postApiKeys",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/api-keys/{id}": {
@@ -68173,7 +68857,12 @@
             }
           }
         },
-        "operationId": "api-keys.deleteApiKeysById"
+        "operationId": "api-keys.deleteApiKeysById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/settings": {
@@ -68333,7 +69022,12 @@
             }
           }
         },
-        "operationId": "settings.getSettings"
+        "operationId": "settings.getSettings",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "put": {
         "summary": "Update settings",
@@ -68506,7 +69200,12 @@
             }
           }
         },
-        "operationId": "settings.putSettings"
+        "operationId": "settings.putSettings",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/settings/impact": {
@@ -68545,7 +69244,12 @@
             }
           }
         },
-        "operationId": "settings.getSettingsImpact"
+        "operationId": "settings.getSettingsImpact",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/settings/reply-to": {
@@ -68607,7 +69311,12 @@
             }
           }
         },
-        "operationId": "settings.getSettingsReplyTo"
+        "operationId": "settings.getSettingsReplyTo",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/settings/reply-to/resend": {
@@ -68677,7 +69386,12 @@
             }
           }
         },
-        "operationId": "settings.postSettingsReplyToResend"
+        "operationId": "settings.postSettingsReplyToResend",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/settings/reply-to/confirm": {
@@ -68753,7 +69467,12 @@
             }
           }
         },
-        "operationId": "settings.postSettingsReplyToConfirm"
+        "operationId": "settings.postSettingsReplyToConfirm",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/audit": {
@@ -68980,7 +69699,12 @@
             }
           }
         },
-        "operationId": "audit.getAudit"
+        "operationId": "audit.getAudit",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/audit/platform": {
@@ -69207,7 +69931,12 @@
             }
           }
         },
-        "operationId": "audit.getAuditPlatform"
+        "operationId": "audit.getAuditPlatform",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/audit/export": {
@@ -69309,7 +70038,12 @@
             }
           }
         },
-        "operationId": "audit.getAuditExport"
+        "operationId": "audit.getAuditExport",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/audit/platform/export": {
@@ -69411,7 +70145,12 @@
             }
           }
         },
-        "operationId": "audit.getAuditPlatformExport"
+        "operationId": "audit.getAuditPlatformExport",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/status": {
@@ -69579,7 +70318,12 @@
             }
           }
         },
-        "operationId": "status.getStatus"
+        "operationId": "status.getStatus",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/status/workflows": {
@@ -69685,7 +70429,12 @@
             }
           }
         },
-        "operationId": "status.getStatusWorkflows"
+        "operationId": "status.getStatusWorkflows",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/metrics/overview": {
@@ -70237,7 +70986,12 @@
             }
           }
         },
-        "operationId": "metrics.getMetricsOverview"
+        "operationId": "metrics.getMetricsOverview",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/metrics/platform/overview": {
@@ -70789,7 +71543,12 @@
             }
           }
         },
-        "operationId": "metrics.getMetricsPlatformOverview"
+        "operationId": "metrics.getMetricsPlatformOverview",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/metrics/activity": {
@@ -70994,7 +71753,12 @@
             }
           }
         },
-        "operationId": "metrics.getMetricsActivity"
+        "operationId": "metrics.getMetricsActivity",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan/pair/preview": {
@@ -71065,7 +71829,12 @@
             }
           }
         },
-        "operationId": "scan.postScanPairPreview"
+        "operationId": "scan.postScanPairPreview",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/pair": {
@@ -71116,7 +71885,12 @@
             }
           }
         },
-        "operationId": "scan.postScanPair"
+        "operationId": "scan.postScanPair",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/unpair": {
@@ -71140,7 +71914,12 @@
             }
           }
         },
-        "operationId": "scan.postScanUnpair"
+        "operationId": "scan.postScanUnpair",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/session": {
@@ -71197,7 +71976,12 @@
             }
           }
         },
-        "operationId": "scan.getScanSession"
+        "operationId": "scan.getScanSession",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/staff": {
@@ -71274,7 +72058,12 @@
             }
           }
         },
-        "operationId": "scan.getScanStaff"
+        "operationId": "scan.getScanStaff",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       },
       "post": {
         "summary": "Sign in staff on this scanner",
@@ -71328,7 +72117,12 @@
             }
           }
         },
-        "operationId": "scan.postScanStaff"
+        "operationId": "scan.postScanStaff",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       },
       "delete": {
         "summary": "Sign out staff on this scanner",
@@ -71357,7 +72151,12 @@
             }
           }
         },
-        "operationId": "scan.deleteScanStaff"
+        "operationId": "scan.deleteScanStaff",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/roll-call": {
@@ -71605,7 +72404,12 @@
             }
           }
         },
-        "operationId": "scan.getScanRollCall"
+        "operationId": "scan.getScanRollCall",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       },
       "post": {
         "summary": "Start a roll call, or join the open one",
@@ -71840,7 +72644,12 @@
             }
           }
         },
-        "operationId": "scan.postScanRollCall"
+        "operationId": "scan.postScanRollCall",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/roll-call/{id}": {
@@ -72089,7 +72898,12 @@
             }
           }
         },
-        "operationId": "scan.getScanRollCallById"
+        "operationId": "scan.getScanRollCallById",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/roll-call/{id}/marks": {
@@ -72427,7 +73241,12 @@
             }
           }
         },
-        "operationId": "scan.postScanRollCallByIdMarks"
+        "operationId": "scan.postScanRollCallByIdMarks",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/roll-call/{id}/end": {
@@ -72676,7 +73495,12 @@
             }
           }
         },
-        "operationId": "scan.postScanRollCallByIdEnd"
+        "operationId": "scan.postScanRollCallByIdEnd",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/mark-out": {
@@ -72776,7 +73600,12 @@
             }
           }
         },
-        "operationId": "scan.postScanMarkOut"
+        "operationId": "scan.postScanMarkOut",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/overrides": {
@@ -72897,7 +73726,12 @@
             }
           }
         },
-        "operationId": "scan.postScanOverrides"
+        "operationId": "scan.postScanOverrides",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/overrides/{scanId}/note": {
@@ -72958,7 +73792,12 @@
             }
           }
         },
-        "operationId": "scan.postScanOverridesByScanIdNote"
+        "operationId": "scan.postScanOverridesByScanIdNote",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/visitors": {
@@ -73094,7 +73933,12 @@
             }
           }
         },
-        "operationId": "scan.getScanVisitors"
+        "operationId": "scan.getScanVisitors",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/sign-out": {
@@ -73187,7 +74031,12 @@
             }
           }
         },
-        "operationId": "scan.postScanSignOut"
+        "operationId": "scan.postScanSignOut",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/role": {
@@ -73272,7 +74121,12 @@
             }
           }
         },
-        "operationId": "scan.postScanRole"
+        "operationId": "scan.postScanRole",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/tags/inspect": {
@@ -73462,7 +74316,12 @@
             }
           }
         },
-        "operationId": "scan.postScanTagsInspect"
+        "operationId": "scan.postScanTagsInspect",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/tags/bind": {
@@ -73786,7 +74645,12 @@
             }
           }
         },
-        "operationId": "scan.postScanTagsBind"
+        "operationId": "scan.postScanTagsBind",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/tags/bindings/{bindingId}/undo": {
@@ -73844,7 +74708,12 @@
             }
           }
         },
-        "operationId": "scan.postScanTagsBindingsByBindingIdUndo"
+        "operationId": "scan.postScanTagsBindingsByBindingIdUndo",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/session/open-now": {
@@ -73950,7 +74819,12 @@
             }
           }
         },
-        "operationId": "scan.postScanSessionOpenNow"
+        "operationId": "scan.postScanSessionOpenNow",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/tag-enrollments/pending": {
@@ -74030,7 +74904,12 @@
             }
           }
         },
-        "operationId": "scan.getScanTagEnrollmentsPending"
+        "operationId": "scan.getScanTagEnrollmentsPending",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/tag-enrollments/{id}/complete": {
@@ -74173,7 +75052,12 @@
             }
           }
         },
-        "operationId": "scan.postScanTagEnrollmentsByIdComplete"
+        "operationId": "scan.postScanTagEnrollmentsByIdComplete",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/tag-enrollments/{id}/decline": {
@@ -74227,7 +75111,12 @@
             }
           }
         },
-        "operationId": "scan.postScanTagEnrollmentsByIdDecline"
+        "operationId": "scan.postScanTagEnrollmentsByIdDecline",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/roster": {
@@ -74281,7 +75170,12 @@
             }
           }
         },
-        "operationId": "scan.getScanRoster"
+        "operationId": "scan.getScanRoster",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/batch": {
@@ -74405,7 +75299,12 @@
             }
           }
         },
-        "operationId": "scan.postScanBatch"
+        "operationId": "scan.postScanBatch",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/branding/logo": {
@@ -74440,7 +75339,12 @@
             }
           }
         },
-        "operationId": "scan.getScanBrandingLogo"
+        "operationId": "scan.getScanBrandingLogo",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/passes/{passId}/photo": {
@@ -74544,7 +75448,12 @@
             }
           }
         },
-        "operationId": "scan.postScanPassesByPassIdPhoto"
+        "operationId": "scan.postScanPassesByPassIdPhoto",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/activity": {
@@ -74588,7 +75497,12 @@
             }
           }
         },
-        "operationId": "scan.getScanActivity"
+        "operationId": "scan.getScanActivity",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/device": {
@@ -74662,7 +75576,12 @@
             }
           }
         },
-        "operationId": "scan.postScanDevice"
+        "operationId": "scan.postScanDevice",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/resolve": {
@@ -75227,7 +76146,12 @@
             }
           }
         },
-        "operationId": "scan.getScanScans"
+        "operationId": "scan.getScanScans",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/summary": {
@@ -75285,7 +76209,12 @@
             }
           }
         },
-        "operationId": "scan.getScanSummary"
+        "operationId": "scan.getScanSummary",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/stats": {
@@ -75330,7 +76259,12 @@
             }
           }
         },
-        "operationId": "scan.getScanStats"
+        "operationId": "scan.getScanStats",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/passes/{passId}/assets/{name}": {
@@ -75380,7 +76314,12 @@
             }
           }
         },
-        "operationId": "scan.getScanPassesByPassIdAssetsByName"
+        "operationId": "scan.getScanPassesByPassIdAssetsByName",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/lookup": {
@@ -75485,7 +76424,12 @@
             }
           }
         },
-        "operationId": "scan.postScanLookup"
+        "operationId": "scan.postScanLookup",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/scans/{scanId}/undo": {
@@ -75726,7 +76670,12 @@
             }
           }
         },
-        "operationId": "scanners.getScanners"
+        "operationId": "scanners.getScanners",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create a scanner (a device comes with a pairing code)",
@@ -76017,7 +76966,12 @@
             }
           }
         },
-        "operationId": "scanners.postScanners"
+        "operationId": "scanners.postScanners",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanners/{id}": {
@@ -76060,7 +77014,12 @@
             }
           }
         },
-        "operationId": "scanners.getScannersById"
+        "operationId": "scanners.getScannersById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Edit a scanner",
@@ -76339,7 +77298,12 @@
             }
           }
         },
-        "operationId": "scanners.patchScannersById"
+        "operationId": "scanners.patchScannersById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanners/{id}/pairing": {
@@ -76410,7 +77374,12 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdPairing"
+        "operationId": "scanners.postScannersByIdPairing",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "get": {
         "summary": "Poll a pairing",
@@ -76484,7 +77453,12 @@
             }
           }
         },
-        "operationId": "scanners.getScannersByIdPairing"
+        "operationId": "scanners.getScannersByIdPairing",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanners/{id}/pair-here": {
@@ -76538,7 +77512,12 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdPairHere"
+        "operationId": "scanners.postScannersByIdPairHere",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanners/{id}/token": {
@@ -76605,7 +77584,12 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdToken"
+        "operationId": "scanners.postScannersByIdToken",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanners/{id}/revoke": {
@@ -76648,7 +77632,12 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdRevoke"
+        "operationId": "scanners.postScannersByIdRevoke",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanners/{id}/mode": {
@@ -76716,7 +77705,12 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdMode"
+        "operationId": "scanners.postScannersByIdMode",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanners/{id}/sample-pass": {
@@ -76775,7 +77769,12 @@
             }
           }
         },
-        "operationId": "scanners.postScannersByIdSamplePass"
+        "operationId": "scanners.postScannersByIdSamplePass",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-setups": {
@@ -77159,7 +78158,12 @@
             }
           }
         },
-        "operationId": "scanners.getScanSetups"
+        "operationId": "scanners.getScanSetups",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create a managed scanner or screen",
@@ -77808,7 +78812,12 @@
             }
           }
         },
-        "operationId": "scanners.postScanSetups"
+        "operationId": "scanners.postScanSetups",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-setups/admin-session": {
@@ -77895,7 +78904,12 @@
             }
           }
         },
-        "operationId": "scanners.postScanSetupsAdminSession"
+        "operationId": "scanners.postScanSetupsAdminSession",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-setups/{id}": {
@@ -78209,7 +79223,12 @@
             }
           }
         },
-        "operationId": "scanners.getScanSetupsById"
+        "operationId": "scanners.getScanSetupsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Update a managed scanner or screen",
@@ -78816,7 +79835,12 @@
             }
           }
         },
-        "operationId": "scanners.patchScanSetupsById"
+        "operationId": "scanners.patchScanSetupsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanning-sessions": {
@@ -78897,7 +79921,12 @@
             }
           }
         },
-        "operationId": "scanners.getScanningSessions"
+        "operationId": "scanners.getScanningSessions",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create a shared scanning session",
@@ -79355,7 +80384,12 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessions"
+        "operationId": "scanners.postScanningSessions",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanning-sessions/join": {
@@ -79442,7 +80476,12 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessionsJoin"
+        "operationId": "scanners.postScanningSessionsJoin",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}": {
@@ -79485,7 +80524,12 @@
             }
           }
         },
-        "operationId": "scanners.getScanningSessionsById"
+        "operationId": "scanners.getScanningSessionsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Update shared session rules",
@@ -79956,7 +81000,12 @@
             }
           }
         },
-        "operationId": "scanners.patchScanningSessionsById"
+        "operationId": "scanners.patchScanningSessionsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}/summary": {
@@ -79999,7 +81048,12 @@
             }
           }
         },
-        "operationId": "scanners.getScanningSessionsByIdSummary"
+        "operationId": "scanners.getScanningSessionsByIdSummary",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}/hold": {
@@ -80114,7 +81168,12 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessionsByIdHold"
+        "operationId": "scanners.postScanningSessionsByIdHold",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}/devices": {
@@ -80225,7 +81284,12 @@
             }
           }
         },
-        "operationId": "scanners.postScanningSessionsByIdDevices"
+        "operationId": "scanners.postScanningSessionsByIdDevices",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}/devices/{deviceId}": {
@@ -80345,7 +81409,12 @@
             }
           }
         },
-        "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId"
+        "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan/live": {
@@ -81959,7 +83028,12 @@
             }
           }
         },
-        "operationId": "scan.getScanLive"
+        "operationId": "scan.getScanLive",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/live/passes/{passId}/assets/member.png": {
@@ -82005,7 +83079,12 @@
             }
           }
         },
-        "operationId": "scan.getScanLivePassesByPassIdAssetsMemberPng"
+        "operationId": "scan.getScanLivePassesByPassIdAssetsMemberPng",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan/live/inside": {
@@ -82235,7 +83314,12 @@
             }
           }
         },
-        "operationId": "scan.getScanLiveInside"
+        "operationId": "scan.getScanLiveInside",
+        "security": [
+          {
+            "scanner": []
+          }
+        ]
       }
     },
     "/api/v1/scan-events/{id}/inside": {
@@ -82475,7 +83559,12 @@
             }
           }
         },
-        "operationId": "scan-events.getScanEventsByIdInside"
+        "operationId": "scan-events.getScanEventsByIdInside",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-events/{id}/mark-out": {
@@ -82537,7 +83626,12 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEventsByIdMarkOut"
+        "operationId": "scan-events.postScanEventsByIdMarkOut",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-events": {
@@ -82641,7 +83735,12 @@
             }
           }
         },
-        "operationId": "scan-events.getScanEvents"
+        "operationId": "scan-events.getScanEvents",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create a scan event",
@@ -82771,7 +83870,12 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEvents"
+        "operationId": "scan-events.postScanEvents",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-events/{id}": {
@@ -82814,7 +83918,12 @@
             }
           }
         },
-        "operationId": "scan-events.getScanEventsById"
+        "operationId": "scan-events.getScanEventsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Edit a scan event",
@@ -82946,7 +84055,12 @@
             }
           }
         },
-        "operationId": "scan-events.patchScanEventsById"
+        "operationId": "scan-events.patchScanEventsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-events/{id}/archive": {
@@ -82989,7 +84103,12 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEventsByIdArchive"
+        "operationId": "scan-events.postScanEventsByIdArchive",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-events/{id}/scanners": {
@@ -83056,7 +84175,12 @@
             }
           }
         },
-        "operationId": "scan-events.postScanEventsByIdScanners"
+        "operationId": "scan-events.postScanEventsByIdScanners",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-staff": {
@@ -83144,7 +84268,12 @@
             }
           }
         },
-        "operationId": "scan-staff.getScanStaff"
+        "operationId": "scan-staff.getScanStaff",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create a staff member and reveal their PIN once",
@@ -83222,7 +84351,12 @@
             }
           }
         },
-        "operationId": "scan-staff.postScanStaff"
+        "operationId": "scan-staff.postScanStaff",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-staff/{id}": {
@@ -83304,7 +84438,12 @@
             }
           }
         },
-        "operationId": "scan-staff.patchScanStaffById"
+        "operationId": "scan-staff.patchScanStaffById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-staff/{id}/reset-pin": {
@@ -83366,7 +84505,12 @@
             }
           }
         },
-        "operationId": "scan-staff.postScanStaffByIdResetPin"
+        "operationId": "scan-staff.postScanStaffByIdResetPin",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-zones/{id}/inside": {
@@ -83606,7 +84750,12 @@
             }
           }
         },
-        "operationId": "scan-zones.getScanZonesByIdInside"
+        "operationId": "scan-zones.getScanZonesByIdInside",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-zones/{id}/mark-out": {
@@ -83668,7 +84817,12 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesByIdMarkOut"
+        "operationId": "scan-zones.postScanZonesByIdMarkOut",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-zones": {
@@ -83932,7 +85086,12 @@
             }
           }
         },
-        "operationId": "scan-zones.getScanZones"
+        "operationId": "scan-zones.getScanZones",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create a zone",
@@ -84217,7 +85376,12 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZones"
+        "operationId": "scan-zones.postScanZones",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-zones/{id}": {
@@ -84505,7 +85669,12 @@
             }
           }
         },
-        "operationId": "scan-zones.patchScanZonesById"
+        "operationId": "scan-zones.patchScanZonesById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-zones/{id}/archive": {
@@ -84719,7 +85888,12 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesByIdArchive"
+        "operationId": "scan-zones.postScanZonesByIdArchive",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-zones/{id}/restore": {
@@ -84933,7 +86107,12 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesByIdRestore"
+        "operationId": "scan-zones.postScanZonesByIdRestore",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scan-zones/visits/{id}/reset": {
@@ -84993,7 +86172,12 @@
             }
           }
         },
-        "operationId": "scan-zones.postScanZonesVisitsByIdReset"
+        "operationId": "scan-zones.postScanZonesVisitsByIdReset",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scans": {
@@ -85445,7 +86629,12 @@
             }
           }
         },
-        "operationId": "scans.getScansExport"
+        "operationId": "scans.getScansExport",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scans/{id}": {
@@ -85488,7 +86677,12 @@
             }
           }
         },
-        "operationId": "scans.getScansById"
+        "operationId": "scans.getScansById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/scans/{id}/undo": {
@@ -85551,7 +86745,12 @@
             }
           }
         },
-        "operationId": "scans.postScansByIdUndo"
+        "operationId": "scans.postScansByIdUndo",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/roll-calls": {
@@ -87121,7 +88320,12 @@
             }
           }
         },
-        "operationId": "scan-display.getScanDisplayPreview"
+        "operationId": "scan-display.getScanDisplayPreview",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/passes/{passId}/tags": {
@@ -87442,7 +88646,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcPassesByPassIdTags"
+        "operationId": "nfc-tags.getNfcPassesByPassIdTags",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Put a removed tag back on a pass",
@@ -87772,7 +88981,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcPassesByPassIdTags"
+        "operationId": "nfc-tags.postNfcPassesByPassIdTags",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/bindings/{bindingId}": {
@@ -88075,7 +89289,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.deleteNfcBindingsByBindingId"
+        "operationId": "nfc-tags.deleteNfcBindingsByBindingId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Change what a tag works with",
@@ -88404,7 +89623,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.patchNfcBindingsByBindingId"
+        "operationId": "nfc-tags.patchNfcBindingsByBindingId",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/tags": {
@@ -88768,7 +89992,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcTags"
+        "operationId": "nfc-tags.getNfcTags",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/tags/{id}": {
@@ -89071,7 +90300,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcTagsById"
+        "operationId": "nfc-tags.getNfcTagsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "patch": {
         "summary": "Rename a tag",
@@ -89396,7 +90630,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.patchNfcTagsById"
+        "operationId": "nfc-tags.patchNfcTagsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/tags/{id}/retire": {
@@ -89699,7 +90938,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagsByIdRetire"
+        "operationId": "nfc-tags.postNfcTagsByIdRetire",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/tags/{id}/restore": {
@@ -90002,7 +91246,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagsByIdRestore"
+        "operationId": "nfc-tags.postNfcTagsByIdRestore",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/tags/{id}/lost": {
@@ -90305,7 +91554,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcTagsByIdLost"
+        "operationId": "nfc-tags.postNfcTagsByIdLost",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/scanners": {
@@ -90432,7 +91686,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcScanners"
+        "operationId": "nfc-tags.getNfcScanners",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/passes/{passId}/enrollments": {
@@ -90750,7 +92009,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.postNfcPassesByPassIdEnrollments"
+        "operationId": "nfc-tags.postNfcPassesByPassIdEnrollments",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/passes/{passId}/enrollments/{id}": {
@@ -91049,7 +92313,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcPassesByPassIdEnrollmentsById"
+        "operationId": "nfc-tags.getNfcPassesByPassIdEnrollmentsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "delete": {
         "summary": "Cancel a tag request",
@@ -91346,7 +92615,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById"
+        "operationId": "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/tags/{id}/history": {
@@ -91575,7 +92849,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcTagsByIdHistory"
+        "operationId": "nfc-tags.getNfcTagsByIdHistory",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/users/{userId}/tags": {
@@ -91916,7 +93195,12 @@
             }
           }
         },
-        "operationId": "nfc-tags.getNfcUsersByUserIdTags"
+        "operationId": "nfc-tags.getNfcUsersByUserIdTags",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/tag-types": {
@@ -92921,7 +94205,12 @@
             }
           }
         },
-        "operationId": "nfc-keysets.getNfcKeysets"
+        "operationId": "nfc-keysets.getNfcKeysets",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       },
       "post": {
         "summary": "Create a tag keyset",
@@ -93127,7 +94416,12 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysets"
+        "operationId": "nfc-keysets.postNfcKeysets",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/keysets/{id}/rotate": {
@@ -93315,7 +94609,12 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysetsByIdRotate"
+        "operationId": "nfc-keysets.postNfcKeysetsByIdRotate",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/keysets/{id}/keys/{version}/retire": {
@@ -93448,7 +94747,12 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire"
+        "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/v1/nfc/keysets/{id}/disable": {
@@ -93571,7 +94875,12 @@
             }
           }
         },
-        "operationId": "nfc-keysets.postNfcKeysetsByIdDisable"
+        "operationId": "nfc-keysets.postNfcKeysetsByIdDisable",
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/t/{slug}": {
@@ -93605,7 +94914,9 @@
             }
           }
         },
-        "operationId": "nfc.getTBySlug"
+        "operationId": "nfc.getTBySlug",
+        "security": [],
+        "x-public": true
       }
     },
     "/wallet/v1/google/{accountId}": {
@@ -93640,7 +94951,9 @@
             }
           }
         },
-        "operationId": "google-wallet.postWalletV1GoogleByAccountId"
+        "operationId": "google-wallet.postWalletV1GoogleByAccountId",
+        "security": [],
+        "x-public": true
       }
     },
     "/wallet/v1/samsung/cards/{cardId}/{refId}": {
@@ -93684,7 +94997,9 @@
             }
           }
         },
-        "operationId": "samsung.getWalletV1SamsungCardsByCardIdByRefId"
+        "operationId": "samsung.getWalletV1SamsungCardsByCardIdByRefId",
+        "security": [],
+        "x-public": true
       },
       "post": {
         "summary": "Receive a Samsung Wallet card-state callback",
@@ -93726,7 +95041,9 @@
             }
           }
         },
-        "operationId": "samsung.postWalletV1SamsungCardsByCardIdByRefId"
+        "operationId": "samsung.postWalletV1SamsungCardsByCardIdByRefId",
+        "security": [],
+        "x-public": true
       }
     },
     "/wallet/v1/devices/{deviceId}/registrations/{passTypeId}/{serial}": {
@@ -93776,7 +95093,12 @@
             }
           }
         },
-        "operationId": "apple.postWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial"
+        "operationId": "apple.postWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial",
+        "security": [
+          {
+            "passToken": []
+          }
+        ]
       },
       "delete": {
         "summary": "Unregister a device",
@@ -93824,7 +95146,12 @@
             }
           }
         },
-        "operationId": "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial"
+        "operationId": "apple.deleteWalletV1DevicesByDeviceIdRegistrationsByPassTypeIdBySerial",
+        "security": [
+          {
+            "passToken": []
+          }
+        ]
       }
     },
     "/wallet/v1/devices/{deviceId}/registrations/{passTypeId}": {
@@ -93874,7 +95201,9 @@
             }
           }
         },
-        "operationId": "apple.getWalletV1DevicesByDeviceIdRegistrationsByPassTypeId"
+        "operationId": "apple.getWalletV1DevicesByDeviceIdRegistrationsByPassTypeId",
+        "security": [],
+        "x-public": true
       }
     },
     "/wallet/v1/passes/{passTypeId}/{serial}": {
@@ -93916,7 +95245,12 @@
             }
           }
         },
-        "operationId": "apple.getWalletV1PassesByPassTypeIdBySerial"
+        "operationId": "apple.getWalletV1PassesByPassTypeIdBySerial",
+        "security": [
+          {
+            "passToken": []
+          }
+        ]
       }
     },
     "/wallet/v1/passes/{passTypeId}/{serial}/personalize": {
@@ -93958,7 +95292,9 @@
             }
           }
         },
-        "operationId": "apple.postWalletV1PassesByPassTypeIdBySerialPersonalize"
+        "operationId": "apple.postWalletV1PassesByPassTypeIdBySerialPersonalize",
+        "security": [],
+        "x-public": true
       }
     },
     "/wallet/v1/log": {
@@ -94005,7 +95341,9 @@
             }
           }
         },
-        "operationId": "apple.postWalletV1Log"
+        "operationId": "apple.postWalletV1Log",
+        "security": [],
+        "x-public": true
       }
     },
     "/p/{token}/wallet/{provider}": {
@@ -94053,7 +95391,9 @@
             }
           }
         },
-        "operationId": "public.getPByTokenWalletByProvider"
+        "operationId": "public.getPByTokenWalletByProvider",
+        "security": [],
+        "x-public": true
       }
     },
     "/p/wallet/samsung/{offer}": {
@@ -94089,7 +95429,9 @@
             }
           }
         },
-        "operationId": "public.getPWalletSamsungByOffer"
+        "operationId": "public.getPWalletSamsungByOffer",
+        "security": [],
+        "x-public": true
       }
     },
     "/w/i/{file}": {
@@ -94124,7 +95466,9 @@
             }
           }
         },
-        "operationId": "public.getWIByFile"
+        "operationId": "public.getWIByFile",
+        "security": [],
+        "x-public": true
       }
     },
     "/brand/{orgId}/{file}": {
@@ -94169,7 +95513,9 @@
             }
           }
         },
-        "operationId": "public.getBrandByOrgIdByFile"
+        "operationId": "public.getBrandByOrgIdByFile",
+        "security": [],
+        "x-public": true
       }
     },
     "/p/{token}": {
@@ -94205,7 +95551,9 @@
             }
           }
         },
-        "operationId": "public.getPByToken"
+        "operationId": "public.getPByToken",
+        "security": [],
+        "x-public": true
       }
     },
     "/p/{token}/barcode": {
@@ -94241,7 +95589,9 @@
             }
           }
         },
-        "operationId": "public.getPByTokenBarcode"
+        "operationId": "public.getPByTokenBarcode",
+        "security": [],
+        "x-public": true
       }
     },
     "/p/{token}/pass.pkpass": {
@@ -94277,7 +95627,9 @@
             }
           }
         },
-        "operationId": "public.getPByTokenPassPkpass"
+        "operationId": "public.getPByTokenPassPkpass",
+        "security": [],
+        "x-public": true
       }
     },
     "/p/{token}/assets/{name}": {
@@ -94322,7 +95674,9 @@
             }
           }
         },
-        "operationId": "public.getPByTokenAssetsByName"
+        "operationId": "public.getPByTokenAssetsByName",
+        "security": [],
+        "x-public": true
       }
     },
     "/b/{token}": {
@@ -94358,7 +95712,9 @@
             }
           }
         },
-        "operationId": "public.getBByToken"
+        "operationId": "public.getBByToken",
+        "security": [],
+        "x-public": true
       }
     },
     "/b/{token}/passes.pkpasses": {
@@ -94394,7 +95750,9 @@
             }
           }
         },
-        "operationId": "public.getBByTokenPassesPkpasses"
+        "operationId": "public.getBByTokenPassesPkpasses",
+        "security": [],
+        "x-public": true
       }
     },
     "/b/{token}/{passId}/pass.pkpass": {
@@ -94440,7 +95798,9 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdPassPkpass"
+        "operationId": "public.getBByTokenByPassIdPassPkpass",
+        "security": [],
+        "x-public": true
       }
     },
     "/b/{token}/{passId}/wallet/{provider}": {
@@ -94498,7 +95858,9 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdWalletByProvider"
+        "operationId": "public.getBByTokenByPassIdWalletByProvider",
+        "security": [],
+        "x-public": true
       }
     },
     "/b/{token}/{passId}/barcode": {
@@ -94544,7 +95906,9 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdBarcode"
+        "operationId": "public.getBByTokenByPassIdBarcode",
+        "security": [],
+        "x-public": true
       }
     },
     "/b/{token}/{passId}/assets/{name}": {
@@ -94600,7 +95964,9 @@
             }
           }
         },
-        "operationId": "public.getBByTokenByPassIdAssetsByName"
+        "operationId": "public.getBByTokenByPassIdAssetsByName",
+        "security": [],
+        "x-public": true
       }
     },
     "/j/{token}": {
@@ -94636,7 +96002,9 @@
             }
           }
         },
-        "operationId": "join.getJByToken"
+        "operationId": "join.getJByToken",
+        "security": [],
+        "x-public": true
       },
       "post": {
         "summary": "Join form post: makes a card, or answers why not",
@@ -94670,7 +96038,9 @@
             }
           }
         },
-        "operationId": "join.postJByToken"
+        "operationId": "join.postJByToken",
+        "security": [],
+        "x-public": true
       }
     },
     "/j/{token}/card/{name}": {
@@ -94715,7 +96085,9 @@
             }
           }
         },
-        "operationId": "join.getJByTokenCardByName"
+        "operationId": "join.getJByTokenCardByName",
+        "security": [],
+        "x-public": true
       }
     },
     "/hooks/connections/{id}": {
@@ -94769,7 +96141,9 @@
             }
           }
         },
-        "operationId": "connections.postHooksConnectionsById"
+        "operationId": "connections.postHooksConnectionsById",
+        "security": [],
+        "x-public": true
       }
     }
   },

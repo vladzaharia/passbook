@@ -1,10 +1,13 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppBindings } from './context.ts';
+import { withDecisions, withIdempotencyKey } from './openapi-decisions.ts';
 import { withSecurity } from './openapi-security.ts';
 
 type Op = { operationId?: string; tags?: string[]; 'x-operation-key'?: string };
 type Doc = { paths?: Record<string, Record<string, Op | undefined>> } & Record<string, unknown>;
 
+/** wrangler.jsonc PUBLIC_BASE_URL; operation paths carry the /api/v1 prefix. */
+const PUBLIC_BASE_URL = 'https://passbook.mobile';
 const API_PREFIX = /^\/api\/v1/;
 const pascal = (s: string): string =>
   s.replace(/(^|[^a-zA-Z0-9]+)([a-zA-Z0-9])/g, (_m, _sep, ch: string) => ch.toUpperCase());
@@ -35,7 +38,8 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
   const doc = app.getOpenAPI31Document({
     openapi: '3.1.0',
     info: { title: 'PassBook API', version: '1.0.0' },
-    servers: [{ url: '/' }],
+    servers: [{ url: PUBLIC_BASE_URL }],
   }) as unknown as Doc;
-  return withSecurity(app, withOperationIds(doc) as never) as unknown as Doc;
+  const secured = withSecurity(app, withOperationIds(doc) as never);
+  return withIdempotencyKey(withDecisions(app, secured as never) as never) as unknown as Doc;
 }
