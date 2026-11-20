@@ -90,6 +90,7 @@ export function ScanOverlays({
             since={shiftStart}
             sessionTotals={sessionTotals}
             pending={state.unsure.length + state.queue.pending}
+            offline={{ state: state.offline, queue: state.queue, onSync: runtime.syncNow }}
             onClose={() => showPanel(null)}
             onEnd={() => location.reload()}
           />

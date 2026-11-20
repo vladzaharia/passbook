@@ -28,7 +28,12 @@ export function stripOf(
   const who = o.display?.identity.holder ?? o.card?.title;
   const said = o.kind === 'ok' ? null : (verdictLine(o, now)?.headline ?? null);
   return {
-    kind: o.kind === 'ok' || o.kind === 'heads_up' || o.kind === 'refused' ? o.kind : 'system',
+    kind:
+      o.kind === 'ok' || o.kind === 'queued'
+        ? 'ok'
+        : o.kind === 'heads_up' || o.kind === 'refused'
+          ? o.kind
+          : 'system',
     title: who ?? said ?? o.action?.label ?? 'Scan',
     meta: who && said ? `${said} · ${meta}` : meta,
     undoable,
@@ -37,7 +42,7 @@ export function stripOf(
 
 /** The dock strip: the newest scan, or while offline what still works and what is saved. */
 export function dockStrip(
-  s: Pick<ScanState, 'online' | 'queue' | 'unsure'>,
+  s: Pick<ScanState, 'online' | 'queue' | 'unsure' | 'offline'>,
   last: Recent | undefined,
   undoable: boolean,
   now: number,
@@ -46,7 +51,7 @@ export function dockStrip(
   const n = savedCount(s);
   return {
     kind: 'system',
-    title: SCAN_COPY.offline.strip,
+    title: s.offline.mode === 'stop' ? SCAN_COPY.offline.strip : SCAN_COPY.offline.stripSaving,
     meta: n > 0 ? scanLine(SCAN_COPY.offline.saved, { n }) : '',
   };
 }

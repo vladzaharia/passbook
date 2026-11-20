@@ -69,6 +69,13 @@ export type { ScanApiDeps } from './scan-api-support.ts';
 
 const BASE = '/api/v1/scan';
 
+const rosterQuery = (cursor: string | undefined, since: number | undefined): string => {
+  const q = new URLSearchParams();
+  if (cursor) q.set('cursor', cursor);
+  if (since !== undefined) q.set('since', String(since));
+  return q.size > 0 ? `?${q}` : '';
+};
+
 export function createScanApi(deps: ScanApiDeps) {
   const doFetch = deps.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
@@ -234,14 +241,8 @@ export function createScanApi(deps: ScanApiDeps) {
     setRole: (body: ScanRoleChange) => request('POST', '/role', ScanSessionSchema, body),
     staffSearch: (q: string, call?: Call) =>
       request('GET', `/staff?q=${encodeURIComponent(q)}`, ScanStaffSearchSchema, undefined, call),
-    roster: (cursor?: string, call?: Call) =>
-      request(
-        'GET',
-        `/roster${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`,
-        ScanRosterSchema,
-        undefined,
-        call,
-      ),
+    roster: (cursor?: string, since?: number, call?: Call) =>
+      request('GET', `/roster${rosterQuery(cursor, since)}`, ScanRosterSchema, undefined, call),
     batch: (body: z.infer<typeof ScanBatchRequestSchema>, call?: Call) =>
       request('POST', '/batch', ScanBatchResultSchema, body, call),
     inside: (query: InsideQuery, call?: Call) => {

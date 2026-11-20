@@ -11,6 +11,7 @@ import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
+import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
 import './visual-gallery.css';
 
@@ -203,6 +204,12 @@ export function ScanVisualGallery() {
   if (surface === 'access')
     return (
       <AccessVisual scenario={ACCESS_SCENARIOS.find((c) => c === params.get('case')) ?? 'grant'} />
+    );
+  if (surface === 'offline')
+    return (
+      <OfflineVisual
+        scenario={OFFLINE_SCENARIOS.find((c) => c === params.get('case')) ?? 'queued'}
+      />
     );
   if (surface === 'tags')
     return (

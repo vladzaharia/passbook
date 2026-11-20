@@ -70,6 +70,19 @@ export function dismiss(s: MachineState, env: Env): Out {
 export function override(s: MachineState, ev: Of<'override'>, env: Env): Out {
   const l = s.loop;
   if (l.s !== 'verdict' || l.outcome.kind !== 'heads_up') return same(s);
+  if (l.outcome.reason === 'offline_decide') {
+    // Staff decide: save the read as unverified. The server checks it when the door is back online.
+    const key = env.id();
+    return out(
+      {
+        ...s,
+        ignore: settleShown(s.ignore, env.now),
+        loop: { s: 'checking', input: l.input, key, since: env.now, slow: false, next: null },
+        lastActivity: env.now,
+      },
+      [{ c: 'offline.decide', key, input: l.input, unverified: true }],
+    );
+  }
   const draft: Draft = { actionId: ev.actionId, amount: null };
   if (l.outcome.reason === 'check_required') draft.confirmed = true;
   else if (l.outcome.scanId) {

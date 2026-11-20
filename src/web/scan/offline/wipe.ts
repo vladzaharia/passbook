@@ -9,6 +9,8 @@ import { collection } from './db.ts';
 /** The v2 stores (queue, roster) and `meta` as plain key-value collections. */
 export interface KeyValue<T = unknown> {
   set(key: string, value: T): Promise<void>;
+  setMany(entries: readonly (readonly [string, T])[]): Promise<void>;
+  remove(key: string): Promise<void>;
   get(key: string): Promise<T | undefined>;
   all(): Promise<T[]>;
   clear(): Promise<void>;
@@ -18,6 +20,10 @@ export function createMemoryKeyValue<T = unknown>(): KeyValue<T> {
   const map = new Map<string, T>();
   return {
     set: async (key, value) => void map.set(key, value),
+    setMany: async (entries) => {
+      for (const [key, value] of entries) map.set(key, value);
+    },
+    remove: async (key) => void map.delete(key),
     get: async (key) => map.get(key),
     all: async () => [...map.values()],
     clear: async () => map.clear(),
@@ -33,6 +39,9 @@ export function createIdbKeyValue<T>(
   const rows = collection<Record<string, unknown>>(db, name);
   return {
     set: (key, value) => rows.put({ [keyPath]: key, v: value }),
+    setMany: (entries) =>
+      rows.putMany(entries.map(([key, value]) => ({ [keyPath]: key, v: value }))),
+    remove: (key) => rows.remove(key),
     get: async (key) => ((await rows.get(key)) as { v?: T } | undefined)?.v,
     all: async () => (await rows.all()).map((r) => r.v as T),
     clear: () => rows.clear(),

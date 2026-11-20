@@ -48,7 +48,8 @@ export function DoorDock({
         onLookUp={() => open(true)}
       />
     );
-  const check = outcome.reason === 'check_required' && outcome.action;
+  const check =
+    (outcome.reason === 'check_required' || outcome.reason === 'offline_decide') && outcome.action;
   const verbs = check ? [] : holdVerbs(outcome);
   const unknown = tags?.assignUnknown ?? null;
   const more = Boolean(check) || verbs.length > 0 || Boolean(unknown) || Boolean(tags?.addTag);

@@ -10,6 +10,8 @@ import { Button } from '../../ui/button.tsx';
 import { ErrorState } from '../../ui/error-state.tsx';
 import { Sheet, SheetContent } from '../../ui/sheet.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
+import type { ScanState } from '../machine/types.ts';
+import { OfflineStatus } from './offline-status.tsx';
 
 type Summary = z.infer<typeof ScanSummarySchema>;
 type Scope = 'device' | 'session';
@@ -139,6 +141,7 @@ export function ShiftSheet({
   onClose,
   onEnd,
   pending,
+  offline,
 }: {
   open: boolean;
   ending: boolean;
@@ -149,6 +152,8 @@ export function ShiftSheet({
   onClose: () => void;
   onEnd: () => void;
   pending: number;
+  /** The offline mode, the list's age and what is queued; absent in tests that do not care. */
+  offline?: { state: ScanState['offline']; queue: ScanState['queue']; onSync: () => void };
 }) {
   const [scope, setScope] = useState<Scope>('device');
   const query = useQuery({
@@ -185,6 +190,14 @@ export function ShiftSheet({
                 </Button>
               ))}
             </fieldset>
+          ) : null}
+          {offline ? (
+            <OfflineStatus
+              offline={offline.state}
+              queue={offline.queue}
+              {...(timeZone ? { timeZone } : {})}
+              onSync={offline.onSync}
+            />
           ) : null}
           {query.isError ? (
             <ErrorState error={query.error} onRetry={() => query.refetch()} />

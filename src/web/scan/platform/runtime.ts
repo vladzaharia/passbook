@@ -1,4 +1,5 @@
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
+import { offlineModeOf } from '../../../shared/scan-offline.ts';
 import { getMode } from '../../lib/mode.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
@@ -14,6 +15,7 @@ import { decodeActive } from '../machine/derive.ts';
 import { createDirectionPin } from '../machine/direction-pin.ts';
 import { initialState } from '../machine/initial-state.ts';
 import { createScanStore } from '../machine/store.ts';
+import type { OfflineController } from '../offline/controller.ts';
 import { openScanDb } from '../offline/db.ts';
 import {
   createIdbUnsureStore,
@@ -28,10 +30,12 @@ import {
 } from '../offline/wipe.ts';
 import { sound } from '../sound/player.ts';
 import type { Announcement } from '../ui/live-announcer.tsx';
+import { cameraDisabledFor } from './camera-disabled.ts';
 import { customerBrandingOf } from './customer-branding.ts';
 import { focusTarget } from './focus-target.ts';
 import { scanId } from './id.ts';
 import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
+import { connectOffline } from './offline-runtime.ts';
 import { createWakeLock } from './wake-lock.ts';
 
 export async function createRuntime(
@@ -64,22 +68,7 @@ export async function createRuntime(
     meta: db ? createIdbKeyValue(db, 'meta') : createMemoryKeyValue(),
   };
   let scanner = session.scanner;
-  const hasDuoLayout = () => {
-    const layout =
-      getNativeCapabilities()?.layout ?? session.workspace?.device.capabilities?.native?.layout;
-    return layout?.posture === 'unfolded' || layout?.posture === 'half-folded';
-  };
-  const cameraDisabled = () => {
-    if (hasDuoLayout()) return false;
-    if (session.workspace?.device.effectiveSurface === 'operator') return true;
-    const native = getNativeCapabilities() ?? session.workspace?.device.capabilities?.native;
-    if (scanner?.settings.reader === 'barcode') {
-      return (
-        session.workspace?.device.capabilities?.nativeBarcode ?? native?.platform === 'android'
-      );
-    }
-    return scanner?.settings.reader === 'nfc' && (native?.vas.available ?? false);
-  };
+  const cameraDisabled = () => cameraDisabledFor(session, scanner);
   try {
     await reconcileScope(localStores, {
       scannerId: scanner?.id ?? 'admin',
@@ -104,6 +93,8 @@ export async function createRuntime(
         ? 'barcode'
         : 'none';
   state.camera = cameraDisabled() ? 'disabled' : 'off';
+  state.offline.mode = scanner ? offlineModeOf(scanner.settings) : 'stop';
+  let offline: OfflineController | null = null;
   if (scanner) state.unsure = await hydrateUnsure(unsure, scanner.id, clock.now());
   const fields = new WedgeFields();
   const webNfc = createWebNfcSource();
@@ -130,6 +121,7 @@ export async function createRuntime(
       ids: { id: scanId },
       pin,
       unsure,
+      offline: { decide: (key, input, unverified) => void offline?.decide(key, input, unverified) },
       scannerId: () => scanner?.id ?? null,
       base: () => ({}),
       audio: { unlock: sound.unlock },
@@ -145,6 +137,7 @@ export async function createRuntime(
     },
     state,
   );
+  offline = connectOffline({ scanner, api, stores: localStores, clock, store });
   const bus = createBus({
     dispatch: store.dispatch,
     clock,
@@ -211,9 +204,13 @@ export async function createRuntime(
     onBadLayout: (badLayout) => store.dispatch({ type: 'reader', reader: { badLayout } }),
   }).start((read) => emit(read));
   const stopWebNfc = webNfc.start((read) => emit(read));
-  const onOnline = () => store.dispatch({ type: 'online', online: navigator.onLine });
+  const onOnline = () => {
+    store.dispatch({ type: 'online', online: navigator.onLine });
+    if (navigator.onLine) offline?.kick();
+  };
   const onVisible = () => {
     store.dispatch({ type: 'visible', visible: !document.hidden });
+    if (!document.hidden) offline?.kick();
     if (!document.hidden) {
       const current = store.getSnapshot().state;
       if (current.started && !current.block && current.loop.s !== 'paused') native?.start();
@@ -277,6 +274,8 @@ export async function createRuntime(
     store,
     pin,
     clear: () => wipeLocal(localStores),
+    /** Send what is queued now: the shift sheet's Sync now. */
+    syncNow: () => offline?.kick(),
     fields,
     emit,
     checkIn: store.checkIn,
@@ -312,6 +311,7 @@ export async function createRuntime(
     },
     dispose() {
       unsubscribe();
+      offline?.dispose();
       stopWedge();
       stopWebNfc();
       native?.dispose();

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import type { ScanCard } from '../../shared/contracts/scan.ts';
 import type { ScanBranding, ScanSession } from '../../shared/contracts/scan-session.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
@@ -52,6 +52,11 @@ export interface ScanPreviewScreenProps {
   /** Where the logo is served for this viewer; the scanner's own URL when absent. */
   logoUrl?: string | null;
   onPass?: (card: ScanCard | null) => void;
+  /** The capsule's state and chips, for screens that show the connection. */
+  capsuleState?: 'scanning' | 'offline';
+  chips?: ReactNode;
+  /** The dock strip; the demo's last scan when absent. */
+  strip?: StripEntry | null;
 }
 
 function OperatorSidebar({
@@ -113,6 +118,9 @@ export function ScanPreviewScreen({
   branding = DEMO_BRANDING,
   logoUrl,
   onPass,
+  capsuleState = 'scanning',
+  chips,
+  strip = STRIP,
 }: ScanPreviewScreenProps) {
   const store = useStaticStore();
   const [runtime] = useState(
@@ -133,7 +141,8 @@ export function ScanPreviewScreen({
           name: scannerName,
           orgName,
           logoUrl: logoUrl !== undefined ? logoUrl : scanBrandLogoUrl(branding),
-          state: 'scanning',
+          state: capsuleState,
+          ...(chips ? { chips } : {}),
         }}
         camera={<div className="scan-visual-camera" />}
         sidebar={
@@ -144,7 +153,7 @@ export function ScanPreviewScreen({
         buddy={
           <Buddy scene="scan" size="xl-scan" mood={mood === 'neutral' ? 'flat' : mood} immediate />
         }
-        strip={STRIP}
+        strip={strip}
         dockRow={
           <DoorDock
             outcome={outcome}
