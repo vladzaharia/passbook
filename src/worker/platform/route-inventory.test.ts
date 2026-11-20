@@ -41,6 +41,7 @@ const PUBLIC = [
   'GET /p/:token/wallet/:provider',
   'GET /p/sw.js',
   'GET /p/wallet/samsung/:offer',
+  'GET /t/:slug',
   'GET /w/i/:file',
   'GET /wallet/v1/devices/:deviceId/registrations/:passTypeId',
   'GET /wallet/v1/passes/:passTypeId/:serial',
@@ -155,7 +156,13 @@ function undecidedRoutes(): string[] {
 }
 
 it("has a decision for every route, and only today's undecided ones are listed", () => {
-  expect(undecidedRoutes()).toEqual([...PUBLIC, ...SCANNER, ...OWN_GUARD].sort());
+  const listed = new Set([...PUBLIC, ...SCANNER, ...OWN_GUARD]);
+  const found = new Set(undecidedRoutes());
+  // Names the routes: give each new one `auth` (or `public: true`), or list it above; delete a stale line.
+  expect({
+    undecided: [...found].filter((route) => !listed.has(route)),
+    declaredSinceListed: [...listed].filter((route) => !found.has(route)),
+  }).toEqual({ undecided: [], declaredSinceListed: [] });
 });
 
 it('leaves no /api/v1 route open except the API document and "who am I"', () => {
