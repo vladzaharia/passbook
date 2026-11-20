@@ -9,8 +9,12 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { isNotFound, resolveTemplate } from '../passes/builder.ts';
 import type { ScanActor } from './actor.ts';
 import { scopeSessionId } from './actor.ts';
+import { DEFAULT_SETTINGS } from './dto-console.ts';
+import { recordSessionChange } from './repo-roster.ts';
+import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { captureTemplateStamps } from './repo-scope-releases.ts';
 import { sessionZoneIds } from './repo-zones.ts';
+import { effectiveSessionSettings } from './scanning-session-dto.ts';
 
 /**
  * Who may use the offline list, and which sessions may have one. The list is only as safe as this
@@ -110,4 +114,26 @@ export async function requireOfflineList(
 export function requireOfflineQueue(actor: ScanActor): void {
   if (!pairedDoor(actor))
     throw new ConflictError('This session does not take offline scans.', 'OFFLINE_OFF');
+}
+
+/** Record a change of status or offline mode, so a queued read is judged by the state in force when it was taken. */
+export async function noteSessionChange(
+  ctx: ServiceContext,
+  row: ScanningSessionRow,
+  status: string,
+  settings: ScanActor['settings'] | null | undefined,
+  at: number,
+): Promise<void> {
+  const was = offlineModeOf(effectiveSessionSettings(row) ?? DEFAULT_SETTINGS);
+  const mode = offlineModeOf(settings ?? DEFAULT_SETTINGS);
+  if (status === row.status && mode === was) return;
+  await recordSessionChange(ctx.env.DB, {
+    sessionId: row.id,
+    orgId: row.org_id,
+    at,
+    status,
+    mode,
+    prev_status: row.status,
+    prev_mode: was,
+  });
 }

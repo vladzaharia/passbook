@@ -60,13 +60,15 @@ export function useScanSession(
   machine?: ScanState | null,
 ): ScanSessionHook {
   const client = useQueryClient();
+  const pendingRef = useRef<number | undefined>(undefined);
+  pendingRef.current = machine ? machine.queue.pending + machine.unsure.length : undefined;
   // Read before the first request: the fragment is gone from the address bar by then.
   const [pairCode] = useState(() => takePairCode());
   const query = useQuery({
     queryKey: KEY,
     queryFn: async () => {
       try {
-        const session = await api.session();
+        const session = await api.session(undefined, undefined, pendingRef.current);
         csrf.set(session.csrfToken);
         void keepSession(session);
         return session;

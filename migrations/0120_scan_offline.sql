@@ -21,3 +21,25 @@ CREATE TABLE scan_offline_reads (
 ) WITHOUT ROWID;
 CREATE INDEX scan_offline_reads_org ON scan_offline_reads (org_id, mode, synced_at DESC);
 CREATE INDEX scan_offline_reads_conflict ON scan_offline_reads (org_id, mode, synced_at DESC) WHERE conflict = 1;
+
+-- When a session's status or offline mode changed, so a queued read is judged by the state in force when the
+-- door took it, not by the session's last edit. `prev_*` is what it was before, for reads older than any row.
+CREATE TABLE scan_session_changes (
+  session_id TEXT NOT NULL,
+  org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+  at INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  prev_status TEXT NOT NULL,
+  prev_mode TEXT NOT NULL,
+  PRIMARY KEY (session_id, at)
+) WITHOUT ROWID;
+
+-- The door's last online contact with nothing waiting to sync: no queued read may be dated before it.
+CREATE TABLE scan_offline_state (
+  scanner_id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+  online_at INTEGER NOT NULL
+) WITHOUT ROWID;
+CREATE INDEX scan_session_changes_org ON scan_session_changes (org_id);
+CREATE INDEX scan_offline_state_org ON scan_offline_state (org_id);

@@ -98,7 +98,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/scan/repo-act-claim.ts': {
     reason:
       "reopen, quarantine and fail of the actor's own claim generation after a key collision, still fenced by the claim authority predicate; a fresh claim is the org_mode.scan.claim upsert. Also the offline flag on a done scan a queued read produced (set once, not authority)",
-    writes: ['scans:eae11c80b490', 'scans:d236ea0f39c0'],
+    writes: ['scans:eae11c80b490', 'scans:6dcbf3a04bfc'],
   },
   'src/worker/modules/scan/repo-gate-recovery.ts': {
     reason:

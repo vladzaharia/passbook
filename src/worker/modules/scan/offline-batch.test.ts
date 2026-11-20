@@ -284,4 +284,32 @@ describe('syncing queued reads', () => {
       await rowsOf("SELECT 1 FROM retention_receipts WHERE class = 'scans' AND deleted >= 1"),
     ).not.toHaveLength(0);
   });
+
+  it('a read dated before the last clean online contact is a conflict, never admitted', async () => {
+    const { tpl, scanner, headers } = await door();
+    const pass = await kit.scanPass(tpl);
+    const now = kit.clock.now();
+    await run(
+      kit.env.DB,
+      'INSERT INTO scan_offline_state (scanner_id, org_id, online_at) VALUES (?, ?, ?)',
+      [scanner.id, kit.org.id, now],
+    );
+    const [only] = (
+      await batchOf(
+        await batch(headers, [item(pass.scanCode ?? '', { clientTs: now - 3_600_000 })]),
+      )
+    ).items;
+    expect(only).toMatchObject({ conflict: true, outcome: { kind: 'heads_up', reason: 'ended' } });
+    expect(await rowsOf('SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toHaveLength(0);
+  });
+
+  it('a clean session poll sets the floor; one with reads queued does not', async () => {
+    const { scanner, headers } = await door();
+    const floor = () =>
+      rowsOf('SELECT online_at FROM scan_offline_state WHERE scanner_id = ?', [scanner.id]);
+    await kit.get(headers, '/session?pending=3');
+    expect(await floor()).toEqual([]);
+    await kit.get(headers, '/session?pending=0');
+    expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
+  });
 });

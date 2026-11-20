@@ -23,7 +23,8 @@ export async function keepSession(session: ScanSession): Promise<void> {
   const kv = await meta();
   if (!kv || !session.scanner) return;
   if (offlineModeOf(session.scanner.settings) === 'stop') await kv.remove(KEY);
-  else await kv.set(KEY, { ...session, csrfToken: null });
+  // No staff names are kept: a door that signs staff in has no offline start (`keptSession`).
+  else await kv.set(KEY, { ...session, csrfToken: null, staff: null, staffList: null });
 }
 
 /** The kept session, only if it still parses and still asks for an offline mode. */
@@ -31,6 +32,7 @@ export async function keptSession(): Promise<ScanSession | null> {
   const parsed = ScanSessionSchema.safeParse(await (await meta())?.get(KEY));
   return parsed.success &&
     parsed.data.scanner &&
+    !parsed.data.scanner.settings.staffSignIn &&
     offlineModeOf(parsed.data.scanner.settings) !== 'stop'
     ? parsed.data
     : null;

@@ -206,8 +206,15 @@ export function createScanApi(deps: ScanApiDeps) {
     pairPreview: (code: string) =>
       request('POST', '/pair/preview', ScanPairPreviewSchema, { code }),
     pair: (code: string) => request('POST', '/pair', ScanSessionSchema, { code }),
-    session: (scope?: AdminScope, call?: Call) =>
-      request('GET', `/session${scopeQuery(scope)}`, ScanSessionSchema, undefined, call),
+    /** `pending`: reads queued on the device; 0 tells the server this contact is a clean one. */
+    session: (scope?: AdminScope, call?: Call, pending?: number) =>
+      request(
+        'GET',
+        `/session${scopeQuery(scope)}${pending === undefined ? '' : `${scope ? '&' : '?'}pending=${pending}`}`,
+        ScanSessionSchema,
+        undefined,
+        call,
+      ),
     resolve: (body: z.infer<typeof ScanResolveRequestSchema>, call?: Call) =>
       request('POST', '/resolve', ScanOutcomeSchema, body, call),
     act: (body: z.infer<typeof ScanActRequestSchema>, call?: Call) =>

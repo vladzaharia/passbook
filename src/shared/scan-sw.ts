@@ -20,11 +20,11 @@ self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const cache = await caches.open(CACHE);
     const res = await fetch(DOC, { cache: 'reload' });
-    if (!res.ok) return;
+    if (!res.ok || res.redirected) return;
     await cache.put(DOC, res.clone());
     const files = new Set(['/scan.webmanifest']);
     for (const m of (await res.text()).matchAll(/(?:src|href)="(\\/assets\\/[^"]+)"/g)) files.add(m[1]);
-    await Promise.all([...files].map((f) => cache.add(f).catch(() => undefined)));
+    await Promise.all([...files].map((f) => fetch(f).then((r) => keep(new Request(f), r)).catch(() => undefined)));
   })());
 });
 self.addEventListener('activate', (e) => {

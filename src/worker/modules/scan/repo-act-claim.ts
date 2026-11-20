@@ -42,8 +42,13 @@ export function failPendingActionClaimStmt(
 }
 
 /** Mark the scan a queued offline read produced: 1 on the list, 2 let in by staff with no list. Set once `act` finalized it. */
-export const markScanOffline = (db: D1Database, scanId: string, door: 'listed' | 'unverified') =>
-  run(db, "UPDATE scans SET offline = ? WHERE id = ? AND state = 'done' AND offline = 0", [
-    door === 'unverified' ? 2 : 1,
-    scanId,
-  ]);
+export const markScanOffline = (
+  db: D1Database,
+  scan: { id: string; orgId: string; mode: string },
+  door: 'listed' | 'unverified',
+) =>
+  run(
+    db,
+    "UPDATE scans SET offline = ? WHERE id = ? AND org_id = ? AND mode = ? AND state = 'done' AND offline = 0",
+    [door === 'unverified' ? 2 : 1, scan.id, scan.orgId, scan.mode],
+  );

@@ -117,3 +117,48 @@ export const recordOfflineRead = (db: D1Database, r: OfflineRead) =>
       r.syncedAt,
     ],
   );
+
+export interface SessionChange {
+  at: number;
+  status: string;
+  mode: string;
+  prev_status: string;
+  prev_mode: string;
+}
+
+export const recordSessionChange = (
+  db: D1Database,
+  c: SessionChange & { sessionId: string; orgId: string },
+) =>
+  run(
+    db,
+    `INSERT OR IGNORE INTO scan_session_changes (session_id, org_id, at, status, mode, prev_status, prev_mode)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [c.sessionId, c.orgId, c.at, c.status, c.mode, c.prev_status, c.prev_mode],
+  );
+
+export const sessionChanges = (db: D1Database, sessionId: string) =>
+  all<SessionChange>(
+    db,
+    `SELECT at, status, mode, prev_status, prev_mode FROM scan_session_changes
+     WHERE session_id = ? ORDER BY at`,
+    [sessionId],
+  );
+
+/** The door's last contact with nothing queued; only ever moves forward. */
+export const touchOnlineAt = (db: D1Database, scannerId: string, orgId: string, now: number) =>
+  run(
+    db,
+    `INSERT INTO scan_offline_state (scanner_id, org_id, online_at) VALUES (?, ?, ?)
+     ON CONFLICT (scanner_id) DO UPDATE SET online_at = excluded.online_at WHERE excluded.online_at > online_at`,
+    [scannerId, orgId, now],
+  );
+
+export const onlineAtOf = async (db: D1Database, scannerId: string): Promise<number> =>
+  (
+    await all<{ online_at: number }>(
+      db,
+      'SELECT online_at FROM scan_offline_state WHERE scanner_id = ?',
+      [scannerId],
+    )
+  )[0]?.online_at ?? 0;
