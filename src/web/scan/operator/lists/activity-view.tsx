@@ -28,9 +28,14 @@ export function ActivityRow({
 }) {
   const row = viewOf(item);
   const openable = row.passId !== null;
-  const detail = [row.where, row.byName ? C.byName : null].filter(Boolean).join(' · ');
+  const detail = [row.where, row.manual ? C.manual : null].filter(Boolean).join(' · ');
   return (
-    <li className="op-row" data-selected={selected || undefined} data-tone={row.tone}>
+    <li
+      className="op-row"
+      data-row-key={row.id}
+      data-selected={selected || undefined}
+      data-tone={row.tone}
+    >
       <button
         type="button"
         className="op-row-main"
@@ -64,7 +69,12 @@ export function ActivityRow({
           className="op-row-undo"
           data-roving
           tabIndex={-1}
-          onClick={() => row.scanId && onUndo(row.scanId)}
+          aria-label={`${C.undo}: ${row.name}`}
+          onClick={(event) => {
+            // The button leaves with the refresh: the row keeps the focus.
+            event.currentTarget.closest('li')?.querySelector<HTMLElement>('.op-row-main')?.focus();
+            if (row.scanId) onUndo(row.scanId);
+          }}
         >
           <Undo2 aria-hidden /> {C.undo}
         </button>

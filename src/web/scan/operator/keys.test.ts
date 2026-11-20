@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type KeyContext, type KeyInput, resolveKey, SHORTCUTS } from './keys.ts';
+import { type KeyContext, type KeyInput, keyLabel, resolveKey, SHORTCUTS } from './keys.ts';
 
 const key = (over: Partial<KeyInput> & { key: string }): KeyInput => ({
   code: '',
@@ -11,6 +11,9 @@ const key = (over: Partial<KeyInput> & { key: string }): KeyInput => ({
   ...over,
 });
 const ctx = (over: Partial<KeyContext> = {}): KeyContext => ({
+  platform: 'mac',
+  textHere: false,
+  typingRecently: false,
   zone: 'record',
   interactive: false,
   views: ['activity', 'problems'],
@@ -84,7 +87,9 @@ describe('chords act at once, from any zone', () => {
   it.each(['search', 'text', 'record'] as const)('in %s', (zone) => {
     const c = ctx({ zone });
     expect(cmd(key({ key: 'k', meta: true }), c)).toEqual({ c: 'focus-search' });
-    expect(cmd(key({ key: 'K', ctrl: true }), c)).toEqual({ c: 'focus-search' });
+    expect(cmd(key({ key: 'K', ctrl: true }), { ...c, platform: 'win' })).toEqual({
+      c: 'focus-search',
+    });
     expect(cmd(key({ key: 'z', meta: true }), c)).toEqual({ c: 'undo' });
     expect(cmd(key({ key: '2', code: 'Digit2', alt: true }), c)).toEqual({
       c: 'view',
@@ -101,6 +106,61 @@ describe('chords act at once, from any zone', () => {
       c: 'walk-in',
     });
     expect(resolveKey(key({ key: '3', code: 'Digit3', alt: true }), ctx())).toBeNull();
+  });
+});
+
+describe('Space belongs to the control that has it (H3)', () => {
+  it('is never the start of a search, on a button, a row or the page', () => {
+    for (const interactive of [true, false])
+      expect(resolveKey(key({ key: ' ', code: 'Space' }), ctx({ interactive }))).toBeNull();
+  });
+  it('a letter on a focused row still starts a search', () => {
+    expect(resolveKey(key({ key: 'm' }), ctx({ interactive: true, record: false }))).toMatchObject({
+      command: { c: 'type', ch: 'm' },
+    });
+  });
+});
+
+describe('Enter after a slow reader (M1)', () => {
+  it('is not the primary action when keys came a moment ago', () => {
+    expect(resolveKey(key({ key: 'Enter' }), ctx({ typingRecently: true }))).toBeNull();
+    expect(cmd(key({ key: 'Enter' }), ctx({ typingRecently: false }))).toEqual({ c: 'primary' });
+  });
+});
+
+describe("⌘Z is a text control's own undo while it has text (M2)", () => {
+  const z = key({ key: 'z', meta: true });
+  it('leaves it to the browser in the field and a note when they hold text', () => {
+    expect(resolveKey(z, ctx({ zone: 'search', textHere: true }))).toBeNull();
+    expect(resolveKey(z, ctx({ zone: 'text', textHere: true }))).toBeNull();
+  });
+  it('undoes the scan from an empty field or the record', () => {
+    expect(cmd(z, ctx({ zone: 'search' }))).toEqual({ c: 'undo' });
+    expect(cmd(z, ctx({ zone: 'record', textHere: true }))).toEqual({ c: 'undo' });
+  });
+});
+
+describe('modifiers by platform (L5)', () => {
+  it('Ctrl is the modifier off a Mac, and Ctrl+Z does nothing on one', () => {
+    expect(cmd(key({ key: 'k', ctrl: true }), ctx({ platform: 'win' }))).toEqual({
+      c: 'focus-search',
+    });
+    expect(resolveKey(key({ key: 'k', meta: true }), ctx({ platform: 'win' }))).toBeNull();
+    expect(resolveKey(key({ key: 'z', ctrl: true }), ctx({ platform: 'mac' }))).toBeNull();
+  });
+  it('Linux needs Shift with Alt, so tab switching keeps Alt+digit', () => {
+    const alt2 = key({ key: '2', code: 'Digit2', alt: true });
+    expect(resolveKey(alt2, ctx({ platform: 'linux' }))).toBeNull();
+    expect(cmd({ ...alt2, shift: true }, ctx({ platform: 'linux' }))).toEqual({
+      c: 'view',
+      view: 'problems',
+    });
+    expect(cmd(alt2, ctx({ platform: 'win' }))).toEqual({ c: 'view', view: 'problems' });
+  });
+  it('labels follow', () => {
+    expect(keyLabel('⌘Z', 'win')).toBe('Ctrl+Z');
+    expect(keyLabel('⌥1', 'linux')).toBe('Alt+Shift+1');
+    expect(keyLabel('⌘K', 'mac')).toBe('⌘K');
   });
 });
 

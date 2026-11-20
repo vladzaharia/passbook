@@ -279,7 +279,7 @@ export const SessionActivitySchema = z.object({
         groupSize: z.number().int().min(2).nullable().default(null),
       }),
     )
-    .max(20),
+    .max(50),
 });
 export const ScanningSessionDetailSchema = ScanningSessionSchema.extend({
   devices: z.array(ScanningDeviceSchema),

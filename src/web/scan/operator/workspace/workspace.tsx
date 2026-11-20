@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import type { ScanCounts } from '../../../../shared/contracts/scan.ts';
 import type { ScanBranding, ScanSession } from '../../../../shared/contracts/scan-session.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
@@ -18,7 +18,7 @@ import { CommandField, Kbd, type Readiness } from './command-field.tsx';
 import { HelpSheet, shortcutsFor } from './help-sheet.tsx';
 import { hintsOf } from './hints.ts';
 import { IdleView } from './idle-view.tsx';
-import { RecordInterim } from './record-interim.tsx';
+import { RecordInterim, RecordPreview } from './record-interim.tsx';
 import { inNowOf, sessionChip } from './session-state.ts';
 import { StatusBar } from './status-bar.tsx';
 import { TopBar } from './top-bar.tsx';
@@ -68,6 +68,11 @@ export function OperatorWorkspace(props: WorkspaceProps) {
       : 'ready';
   // A boot or paused card is a record too: on one column it must show over the list.
   const recordOpen = op.recordOpen || Boolean(props.scanCard);
+  // One polite region (design 12): a refusal must not interrupt a busy desk. The verdict word comes first.
+  const polite = useMemo(
+    () => (props.announcement ? { ...props.announcement, polite: true } : null),
+    [props.announcement],
+  );
   const selectedPassId = op.record?.kind === 'pass' ? op.record.passId : null;
   const hints = hintsOf({
     searching: isSearching,
@@ -91,6 +96,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
     <SearchResults
       result={op.lookup.result}
       busy={op.lookup.busy}
+      missed={op.missed}
       highlight={ui.highlight}
       hint={hint}
       error={op.lookup.error}
@@ -130,6 +136,10 @@ export function OperatorWorkspace(props: WorkspaceProps) {
         {scan}
         {props.dock}
       </div>
+    ) : op.record?.kind === 'pass' && op.record.from === 'preview' ? (
+      op.previewRow ? (
+        <RecordPreview row={op.previewRow} />
+      ) : null
     ) : op.record?.kind === 'pass' ? (
       <RecordInterim
         key={op.record.passId}
@@ -200,7 +210,8 @@ export function OperatorWorkspace(props: WorkspaceProps) {
           <div
             role="tabpanel"
             id={panelId}
-            aria-labelledby={tabId(view)}
+            aria-labelledby={isSearching ? undefined : tabId(view)}
+            aria-label={isSearching ? 'Search results' : undefined}
             className="op-panel"
             data-results={isSearching ? RESULT_LIST_ID : undefined}
           >
@@ -236,7 +247,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
         onOpenChange={(open) => op.send({ t: 'help', open })}
         rows={shortcuts}
       />
-      <LiveAnnouncer message={props.announcement} />
+      <LiveAnnouncer message={polite} />
       {op.actions.sheet}
     </div>
   );

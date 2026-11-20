@@ -8,12 +8,44 @@ import type { ScanApi } from '../../api/scan-api.ts';
 import { scanId } from '../../platform/id.ts';
 import type { Command } from '../keys.ts';
 import { PersonAvatar } from '../lists/person-avatar.tsx';
+import { type SearchResult, statePill } from '../lists/search-results.tsx';
 import type { RecordRef } from '../operator-model.ts';
 import { Kbd } from './command-field.tsx';
+
+type SearchRow = SearchResult['items'][number];
 
 const PassPreview = lazy(() =>
   import('../../result/pass-preview.tsx').then((m) => ({ default: m.PassPreview })),
 );
+
+/**
+ * A highlighted search hit, drawn from the search row. Nothing is asked of the server: /resolve
+ * shows up as a live row on monitors, and arrowing through eight hits is not eight lookups.
+ */
+export function RecordPreview({ row }: { row: SearchRow }) {
+  const pill = statePill(row);
+  return (
+    <article className="op-record">
+      <p className="op-band" data-kind="preview">
+        <Eye aria-hidden /> Found by name. Nothing changed yet.
+      </p>
+      <div className="op-record-body">
+        <div className="op-ident">
+          <PersonAvatar name={row.title} photoUrl={row.photoUrl} size="lg" />
+          <div className="op-ident-text">
+            <h2 className="op-name" data-operator-heading tabIndex={-1}>
+              {row.title}
+            </h2>
+            <p className="op-ident-meta">
+              {[row.templateName, row.subtitle, row.maskedEmail].filter(Boolean).join(' · ')}
+            </p>
+            {pill ? <p className="op-ident-status">{pill.text}</p> : null}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 /** Settles a pass for the record: a preview that changes nothing until Check in. */
 function useResolvedPass(api: ScanApi, passId: string, delayMs: number) {
@@ -67,7 +99,7 @@ export function RecordInterim({
   keys: { current: ((command: Command) => boolean) | null };
 }) {
   const preview = record.from === 'search';
-  const { outcome, failed } = useResolvedPass(api, record.passId, preview ? 140 : 0);
+  const { outcome, failed } = useResolvedPass(api, record.passId, 0);
   const card = outcome?.card ?? null;
   const action =
     outcome?.kind === 'ready'

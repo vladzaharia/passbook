@@ -112,10 +112,12 @@ register(
     method: 'get',
     path: '/activity',
     summary: 'Recent activity on this scanning session',
+    query: z.object({ problems: z.enum(['1']).optional() }),
     response: SessionActivitySchema,
   },
   async (c) => {
-    return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c)));
+    const { problems } = c.req.valid('query');
+    return c.json(await sessionActivityFor(serviceContext(c), scanActorOf(c), problems === '1'));
   },
 );
 

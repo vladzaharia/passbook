@@ -32,7 +32,7 @@ export const OPERATOR_COPY = {
     empty: 'Check-ins appear here.',
     unavailable: 'Activity unavailable. Retrying.',
     unknown: 'Unknown code',
-    byName: 'by name',
+    manual: 'manual',
     letInBy: 'Let in by {staff}',
     undoneBy: 'Undone by {staff}',
     undone: 'Undone',

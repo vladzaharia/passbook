@@ -54,6 +54,21 @@ describe('operator model', () => {
     expect(s).toMatchObject({ record: null, highlight: -1, query: 'mar' });
   });
 
+  it('moving to another hit leaves a record opened from search, and keeps one opened elsewhere', () => {
+    const fromSearch = play(
+      { t: 'query', q: 'mar' },
+      { t: 'highlight', index: 0 },
+      { t: 'open', ref: { kind: 'pass', passId: 'p', from: 'search' } },
+    );
+    expect(reduceOperator(fromSearch, { t: 'move', by: 1, count: 3 }).record).toBeNull();
+    expect(reduceOperator(fromSearch, { t: 'highlight', index: 0 }).record).not.toBeNull();
+    const fromRow = play(
+      { t: 'open', ref: { kind: 'pass', passId: 'p', from: 'activity' } },
+      { t: 'highlight', index: 2 },
+    );
+    expect(fromRow.record).not.toBeNull();
+  });
+
   describe('where focus goes when a scan lands', () => {
     it('from idle it goes to the heading', () => {
       expect(idle(INITIAL, false)).toBe(true);

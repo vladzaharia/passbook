@@ -68,9 +68,11 @@ import {
 import { canReload, ScanApiError } from './errors.ts';
 import {
   type AdminScope,
+  activityPath,
   type Call,
   problemOf,
   retryAfterMs,
+  rosterQuery,
   type ScanApiDeps,
   scopeQuery,
 } from './scan-api-support.ts';
@@ -79,13 +81,6 @@ export { ScanApiError } from './errors.ts';
 export type { ScanApiDeps } from './scan-api-support.ts';
 
 const BASE = '/api/v1/scan';
-
-const rosterQuery = (cursor: string | undefined, since: number | undefined): string => {
-  const q = new URLSearchParams();
-  if (cursor) q.set('cursor', cursor);
-  if (since !== undefined) q.set('since', String(since));
-  return q.size > 0 ? `?${q}` : '';
-};
 
 export function createScanApi(deps: ScanApiDeps) {
   const doFetch = deps.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -211,7 +206,8 @@ export function createScanApi(deps: ScanApiDeps) {
   }
 
   return {
-    activity: (call?: Call) => request('GET', '/activity', SessionActivitySchema, undefined, call),
+    activity: (call?: Call) =>
+      request('GET', activityPath(call), SessionActivitySchema, undefined, call),
     reportDevice: (capabilities: ScanDeviceCapabilities, call?: Call) =>
       request('POST', '/device', ScanWorkspaceSchema.nullable(), { capabilities }, call),
     pairPreview: (code: string) =>

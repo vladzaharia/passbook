@@ -1,5 +1,6 @@
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { sessionTime } from '../../ui/session-time.ts';
+import { keyLabel } from '../keys.ts';
 import { Kbd } from './command-field.tsx';
 
 const S = OPERATOR_COPY.status;
@@ -33,7 +34,7 @@ export function StatusBar({
       <span className="op-status-keys">
         {hints.map((h) => (
           <span key={h.label}>
-            <Kbd>{h.keys}</Kbd> {h.label}
+            <Kbd>{keyLabel(h.keys)}</Kbd> {h.label}
           </span>
         ))}
       </span>

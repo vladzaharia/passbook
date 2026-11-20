@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { useNow } from '../../ui/rel-time.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
@@ -17,7 +17,14 @@ import {
   searching,
 } from './operator-model.ts';
 import { type KeyFacts, useOperatorKeys } from './use-operator-keys.ts';
-import { focusHeading, focusSearch } from './workspace/focus.ts';
+import {
+  focusAfterClose,
+  focusHeading,
+  focusLost,
+  focusSearch,
+  rowKeyOfFocus,
+  zoneOf,
+} from './workspace/focus.ts';
 
 /** True while the machine is working a scan or showing its answer. */
 export const scanLive = (loop: { s: string }) =>
@@ -44,7 +51,9 @@ export function useOperator({
 }) {
   const { state, dispatch: machine } = useScanMachine();
   const [ui, send] = useReducer(reduceOperator, INITIAL);
-  const activity = useSessionActivity(api);
+  const activity = useSessionActivity(api, state.online);
+  const opener = useRef<string | null>(null);
+  const [missed, setMissed] = useState(false);
   const clock = useNow(30_000);
   const recordKeys = useRef<((command: Command) => boolean) | null>(null);
   const live = scanLive(state.loop);
@@ -57,6 +66,7 @@ export function useOperator({
   const setQuery = useCallback(
     (q: string) => {
       change(q);
+      setMissed(false);
       send({ t: 'query', q });
     },
     [change],
@@ -68,33 +78,71 @@ export function useOperator({
     session.staff?.name ?? null,
     () => void activity.refresh(),
   );
-  const problems = problemsOf(activity.items, clock, actions.settled);
+  // The problems page and the newest scans overlap; a problem settled by a later check-in needs both.
+  const everything = useMemo(() => {
+    const byId = new Map(
+      [...activity.problemItems, ...activity.items].map((item) => [item.id, item]),
+    );
+    return [...byId.values()].sort((a, b) => b.at - a.at);
+  }, [activity.items, activity.problemItems]);
+  const problems = problemsOf(everything, clock, actions.settled);
   const last = state.recent[0];
   const undoId =
     last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > Date.now()
       ? last.scanId
       : null;
   const previewed = results[ui.highlight];
+  // A highlighted hit is shown from the search row, not opened: /resolve is a live row on monitors.
   const preview: RecordRef | null =
-    searching(ui) && previewed ? { kind: 'pass', passId: previewed.passId, from: 'search' } : null;
-  const record = preview ?? ui.record;
+    searching(ui) && previewed ? { kind: 'pass', passId: previewed.passId, from: 'preview' } : null;
+  const record = ui.record ?? preview;
   const recordOpen = live || record !== null;
 
-  // Fresh results highlight the first row, so the record previews it and Enter opens it.
-  useEffect(() => send({ t: 'highlight', index: found?.items.length ? 0 : -1 }), [found]);
+  // Fresh results highlight the first row, or the one that was highlighted when it is still there
+  // (a scan restoring the field re-runs the search), so the record previews it and Enter opens it.
+  const highlighted = useRef<string | null>(null);
+  highlighted.current = previewed?.passId ?? highlighted.current;
+  useEffect(() => {
+    const items = found?.items ?? [];
+    const keep = items.findIndex((row) => row.passId === highlighted.current);
+    send({ t: 'highlight', index: items.length ? Math.max(0, keep) : -1 });
+  }, [found]);
+
+  // `submit` may pick a single hit or a short code on its own. The operator never keeps that state:
+  // it opens the hit, or says there was none, and clears it so search keeps working.
+  const { picked, back } = lookup;
 
   const latest = useRef({ ui, results, undoId });
   latest.current = { ui, results, undoId };
 
   const open = useCallback((passId: string, from: From) => {
+    opener.current = from === 'search' ? 'search' : rowKeyOfFocus();
     send({ t: 'open', ref: { kind: 'pass', passId, from } });
     requestAnimationFrame(focusHeading);
   }, []);
-  const undo = useCallback((scanId: string) => machine({ type: 'undo', scanId }), [machine]);
+  useEffect(() => {
+    if (!picked) return;
+    const passId = picked.card?.passId;
+    back();
+    if (passId) open(passId, 'search');
+    else setMissed(true);
+  }, [picked, back, open]);
+  const undo = useCallback(
+    (scanId: string) => {
+      machine({ type: 'undo', scanId });
+      // The Undo button leaves with the refresh: keep the operator where they were.
+      requestAnimationFrame(() => {
+        if (focusLost() && !focusHeading()) focusSearch(false);
+      });
+    },
+    [machine],
+  );
   const close = useCallback(() => {
+    const from = opener.current;
+    opener.current = null;
     send({ t: 'close' });
     machine({ type: 'dismiss' });
-    requestAnimationFrame(focusHeading);
+    requestAnimationFrame(() => focusAfterClose(from));
   }, [machine]);
   const changeView = useCallback(
     (view: OperatorView) => {
@@ -163,15 +211,21 @@ export function useOperator({
   useEffect(() => {
     if (live && !wasLive.current) {
       const focus = landingFocus(latest.current.ui, false);
+      // Someone typing, in the field or a note, keeps their place whatever is open.
+      const typing = zoneOf(document.activeElement) !== 'record';
       send({ t: 'close' });
       requestAnimationFrame(() => {
         // Left where it was, unless that control went with the record it belonged to.
-        const gone = !document.activeElement || document.activeElement === document.body;
-        if (focus === 'heading' || gone) focusHeading();
+        if (typing) return;
+        if (focus === 'heading' || focusLost()) focusHeading();
       });
     }
     wasLive.current = live;
   }, [live]);
+  // An operator console holds a result until it is closed or the next scan replaces it: no 1.2 s timeout.
+  useEffect(() => {
+    machine({ type: 'prefs', prefs: { holdResults: true } });
+  }, [machine]);
   // This device's own scans and undos show in the list now, not at the next poll.
   const lastScanId = last?.scanId ?? null;
   const lastKind = last?.outcome.kind ?? null;
@@ -196,6 +250,8 @@ export function useOperator({
     changeView,
     setQuery,
     record,
+    previewRow: previewed ?? null,
+    missed,
     recordOpen,
     live,
     allowPeople,
