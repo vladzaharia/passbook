@@ -71,7 +71,9 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
           expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(seatBox.y + 1);
         await expectWithinViewport(page, '.scan-result');
         await expectNoHorizontalOverflow(page);
-        if (pass === 'generic' && viewport.height <= 650) {
+        // A handheld's glance card keeps the verdict, who and one fact: the details are in the pass sheet.
+        const glance = surface === 'scanner' && viewport.width < 640;
+        if (pass === 'generic' && viewport.height <= 650 && !glance) {
           const body = page.locator('.scan-result-body');
           for (const value of ['Saturday eve', 'Gallery wing']) {
             const field = page.getByText(value, { exact: true });
@@ -113,12 +115,20 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
       await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
       await page.goto(`/scan?visual=1&surface=${surface}&pass=${pass}`);
       await page.getByRole('button', { name: 'View pass', exact: true }).click();
-      const preview = page.locator('.scan-detail-sheet');
+      const preview = page.locator('.scan-pass-sheet');
       await expect(preview).toBeVisible();
       await expect
         .poll(async () => (await preview.boundingBox())?.x ?? Infinity)
         .toBeLessThanOrEqual(1);
-      await expectWithinViewport(page, '.scan-detail-sheet');
+      // The sheet slides up; wait for it to rest before measuring.
+      await expect
+        .poll(async () => {
+          const box = await preview.boundingBox();
+          return box ? box.y + box.height : Infinity;
+        })
+        .toBeLessThanOrEqual(845);
+      await expectWithinViewport(page, '.scan-pass-sheet');
+      await page.getByRole('button', { name: 'Show pass', exact: true }).click();
       await expect(page.locator('.pc-root')).toHaveAttribute('data-face', 'front');
       await expectNoHorizontalOverflow(page);
       await page.screenshot({
@@ -136,14 +146,10 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
 test('scan details remain reachable on compact screens', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto('/scan?visual=1&surface=scanner&pass=generic');
-  const body = page.locator('.scan-result-body');
+  await expect(page.getByTestId('scan-result')).toHaveAttribute('data-density', 'glance');
+  await page.getByRole('button', { name: 'View pass', exact: true }).click();
   const note = page.getByText('If the printed name differs, check with a supervisor.');
-  await expect(note).toBeVisible();
-  const sizes = await body.evaluate((element) => ({
-    client: element.clientHeight,
-    scroll: element.scrollHeight,
-  }));
-  if (sizes.scroll > sizes.client) await note.scrollIntoViewIfNeeded();
+  await note.scrollIntoViewIfNeeded();
   await expect(note).toBeInViewport({ ratio: 1 });
   await expectNoHorizontalOverflow(page);
   await page.screenshot({
@@ -151,8 +157,8 @@ test('scan details remain reachable on compact screens', async ({ page }) => {
     path: 'test-results/scan-visual-generic-320x640-details-scroll.png',
   });
   await page.goto('/scan?visual=1&surface=scanner&pass=identity');
+  await page.getByRole('button', { name: 'View pass', exact: true }).click();
   const memberId = page.getByText('NW-2048-771', { exact: true });
-  await expect(memberId).toBeVisible();
   await memberId.scrollIntoViewIfNeeded();
   await expect(memberId).toBeInViewport({ ratio: 1 });
   await expectNoHorizontalOverflow(page);

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
+import { PHONE, useMediaQuery } from '../lib/media.ts';
 import { getMode } from '../lib/mode.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import { Button } from '../ui/button.tsx';
@@ -95,6 +96,7 @@ export function ScanLoop({
     nativeCapabilities?.layout?.posture === 'half-folded';
   const operator = session.workspace?.device.effectiveSurface === 'operator';
   const operatorPane = operator || duoLayout;
+  const handheld = useMediaQuery(PHONE) && !operatorPane;
   const nativeBarcode =
     session.workspace?.device.capabilities?.nativeBarcode ??
     nativeCapabilities?.platform === 'android';
@@ -201,9 +203,14 @@ export function ScanLoop({
             <ResultCard
               key={s.card.id}
               outcome={result}
-              onPass={(card) => {
-                if (card) setPass({ card });
-                else if ('input' in l) setPass({ input: l.input });
+              density={handheld ? 'glance' : 'full'}
+              onPass={(card, outcome) => {
+                setPass({
+                  outcome,
+                  card,
+                  live: true,
+                  ...('input' in l ? { input: l.input } : {}),
+                });
                 dispatch({ type: 'overlay', open: 'settings' });
               }}
               phase={s.card.phase}
@@ -255,7 +262,11 @@ export function ScanLoop({
             setShiftStart(Date.now());
             runtime.start();
           },
-          openRecent: () => showPanel('recent'),
+          openRecent: () => {
+            const o = last?.outcome ?? null;
+            setPass({ outcome: o, card: o?.card ?? null, tab: o ? 'pass' : 'recent' });
+            dispatch({ type: 'overlay', open: 'recent' });
+          },
           undo: () => {
             if (tags.strip && tags.onUndo) tags.onUndo();
             else if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });
@@ -269,6 +280,8 @@ export function ScanLoop({
         sessionTotals={session.staff?.role === 'manager' && Boolean(session.workspace)}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}
+        where={scanner?.name ?? ''}
+        eventNote={session.event?.note}
         sheet={sheet}
         panel={panel}
         pass={pass}

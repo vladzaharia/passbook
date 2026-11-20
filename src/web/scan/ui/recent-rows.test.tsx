@@ -1,15 +1,19 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
+import { createQueryClient } from '../../lib/query-client.ts';
 import '../../lib/test-utils.tsx';
 import { ScanReasonSchema } from '../../../shared/contracts/scan.ts';
+import type { ScanApi } from '../api/scan-api.ts';
 import { FIXTURE_NOW, fixtureOutcome, fixtureState } from '../machine/fixtures.test-support.ts';
 import { fakeDeps } from '../machine/store.test-support.ts';
 import { createScanStore } from '../machine/store.ts';
 import type { Recent } from '../machine/types.ts';
 import { ScanStoreContext } from '../machine/use-scan-machine.ts';
-import { RecentScans, rowLabel } from './recent-scans.tsx';
+import { PassInspector } from '../result/pass-inspector.tsx';
+import { rowLabel } from './recent-scans.tsx';
 import { stripOf } from './strip-of.ts';
 
 const row = (outcome: ReturnType<typeof fixtureOutcome>): Recent => ({
@@ -43,9 +47,18 @@ describe('Recent rows show copy, never a reason code', () => {
     ];
     const store = createScanStore(fakeDeps().deps, fixtureState({ recent }));
     const wrap = ({ children }: { children: ReactNode }) => (
-      <ScanStoreContext.Provider value={store}>{children}</ScanStoreContext.Provider>
+      <QueryClientProvider client={createQueryClient()}>
+        <ScanStoreContext.Provider value={store}>{children}</ScanStoreContext.Provider>
+      </QueryClientProvider>
     );
-    render(<RecentScans open onClose={() => undefined} />, { wrapper: wrap });
+    render(
+      <PassInspector
+        inspection={{ tab: 'recent' }}
+        api={{} as ScanApi}
+        onClose={() => undefined}
+      />,
+      { wrapper: wrap },
+    );
     expect(screen.getByText(/Just done/)).toBeVisible();
     expect(screen.getByText(/Not found/)).toBeVisible();
     expect(screen.queryByText(/not_found|cooldown/)).toBeNull();

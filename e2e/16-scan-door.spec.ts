@@ -132,8 +132,8 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
         const seat = await page.locator('.scan-buddy-seat').boundingBox();
         const height = width === 1180 ? 820 : 844;
         // Card zone (ui/scan.css): top token, and a bottom that clears the buddy's seat.
-        const top = width < 640 ? 84 : width >= 1024 ? 108 : 117;
-        const limit = height - (width >= 1024 ? 312 : 314);
+        const top = width < 640 ? 117 : width >= 1024 ? 108 : 117;
+        const limit = height - (width >= 1024 ? 312 : width < 640 ? 224 : 314);
         const bottom = Math.round((box?.y ?? 0) + (box?.height ?? 0));
         expect(box?.y).toBeGreaterThanOrEqual(top);
         expect(bottom).toBeLessThanOrEqual(limit);
@@ -153,10 +153,11 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     await page.emulateMedia({ colorScheme: 'light' });
     await page.getByRole('button', { name: 'View pass', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Pass', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Show pass', exact: true }).click();
     await expect(page.locator('.pc-barcode')).toHaveCount(0);
     await page.getByRole('button', { name: 'Close', exact: true }).click();
     await page.getByRole('button', { name: /Last scan:/ }).click();
-    await expect(page.getByRole('heading', { name: 'Recent scans' })).toBeVisible();
+    await page.getByRole('radio', { name: 'Recent scans' }).click();
     await expect(page.getByRole('dialog')).toContainText('Lookup Guest');
     await page.getByRole('button', { name: 'Close', exact: true }).click();
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
@@ -165,7 +166,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
     await expect(page.getByRole('dialog')).toContainText('Done');
     await page.getByRole('button', { name: 'Close', exact: true }).click();
     await page.getByRole('button', { name: /Last scan:/ }).click();
-    await expect(page.getByRole('heading', { name: 'Recent scans' })).toBeVisible();
+    await expect(page.getByRole('radio', { name: 'Recent scans' })).toBeVisible();
     await nativeRead('unknown', uid('UNKNOWN'));
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByTestId('scan-verdict')).toHaveAttribute('data-kind', 'refused');

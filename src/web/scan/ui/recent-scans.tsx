@@ -1,20 +1,15 @@
-import { Check, CircleAlert, Info, TriangleAlert, Undo2 } from 'lucide-react';
+import { Cloud, Undo2 } from 'lucide-react';
 import { groupLine } from '../../../shared/copy/scan-group.ts';
-import { Button } from '../../ui/button.tsx';
-import { Sheet, SheetContent } from '../../ui/sheet.tsx';
-import type { ScanOutcome } from '../machine/types.ts';
+import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
+import type { Recent, ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
+import { toneOf } from '../result/tone.ts';
+import { DISC_GLYPH } from './disc-glyph.ts';
 import { sessionTime } from './session-time.ts';
 
-const GLYPH = {
-  ok: Check,
-  heads_up: TriangleAlert,
-  refused: CircleAlert,
-  system: Info,
-  ready: Info,
-  queued: Info,
-};
+const COPY = SCAN_HANDHELD_COPY.sheet;
+
 /** What a row says it did: the action, or the verdict's own words. Never a reason code. */
 export function rowLabel(o: ScanOutcome, now: number): string {
   if (o.action?.id === 'undo') return 'Undone';
@@ -22,66 +17,67 @@ export function rowLabel(o: ScanOutcome, now: number): string {
   return verdictLine(o, now)?.headline ?? o.action?.label ?? 'Not checked';
 }
 
-export function RecentScans({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** The last 20 scans of this device: the verdict, who, what, when. A row opens its pass; Undo reverts it. */
+export function RecentList({ onPick }: { onPick: (row: Recent) => void }) {
   const { state, now, dispatch } = useScanMachine();
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(value) => {
-        if (!value) onClose();
-      }}
-    >
-      <SheetContent title="Recent scans" className="scan-detail-sheet">
-        <div className="p-4">
-          {state.recent.length ? (
-            <ol>
-              {state.recent.slice(0, 20).map((row) => {
-                const Glyph = GLYPH[row.outcome.kind];
-                return (
-                  <li
-                    key={row.scanId ?? row.at}
-                    className="flex min-h-18 items-center gap-3 border-b border-border py-3"
+    <>
+      {state.recent.length ? (
+        <ol className="scan-recent" data-testid="scan-recent">
+          {state.recent.slice(0, 20).map((row) => {
+            const tone = toneOf(row.outcome.kind);
+            const Glyph = DISC_GLYPH[tone];
+            const canUndo = row.undoable && row.scanId && (row.outcome.undoUntil ?? 0) > now;
+            return (
+              <li key={row.scanId ?? row.at} className="scan-recent-row">
+                <button type="button" className="scan-recent-open" onClick={() => onPick(row)}>
+                  <span aria-hidden className="scan-strip-disc" data-kind={tone}>
+                    <Glyph size={15} strokeWidth={2.5} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <p>
+                      {row.outcome.display?.identity.holder ??
+                        row.outcome.card?.title ??
+                        'Unknown code'}
+                    </p>
+                    <p>
+                      {rowLabel(row.outcome, now)}
+                      {row.outcome.group ? ` · ${groupLine(row.outcome.group)}` : ''} ·{' '}
+                      {sessionTime(row.at)}
+                      {row.outcome.kind === 'queued' ? (
+                        <>
+                          {' · '}
+                          <Cloud aria-hidden size={13} className="inline" /> {COPY.notConfirmed}
+                        </>
+                      ) : null}
+                    </p>
+                  </span>
+                </button>
+                {canUndo ? (
+                  <button
+                    type="button"
+                    className="scan-strip-undo"
+                    disabled={state.undo !== null}
+                    onClick={() => dispatch({ type: 'undo', scanId: row.scanId ?? '' })}
                   >
-                    <span className="scan-strip-disc" data-kind={row.outcome.kind}>
-                      <Glyph size={15} aria-hidden />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">
-                        {row.outcome.display?.identity.holder ??
-                          row.outcome.card?.title ??
-                          'Unknown code'}
-                      </p>
-                      <p className="text-sm text-fg-muted">
-                        {rowLabel(row.outcome, now)}
-                        {row.outcome.group ? ` · ${groupLine(row.outcome.group)}` : ''} ·{' '}
-                        {sessionTime(row.at)}
-                      </p>
-                    </div>
-                    {row.undoable && row.scanId && (row.outcome.undoUntil ?? 0) > now ? (
-                      <Button
-                        variant="ghost"
-                        disabled={state.undo !== null}
-                        loading={state.undo?.scanId === row.scanId}
-                        iconStart={<Undo2 aria-hidden />}
-                        onClick={() => dispatch({ type: 'undo', scanId: row.scanId ?? '' })}
-                      >
-                        Undo
-                      </Button>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ol>
-          ) : (
-            <p className="py-8 text-center text-fg-muted">No scans yet.</p>
-          )}
-          {state.unsure.length ? (
-            <p role="status" className="pt-4 text-sm">
-              {state.unsure.length} scans not confirmed yet. Keep this page open.
-            </p>
-          ) : null}
-        </div>
-      </SheetContent>
-    </Sheet>
+                    <Undo2 aria-hidden size={18} className="scan-strip-undo-icon" />
+                    {COPY.undo}
+                  </button>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p className="scan-sheet-status" style={{ textAlign: 'center', paddingBlock: 32 }}>
+          {COPY.noScans}
+        </p>
+      )}
+      {state.unsure.length ? (
+        <p role="status" className="scan-sheet-status">
+          {COPY.unsure.replace('{n}', String(state.unsure.length))}
+        </p>
+      ) : null}
+    </>
   );
 }

@@ -12,11 +12,8 @@ const LookupSheet = lazy(() =>
 const PassInspector = lazy(() =>
   import('../result/pass-inspector.tsx').then((m) => ({ default: m.PassInspector })),
 );
-const RecentScans = lazy(() =>
-  import('./recent-scans.tsx').then((m) => ({ default: m.RecentScans })),
-);
 const ShiftSheet = lazy(() => import('./shift-sheet.tsx').then((m) => ({ default: m.ShiftSheet })));
-export type ScanPanel = 'recent' | 'shift' | 'end' | 'tips' | null;
+export type ScanPanel = 'shift' | 'end' | 'tips' | null;
 export function ScanOverlays({
   sheet,
   panel,
@@ -31,6 +28,8 @@ export function ScanOverlays({
   clearError,
   orgId,
   timeZone,
+  where,
+  eventNote,
   allowPeople,
   sessionTotals,
 }: {
@@ -47,6 +46,8 @@ export function ScanOverlays({
   clearError: () => void;
   orgId?: string;
   timeZone?: string;
+  where?: string;
+  eventNote?: string | null | undefined;
   allowPeople: boolean;
   sessionTotals: boolean;
 }) {
@@ -77,11 +78,12 @@ export function ScanOverlays({
             api={api}
             orgId={orgId}
             timeZone={timeZone}
+            where={where ?? ''}
+            eventNote={eventNote}
             inspection={pass}
             onClose={closePass}
           />
         ) : null}
-        {panel === 'recent' ? <RecentScans open onClose={() => showPanel(null)} /> : null}
         {panel === 'shift' || panel === 'end' ? (
           <ShiftSheet
             open

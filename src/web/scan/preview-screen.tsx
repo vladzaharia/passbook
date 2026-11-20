@@ -7,7 +7,7 @@ import { ScanAppView } from './app.tsx';
 import { initialState } from './machine/initial-state.ts';
 import { moodOf, viewOf } from './machine/present.ts';
 import type { ScanStore } from './machine/store.ts';
-import type { ScanOutcome } from './machine/types.ts';
+import type { Recent, ScanOutcome } from './machine/types.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorPanel } from './operator/operator-panel.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
@@ -15,6 +15,7 @@ import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { ResultCard } from './result/result-card.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import type { StripEntry } from './ui/last-scan-strip.tsx';
+import type { Tint } from './ui/verdict-tint.tsx';
 import './visual-gallery.css';
 
 const DEMO_BRANDING: ScanBranding = {
@@ -23,10 +24,10 @@ const DEMO_BRANDING: ScanBranding = {
 };
 const STRIP: StripEntry = { kind: 'ok', title: 'Taylor Chen', meta: '6:42 PM', undoable: true };
 
-function useStaticStore() {
+function useStaticStore(recent: Recent[], at: number) {
   const [store] = useState(() => {
-    const state = initialState(Date.now());
-    const snapshot = { state, view: viewOf(state), now: Date.now() };
+    const state = { ...initialState(at), recent };
+    const snapshot = { state, view: viewOf(state), now: at };
     return {
       getSnapshot: () => snapshot,
       subscribe: () => () => undefined,
@@ -51,7 +52,7 @@ export interface ScanPreviewScreenProps {
   branding?: ScanBranding | null;
   /** Where the logo is served for this viewer; the scanner's own URL when absent. */
   logoUrl?: string | null;
-  onPass?: (card: ScanCard | null) => void;
+  onPass?: (card: ScanCard | null, outcome: ScanOutcome) => void;
   /** The desk card's Add photo, as a device that may add photos would show it. */
   addPhoto?: ScanApi;
   /** The capsule's state and chips, for screens that show the connection. */
@@ -59,6 +60,16 @@ export interface ScanPreviewScreenProps {
   chips?: ReactNode;
   /** The dock strip; the demo's last scan when absent. */
   strip?: StripEntry | null;
+  /** `glance` is the handheld's card; the designer's phone preview keeps the full card. */
+  density?: 'full' | 'glance';
+  /** The verdict wash and ring; none when absent. */
+  tint?: Tint;
+  /** The clock "12 min ago" reads from; now when absent. */
+  clock?: number;
+  /** The device's recent scans, for the pass sheet's Recent tab. */
+  recent?: Recent[];
+  /** Rendered inside the scan store: sheets that read it. */
+  children?: ReactNode;
 }
 
 function OperatorSidebar({
@@ -124,8 +135,13 @@ export function ScanPreviewScreen({
   capsuleState = 'scanning',
   chips,
   strip = STRIP,
+  density = 'full',
+  recent = [],
+  tint = 'none',
+  clock,
+  children,
 }: ScanPreviewScreenProps) {
-  const store = useStaticStore();
+  const store = useStaticStore(recent, clock ?? Date.now());
   const [runtime] = useState(
     () =>
       ({
@@ -140,6 +156,7 @@ export function ScanPreviewScreen({
         screen={{ s: 'loop' }}
         surface={surface}
         branding={branding}
+        tint={tint}
         capsule={{
           name: scannerName,
           orgName,
@@ -172,9 +189,12 @@ export function ScanPreviewScreen({
             onPass={onPass}
             onGroup={() => undefined}
             addPhoto={addPhoto}
+            density={density}
+            {...(clock ? { clock } : {})}
           />
         }
       />
+      {children}
     </ScanStoreContext.Provider>
   );
 }

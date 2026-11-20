@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import type { ScanReason } from '../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../shared/contracts/scan-setups.ts';
+import { PHONE, useMediaQuery } from '../lib/media.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
-import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
+import { FIXTURE_NOW, fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
+import { recentRows, TINT, withKind } from './visual-handheld.ts';
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
@@ -192,23 +194,36 @@ function ScanResultVisual({
   selected: (typeof SCAN_VISUAL_CASES)[number];
   phase: 'up' | 'rising';
 }) {
-  const [inspection, setInspection] = useState<PassInspection | null>(null);
+  const params = new URLSearchParams(location.search);
+  const sheet = params.get('sheet');
+  const handheld = useMediaQuery(PHONE) && surface !== 'operator';
+  const [inspection, setInspection] = useState<PassInspection | null>(
+    sheet === 'pass' || sheet === 'recent'
+      ? { outcome: withKind(selected, params), card: selected.outcome.card, live: true, tab: sheet }
+      : null,
+  );
   const [api] = useState(() => ({ resolve: async () => selected.outcome }) as unknown as ScanApi);
-  const outcome = withGroup(selected.outcome, new URLSearchParams(location.search).get('group'));
+  const outcome = withGroup(withKind(selected, params), params.get('group'));
   return (
-    <>
-      <ScanPreviewScreen
-        outcome={outcome}
-        surface={surface === 'operator' ? 'operator' : 'phone'}
-        phase={phase}
-        onPass={(card) => {
-          if (card) setInspection({ card });
-        }}
-      />
+    <ScanPreviewScreen
+      outcome={outcome}
+      surface={surface === 'operator' ? 'operator' : 'phone'}
+      phase={phase}
+      density={handheld ? 'glance' : 'full'}
+      recent={recentRows(!params.has('kind'))}
+      clock={FIXTURE_NOW}
+      tint={params.has('tint') ? TINT[outcome.kind] : 'none'}
+      onPass={(card, shown) => setInspection({ outcome: shown, card, live: true })}
+    >
       {inspection ? (
-        <PassInspector inspection={inspection} api={api} onClose={() => setInspection(null)} />
+        <PassInspector
+          inspection={inspection}
+          api={api}
+          where="Front door"
+          onClose={() => setInspection(null)}
+        />
       ) : null}
-    </>
+    </ScanPreviewScreen>
   );
 }
 
