@@ -13,6 +13,7 @@ export * from './me.ts';
 export * from './message-rules.ts';
 export * from './metrics.ts';
 export * from './nfc.ts';
+export * from './org-lifecycle.ts';
 export * from './org-membership.ts';
 export * from './orgs.ts';
 export * from './passes.ts';

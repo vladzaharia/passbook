@@ -17,8 +17,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
-import { orgIsHeld } from '../retention/holds.ts';
-import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
+import { closeOrg } from '../org-lifecycle/service.ts';
 import { markPassesStale } from './branding-stale.ts';
 import {
   COUNT_CAP,
@@ -271,27 +270,12 @@ export async function setOrgStatus(
   return toDto(saved);
 }
 
-/** Soft delete: passes and audit rows keep their org reference. */
+/** Closes the org (the lifecycle module owns it): read-only, 30 days to export, then purge. */
 export async function deleteOrg(
   ctx: ServiceContext,
   actor: Actor,
   id: string,
   admin: OrgAdmin,
 ): Promise<void> {
-  const row = await requireOrg(ctx, id);
-  if (await orgIsHeld(ctx, id))
-    throw new ConflictError(
-      'A legal hold is active. Release it before deleting the organization.',
-      'ORG_HELD',
-    );
-  await moveOrgStatusAsAdmin(ctx, id, row.status, 'deleted', admin);
-  await recordAudit(ctx, {
-    ...auditActor(actor),
-    orgId: id,
-    action: 'org.delete',
-    targetType: 'org',
-    targetId: id,
-    detail: { slug: row.slug, name: row.name },
-  });
-  await purgeOrgWalletArt(ctx, id);
+  await closeOrg(ctx, actor, id, { kind: 'platform', ...admin });
 }

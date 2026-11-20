@@ -21,6 +21,11 @@ import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
 import { nfcRoutes } from './modules/nfc/routes.ts';
 import { tagPageRoutes } from './modules/nfc/tag-page.ts';
+import {
+  orgClosedRoutes,
+  orgExportDownloadRoutes,
+  orgLifecycleRoutes,
+} from './modules/org-lifecycle/routes.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
@@ -141,8 +146,11 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/orgs', walletCredentialRoutes);
   app.route('/api/v1/orgs', walletEnrolmentRoutes);
   app.route('/api/v1/orgs', retentionRoutes);
+  app.route('/api/v1/orgs', orgLifecycleRoutes);
+  app.route('/api/v1/org-exports', orgExportDownloadRoutes);
   app.route('/api/v1/platform', walletPlatformRoutes);
   app.route('/api/v1/platform', retentionPlatformRoutes);
+  app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/pass-imports', passImportRoutes);

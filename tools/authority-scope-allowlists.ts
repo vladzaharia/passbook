@@ -118,7 +118,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/apple/repo-events.ts': {
     reason:
       'device.fetched ledger rows from the Apple device protocol, fenced in SQL by the credential serial and generation; the device principal has no ledger purpose',
-    writes: ['pass_events:9f58dbf16fba'],
+    writes: ['pass_events:93fa910529e3'],
   },
   'src/worker/modules/passes/repo-remove-compensate.ts': {
     reason:
@@ -241,7 +241,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/delivery/repo-devices.ts': {
     reason:
       'push device outcomes (outbox cancel, pass_events) written while delivering a leased push',
-    writes: ['outbox:4599402ca096', 'outbox:d8027ae6e23e', 'pass_events:8194770a5634'],
+    writes: ['outbox:965be41de4bd', 'outbox:ea24d4f8a142', 'pass_events:a5300ed933c7'],
   },
   'src/worker/modules/delivery/repo-issuance-recovery.ts': {
     reason:
@@ -297,6 +297,8 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
     'deleteInBatches takes its table from the caller; a call that names a guarded table is a raw-guarded-write finding at the call site',
   'src/worker/platform/db.ts':
     'casUpdate takes its table from the caller (identifier-checked); a call that names a guarded table is a raw-guarded-write finding at the call site',
+  'src/worker/modules/org-lifecycle/repo-purge.ts':
+    'the org purge (platform job, no principal) deletes the tables of PURGE_STEPS; every delete repeats the closed, in-purge and no-hold test, and a schema test proves each table is a step, a cascade of one, kept or not tenant data',
   'src/worker/modules/passes/repo-credential-transfer.ts':
     'deviceRows builds a writePart: buildPart lints the expanded target at runtime (one target, no guarded table, tenant and pass ties)',
 };
