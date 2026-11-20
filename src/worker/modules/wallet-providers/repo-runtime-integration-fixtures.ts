@@ -1,4 +1,5 @@
 import { batch, first, run, stmt } from '../../platform/db.ts';
+import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 
 export function readHistoricalCredentialGeneration(db: D1Database, passId: string) {
   return first<{ credentialGeneration: number }>(
@@ -40,7 +41,7 @@ export function insertHistoricalGoogleRelease(
       FROM template_candidates c JOIN template_approvals a ON a.candidate_id = c.id
         AND a.candidate_hash = c.candidate_hash AND a.credential_keyset_commitment = c.credential_keyset_commitment
       WHERE c.id = ? AND a.id = ? AND c.provider = 'google' AND a.reviewer_id != c.author_id
-        AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)
+        AND ${versionAuthorIndependentSql('c', 'a.reviewer_id')}
         AND c.credential_keyset_commitment = ?`,
       [
         input.releaseId,

@@ -106,9 +106,11 @@ describe('org settings inheritance', () => {
     });
     expect(
       await screen.findByLabelText(
-        'Disabled. Off for the platform. Change it in Platform settings.',
+        'Disabled. Off for the platform. Copies stay as they are. Change it in Platform settings.',
       ),
     ).toHaveTextContent('Disabled');
+    // The platform blocks tags, not printing.
+    expect(screen.queryByText(/printing/i)).toBeNull();
     expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
     expect(screen.queryByText('Off for this organization')).toBeNull();
   });

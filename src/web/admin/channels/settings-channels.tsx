@@ -47,7 +47,7 @@ export function OrgChannelsCard({ orgId }: { orgId: string }) {
   ];
   const nfcLocked = tags?.blockedByPlatform === true || planBlocked.includes('nfc');
   const status = (c: Channel): ChannelStatus => {
-    if (c === 'nfc' && tags?.blockedByPlatform) return OFF('printing_off');
+    if (c === 'nfc' && tags?.blockedByPlatform) return OFF('tags_off');
     if (planBlocked.includes(c)) return OFF('not_included');
     if (blocked.includes(c)) return { on: false, source: 'org', reason: 'blocked' };
     if (c === 'nfc' && !tagsOn) return { on: false, source: 'org', reason: 'tags_off' };

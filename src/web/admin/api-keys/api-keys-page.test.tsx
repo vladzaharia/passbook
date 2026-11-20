@@ -130,6 +130,7 @@ describe('api keys page', () => {
     expect(within(dialog).getByRole('checkbox', { name: 'Manage webhooks' })).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
+    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     let review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
     expect(body).toEqual({});
@@ -143,6 +144,7 @@ describe('api keys page', () => {
     await user.click(within(review).getByRole('button', { name: 'Create key' }));
     await waitFor(() => expect(body.name).toBe('CI key'));
     expect(body.scopes).toEqual(['passes:read']);
+    expect(body.ipAllow).toEqual(['203.0.113.0/24']);
     expect(body.orgId).toBeNull();
     expect(body.mode).toBe('live');
     expect(typeof body.expiresAt).toBe('number');
@@ -353,6 +355,7 @@ describe('api keys page', () => {
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'P');
+    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
     await user.click(within(dialog).getByRole('combobox', { name: /Mode/ }));
     await user.click(await screen.findByRole('option', { name: 'Test' }));
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
@@ -382,6 +385,7 @@ describe('api keys page', () => {
       await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
       const dialog = await screen.findByRole('dialog');
       await user.type(within(dialog).getByLabelText(/Name/), 'P');
+      await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
       await user.click(within(dialog).getByRole('button', { name: 'Create' }));
       await user.click(
         within(
@@ -409,6 +413,7 @@ describe('api keys page', () => {
     await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'x');
+    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     await user.click(
       within(await screen.findByRole('alertdialog', { name: 'Create a platform key?' })).getByRole(

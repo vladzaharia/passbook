@@ -20,6 +20,7 @@ export const HISTORY_COLUMNS = `s.id, s.org_id, s.mode, s.at, s.outcome, s.reaso
     st.id AS staff_id, st.name AS staff_name, ap.name AS approver_name, s.method, s.amount,
     s.before_value, s.after_value, s.override_of, s.offline, s.actor_type, s.actor_id, s.undone_at,
     u.id AS undone_by, undo_target.id AS undoes,
+    (SELECT COUNT(*) FROM scan_group_members g WHERE g.group_scan_id = s.id AND g.org_id = s.org_id) AS group_size,
     coalesce(ust.name, usc.name, CASE WHEN u.actor_type = 'user' THEN 'Admin console' END) AS undone_by_name,
     ${HISTORY_FLAG_COLUMNS},
     ${HISTORY_SOURCE_COLUMNS}`;

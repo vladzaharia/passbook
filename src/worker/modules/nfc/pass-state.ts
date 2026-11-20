@@ -4,13 +4,18 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { type Candidate, candidateById } from '../scan/repo-lookup.ts';
 import { candidateWallet } from '../scan/resolve-candidates.ts';
 import { tagFit } from '../scan/tag-assurance.ts';
+import type { TagAssurance } from './systems/types.ts';
 
 const refused = (reason: 'removed' | 'voided' | 'expired') =>
   new ConflictError(`Can't assign a tag to a ${reason} pass.`, `TAG_PASS_${reason.toUpperCase()}`);
 
 /** A Basic tag cannot go to a pass whose template needs a secure one. */
-export function assertTakesTag(ctx: ServiceContext, candidate: Candidate): void {
-  const fit = tagFit(ctx, candidate);
+export function assertTakesTag(
+  ctx: ServiceContext,
+  candidate: Candidate,
+  assurance: TagAssurance = 'basic',
+): void {
+  const fit = tagFit(ctx, candidate, assurance);
   if (fit === 'unreadable') throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   if (fit === 'low') throw new ConflictError('This pass needs a secure tag.', 'TAG_ASSURANCE_LOW');
 }
@@ -30,6 +35,7 @@ export async function assertBindable(
   ctx: ServiceContext,
   orgId: string,
   passId: string,
+  assurance: TagAssurance = 'basic',
 ): Promise<void> {
   const candidate = await candidateById(ctx.env.DB, orgId, passId);
   if (!candidate) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
@@ -41,5 +47,5 @@ export async function assertBindable(
   const validity = validityOf(wallet, ctx.clock.now());
   if (validity.status === 'voided') throw refused('voided');
   if (validity.status === 'expired') throw refused('expired');
-  assertTakesTag(ctx, candidate);
+  assertTakesTag(ctx, candidate, assurance);
 }

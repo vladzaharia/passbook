@@ -60,7 +60,13 @@ export const TagTypeSchema = z.object({
   archivedAt: TimestampSchema.nullable(),
 });
 export type TagType = z.infer<typeof TagTypeSchema>;
-export const TagTypeListSchema = z.object({ items: z.array(TagTypeSchema) });
+export const TagTypeListSchema = pageOf(TagTypeSchema);
+/** Oldest first; `cursor` is the last id of the previous page. */
+export const TagTypeListQuerySchema = z.object({
+  orgId: IdSchema.optional(),
+  cursor: IdSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(100),
+});
 /** A Secure type needs the `sun` system; typed IDs are Basic only. */
 export const CreateTagTypeSchema = z
   .strictObject({ ...typeFields, system: TagSystemSchema.default('uid') })

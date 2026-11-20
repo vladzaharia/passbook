@@ -8,6 +8,7 @@ import {
   type NativeProvider,
   SAMSUNG_PROJECTION_POLICY,
 } from './projection-contract.ts';
+import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
 import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
@@ -55,7 +56,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
     JOIN template_versions pv ON pv.template_id = pc.template_id AND pv.version = pc.version
     JOIN wallet_provider_accounts paccount ON paccount.id = pc.provider_account_id
       AND paccount.org_id = pc.org_id AND paccount.mode = pc.mode AND paccount.provider = pc.provider
-      AND paccount.revision = pc.provider_account_revision AND paccount.credential_id IS NOT NULL
+      AND paccount.authority_epoch = pc.provider_account_epoch AND paccount.credential_id IS NOT NULL
       AND paccount.revoked_at IS NULL
     WHERE (pr.org_id = (${scope.orgIdSql}) AND pr.mode = (${scope.modeSql})
       AND pr.provider = (${scope.providerSql}))
@@ -72,13 +73,11 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
         AND pc.adapter_capabilities = pr.adapter_capabilities
         AND pc.audience_policy_revision = pr.audience_policy_revision)
       AND (pv.created_by IS pc.version_author_id AND pa.reviewer_id != pc.author_id
-        AND (pc.version_author_id IS NULL OR pa.reviewer_id != pc.version_author_id)
+        AND ${versionAuthorIndependentSql('pc', 'pa.reviewer_id')}
         AND pr.created_by IS NOT NULL
         AND pc.projection_json IS NOT NULL AND json_valid(pc.projection_json)
         AND json_type(pc.projection_json) = 'object' AND length(pc.provider_identity_hash) = 64)
-      AND NOT EXISTS (SELECT 1 FROM template_releases newer WHERE newer.template_id = pr.template_id
-        AND newer.org_id = pr.org_id AND newer.mode = pr.mode AND newer.provider = pr.provider
-        AND newer.generation > pr.generation)
+      AND EXISTS (SELECT 1 FROM template_release_heads head WHERE head.release_id = pr.id)
   INTERSECT
   SELECT pb.id FROM projection_binding_release pb
     JOIN template_candidates pc ON pc.id = pb.candidate_id
@@ -180,6 +179,7 @@ export interface ProjectionRetirementMetadata {
   sourceReleaseId: string;
   accountId: string;
   accountRevision: number;
+  accountEpoch: number | null;
   providerIdentityHash: string;
   adapterRevision: number;
   policyRevision: number;
@@ -201,7 +201,8 @@ export async function getProjectionRetirementMetadata(
     `SELECT r.id, r.generation, r.org_id AS orgId, r.mode, r.provider, r.template_id AS templateId,
       r.version, c.id AS candidateId, c.candidate_hash AS candidateHash,
       c.source_release_id AS sourceReleaseId, c.provider_account_id AS accountId,
-      c.provider_account_revision AS accountRevision, c.provider_identity_hash AS providerIdentityHash,
+      c.provider_account_revision AS accountRevision, c.provider_account_epoch AS accountEpoch,
+      c.provider_identity_hash AS providerIdentityHash,
       c.adapter_revision AS adapterRevision, c.audience_policy_revision AS policyRevision
       FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id
         AND c.org_id = r.org_id AND c.mode = r.mode AND c.provider = r.provider
@@ -213,7 +214,7 @@ export async function getProjectionRetirementMetadata(
         AND r.candidate_hash = c.candidate_hash AND a.candidate_hash = c.candidate_hash
         AND r.credential_keyset_commitment = ${pinnedKeysetSql} AND c.credential_keyset_commitment = r.credential_keyset_commitment
         AND a.credential_keyset_commitment = r.credential_keyset_commitment
-        AND a.reviewer_id != c.author_id AND (c.version_author_id IS NULL OR a.reviewer_id != c.version_author_id)`,
+        AND a.reviewer_id != c.author_id AND ${versionAuthorIndependentSql('c', 'a.reviewer_id')}`,
     [releaseId],
   );
   if (!row) return null;

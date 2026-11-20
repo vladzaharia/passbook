@@ -44,7 +44,8 @@ export function ChannelRow({
   label,
   reasonText,
 }: ChannelRowProps) {
-  const why = !status.on && status.reason ? channelWhy(channel, status.reason) : null;
+  const why =
+    !status.on && status.reason ? channelWhy(channel, status.reason, status.source) : null;
   const state = status.on ? 'on' : 'off';
   const word =
     status.reason && UNAVAILABLE.has(status.reason)

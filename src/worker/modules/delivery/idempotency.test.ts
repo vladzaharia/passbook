@@ -51,7 +51,7 @@ describe('bulk email honours Idempotency-Key', () => {
     expect(await emails(a.id)).toHaveLength(1);
     expect(await emails(b.id)).toHaveLength(1);
     const other = await post('/passes/bulk', { ...body, ids: [a.id] }, 'bulk-key-1');
-    expect(other.status).toBe(409);
+    expect(other.status).toBe(422);
     expect(await other.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
     expect(await emails(a.id)).toHaveLength(1);
   });
@@ -84,7 +84,7 @@ describe('bundle resend honours Idempotency-Key', () => {
     expect((await post(path, {}, 'bundle-key-1')).status).toBe(202);
     expect(await emails(a.id)).toHaveLength(1);
     const reused = await post(path, { to: 'other@example.com' }, 'bundle-key-1');
-    expect(reused.status).toBe(409);
+    expect(reused.status).toBe(422);
     expect(await reused.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
     expect((await post(path, {})).status).toBe(202);
     expect(await emails(a.id)).toHaveLength(2);
@@ -130,16 +130,17 @@ describe('bulk email keeps its result and its key', () => {
     // The lower-cased address is the same request.
     expect((await post(path, { to: 'reclaim@example.com' }, 'reclaim-key')).status).toBe(202);
     expect(await emails(a.id)).toHaveLength(1);
-    const row = await first<{ key: string }>(
+    const row = await first<{ principal: string; operation: string }>(
       kit.env.DB,
-      "SELECT key FROM idempotency_keys WHERE key LIKE 'bundle-send:%reclaim-key'",
+      "SELECT principal, operation FROM idempotent_requests WHERE key = 'reclaim-key'",
     );
-    expect(row?.key).toMatch(/^bundle-send:[^:]+:[^:]+:reclaim-key$/);
+    expect(row).toMatchObject({ operation: 'POST /bundles/{id}/send-email' });
+    expect(row?.principal).toMatch(/^(session|key):/);
     // A first call that died before settling: the key blocks retries, then expires.
-    await run(kit.env.DB, 'UPDATE idempotency_keys SET resource_id = ? WHERE key = ?', [
-      'reserved',
-      row?.key ?? '',
-    ]);
+    await run(
+      kit.env.DB,
+      "UPDATE idempotent_requests SET status = NULL, body = NULL WHERE key = 'reclaim-key'",
+    );
     const blocked = await post(path, { to: 'reclaim@example.com' }, 'reclaim-key');
     expect(blocked.status).toBe(409);
     expect(await blocked.json()).toMatchObject({ code: 'IDEMPOTENCY_IN_PROGRESS' });

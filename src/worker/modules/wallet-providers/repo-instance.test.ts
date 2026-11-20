@@ -26,6 +26,7 @@ import {
 import { insertOutcome } from './repo-instance-outcomes.ts';
 import { deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 const makeEnv = installKeysetTestEnv();
 
@@ -385,7 +386,7 @@ describe('wallet provider instance repository keyset authority', () => {
       now,
     };
     const other = t.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
-    expect(await claimOperation(db, claim)).toBe('claimed');
+    expect(await claimOperation(walletJobCtx(db), claim)).toBe('claimed');
     const id = crypto.randomUUID();
     const envelope = await encryptSecret(
       await loadKekRing(t.kit.env),
@@ -423,8 +424,8 @@ describe('wallet provider instance repository keyset authority', () => {
           t.credentialKeysetCommitment,
           value,
           async () => {
-            expect(await insertOutcome(db, outcome)).toBe('stale');
-            expect(await finishOperation(db, finish)).toBeNull();
+            expect(await insertOutcome(walletJobCtx(db), outcome)).toBe('stale');
+            expect(await finishOperation(walletJobCtx(db), finish)).toBeNull();
             expect(
               await first(
                 db,
@@ -436,9 +437,9 @@ describe('wallet provider instance repository keyset authority', () => {
         );
       }
     }
-    expect(await insertOutcome(db, outcome)).toBe('recorded');
-    expect(await insertOutcome(db, outcome)).toBe('replay');
-    expect(await finishOperation(db, finish)).toBe('succeeded');
+    expect(await insertOutcome(walletJobCtx(db), outcome)).toBe('recorded');
+    expect(await insertOutcome(walletJobCtx(db), outcome)).toBe('replay');
+    expect(await finishOperation(walletJobCtx(db), finish)).toBe('succeeded');
     expect(await getOperation(db, claim)).toMatchObject({
       state: 'succeeded',
     });
@@ -506,7 +507,7 @@ describe('wallet provider due-operation selection', () => {
       hash: await sha256Hex(crypto.randomUUID()),
       now,
     };
-    expect(await claimOperation(db, claim)).toBe('claimed');
+    expect(await claimOperation(walletJobCtx(db), claim)).toBe('claimed');
     const next = {
       ...op,
       operationId: crypto.randomUUID(),
@@ -521,7 +522,7 @@ describe('wallet provider due-operation selection', () => {
       state: 'pending',
     });
     expect(await list()).toEqual([second.id]);
-    expect(await markUncertain(db, claim)).toBe(true);
+    expect(await markUncertain(walletJobCtx(db), claim)).toBe(true);
     expect(await list()).toEqual([second.id]);
 
     // Simulate transport settlement of the older operation before considering its successor.
@@ -535,7 +536,7 @@ describe('wallet provider due-operation selection', () => {
     await run(db, "UPDATE passes SET status = 'voided' WHERE id = ?", [op.passId]);
     expect(await list()).toEqual([second.id]);
     expect(
-      await claimOperation(db, {
+      await claimOperation(walletJobCtx(db), {
         ...claim,
         version: 2,
         hash: await sha256Hex(crypto.randomUUID()),
@@ -543,7 +544,7 @@ describe('wallet provider due-operation selection', () => {
     ).toBe('not_claimable');
   });
 
-  it('defers only the exact current operation with live projection evidence', async () => {
+  it('defers only the exact current operation', async () => {
     const t = await setupSamsungCallbacks({ reference: false, db: (await makeEnv()).DB });
     const db = t.kit.env.DB;
     const op = t.operation;
@@ -556,35 +557,36 @@ describe('wallet provider due-operation selection', () => {
       version: op.version,
     };
     const other = t.credentialKeysetCommitment === 'a'.repeat(64) ? 'b'.repeat(64) : 'a'.repeat(64);
-    const evidence = await first<{ expires_at: number }>(
-      db,
-      `SELECT e.expires_at FROM template_releases r
-      JOIN wallet_provider_projection_evidence e ON e.candidate_id = r.candidate_id
-      WHERE r.id = ? AND e.status = 'verified'`,
-      [op.projectionReleaseId],
-    );
-    if (!evidence) throw new Error('Missing verified provider evidence');
-
     expect(
-      await deferWalletSyncOperation(db, { ...ref, version: ref.version + 1 }, now, 1_000),
+      await deferWalletSyncOperation(
+        walletJobCtx(db),
+        { ...ref, version: ref.version + 1 },
+        now,
+        1_000,
+      ),
     ).toBe(false);
     expect(
-      await deferWalletSyncOperation(db, { ...ref, orgId: crypto.randomUUID() }, now, 1_000),
+      await deferWalletSyncOperation(
+        walletJobCtx(db),
+        { ...ref, orgId: crypto.randomUUID() },
+        now,
+        1_000,
+      ),
     ).toBe(false);
     await replaceCallbackKeysetForTest(db, other);
     try {
-      expect(await deferWalletSyncOperation(db, ref, now, 1_000)).toBe(false);
+      expect(await deferWalletSyncOperation(walletJobCtx(db), ref, now, 1_000)).toBe(false);
     } finally {
       await replaceCallbackKeysetForTest(db, t.credentialKeysetCommitment);
     }
-    expect(await deferWalletSyncOperation(db, ref, evidence.expires_at, 1_000)).toBe(false);
+    // D8: the evidence expiry is no longer a queue predicate; reconcile and publish check it.
     expect(await getOperation(db, ref)).toMatchObject({
       state: 'pending',
       attempts: 0,
       nextAttemptAt: null,
     });
 
-    expect(await deferWalletSyncOperation(db, ref, now, 1_000)).toBe(true);
+    expect(await deferWalletSyncOperation(walletJobCtx(db), ref, now, 1_000)).toBe(true);
     expect(await getOperation(db, ref)).toMatchObject({
       state: 'pending',
       attempts: 0,
@@ -595,8 +597,8 @@ describe('wallet provider due-operation selection', () => {
       op.id,
     ]);
     const claim = { ...ref, hash: await sha256Hex(crypto.randomUUID()), now: now + 1_000 };
-    expect(await claimOperation(db, claim)).toBe('claimed');
-    expect(await deferWalletSyncOperation(db, ref, now + 1_000, 1_000)).toBe(false);
+    expect(await claimOperation(walletJobCtx(db), claim)).toBe('claimed');
+    expect(await deferWalletSyncOperation(walletJobCtx(db), ref, now + 1_000, 1_000)).toBe(false);
     expect(await getOperation(db, ref)).toMatchObject({ state: 'claimed', attempts: 1 });
     expect(await operationFresh(db, claim)).toBe(true);
     expect(await operationFresh(db, { ...claim, hash: await sha256Hex('other claim') })).toBe(

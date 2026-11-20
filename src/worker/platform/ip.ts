@@ -1,5 +1,5 @@
 /** Eight 16-bit groups of an IPv6 address (`::` expanded, lowercase), or null if malformed. */
-function ipv6Groups(ip: string): string[] | null {
+export function ipv6Groups(ip: string): string[] | null {
   let addr = ip.toLowerCase().split('%')[0] ?? '';
   const tail = addr.match(/(\d+\.\d+\.\d+\.\d+)$/);
   if (tail?.[1]) {

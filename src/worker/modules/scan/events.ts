@@ -8,7 +8,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminActor, captureScanTenantAuthority, tenantScanRole } from './actor.ts';
 import { captureScanEpochs } from './authority-checks.ts';
-import { sessionGrant } from './repo-admin-grant.ts';
+import { grantAuthorityOf, sessionGrant } from './repo-admin-grant.ts';
 import { EXPECTED_TTL_MS } from './repo-counts.ts';
 import { eventCacheChecks } from './repo-event-authority.ts';
 import type { EventAuthority } from './repo-event-keyset.ts';
@@ -195,14 +195,9 @@ export async function loadManageEvent(
   ctx: ServiceContext,
   id: string,
   userId: string,
-  authority: EventAuthority,
+  authority: TenantPassWrite,
 ): Promise<ConsoleEventRow> {
-  if (
-    authority.kind !== 'session' ||
-    authority.capability !== 'scanning:manage' ||
-    authority.userId !== userId
-  )
-    throw new ForbiddenError();
+  grantAuthorityOf(authority, userId, authority.orgId);
   const row = await getCommittedConsoleEvent(ctx.env.DB, id, authority.orgId, ctx.clock.now());
   if (!row || row.mode !== authority.mode)
     throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');

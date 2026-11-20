@@ -39,6 +39,13 @@ describe('channelWhy', () => {
     });
     expect(channelWhy('paper', 'printing_off').fix).toBe('platform');
     expect(channelWhy('google', 'not_released').fix).toBeNull();
+    // Tags the platform turned off are fixed in Platform settings.
+    expect(channelWhy('nfc', 'tags_off', 'platform')).toEqual({
+      text: 'Off for the platform',
+      fix: 'platform',
+      copiesStay: true,
+    });
+    expect(channelWhy('nfc', 'tags_off', 'org').fix).toBe('org');
     expect(channelWhy('paper', 'not_included')).toEqual({
       text: 'Not included for this organization. Ask PassBook to turn it on.',
       fix: null,

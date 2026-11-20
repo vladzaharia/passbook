@@ -34,6 +34,7 @@ import { projectionPolicy } from './projection-contract.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
 import { seedHistoricalOfferRef } from './runtime-historical-fixtures.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
 beforeAll(() => {
@@ -122,7 +123,7 @@ describe('provider credential generation transitions', () => {
       claimHandle: newWalletClaimHandle(),
       now: f.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, oldClaim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), oldClaim)).toBe('claimed');
     const oldToken = f.pass.downloadToken;
     const oldRefHash = await sha256Hex(f.refId);
     const wrapper = f.kit.ctx.ids.token(32);
@@ -147,7 +148,7 @@ describe('provider credential generation transitions', () => {
       { kind: 'tenant-holder', expected: f.pass },
     );
     expect(transfer.state).toBe('pending');
-    expect(await markWalletClaimUncertain(db, oldClaim)).toBe(true);
+    expect(await markWalletClaimUncertain(walletJobCtx(db), oldClaim)).toBe(true);
     await expect(passForToken(f.kit.ctx, oldToken)).rejects.toMatchObject({ status: 404 });
     expect((await f.call({ token: await f.token() })).status).not.toBe(200);
     expect(await consumeWalletOfferRef(db, wrapper, f.kit.clock.now())).toBeNull();
@@ -185,7 +186,7 @@ describe('provider credential generation transitions', () => {
 
     const old = await getWalletInstanceById(db, { ...scope, instanceId: f.operation.instanceId });
     if (!old) throw new Error('Missing retiring provider identity');
-    expect(await reconcileWalletInstance(f.kit.ctx, old)).toBe('scheduled');
+    expect(await reconcileWalletInstance(jobCtxOf(f.kit), old)).toBe('scheduled');
     const retiring = await getWalletInstanceById(db, { ...scope, instanceId: old.id });
     if (!retiring) throw new Error('Missing desired revocation');
     const revoke = await getWalletOperation(db, {
@@ -206,17 +207,17 @@ describe('provider credential generation transitions', () => {
       claimHandle: newWalletClaimHandle(),
       now: f.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, revokeClaim)).toBe('not_claimable');
+    expect(await claimWalletOperation(walletJobCtx(db), revokeClaim)).toBe('not_claimable');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...oldClaim,
         now: f.kit.clock.now(),
         result: { kind: 'success', httpStatus: 200 },
       }),
     ).toBe('superseded');
-    expect(await claimWalletOperation(db, revokeClaim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), revokeClaim)).toBe('claimed');
     expect(
-      await completeWalletOperation(f.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(f.kit), {
         ...revokeClaim,
         result: { kind: 'success', httpStatus: 200 },
       }),

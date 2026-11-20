@@ -1,4 +1,4 @@
-import type { Channel, ChannelReason, OfferHold } from '../contracts/channels.ts';
+import type { Channel, ChannelReason, ChannelSource, OfferHold } from '../contracts/channels.ts';
 import { FEATURE_ASK, NOT_INCLUDED } from './entitlements.ts';
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
@@ -64,10 +64,14 @@ const PROVIDER_ACCOUNT: Partial<Record<Channel, string>> = {
   samsung: 'Samsung account',
 };
 
-/** Why a channel cannot be on, and where to fix it; null `fix` when nothing in the admin can. */
+/**
+ * Why a channel cannot be on, and where to fix it; null `fix` when nothing in the admin can. Tags the
+ * platform turned off (`source: 'platform'`) are fixed in Platform settings, not the organization's.
+ */
 export const channelWhy = (
   channel: Channel,
   reason: ChannelReason,
+  source?: ChannelSource,
 ): { text: string; fix: ChannelFix | null; copiesStay: boolean } => {
   switch (reason) {
     case 'not_released':
@@ -81,6 +85,9 @@ export const channelWhy = (
     case 'no_design':
       return { text: 'No design in this template', fix: 'template', copiesStay: false };
     case 'tags_off':
+      if (source === 'platform')
+        return { text: 'Off for the platform', fix: 'platform', copiesStay: true };
+      return { text: 'Off for this organization', fix: 'org', copiesStay: true };
     case 'blocked':
       return { text: 'Off for this organization', fix: 'org', copiesStay: true };
     case 'printing_off':

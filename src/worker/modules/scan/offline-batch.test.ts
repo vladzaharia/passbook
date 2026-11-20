@@ -312,4 +312,66 @@ describe('syncing queued reads', () => {
     await kit.get(headers, '/session?pending=0');
     expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
   });
+
+  it('an honest door that scans online before its queue drains keeps every queued read', async () => {
+    const { tpl, scanner, headers } = await door();
+    const floor = () =>
+      rowsOf('SELECT online_at FROM scan_offline_state WHERE scanner_id = ?', [scanner.id]);
+    // Last clean contact, then an outage of two hours with ten reads taken.
+    await kit.get(headers, '/session?pending=0');
+    const clean = kit.clock.now();
+    kit.clock.advance(2 * 3_600_000);
+    const queued = [];
+    for (let i = 0; i < 10; i++) {
+      const p = await kit.scanPass(tpl);
+      queued.push(item(p.scanCode ?? '', { clientTs: clean + (i + 1) * 60_000 }));
+    }
+    // Back online: it scans one person online, and polls with the queue still waiting.
+    const live = await kit.scanPass(tpl);
+    expect((await act(headers, { code: live.scanCode ?? '', method: 'camera' })).status).toBe(200);
+    await kit.get(headers, '/session?pending=10');
+    expect(await floor()).toEqual([{ online_at: clean }]);
+    const { items } = await batchOf(await batch(headers, queued));
+    expect(items.map((i) => i.outcome.kind)).toEqual(Array(10).fill('ok'));
+    expect(items.some((i) => i.conflict)).toBe(false);
+    await kit.get(headers, '/session?pending=0');
+    expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
+  });
+
+  it('a modified client claiming dates before its last clean contact is refused', async () => {
+    const { tpl, headers } = await door();
+    const pass = await kit.scanPass(tpl);
+    await kit.get(headers, '/session?pending=0');
+    const clean = kit.clock.now();
+    kit.clock.advance(3_600_000);
+    const [only] = (
+      await batchOf(
+        await batch(headers, [item(pass.scanCode ?? '', { clientTs: clean - 3_600_000 })]),
+      )
+    ).items;
+    expect(only).toMatchObject({ conflict: true, outcome: { kind: 'heads_up', reason: 'ended' } });
+    expect(await rowsOf('SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toHaveLength(0);
+  });
+
+  it('labels a scan its first run left unlabelled when the batch is sent again', async () => {
+    const { tpl, headers } = await door({ offline: false, whenOffline: 'decide' });
+    const pass = await kit.scanPass(tpl);
+    const sent = item(pass.scanCode ?? '', { door: 'unverified' });
+    await batch(headers, [sent]);
+    // The first run stopped between the scan and its label and record.
+    await run(kit.env.DB, 'UPDATE scans SET offline = 0 WHERE pass_id = ?', [pass.id]);
+    await run(kit.env.DB, 'DELETE FROM scan_offline_reads WHERE idempotency_key = ?', [
+      sent.idempotencyKey,
+    ]);
+    const [again] = (await batchOf(await batch(headers, [sent]))).items;
+    expect(again?.outcome).toMatchObject({ kind: 'ok', replay: true });
+    expect(await rowsOf('SELECT offline FROM scans WHERE pass_id = ?', [pass.id])).toEqual([
+      { offline: 2 },
+    ]);
+    expect(
+      await rowsOf('SELECT 1 FROM scan_offline_reads WHERE idempotency_key = ?', [
+        sent.idempotencyKey,
+      ]),
+    ).toHaveLength(1);
+  });
 });

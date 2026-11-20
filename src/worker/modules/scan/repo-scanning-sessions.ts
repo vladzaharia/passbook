@@ -76,7 +76,7 @@ export const listScanningSessionRows = (
 export const addScanningSessionInsert = (
   g: Grant,
   row: Omit<ScanningSessionRow, 'org_name' | 'org_id' | 'mode' | 'config_epoch' | 'hold'>,
-  userId: string,
+  createdBy: string | null,
 ): GrantedStatement =>
   g.insertSelect(
     'scanning_sessions',
@@ -105,7 +105,7 @@ export const addScanningSessionInsert = (
       row.hours_next_at,
       row.created_at,
       row.updated_at,
-      userId,
+      createdBy,
       ...(row.setup_template_id ? [row.setup_template_id] : []),
     ],
   );

@@ -55,6 +55,14 @@ export async function keysetById(db: D1Database, id: string): Promise<KeysetRow 
   return row && keysetOf(row);
 }
 
+/** The keyset a SUN URL names. The slug is public; whether it is this caller's is the caller's check. */
+export async function keysetBySlug(db: D1Database, slug: string): Promise<KeysetRow | null> {
+  const row = await first<RawKeyset>(db, `SELECT ${KEYSET} FROM nfc_tag_keysets WHERE slug = ?`, [
+    slug,
+  ]);
+  return row && keysetOf(row);
+}
+
 /** Newest first (ids are UUIDv7). */
 export async function keysetsOf(db: D1Database, orgId: string, mode: Mode): Promise<KeysetRow[]> {
   const rows = await all<RawKeyset>(
@@ -133,6 +141,34 @@ export async function versionEnvelopes(
     id: r.id,
     version: r.version,
     state: r.state,
+    envelope: envelopeOf(r),
+  }));
+}
+
+export interface OrgVersionEnvelope extends VersionEnvelope {
+  keysetId: string;
+  mode: Mode;
+}
+
+/** Every key version of every keyset of the org, both modes and disabled ones, to check a new key against. */
+export async function orgVersionEnvelopes(
+  db: D1Database,
+  orgId: string,
+): Promise<OrgVersionEnvelope[]> {
+  const rows = await all<
+    EnvelopeRaw & { id: string; version: number; state: KeyState; keyset_id: string; mode: Mode }
+  >(
+    db,
+    `SELECT k.id, k.version, k.state, k.keyset_id, s.mode, k.kek_version, k.iv, k.wrapped_dek, k.ciphertext
+      FROM nfc_tag_keys k JOIN nfc_tag_keysets s ON s.id = k.keyset_id WHERE s.org_id = ? LIMIT 5000`,
+    [orgId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    version: r.version,
+    state: r.state,
+    keysetId: r.keyset_id,
+    mode: r.mode,
     envelope: envelopeOf(r),
   }));
 }

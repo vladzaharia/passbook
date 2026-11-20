@@ -155,8 +155,10 @@ export function tagsOn(result: D1Result | undefined): boolean {
     if (typeof row.value !== 'string') return false;
     try {
       const v = JSON.parse(row.value) as unknown;
-      const on = row.key === 'nfc.tags' ? (v as { enabled?: unknown } | null)?.enabled : v;
-      if (on !== true) return false;
+      // The org row defaults to on (shared/contracts/settings.ts): only an explicit false turns tags off.
+      if (row.key === 'nfc.tags') {
+        if ((v as { enabled?: unknown } | null)?.enabled === false) return false;
+      } else if (v !== true) return false;
     } catch {
       return false;
     }

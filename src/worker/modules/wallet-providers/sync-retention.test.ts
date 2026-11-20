@@ -56,8 +56,11 @@ describe('wallet retirement fences', () => {
     expect(predicate).toContain(
       'wallet_retention_instance.credential_generation < p.credential_generation',
     );
-    expect(predicate).toContain("retirement_reason = 'not_issued'");
-    expect(predicate).toContain("provider = 'samsung'");
+    expect(predicate).toContain('wallet_retention_instance.retirement_settled_at IS NULL');
+    expect(
+      predicate.length,
+      'the settle proof is a column, not a copy of the evidence',
+    ).toBeLessThan(700);
   });
 
   it('checks every incarnation for pass retention', () => {
@@ -355,7 +358,7 @@ describe('wallet sync of unissued transfer targets', () => {
       { provider: 'samsung', lifecycle: 'ready' },
     ]);
     for (const instance of instances) await dirtyGeneration(db, instance.id);
-    await drainWalletProviderSync(kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(kit));
     expect(
       await all(
         db,
@@ -374,7 +377,7 @@ describe('wallet sync of unissued transfer targets', () => {
     ).toEqual([]);
 
     await run(db, 'UPDATE passes SET deleted_at = ? WHERE id = ?', [kit.clock.now(), pass.id]);
-    await drainWalletProviderSync(kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(kit));
     const retired = await all(
       db,
       `SELECT provider, lifecycle, retirement_reason AS reason FROM wallet_provider_instances
@@ -393,7 +396,7 @@ describe('wallet sync of unissued transfer targets', () => {
         [pass.id],
       ),
     ).toEqual([]);
-    await drainWalletProviderSync(kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(kit));
     expect(
       await all(
         db,

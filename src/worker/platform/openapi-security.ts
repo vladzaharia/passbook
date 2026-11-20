@@ -13,6 +13,8 @@ export interface KeyAccess {
   anyKey?: boolean;
   /** Limits the claim to doc paths that match. */
   only?: RegExp;
+  /** The guard only documents key access; another guard on the route does the checking. */
+  documentOnly?: true;
 }
 
 /** The scopes a rule accepts, for reads and for the rest. */
@@ -42,8 +44,11 @@ export function scopesForMethod(rule: ScopeRule, method: string): readonly ApiSc
   return isRead(method) ? access.read : (access.write ?? []);
 }
 
-/** Whether a guard declared its key scopes, which puts its routes in the OpenAPI document. */
-export const hasKeyAccess = (guard: object): boolean => accessOf.has(guard);
+/** Whether a guard declared key access and enforces it: a route it covers has its access decision. */
+export const enforcesKeyAccess = (guard: object): boolean => {
+  const access = accessOf.get(guard);
+  return access !== undefined && access.documentOnly !== true;
+};
 
 /** The OpenAPI `security` (and extensions) a route's `auth` declaration writes. */
 export function operationSecurity(
@@ -122,7 +127,7 @@ export function withSecurity(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
       apiKey: {
         type: 'http',
         scheme: 'bearer',
-        bearerFormat: 'wlt_<prefix>_<secret>',
+        bearerFormat: 'pb_<live|test>_<prefix>_<secret>',
         description:
           'An API key. A key with any one of the listed scopes may call the operation, in its own organization and mode.',
       },

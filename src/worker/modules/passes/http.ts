@@ -80,6 +80,8 @@ export async function tenantAuthorityOf(
   auth: AuthContext,
   orgId: string,
   capability: OrgCapability,
+  /** `tillKey`: the call site is one a till's `scans:write` key may reach as `passes:operate` (roll call). */
+  options: { tillKey?: true } = {},
 ): Promise<TenantPassWrite> {
   const orgAccessRevision = await tenantOrgAccessRevision(ctx.env.DB, orgId);
   if (orgAccessRevision === null) throw new ForbiddenError();
@@ -105,8 +107,10 @@ export async function tenantAuthorityOf(
     // Holder and pass routes use different scopes. The endpoint guard supplies the exact
     // scope it verified, which is checked again in the final D1 predicate.
     const scope = verifiedScopeOf(auth);
-    // A till's `scans:write` is not tenant authority anywhere else; only the roll-call routes verify it.
-    const rollCall = scope === 'scans:write' && capability === 'passes:operate';
+    // A till's `scans:write` is not tenant authority anywhere else; only a call site that opts in
+    // (the roll-call routes) accepts it.
+    const rollCall =
+      options.tillKey === true && scope === 'scans:write' && capability === 'passes:operate';
     if (!scope || !(rollCall || scopeExercises(scope, capability)) || !auth.scopes.includes(scope))
       throw new ForbiddenError();
     authority = {

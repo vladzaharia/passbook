@@ -76,6 +76,16 @@ export const JobSchema = z.discriminatedUnion('kind', [
   /** A platform admin's hold on a suspended org's wallet enrolment: a job grant writes it. */
   /** One legacy wallet account onto its credential source, under the migrate job grant. */
   z.object({ kind: z.literal('wallet.credential_migrate'), accountId: z.string().min(1) }),
+  /** An Apple release published: the platform authors the provider candidate (CW7b). */
+  z.object({
+    kind: z.literal('wallet.projection_system'),
+    orgId: z.string().min(1),
+    mode: ModeSchema,
+    templateId: z.string().min(1),
+    sourceReleaseId: z.string().min(1),
+    version: z.string().min(1),
+    provider: z.enum(['google', 'samsung']),
+  }),
   z.object({
     kind: z.literal('wallet.enrolment_hold'),
     orgId: z.string().min(1),

@@ -33,20 +33,28 @@ export {
   type SamsungTombstoneVerification,
 } from './account-credential-historical.ts';
 
-/** Server-only probe material; the caller must authorize the probe and fence provider evidence. */
+/**
+ * Server-only probe material; the caller must authorize the probe and fence provider evidence. Pin the
+ * revision for work built under one credential, or the authority epoch for work that survives a rotation
+ * under the same provider identity (candidates, approvals, evidence).
+ */
 export async function readConfiguredWalletProviderCredentials(
   ctx: ServiceContext,
   scope: WalletProviderScope,
-  expected: { accountId: string; accountRevision: number },
+  expected: { accountId: string } & (
+    | { accountRevision: number; authorityEpoch?: never }
+    | { authorityEpoch: number; accountRevision?: never }
+  ),
 ): Promise<WalletProviderCredentialSnapshot | null> {
   ctx = snapshotWalletCredentialContext(ctx);
   const parsed = WalletProviderScopeSchema.safeParse(scope);
   const pinned = { ...expected };
+  const pin = pinned.authorityEpoch ?? pinned.accountRevision;
   if (
     !parsed.success ||
     !IdSchema.safeParse(pinned.accountId).success ||
-    !Number.isSafeInteger(pinned.accountRevision) ||
-    pinned.accountRevision <= 0
+    !Number.isSafeInteger(pin) ||
+    pin <= 0
   )
     throw new ValidationError();
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
@@ -58,7 +66,9 @@ export async function readConfiguredWalletProviderCredentials(
   }
   if (
     row.id !== pinned.accountId ||
-    row.revision !== pinned.accountRevision ||
+    (pinned.authorityEpoch === undefined
+      ? row.revision !== pinned.accountRevision
+      : row.authority_epoch !== pinned.authorityEpoch) ||
     (!row.credential_id && !row.hmac_ciphertext && row.provider !== 'samsung') ||
     row.revoked_at !== null
   ) {

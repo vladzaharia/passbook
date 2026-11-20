@@ -59,6 +59,10 @@ export function planOccupancy(i: {
   };
 }
 
+/** The scanner and the person signed in on it, as Who's in and the result name who moved a pass. */
+export const viaName = (scanner: string | null | undefined, staff: string | null | undefined) =>
+  [scanner, staff].filter(Boolean).join(' · ') || null;
+
 /** What an override lets through at a place: it names one reason, and only that one is waived. */
 export const occupancyWaivers = (reason: string | null | undefined): Waivers => ({
   parent: reason === 'not_inside',

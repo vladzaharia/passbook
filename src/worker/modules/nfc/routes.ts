@@ -16,6 +16,7 @@ import { actingIn, orgNotFound, passNotFound, tagNotFound, tagOrg } from './rout
 import { registerEnrollmentRoutes } from './routes-enrollments.ts';
 import { registerKeysetRoutes } from './routes-keysets.ts';
 import { registerTagMoreRoutes } from './routes-more.ts';
+import { registerTagTypeRoutes } from './routes-types.ts';
 import {
   reportTagLost,
   restoreTag,
@@ -168,4 +169,5 @@ for (const [action, summary, act] of [
 
 registerEnrollmentRoutes(nfcRoutes);
 registerTagMoreRoutes(nfcRoutes);
+registerTagTypeRoutes(nfcRoutes);
 registerKeysetRoutes(nfcRoutes);

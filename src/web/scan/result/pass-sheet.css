@@ -1,0 +1,162 @@
+/* The pass sheet's This pass tab (handheld design 6). */
+.scan-verdict-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+}
+.scan-verdict-line > div {
+  min-width: 0;
+}
+.scan-verdict-line p {
+  margin: 0;
+}
+.scan-verdict-line-sub {
+  color: var(--sd-body);
+  font-weight: 500;
+}
+.scan-verdict-line[data-kind="ok"] {
+  background: color-mix(in oklab, var(--scan-ok) 18%, var(--scan-card));
+}
+.scan-verdict-line[data-kind="heads_up"] {
+  background: color-mix(in oklab, var(--scan-heads) 20%, var(--scan-card));
+}
+.scan-verdict-line[data-kind="refused"] {
+  background: color-mix(in oklab, var(--scan-refused) 14%, var(--scan-card));
+}
+.scan-today h2 {
+  margin: 0 4px 4px;
+  color: var(--sd-muted);
+  font: 600 13px / 18px var(--pk-font-sans);
+}
+.scan-today ul,
+.scan-recent {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scan-today li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  border-bottom: 0.5px solid var(--sd-rule);
+}
+.scan-today li:last-child {
+  border: 0;
+}
+.scan-today li p {
+  margin: 0;
+  font: 500 16px / 20px var(--pk-font-sans);
+  color: var(--sd-strong);
+}
+.scan-today li p + p {
+  color: var(--sd-muted);
+  font-size: 13px;
+  line-height: 16px;
+}
+.scan-sheet-id {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.scan-sheet-id .scan-pass-tile {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+.scan-sheet-id .scan-identity-photo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+.scan-sheet-id > div {
+  min-width: 0;
+}
+.scan-sheet-id p {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-sheet-name {
+  color: var(--sd-strong);
+  font: 600 22px / 28px var(--pk-font-sans);
+}
+.scan-sheet-meta {
+  color: var(--sd-muted);
+  font: 400 15px / 20px var(--pk-font-sans);
+}
+.scan-sheet-status {
+  margin: 0;
+  color: var(--sd-muted);
+  font: 400 15px / 20px var(--pk-font-sans);
+}
+
+/* Recent scans tab. */
+.scan-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 56px;
+  border-bottom: 0.5px solid var(--sd-rule);
+}
+.scan-recent-row:last-child {
+  border: 0;
+}
+.scan-recent-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.scan-recent-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.scan-recent-name,
+.scan-recent-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-recent-name {
+  color: var(--sd-strong);
+  font: 500 16px / 20px var(--pk-font-sans);
+}
+.scan-recent-meta {
+  color: var(--sd-muted);
+  font: 400 13px / 16px var(--pk-font-sans);
+}
+.scan-recent-row .scan-strip-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  min-width: 44px;
+  height: 44px;
+  padding-inline: 10px;
+}
+.scan-recent-row .scan-strip-undo-icon {
+  display: block;
+}
+.scan-recent-row .scan-strip-undo[disabled] {
+  opacity: 0.4;
+}

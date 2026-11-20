@@ -8,6 +8,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { emailRate, limitReached } from '../delivery/email-limits.ts';
 import { depsOf } from '../passes/deps.ts';
 import type { ScanActor } from '../scan/guard.ts';
+import type { Candidate } from '../scan/repo-lookup.ts';
 import { scanTarget, type VisitorRow, visitorByPass } from './repo.ts';
 
 /**
@@ -73,7 +74,10 @@ export function notifyHostOfArrival(
   ctx: ServiceContext,
   actor: ScanActor,
   outcome: ScanOutcome,
+  candidate: Candidate | null,
 ): void {
+  // The scan's own pass read says whether a visit is booked; only a known "no" skips the lookup.
+  if (candidate?.visitor === false) return;
   if (outcome.kind !== 'ok' || outcome.replay || outcome.action?.kind !== 'check_in') return;
   if (outcome.occupancy?.direction === 'out' || !outcome.scanId) return;
   ctx.waitUntil(notify(ctx, actor, outcome.scanId));

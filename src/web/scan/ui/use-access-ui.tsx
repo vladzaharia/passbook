@@ -2,6 +2,7 @@ import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import type { MachineEvent } from '../machine/access-events.ts';
+import { nextDirection, type ShownDirection, shownDirection } from '../machine/direction-view.ts';
 import type { Counts } from '../machine/types.ts';
 import type { KeyValue } from '../offline/wipe.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
@@ -30,7 +31,12 @@ export function useAccessUi({
   online,
   overlay,
   dispatch,
+  handheld = false,
+  scopeDirection = 'in',
 }: {
+  /** A handheld moves the direction chip to the thumb row and the state line. */
+  handheld?: boolean;
+  scopeDirection?: 'in' | 'out';
   runtime: ScanRuntime;
   session: ScanSession;
   api: ScanApi;
@@ -42,6 +48,8 @@ export function useAccessUi({
   chips: ReactNode;
   inside: { count: number; onOpen: () => void } | undefined;
   visitors: { onOpen: () => void } | undefined;
+  /** The way this scanner reads, when it has one worth showing; `onCycle` on a Both scanner. */
+  direction: { value: ShownDirection; onCycle?: () => void } | undefined;
   layer: ReactNode;
 } {
   const pin = useDirectionPin(runtime.pin);
@@ -67,9 +75,21 @@ export function useAccessUi({
       });
   };
   const deskInside = place !== null && isDeskRole(session);
+  const shown = shownDirection(setting, pin, scopeDirection);
+  const direction =
+    place !== null || setting !== 'in'
+      ? {
+          value: shown,
+          ...(setting === 'both'
+            ? { onCycle: () => runtime.pin.set(nextDirection(shown, scopeDirection)) }
+            : {}),
+        }
+      : undefined;
   const chips = place ? (
     <>
-      <DirectionChip setting={setting} pin={pin} onOpen={() => show('direction')} />
+      {handheld ? null : (
+        <DirectionChip setting={setting} pin={pin} onOpen={() => show('direction')} />
+      )}
       <PlaceChip name={place.name} inNow={place.inNow} capacity={place.capacity} />
     </>
   ) : (
@@ -119,6 +139,7 @@ export function useAccessUi({
   );
   return {
     chips,
+    direction,
     inside: deskInside && place ? { count: place.inNow, onOpen: () => show('inside') } : undefined,
     visitors: isDeskRole(session) ? { onOpen: () => show('visitors') } : undefined,
     layer,

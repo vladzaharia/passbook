@@ -298,3 +298,14 @@ body:has([role="dialog"][data-state="open"])
     display: none;
   }
 }
+
+/* A line in the thumb row where a button would be: "Ask an admin to allow it." */
+.scan-dock-line {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+}

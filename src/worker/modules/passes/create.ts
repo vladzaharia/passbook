@@ -1,4 +1,9 @@
-import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TemplateRelease } from '../templates/releases.ts';
@@ -72,8 +77,9 @@ async function replayIdempotentPass(
 ) {
   await assertTenantCreateAuthority(ctx, p);
   if (!existing || existing.requestHash !== hash)
-    throw new ConflictError(
+    throw new ValidationError(
       'The Idempotency-Key was used with a different request.',
+      [],
       'IDEMPOTENCY_KEY_REUSED',
     );
   let pass = existing.resourceId ? await getPass(ctx.env.DB, existing.resourceId, p.orgId) : null;

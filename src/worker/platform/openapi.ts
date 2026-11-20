@@ -8,6 +8,7 @@ import { authorityUnproven, type RouteAuth, requireCaller } from './auth.ts';
 import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
 import { AppError } from './errors.ts';
+import './openapi-names.ts';
 import { checkFeatureRule, type FeatureRule, featureUnchecked } from './feature-guard.ts';
 import { operationSecurity, scopesForMethod } from './openapi-security.ts';
 
@@ -18,6 +19,8 @@ export interface RouteSpec {
   /** OpenAPI style path, e.g. `/{id}/void`. */
   path: string;
   summary: string;
+  /** Stable id for SDKs. Default: `<tag>.<verb><Path>` (openapi-document.ts); frozen in docs/api/operation-ids.json. */
+  operationId?: string;
   params?: ZodType;
   query?: ZodType;
   /** JSON request body. */
@@ -132,6 +135,7 @@ export function register<S extends RouteSpec>(
     method: spec.method,
     path: spec.path,
     summary: spec.summary,
+    ...(spec.operationId ? { operationId: spec.operationId } : {}),
     tags: [tag],
     request: {
       ...(spec.params ? { params: spec.params } : {}),

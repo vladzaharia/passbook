@@ -26,6 +26,7 @@ import { reconcileWalletInstance } from '../wallet-providers/lifecycle.ts';
 import * as walletOffers from '../wallet-providers/offers.ts';
 import { makeProviderTestTemplate } from '../wallet-providers/offers-test-fixtures.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
+import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 import { myPassesBundle } from './bundle.ts';
 import { getMyPass, listMyPasses, removeMyPass } from './service.ts';
 
@@ -147,7 +148,7 @@ describe('self-removal credential transfers', () => {
       claimHandle: newWalletClaimHandle(),
       now: kit.clock.now(),
     };
-    expect(await claimWalletOperation(kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(kit.env.DB), claim)).toBe('claimed');
     expect(
       await completeWalletOperation(jobCtxOf(kit), {
         ...claim,

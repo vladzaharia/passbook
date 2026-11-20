@@ -98,9 +98,25 @@ export async function migrateForward(db: D1Database): Promise<void> {
   );
 }
 
+/**
+ * The baked sync runs on the current code against the 0069 schema, and its grants write `limit_key` (0152).
+ * That column stands in until the real 0152 adds it.
+ */
+export async function addGrantLimitKey(db: D1Database): Promise<void> {
+  await db.exec('ALTER TABLE authority_grants ADD COLUMN limit_key TEXT');
+}
+
+async function dropGrantLimitKey(db: D1Database): Promise<void> {
+  const has = await db
+    .prepare("SELECT 1 AS x FROM pragma_table_info('authority_grants') WHERE name = 'limit_key'")
+    .first();
+  if (has) await db.exec('ALTER TABLE authority_grants DROP COLUMN limit_key');
+}
+
 /** The rest of the release, after the promote: the seed's tokens are sealed (the pre-0070 cron), then 0070 runs. */
 export async function finishMigrations(db: D1Database): Promise<void> {
   await sealSeed(db);
+  await dropGrantLimitKey(db);
   await applyD1Migrations(db, allMigrations());
 }
 

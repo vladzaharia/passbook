@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
+import type { ScanReason, ScanResolveRequestSchema } from '../../../shared/contracts/scan.ts';
 import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
@@ -21,6 +21,7 @@ import { resolveObserved, unknown } from './resolve-outcome-observed.ts';
 import type { ScanEvaluation } from './scan-evaluation.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { countTagMiss, type TagAct, tagRefusal, tagUnknown, withTagView } from './tag-scan.ts';
+import { type TagId, verifiedSunId } from './tags-sun.ts';
 
 type TagInput = Extract<ActRequestInput['input'], { tag: unknown }>;
 type ResolveRequest = Omit<z.infer<typeof ScanResolveRequestSchema>, 'input'>;
@@ -32,27 +33,27 @@ const frozen = (refs: CredentialTombstoneSnapshot): CredentialTombstoneSnapshot 
     otherModeCredentialTombstoneRefs: Object.freeze([...refs.otherModeCredentialTombstoneRefs]),
   });
 
-/** Step 1: the UID of a tag, or the NDEF pass code a read carries when the org has no such tag. */
-async function readOf(ctx: ServiceContext, actor: ScanActor, input: TagInput) {
-  const read = tagReadOf(input.tag);
-  if (read && 'uid' in read && input.tag.ndef && (await tagUnknown(ctx, actor, read.uid)))
-    return { code: input.tag.ndef.value };
-  return read;
-}
-
 /**
- * Why a read that is not a UID tag is refused. A SUN tag below the plan's Secure level is not allowed; at
- * Secure it stays invalid until its plugin.
+ * Step 1: the tag a read names (its UID, or a SUN read the plugin verified), the NDEF pass code it carries
+ * when the org has no such tag, or the refusal a bad SUN read gets.
  */
-async function unreadable(
+async function readOf(
   ctx: ServiceContext,
   actor: ScanActor,
-  read: Awaited<ReturnType<typeof readOf>>,
-): Promise<'tag_invalid' | 'tag_not_allowed'> {
-  if (!read) return 'tag_invalid';
-  return isEntitled(await entitlementsOf(ctx, actor.orgId), 'nfc', 'secure')
-    ? 'tag_invalid'
-    : 'tag_not_allowed';
+  input: TagInput,
+): Promise<{ id: TagId } | { code: string } | { refused: ScanReason } | null> {
+  const read = tagReadOf(input.tag, ctx.env);
+  if (!read) return null;
+  if ('sun' in read) {
+    // A SUN tag below the plan's Secure level is not allowed.
+    if (!isEntitled(await entitlementsOf(ctx, actor.orgId), 'nfc', 'secure'))
+      return { refused: 'tag_not_allowed' };
+    return verifiedSunId(ctx, actor, input.tag);
+  }
+  if ('code' in read) return read;
+  if (input.tag.ndef && (await tagUnknown(ctx, actor, read.uid)))
+    return { code: input.tag.ndef.value };
+  return { id: { uid: read.uid } };
 }
 
 /** `POST /resolve` with a tag read (design §4.2): one batch, then the chosen pass's own answer. */
@@ -66,9 +67,9 @@ export async function resolveTag(
   ctx = { ...ctx, env };
   actor = cloneObservedScanActor(actor);
   const read = await readOf(ctx, actor, req.input);
-  if (!read || 'sun' in read)
+  if (!read || 'refused' in read)
     return {
-      outcome: tagRefusal(await unreadable(ctx, actor, read)),
+      outcome: tagRefusal(read ? read.refused : 'tag_invalid'),
       evaluatedSnapshot: null,
       credentialContext: null,
     };
@@ -78,7 +79,7 @@ export async function resolveTag(
     await credentialTombstoneRefsForInput(ctx, actor.orgId, actor.mode, req.input, true, 'defer'),
   );
   actor = { ...actor, credentialKeysetCommitment: credentials.credentialKeysetCommitment };
-  const plan = await planTagReads(ctx, actor, read.uid, credentials);
+  const plan = await planTagReads(ctx, actor, read.id, credentials);
   const now = ctx.clock.now();
   const countPlan = planCounts({ ...ctx, clock: { now: () => now } }, actor, req.dayStart);
   const n = plan.stmts.length;
@@ -129,9 +130,9 @@ export async function actTag(
   req: ActRequestInput & { input: TagInput },
 ): Promise<ScanEvaluation> {
   const read = await readOf(ctx, actor, req.input);
-  if (!read || 'sun' in read)
+  if (!read || 'refused' in read)
     return {
-      outcome: tagRefusal(await unreadable(ctx, actor, read)),
+      outcome: tagRefusal(read ? read.refused : 'tag_invalid'),
       evaluatedSnapshot: null,
       credentialContext: null,
     };
@@ -144,7 +145,9 @@ export async function actTag(
     true,
     'defer',
   );
-  const plan = await planTagReads(ctx, actor, read.uid, credentials, req.overrideOf);
+  // Only a follow-up of a heads-up may present a read its device already used.
+  const followUp = !!(req.confirmed || req.overrideOf || req.approval);
+  const plan = await planTagReads(ctx, actor, read.id, credentials, req.overrideOf, followUp);
   let view: Awaited<ReturnType<typeof chooseTagPass>> = null;
   const tag: TagAct = {
     ref: plan.ref,
@@ -152,7 +155,12 @@ export async function actTag(
     async choose(results) {
       const found = plan.read(results);
       if (found.stop)
-        return { reason: found.stop, tagId: found.tagId ?? null, miss: !!found.unknown };
+        return {
+          reason: found.stop,
+          tagId: found.tagId ?? null,
+          miss: !!found.unknown,
+          ...(found.sun ? { sun: found.sun } : {}),
+        };
       // An override acts on the pass of the scan it overrides: no re-selection.
       const pin = req.input.passId ?? (req.overrideOf ? (found.overridden ?? '') : null);
       view = await chooseTagPass(ctx, actor, found, { pin, actionId: req.actionId });

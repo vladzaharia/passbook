@@ -84,7 +84,7 @@ export async function runWalletProviderOperation(
     claimHandle: newWalletClaimHandle(),
     now: ctx.clock.now(),
   };
-  if ((await claimWalletOperation(ctx.env.DB, claim)) !== 'claimed') return 'not_claimed';
+  if ((await claimWalletOperation(ctx, claim)) !== 'claimed') return 'not_claimed';
   const op = await getWalletOperation(ctx.env.DB, claim);
   if (!op) return 'uncertain';
   let responseSequence = 0;
@@ -95,7 +95,7 @@ export async function runWalletProviderOperation(
     fenceLost: false,
     lastResponseStatus: null,
     holdClaim: async () => {
-      await markWalletClaimUncertain(ctx.env.DB, { ...claim, now: ctx.clock.now() });
+      await markWalletClaimUncertain(ctx, { ...claim, now: ctx.clock.now() });
       return 'uncertain';
     },
     assertCurrent: async () => {

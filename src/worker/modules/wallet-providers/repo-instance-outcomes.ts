@@ -1,13 +1,20 @@
+import { writePart } from '../../platform/authority-include.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { first } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WalletOperationRef, WalletReasonCode } from './instance-types.ts';
+import { instanceCheck } from './repo-instance-current.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
+import { commitWalletGrant, walletQueueGrant } from './repo-queue-grant.ts';
 
 export type OutcomeReceipt = 'recorded' | 'replay' | 'conflict' | 'stale';
 
-/** Retains untrusted encrypted response bytes; never changes operation or installation state. */
+/**
+ * Retains untrusted encrypted response bytes; never changes operation or installation state. A response is recorded
+ * whatever the org's state and however stale the operation is: lineage only.
+ */
 export async function insertOutcome(
-  db: D1Database,
+  ctx: ServiceContext,
   p: WalletOperationRef & {
     claimHash: string;
     operationId: string;
@@ -23,40 +30,44 @@ export async function insertOutcome(
   },
 ): Promise<OutcomeReceipt> {
   p = { ...p };
-  const inserted = await first(
-    db,
-    `INSERT OR IGNORE INTO wallet_provider_instance_outcomes
+  const db = ctx.env.DB;
+  const g = walletQueueGrant(ctx, 'record', p, [instanceCheck(p.instanceId)]);
+  g.include(
+    writePart(
+      `INSERT OR IGNORE INTO wallet_provider_instance_outcomes
       (id, operation_id, attempt, sequence, event_hash, payload_hash, reason_code, http_status,
        kek_version, iv, wrapped_dek, ciphertext, received_at)
     SELECT ?, op.id, op.attempts, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     FROM wallet_provider_instance_operations op JOIN wallet_provider_instances i ON i.id = op.instance_id
-    WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND op.id = ?
+    WHERE i.id = ? AND i.org_id = {org} AND i.mode = {mode} AND i.provider = ? AND op.id = ?
       AND op.version = ? AND op.attempts = ? AND op.claim_hash = ? AND op.state IN ('claimed', 'uncertain')
       AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND i.credential_keyset_commitment = ${pinnedKeysetSql}
+      AND {grant}
     RETURNING id`,
-    [
-      p.id,
-      p.sequence,
-      p.eventHash,
-      p.payloadHash,
-      p.reason,
-      p.httpStatus,
-      p.envelope.kekVersion,
-      p.envelope.iv,
-      p.envelope.wrappedDek,
-      p.envelope.ciphertext,
-      p.now,
-      p.instanceId,
-      p.orgId,
-      p.mode,
-      p.provider,
-      p.operationId,
-      p.version,
-      p.attempt,
-      p.claimHash,
-    ],
+      [
+        p.id,
+        p.sequence,
+        p.eventHash,
+        p.payloadHash,
+        p.reason,
+        p.httpStatus,
+        p.envelope.kekVersion,
+        p.envelope.iv,
+        p.envelope.wrappedDek,
+        p.envelope.ciphertext,
+        p.now,
+        p.instanceId,
+        p.provider,
+        p.operationId,
+        p.version,
+        p.attempt,
+        p.claimHash,
+      ],
+    ),
   );
-  if (inserted !== null) return 'recorded';
+  const committed = await commitWalletGrant(g);
+  const inserted = 'results' in committed && (committed.results[0]?.results.length ?? 0) === 1;
+  if (inserted) return 'recorded';
   const previous = await first<{
     sequence: number;
     event_hash: string;

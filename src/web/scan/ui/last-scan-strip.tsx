@@ -1,4 +1,6 @@
-import { Check, CircleAlert, Info, Minus, TriangleAlert } from 'lucide-react';
+import { CloudOff, Minus, Undo2 } from 'lucide-react';
+import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
+import { DISC_GLYPH } from './disc-glyph.ts';
 
 export type StripKind = 'ok' | 'heads_up' | 'refused' | 'system';
 
@@ -9,31 +11,36 @@ export interface StripEntry {
   /** Time, place, staff: "6:42 PM". */
   meta: string;
   undoable?: boolean;
+  /** Offline with scans saved: the strip is the queue line and View opens the queue. */
+  view?: boolean;
+  icon?: 'offline';
 }
 
-const GLYPH = { ok: Check, heads_up: TriangleAlert, refused: CircleAlert, system: Info } as const;
-
-/** The dock's 48 px strip. It always holds its box: an empty strip shows a muted dash. */
+/** The dock's strip: 44 px on a handheld (the name over its meta), 48 on a tablet. It always holds its box: an empty strip shows a muted dash. */
 export function LastScanStrip({
   entry,
   onOpen,
   onUndo,
+  onView,
 }: {
   entry: StripEntry | null;
   onOpen?: () => void;
   onUndo?: () => void;
+  onView?: () => void;
 }) {
-  const Glyph = entry ? GLYPH[entry.kind] : Minus;
+  const Glyph = entry?.icon === 'offline' ? CloudOff : entry ? DISC_GLYPH[entry.kind] : Minus;
   return (
     <div className="scan-dock-strip" data-testid="scan-last">
       <button
         type="button"
         className="scan-strip-main"
-        onClick={onOpen}
+        onClick={entry?.view ? onView : onOpen}
         aria-label={
-          entry
-            ? `Last scan: ${entry.title} ${entry.meta}. Open Recent`
-            : 'No scans yet. Open Recent'
+          entry?.view
+            ? `${entry.title}. ${entry.meta}`
+            : entry
+              ? `Last scan: ${entry.title} ${entry.meta}. Open details`
+              : 'No scans yet. Open recent scans'
         }
       >
         <span aria-hidden className="scan-strip-disc" data-kind={entry?.kind}>
@@ -51,8 +58,19 @@ export function LastScanStrip({
           ) : null}
         </span>
       </button>
+      {entry?.view ? (
+        <button
+          type="button"
+          className="scan-strip-view"
+          data-testid="scan-queue-view"
+          onClick={onView}
+        >
+          {SCAN_HANDHELD_COPY.queue.view}
+        </button>
+      ) : null}
       {entry?.undoable ? (
         <button type="button" className="scan-strip-undo" onClick={onUndo}>
+          <Undo2 aria-hidden size={18} className="scan-strip-undo-icon" />
           Undo
         </button>
       ) : null}

@@ -14,7 +14,9 @@ import {
   Select,
   useFormErrors,
 } from '@/web/ui/index.ts';
+import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
+import { KindFields, SHORT_EXPIRY } from './key-kind-fields.tsx';
 import { type ApiKey, useCreateKey } from './queries.ts';
 import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
 
@@ -27,7 +29,6 @@ const EXPIRY = [
   { value: '365', label: '1 year' },
   { value: 'never', label: 'Never' },
 ];
-
 const MODES = [
   { value: 'live', label: 'Live' },
   { value: 'test', label: 'Test' },
@@ -54,6 +55,14 @@ export function CreateKeyDialog({
   const [terminalIds, setTerminalIds] = useState<string[]>([]);
   const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
+  const [kind, setKind] = useState<'service' | 'personal'>('service');
+  const [access, setAccess] = useState('scopes');
+  const [ips, setIps] = useState('');
+  const role = ROLES.find((r) => r === access);
+  const ipAllow = ips.split(/[\s,]+/).filter(Boolean);
+  const short = orgId === null || kind === 'personal';
+  // A short-lived kind falls back to 90 days when the longer choice was picked first.
+  const days = short && expiry !== '30' ? '90' : expiry;
   // An organization key takes the console's mode, shown without a choice. Platform pages ignore
   // mode, so a platform key's mode is chosen here.
   const [keyMode, setKeyMode] = useState<Mode>(getMode);
@@ -67,7 +76,8 @@ export function CreateKeyDialog({
   }, [open]);
   const check = useFormErrors({
     ...(name.trim() ? {} : { name: 'Required.' }),
-    ...(scopes.length ? {} : { scopes: 'Pick at least one scope.' }),
+    ...(role || scopes.length ? {} : { scopes: 'Pick at least one scope.' }),
+    ...(orgId !== null || ipAllow.length ? {} : { ipAllow: 'Required for a platform key.' }),
     ...(!scansWrite || terminalIds.length ? {} : { terminalIds: 'Pick at least one terminal.' }),
   });
   const errors: Record<string, string | undefined> = { ...server, ...check.errors };
@@ -78,6 +88,9 @@ export function CreateKeyDialog({
     setScopes(DEFAULT_SCOPES);
     setTerminalIds([]);
     setExpiry('90');
+    setKind('service');
+    setAccess('scopes');
+    setIps('');
     setKeyMode(getMode());
     setServer({});
     check.reset();
@@ -92,10 +105,13 @@ export function CreateKeyDialog({
       const result = await create.mutateAsync({
         name: name.trim(),
         orgId,
-        scopes: scopes as (typeof SCOPES)[number][],
-        ...(scansWrite ? { terminalIds } : {}),
+        scopes: role ? [] : (scopes as (typeof SCOPES)[number][]),
+        ...(role ? { roles: [role] } : {}),
+        ...(orgId !== null ? { kind } : {}),
+        ...(ipAllow.length ? { ipAllow } : {}),
+        ...(scansWrite && !role ? { terminalIds } : {}),
         mode: keyMode,
-        expiresAt: expiry === 'never' ? null : Date.now() + Number(expiry) * DAY,
+        expiresAt: days === 'never' ? null : Date.now() + Number(days) * DAY,
       });
       setCreated(result);
     } catch (cause) {
@@ -140,7 +156,14 @@ export function CreateKeyDialog({
   return (
     <Dialog
       open={open}
-      dirty={name.trim() !== '' || scopes.join() !== DEFAULT_SCOPES.join() || expiry !== '90'}
+      dirty={
+        name.trim() !== '' ||
+        scopes.join() !== DEFAULT_SCOPES.join() ||
+        expiry !== '90' ||
+        kind !== 'service' ||
+        access !== 'scopes' ||
+        ips !== ''
+      }
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
       <DialogContent
@@ -186,9 +209,29 @@ export function CreateKeyDialog({
               {errors.orgId ? <p className="mt-1 text-xs text-danger">{errors.orgId}</p> : null}
             </div>
             <FormField label="Expires" error={errors.expiresAt}>
-              {(p) => <Select {...p} value={expiry} onValueChange={setExpiry} options={EXPIRY} />}
+              {(p) => (
+                <Select
+                  {...p}
+                  value={days}
+                  onValueChange={setExpiry}
+                  options={short ? SHORT_EXPIRY : EXPIRY}
+                />
+              )}
             </FormField>
           </div>
+          <KindFields
+            orgId={orgId}
+            kind={kind}
+            onKind={setKind}
+            access={access}
+            onAccess={setAccess}
+            ips={ips}
+            onIps={(next) => {
+              setIps(next);
+              setServer({});
+            }}
+            errors={errors}
+          />
           {orgId === null ? (
             <FormField label="Mode" error={errors.mode}>
               {(p) => (
@@ -211,13 +254,15 @@ export function CreateKeyDialog({
               </p>
             </div>
           )}
-          <ScopeRows
-            value={scopes}
-            onChange={setScopes}
-            error={errors.scopes}
-            platform={orgId === null}
-          />
-          {scansWrite && orgId !== null ? (
+          {role ? null : (
+            <ScopeRows
+              value={scopes}
+              onChange={setScopes}
+              error={errors.scopes}
+              platform={orgId === null}
+            />
+          )}
+          {scansWrite && orgId !== null && !role ? (
             <TerminalRows
               orgId={orgId}
               value={terminalIds}
@@ -231,7 +276,13 @@ export function CreateKeyDialog({
       <ConfirmDialog
         open={reviewKey}
         onOpenChange={setReviewKey}
-        title={orgId === null ? 'Create a platform key?' : 'Review service key'}
+        title={
+          orgId === null
+            ? 'Create a platform key?'
+            : kind === 'personal'
+              ? 'Review personal key'
+              : 'Review service key'
+        }
         description={
           <span className="block">
             <span className="block">
@@ -247,11 +298,19 @@ export function CreateKeyDialog({
               )}
             </span>
             <span className="mt-3 block">Name: {name.trim()}</span>
-            <span className="block">Permissions: {scopes.join(', ')}</span>
             <span className="block">
-              {expiry === 'never'
+              {kind === 'personal' && orgId !== null ? 'Type: personal, acts as you.' : null}
+            </span>
+            <span className="block">
+              Permissions: {role ? ROLE_LABELS[role] : scopes.join(', ')}
+            </span>
+            {ipAllow.length ? (
+              <span className="block">Allowed IPs: {ipAllow.join(', ')}</span>
+            ) : null}
+            <span className="block">
+              {days === 'never'
                 ? 'It will not expire.'
-                : `It expires after ${expiry === '365' ? '1 year' : `${expiry} days`}.`}
+                : `It expires after ${days === '365' ? '1 year' : `${days} days`}.`}
             </span>
             <span className="mt-3 block">
               No secret has been issued yet. It will be shown once after creation.

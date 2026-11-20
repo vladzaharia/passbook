@@ -6,6 +6,7 @@ import { type AppBindings, requestContext } from '../../platform/context.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import { handleError } from '../../platform/error-handler.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { readGoogleCallbackVerification } from './account-service.ts';
 import { clearGoogleCallbackKeyCache } from './google-callback-crypto.ts';
@@ -30,6 +31,7 @@ import { findGoogleCallbackBinding } from './repo-google-callback.ts';
 import { googleCallbackRoutes } from './routes-google-callbacks.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
 import { historicalGoogleRelease } from './runtime-integration-fixtures.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 // Historical Google instances exist only while a provider is enabled.
 beforeAll(() => {
@@ -165,9 +167,9 @@ async function setup() {
 /** Off, settle the revoke, then re-enable and insert the epoch 2 successor. */
 async function retireAndSucceed(t: Awaited<ReturnType<typeof setup>>) {
   await t.marker(t.kit.clock.now());
-  expect(await reconcileWalletInstance(t.kit.ctx, await t.instance(t.first1.instanceId))).toBe(
-    'scheduled',
-  );
+  expect(
+    await reconcileWalletInstance(jobCtxOf(t.kit), await t.instance(t.first1.instanceId)),
+  ).toBe('scheduled');
   const staged = await t.instance(t.first1.instanceId);
   const claim = {
     orgId: t.scope.orgId,
@@ -179,8 +181,8 @@ async function retireAndSucceed(t: Awaited<ReturnType<typeof setup>>) {
     claimHandle: newWalletClaimHandle(),
     now: t.kit.clock.now(),
   };
-  expect(await claimWalletOperation(t.db, claim)).toBe('claimed');
-  await completeWalletOperation(t.kit.ctx, { ...claim, result: { kind: 'success' } });
+  expect(await claimWalletOperation(walletJobCtx(t.db), claim)).toBe('claimed');
+  await completeWalletOperation(jobCtxOf(t.kit), { ...claim, result: { kind: 'success' } });
   await t.marker(null);
   const successor = {
     ...t.proof,
@@ -219,8 +221,10 @@ async function retireAndSucceed(t: Awaited<ReturnType<typeof setup>>) {
       `INSERT INTO wallet_provider_instance_operations
         (id, instance_id, version, kind, request_hash, pass_version, pass_revision, lifecycle_generation,
          pass_credential_generation, issuing_release_id, projection_release_id, account_revision,
-         adapter_revision, policy_revision, credential_keyset_commitment, created_at)
-      VALUES (?, ?, 1, 'upsert', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         adapter_revision, policy_revision, credential_keyset_commitment, created_at, pass_row_version, account_epoch)
+      VALUES (?, ?, 1, 'upsert', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        (SELECT row_version FROM passes WHERE id = ?),
+        (SELECT authority_epoch FROM wallet_provider_accounts WHERE id = ?))`,
       [
         successor.operationId,
         successor.instanceId,
@@ -236,6 +240,8 @@ async function retireAndSucceed(t: Awaited<ReturnType<typeof setup>>) {
         t.proof.policyRevision,
         t.scope.credentialKeysetCommitment,
         successor.now,
+        t.proof.passId,
+        t.proof.accountId,
       ],
     ),
   ]);

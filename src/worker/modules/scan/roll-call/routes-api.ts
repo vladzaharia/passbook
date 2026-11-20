@@ -63,6 +63,7 @@ async function callerOf(c: C, q: z.infer<typeof OrgQuerySchema>, write: boolean)
     auth,
     orgId,
     write ? 'passes:operate' : 'scanning:read',
+    { tillKey: true },
   );
   const who =
     auth.kind === 'session'
