@@ -123,6 +123,10 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     org: null,
     edges: [edge('type_id', 'nfc_tag_types'), edge('template_id', 'templates')],
   },
+  // Secure tag keys (0129): keys and per-tag counters hang off a keyset or tag; triggers hold them to one org and mode.
+  nfc_tag_keysets: { org: 'org_id', mode: 'mode' },
+  nfc_tag_keys: { org: null, edges: [edge('keyset_id', 'nfc_tag_keysets')] },
+  nfc_tag_sun: { org: null, edges: [edge('tag_id', 'nfc_tags')] },
   // Outbound webhooks (0090). Endpoints and secrets are written through grants; delivery bookkeeping by a
   // reviewed raw-write allowlist entry. event_feed is written only by the pass_events trigger.
   webhook_endpoints: { org: 'org_id', mode: 'mode' },
@@ -177,12 +181,19 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   wallet_enrolment_events: { org: 'org_id', mode: 'mode' },
 };
 
+const KEYSET_PURPOSES = ['create', 'rotate', 'retire_key', 'disable'].map(
+  (p) => `org_mode.nfc.keyset.${p}`,
+);
+
 /**
  * Guarded tables only the listed purposes may write, whatever the principal or the grant's `tables`. The
  * credential check job is the one writer of a check: no org_mode or platform.wallet.* grant inserts one.
  */
 export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   wallet_credential_checks: ['platform.job.wallet.credential_check'],
+  // Secure tag keys (0129): the four keyset purposes only.
+  nfc_tag_keysets: KEYSET_PURPOSES,
+  nfc_tag_keys: KEYSET_PURPOSES,
 };
 
 /** Tables only the triggers and `authority.ts` may write; raw SQL on them is a lint failure. */
