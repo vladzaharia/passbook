@@ -1564,7 +1564,7 @@ describe('bulk selection and reissue authority', () => {
       403,
       'FORBIDDEN',
     );
-    expect((await bulk('bulk-reissue', key.headers, scoped)).status).toBe(401);
+    expect((await bulk('bulk-reissue', key.headers, scoped)).status).toBe(202);
     expect(
       (await bulk('bulk-reissue', operator.session.headers, { templateId: kit.template.id }))
         .status,

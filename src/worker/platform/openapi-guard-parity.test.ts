@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../test/helpers/index.ts';
 import { createApp } from '../app.ts';
 import { ManualClock } from './clock.ts';
-import { withSecurity } from './openapi-security.ts';
+import { buildOpenApiDocument } from './openapi-document.ts';
 
-type Op = { security?: Record<string, string[]>[] };
+type Op = { security?: Record<string, string[]>[]; 'x-public'?: true; responses?: object };
 type Doc = { paths: Record<string, Record<string, Op>> };
 
 /** Refusals that name the credential, not the request or the data. */
@@ -22,6 +22,9 @@ const NOT_ON_DOC = new Set(['trace', 'parameters', 'servers', 'summary', 'descri
 const HANDLER_LEVEL_SESSION_ONLY = new Set([
   // removeCreated refuses keys (SESSION_REQUIRED); import-remove.test.ts proves it with a real draft.
   'post /api/v1/pass-imports/{id}/remove-created',
+  // The test inbox guard lets a key through to the handler; only the list and one message accept one (sandbox/routes.ts).
+  'get /api/v1/test-inbox/{id}/html',
+  'post /api/v1/test-inbox/{id}/send-to-me',
 ]);
 
 async function setup() {
@@ -31,10 +34,7 @@ async function setup() {
   const clock = new ManualClock();
   fake.bindApiKeys(env, clock);
   const org = await makeOrg(fixtures(env, clock));
-  const doc = withSecurity(
-    app as never,
-    app.getOpenAPI31Document({ openapi: '3.1.0', info: { title: 't', version: '1' } }) as never,
-  ) as unknown as Doc;
+  const doc = buildOpenApiDocument(app) as unknown as Doc;
   const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext;
   const call = async (method: string, path: string, headers: Record<string, string>) => {
     const url = `https://wallet.test${path.replace(/\{([^}]+)\}/g, (_m, n: string) =>
@@ -114,10 +114,38 @@ describe('OpenAPI document and guards agree', () => {
       '/api/v1/scan/scans/{scanId}/undo',
     ])
       expect(scopesOf('post', path)).toEqual(['scans:write']);
-    expect(scopesOf('post', '/api/v1/passes/bulk-reissue')).toEqual([]);
+    expect(scopesOf('post', '/api/v1/passes/bulk-reissue')).toEqual(['passes:write']);
     expect(scopesOf('post', '/api/v1/passes/bulk-print')).toEqual(['passes:write']);
     expect(scopesOf('get', '/api/v1/passes/bulk-print/{jobId}')).toEqual(['passes:read']);
     expect(scopesOf('delete', '/api/v1/pass-imports/{id}')).toEqual(['passes:write']);
     expect(scopesOf('post', '/api/v1/pass-imports/{id}/remove-created')).toEqual([]);
   });
+
+  it('gives every operation a security: guarded ones name a credential, open ones say so', async () => {
+    const { doc } = await setup();
+    const bad: string[] = [];
+    for (const [path, item] of Object.entries(doc.paths))
+      for (const [method, op] of Object.entries(item)) {
+        if (NOT_ON_DOC.has(method) || !op.responses) continue;
+        const name = `${method} ${path}`;
+        if (!Array.isArray(op.security)) bad.push(`${name}: no security`);
+        else if (op.security.length === 0 && op['x-public'] !== true)
+          bad.push(`${name}: empty security without x-public`);
+        else if (op.security.length > 0 && op['x-public'] === true)
+          bad.push(`${name}: x-public with a credential`);
+      }
+    expect(bad).toEqual([]);
+  });
+
+  it('answers a credential-less call to a public operation with something other than 401', async () => {
+    const { doc, call } = await setup();
+    const wrong: string[] = [];
+    for (const [path, item] of Object.entries(doc.paths))
+      for (const [method, op] of Object.entries(item)) {
+        if (NOT_ON_DOC.has(method) || op['x-public'] !== true) continue;
+        const r = await call(method, path, {});
+        if (r.status === 401) wrong.push(`${method} ${path}: public in the document, got 401`);
+      }
+    expect(wrong).toEqual([]);
+  }, 600_000);
 });

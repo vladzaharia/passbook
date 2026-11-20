@@ -4,26 +4,33 @@ import {
   BulkReissueResponseSchema,
   BulkReissueSchema,
 } from '../../../shared/contracts/index.ts';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { bump } from '../../platform/counters.ts';
+import {
+  ForbiddenError,
+  NotFoundError,
+  RateLimitedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction, selectBulkPasses } from './bulk-actions.ts';
-import {
-  actorFor,
-  assertOrg,
-  authOf,
-  passScopeOf,
-  requireTenantSession,
-  svc,
-  tenantAuthorityOf,
-} from './http.ts';
+import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
 import { getPass } from './repo-read-pass.ts';
+
+const REISSUES_PER_KEY_HOUR = 6;
+const HOUR_MS = 60 * 60_000;
+
+/** A key starts at most six rebuilds an hour: each one rebuilds and pushes a whole template. */
+async function limitKeyReissues(ctx: ReturnType<typeof svc>, keyId: string): Promise<void> {
+  const now = ctx.clock.now();
+  const window = Math.floor(now / HOUR_MS) * HOUR_MS;
+  if ((await bump(ctx.env.DB, `bulk-reissue:key:${keyId}`, window)) > REISSUES_PER_KEY_HOUR)
+    throw new RateLimitedError(Math.ceil((window + HOUR_MS - now) / 1000));
+}
 
 /** Many-pass actions: void, email or remove a selection, and template-wide reissues. */
 export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>): void {
-  passesRoutes.use('/bulk-reissue', requireTenantSession);
-
   register(
     passesRoutes,
     'passes',
@@ -102,7 +109,7 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
     {
       method: 'post',
       path: '/bulk-reissue',
-      summary: 'Rebuild passes of a template',
+      summary: 'Rebuild passes of a template in your org; a key needs passes:write',
       body: BulkReissueSchema,
       status: 202,
       response: BulkReissueResponseSchema,
@@ -112,20 +119,29 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
       const ctx = svc(c);
       const auth = authOf(c);
       const mode = passScopeOf(c).mode;
-      if (!body.orgId && (auth.kind !== 'session' || !auth.roles.includes('admin')))
+      // A key rebuilds its own org; only a platform admin session may omit the org.
+      const orgId = body.orgId ?? (auth.kind === 'api_key' ? (auth.orgId ?? undefined) : undefined);
+      if (!orgId && (auth.kind !== 'session' || !auth.roles.includes('admin')))
         throw new ForbiddenError('Admin access is required.');
-      const authority = body.orgId
-        ? await tenantAuthorityOf(ctx, auth, body.orgId, 'passes:operate')
+      if (orgId) assertOrg(c, orgId);
+      const authority = orgId
+        ? await tenantAuthorityOf(ctx, auth, orgId, 'passes:operate')
         : undefined;
+      if (auth.kind === 'api_key') await limitKeyReissues(ctx, auth.keyId);
       const platformSession =
-        !body.orgId && auth.kind === 'session'
+        !orgId && auth.kind === 'session'
           ? { userId: auth.userId, sessionId: auth.sessionId }
           : undefined;
-      const workflowInstanceId = await startBulkReissue(ctx, actorFor(c), body, {
-        ...(authority ? { authority } : {}),
-        ...(platformSession ? { platformSession } : {}),
-        mode,
-      });
+      const workflowInstanceId = await startBulkReissue(
+        ctx,
+        actorFor(c),
+        { ...body, orgId },
+        {
+          ...(authority ? { authority } : {}),
+          ...(platformSession ? { platformSession } : {}),
+          mode,
+        },
+      );
       return c.json({ workflowInstanceId }, 202);
     },
   );

@@ -32,7 +32,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | Scope | Allows |
 |---|---|
 | `passes:read` | GET passes, assets, versions, delivery, events, devices, bundles |
-| `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles |
+| `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles, `POST /passes/bulk-reissue` (an org key rebuilds its own org, `orgId` defaults to it; a platform key must name the org; a test key rebuilds test mode; one active run per target, else 409 `BULK_RUN_ACTIVE` with the run id; 6 starts per key per hour, then 429) |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
@@ -124,7 +124,7 @@ only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanne
 | Header | Where | Meaning |
 |---|---|---|
 | `Authorization: Bearer <key>` | all key routes | the API key |
-| `Idempotency-Key` | pass create, resend | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
+| `Idempotency-Key` | pass create, resend, bulk email, bundle email | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
 | `If-Match: <version>` | pass update | optimistic concurrency; stale is `412 VERSION_CONFLICT` |
 | `x-passbook-mode` | console sessions | `test` selects Test mode; keys use their own mode |
 
@@ -259,8 +259,7 @@ The MAC is HMAC-SHA-256 over `<timestamp>.<raw body>`, hex, prefixed `v1=`. The 
 seconds; the server refuses one older than 5 minutes or more than 1 minute ahead, a body over
 256 KB, and a signature that does not match (constant-time compare). Use the exact bytes you
 send: re-serializing the JSON changes the MAC. Rotate the secret with
-`POST /connections/{id}/webhook-secret`. PassBook sends no outbound webhooks yet; when it does, they
-will use this scheme.
+`POST /connections/{id}/webhook-secret`.
 
 ## Errors
 
