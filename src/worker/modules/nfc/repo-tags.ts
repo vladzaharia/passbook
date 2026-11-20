@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Tag, TagBinding } from '../../../shared/contracts/nfc-tags.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
+import { assuranceOfSystem } from './systems/registry.ts';
 
 type Db = D1Database;
 
@@ -95,7 +96,7 @@ function toTag(r: ViewRow): Tag {
       r.type_id && r.type_name && r.type_use
         ? { id: r.type_id, name: r.type_name, use: r.type_use }
         : null,
-    assurance: r.system === 'sun' ? 'secure' : 'basic',
+    assurance: assuranceOfSystem(r.system),
     hint: r.hint,
     label: r.label,
     pool: false,

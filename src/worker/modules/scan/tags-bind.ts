@@ -21,7 +21,7 @@ import { tagsEnabled } from '../nfc/policy.ts';
 import { activeBinding, type PassFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
 import { addBind, type BindPlan, bindChecks, type TagActor } from '../nfc/repo-tags-write.ts';
-import { canonicalUid, tagRef } from '../nfc/tag-ref.ts';
+import { UID_SYSTEM } from '../nfc/systems/uid.ts';
 import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { verifyApproval } from './approval.ts';
@@ -38,7 +38,7 @@ import { guardMiss } from './repo-undo-approval-guard.ts';
 import { ROLE_RANK } from './rules.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
-import { skippedTitles, TAG_ASSURANCE } from './tag-assurance.ts';
+import { skippedTitles } from './tag-assurance.ts';
 import { cardPass, tagRights, tagUid } from './tags-inspect.ts';
 
 type BindRequest = z.infer<typeof ScanTagBindRequestSchema>;
@@ -144,7 +144,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   await bumpTagCap(db, req.preview ? 'preview' : 'bind', scannerId, ctx.clock.now());
   const uid = tagUid(req.tag);
   await ensureCredentialRefKeyset(db, ctx.env);
-  const { ref, hint } = await tagRef(ctx.env, orgId, mode, canonicalUid(uid));
+  const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, uid);
   const replayed = await replay(ctx, scannerId, req, ref);
   if (replayed) return replayed;
 
@@ -222,7 +222,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     ) => ({
       status,
       hint: tag?.hint ?? hint,
-      assurance: TAG_ASSURANCE,
+      assurance: UID_SYSTEM.assurance,
       scope: req.binding,
       bindingId,
       card: summary,

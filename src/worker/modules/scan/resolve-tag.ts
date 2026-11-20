@@ -50,7 +50,7 @@ export async function resolveTag(
   ctx = { ...ctx, env };
   actor = cloneObservedScanActor(actor);
   const read = await readOf(ctx, actor, req.input);
-  if (!read)
+  if (!read || 'sun' in read)
     return { outcome: tagRefusal('tag_invalid'), evaluatedSnapshot: null, credentialContext: null };
   if ('code' in read)
     return resolveOutcome(ctx, actor, { ...req, input: { code: read.code, method: 'nfc' } });
@@ -109,7 +109,7 @@ export async function actTag(
   req: ActRequestInput & { input: TagInput },
 ): Promise<ScanEvaluation> {
   const read = await readOf(ctx, actor, req.input);
-  if (!read)
+  if (!read || 'sun' in read)
     return { outcome: tagRefusal('tag_invalid'), evaluatedSnapshot: null, credentialContext: null };
   if ('code' in read) return act(ctx, actor, { ...req, input: { code: read.code, method: 'nfc' } });
   const credentials = await credentialTombstoneRefsForInput(
