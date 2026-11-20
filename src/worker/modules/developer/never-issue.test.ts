@@ -26,6 +26,7 @@ import {
 } from '../wallet-providers/provider-policy.ts';
 import { runtimeCredentialCurrent } from '../wallet-providers/runtime-core-credentials.ts';
 import { assertNotPreviewOnly, PreviewOnlyError } from './fence.ts';
+import { checkPreviewLink } from './preview-link.ts';
 
 /**
  * The owner's invariant, run against the real entry points: a developer org's pass is never signed, minted,
@@ -129,7 +130,14 @@ describe('add to a wallet', () => {
     expect(((await res.json()) as { code: string }).code).toBe('SANDBOX_PREVIEW_ONLY');
 
     const links = await linksOf(kit.ctx, pass, plain);
-    expect(links.downloadUrl).toBe(`${ORIGIN}/developers/preview/${plain}`);
+    expect(links.downloadUrl.startsWith(`${ORIGIN}/preview/`)).toBe(true);
+    expect(
+      await checkPreviewLink(
+        kit.env,
+        links.downloadUrl.slice(`${ORIGIN}/preview/`.length),
+        kit.clock.now(),
+      ),
+    ).toMatchObject({ state: 'ok', passId: pass.id });
     const standard = await stdPass();
     const stdLinks = await linksOf(kit.ctx, standard);
     expect(stdLinks.downloadUrl).toMatch(/\/pass\.pkpass$/);
@@ -259,8 +267,7 @@ describe('send mail', () => {
     const [row] = rows;
     expect(row?.attached).toBe(0);
     const html = await openBody(kit.env, row?.id ?? '', row?.org_id ?? '', row?.html ?? '');
-    const plain = await token(pass);
-    expect(html).toContain(`/developers/preview/${plain}`);
+    expect(html).toContain(`${ORIGIN}/preview/${pass.id}.`);
     expect(html).not.toContain('pass.pkpass');
   });
 

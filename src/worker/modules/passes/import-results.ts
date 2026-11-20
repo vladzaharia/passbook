@@ -76,7 +76,16 @@ export async function resultsCsv(
         r.external_id ?? '',
         r.holder_email ?? '',
         token ? `${base}/p/${token}` : '',
-        token ? (previewOnly ? testPreviewUrl(base, token) : `${base}/p/${token}/pass.pkpass`) : '',
+        pass && token
+          ? previewOnly
+            ? await testPreviewUrl(
+                ctx.env,
+                base,
+                { id: pass.id, linkGeneration: pass.link_generation },
+                ctx.clock.now(),
+              )
+            : `${base}/p/${token}/pass.pkpass`
+          : '',
         problem,
       ]);
     }

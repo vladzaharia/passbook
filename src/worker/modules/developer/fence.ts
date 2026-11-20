@@ -1,5 +1,6 @@
 import { SANDBOX_PREVIEW_ONLY_COPY, TEST_PREVIEW_PATH } from '../../../shared/copy/developer.ts';
 import { AppError } from '../../platform/errors.ts';
+import { mintPreviewLink } from './preview-link.ts';
 import { isPreviewOnlyOrg } from './repo-fence.ts';
 
 export { isPreviewOnlyOrg };
@@ -21,9 +22,14 @@ export async function assertNotPreviewOnly(db: D1Database, orgId: string): Promi
   if (await isPreviewOnlyOrg(db, orgId)) throw new PreviewOnlyError();
 }
 
-/** The TEST preview page of a pass (PX9 renders it): public by its token, never installable. */
-export const testPreviewUrl = (base: string, token: string): string =>
-  `${base}${TEST_PREVIEW_PATH}${token}`;
+/** The TEST preview page of a pass: a MAC'd link (preview-link.ts), public, never installable. */
+export const testPreviewUrl = async (
+  env: object,
+  base: string,
+  pass: { id: string; linkGeneration: number },
+  nowMs: number,
+): Promise<string> =>
+  `${base}${TEST_PREVIEW_PATH}${await mintPreviewLink(env, { passId: pass.id, linkGeneration: pass.linkGeneration }, nowMs)}`;
 
 /** The stored object of a preview-only pass: its JSON, never a package. */
 export const PREVIEW_OBJECT_SUFFIX = '.preview.json';

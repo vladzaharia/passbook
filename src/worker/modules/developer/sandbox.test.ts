@@ -21,6 +21,7 @@ import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
 import { dailyDeveloperSandbox, SANDBOX_IDLE_MS } from './jobs.ts';
+import { checkPreviewLink } from './preview-link.ts';
 
 const ORIGIN = 'https://wallet.test';
 const DAY = 86_400_000;
@@ -479,7 +480,15 @@ describe('issue and send in a sandbox', () => {
     const token = pass.publicUrl.split('/p/')[1] ?? '';
     expect(token).not.toBe('');
     // Same shape as any org's pass; the download link is the preview page, never a package.
-    expect(pass.downloadUrl).toBe(`${new URL(pass.publicUrl).origin}/developers/preview/${token}`);
+    const origin = new URL(pass.publicUrl).origin;
+    expect(pass.downloadUrl.startsWith(`${origin}/preview/`)).toBe(true);
+    expect(
+      await checkPreviewLink(
+        kit.env,
+        pass.downloadUrl.slice(`${origin}/preview/`.length),
+        kit.clock.now(),
+      ),
+    ).toMatchObject({ state: 'ok', passId: pass.id });
     expect(pass.downloadUrl).not.toContain('.pkpass');
     expect(pass.mode).toBe('test');
 
@@ -488,7 +497,13 @@ describe('issue and send in a sandbox', () => {
     const links = RotateLinkResponseSchema.parse(await rotated.json());
     const next = links.publicUrl.split('/p/')[1] ?? '';
     expect(next).not.toBe(token);
-    expect(links.downloadUrl).toBe(`${new URL(links.publicUrl).origin}/developers/preview/${next}`);
+    expect(
+      await checkPreviewLink(
+        kit.env,
+        links.downloadUrl.slice(`${origin}/preview/`.length),
+        kit.clock.now(),
+      ),
+    ).toMatchObject({ state: 'ok', passId: pass.id });
 
     const resent = await send('POST', `/passes/${pass.id}/resend-email`, s.key, { attach: true });
     expect(resent.status).toBe(202);
