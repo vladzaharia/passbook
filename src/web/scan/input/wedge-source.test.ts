@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeClock } from '../machine/store.test-support.ts';
 import type { RawRead } from './types.ts';
 import { WEDGE_SLOW, WEDGE_STANDARD } from './wedge-detector.ts';
-import { createWedgeSource, WedgeFields } from './wedge-source.ts';
+import { createWedgeSource, WEDGE_SCAN_EVENT, WedgeFields } from './wedge-source.ts';
 
 const CODE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const NFC_CODE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.replace(/[^A-Z2-7]/g, 'A').slice(0, 26);
@@ -119,13 +119,79 @@ describe('createWedgeSource', () => {
     expect(env.humans).toEqual([]);
   });
 
-  it('a burst into an unregistered input is ignored', () => {
+  it('a burst into an unregistered text field (a PIN field) is a scan, and the field is put back', () => {
     env = setup();
     const input = document.createElement('input');
     document.body.append(input);
+    input.focus();
+    input.value = '12';
+    const heard: string[] = [];
+    input.addEventListener('input', () => heard.push(input.value));
     const events = env.burst(input, CODE, 8);
-    expect(env.emitted).toEqual([]);
+    expect(env.emitted).toEqual([{ method: 'wedge', code: CODE }]);
+    expect(input.value).toBe('12');
+    expect(heard.at(-1)).toBe('12');
+    expect(events.at(-1)?.defaultPrevented).toBe(true);
+  });
+
+  it('a numpad PIN typed at 30 to 60 ms a key arrives whole in a PIN field (N1)', () => {
+    env = setup();
+    const input = document.createElement('input');
+    document.body.append(input);
+    input.focus();
+    const gaps = [30, 45, 60, 35, 50];
+    const events: KeyboardEvent[] = [];
+    for (const [i, ch] of [...'482910'].entries()) {
+      if (i > 0) env.clock.advance(gaps[i - 1] ?? 40);
+      events.push(env.key(input, { code: `Digit${ch}`, key: ch }));
+    }
+    env.clock.advance(1000);
+    expect(input.value).toBe('482910');
     expect(events.some((e) => e.defaultPrevented)).toBe(false);
+    expect(env.emitted).toEqual([]);
+  });
+
+  it('a person typing into an unregistered text field is left alone', () => {
+    env = setup();
+    const input = document.createElement('input');
+    document.body.append(input);
+    const events = env.burst(input, 'anna', 120, null);
+    expect(events.some((e) => e.defaultPrevented)).toBe(false);
+    expect(input.value).toBe('anna');
+    expect(env.emitted).toEqual([]);
+  });
+
+  it('a burst into a select is ignored', () => {
+    env = setup();
+    const select = document.createElement('select');
+    document.body.append(select);
+    env.burst(select, CODE, 8);
+    expect(env.emitted).toEqual([]);
+  });
+
+  it('keys from an input method editor still make a scan, and the composition ends', () => {
+    env = setup();
+    const input = document.createElement('input');
+    document.body.append(input);
+    input.focus();
+    const blur = vi.spyOn(input, 'blur');
+    for (const [i, ch] of [...'ABCDEFGH'].entries()) {
+      if (i > 0) env.clock.advance(8);
+      env.key(input, { code: `Key${ch}`, key: 'Process', isComposing: true });
+    }
+    env.clock.advance(8);
+    env.key(input, { code: 'Enter', key: 'Enter' });
+    expect(env.emitted).toEqual([{ method: 'wedge', code: 'abcdefgh' }]);
+    expect(blur).toHaveBeenCalled();
+  });
+
+  it('announces each scan on the window', () => {
+    env = setup();
+    const heard = vi.fn();
+    window.addEventListener(WEDGE_SCAN_EVENT, heard);
+    env.burst(document.body, CODE, 8);
+    window.removeEventListener(WEDGE_SCAN_EVENT, heard);
+    expect(heard).toHaveBeenCalledTimes(1);
   });
 
   it('one slow key with nothing focused opens lookup with that character', () => {
