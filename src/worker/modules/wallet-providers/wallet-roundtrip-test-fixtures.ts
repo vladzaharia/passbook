@@ -3,6 +3,7 @@
 // of these tables are dropped in the file's own database and the rows are inserted directly.
 import { env } from 'cloudflare:workers';
 import { makeUser } from '../../../../test/helpers/index.ts';
+import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
@@ -66,14 +67,33 @@ export async function orgMember(f: OfferKit, orgId: string, mode: Mode) {
 }
 
 /** One platform credential for the mode (an issuer id per mode, as identities are unique). */
-export async function platformSource(f: OfferKit, mode: Mode, issuerId: string) {
+export async function platformSource(
+  f: OfferKit,
+  mode: Mode,
+  issuerId: string,
+  provider: 'google' | 'samsung' = 'google',
+) {
   const admin = await sessionFor(f, (await makeUser(f.kit.fx)).id, ['admin', 'user'], mode);
-  const saved = await savePlatformCredential(f.kit.ctx, admin, {
-    mode,
-    provider: 'google',
-    expectedRevision: 0,
-    credentials: { ...f.google, issuerId },
-  });
+  // The offer kit's certificate is dated at its fixed epoch; the clock here follows the real one.
+  const identity = provider === 'samsung' ? await createFixtureIdentity() : null;
+  const saved = await savePlatformCredential(
+    f.kit.ctx,
+    admin,
+    provider === 'google'
+      ? { mode, provider, expectedRevision: 0, credentials: { ...f.google, issuerId } }
+      : {
+          mode,
+          provider,
+          expectedRevision: 0,
+          credentials: {
+            ...f.samsung,
+            cardId: issuerId,
+            partnerPrivateKeyPem: identity?.privateKey ?? '',
+            partnerCertificatePem: identity?.certificate ?? '',
+            samsungCertificatePem: identity?.certificate ?? '',
+          },
+        },
+  );
   const version = await first<{ v: string }>(
     env.DB,
     'SELECT current_version_id AS v FROM wallet_credentials WHERE id = ?',
@@ -89,15 +109,16 @@ export async function enrol(
   mode: Mode,
   source: { id: string; versionId: string },
   enable: boolean,
+  provider: 'google' | 'samsung' = 'google',
 ) {
   const auth = await orgMember(f, orgId, mode);
-  const view = await setEnrolmentSource(f.kit.ctx, auth, orgId, 'google', {
+  const view = await setEnrolmentSource(f.kit.ctx, auth, orgId, provider, {
     source: 'platform',
     expectedRevision: 0,
   });
   if (enable) {
     await addCheck(source.id, source.versionId);
-    await enableEnrolment(f.kit.ctx, auth, orgId, 'google', { expectedRevision: 1 });
+    await enableEnrolment(f.kit.ctx, auth, orgId, provider, { expectedRevision: 1 });
   }
   const row = await first<{ id: string; rev: number }>(
     env.DB,
@@ -132,9 +153,10 @@ export async function seedInstance(
   f: OfferKit,
   pass: Pass,
   e: { accountId: string; revision: number },
-  verification: { issuerId: string; objectIdHmacKey: Uint8Array },
+  verification: { issuerId: string; objectIdHmacKey: Uint8Array } | null,
   /** A repeat seed for the same pass needs the next release generation. */
   generation = 1,
+  provider: 'google' | 'samsung' = 'google',
 ) {
   const { kit } = f;
   const db = env.DB;
@@ -154,7 +176,7 @@ export async function seedInstance(
     `INSERT INTO template_candidates (id, template_id, org_id, mode, provider, version, candidate_hash,
       content_hash, adapter_revision, adapter_capabilities, audience_policy_revision, author_id,
       created_at, source_release_id, provider_account_id, provider_account_revision, credential_keyset_commitment)
-     VALUES (?, ?, ?, ?, 'google', ?, ?, ?, 1, '[]', 1, 'author', ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, '${provider}', ?, ?, ?, 1, '[]', 1, 'author', ?, ?, ?, ?, ?)`,
     [
       candidateId,
       pass.templateId,
@@ -181,7 +203,7 @@ export async function seedInstance(
     `INSERT INTO template_releases (id, template_id, org_id, mode, provider, generation, version,
       candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision,
       source, action, candidate_id, approval_id, created_by, created_at, credential_keyset_commitment)
-     VALUES (?, ?, ?, ?, 'google', ?, ?, ?, ?, 1, '[]', 1, 'approved', 'release', ?, ?, 'author', ?, ?)`,
+     VALUES (?, ?, ?, ?, '${provider}', ?, ?, ?, ?, 1, '[]', 1, 'approved', 'release', ?, ?, 'author', ?, ?)`,
     [
       releaseId,
       pass.templateId,
@@ -213,7 +235,7 @@ export async function seedInstance(
     `INSERT INTO wallet_provider_instances (id, pass_id, org_id, mode, provider, account_id,
       identity_projection_release_id, credential_generation, lifecycle, desired_version,
       desired_operation_id, created_at, updated_at, credential_keyset_commitment)
-     VALUES (?, ?, ?, ?, 'google', ?, ?, ?, 'active', 1, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, '${provider}', ?, ?, ?, 'active', 1, ?, ?, ?, ?)`,
     [
       instanceId,
       pass.id,
@@ -250,6 +272,7 @@ export async function seedInstance(
       keyset,
     ],
   );
+  if (!verification) return { instanceId, releaseId, classId: '', objectId: '' };
   const { classId, objectId } = await googleObjectIds(
     verification.issuerId,
     verification.objectIdHmacKey,
@@ -267,5 +290,5 @@ export async function seedInstance(
       object_id_hash, created_at, credential_keyset_commitment) VALUES (?, ?, ?, ?, ?, ?)`,
     [instanceId, e.accountId, await hex(classId), await hex(objectId), now, keyset],
   );
-  return { instanceId, classId, objectId };
+  return { instanceId, releaseId, classId, objectId };
 }
