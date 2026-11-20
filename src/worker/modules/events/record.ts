@@ -60,20 +60,30 @@ export function sanitizeEventData(data: Record<string, Json> | undefined): Recor
   return JSON.stringify(clean).length > DATA_MAX_BYTES ? { truncated: true } : clean;
 }
 
-async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventRow> {
-  const at = input.at ?? ctx.clock.now();
+/** The one row shape: kind check, actor and redacted data. `at` is required here. */
+export function eventRowOf(
+  input: PassEventInput & { at: number },
+  id: string,
+  device: string | null,
+): EventRow {
   return {
-    id: ctx.ids.ordered(at),
+    id,
     org_id: input.orgId,
     pass_id: input.passId,
     mode: input.mode,
     kind: EventKindSchema.parse(input.kind),
-    device: input.device ? await hashDevice(input.device) : (input.deviceHash ?? null),
+    device,
     actor_type: input.actor?.type ?? null,
     actor_id: input.actor?.id ?? null,
     data: JSON.stringify(sanitizeEventData(input.data)),
-    at,
+    at: input.at,
   };
+}
+
+async function toRow(ctx: ServiceContext, input: PassEventInput): Promise<EventRow> {
+  const at = input.at ?? ctx.clock.now();
+  const device = input.device ? await hashDevice(input.device) : (input.deviceHash ?? null);
+  return eventRowOf({ ...input, at }, ctx.ids.ordered(at), device);
 }
 
 /**

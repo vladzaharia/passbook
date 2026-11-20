@@ -50,6 +50,8 @@ const EXEMPT: Record<string, string> = {
   'modules/orgs/email-preview.ts': 'sample email for admins',
   'modules/templates/import-pipeline.ts': 'template import, not a holder surface',
   'modules/wallet-providers/routes-offers.ts': 'routes call issueWalletOffer, gated in offers.ts',
+  'modules/bundles/wallet-links.ts':
+    'calls listWalletOffers and issueWalletOffer, gated in offers.ts',
 };
 
 describe('channel gate coverage', () => {

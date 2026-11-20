@@ -76,6 +76,12 @@ export const ChannelWindowSchema = z.object({
 });
 export type ChannelWindow = z.infer<typeof ChannelWindowSchema>;
 
+/** The open event or session that holds new codes, and when it ends (null when unknown). */
+export const ChannelBlockSchema = z.object({
+  name: z.string(),
+  closesAt: TimestampSchema.nullable(),
+});
+
 /** Why "Turn off and replace codes" is not offered: the barcode is not the scan code, or no digital channel stays on. */
 export const ChannelReplaceBlockSchema = z.enum(['barcode_not_scan_code', 'all_digital_off']);
 export type ChannelReplaceBlock = z.infer<typeof ChannelReplaceBlockSchema>;
@@ -86,7 +92,17 @@ export const PassChannelsResponseSchema = z.object({
   /** Per-pass overrides only; a channel absent here follows its template. */
   overrides: PassChannelOverridesSchema,
   /** "Turn off and replace codes": whether this pass's barcode allows it, and the windows within 48 hours. */
-  replace: z.object({ supported: z.boolean(), windows: z.array(ChannelWindowSchema) }),
+  replace: z.object({
+    supported: z.boolean(),
+    /** Opening within 48 hours, or a session with no hours: warnings. An open one is in `blocked`. */
+    windows: z.array(ChannelWindowSchema),
+    /** Turning off a digital channel would owe this pass a new code. */
+    owed: z.boolean(),
+    /** Set only when a code is owed and an event or session is open: a replace is refused. */
+    blocked: ChannelBlockSchema.nullable(),
+    /** Channels whose turn-off would leave no digital channel on: no new code is possible. */
+    lastDigital: z.array(ChannelSchema),
+  }),
 });
 export type PassChannelsDto = z.infer<typeof PassChannelsResponseSchema>;
 
@@ -114,11 +130,33 @@ export const BulkPassChannelsSchema = z.object({
   notify: z.boolean().default(false),
   /** Also issue new scan codes ("Turn off and replace codes"). Off by default: turning off never rotates. */
   replaceCodes: z.boolean().default(false),
+  /** Answer with what applying would do and change nothing. */
+  dryRun: z.boolean().default(false),
   orgId: OrgIdSchema.optional(),
+});
+/** What a bulk change would do: passes turned off and new codes owed per channel, and what holds them. */
+export const BulkChannelsPreviewSchema = z.object({
+  impact: z.array(
+    z.object({
+      channel: ChannelSchema,
+      passes: z.number().int().nonnegative(),
+      rotated: z.number().int().nonnegative(),
+    }),
+  ),
+  /** Passes whose barcode is not the scan code: they turn off without a new code. */
+  unsupported: z.number().int().nonnegative(),
+  /** Passes where no digital channel would stay on: no new code. */
+  allOff: z.number().int().nonnegative(),
+  /** An open event or session for the passes' templates: new codes wait for it. */
+  blocked: ChannelBlockSchema.nullable(),
+  /** Opening within 48 hours, or sessions with no hours: warnings. */
+  windows: z.array(ChannelWindowSchema),
 });
 export const BulkPassChannelsResponseSchema = z.object({
   done: z.number().int(),
   skipped: z.array(z.object({ id: IdSchema, code: z.string() })),
+  /** Only on a dry run. */
+  preview: BulkChannelsPreviewSchema.optional(),
 });
 
 /** What saving would change, for "Turns off Apple for 412 passes and issues new codes." */
@@ -161,8 +199,12 @@ export const PutTemplateChannelsResponseSchema = TemplateChannelsResponseSchema.
   workflowInstanceId: z.string().nullable(),
   /** Whether the released version's barcode is the scan code (so codes can be replaced). */
   replaceSupported: z.boolean(),
-  /** Windows open or opening within 48 hours; a dry run shows them as a warning. */
+  /** Opening within 48 hours or without hours: a dry run shows them as warnings. */
   windows: z.array(ChannelWindowSchema),
+  /** The open event or session that refuses a replace (null when none). */
+  blocked: ChannelBlockSchema.nullable(),
+  /** No digital channel would stay on: no new code is possible. */
+  allOff: z.boolean(),
 });
 
 export const ChannelApplyRunSchema = z.object({
@@ -174,6 +216,8 @@ export const ChannelApplyRunSchema = z.object({
   finishedAt: TimestampSchema.nullable(),
   counts: z.record(z.string(), z.number()),
   errorCode: z.string().nullable(),
+  /** A running run that replaces codes and is held by an open event or session: its name and end (null when unknown). */
+  waiting: z.object({ name: z.string(), until: TimestampSchema.nullable() }).nullable(),
 });
 export type ChannelApplyRunDto = z.infer<typeof ChannelApplyRunSchema>;
 

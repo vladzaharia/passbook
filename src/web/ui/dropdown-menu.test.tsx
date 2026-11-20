@@ -16,18 +16,38 @@ function open(onSelect: () => void) {
 }
 
 describe('dropdown menu items', () => {
-  it('ignore the pointer up of the gesture that opened the menu', () => {
+  it('ignore a touch pointer up right after opening', () => {
     const onSelect = vi.fn();
-    fireEvent.pointerUp(open(onSelect));
+    fireEvent.pointerUp(open(onSelect), { pointerType: 'touch' });
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it('select on a later pointer up', () => {
+  it('select a mouse press-drag-release at once', () => {
+    const onSelect = vi.fn();
+    fireEvent.pointerUp(open(onSelect), { pointerType: 'mouse' });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('select a touch pointer up after the window', () => {
     const onSelect = vi.fn();
     const item = open(onSelect);
     const now = performance.now();
     vi.spyOn(performance, 'now').mockReturnValue(now + 1000);
-    fireEvent.pointerUp(item);
+    fireEvent.pointerUp(item, { pointerType: 'touch' });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('select on click right after opening', () => {
+    const onSelect = vi.fn();
+    fireEvent.click(open(onSelect));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('select on Enter right after opening', () => {
+    const onSelect = vi.fn();
+    const item = open(onSelect);
+    item.focus();
+    fireEvent.keyDown(item, { key: 'Enter' });
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 });

@@ -63,6 +63,7 @@ describe('channel apply: save', () => {
         finishedAt: null,
         counts: { changed: 0, flips: 0, stale: 0, rotated: 0, unsupported: 0 },
         errorCode: null,
+        waiting: null,
       },
     ]);
     const test = await t.kit.api(`/templates/${t.templateId}/channels/runs?orgId=${t.orgId}`, {

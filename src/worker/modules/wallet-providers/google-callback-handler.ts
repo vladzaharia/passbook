@@ -17,14 +17,14 @@ import {
   verifyGoogleCallback,
 } from './google-callback-crypto.ts';
 import { googleObjectIds } from './google-ids.ts';
-import { walletProviderDisabledReason } from './provider-policy.ts';
+import { walletProviderReleaseReason } from './provider-policy.ts';
 import {
   findGoogleCallbackAccount,
   findGoogleCallbackBinding,
   isGoogleCallbackReceiptCurrent,
-  isGoogleCallbackRedelivery,
   putGoogleCallbackReceipt,
 } from './repo-google-callback.ts';
+import { isGoogleCallbackRedelivery } from './repo-google-callback-replay.ts';
 
 const rejected = () =>
   new UnauthenticatedError('Google Wallet callback is invalid.', 'GOOGLE_CALLBACK_INVALID');
@@ -85,7 +85,7 @@ export async function handleGoogleCallback(
     // The size cap needs no stored state, so it applies even before the keyset is initialized.
     const raw = await readGoogleCallbackBody(request);
     // A disabled provider is acknowledged after the size cap and before any account material is read or decrypted.
-    const disabled = walletProviderDisabledReason('google');
+    const disabled = walletProviderReleaseReason('google');
     if (disabled) {
       ctx.log.info('wallet.callback_ignored', {
         code: 'WALLET_PROVIDER_DISABLED',
@@ -102,6 +102,15 @@ export async function handleGoogleCallback(
       credentialKeysetCommitment,
     );
     if (!scope) throw rejected();
+    // Released per mode: Test may be on before Live. Nothing is decrypted for an unreleased mode.
+    if (walletProviderReleaseReason('google', scope.mode)) {
+      ctx.log.info('wallet.callback_ignored', {
+        code: 'WALLET_PROVIDER_DISABLED',
+        provider: 'google',
+        reason: 'not_released',
+      });
+      return;
+    }
     const account = await readGoogleCallbackVerification(pinnedCtx, scope);
     await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
     if (!account) throw rejected();

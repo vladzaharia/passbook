@@ -279,7 +279,7 @@ export function registerRetentionOccupancyTests() {
     expect(await scopedCount(kit.org.id, event.id, true)).toBe(1);
   });
 
-  it('captures the entry whose state an undo restored, not the unsigned undo row', async () => {
+  it('captures the entry whose state an undo restored, and the undo that signs it', async () => {
     const event = await kit.event({ templateIds: [templateId] });
     await run(kit.env.DB, 'UPDATE scan_events SET reentry=1 WHERE id=?', [event.id]);
     const scanner = await kit.scanner({
@@ -300,12 +300,15 @@ export function registerRetentionOccupancyTests() {
     expect(restored.kind).toBe('ok');
     if (!restored.scanId) throw new Error('Missing undo scan');
     await hardDelete(pass);
-    // The undo row carries no proof (it cannot be captured); it does not block the entry it restored.
+    // The undo's proof now carries the gate and presence it left (0118): it is captured too, and the pass
+    // still counts once below.
     expect(
-      await first(kit.env.DB, 'SELECT scan_id FROM scan_retained_gates WHERE scan_id=?', [
-        restored.scanId,
-      ]),
-    ).toBeNull();
+      await first(
+        kit.env.DB,
+        'SELECT state,presence_state FROM scan_retained_gates WHERE scan_id=?',
+        [restored.scanId],
+      ),
+    ).toEqual({ state: 'in', presence_state: 'in' });
     expect(
       await first(
         kit.env.DB,

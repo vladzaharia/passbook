@@ -59,7 +59,7 @@ export async function enrolmentView(
       row?.platform_hold_at != null
         ? { at: row.platform_hold_at, reason: row.platform_hold_reason ?? '' }
         : null,
-    issuance: walletProviderIssuance(provider),
+    issuance: walletProviderIssuance(provider, mode),
   };
 }
 

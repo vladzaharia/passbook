@@ -6,7 +6,7 @@ import type {
 } from '@/shared/contracts/scanning-sessions.ts';
 import { localZone } from '@/web/lib/timezones.ts';
 import { EMPTY_DRAFT, type ScannerDraft, settingsOf } from '../scanners/scanner-draft.ts';
-import { hoursBody, hoursProblem } from './session-hours.ts';
+import { hoursBody, hoursProblem, weekOf } from './session-hours.ts';
 
 export type SessionDraft = ScannerDraft & {
   timeZone: string;
@@ -18,6 +18,8 @@ export type SessionDraft = ScannerDraft & {
   /** Open only at set hours, in the time zone above. */
   hoursOn: boolean;
   hours?: WeeklyHours;
+  /** Dated exceptions in the session's zone: no spans is closed all day. */
+  dates?: Record<string, string[]>;
   /** Events the session admits beside its pass types (`templateIds`). */
   eventIds: string[];
 };
@@ -58,14 +60,15 @@ export function sessionDraft(s: ScanningSession): SessionDraft {
     deskActionsSaved: s.settings.deskActions !== undefined,
     customer: s.settings.customer,
     hoursOn: Boolean(s.hours),
-    ...(s.hours ? { hours: s.hours } : {}),
+    ...(s.hours ? { hours: weekOf(s.hours) } : {}),
+    ...(s.hours?.dates ? { dates: s.hours.dates } : {}),
   };
 }
 export const sessionBody = (d: SessionDraft) => ({
   name: d.name.trim(),
   orgId: d.orgId,
   timeZone: d.timeZone,
-  hours: hoursBody(d.hoursOn, d.hours),
+  hours: hoursBody(d.hoursOn, d.hours, d.dates, d.timeZone),
   accepts:
     d.accepts === 'all' ? null : admitsWire({ templateIds: d.templateIds, eventIds: d.eventIds }),
   settings: {

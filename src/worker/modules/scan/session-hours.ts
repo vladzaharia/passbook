@@ -1,4 +1,11 @@
-import { closesAt, isOpen, nextFlip, nextOpen } from '../../../passkit/template/access/hours.ts';
+import {
+  closesAt,
+  dateKey,
+  isOpen,
+  nextFlip,
+  nextOpen,
+  wall,
+} from '../../../passkit/template/access/hours.ts';
 import {
   type SessionHold,
   SessionHoldSchema,
@@ -7,7 +14,7 @@ import {
   type SessionWindow,
 } from '../../../shared/contracts/scanning-sessions.ts';
 
-import { ForbiddenError } from '../../platform/errors.ts';
+import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 
 const HOUR = 3_600_000;
 export const HOLD_MAX_MS = 24 * HOUR;
@@ -38,6 +45,34 @@ function parse<T>(
 /** Null: always open. A stored schedule that no longer parses is `invalid` and closes the session. */
 export const storedHours = (raw: string | null | undefined): SessionHours | null | 'invalid' =>
   parse(raw, SessionHoursSchema);
+
+const DAY_MS = 86_400_000;
+/** Yesterday's key still counts: an overnight span on it covers the start of today. */
+function earliestKey(timeZone: string, now: number): string {
+  const w = wall(now, timeZone);
+  const d = new Date(Date.UTC(w.y, w.m - 1, w.d - 1));
+  return dateKey(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+}
+
+/** Drops exceptions dated before yesterday in the session's zone; they can no longer matter. */
+export function pruneDates(hours: SessionHours, timeZone: string, now: number): SessionHours {
+  if (!hours.dates) return hours;
+  const earliest = earliestKey(timeZone, now);
+  const kept = Object.entries(hours.dates).filter(([key]) => key >= earliest);
+  const { dates: _old, ...rest } = hours;
+  return kept.length > 0 ? { ...rest, dates: Object.fromEntries(kept) } : rest;
+}
+
+/** Refuses exceptions outside yesterday to two years ahead, in the session's zone. */
+export function assertDatesInRange(hours: SessionHours, timeZone: string, now: number): void {
+  const earliest = earliestKey(timeZone, now);
+  const latest = earliestKey(timeZone, now + 732 * DAY_MS);
+  const bad = Object.keys(hours.dates ?? {}).find((key) => key < earliest || key > latest);
+  if (bad)
+    throw new ValidationError('Closed dates run from today to two years ahead.', [
+      { path: `hours.dates.${bad}`, message: 'Pick a date from today to two years ahead.' },
+    ]);
+}
 
 /** The hold in force at `now`; one past its end is as good as none. */
 export function activeHold(raw: string | null | undefined, now: number): SessionHold | null {

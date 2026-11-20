@@ -17,7 +17,7 @@ import {
 } from './instance.ts';
 import type { WalletClaimRef, WalletOperation } from './instance-types.ts';
 import { isCredentialKeysetCommitment } from './instance-types.ts';
-import { walletProviderEnabled } from './provider-policy.ts';
+import { walletProviderDisabledReason, walletProviderReleaseReason } from './provider-policy.ts';
 import type { OutcomeReceipt } from './repo-instance-outcomes.ts';
 import {
   originalScope,
@@ -73,7 +73,19 @@ export async function runWalletProviderOperation(
   }
   // A disabled provider is never called and the operation is not claimed, so it cannot go uncertain.
   // Only a locally proven absence (no external card) can still settle.
-  if (!unissuedCandidate && !walletProviderEnabled(candidate.provider)) return 'deferred';
+  // An org that is not enrolled (Off, held, revoked) is not called either; revoking still needs only the release.
+  if (!unissuedCandidate) {
+    const reason =
+      candidate.kind === 'revoke'
+        ? walletProviderReleaseReason(candidate.provider, candidate.mode)
+        : await walletProviderDisabledReason(
+            ctx.env.DB,
+            candidate.provider,
+            candidate.orgId,
+            candidate.mode,
+          );
+    if (reason) return 'deferred';
+  }
   const claim: WalletClaimRef = {
     orgId: candidate.orgId,
     mode: candidate.mode,

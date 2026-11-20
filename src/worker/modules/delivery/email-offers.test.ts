@@ -88,6 +88,11 @@ describe('wallet offers in pass delivery', () => {
       expect(sent?.text).toContain(link);
     }
     expect(sent?.html).toContain(`href="${base}/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
+    // Gmail cannot draw SVG: the badge in mail is the PNG of the same artwork.
+    expect(sent?.html).toContain(
+      `src="${base}/icons/wallet-providers/google/add-to-google-wallet.png"`,
+    );
+    expect(sent?.html).not.toContain('.svg');
     const payload = JSON.stringify((await getOutbox(kit.env.DB, outboxId))?.payload);
     const output = [sent?.html, sent?.text, payload].join('\n');
     expect(payload).not.toContain(await linkToken(kit.env, pass));
@@ -105,6 +110,7 @@ describe('wallet offers in pass delivery', () => {
     expect(lookup.mock.calls.map((call) => call[1])).toContain(pass.id);
     expect(sent?.html).toContain('alt="Add to Apple Wallet"');
     expect(sent?.html).not.toContain('/wallet-providers/');
+    expect(sent?.html).not.toContain('add-to-google-wallet');
     expect(sent?.text).not.toContain('Add to Google Wallet');
     expect(sent?.text).not.toContain('Add to Samsung Wallet');
   });

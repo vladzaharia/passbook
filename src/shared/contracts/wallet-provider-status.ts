@@ -40,6 +40,10 @@ export const WalletProviderInstanceStatusSchema = z.strictObject({
   priorGenerationRetirementPending: z.boolean(),
   /** Neither a provider operation nor a retirement proves device installation or deletion. */
   installation: z.literal('unknown'),
+  /** What the provider's callback last reported; a report, not proof, and absent when it sent none. */
+  reported: z
+    .strictObject({ event: z.enum(['saved', 'removed']), at: z.number().int() })
+    .optional(),
   issuance: WalletProviderIssuanceSchema,
 });
 export type WalletProviderInstanceStatus = z.infer<typeof WalletProviderInstanceStatusSchema>;

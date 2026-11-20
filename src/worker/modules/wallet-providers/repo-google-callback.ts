@@ -1,8 +1,9 @@
-import { deleteInBatches } from '../../platform/batched.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { REVISION_EXPR } from './repo-accounts.ts';
+import { walletHolderEventStmt } from './repo-holder-events.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import type { WalletRuntimeScope } from './runtime-core.ts';
 
@@ -154,7 +155,7 @@ export async function findGoogleCallbackBinding(
     db,
     `SELECT i.id AS instanceId, i.pass_id AS passId,
       i.identity_projection_release_id AS releaseId, i.credential_generation AS credentialGeneration,
-      i.channel_epoch AS channelEpoch, a.id AS accountId, a.org_id AS orgId, a.mode, a.revision AS accountRevision,
+      i.channel_epoch AS channelEpoch, a.id AS accountId, a.org_id AS orgId, a.mode, ${REVISION_EXPR} AS accountRevision,
       CASE WHEN i.credential_keyset_commitment = b.credential_keyset_commitment
         THEN b.credential_keyset_commitment END AS credentialKeysetCommitment
     FROM wallet_google_callback_bindings b
@@ -163,7 +164,7 @@ export async function findGoogleCallbackBinding(
       AND a.mode = i.mode AND a.provider = i.provider
     WHERE b.account_id = ? AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.org_id = ? AND i.mode = ? AND i.provider = 'google'
-      AND a.revision = ? AND a.revoked_at IS NULL AND a.credential_id IS NOT NULL
+      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND ${credentialRefKeysetSql}`,
     [
       scope.accountId,
@@ -202,9 +203,8 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
     JOIN wallet_provider_accounts a ON a.id = i.account_id AND a.org_id = i.org_id
       AND a.mode = i.mode AND a.provider = i.provider`;
   const guard = `i.id = ? AND i.pass_id = ? AND i.identity_projection_release_id = ?
-      AND i.credential_generation = ? AND i.channel_epoch = ? AND i.org_id = ? AND i.mode = ?
-      AND i.provider = 'google' AND a.id = ?
-      AND a.revision = ? AND a.revoked_at IS NULL AND a.credential_id IS NOT NULL
+      AND i.credential_generation = ? AND i.channel_epoch = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'google' AND a.id = ?
+      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.credential_keyset_commitment = ? AND b.credential_keyset_commitment = ?
       AND ${credentialRefKeysetSql} AND ? > ?`;
@@ -237,6 +237,7 @@ export async function putGoogleCallbackReceipt(
 ): Promise<boolean> {
   const { envelope } = input;
   const { join, guard, params } = googleReceiptProof(binding, input);
+  const column = input.eventType === 'save' ? 'saved_at' : 'holder_removed_at';
   const results = await batch(db, [
     stmt(
       db,
@@ -270,41 +271,25 @@ export async function putGoogleCallbackReceipt(
         input.id,
       ],
     ),
+    walletHolderEventStmt(db, {
+      orgId: binding.orgId,
+      passId: binding.passId,
+      mode: binding.mode,
+      receiptTable: 'wallet_google_callback_receipts',
+      receiptId: input.id,
+      provider: 'google',
+      event: input.eventType === 'save' ? 'saved' : 'removed',
+      at: input.now,
+    }),
+    // The provider's report, applied only with the receipt it came from. Nothing here revokes.
+    stmt(
+      db,
+      `UPDATE wallet_provider_instances SET ${column} = MAX(COALESCE(${column}, 0), ?)
+      WHERE id = ? AND EXISTS (SELECT 1 FROM wallet_google_callback_receipts WHERE id = ?)`,
+      [input.now, binding.instanceId, input.id],
+    ),
   ]);
   return results[0]?.results.length === 1 && results[1]?.results.length === 1;
-}
-
-/** Replay reservations only matter until the signed message itself expires. */
-export function purgeExpiredGoogleCallbackReplays(db: D1Database, now: number): Promise<number> {
-  return deleteInBatches(db, 'wallet_google_callback_replays', 'expires_at <= ?', [now], 5);
-}
-
-/** True when this exact signed message (account, nonce, instance, event) already has a receipt. */
-export async function isGoogleCallbackRedelivery(
-  db: D1Database,
-  binding: GoogleCallbackBinding,
-  input: { nonceHash: string; eventType: 'save' | 'del'; expiresAt: number },
-): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      `SELECT 1 AS ok FROM wallet_google_callback_receipts receipt
-      JOIN wallet_google_callback_replays replay ON replay.account_id = receipt.account_id
-        AND replay.nonce_hash = receipt.nonce_hash AND replay.claim_id = receipt.id
-      WHERE receipt.account_id = ? AND receipt.nonce_hash = ? AND receipt.instance_id = ?
-        AND receipt.org_id = ? AND receipt.mode = ? AND receipt.event_type = ?
-        AND receipt.expires_at = ?`,
-      [
-        binding.accountId,
-        input.nonceHash,
-        binding.instanceId,
-        binding.orgId,
-        binding.mode,
-        input.eventType,
-        input.expiresAt,
-      ],
-    )) !== null
-  );
 }
 
 /** Bind the acknowledgement to the committed receipt, replay reservation and current proof. */

@@ -152,7 +152,7 @@ describe('pass email', () => {
     expect(html).toContain('href="https://w.test/p/t"');
     expect(text).toContain('Open your pass: https://w.test/p/t');
     for (const [provider, label, asset] of [
-      ['google', 'Add to Google Wallet', '/icons/wallet-providers/google/add-to-google-wallet.svg'],
+      ['google', 'Add to Google Wallet', '/icons/wallet-providers/google/add-to-google-wallet.png'],
       [
         'samsung',
         'Add to Samsung Wallet',
@@ -169,6 +169,18 @@ describe('pass email', () => {
         expect(text).not.toContain(label);
       }
     }
+  });
+
+  it('never links an SVG badge: Gmail cannot draw it', () => {
+    const { html } = render({
+      publicBaseUrl: 'https://w.test',
+      walletOffers: [
+        { provider: 'google', href: '/p/t/wallet/google', installation: 'unknown' },
+        { provider: 'samsung', href: '/p/t/wallet/samsung', installation: 'unknown' },
+      ],
+    });
+    expect(html).not.toMatch(/\.svg/);
+    expect(html).toContain('/icons/wallet-providers/google/add-to-google-wallet.png');
   });
 
   it('keeps text links for mail clients that cannot show the badges', () => {
