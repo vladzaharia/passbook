@@ -611,6 +611,12 @@
     "fix": "Send the request again.",
     "retryable": true
   },
+  "IMPORT_EMPTY": {
+    "title": "Empty tag file",
+    "when": "The uploaded CSV has no rows.",
+    "fix": "Upload a CSV with a header line and one tag per row.",
+    "retryable": false
+  },
   "IMPORT_EXPIRED": {
     "title": "Import expired",
     "when": "The import's checked file expired before you committed it.",
@@ -627,6 +633,12 @@
     "title": "Import has errors",
     "when": "Some rows have errors and the import is set to stop on errors.",
     "fix": "Fix the rows listed in GET /api/v1/pass-imports/{id}/errors.csv, or skip them, then commit again.",
+    "retryable": false
+  },
+  "IMPORT_HEADER": {
+    "title": "Tag file header missing",
+    "when": "The CSV's first line has no uid and key columns.",
+    "fix": "Start the file with a header line naming the uid and key columns.",
     "retryable": false
   },
   "IMPORT_HEADER_TOO_LONG": {
@@ -669,6 +681,12 @@
     "title": "Import in the wrong state",
     "when": "The import is not in a state that allows this action, such as results before it ran.",
     "fix": "Check its state with GET /api/v1/pass-imports/{id} and call the action that state allows.",
+    "retryable": false
+  },
+  "IMPORT_TOO_MANY": {
+    "title": "Tag file too large",
+    "when": "The CSV has more rows than one import takes.",
+    "fix": "Split the file and import it in parts.",
     "retryable": false
   },
   "INVALID_API_KEY": {
@@ -1919,6 +1937,12 @@
     "fix": "Assign the tag from a paired scanner.",
     "retryable": false
   },
+  "TAG_SECURE_REQUIRED": {
+    "title": "Secure tags only",
+    "when": "The session or tag type takes Secure tags and this one is Basic.",
+    "fix": "Use a Secure (SUN) tag, or lower the session's tag level.",
+    "retryable": false
+  },
   "TAG_SUN_REPLAY": {
     "title": "Tag read replayed",
     "when": "The tag's one-time read counter was already used, so the read looks copied.",
@@ -1929,6 +1953,12 @@
     "title": "Tag system unavailable",
     "when": "The tag system is not available for this organization.",
     "fix": "Pick a tag system that is available, or contact the platform owner.",
+    "retryable": false
+  },
+  "TAG_TYPED_OFF": {
+    "title": "Tag must be tapped",
+    "when": "The tag type doesn't allow a tag ID to be typed in.",
+    "fix": "Tap the tag on a scanner, or allow typed IDs on the tag type.",
     "retryable": false
   },
   "TAG_TYPE_ARCHIVED": {
@@ -1943,6 +1973,24 @@
     "fix": "Fetch the tag type and send your change again.",
     "retryable": false
   },
+  "TAG_TYPE_CHOOSE": {
+    "title": "Tag type needed",
+    "when": "More than one tag type fits the pass and the org has no default.",
+    "fix": "Send `typeId`, or set a default tag type for the organization.",
+    "retryable": false
+  },
+  "TAG_TYPE_LIMIT": {
+    "title": "Pass has this tag type",
+    "when": "The pass already holds as many tags of this type as the type allows.",
+    "fix": "Remove the pass's current tag of this type first, or use another type.",
+    "retryable": false
+  },
+  "TAG_TYPE_MISMATCH": {
+    "title": "Tag type not allowed on this pass",
+    "when": "The tag type is limited to other templates.",
+    "fix": "Choose a tag type that lists this pass's template.",
+    "retryable": false
+  },
   "TAG_TYPE_NAME_TAKEN": {
     "title": "Tag type name taken",
     "when": "Another tag type in the organization has this name.",
@@ -1953,6 +2001,24 @@
     "title": "Tag type not found",
     "when": "No tag type with this id exists in this mode and organization.",
     "fix": "Check the tag type id.",
+    "retryable": false
+  },
+  "TAG_TYPE_SCOPE": {
+    "title": "Tag type not allowed here",
+    "when": "The tag type doesn't allow this way of assigning, such as a person-wide tag.",
+    "fix": "Choose a tag type with the scope you need.",
+    "retryable": false
+  },
+  "TAG_TYPE_SET": {
+    "title": "Tag already has a type",
+    "when": "The request names a different type for a tag that has one.",
+    "fix": "Leave `typeId` out, or change the tag's type in the console first.",
+    "retryable": false
+  },
+  "TAG_TYPE_SYSTEM": {
+    "title": "Tag type is for another tag system",
+    "when": "The tag type is for Basic tags and the tag is Secure, or the reverse.",
+    "fix": "Choose a tag type for this tag's system.",
     "retryable": false
   },
   "TAG_UID_RANDOM": {
@@ -1977,6 +2043,12 @@
     "title": "Tag unreadable",
     "when": "The scanner could not read the tag.",
     "fix": "Hold the tag steady, or use another tag.",
+    "retryable": false
+  },
+  "TAG_USE_MISMATCH": {
+    "title": "Pass doesn't take this tag use",
+    "when": "The pass's template doesn't accept tags for this use (member, staff or visitor).",
+    "fix": "Choose a tag type whose use the template accepts.",
     "retryable": false
   },
   "TEMPLATE_ARCHIVED": {

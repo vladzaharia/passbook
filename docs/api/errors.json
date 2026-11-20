@@ -532,6 +532,15 @@
       ]
     },
     {
+      "code": "CHANNEL_ENTITLEMENT_RETRY",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "channels"
+      ]
+    },
+    {
       "code": "CHANNEL_OFF",
       "statuses": [
         404
@@ -1341,6 +1350,15 @@
       ]
     },
     {
+      "code": "IMPORT_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
       "code": "IMPORT_EXPIRED",
       "statuses": [
         409
@@ -1365,6 +1383,15 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_HEADER",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {
@@ -1428,6 +1455,15 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_TOO_MANY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {
@@ -3929,6 +3965,15 @@
       ]
     },
     {
+      "code": "TAG_SECURE_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
       "code": "TAG_SUN_REPLAY",
       "statuses": [
         409
@@ -3939,6 +3984,15 @@
     },
     {
       "code": "TAG_SYSTEM_DISABLED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPED_OFF",
       "statuses": [
         409
       ],
@@ -3965,6 +4019,33 @@
       ]
     },
     {
+      "code": "TAG_TYPE_CHOOSE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_LIMIT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
       "code": "TAG_TYPE_NAME_TAKEN",
       "statuses": [
         409
@@ -3977,6 +4058,33 @@
       "code": "TAG_TYPE_NOT_FOUND",
       "statuses": [
         404
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_SCOPE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_SET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_SYSTEM",
+      "statuses": [
+        409
       ],
       "modules": [
         "nfc"
@@ -4017,6 +4125,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "TAG_USE_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {

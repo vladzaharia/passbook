@@ -819,6 +819,19 @@ export type NfcKeysetsCreateParams = {
   diversify?: boolean;
   metaKey: string;
   fileKey: string;
+} | {
+  name: string;
+  perTag: true;
+  metaKey: string;
+};
+
+export type NfcKeysetsImportTagsParams = {
+  csv: string;
+  dryRun: boolean;
+};
+
+export type NfcKeysetsReenrollParams = {
+  toKeysetId: string;
 };
 
 export type NfcKeysetsRotateParams = {
@@ -826,6 +839,8 @@ export type NfcKeysetsRotateParams = {
 } | {
   metaKey: string;
   fileKey: string;
+} | {
+  metaKey: string;
 };
 
 export type NfcTagTypesArchiveParams = {
@@ -2577,6 +2592,8 @@ export type ScanSetupsCreateParams = {
       assign?: "desk" | "manager" | "never";
       assignAll?: "desk" | "manager" | "never";
       level?: "off" | "basic" | "secure";
+      types?: Array<string | "standard">;
+      confirmBasic?: "none" | "staff" | "manager";
     };
   };
   timeZone: string;
@@ -2628,6 +2645,8 @@ export type ScanSetupsUpdateParams = {
       assign?: "desk" | "manager" | "never";
       assignAll?: "desk" | "manager" | "never";
       level?: "off" | "basic" | "secure";
+      types?: Array<string | "standard">;
+      confirmBasic?: "none" | "staff" | "manager";
     };
   };
   watch?: {
@@ -2826,6 +2845,8 @@ export type ScannerSettings = {
     assign?: "desk" | "manager" | "never";
     assignAll?: "desk" | "manager" | "never";
     level?: "off" | "basic" | "secure";
+    types?: Array<string | "standard">;
+    confirmBasic?: "none" | "staff" | "manager";
   };
 };
 
@@ -2868,6 +2889,8 @@ export type ScannersCreateParams = {
       assign?: "desk" | "manager" | "never";
       assignAll?: "desk" | "manager" | "never";
       level?: "off" | "basic" | "secure";
+      types?: Array<string | "standard">;
+      confirmBasic?: "none" | "staff" | "manager";
     };
   };
   timeZone: string;
@@ -2915,6 +2938,8 @@ export type ScannersUpdateParams = {
       assign?: "desk" | "manager" | "never";
       assignAll?: "desk" | "manager" | "never";
       level?: "off" | "basic" | "secure";
+      types?: Array<string | "standard">;
+      confirmBasic?: "none" | "staff" | "manager";
     };
   };
 };
