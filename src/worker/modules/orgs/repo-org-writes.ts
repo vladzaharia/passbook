@@ -1,3 +1,4 @@
+import type { EntitlementPreset } from '../../../shared/contracts/entitlements.ts';
 import { grant } from '../../platform/authority.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
@@ -81,11 +82,15 @@ export interface OrgAdmin {
 const adminPrincipal = (admin: OrgAdmin) =>
   ({ kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId }) as const;
 
-/** `platform.org.create`: commits only while the admin session is live. */
+/**
+ * `platform.org.create`: commits only while the admin session is live. The org and its entitlements row
+ * (its preset, design-multi-tenancy.md section 2.2) are one batch: an org never exists without one.
+ */
 export async function insertOrgAsAdmin(
   ctx: ServiceContext,
   row: Omit<OrgRow, 'config_revision'>,
   admin: OrgAdmin,
+  preset: EntitlementPreset,
 ): Promise<void> {
   const g = grant(ctx, {
     purpose: 'platform.org.create',
@@ -105,6 +110,11 @@ export async function insertOrgAsAdmin(
       row.created_at,
       row.updated_at,
     ],
+  );
+  g.insertSelect(
+    'org_entitlements',
+    ['org_id', 'preset', 'updated_at'],
+    [row.id, preset, row.updated_at],
   );
   await g.commit();
 }

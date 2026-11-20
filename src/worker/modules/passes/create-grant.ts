@@ -27,6 +27,8 @@ export const CREATE_CODES = {
   lineage: 'CREATE_LINEAGE',
   release: 'CREATE_RELEASE',
   retention: 'CREATE_RETENTION',
+  entitlement: 'FEATURE_NOT_INCLUDED',
+  limit: 'ORG_LIMIT',
   stale: 'CREATE_STALE',
 } as const satisfies Record<Exclude<DenyReason, 'proof'>, string>;
 

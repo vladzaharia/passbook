@@ -95,7 +95,8 @@ export class UnavailableError extends AppError {
 
 /**
  * Why a grant refused (section 1.2). Ordered by deny precedence: org first, stale last. `staff` is a
- * bound staff member who changed (409, the device stays paired).
+ * bound staff member who changed (409, the device stays paired). `entitlement` and `limit` are the org's
+ * Features (design-multi-tenancy.md section 2): a feature that is not included, or a cap that is reached.
  */
 export const DENY_REASONS = [
   'org',
@@ -105,6 +106,8 @@ export const DENY_REASONS = [
   'lineage',
   'release',
   'retention',
+  'entitlement',
+  'limit',
   'stale',
   'proof',
 ] as const;
@@ -154,6 +157,16 @@ export function authorityDenied(
       return new ConflictError(
         'Staff changed. Sign in again and retry.',
         code ?? 'SCAN_STAFF_CHANGED',
+      );
+    case 'entitlement':
+      return new ForbiddenError(
+        "This isn't included for this organization. Ask PassBook to turn it on.",
+        code ?? 'FEATURE_NOT_INCLUDED',
+      );
+    case 'limit':
+      return new ForbiddenError(
+        'This organization has reached its limit. Ask PassBook for more.',
+        code ?? 'ORG_LIMIT',
       );
     case 'stale':
       return new ConflictError('The resource changed. Reload and retry.', code ?? 'STALE');

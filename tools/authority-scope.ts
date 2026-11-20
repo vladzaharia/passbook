@@ -113,6 +113,8 @@ const TENANT_KEY_ALLOWLIST: Record<string, string> = {
     'a platform admin places a legal hold on an org: the platform grant names it; the org grant branch names none',
   'src/worker/modules/scan/repo-scanners.ts':
     'the scanner mode move is the one org-scope write that names its destination mode; the source mode is checked with exactlyOne in the same grant',
+  'src/worker/modules/orgs/repo-org-writes.ts':
+    'the platform org create writes the new org row and its entitlements row, which names the org it was just inserted under in the same batch',
 };
 /** Also `UPDATE OR REPLACE`, which evicts a row through any unique key. */
 /** A builder call whose arguments name `org_id` or `mode`: the grant supplies both. */

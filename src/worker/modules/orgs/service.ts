@@ -140,7 +140,7 @@ export async function createOrg(
     updated_at: now,
     config_revision: 1,
   };
-  await insertOrgAsAdmin(ctx, row, admin);
+  await insertOrgAsAdmin(ctx, row, admin, input.preset ?? 'standard');
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.id,
