@@ -9,7 +9,11 @@ import { dropPrintPdfs } from './pdf-drop.ts';
 import { bulkKey } from './pdf-store.ts';
 import { FORBIDDEN, pdfKit, pdfText } from './pdf-test-fixtures.ts';
 
-type Started = { jobId: string; count: number; skipped: { id: string; code: string }[] };
+type Started = {
+  jobId: string;
+  count: number;
+  skipped: { id: string; code: string; reason?: string }[];
+};
 
 async function setup() {
   const k = await pdfKit();
@@ -33,7 +37,9 @@ describe('bulk print', () => {
     expect(res.status).toBe(202);
     const started = (await res.json()) as Started;
     expect(started.count).toBe(2);
-    expect(started.skipped).toEqual([{ id: off.id, code: 'PRINTING_OFF' }]);
+    expect(started.skipped).toEqual([
+      { id: off.id, code: 'PRINTING_OFF', reason: expect.stringMatching(/^Paper is off for .+/) },
+    ]);
     // The existing print stays (not replaced), the new pass got one.
     const prints = await all<{ id: string }>(
       kit.env.DB,

@@ -70,7 +70,6 @@ export const IMPORT_COPY = {
   sheet: {
     title: 'Import',
     email: 'Email new holders',
-    skip: (n: number) => `Skip ${n} ${n === 1 ? 'row' : 'rows'} with errors`,
     noEmail: 'No new holder has an email.',
   },
   progress: { title: 'Importing', leave: 'You can leave this page.' },

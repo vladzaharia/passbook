@@ -137,36 +137,42 @@ export function BootstrapOrgAdmin({ orgId, active }: { orgId: string; active: bo
             Reactivate the organization before inviting an admin.
           </p>
         ) : null}
-        <Form {...check.form} onValid={submit} className="flex flex-col gap-3">
-          <FormField label="Administrator email" required error={check.errors.email}>
-            {(props) => (
-              <Input
-                {...props}
-                type="text"
-                inputMode="email"
-                autoComplete="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            )}
-          </FormField>
-          {error ? (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          ) : null}
-          {sent ? (
-            <p role="status" className="text-sm text-fg-muted">
+        {sent ? (
+          <div className="flex flex-col items-start gap-3">
+            <p role="status" className="text-sm text-fg-strong">
               Invitation sent to {sent}.
             </p>
-          ) : null}
-          <div>
-            <Button type="submit" size="sm" disabled={!active} loading={invite.isPending}>
-              Invite organization admin
+            <Button size="sm" variant="outline" onClick={() => setSent('')}>
+              Invite another
             </Button>
           </div>
-        </Form>
+        ) : (
+          <Form {...check.form} onValid={submit} className="flex flex-col gap-3">
+            <FormField label="Administrator email" required error={check.errors.email}>
+              {(props) => (
+                <Input
+                  {...props}
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              )}
+            </FormField>
+            {error ? (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            ) : null}
+            <div>
+              <Button type="submit" size="sm" disabled={!active} loading={invite.isPending}>
+                Invite organization admin
+              </Button>
+            </div>
+          </Form>
+        )}
       </CardBody>
     </Card>
   );

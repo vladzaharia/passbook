@@ -101,3 +101,15 @@ describe('closed dates in the body', () => {
     expect(screen.getByText('Hours could not be read. Edit and save them again.')).toBeTruthy();
   });
 });
+
+describe('hours summary exceptions', () => {
+  it('lists dated closures and special hours after the week', () => {
+    const lines = hoursSummary({
+      ...DEFAULT_HOURS,
+      dates: { '2027-12-31': ['10:00-14:00'], '2027-12-25': [] },
+    });
+    expect(lines[0]).toMatch(/^Mon–Fri/);
+    expect(lines[1]).toMatch(/Dec.* 25.*: Closed$/);
+    expect(lines[2]).toMatch(/Dec.* 31.*: 10 AM . 2 PM$/);
+  });
+});
