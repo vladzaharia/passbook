@@ -10,7 +10,7 @@ import { TYPED_NUMBER_FLAG } from '../../../shared/copy/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPlatformSettings } from '../settings/service.ts';
-import { admitOf } from './admit.ts';
+import { safeAdmitAccess } from './admit.ts';
 import { sourcePolicyProven, visibleSource } from './card-semantics.ts';
 import type { CountsRead } from './counts.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
@@ -217,6 +217,13 @@ export function stopOutcome(
   const out = blankOutcome(stop.kind, read);
   const showPass = stop.pass !== null && !NO_DISPLAY.has(stop.reason);
   const details = safeOutcomeDetails(stop.found, actor, options.action, stop.flags);
+  const shown = safeAdmitAccess(
+    stop.found ?? null,
+    actor,
+    stop.access,
+    details.template,
+    stop.found?.admission?.state,
+  );
   return {
     ...out,
     scanId: options.scanId ?? null,
@@ -227,10 +234,7 @@ export function stopOutcome(
     at: stop.at,
     event: eventLine(actor, stop.reason),
     cooldownRemainingMs: stop.cooldownRemainingMs ?? null,
-    access: stop.access ?? null,
-    ...(stop.found && details.template
-      ? { admit: admitOf(stop.found, actor, stop.access, details.template.name) }
-      : {}),
+    ...shown,
     ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
     flags: details.flags,
     ...(stop.channel ? { channel: stop.channel } : {}),

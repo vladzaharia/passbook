@@ -142,28 +142,34 @@ describe('admitOf', () => {
 
   it('names the plan and counts a guest visit', () => {
     expect(
-      admitOf(found(), actor, access({ visits: { used: 2, limit: 3 }, visit: true }), 'Gym'),
+      admitOf(
+        found(),
+        actor,
+        access({ visits: { used: 2, limit: 3 }, visit: true }),
+        'Gym',
+        () => true,
+      ),
     ).toEqual({ type: 'Guest', rule: { kind: 'visit', n: 2, of: 3 }, timeZone: 'UTC' });
   });
   it('says how many visits are left when the scan did not count one', () => {
-    expect(admitOf(found(), actor, access({ visits: { used: 2, limit: 10 } }), 'Gym').rule).toEqual(
-      {
-        kind: 'left',
-        n: 8,
-      },
-    );
+    expect(
+      admitOf(found(), actor, access({ visits: { used: 2, limit: 10 } }), 'Gym', () => true).rule,
+    ).toEqual({
+      kind: 'left',
+      n: 8,
+    });
   });
   it('an event wins over the plan', () => {
     const f = found({
       admission: { event: { name: 'Summer Gala', timeZone: 'UTC' }, state: {} } as never,
     });
-    expect(admitOf(f, actor, null, 'Gym')).toMatchObject({
+    expect(admitOf(f, actor, null, 'Gym', () => true)).toMatchObject({
       type: 'Gym',
       rule: { kind: 'event', name: 'Summer Gala' },
     });
   });
   it('a plan end is an until', () => {
-    expect(admitOf(found(), actor, access({ closesAt: 5 }), 'Gym').rule).toEqual({
+    expect(admitOf(found(), actor, access({ closesAt: 5 }), 'Gym', () => true).rule).toEqual({
       kind: 'until',
       at: 5,
     });
