@@ -1,6 +1,6 @@
 import { jobGrant } from '../../platform/authority.ts';
 import { type Check, exactlyOne } from '../../platform/authority-checks.ts';
-import { all } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { PreparedReceipt } from '../retention/receipt-service.ts';
 import type { Scope } from '../retention/repo-sweep.ts';
@@ -36,6 +36,15 @@ const receiptExists = (receiptId: string): Check => ({
   reason: 'config',
   ok: (b) => `EXISTS (SELECT 1 FROM retention_receipts WHERE id = ${b.bind(receiptId)})`,
 });
+
+/** A hold that landed after the page was read: the pass must not be removed. */
+export async function visitHeld(db: D1Database, v: RetentionVisit): Promise<boolean> {
+  const row = await first<{ held: number }>(db, `SELECT ${heldSql('?', '?')} AS held`, [
+    v.org_id,
+    v.pass_id,
+  ]);
+  return row?.held === 1;
+}
 
 /** Visits whose window ended before `before`, in id order after the cursor, not held. */
 export function endedVisits(

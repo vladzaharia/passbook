@@ -6,19 +6,21 @@ import { type PreparedReceipt, prepareReceipt, recordHead } from '../retention/r
 import { chainHead } from '../retention/repo-receipts.ts';
 import type { Scope } from '../retention/repo-sweep.ts';
 import { retentionTargets } from '../retention/targets.ts';
-import { deleteVisit, endedVisits, type RetentionVisit } from './repo-retention.ts';
+import { deleteVisit, endedVisits, type RetentionVisit, visitHeld } from './repo-retention.ts';
 
 const DAY = 86_400_000;
 const BATCH = 50;
 /** Visits one run removes: the platform pass, then all org passes together. A backlog drains over days. */
 export const VISIT_LIMITS = { platform: 200, orgs: 200 };
 
-/** Soft-deletes the visit's pass as the system. A pass already gone is settled. */
-async function removePass(ctx: ServiceContext, v: RetentionVisit): Promise<void> {
+/** Soft-deletes the visit's pass as the system; false when it was already gone (settled). */
+async function removePass(ctx: ServiceContext, v: RetentionVisit): Promise<boolean> {
   try {
     await deletePass(ctx, { type: 'system', id: null }, v.pass_id, v.org_id);
+    return true;
   } catch (error) {
     if (!(error instanceof NotFoundError)) throw error;
+    return false;
   }
 }
 
@@ -46,17 +48,20 @@ export async function dailyVisitors(ctx: ServiceContext): Promise<void> {
       for (const v of page) {
         budget.left--;
         try {
+          // A hold may have landed since the page was read; the pass stays then, and so does the visit.
+          if (await visitHeld(ctx.env.DB, v)) continue;
+          // The visitor pass goes first (its name, host and copies follow pass retention), then the visit row.
+          const passGone = await removePass(ctx, v);
+          // The receipt counts what this run removed: a pass already gone (a retry, an erasure) is not counted again.
           const receipt: PreparedReceipt = await prepareReceipt(ctx, {
             orgId,
             cls: 'visitors',
             kind: 'visitor',
             policyDays: days,
             cutoffAt: now - days * DAY,
-            deleted: 2,
+            deleted: passGone ? 2 : 1,
             anonymised: 0,
           });
-          // The visitor pass goes first (its name, host and copies follow pass retention), then the visit row.
-          await removePass(ctx, v);
           await deleteVisit(ctx, v, receipt);
           await recordHead(ctx, receipt.receipt);
           removed++;
