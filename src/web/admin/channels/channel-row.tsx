@@ -25,7 +25,7 @@ export interface ChannelRowProps {
 }
 
 /** What the locked label says: unavailable outright, or turned off by a higher level. */
-const UNAVAILABLE = new Set(['not_released', 'not_enrolled', 'no_design']);
+const UNAVAILABLE = new Set(['not_released', 'not_enrolled', 'no_design', 'not_included']);
 
 /**
  * One channel at any level: name, effective state and the level's own control. A row this level
