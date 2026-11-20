@@ -156,6 +156,21 @@ export const TemplateCandidateParamSchema = z.strictObject({
 });
 export type TemplateCandidateParam = z.infer<typeof TemplateCandidateParamSchema>;
 
+/** A pass type's entry rule as its template sets it: what a session shows beside each admitted type. */
+export const EntryRuleSchema = z.object({
+  /** How often a pass checks in; `unlimited` is every visit. */
+  mode: z.enum(['single', 'daily', 'unlimited']),
+  /** Ends at local midnight after this many days. */
+  days: z.number().int().nullable(),
+  durationMinutes: z.number().int().nullable(),
+  durationFrom: z.enum(['first_scan', 'issued']).nullable(),
+  /** The kinds of its access plans; empty without an access card. */
+  plans: z.array(z.enum(['always', 'timed', 'guest'])).max(24),
+  /** `template`: the type's own `scan.checkIn`. `action`: the check-in action's setting. */
+  source: z.enum(['template', 'action']),
+});
+export type EntryRule = z.infer<typeof EntryRuleSchema>;
+
 /** A release-backed choice for pass and scanner pickers; never exposes a draft manifest. */
 export const EligibleTemplateSchema = z.object({
   templateId: IdSchema,
@@ -167,6 +182,8 @@ export const EligibleTemplateSchema = z.object({
   version: z.string(),
   candidateHash: z.string(),
   supportsCheckIn: z.boolean(),
+  /** Null without a check-in action. */
+  rule: EntryRuleSchema.nullable().default(null),
 });
 export type EligibleTemplate = z.infer<typeof EligibleTemplateSchema>;
 

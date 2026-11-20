@@ -5,9 +5,10 @@ import { TAG_OFFLINE } from './assign-state.ts';
 import { findIgnore, settleShown } from './ignore.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { same } from './internal.ts';
-import { localOutcome } from './outcome.ts';
+import { headlineOf, localOutcome } from './outcome.ts';
 import type { Cmd, Draft, Ignore, Loop } from './types.ts';
 import { cardBehind, enterVerdict } from './verdict.ts';
+import { verdictLine } from './verdict-lines.ts';
 
 const chipFor = (hit: Ignore | undefined): Cmd => ({
   c: 'chip',
@@ -123,6 +124,11 @@ export function read(s: MachineState, input: ScanInput, env: Env): Out {
       };
     }
     case 'verdict': {
+      if (isSame && (l.outcome.kind === 'heads_up' || l.outcome.kind === 'refused'))
+        return chip({
+          c: 'chip',
+          chip: { same: verdictLine(l.outcome, now)?.headline ?? headlineOf(l.outcome.reason) },
+        });
       if (isSame && l.outcome.kind !== 'system') return chip({ c: 'chip', chip: 'just_now' });
       if (isSame) return begin(s, input, env);
       if (hit) return chip();

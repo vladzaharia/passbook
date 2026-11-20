@@ -21,6 +21,7 @@ import { reconcileScope, wipeLocal } from '../offline/wipe.ts';
 import { sound } from '../sound/player.ts';
 import type { Announcement } from '../ui/live-announcer.tsx';
 import { cameraDisabledFor } from './camera-disabled.ts';
+import { chipText } from './chip-text.ts';
 import { customerBrandingOf } from './customer-branding.ts';
 import { focusTarget } from './focus-target.ts';
 import { scanId } from './id.ts';
@@ -107,7 +108,7 @@ export async function createRuntime(
       wake: wakeLock,
       announce: notice,
       focus: focusTarget,
-      chip: () => notice('Just scanned'),
+      chip: (chip) => notice(chipText(chip)),
       celebrate: () => undefined,
       wipe: () => {
         void wipeLocal(localStores).catch(() => notice('Could not clear stored scans.', false));

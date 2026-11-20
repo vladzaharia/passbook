@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
+import { apiAs, createPass, uid } from './helpers/api.ts';
+import { cloneMemberBarcode } from './helpers/member-barcode.ts';
 import { pairScanner } from './helpers/pair.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
@@ -9,11 +10,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
   const api = await apiAs('admin');
   const orgId = readSeed().org.id;
   const memberId = uid('SCAN').toUpperCase();
-  const template = await api.send(
-    'POST',
-    `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
-    { orgId, name: uid('Door template') },
-  );
+  const template = await cloneMemberBarcode(api, orgId, uid('Door template'));
   const release = await publishTemplateVersion(
     api,
     orgId,
@@ -186,11 +183,7 @@ test('camera decodes a real QR frame through the wasm worker', async ({ browser 
   const api = await apiAs('admin');
   const orgId = readSeed().org.id;
   const memberId = uid('CAMERA').toUpperCase();
-  const template = await api.send(
-    'POST',
-    `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
-    { orgId, name: uid('Camera ticket') },
-  );
+  const template = await cloneMemberBarcode(api, orgId, uid('Camera ticket'));
   const release = await publishTemplateVersion(
     api,
     orgId,

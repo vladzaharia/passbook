@@ -60,6 +60,17 @@ function step(s: MachineState, event: MachineEvent, env: Env): Out {
       return resume(s, env);
     case 'visible':
       return visible(s, event, env);
+    case 'online':
+      // "No connection" was true when it was shown; back online, it only blocks the next scan.
+      if (
+        event.online &&
+        s.loop.s === 'verdict' &&
+        s.loop.outcome.local &&
+        s.loop.outcome.kind === 'system' &&
+        s.loop.outcome.reason === 'network'
+      )
+        return dismiss({ ...s, online: true }, env);
+      return setter(s, event, env) ?? same(s);
     case 'dismiss':
       return s.assign ? cancelAssign(s, env) : dismiss(s, env);
     case 'override':

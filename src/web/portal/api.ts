@@ -8,7 +8,7 @@ import {
   RefreshResponseSchema,
   RemovePassResponseSchema,
 } from '@/shared/contracts/me.ts';
-import { api } from '../lib/api.ts';
+import { api, PAGE_FETCH_TIMEOUT_MS } from '../lib/api.ts';
 import { isPendingRefresh } from './refresh.ts';
 
 export const myPassesKey = ['me', 'passes'] as const;
@@ -53,7 +53,10 @@ export function myPassQuery(id: string) {
   return queryOptions({
     queryKey: [...myPassesKey, id] as const,
     queryFn: ({ signal }) =>
-      api.get(`/api/v1/me/passes/${encodeURIComponent(id)}`, MyPassSchema, { signal }),
+      api.get(`/api/v1/me/passes/${encodeURIComponent(id)}`, MyPassSchema, {
+        signal,
+        timeoutMs: PAGE_FETCH_TIMEOUT_MS,
+      }),
     refetchInterval: (query) =>
       query.state.data && isPendingRefresh(query.state.data, Date.now()) ? POLL_MS : false,
   });

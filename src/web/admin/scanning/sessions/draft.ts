@@ -1,16 +1,12 @@
 import type { WeeklyHours } from '@/passkit/types.ts';
+import { admitsOf, admitsWire } from '@/shared/contracts/scanners.ts';
 import type {
   ScanningSession,
   SessionCustomerSettings,
 } from '@/shared/contracts/scanning-sessions.ts';
 import { type OfflineMode, offlineModeOf } from '@/shared/scan-offline.ts';
 import { localZone } from '@/web/lib/timezones.ts';
-import {
-  acceptsOf,
-  EMPTY_DRAFT,
-  type ScannerDraft,
-  settingsOf,
-} from '../scanners/scanner-draft.ts';
+import { EMPTY_DRAFT, type ScannerDraft, settingsOf } from '../scanners/scanner-draft.ts';
 import { hoursBody, hoursProblem, weekOf } from './session-hours.ts';
 
 export type SessionDraft = ScannerDraft & {
@@ -27,36 +23,30 @@ export type SessionDraft = ScannerDraft & {
   hours?: WeeklyHours;
   /** Dated exceptions in the session's zone: no spans is closed all day. */
   dates?: Record<string, string[]>;
-  /** Events a mixed session admits beside its templates; this editor does not show them, so it sends them back. */
-  keptEventIds?: string[];
+  /** Events the session admits beside its pass types (`templateIds`). */
+  eventIds: string[];
 };
 
 export const emptySessionDraft = (): SessionDraft => ({
   ...EMPTY_DRAFT,
   timeZone: localZone(),
   accepts: 'all',
+  eventIds: [],
   lookup: true,
   whenOffline: 'stop',
   zoneIds: [],
   hoursOn: false,
 });
 export function sessionDraft(s: ScanningSession): SessionDraft {
+  const admits = s.accepts ? admitsOf(s.accepts) : { templateIds: [], eventIds: [] };
   return {
     ...emptySessionDraft(),
     name: s.name,
     timeZone: s.timeZone,
     orgId: s.orgId,
-    accepts:
-      s.accepts && 'eventId' in s.accepts
-        ? 'event'
-        : s.accepts
-          ? 'templates'
-          : s.settings.acceptAllTemplates
-            ? 'all'
-            : 'templates',
-    eventId: s.accepts && 'eventId' in s.accepts ? s.accepts.eventId : '',
-    templateIds: s.accepts && 'templateIds' in s.accepts ? s.accepts.templateIds : [],
-    ...(s.accepts && 'eventIds' in s.accepts ? { keptEventIds: s.accepts.eventIds } : {}),
+    accepts: s.accepts ? 'templates' : s.settings.acceptAllTemplates ? 'all' : 'templates',
+    templateIds: admits.templateIds,
+    eventIds: admits.eventIds,
     whenOffline: offlineModeOf(s.settings),
     flow: s.settings.flow,
     reader: s.settings.reader === 'barcode' ? 'barcode' : 'none',
@@ -85,9 +75,7 @@ export const sessionBody = (d: SessionDraft) => ({
   timeZone: d.timeZone,
   hours: hoursBody(d.hoursOn, d.hours, d.dates, d.timeZone),
   accepts:
-    d.accepts === 'templates' && d.keptEventIds?.length
-      ? { templateIds: d.templateIds, eventIds: d.keptEventIds }
-      : acceptsOf(d),
+    d.accepts === 'all' ? null : admitsWire({ templateIds: d.templateIds, eventIds: d.eventIds }),
   settings: {
     ...settingsOf(d),
     whenOffline: d.whenOffline,
@@ -96,7 +84,7 @@ export const sessionBody = (d: SessionDraft) => ({
     ...(d.customer === undefined ? {} : { customer: cleanCustomer(d.customer) }),
   },
   // Events check in once: a session on one holds no zones.
-  ...(d.zoneIds === undefined ? {} : { zoneIds: d.accepts === 'event' ? [] : d.zoneIds }),
+  ...(d.zoneIds === undefined ? {} : { zoneIds: eventsOnly(d) ? [] : d.zoneIds }),
 });
 
 /** Empty lines are absent, so the defaults in `copy/scan-customer.ts` apply. */
@@ -111,25 +99,28 @@ export function cleanCustomer(c: SessionCustomerSettings): SessionCustomerSettin
     ...(c.showDraft === undefined ? {} : { showDraft: c.showDraft }),
   };
 }
+/** A session that admits events only: its doors hold no zones. */
+export const eventsOnly = (d: Pick<SessionDraft, 'accepts' | 'templateIds' | 'eventIds'>) =>
+  d.accepts !== 'all' && d.templateIds.length === 0 && d.eventIds.length > 0;
+
 export function sessionReady(d: SessionDraft) {
   return (
     !hoursProblem(d.hoursOn, d.hours) &&
     !!d.name.trim() &&
     !!d.orgId &&
-    (d.accepts === 'all' ||
-      (d.accepts === 'event' ? !!d.eventId : !!(d.templateIds.length || d.keptEventIds?.length)))
+    (d.accepts === 'all' || !!(d.templateIds.length || d.eventIds.length))
   );
 }
 export function sessionAccepts(s: ScanningSession, eventName?: string) {
-  const n = s.accepts && 'templateIds' in s.accepts ? s.accepts.templateIds.length : 0;
-  const events = s.accepts && 'eventIds' in s.accepts ? s.accepts.eventIds.length : 0;
-  return s.accepts && 'eventId' in s.accepts
-    ? (eventName ?? 'Event admission')
-    : s.accepts
-      ? `${n} pass ${n === 1 ? 'template' : 'templates'}${events ? `, ${events} ${events === 1 ? 'event' : 'events'}` : ''}`
-      : s.settings.acceptAllTemplates
-        ? 'All passes'
-        : 'No passes assigned';
+  if (!s.accepts) return s.settings.acceptAllTemplates ? 'Any pass type' : 'No pass types';
+  const { templateIds, eventIds } = admitsOf(s.accepts);
+  if (!templateIds.length && eventIds.length === 1) return eventName ?? '1 event';
+  const part = (n: number, one: string, many: string) =>
+    n ? [`${n} ${n === 1 ? one : many}`] : [];
+  return [
+    ...part(templateIds.length, 'pass type', 'pass types'),
+    ...part(eventIds.length, 'event', 'events'),
+  ].join(', ');
 }
 export const sessionRuleLabel = (s: ScanningSession) =>
   s.settings.checkIn?.mode

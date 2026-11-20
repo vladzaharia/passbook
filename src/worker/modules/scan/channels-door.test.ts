@@ -286,6 +286,24 @@ describe('typed numbers: reads that are not typed, and desk picks', () => {
     expect(o).toMatchObject({ kind: 'refused', reason: 'channel_off' });
   });
 
+  it('a camera read of the lookup value alone is checked, not admitted', async () => {
+    const s = await door();
+    const { memberNo } = await numbered(false);
+    const { out: o } = await resolve(s.headers, { code: memberNo, method: 'camera' });
+    expect(o).toMatchObject({
+      kind: 'heads_up',
+      reason: 'check_required',
+      flags: ['Typed number'],
+    });
+  });
+
+  it('a typed lookup stays ready, and the real barcode still admits', async () => {
+    const s = await door();
+    const { pass, memberNo } = await numbered(false);
+    expect((await resolve(s.headers, { code: memberNo, method: 'manual' })).out.kind).toBe('ready');
+    expect((await resolve(s.headers, codeOf(pass))).out.kind).toBe('ready');
+  });
+
   it('a desk pick of an all-off pass is a typed-number heads-up', async () => {
     const s = await door();
     const pass = await kit.scanPass(tpl);

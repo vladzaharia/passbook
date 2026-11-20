@@ -200,6 +200,25 @@ describe('read: verdict', () => {
     expect(again.state.loop.s).toBe('checking');
   });
 
+  it('the same code on a heads-up says what the card says, not just scanned', () => {
+    const sent = step(states.ready(), readOf('AAAA1111'));
+    const v = step(
+      sent.state,
+      answerOf(requestKey(sent.cmds), 'heads_up', 'already_done'),
+      at(100),
+    );
+    const again = step(v.state, readOf('AAAA1111'), at(900));
+    expect(again.cmds).toEqual([{ c: 'chip', chip: { same: 'Already done' } }]);
+  });
+
+  it('back online closes a "No connection" verdict', () => {
+    const off = step({ ...states.ready(), online: false }, readOf('AAAA1111'));
+    expect(off.state.loop).toMatchObject({ s: 'verdict', outcome: { reason: 'network' } });
+    const back = step(off.state, { type: 'online', online: true }, at(100));
+    expect(back.state.loop.s).toBe('ready');
+    expect(back.state.online).toBe(true);
+  });
+
   it('the same code is ignored for 5,000 ms after ok and sent at 5,001', () => {
     const v = verdict(); // ok answered at +100
     const closed = step(v.state, { type: 'tick' }, at(100 + SCAN_TIMING.OK_HOLD));
