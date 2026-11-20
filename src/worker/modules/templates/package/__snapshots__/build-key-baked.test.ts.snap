@@ -8,7 +8,7 @@ exports[`build keys of the baked templates > are unchanged by the wallets extens
   "starter-boarding-pass": "ab1c048da2433815935430cc7e4430477ed28c8a9e699be19cdd3f3c28f1bc48",
   "starter-booking": "def75ce42c09f73529c7ebe5e43da9528b6c5f1aeda343463ef1287b090a1d89",
   "starter-coupon": "a39dc95534d8ff294f658a194c3919fb6def97ad42c4d862a05d9d72633cab88",
-  "starter-day-pass": "d4e6ae68b8992f48f3841470283aaadc2078664cbafa86326fe0dd36895ddf53",
+  "starter-day-pass": "284725a6592d5086da3f10ab76f458d0ff10ee72ef87967f7bc95a967b0da9dd",
   "starter-event-ticket": "c0ebc5e02ad8c15bbdbaee93a56ecc7e3c4a5a5ee5aa4ddd6b2e4ccd7a7620d9",
   "starter-generic": "1f5f1005daa9bd7205f9fd65ac49889a9d8f385f9ef045f70fd16759549b77f1",
   "starter-guest-pass": "bf050ac5161421ec0f0e714da03d3dd99537435ea058f639e47b43dce7edd109",

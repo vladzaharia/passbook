@@ -182,7 +182,12 @@
                 {
                   "id": "i_first",
                   "label": "Today",
-                  "value": {"count": "{{history.visits.today}}", "one": "# visit", "other": "# visits", "zero": "First visit"}
+                  "value": {
+                    "count": "{{history.visits.today}}",
+                    "one": "# visit",
+                    "other": "# visits",
+                    "zero": "First visit"
+                  }
                 },
                 {
                   "id": "i_last",
@@ -208,6 +213,16 @@
       "mode": "unlimited",
       "days": 1,
       "durationFrom": "first_scan"
-    }
+    },
+    "flags": [
+      {
+        "input": "status",
+        "label": "Suspended",
+        "equals": [
+          "Suspended"
+        ],
+        "stop": true
+      }
+    ]
   }
 }

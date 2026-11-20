@@ -49,6 +49,10 @@ describe('entry pass types', () => {
   it('Day pass is check-in only: one day from the first scan, unlimited entries', async () => {
     const { template } = await loadBaked('starter-day-pass', { strips: false });
     expect(template.manifest.scan?.access).toBeUndefined();
+    // No access plan, so Suspended stops the scan through a flag on the status input.
+    expect(template.manifest.scan?.flags).toEqual([
+      { input: 'status', label: 'Suspended', equals: ['Suspended'], stop: true },
+    ]);
     expect(template.manifest.scan?.checkIn).toEqual({
       mode: 'unlimited',
       days: 1,

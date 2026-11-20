@@ -2,7 +2,7 @@
 import type { BakedTemplate } from '../worker/modules/templates/baked-types.ts';
 
 /** Hash of every template id@version; syncBakedTemplates() runs once per isolate per value. */
-export const BAKED_BUILD_HASH = "4c02800ed4ba8a81caab2bfdd2e7cb12a837c9f3";
+export const BAKED_BUILD_HASH = "94930af149d61ebe2f00d89870ffa1cf06b37060";
 
 export const bakedTemplates: readonly BakedTemplate[] = [
   {
@@ -4334,7 +4334,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
   {
     "id": "baked:starter-day-pass",
     "slug": "starter-day-pass",
-    "version": "ea359c60928abaa7",
+    "version": "ad404953853f0b0a",
     "name": "Day pass",
     "description": "One day of entry, ending at midnight. Unlimited visits until then.",
     "org": null,
@@ -4557,7 +4557,17 @@ export const bakedTemplates: readonly BakedTemplate[] = [
           "mode": "unlimited",
           "days": 1,
           "durationFrom": "first_scan"
-        }
+        },
+        "flags": [
+          {
+            "input": "status",
+            "label": "Suspended",
+            "equals": [
+              "Suspended"
+            ],
+            "stop": true
+          }
+        ]
       }
     },
     "passJson": {
@@ -4646,7 +4656,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "crc32": 2019410701,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ea359c60928abaa7/en.lproj/pass.strings"
+          "path": "/templates/starter-day-pass/ad404953853f0b0a/en.lproj/pass.strings"
         }
       },
       {
@@ -4660,7 +4670,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 76,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ea359c60928abaa7/icon@2x.png"
+          "path": "/templates/starter-day-pass/ad404953853f0b0a/icon@2x.png"
         }
       },
       {
@@ -4674,7 +4684,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 114,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ea359c60928abaa7/icon@3x.png"
+          "path": "/templates/starter-day-pass/ad404953853f0b0a/icon@3x.png"
         }
       },
       {
@@ -4688,7 +4698,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 100,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ea359c60928abaa7/logo@2x.png"
+          "path": "/templates/starter-day-pass/ad404953853f0b0a/logo@2x.png"
         }
       },
       {
@@ -4702,7 +4712,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 150,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ea359c60928abaa7/logo@3x.png"
+          "path": "/templates/starter-day-pass/ad404953853f0b0a/logo@3x.png"
         }
       },
       {
@@ -4716,7 +4726,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 180,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ea359c60928abaa7/thumbnail@2x.png"
+          "path": "/templates/starter-day-pass/ad404953853f0b0a/thumbnail@2x.png"
         }
       },
       {
@@ -4730,7 +4740,7 @@ export const bakedTemplates: readonly BakedTemplate[] = [
         "height": 270,
         "source": {
           "kind": "static",
-          "path": "/templates/starter-day-pass/ea359c60928abaa7/thumbnail@3x.png"
+          "path": "/templates/starter-day-pass/ad404953853f0b0a/thumbnail@3x.png"
         }
       }
     ],

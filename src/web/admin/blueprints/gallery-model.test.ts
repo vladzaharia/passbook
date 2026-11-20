@@ -28,4 +28,17 @@ describe('entriesOf', () => {
     expect(slugs('membership-id')).toEqual(['generic', 'id-card']);
     expect(slugs('prove-collect')).toEqual(['pickup', 'permit']);
   });
+
+  it('puts the entry passes right after the access card', () => {
+    const items = ['guest-pass', 'day-pass', 'monthly-pass', 'timed-ticket', 'access-card'].map(
+      (s) => bp(s, s, 'get-in'),
+    );
+    expect(entriesOf(items).map((e) => e.id.replace(/^.*starter-/, ''))).toEqual([
+      'access-card',
+      'monthly-pass',
+      'day-pass',
+      'guest-pass',
+      'timed-ticket',
+    ]);
+  });
 });
