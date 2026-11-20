@@ -62,6 +62,7 @@ describe('the nfc level: Secure keysets', () => {
         name: 'Late',
         slug: `late-${f.kit.ctx.ids.token(4)}`.toLowerCase(),
         diversify: false,
+        perTag: false,
         first: {
           id: f.kit.ctx.ids.id(),
           version: 1,

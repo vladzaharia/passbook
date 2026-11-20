@@ -49,7 +49,14 @@ describe('create', () => {
     expect(made).toMatchObject({ diversify: true, disabledAt: null });
     expect(made.slug).toMatch(/^[a-z0-9]{8}$/);
     expect(made.versions).toEqual([
-      { version: 1, state: 'active', createdAt: expect.any(Number), stateAt: null, tags: 0 },
+      {
+        version: 1,
+        state: 'active',
+        createdAt: expect.any(Number),
+        stateAt: null,
+        revokedAt: null,
+        tags: 0,
+      },
     ]);
     const [stored] = await versionEnvelopes(db(), made.id);
     const cipher = bytesToHex(stored?.envelope.ciphertext ?? new Uint8Array());
@@ -327,7 +334,6 @@ describe('rotate, retire and disable', () => {
 
   it('keeps a version while tags use it, and counts them', async () => {
     const { t, authority, made } = await keyset();
-    await rotateKeyset(ctx(), authority, made.id, { generate: true });
     const { ref, hint } = await tagRef(f.kit.env, t.org.id, 'live', f.nextUid());
     await run(
       db(),
@@ -339,6 +345,7 @@ describe('rotate, retire and disable', () => {
       "INSERT INTO nfc_tag_sun (tag_id, keyset_id, key_version, ctr, ctr_at) VALUES ('sun-1', ?, 1, 5, 1)",
       [made.id],
     );
+    await rotateKeyset(ctx(), authority, made.id, { generate: true });
     const listed = await retireKeyVersion(ctx(), authority, made.id, 1).catch((e) => e);
     expect(listed).toMatchObject({ code: 'KEYSET_KEY_IN_USE' });
     expect(listed.message).toContain('1 tags');

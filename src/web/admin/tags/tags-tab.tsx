@@ -1,11 +1,19 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type { Tag } from '@/shared/contracts/nfc-tags.ts';
+import { KEYSET_COPY } from '@/shared/copy/tag-keysets.ts';
 import { TAG_COPY } from '@/shared/copy/tags.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
-import { DataTable, EmptyState, ErrorState, FilterBar, LoadMore } from '@/web/ui/index.ts';
+import {
+  DataTable,
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  LoadMore,
+  SegmentedControl,
+} from '@/web/ui/index.ts';
 import type { ScanningSearch } from '../scanning/search.ts';
 import { useTagList } from './api.ts';
 import { KindPill } from './enroll-result.tsx';
@@ -14,6 +22,10 @@ import { WorksWithChip } from './tag-row.tsx';
 import { TagSheet } from './tag-sheet.tsx';
 import { StateBadge, TAG_STATE_FILTERS } from './tags-state.tsx';
 import { tagName } from './words.ts';
+
+const KeysetsView = lazy(() =>
+  import('../scanning/tags/keysets/keysets-view.tsx').then((m) => ({ default: m.KeysetsView })),
+);
 
 /**
  * Scanning > Tags: the org's tags in the current mode. Filter by state, search by name or code,
@@ -24,7 +36,65 @@ export function TagsTab({ search }: { search: ScanningSearch }) {
   const orgId = scope.orgId;
   if (!orgId) return <EmptyState art="badge" title="Select an organization" />;
   const canOperate = Boolean(scope.membership?.capabilities.includes('passes:operate'));
-  return <Inventory key={orgId} orgId={orgId} search={search} readOnly={!canOperate} />;
+  const canManage = Boolean(scope.membership?.capabilities.includes('scanning:manage'));
+  return (
+    <TagsViews
+      key={orgId}
+      orgId={orgId}
+      search={search}
+      canManage={canManage}
+      readOnly={!canOperate}
+    />
+  );
+}
+
+/** Tags, and Secure keys beside them: one more view of the same tab. */
+function TagsViews({
+  orgId,
+  search,
+  canManage,
+  readOnly,
+}: {
+  orgId: string;
+  search: ScanningSearch;
+  canManage: boolean;
+  readOnly: boolean;
+}) {
+  const navigate = useNavigate();
+  const view = search.tagView ?? 'tags';
+  const set = (patch: Partial<ScanningSearch>) =>
+    void navigate({ to: '.', search: (prev) => ({ ...prev, ...patch }), replace: true });
+  return (
+    <div className="flex flex-col gap-4">
+      <SegmentedControl
+        label="Tags view"
+        value={view}
+        options={[
+          { value: 'tags', label: KEYSET_COPY.tabs.tags },
+          { value: 'keys', label: KEYSET_COPY.tabs.keys },
+        ]}
+        onValueChange={(next) =>
+          set({
+            tagView: next === 'keys' ? 'keys' : undefined,
+            tag: undefined,
+            keyset: undefined,
+          })
+        }
+      />
+      {view === 'keys' ? (
+        <Suspense fallback={<p role="status">Loading keys…</p>}>
+          <KeysetsView
+            orgId={orgId}
+            canManage={canManage}
+            open={search.keyset}
+            onOpen={(keyset) => set({ keyset })}
+          />
+        </Suspense>
+      ) : (
+        <Inventory orgId={orgId} search={search} readOnly={readOnly} />
+      )}
+    </div>
+  );
 }
 
 function Inventory({

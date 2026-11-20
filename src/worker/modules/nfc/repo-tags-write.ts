@@ -7,7 +7,14 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
-import { consumeSun, enrolSun, type SunSeen, sunFreshCheck, sunKeysetCheck } from './repo-sun.ts';
+import {
+  consumeSun,
+  enrolSun,
+  type SunSeen,
+  sunActiveCheck,
+  sunFreshCheck,
+  sunKeysetCheck,
+} from './repo-sun.ts';
 import type { TagSystemId } from './systems/types.ts';
 
 type Session = Extract<TenantPassWrite, { kind: 'session' }>;
@@ -137,7 +144,7 @@ export const bindChecks = (
   ...(p.sun
     ? p.tagId && !p.newTag
       ? sunFreshCheck(p.tagId, p.sun)
-      : [sunKeysetCheck(p.sun)]
+      : [sunKeysetCheck(p.sun), sunActiveCheck(p.sun)]
     : []),
 ];
 

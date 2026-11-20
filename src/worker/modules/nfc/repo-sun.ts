@@ -2,8 +2,10 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { gte, lt, lte } from '../../platform/authority-expr.ts';
+import { gte, lt, lte, ne } from '../../platform/authority-expr.ts';
+import type { Envelope } from '../../platform/crypto.ts';
 import { first, stmt } from '../../platform/db.ts';
+import { type EnvelopeRaw, envelopeOf } from './keyset-seal.ts';
 
 /** What a SUN tag's side row holds: the keyset and key version of its last read, and that read's counter. */
 export interface SunStored {
@@ -39,6 +41,24 @@ interface RawStored {
 const STORED = `SELECT t.id AS tag_id, t.system, s.keyset_id, s.key_version, s.ctr
   FROM nfc_tags t JOIN nfc_tag_sun s ON s.tag_id = t.id
   WHERE t.org_id = ? AND t.mode = ? AND t.tag_ref = ?`;
+
+/** The sealed own key of the tag with this ref on this keyset, with the id its seal is bound to. Null: it holds none. */
+export async function sunTagKeyByRef(
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  keysetId: string,
+  ref: string,
+): Promise<{ tagId: string; envelope: Envelope } | null> {
+  const row = await first<EnvelopeRaw & { tag_id: string }>(
+    db,
+    `SELECT t.id AS tag_id, s.kek_version, s.iv, s.wrapped_dek, s.ciphertext
+      FROM nfc_tags t JOIN nfc_tag_sun s ON s.tag_id = t.id
+      WHERE t.org_id = ? AND t.mode = ? AND t.tag_ref = ? AND s.keyset_id = ? AND s.kek_version IS NOT NULL`,
+    [orgId, mode, ref, keysetId],
+  );
+  return row ? { tagId: row.tag_id, envelope: envelopeOf(row) } : null;
+}
 
 /** For a batch: the side row of the tag with this ref. A `sun` tag without one fails closed. */
 export const sunStoredStmt = (db: D1Database, orgId: string, mode: Mode, ref: string) =>
@@ -84,12 +104,31 @@ export const sunKeysetCheck = (seen: SunSeen): Check =>
     'stale',
   );
 
+/** A new tag enrols only on the keyset's active version, still active at commit: a retiring one verifies known tags only. */
+export const sunActiveCheck = (seen: SunSeen): Check =>
+  exactlyOne(
+    'nfc_tag_keys',
+    { keyset_id: seen.keysetId, version: seen.keyVersion, state: 'active' },
+    'keyset_id',
+    'stale',
+  );
+
+/** The key version that verified the read is still live: a version revoked or retired since the read refuses the batch. */
+const sunVersionCheck = (seen: SunSeen): Check =>
+  exactlyOne(
+    'nfc_tag_keys',
+    { keyset_id: seen.keysetId, version: seen.keyVersion, state: ne('retired') },
+    'keyset_id',
+    'stale',
+  );
+
 /**
  * Refuses the batch unless the keyset is still enabled and this read is still newer than the tag's counter,
  * in the grant's own transaction: of two acts on one read exactly one passes.
  */
 export const sunFreshCheck = (tagId: string, seen: SunSeen): Check[] => [
   sunKeysetCheck(seen),
+  sunVersionCheck(seen),
   exactlyOne('nfc_tag_sun', fresh(tagId, seen), 'tag_id', 'stale'),
 ];
 
@@ -105,6 +144,7 @@ export const sunFollowCheck = (
   since: number,
 ): Check[] => [
   sunKeysetCheck(seen),
+  sunVersionCheck(seen),
   exactlyOne(
     'nfc_tag_sun',
     { tag_id: tagId, keyset_id: seen.keysetId, ctr: seen.ctr, key_version: seen.keyVersion },
