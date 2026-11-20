@@ -14,6 +14,8 @@ import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
+import { enforceFeatures, type FeatureRule, trackFeatures } from './feature-guard.ts';
+import { serviceContext } from './service-context.ts';
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
@@ -181,9 +183,13 @@ export type RouteAuth =
    * key's scope): `register` turns a success response without that proof into a 500
    * AUTHORITY_UNPROVEN. `session: 'admin'` takes an admin session instead of any tenant session.
    */
-  | { scope: ScopeRule; capability?: OrgCapability; session?: 'admin' }
-  /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header. */
-  | { human: true; requestMode?: boolean }
+  | { scope: ScopeRule; capability?: OrgCapability; session?: 'admin'; feature?: FeatureRule }
+  /**
+   * A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header.
+   * `feature` (needs `requestMode`) is an entitlement the organization must have, checked with the org's
+   * authority in `tenantAuthorityOf`, for a key as well as a session.
+   */
+  | { human: true; requestMode?: boolean; feature?: FeatureRule }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
   | { platform: PlatformScope };
 
@@ -246,6 +252,7 @@ function sessionKindOf(auth: RouteAuth): SessionKind {
 export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const rule = 'scope' in auth ? auth.scope : null;
   const capability = 'scope' in auth ? auth.capability : undefined;
+  const feature = 'platform' in auth ? undefined : auth.feature;
   const sessionKind = sessionKindOf(auth);
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
@@ -266,7 +273,16 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       // tenantAuthorityOf refuses them, as it always has.
       if (sessionKind !== 'admin') verifiedScopes.set(scoped, needed);
       if (capability) capabilityState.set(scoped, { capability, proven: false });
+      // A key is API: `api` must allow it (read for GET and HEAD, full for the rest). A terminal's
+      // scans:write is scanning, not API, so it is exempt.
+      trackFeatures(
+        scoped,
+        feature,
+        needed === 'scans:write' ? undefined : { key: 'api', atLeast: isRead(c) ? 'read' : 'full' },
+      );
       c.set('auth', scoped);
+      // An org-bound key names its org; a platform key is checked per org in tenantAuthorityOf.
+      if (key.orgId !== null) await enforceFeatures(serviceContext(c), scoped, key.orgId);
       return next();
     }
     const session = await sessionOrThrow(c);
@@ -274,6 +290,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };
       if (capability) capabilityState.set(principal, { capability, proven: false });
+      trackFeatures(principal, feature, undefined);
       c.set('auth', principal);
     }
     await csrfGuard(c, session);

@@ -1,5 +1,6 @@
 import type { AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { waiveFeature } from '../../platform/feature-guard.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { loadUserAccessRevision } from '../passes/repo-access-revision.ts';
@@ -31,6 +32,8 @@ export async function authorizeTemplateWrite(
     return authority;
   }
   if (!auth.roles.includes('admin')) throw new ForbiddenError();
+  // Platform-owned templates belong to no org, so a route's declared feature has nothing to check.
+  waiveFeature(auth);
   const authority: PlatformSessionAuthority = {
     kind: 'platform',
     userId: auth.userId,

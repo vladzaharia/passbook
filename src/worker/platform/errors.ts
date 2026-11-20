@@ -11,6 +11,8 @@ export interface AppErrorOptions {
   detail?: string;
   issues?: FieldIssue[];
   headers?: Record<string, string>;
+  /** The entitlement key a FEATURE_NOT_INCLUDED refusal names. */
+  feature?: string;
   cause?: unknown;
 }
 
@@ -20,6 +22,7 @@ export class AppError extends Error {
   readonly status: number;
   readonly issues?: FieldIssue[];
   readonly headers?: Record<string, string>;
+  readonly feature?: string;
 
   constructor(code: string, status: number, message: string, options: AppErrorOptions = {}) {
     super(message, options.cause === undefined ? undefined : { cause: options.cause });
@@ -28,6 +31,7 @@ export class AppError extends Error {
     this.status = status;
     if (options.issues) this.issues = options.issues;
     if (options.headers) this.headers = options.headers;
+    if (options.feature) this.feature = options.feature;
   }
 }
 
@@ -90,6 +94,13 @@ export class UpstreamError extends AppError {
 export class UnavailableError extends AppError {
   constructor(message = 'Service unavailable. Try again later.', code = 'UNAVAILABLE') {
     super(code, 503, message);
+  }
+}
+
+/** 403 `FEATURE_NOT_INCLUDED`: the organization's entitlements lack `feature` (the request guard's refusal). */
+export class FeatureNotIncludedError extends AppError {
+  constructor(feature: string, message: string) {
+    super('FEATURE_NOT_INCLUDED', 403, message, { feature });
   }
 }
 
@@ -190,6 +201,7 @@ export interface Problem {
   detail: string;
   requestId?: string;
   issues?: FieldIssue[];
+  feature?: string;
 }
 
 const TITLES: Record<number, string> = {
@@ -227,9 +239,10 @@ export function toProblem(
   let detail = 'Something went wrong. Try again later.';
   let issues: FieldIssue[] | undefined;
   let headers: Record<string, string> | undefined;
+  let feature: string | undefined;
 
   if (error instanceof AppError) {
-    ({ status, code, issues, headers } = error);
+    ({ status, code, issues, headers, feature } = error);
     detail = error.message;
   } else if (error instanceof ZodError) {
     status = 422;
@@ -249,6 +262,7 @@ export function toProblem(
     detail,
     ...(requestId ? { requestId } : {}),
     ...(issues?.length ? { issues } : {}),
+    ...(feature ? { feature } : {}),
     ...(headers ? { headers } : {}),
   };
 }
