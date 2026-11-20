@@ -1,0 +1,117 @@
+import { developerSandboxGrant } from '../../jobs/developer-sandbox.ts';
+import { rawCheck } from '../../platform/authority-checks.ts';
+import { maxNow } from '../../platform/authority-expr.ts';
+import { addOrgEntitlements } from '../../platform/entitlements.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { grantedAudit } from '../audit/repo-granted.ts';
+
+/** A closed sandbox's window to export, like any closed org (`CLOSE_WINDOW_MS`). */
+const CLOSE_WINDOW_MS = 30 * 86_400_000;
+
+export interface NewSandbox {
+  id: string;
+  orgId: string;
+  slug: string;
+  name: string;
+  userId: string;
+  email: string;
+  sessionIdHash: string;
+  membershipId: string;
+  invitationId: string;
+  invitationHash: string;
+  now: number;
+}
+
+/**
+ * `platform.job.developer_sandbox.create`: the org (kind `developer`, preset `developer`), the person as its
+ * admin and the sandbox record, in one batch. It commits only while the person's session is live and they
+ * have no sandbox: a refusal leaves nothing behind.
+ */
+export async function insertSandbox(ctx: ServiceContext, s: NewSandbox): Promise<void> {
+  const live = rawCheck(
+    'actor',
+    `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
+      WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
+        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+    [s.sessionIdHash, s.userId, s.now, s.now],
+  );
+  const none = rawCheck(
+    'config',
+    'NOT EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.user_id = ?)',
+    [s.userId],
+  );
+  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.create', [live, none]);
+  g.insertSelect(
+    'orgs',
+    ['id', 'slug', 'name', 'status', 'kind', 'branding', 'created_at', 'updated_at'],
+    [s.orgId, s.slug, s.name, 'active', 'developer', '{}', s.now, s.now],
+  );
+  addOrgEntitlements(g, s.orgId, 'developer', s.now);
+  g.insertSelect(
+    'org_invitations',
+    ['id', 'org_id', 'email', 'roles', 'token_hash', 'created_at', 'expires_at', 'accepted_at'],
+    [
+      s.invitationId,
+      s.orgId,
+      s.email,
+      '["org_admin"]',
+      s.invitationHash,
+      s.now,
+      s.now + 1000,
+      s.now,
+    ],
+  );
+  g.insertSelect(
+    'org_memberships',
+    ['id', 'org_id', 'user_id', 'invitation_id', 'roles', 'created_at'],
+    [s.membershipId, s.orgId, s.userId, s.invitationId, '["org_admin"]', s.now],
+  );
+  g.insertSelect(
+    'developer_sandboxes',
+    ['id', 'org_id', 'user_id', 'created_at'],
+    [s.id, s.orgId, s.userId, s.now],
+  );
+  grantedAudit(g, ctx, {
+    orgId: s.orgId,
+    actorType: 'user',
+    actorId: s.userId,
+    action: 'developer_sandbox.create',
+    targetType: 'org',
+    targetId: s.orgId,
+  });
+  await g.commit();
+}
+
+/**
+ * `platform.job.developer_sandbox.close`: the idle sweep closes an active sandbox org and records why. False
+ * when the org was no longer active.
+ */
+export async function closeSandbox(ctx: ServiceContext, orgId: string): Promise<boolean> {
+  const now = ctx.clock.now();
+  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.close', [], orgId);
+  g.update('orgs', {
+    set: {
+      status: 'deleted',
+      default_identity_id: null,
+      closed_at: now,
+      purge_after: now + CLOSE_WINDOW_MS,
+      updated_at: maxNow(now),
+    },
+    where: { id: orgId, status: 'active', kind: 'developer' },
+    returning: ['id'],
+  });
+  g.update('developer_sandboxes', {
+    set: { closed_at: now, close_reason: 'idle' },
+    where: { org_id: orgId, closed_at: null },
+  });
+  grantedAudit(g, ctx, {
+    orgId,
+    actorType: 'system',
+    action: 'developer_sandbox.close',
+    targetType: 'org',
+    targetId: orgId,
+    detail: { reason: 'idle' },
+  });
+  const [closed] = await g.commit();
+  return (closed?.results.length ?? 0) > 0;
+}

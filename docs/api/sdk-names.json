@@ -307,6 +307,14 @@
     "resource": "deliveries",
     "method": "list"
   },
+  "developer.getSandbox": {
+    "resource": "developer.sandbox",
+    "method": "retrieve"
+  },
+  "developer.postSandbox": {
+    "resource": "developer.sandbox",
+    "method": "create"
+  },
   "entitlements.getOrgsByIdEntitlements": {
     "resource": "orgs.entitlements",
     "method": "retrieve"

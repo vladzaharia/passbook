@@ -14300,6 +14300,19 @@
           "undoneAt"
         ]
       },
+      "DeveloperSandboxCreateParams": {
+        "type": "object",
+        "properties": {
+          "turnstileToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "turnstileToken"
+        ]
+      },
       "InvitationsCreateParams": {
         "type": "object",
         "properties": {
@@ -26042,6 +26055,239 @@
             "session": []
           }
         ]
+      }
+    },
+    "/api/v1/developer/sandbox": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Make your developer sandbox: a test organization whose passes are previews",
+        "operationId": "developer.postSandbox",
+        "tags": [
+          "developer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeveloperSandboxCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgSlug": {
+                      "type": "string"
+                    },
+                    "templateId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "previewOnly": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "closedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "key": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "secret": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "test"
+                          ]
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "secret",
+                        "mode",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "orgSlug",
+                    "templateId",
+                    "previewOnly",
+                    "createdAt",
+                    "closedAt",
+                    "key"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "create"
+        }
+      },
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Your developer sandbox, or null",
+        "operationId": "developer.getSandbox",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sandbox": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgSlug": {
+                          "type": "string"
+                        },
+                        "templateId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "previewOnly": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "closedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "orgId",
+                        "orgSlug",
+                        "templateId",
+                        "previewOnly",
+                        "createdAt",
+                        "closedAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "sandbox"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "retrieve"
+        }
       }
     },
     "/api/v1/orgs/{id}/entitlements": {

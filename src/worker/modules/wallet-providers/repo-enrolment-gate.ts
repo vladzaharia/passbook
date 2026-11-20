@@ -1,5 +1,5 @@
 import { first } from '../../platform/db.ts';
-import { notPreviewOnlySql } from '../developer/fence.ts';
+import { notPreviewOnlySql } from '../developer/repo-fence.ts';
 import type { WalletProvider } from './instance-types.ts';
 
 export interface EnrolmentGateRow {

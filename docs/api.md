@@ -293,6 +293,12 @@ Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google
 
 `FEATURE_LIMIT_REACHED` (403) carries `feature`, `limit` and `used`: a create would pass the organization's cap for that feature. It covers live and test passes, templates, members (pending invitations count), API keys, scanner devices, webhook endpoints, connections, broadcasts a day and join cards a day (a join visitor sees only the daily-limit answer). A downgrade never removes anything: what exists stays, only new creates are refused, and a removed or revoked item frees its slot. A pass import that reaches the limit stops creating: it reports the rest as `skipped` (`progress.skipped`, row code `FEATURE_LIMIT_REACHED`) and still applies its updates. A connection sync records each refused record as failed and goes on. Daily limits count per mode, so test-mode work never uses up the live allowance. Emails a day (`email.perDay`) lower the organization's own daily email cap and answer `EMAIL_RATE_LIMITED`.
 
+## Developer sandbox
+
+`POST /api/v1/developer/sandbox` (a signed-in person: session, CSRF and a Turnstile token; never a key) makes your sandbox, once per person: a `developer` organization with you as admin, a Test personal key (`pbp_test_...`, 30 days, the secret shown once) and a "Quickstart ticket" template released in Test. `GET` reads it back.
+
+A sandbox pass is a preview. Nothing in a sandbox is ever signed, added to a wallet, pushed or mailed: issue and send calls answer with the same shapes, `downloadUrl` is the TEST preview page (`/developers/preview/<token>`), and mail lands in the test inbox. `GET /p/<token>/pass.pkpass` answers `SANDBOX_PREVIEW_ONLY` (409). A sandbox never holds Live: a Live key or request is refused. Its plan is the `developer` preset (500 test passes, 10 templates, 3 webhook endpoints); a create at a cap answers `SANDBOX_QUOTA` (403) with `feature`, `limit` and `used`, as `FEATURE_LIMIT_REACHED` does elsewhere. A sandbox with no activity for 90 days closes.
+
 ## Approved template releases
 
 `GET /api/v1/templates/eligible?orgId=<org>&mode=live&provider=apple` returns a bounded page

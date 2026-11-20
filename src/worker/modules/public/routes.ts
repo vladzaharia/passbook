@@ -17,9 +17,8 @@ import {
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
-import { channelGate, recordCopy } from '../channels/gate.ts';
+import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { codesReplacedNotice } from '../channels/service.ts';
-import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
@@ -257,8 +256,7 @@ register(
     const pass = await passForToken(ctx, c.req.valid('param').token);
     // Gate before the snapshot: a flip landing between them serves one live copy, and the version
     // bump it causes trips the snapshot check below.
-    await assertNotPreviewOnly(ctx.env.DB, pass.orgId);
-    await channelGate(ctx, pass, 'apple');
+    await appleFileGate(ctx, pass);
     const snapshot = await capturePassSnapshot(ctx, pass);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
     try {

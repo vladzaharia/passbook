@@ -51,6 +51,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'broadcast.send': a('Message sent', I.updateDevices, 'info'),
   'broadcast.update': a('Message edited', I.edit, 'info'),
   'broadcast.retry': a('Message sent again', I.updateDevices, 'info'),
+  'developer_sandbox.close': a('Developer sandbox closed', Pause, 'warning'),
+  'developer_sandbox.create': a('Developer sandbox made', ENTITY.org.icon, 'success'),
   'message_rule.create': a('Message rule created', ENTITY.broadcast.icon, 'success'),
   'message_rule.update': a('Message rule edited', I.edit, 'info'),
   'message_rule.pause': a('Message rule paused', Pause, 'warning'),
