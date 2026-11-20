@@ -22985,6 +22985,38 @@
             "additionalProperties": false
           }
         ]
+      },
+      "NfcKeysetsReenrollParams": {
+        "type": "object",
+        "properties": {
+          "toKeysetId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "toKeysetId"
+        ],
+        "additionalProperties": false
+      },
+      "NfcKeysetsImportTagsParams": {
+        "type": "object",
+        "properties": {
+          "csv": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60000
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "csv",
+          "dryRun"
+        ],
+        "additionalProperties": false
       }
     },
     "parameters": {
@@ -94995,6 +95027,10 @@
           }
         },
         "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "revokeKey"
+        },
         "security": [
           {
             "session": []
@@ -95025,18 +95061,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "toKeysetId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64
-                  }
-                },
-                "required": [
-                  "toKeysetId"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/NfcKeysetsReenrollParams"
               }
             }
           }
@@ -95174,6 +95199,10 @@
           }
         },
         "operationId": "nfc-keysets.postNfcKeysetsByIdReenrol",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "reenroll"
+        },
         "security": [
           {
             "session": []
@@ -95204,22 +95233,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "csv": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 60000
-                  },
-                  "dryRun": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "csv",
-                  "dryRun"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/NfcKeysetsImportTagsParams"
               }
             }
           }
@@ -95313,6 +95327,10 @@
           }
         },
         "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+        "x-sdk": {
+          "resource": "nfc.keysets",
+          "method": "importTags"
+        },
         "security": [
           {
             "session": []
