@@ -1,6 +1,9 @@
 -- A desk mark-out or an auto exit at an event place no longer drops the pass from the event's retained totals. The exit
 -- moves the presence past the check-in's proof, so the retained gate comes from the exit's own signed
--- proof. Proofs written before this carry no snapshots and retain nothing, as before.
+-- proof. Proofs written before this carry no snapshots and retain nothing, as before. The check-in (or
+-- undo) the exit followed must still have a valid proof of its own; an undo row only counts with snapshots.
+-- Known undercount: a gate shared across events (empty or day scope) that another event's check-in moved on
+-- no longer names this event's check-in, so the pass is not kept through its exit.
 DROP TRIGGER scan_retained_gates_insert_guard;
 CREATE TRIGGER scan_retained_gates_insert_guard BEFORE INSERT ON scan_retained_gates
 WHEN EXISTS (SELECT 1 FROM scan_retained_gates WHERE scan_id=NEW.scan_id)
@@ -70,7 +73,10 @@ WHEN EXISTS (SELECT 1 FROM scan_retained_gates WHERE scan_id=NEW.scan_id)
       AND presence.scope='event:' || s.event_id AND presence.last_scan_id=s.id
     JOIN scans c ON c.id=json_extract(proof.gate_snapshot,'$.lastScanId') AND c.pass_id=p.id
       AND c.org_id=s.org_id AND c.mode=s.mode AND c.event_id=s.event_id AND c.state='done' AND c.outcome='ok'
-      AND c.action_kind='check_in'
+      AND c.action_kind IN ('check_in','undo')
+    JOIN scan_retention_proofs cp ON cp.scan_id=c.id AND cp.org_id=c.org_id AND cp.mode=c.mode
+      AND cp.pass_ref=proof.pass_ref AND cp.excluded=0 AND cp.invalidated=0 AND cp.occupancy_invalidated=0
+      AND (c.action_kind='check_in' OR cp.gate_snapshot IS NOT NULL)
     JOIN scan_gates g ON g.pass_id=p.id AND g.org_id=s.org_id AND g.mode=s.mode AND g.template_id=s.template_id
       AND g.action_id=c.action_id AND g.last_scan_id=c.id
     JOIN scan_retention_delete_intents intent ON intent.org_id=s.org_id AND intent.mode=s.mode
@@ -85,7 +91,7 @@ WHEN EXISTS (SELECT 1 FROM scan_retained_gates WHERE scan_id=NEW.scan_id)
       AND json_extract(proof.presence_snapshot,'$.state')='out'
       AND (g.scope='event:' || s.event_id OR g.scope='' OR (length(g.scope)=14
         AND g.scope GLOB 'day:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'))
-      AND NOT EXISTS (SELECT 1 FROM scan_quarantine_exclusions q WHERE q.scan_id=s.id)
+      AND NOT EXISTS (SELECT 1 FROM scan_quarantine_exclusions q WHERE q.scan_id IN (s.id,c.id))
       AND (g.scope IS json_extract(proof.gate_snapshot,'$.scope')
       AND g.kind IS json_extract(proof.gate_snapshot,'$.kind')
       AND g.state IS json_extract(proof.gate_snapshot,'$.state')
@@ -128,7 +134,10 @@ BEGIN
     AND presence.scope='event:' || s.event_id AND presence.last_scan_id=s.id
   JOIN scans c ON c.id=json_extract(proof.gate_snapshot,'$.lastScanId') AND c.pass_id=p.id
     AND c.org_id=s.org_id AND c.mode=s.mode AND c.event_id=s.event_id AND c.state='done' AND c.outcome='ok'
-    AND c.action_kind='check_in'
+    AND c.action_kind IN ('check_in','undo')
+  JOIN scan_retention_proofs cp ON cp.scan_id=c.id AND cp.org_id=c.org_id AND cp.mode=c.mode
+    AND cp.pass_ref=proof.pass_ref AND cp.excluded=0 AND cp.invalidated=0 AND cp.occupancy_invalidated=0
+    AND (c.action_kind='check_in' OR cp.gate_snapshot IS NOT NULL)
   JOIN scan_gates g ON g.pass_id=p.id AND g.org_id=s.org_id AND g.mode=s.mode AND g.template_id=s.template_id
     AND g.action_id=c.action_id AND g.last_scan_id=c.id
   JOIN scan_retention_delete_intents intent ON intent.org_id=s.org_id AND intent.mode=s.mode
@@ -141,7 +150,7 @@ BEGIN
   AND json_extract(proof.presence_snapshot,'$.state')='out'
   AND (g.scope='event:' || s.event_id OR g.scope='' OR (length(g.scope)=14
     AND g.scope GLOB 'day:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'))
-  AND NOT EXISTS (SELECT 1 FROM scan_quarantine_exclusions q WHERE q.scan_id=s.id)
+  AND NOT EXISTS (SELECT 1 FROM scan_quarantine_exclusions q WHERE q.scan_id IN (s.id,c.id))
   AND (g.scope IS json_extract(proof.gate_snapshot,'$.scope')
   AND g.kind IS json_extract(proof.gate_snapshot,'$.kind')
   AND g.state IS json_extract(proof.gate_snapshot,'$.state')

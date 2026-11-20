@@ -93,8 +93,7 @@ interface Held {
 
 /**
  * The check-in gate (unchanged by an exit) and the presence row the exit writes, from the rows the desk
- * read. Null unless the place is an event, the gate still belongs to the entry's check-in and that
- * check-in's ledger row names its action.
+ * read. Null unless the place is an event and the gate's last scan has a ledger row naming its action.
  */
 export async function markOutEffect(
   db: D1Database,
@@ -110,18 +109,22 @@ export async function markOutEffect(
     [orgId, s.passId, s.place],
   );
   if (!held) return null;
+  // The newest check-in gate of the pass: after an undo it is the undo row's, which names the action
+  // in its signed post-undo gate.
   const gate = await first<Record<string, string | number | null>>(
     db,
     `SELECT g.scope, g.kind, g.state, g.count, g.first_at AS firstAt, g.last_at AS lastAt,
        g.last_scan_id AS lastScanId, g.prev_state AS prevState, g.prev_last_at AS prevLastAt,
        g.prev_scan_id AS prevScanId,
-       (SELECT json_extract(e.data, '$.actionIdRef') FROM pass_events e WHERE e.pass_id = g.pass_id
-         AND e.org_id = g.org_id AND e.mode = g.mode
+       (SELECT COALESCE(json_extract(e.data, '$.actionIdRef'), json_extract(e.data, '$.postUndoGate.actionIdRef'))
+         FROM pass_events e WHERE e.pass_id = g.pass_id AND e.org_id = g.org_id AND e.mode = g.mode
          AND (CASE WHEN json_valid(e.data) THEN json_extract(e.data, '$.scanId') END) = g.last_scan_id
          LIMIT 1) AS actionIdRef
      FROM scan_gates g WHERE g.pass_id = ? AND g.org_id = ? AND g.mode = ? AND g.template_id = ?
-       AND g.last_scan_id = ? AND g.kind = 'check_in' AND g.state IN ('in', 'out')`,
-    [s.passId, orgId, mode, s.templateId, held.lastScanId],
+       AND g.kind = 'check_in' AND g.state IN ('in', 'out')
+       AND (g.scope = ? OR g.scope = '' OR g.scope GLOB 'day:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]')
+     ORDER BY g.last_at DESC, g.last_scan_id DESC LIMIT 1`,
+    [s.passId, orgId, mode, s.templateId, s.place],
   );
   if (!gate?.actionIdRef) return null;
   return {

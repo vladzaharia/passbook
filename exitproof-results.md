@@ -21,3 +21,9 @@ Branch fix/desk-markout-totals. Migration 0118_markout_totals.sql. Gate: capped-
 - Changed an existing test: scan-retention-proof (occupancy fixtures) "captures the entry whose state an undo restored, not the unsigned undo row". It protected: an undo row without a proof is never captured and does not block the restored entry. Now new undo rows carry snapshots, so the undo row is captured (state in) and the entry is still captured; count stays 1. Correct because the proof now exists.
 - Zone-place exits and value undos still sign null snapshots.
 - Gate: capped-check PASS (30 files).
+
+## Review follow-ups (third commit)
+- Behaviour change: an auto exit at an event place now carries the event id, so its pass counts in `arrived` (everyone who arrived) and drops from `inside`, live and after deletion. Test asserts arrived 1, inside 0 before deletion. Auto exits written before this keep no event_id (new rows only, no backfill) and still do not count.
+- 0118 exit capture and its guard branch now require the check-in's own proof to be current (same pass_ref, not excluded, invalidated or occupancy-invalidated) and no quarantine on the check-in. Test: an invalidated check-in proof is not kept through its exit.
+- The check-in may be an undo row (an undo-restored entry); an undo row counts only with snapshots, so an undo proof from before 0118 never keeps an exit. `markOutEffect` now takes the pass's newest check-in gate (its action ref from the ledger row or the undo's signed post-undo gate). Tests for both.
+- Known undercount: a gate shared across events (empty or day scope) that another event's check-in moved on no longer names this event's check-in, so the pass is not kept through its exit.
