@@ -98,6 +98,7 @@ export async function buildProjectionCandidate(
     sourceReleaseHash: source.release.candidateHash,
     accountId: account.accountId,
     accountRevision: account.revision,
+    accountEpoch: account.authorityEpoch,
     providerIdentityHash: await providerIdentityHash(
       account,
       projection.schema === 1 && projection.provider === 'samsung'

@@ -56,7 +56,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
     JOIN template_versions pv ON pv.template_id = pc.template_id AND pv.version = pc.version
     JOIN wallet_provider_accounts paccount ON paccount.id = pc.provider_account_id
       AND paccount.org_id = pc.org_id AND paccount.mode = pc.mode AND paccount.provider = pc.provider
-      AND paccount.revision = pc.provider_account_revision AND paccount.credential_id IS NOT NULL
+      AND paccount.authority_epoch = pc.provider_account_epoch AND paccount.credential_id IS NOT NULL
       AND paccount.revoked_at IS NULL
     WHERE (pr.org_id = (${scope.orgIdSql}) AND pr.mode = (${scope.modeSql})
       AND pr.provider = (${scope.providerSql}))

@@ -45,7 +45,7 @@ export function samsungProjectionEvidencePredicateSql(
             AND eh.expires_at = ev.expires_at)))`;
 }
 
-/** The reviewed candidate, credential revision, and tenant grant must still be current in each write. */
+/** The reviewed candidate and tenant grant must still be current in each write; the account join compares epochs. */
 const currentCandidate = `c.provider = 'samsung' AND c.id = ? AND c.org_id = ? AND c.mode = ?
   AND c.candidate_hash = ? AND c.provider_account_id = ? AND c.provider_account_revision = ?
   AND c.provider_identity_hash = ? AND json_valid(c.projection_json)
@@ -104,7 +104,7 @@ export async function hasSamsungProjectionEvidence(
     JOIN orgs owner ON owner.id = c.org_id AND owner.status = 'active'
     JOIN wallet_provider_accounts account ON account.id = c.provider_account_id
       AND account.org_id = c.org_id AND account.mode = c.mode AND account.provider = 'samsung'
-      AND account.revision = c.provider_account_revision AND account.credential_id IS NOT NULL
+      AND account.authority_epoch = c.provider_account_epoch AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
     WHERE ${currentCandidate} AND ${samsungProjectionEvidencePredicateSql('c', '?')}`,
     [...candidateParams(c), ctx.clock.now()],
@@ -134,7 +134,7 @@ export async function beginSamsungProjectionProbe(
       'pending', NULL, ?, NULL, NULL, c.credential_keyset_commitment, c.provider_account_epoch
     FROM template_candidates c JOIN wallet_provider_accounts account ON account.id = c.provider_account_id
       AND account.org_id = c.org_id AND account.mode = c.mode AND account.provider = 'samsung'
-      AND account.revision = c.provider_account_revision AND account.credential_id IS NOT NULL
+      AND account.authority_epoch = c.provider_account_epoch AND account.credential_id IS NOT NULL
       AND account.revoked_at IS NULL
     JOIN orgs owner ON owner.id = c.org_id AND owner.status = 'active'
     WHERE ${currentCandidate} AND ${guard.sql}
@@ -205,7 +205,7 @@ export async function completeSamsungProjectionProbe(
         AND json_extract(c.projection_json, '$.cardSubType') = ev.card_sub_type
         AND json_extract(c.projection_json, '$.countryCode') = ev.country_code
       JOIN wallet_provider_accounts account ON account.id = ev.account_id AND account.org_id = ev.org_id
-        AND account.mode = ev.mode AND account.provider = 'samsung' AND account.revision = ev.account_revision
+        AND account.mode = ev.mode AND account.provider = 'samsung' AND account.authority_epoch = ev.account_epoch
         AND account.credential_id IS NOT NULL AND account.revoked_at IS NULL
       JOIN orgs owner ON owner.id = ev.org_id AND owner.status = 'active'
       WHERE ev.status = 'pending' AND ev.probe_id = ? AND ${currentCandidate}

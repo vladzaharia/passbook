@@ -345,16 +345,18 @@ describe('resuming and edge cases of the system job', () => {
     },
   );
 
-  it('the revoke proof exempts the version author from a system candidate only', async () => {
-    const row = (author: string) =>
+  it('the revoke proof exempts the version author from a Google system candidate only', async () => {
+    const row = (author: string, provider = 'google') =>
       first<{ ok: number }>(
         S.env.DB,
         `SELECT ${versionAuthorIndependentSql('c', 'r.id')} AS ok
-         FROM (SELECT 'u1' AS version_author_id, ? AS author_id) c, (SELECT 'u1' AS id) r`,
-        [author],
+         FROM (SELECT 'u1' AS version_author_id, ? AS author_id, ? AS provider) c, (SELECT 'u1' AS id) r`,
+        [author, provider],
       );
     expect((await row(SYSTEM_AUTHOR))?.ok).toBe(1);
     expect((await row('u2'))?.ok).toBe(0);
+    // Samsung retirement and tombstone proofs keep the raw predicate, so the exemption stops at Google.
+    expect((await row(SYSTEM_AUTHOR, 'samsung'))?.ok).toBe(0);
     expect(walletInstanceProofSql('i', 'o', '1', false, 'revoke')).toContain(
       `author_id = '${SYSTEM_AUTHOR}'`,
     );
