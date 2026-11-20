@@ -110,16 +110,6 @@ export class Grant {
     );
   }
 
-  /** A write outside the grant's `tables` is a programming error. */
-  #allow(table: string, op: 'insert' | 'change' = 'change'): string {
-    return assertTableAllowed(this.purpose, this.#tables, table, op);
-  }
-
-  /** Parts reach tables the builder does not type, so the grant must list its tables. */
-  #need(table: string): string {
-    return assertTableAllowed(this.purpose, this.#tables, table, 'change', true);
-  }
-
   #push(built: BuiltStatement): GrantedStatement {
     if (this.#committed)
       throw new AuthorityError('GRANT_ALREADY_COMMITTED', 'This grant was committed.');
@@ -141,7 +131,9 @@ export class Grant {
   ): GrantedStatement {
     if (verb) joinOnlyInserts(this.principal, verb);
     if (this.#keyed && !may) this.#limitedRefused = true;
-    return this.#push(build(this.#allow(table, op), this.#pin, this.#keyed));
+    // A write outside the grant's `tables` is a programming error.
+    const allowed = assertTableAllowed(this.purpose, this.#tables, table, op);
+    return this.#push(build(allowed, this.#pin, this.#keyed));
   }
 
   update(table: string, options: WriteOptions): GrantedStatement {
@@ -242,7 +234,8 @@ export class Grant {
       this.#push(
         buildPart(this.id, this.scope, p, {
           holder: this.#pin !== undefined,
-          onWrite: (t) => this.#need(t),
+          // Parts reach tables the builder does not type, so the grant must list its tables.
+          onWrite: (t) => assertTableAllowed(this.purpose, this.#tables, t, 'change', true),
         }),
       ),
     );

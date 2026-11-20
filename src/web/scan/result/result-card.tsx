@@ -27,6 +27,7 @@ import './result.css';
 import './identity.css';
 import './motion.css';
 import './result-glance.css';
+import './result-keyfact.css';
 
 export function ResultCard({
   outcome: o,
