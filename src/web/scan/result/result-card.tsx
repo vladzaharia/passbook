@@ -248,7 +248,7 @@ export function ResultCard({
           ) : chip ? (
             <GroupChip outcome={o} onGroup={onGroup} />
           ) : null}
-          {o.reason === 'needs_approval' && desk && o.approvals ? (
+          {o.reason === 'needs_approval' && desk && o.approvals && !glance ? (
             pin ? (
               <ApprovalSheet
                 managers={desk.managers}

@@ -73,6 +73,7 @@ describe('the glance card', () => {
         }}
       />,
     );
-    expect(screen.getByTestId('scan-manager-pin')).toBeVisible();
+    // The handheld's Manager PIN is the dock's (ApprovalDock), not a button on the card.
+    expect(screen.queryByTestId('scan-manager-pin')).toBeNull();
   });
 });

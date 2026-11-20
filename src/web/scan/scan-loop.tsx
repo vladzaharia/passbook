@@ -104,7 +104,10 @@ export function ScanLoop({
     (s.reader.kind === 'barcode' && nativeBarcode) ||
     (s.reader.kind === 'nfc' && nativeCapabilities?.vas.available === true);
   const last = s.recent[0];
-  const result: ScanOutcome | null = resultOf(l, counts);
+  // A handheld keeps the hold on screen while its Manager PIN is with the server.
+  const approving = handheld && l.s === 'applying' ? (l.retry ?? null) : null;
+  const result: ScanOutcome | null = resultOf(l, counts) ?? approving;
+  const desk = deskOf(l, session, dispatch);
   useVerdictHaptic(l.s === 'verdict' ? l.outcome : null);
   useEffect(() => {
     if (needsSessionRefetch(session, s) && requestedRev.current !== counts.configRev) {
@@ -219,7 +222,7 @@ export function ScanLoop({
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
               onGroup={() => dispatch({ type: 'group' })}
-              desk={deskOf(l, session, dispatch)}
+              desk={desk}
               addPhoto={canAddPhoto(session) ? api : undefined}
               tagRead={'input' in l && Boolean(l.input.tag)}
             />
@@ -255,6 +258,8 @@ export function ScanLoop({
               inside={access.inside}
               visitors={access.visitors}
               tags={tags}
+              approval={handheld ? desk : undefined}
+              approving={approving !== null}
             />
           )
         }

@@ -6,6 +6,7 @@ import { holdVerbs } from '../machine/access-view.ts';
 import type { ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
+import { ApprovalDock, type DockApproval } from './approval-dock.tsx';
 import { DockButton, DoorThumbRow } from './dock.tsx';
 
 export function DoorDock({
@@ -16,6 +17,8 @@ export function DoorDock({
   inside,
   visitors,
   tags,
+  approval,
+  approving = false,
 }: {
   outcome: ScanOutcome | null;
   runtime: ScanRuntime;
@@ -23,6 +26,10 @@ export function DoorDock({
   onError: (message: string) => void;
   inside?: { count: number; onOpen: () => void };
   visitors?: { onOpen: () => void };
+  /** A handheld: a `needs_approval` hold offers the Manager PIN tray here, not on the card. */
+  approval?: DockApproval | undefined;
+  /** The PIN is with the server. */
+  approving?: boolean;
   /** Tags: Tap to read (iPhone), Add tag on a result, Assign tag on an unknown tag. */
   tags?: {
     tapToRead: (() => void) | null;
@@ -51,6 +58,8 @@ export function DoorDock({
         onLookUp={() => open(true)}
       />
     );
+  if (approval && outcome.reason === 'needs_approval')
+    return <ApprovalDock outcome={outcome} approval={approval} busy={approving} />;
   const check =
     (outcome.reason === 'check_required' || outcome.reason === 'offline_decide') && outcome.action;
   const verbs = check ? [] : holdVerbs(outcome);

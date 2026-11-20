@@ -13,7 +13,7 @@ export function waitLine(ms: number): string {
   return n >= 60 ? '1 hour' : `${n} min`;
 }
 
-const noteLine = (note: PinNote | undefined, code: boolean) => {
+export const noteLine = (note: PinNote | undefined, code: boolean) => {
   if (!note) return undefined;
   const copy = code ? SCAN_COPY.managerCode : null;
   const locked = copy ? copy.locked : SCAN_COPY.boot.pinLocked;
@@ -100,6 +100,7 @@ export function ApprovalSheet({
             onChange={setPin}
             disabled={locked}
             invalid={error !== undefined}
+            autoComplete="off"
             describedBy={p['aria-describedby']}
           />
         )}
