@@ -5,6 +5,7 @@ import type { Json, PassBeacon, PassLocation, PassStyle, SemanticTags } from '..
 import type {
   BarcodeKind,
   CapabilityId,
+  ItemGroup,
   Support,
   ViewGroup,
   WalletRole,
