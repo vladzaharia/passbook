@@ -322,7 +322,6 @@ export const ScanOutcomeSchema = z.object({
 export type ScanOutcome = z.infer<typeof ScanOutcomeSchema>;
 export type ScanCard = z.infer<typeof ScanCardSchema>;
 export type ScanCounts = z.infer<typeof ScanCountsSchema>;
-
 /** Shared with broadcasts and the passes list. */
 export const ScanTargetSchema = z.union([
   z.object({ eventId: IdSchema, checkedIn: z.boolean() }),
