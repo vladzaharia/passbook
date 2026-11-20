@@ -102,6 +102,15 @@ export async function handleGoogleCallback(
       credentialKeysetCommitment,
     );
     if (!scope) throw rejected();
+    // Released per mode: Test may be on before Live. Nothing is decrypted for an unreleased mode.
+    if (walletProviderReleaseReason('google', scope.mode)) {
+      ctx.log.info('wallet.callback_ignored', {
+        code: 'WALLET_PROVIDER_DISABLED',
+        provider: 'google',
+        reason: 'not_released',
+      });
+      return;
+    }
     const account = await readGoogleCallbackVerification(pinnedCtx, scope);
     await assertCallbackKeyset(ctx, credentialKeyEnv, credentialKeysetCommitment);
     if (!account) throw rejected();

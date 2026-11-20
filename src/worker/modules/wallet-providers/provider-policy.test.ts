@@ -81,6 +81,24 @@ describe('wallet provider policy', () => {
   });
 });
 
+describe('release per mode', () => {
+  it('releases Test before Live, in code and in SQL', () => {
+    const restore = setWalletProvidersEnabledForTest(true, 'test');
+    expect(walletProviderReleaseReason('google', 'test')).toBeNull();
+    expect(walletProviderReleaseReason('google', 'live')).toBe('not_released');
+    expect(walletProviderReleaseReason('google')).toBeNull();
+    expect(walletProviderEnabledSql('i.provider', 'i.mode')).toBe(
+      "((i.provider = 'google' AND i.mode IN ('test')) OR (i.provider = 'samsung' AND i.mode IN ('test')))",
+    );
+    expect(() => assertWalletProviderEnabled('google', 'live')).toThrow(
+      WalletProviderDisabledError,
+    );
+    expect(() => assertWalletProviderEnabled('google', 'test')).not.toThrow();
+    restore();
+    expect(walletProviderReleaseReason('google')).toBe('not_released');
+  });
+});
+
 describe('disabled providers', () => {
   it('keeps account setup and credential storage working', async () => {
     const f = await kitFor({ google: 'configured', samsung: 'configured' });

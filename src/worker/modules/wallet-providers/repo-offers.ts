@@ -100,7 +100,7 @@ export async function walletOfferSnapshotCurrent(
                 AND current_op.version = current_instance.desired_version
                 AND current_op.credential_keyset_commitment = current_instance.credential_keyset_commitment))))
       -- Single SQL form of the provider policy gate (provider-policy.ts).
-      AND ${walletProviderEnabledSql('requested.provider')}
+      AND ${walletProviderEnabledSql('requested.provider', 'p.mode')}
       AND ${walletEnrolmentIssuesSql('p.org_id', 'p.mode', 'requested.provider')}
     ),
     retirement_blocker AS MATERIALIZED (

@@ -3,6 +3,7 @@ import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { REVISION_EXPR } from './repo-accounts.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import type { WalletRuntimeScope } from './runtime-core.ts';
 
@@ -30,10 +31,6 @@ export interface GoogleCallbackBindingInput {
   credentialGeneration: number;
   operationVersion: number;
 }
-
-/** The fence revision: a legacy row's `revision`, a new-model enrolment's `enrolment_revision`. */
-const ACCOUNT_REVISION =
-  'CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END';
 
 /** The path selects one account; receipt admission does not require outbound publishing approval. */
 export function findGoogleCallbackAccount(
@@ -155,7 +152,7 @@ export async function findGoogleCallbackBinding(
     db,
     `SELECT i.id AS instanceId, i.pass_id AS passId,
       i.identity_projection_release_id AS releaseId, i.credential_generation AS credentialGeneration,
-      a.id AS accountId, a.org_id AS orgId, a.mode, ${ACCOUNT_REVISION} AS accountRevision,
+      a.id AS accountId, a.org_id AS orgId, a.mode, ${REVISION_EXPR} AS accountRevision,
       CASE WHEN i.credential_keyset_commitment = b.credential_keyset_commitment
         THEN b.credential_keyset_commitment END AS credentialKeysetCommitment
     FROM wallet_google_callback_bindings b
@@ -164,7 +161,7 @@ export async function findGoogleCallbackBinding(
       AND a.mode = i.mode AND a.provider = i.provider
     WHERE b.account_id = ? AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.org_id = ? AND i.mode = ? AND i.provider = 'google'
-      AND ${ACCOUNT_REVISION} = ? AND a.revoked_at IS NULL
+      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL
       AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND ${credentialRefKeysetSql}`,
     [
@@ -205,7 +202,7 @@ function googleReceiptProof(binding: GoogleCallbackBinding, input: GoogleCallbac
       AND a.mode = i.mode AND a.provider = i.provider`;
   const guard = `i.id = ? AND i.pass_id = ? AND i.identity_projection_release_id = ?
       AND i.credential_generation = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'google' AND a.id = ?
-      AND ${ACCOUNT_REVISION} = ? AND a.revoked_at IS NULL
+      AND ${REVISION_EXPR} = ? AND a.revoked_at IS NULL
       AND (a.credential_id IS NOT NULL OR a.hmac_ciphertext IS NOT NULL)
       AND b.class_id_hash = ? AND b.object_id_hash = ?
       AND i.credential_keyset_commitment = ? AND b.credential_keyset_commitment = ?

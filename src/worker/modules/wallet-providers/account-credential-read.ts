@@ -25,6 +25,7 @@ import {
   type SamsungPromotedRefreshProof,
   type WalletProviderRetirementProof,
 } from './repo-accounts.ts';
+import { findEnrolmentGateRow } from './repo-enrolment-gate.ts';
 
 export {
   readSamsungIssuedRefVerification,
@@ -207,6 +208,16 @@ export async function readSamsungPromotedRefreshCredentials(
     throw new ValidationError();
   await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
   const row = await findSamsungPromotedRefreshAccount(ctx.env.DB, pinned, ctx.clock.now());
+  // A refresh is an outbound call: an Off or held enrolment stops it like any other issuance.
+  if (
+    row &&
+    !walletEnrolmentIssues(
+      await findEnrolmentGateRow(ctx.env.DB, 'samsung', pinned.orgId, pinned.mode),
+    )
+  ) {
+    await assertCredentialKeyset(ctx, pinned.credentialKeysetCommitment);
+    return null;
+  }
   const stored = row
     ? await applyEnrolmentSource(ctx, enrolmentOf(row), await openAccount(ctx, row), {
         versionId: await findOperationPin(ctx.env.DB, pinned.instanceId, {

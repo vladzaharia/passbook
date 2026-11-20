@@ -212,8 +212,8 @@ export async function eligibleWalletProvider(
   channels?: EffectiveChannels,
 ): Promise<EligibleWalletProvider | null> {
   ctx = captureOfferContext(ctx);
-  if (!walletProviderEnabled(provider)) return null;
   const pass = snapshot.pass;
+  if (!walletProviderEnabled(provider, pass.mode)) return null;
   if (!pass.releaseId) return null;
   // The one channel gate: platform, org, template and pass levels, and the design's capability.
   if (!(channels ? channels[provider].on : await channelOn(ctx, pass, provider))) return null;

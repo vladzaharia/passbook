@@ -71,7 +71,7 @@ export interface AccountRow {
  * The fence revision: a legacy row's `revision`, an enrolment without a legacy envelope its
  * `enrolment_revision`. Both columns and the own-key envelope, for the account selects below.
  */
-const REVISION_EXPR =
+export const REVISION_EXPR =
   'CASE WHEN a.credential_id IS NULL THEN a.enrolment_revision ELSE a.revision END';
 const OWN_KEY = 'a.hmac_kek_version, a.hmac_iv, a.hmac_wrapped_dek, a.hmac_ciphertext';
 /** An account the runtime can open: a legacy envelope or its own key. */

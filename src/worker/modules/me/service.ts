@@ -148,7 +148,7 @@ async function toPass(
     channels,
     holderPrint,
     walletOffers,
-    walletIssuance: walletIssuanceByProvider(),
+    walletIssuance: walletIssuanceByProvider(row.mode),
     passJson,
     assetBaseUrl: base === null ? null : `${base}/assets/`,
     assetNames,

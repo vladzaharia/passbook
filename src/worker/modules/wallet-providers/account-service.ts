@@ -99,7 +99,7 @@ function readiness(scope: WalletProviderScope, row: AccountRow | null): WalletPr
     revision: row?.revision ?? 0,
     state,
     externalApprovalVerified: false,
-    issuance: walletProviderIssuance(scope.provider),
+    issuance: walletProviderIssuance(scope.provider, scope.mode),
     updatedAt: row?.updated_at ?? null,
   };
 }

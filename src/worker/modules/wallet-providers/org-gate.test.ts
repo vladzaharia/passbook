@@ -124,6 +124,14 @@ describe('the org layer', () => {
       expect(await reason(e.org.id, 'live')).toBe('not_enrolled');
     });
 
+    it('reads the release per mode before the enrolment', async () => {
+      const org = await k.org();
+      const undo = setWalletProvidersEnabledForTest(false, 'live');
+      expect(await reason(org.id, 'live')).toBe('not_released');
+      expect(await reason(org.id, 'test')).toBe('not_enrolled');
+      undo();
+    });
+
     it('leaves a legacy envelope row as it was', async () => {
       const org = await k.org();
       const m = await k.member(org.id, 'live');

@@ -10,7 +10,6 @@ import { all } from '../../platform/db.ts';
 import { handleError } from '../../platform/error-handler.ts';
 import { enableEnrolment } from './enrolment-service.ts';
 import { googleCallbackUrl } from './google-callback-binding.ts';
-import { clearGoogleCallbackKeyCache } from './google-callback-crypto.ts';
 import {
   type CallbackSigningKeys,
   callbackKeyset,
@@ -125,6 +124,11 @@ describe('Google save callback for a new-model Test enrolment', () => {
       enableEnrolment(kit.ctx, live.auth, orgId, 'google', { expectedRevision: 1 }),
     ).rejects.toMatchObject({ code: 'WALLET_ENROLMENT_PREREQUISITE' });
 
+    // Released per mode: with Test unreleased the callback is acknowledged and nothing is stored.
+    const unrelease = setWalletProvidersEnabledForTest(false, 'test');
+    expect(await post(a.accountId, seeded, 'nonce-unreleased')).toBe(204);
+    expect(await receipts(orgId)).toEqual([]);
+    unrelease();
     // The receipt must postdate the enrolment's source event, which the database stamped.
     kit.clock.set(Date.now() + 2_000);
     expect(await post(a.accountId, seeded, 'nonce-own')).toBe(204);

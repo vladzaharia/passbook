@@ -159,7 +159,7 @@ async function snapshot(
   purpose?: RuntimeCredentialPurpose,
 ): Promise<WalletProviderCredentialSnapshot> {
   // Every provider credential read, hence every outbound provider call, passes this gate.
-  assertWalletProviderEnabled(provider);
+  assertWalletProviderEnabled(provider, scope.mode);
   try {
     // Unpurposed reads have no credential path yet; the provider track that enables issuance adds one.
     if (!purpose) throw runtimeAccountUnavailable();

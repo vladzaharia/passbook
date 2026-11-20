@@ -29,11 +29,12 @@ const GUARDED = [
   'wallet_google_callback_bindings',
 ];
 
+/** Drops every guard on the seeded tables except the WA5 enrolment gate, which the tests exercise. */
 export async function dropInsertGuards(db: D1Database): Promise<void> {
   const rows = await all<{ name: string }>(
     db,
     `SELECT name FROM sqlite_master WHERE type = 'trigger'
-     AND tbl_name IN (${GUARDED.map(() => '?').join(', ')})`,
+     AND tbl_name IN (${GUARDED.map(() => '?').join(', ')}) AND name NOT LIKE 'wallet_enrolment_gate_%'`,
     GUARDED,
   );
   for (const { name } of rows) await run(db, `DROP TRIGGER ${name}`);
@@ -132,6 +133,8 @@ export async function seedInstance(
   pass: Pass,
   e: { accountId: string; revision: number },
   verification: { issuerId: string; objectIdHmacKey: Uint8Array },
+  /** A repeat seed for the same pass needs the next release generation. */
+  generation = 1,
 ) {
   const { kit } = f;
   const db = env.DB;
@@ -178,12 +181,13 @@ export async function seedInstance(
     `INSERT INTO template_releases (id, template_id, org_id, mode, provider, generation, version,
       candidate_hash, content_hash, adapter_revision, adapter_capabilities, audience_policy_revision,
       source, action, candidate_id, approval_id, created_by, created_at, credential_keyset_commitment)
-     VALUES (?, ?, ?, ?, 'google', 1, ?, ?, ?, 1, '[]', 1, 'approved', 'release', ?, ?, 'author', ?, ?)`,
+     VALUES (?, ?, ?, ?, 'google', ?, ?, ?, ?, 1, '[]', 1, 'approved', 'release', ?, ?, 'author', ?, ?)`,
     [
       releaseId,
       pass.templateId,
       pass.orgId,
       pass.mode,
+      generation,
       pass.templateVersion,
       hash,
       hash,

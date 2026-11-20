@@ -39,11 +39,12 @@ const mocks = vi.hoisted(() => ({
   listTargets: vi.fn(),
   beginTarget: vi.fn(),
   finishTarget: vi.fn(),
+  orgReason: vi.fn(),
 }));
-// These cases run on a fake database; the org layer of the gate is covered by org-gate.test.ts.
+// These cases run on a fake database; the org layer answers from `mocks.orgReason` (null: enrolled).
 vi.mock('./provider-policy.ts', async (original) => ({
   ...(await original<typeof import('./provider-policy.ts')>()),
-  walletProviderDisabledReason: async () => null,
+  walletProviderDisabledReason: (...args: unknown[]) => mocks.orgReason(...args),
 }));
 vi.mock('./instance.ts', () => ({
   claimWalletOperation: mocks.claim,
@@ -170,6 +171,7 @@ beforeEach(async () => {
     ctx.env,
   );
   operation = { ...operationFields, credentialKeysetCommitment };
+  mocks.orgReason.mockResolvedValue(null);
   mocks.claim.mockResolvedValue('claimed');
   mocks.fresh.mockResolvedValue(true);
   mocks.getOperation.mockResolvedValue(claimed(operation));
@@ -432,6 +434,27 @@ describe('wallet provider operation fences', () => {
         credentialGeneration: 2,
       }),
     );
+  });
+
+  it('defers an upsert for an org that is not enrolled: no claim, no provider call', async () => {
+    mocks.orgReason.mockResolvedValue('not_enrolled');
+    expect(await runWalletProviderOperation(ctx, operation)).toBe('deferred');
+    expect(mocks.orgReason).toHaveBeenCalledWith(
+      expect.anything(),
+      'google',
+      operation.orgId,
+      operation.mode,
+    );
+    expect(mocks.claim).not.toHaveBeenCalled();
+    expect(mocks.googleClass).not.toHaveBeenCalled();
+    expect(mocks.googleObject).not.toHaveBeenCalled();
+  });
+
+  it('still claims a revoke for an org that is not enrolled', async () => {
+    mocks.orgReason.mockResolvedValue('not_enrolled');
+    await runWalletProviderOperation(ctx, { ...operation, kind: 'revoke' }).catch(() => undefined);
+    expect(mocks.claim).toHaveBeenCalled();
+    expect(mocks.orgReason).not.toHaveBeenCalled();
   });
 
   it('does not issue a second provider request for an already claimed operation', async () => {

@@ -18,18 +18,31 @@ export { walletEnrolmentIssuesSql };
  */
 export type WalletProviderDisabledReason = 'not_released' | 'not_enrolled';
 
-const ENABLED: Record<WalletProvider, boolean> = { google: false, samsung: false };
+type Mode = 'live' | 'test';
+const MODES: readonly Mode[] = ['live', 'test'];
+const PROVIDERS: readonly WalletProvider[] = ['google', 'samsung'];
 
-/** The platform layer alone: for callers with no org (callbacks, platform status, drains). */
+/** Released per provider and mode: Test can be released before Live. */
+const ENABLED: Record<WalletProvider, Record<Mode, boolean>> = {
+  google: { live: false, test: false },
+  samsung: { live: false, test: false },
+};
+
+/**
+ * The platform layer alone: for callers with no org. Without a mode, released means released in
+ * some mode (an early-out before the mode is known); with one, in that mode.
+ */
 export function walletProviderReleaseReason(
   provider: WalletProvider,
+  mode?: Mode,
 ): Extract<WalletProviderDisabledReason, 'not_released'> | null {
-  return ENABLED[provider] ? null : 'not_released';
+  const released = mode ? ENABLED[provider][mode] : MODES.some((m) => ENABLED[provider][m]);
+  return released ? null : 'not_released';
 }
 
-/** True when the platform has released the provider; says nothing about any org. */
-export function walletProviderEnabled(provider: WalletProvider): boolean {
-  return walletProviderReleaseReason(provider) === null;
+/** True when the platform has released the provider (in `mode`, or in any mode); says nothing about any org. */
+export function walletProviderEnabled(provider: WalletProvider, mode?: Mode): boolean {
+  return walletProviderReleaseReason(provider, mode) === null;
 }
 
 /**
@@ -50,22 +63,30 @@ export async function walletProviderDisabledReason(
   db: D1Database,
   provider: WalletProvider,
   orgId: string,
-  mode: 'live' | 'test',
+  mode: Mode,
 ): Promise<WalletProviderDisabledReason | null> {
-  const released = walletProviderReleaseReason(provider);
+  const released = walletProviderReleaseReason(provider, mode);
   if (released) return released;
   const row = await findEnrolmentGateRow(db, provider, orgId, mode);
   return walletEnrolmentIssues(row) ? null : 'not_enrolled';
 }
 
 /** The issuance state every DTO and page reports for a provider. */
-export function walletProviderIssuance(provider: WalletProvider): WalletProviderIssuance {
-  const reason = walletProviderReleaseReason(provider);
+export function walletProviderIssuance(
+  provider: WalletProvider,
+  mode?: Mode,
+): WalletProviderIssuance {
+  const reason = walletProviderReleaseReason(provider, mode);
   return reason ? { state: 'disabled', reason } : { state: 'enabled' };
 }
 
-export function walletIssuanceByProvider(): Record<WalletProvider, WalletProviderIssuance> {
-  return { google: walletProviderIssuance('google'), samsung: walletProviderIssuance('samsung') };
+export function walletIssuanceByProvider(
+  mode?: Mode,
+): Record<WalletProvider, WalletProviderIssuance> {
+  return {
+    google: walletProviderIssuance('google', mode),
+    samsung: walletProviderIssuance('samsung', mode),
+  };
 }
 
 export class WalletProviderDisabledError extends AppError {
@@ -77,27 +98,42 @@ export class WalletProviderDisabledError extends AppError {
   }
 }
 
-export function assertWalletProviderEnabled(provider: WalletProvider): void {
-  const reason = walletProviderReleaseReason(provider);
+export function assertWalletProviderEnabled(provider: WalletProvider, mode?: Mode): void {
+  const reason = walletProviderReleaseReason(provider, mode);
   if (reason) throw new WalletProviderDisabledError(provider, reason);
 }
 
-/** Trusted SQL predicate over a provider column; the only SQL form of the gate. */
-export function walletProviderEnabledSql(providerSql: string): string {
-  if (!/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?$/.test(providerSql))
+const IDENT = /^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?$/;
+
+/**
+ * Trusted SQL predicate over a provider column (and a mode column, when the row has one); the only
+ * SQL form of the release gate. Without a mode column it opens when any mode is released.
+ */
+export function walletProviderEnabledSql(providerSql: string, modeSql?: string): string {
+  if (!IDENT.test(providerSql) || (modeSql !== undefined && !IDENT.test(modeSql)))
     throw new Error('Invalid trusted wallet provider identifier');
-  const enabled = (['google', 'samsung'] as const).filter(walletProviderEnabled);
-  return enabled.length
-    ? `${providerSql} IN (${enabled.map((p) => `'${p}'`).join(', ')})`
-    : '1 = 0';
+  const open = PROVIDERS.map((p) => ({ p, modes: MODES.filter((m) => ENABLED[p][m]) })).filter(
+    (e) => e.modes.length > 0,
+  );
+  if (open.length === 0) return '1 = 0';
+  if (modeSql === undefined || open.every((e) => e.modes.length === MODES.length))
+    return `${providerSql} IN (${open.map((e) => `'${e.p}'`).join(', ')})`;
+  return `(${open
+    .map(
+      (e) =>
+        `(${providerSql} = '${e.p}' AND ${modeSql} IN (${e.modes.map((m) => `'${m}'`).join(', ')}))`,
+    )
+    .join(' OR ')})`;
 }
 
 /** Tests only: flips the gate for the current test file's module registry; returns a restorer. */
-export function setWalletProvidersEnabledForTest(enabled: boolean): () => void {
-  const previous = { ...ENABLED };
-  ENABLED.google = enabled;
-  ENABLED.samsung = enabled;
-  return () => Object.assign(ENABLED, previous);
+export function setWalletProvidersEnabledForTest(enabled: boolean, mode?: Mode): () => void {
+  const previous = structuredClone(ENABLED);
+  for (const p of PROVIDERS)
+    for (const m of MODES) if (!mode || m === mode) ENABLED[p][m] = enabled;
+  return () => {
+    for (const p of PROVIDERS) Object.assign(ENABLED[p], previous[p]);
+  };
 }
 
 /** Tests only: runs a call that must be denied while providers are disabled. */

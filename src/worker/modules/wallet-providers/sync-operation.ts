@@ -77,7 +77,7 @@ export async function runWalletProviderOperation(
   if (!unissuedCandidate) {
     const reason =
       candidate.kind === 'revoke'
-        ? walletProviderReleaseReason(candidate.provider)
+        ? walletProviderReleaseReason(candidate.provider, candidate.mode)
         : await walletProviderDisabledReason(
             ctx.env.DB,
             candidate.provider,
