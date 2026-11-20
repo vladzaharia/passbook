@@ -119,6 +119,8 @@ describe('direction pill, beat and holds', () => {
     const zone = heldIn({ occupancy: { ...heldIn().occupancy!, turnaround: null } });
     expect(holdVerbs(zone)).toEqual([{ kind: 'letIn', label: 'Let in again' }]);
     expect(holdVerbs(full())).toEqual([{ kind: 'letIn', label: 'Let in anyway' }]);
+    // The PIN, not a bare override, is the way past needs_approval.
+    expect(holdVerbs({ ...full(), reason: 'needs_approval' })).toEqual([]);
     for (const reason of ['cooldown', 'not_yet_valid', 'ended', 'capacity_full'] as const)
       expect(
         holdVerbs(

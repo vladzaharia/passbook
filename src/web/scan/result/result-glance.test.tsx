@@ -13,6 +13,15 @@ describe('the glance card', () => {
     expect(screen.getByTestId('scan-keyfact')).toHaveTextContent('6 of 10');
     expect(document.querySelector('.sd-panel')).toBeNull();
   });
+  it('names the manager whose PIN let it through', () => {
+    render(<ResultCard outcome={ok} density="glance" approvedBy="Maya R." />);
+    expect(screen.getByText('Approved by Maya R.')).toBeVisible();
+  });
+  it('says nothing of an approval on a hold', () => {
+    const hold = fixtureOutcome('heads_up', 'already_done', { card: fixtureCard() });
+    render(<ResultCard outcome={hold} density="glance" approvedBy="Maya R." />);
+    expect(screen.queryByText(/Approved by/)).toBeNull();
+  });
   it('is one button that opens the pass with its outcome', () => {
     const onPass = vi.fn();
     render(<ResultCard outcome={ok} density="glance" onPass={onPass} />);
@@ -77,6 +86,7 @@ describe('the glance card', () => {
         }}
       />,
     );
-    expect(screen.getByTestId('scan-manager-pin')).toBeVisible();
+    // The handheld's Manager PIN is the dock's (ApprovalDock), not a button on the card.
+    expect(screen.queryByTestId('scan-manager-pin')).toBeNull();
   });
 });

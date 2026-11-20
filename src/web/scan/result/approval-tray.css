@@ -1,0 +1,188 @@
+/* Manager PIN tray (handheld design 6). */
+.scan-pin {
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.scan-pin-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  padding-block-start: 4px;
+}
+.scan-pin-head > div {
+  min-width: 0;
+}
+.scan-pin-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--sd-accent) 16%, var(--scan-card));
+  color: var(--sd-accent);
+}
+.scan-pin-title {
+  margin: 0;
+  color: var(--sd-strong);
+  font: 650 24px / 28px var(--pk-font-sans);
+  letter-spacing: -0.01em;
+}
+.scan-pin-sub {
+  margin: 0;
+  overflow: hidden;
+  color: var(--sd-muted);
+  font: 400 17px / 22px var(--pk-font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-pin-manager {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+.scan-pin-manager > div {
+  flex: 1;
+  min-width: 0;
+}
+.scan-pin-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--sd-accent) 16%, var(--scan-card));
+  color: var(--sd-accent);
+  font: 650 15px / 1 var(--pk-font-sans);
+}
+.scan-pin-name,
+.scan-pin-role {
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scan-pin-name {
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+}
+.scan-pin-role {
+  color: var(--sd-muted);
+  font: 400 14px / 18px var(--pk-font-sans);
+}
+.scan-pin-change {
+  flex: none;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--sd-accent);
+  font: 600 17px / 22px var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-pin-change:disabled {
+  opacity: 0.4;
+}
+.scan-pin-list {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+.scan-pin-pick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 14px;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--sd-fill-gray);
+  text-align: start;
+  cursor: pointer;
+}
+.scan-pin-pick[aria-pressed="true"] {
+  border-color: var(--sd-accent);
+}
+.scan-pin-pick > span:last-child {
+  min-width: 0;
+}
+
+/* Six slots. Filled is solid; the count is all that is drawn. */
+.scan-pin-dots {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  gap: 20px;
+  padding-block: 6px;
+}
+.scan-pin-dots > span {
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 2px solid var(--sd-muted);
+  border-radius: 50%;
+}
+.scan-pin-dots > span[data-filled] {
+  border-color: var(--sd-strong);
+  background: var(--sd-strong);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scan-pin-dots > span[data-filled] {
+    animation: scan-pin-pop 120ms var(--wl-ease-out);
+  }
+  .scan-pin-dots[data-shake] {
+    animation: scan-pin-shake 320ms var(--wl-ease-out);
+  }
+}
+@keyframes scan-pin-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+@keyframes scan-pin-shake {
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+.scan-pin-note {
+  flex: none;
+  min-height: 20px;
+  margin: 0;
+  color: var(--sd-muted);
+  font: 500 15px / 20px var(--pk-font-sans);
+  text-align: center;
+}
+.scan-pin-note[data-invalid] {
+  color: var(--scan-pin-error);
+}
+.scan-pin-dots[data-invalid] > span {
+  border-color: var(--scan-pin-error);
+}
+.scan-pin-who {
+  margin: 0;
+  overflow: hidden;
+  color: var(--sd-strong);
+  font: 600 17px / 22px var(--pk-font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

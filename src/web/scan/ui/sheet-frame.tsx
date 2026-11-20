@@ -13,7 +13,7 @@ export type Snap = 'full' | 'half';
  * Pulling the grab area: down 90 px (or fast) steps 700 to 460 and closes from 460; up 60 px
  * from 460 goes back to 700. Short of that it settles where it was. No bounce.
  */
-function useSnapDrag(snap: Snap, setSnap: (snap: Snap) => void, onClose: () => void) {
+export function useSnapDrag(snap: Snap, setSnap: (snap: Snap) => void, onClose: () => void) {
   const el = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; t: number; dy: number } | null>(null);
   const settle = () => {

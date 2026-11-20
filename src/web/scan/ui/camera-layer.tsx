@@ -95,7 +95,7 @@ export function CameraLayer({
             {status === 'blocked'
               ? 'Allow camera access in your browser settings, or type a code.'
               : status === 'decoder_failed'
-                ? 'Camera reader unavailable. Use Look up.'
+                ? 'Camera reader unavailable. Enter the code instead.'
                 : status === 'unavailable'
                   ? 'Could not open the camera. Close other camera apps and try again.'
                   : reader
