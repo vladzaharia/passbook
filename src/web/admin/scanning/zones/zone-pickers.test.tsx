@@ -80,7 +80,25 @@ describe('session pickers', () => {
   });
 
   it('removes a chip, stops at 8 and disables Zones on an event session', async () => {
-    const { dialog, writes, user } = await openNew();
+    const gala = {
+      id: 'e1',
+      orgId: 'o1',
+      mode: 'live',
+      name: 'Gala',
+      templateIds: [],
+      match: null,
+      opensAt: 1_800_000_000_000,
+      closesAt: 1_800_003_600_000,
+      timeZone: 'UTC',
+      capacity: null,
+      reentry: false,
+      note: null,
+      status: 'upcoming',
+      arrived: 0,
+      expected: 0,
+      scanners: 0,
+    };
+    const { dialog, writes, user } = await openNew({ '/api/v1/scan-events': () => page([gala]) });
     await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Gate');
     await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
     await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
@@ -89,7 +107,8 @@ describe('session pickers', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Remove Gym' }));
     expect(within(dialog).getByText('Any zone')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('tab', { name: 'Passes' }));
-    await user.click(within(dialog).getByRole('radio', { name: 'Event' }));
+    await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
+    await user.click(await within(dialog).findByRole('checkbox', { name: /Gala/ }));
     await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
     expect(within(dialog).getByRole('button', { name: 'Choose zones' })).toBeDisabled();
     expect(

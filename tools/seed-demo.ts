@@ -63,11 +63,17 @@ const harbor = orgId('harbor-lights');
 // org templates: sign in once, then become org_admin in every org (re-run after uploads below).
 const owner = new Session(base);
 // Magic links go only to known addresses, so a first run invites the owner to an org.
-if (!(await admin.all('/api/v1/users')).some((u) => u.primaryEmail === DEMO_OWNER))
-  await admin.send('POST', `/api/v1/orgs/${northwind}/invitations`, {
-    email: DEMO_OWNER,
-    roles: ['org_admin'],
-  });
+if (!(await admin.all('/api/v1/users')).some((u) => u.primaryEmail === DEMO_OWNER)) {
+  try {
+    await admin.send('POST', `/api/v1/orgs/${northwind}/invitations`, {
+      email: DEMO_OWNER,
+      roles: ['org_admin'],
+    });
+  } catch (error) {
+    // A run that stopped before the sign-in left the invitation; it still admits the owner.
+    if ((error as { code?: string }).code !== 'INVITATION_PENDING') throw error;
+  }
+}
 await owner.magicLink(DEMO_OWNER, mailDir);
 const tenancy = tenancyCommand(DEMO_OWNER);
 const applyTenancy = () =>

@@ -19,6 +19,8 @@ export const ScanWhosInRowSchema = z.object({
   photoUrl: z.string().nullable(),
   /** The access plan's label (an Access card), else null. */
   plan: z.string().nullable(),
+  /** The pass type: the plan label, else the template name. */
+  type: z.string().nullable(),
   /** A visitor's host, from the pass's host input when the template has one. */
   host: z.string().nullable(),
   place: PlaceKeySchema,

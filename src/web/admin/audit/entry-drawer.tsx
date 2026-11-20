@@ -13,6 +13,7 @@ import { formatDateTime } from '../../lib/format.ts';
 import { actorRef, targetRef } from './labels.ts';
 import { describeDetail } from './redact.ts';
 import { RefChip } from './ref-chip.tsx';
+import { ChangesList, settingChanges } from './settings-changes.tsx';
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
 
@@ -27,6 +28,7 @@ export function EntryDrawer({
   onClose: () => void;
 }) {
   const view = describeDetail(entry?.detail);
+  const changes = settingChanges(entry?.detail);
   const target = entry ? targetRef(entry) : undefined;
   const context =
     view.value && typeof view.value === 'object' && !Array.isArray(view.value)
@@ -83,7 +85,17 @@ export function EntryDrawer({
                 { label: 'Request', value: entry.requestId },
               ]}
             />
-            <section aria-label="Detail" className="flex flex-col gap-2">
+            {changes ? (
+              <section aria-label="What changed" className="flex flex-col gap-2">
+                <h3 className="text-sm font-semibold text-fg-strong">What changed</h3>
+                <ChangesList changes={changes} />
+              </section>
+            ) : null}
+            <section
+              aria-label="Detail"
+              hidden={changes !== undefined}
+              className="flex flex-col gap-2"
+            >
               <h3 className="text-sm font-semibold text-fg-strong">Detail</h3>
               {view.kind === 'none' ? (
                 <p className="text-sm text-fg-muted">No detail.</p>
