@@ -66,7 +66,10 @@ export async function retireKey(
   audit: AuditEntry,
 ): Promise<void> {
   const platform = authority.kind === 'platform';
-  if (!platform && authority.capability !== 'integrations:manage') throw new ForbiddenError();
+  // As revoke: a member without `integrations:manage` retires only their own personal key.
+  const own = !platform && authority.capability === 'org:read';
+  if (!platform && !own && authority.capability !== 'integrations:manage')
+    throw new ForbiddenError();
   const g = grant(ctx, {
     purpose: platform ? 'platform.api_key.retire' : 'org.api_key.retire',
     principal: platform
@@ -75,7 +78,10 @@ export async function retireKey(
     target: id,
     checks: [
       ...(platform ? [] : capabilityChecks(authority)),
-      exactlyOne('api_keys', platform ? { id, ...NO_ORG } : { id }),
+      exactlyOne(
+        'api_keys',
+        platform ? { id, ...NO_ORG } : own ? { id, membership_id: authority.membershipId } : { id },
+      ),
     ],
     codes: { lineage: 'API_KEY_NOT_FOUND' },
   });
@@ -94,14 +100,20 @@ export interface KeyFilter {
   /** The last id of the previous page. */
   cursor?: string | undefined;
   limit: number;
+  /** A membership id: only that member's personal keys, in SQL, whatever else the caller names. */
+  mine?: string | undefined;
 }
 
-function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state'>) {
+function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine'>) {
   const where: string[] = [];
   const params: SqlValue[] = [f.orgId];
   where.push('k.org_id IS ?');
   if (f.state === 'live') where.push('k.revoked_at IS NULL');
   if (f.state === 'revoked') where.push('k.revoked_at IS NOT NULL');
+  if (f.mine !== undefined) {
+    where.push("k.kind = 'personal' AND k.membership_id = ?");
+    params.push(f.mine);
+  }
   return { where, params };
 }
 
@@ -125,8 +137,8 @@ export function listKeys(db: Db, f: KeyFilter, platform: boolean) {
   );
 }
 
-export async function countRevoked(db: Db, orgId: string | null): Promise<number> {
-  const { where, params } = keyWhere({ orgId, state: 'revoked' });
+export async function countRevoked(db: Db, orgId: string | null, mine?: string): Promise<number> {
+  const { where, params } = keyWhere({ orgId, state: 'revoked', mine });
   const row = await first<{ n: number }>(
     db,
     `SELECT count(*) AS n FROM api_keys k WHERE ${where.join(' AND ')}`,

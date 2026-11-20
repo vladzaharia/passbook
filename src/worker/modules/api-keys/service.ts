@@ -51,13 +51,18 @@ export async function listApiKeys(
   authority: ApiKeyAuthority,
 ): Promise<{ items: ApiKeyDto[]; nextCursor: string | null; revokedCount: number }> {
   const orgId = authorityOrgId(authority);
+  // A member without `integrations:read` (authorized as `org:read`) sees only their own personal keys.
+  const mine =
+    authority.kind === 'session' && authority.capability === 'org:read'
+      ? authority.membershipId
+      : undefined;
   const [rows, revokedCount] = await Promise.all([
     repo.listKeys(
       ctx.env.DB,
-      { ...query, orgId, limit: query.limit + 1 },
+      { ...query, orgId, limit: query.limit + 1, mine },
       seesAccountEmails(authority),
     ),
-    repo.countRevoked(ctx.env.DB, orgId),
+    repo.countRevoked(ctx.env.DB, orgId, mine),
   ]);
   const page = rows.slice(0, query.limit);
   const resources = await repo.keyResources(

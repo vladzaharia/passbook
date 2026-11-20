@@ -551,10 +551,12 @@ describe('explicit management scope', () => {
         ).status,
       ).toBe(403);
     }
+    // Before: 403 for a role without integrations:read. Now 200, with that member's own personal keys
+    // only: the org's service key above is not in it (api-tokens.test.ts covers the rest).
     const author = await memberHeaders(org.id, 'template_author', true);
-    expect(
-      (await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers: author.headers })).status,
-    ).toBe(403);
+    const own = await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers: author.headers });
+    expect(own.status).toBe(200);
+    expect(((await own.json()) as { items: unknown[] }).items).toEqual([]);
     expect(
       await first(h.env.DB, 'SELECT revoked_at FROM api_keys WHERE id = ?', [target.id]),
     ).toEqual({ revoked_at: null });

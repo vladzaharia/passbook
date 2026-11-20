@@ -295,7 +295,11 @@ describe('API key tenant authorization', () => {
     const { session: author } = await member('template_author');
     const key = await makeApiKey(f(), { orgId: org.id });
     const before = await keyState();
-    await expectProblem(await list(author.headers, org.id), 403, 'FORBIDDEN');
+    // Before: listing was 403 for a role without integrations:read. Now it answers with the member's own
+    // personal keys only (api-tokens.test.ts); an org key is never in it.
+    const mine = await list(author.headers, org.id);
+    expect(mine.status).toBe(200);
+    expect(((await mine.json()) as KeyPage).items).toEqual([]);
     await expectProblem(await create(author.headers, keyBody(org.id)), 403, 'FORBIDDEN');
     await expectProblem(await revoke(author.headers, key.id, org.id), 403, 'FORBIDDEN');
 

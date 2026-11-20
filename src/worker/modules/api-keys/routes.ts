@@ -13,7 +13,8 @@ import { limitBody } from '../../platform/body-limit.ts';
 import { BadRequestError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { authorizeApiKeys } from './access.ts';
+import { rolesGranting } from '../orgs/access.ts';
+import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
 import {
   createApiKey,
   isOwnPersonalKey,
@@ -62,7 +63,18 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
-    const authority = await authorizeApiKeys(ctx, c.var.auth, query.orgId, 'integrations:read');
+    // Any member lists their own personal keys; the org's keys need `integrations:read`.
+    const member =
+      query.orgId === null
+        ? null
+        : await authorizeApiKeys(ctx, c.var.auth, query.orgId, 'org:read');
+    const full =
+      member === null ||
+      (member.kind === 'session' &&
+        member.roles.some((role) => rolesGranting('integrations:read').includes(role)));
+    const authority = full
+      ? await authorizeApiKeys(ctx, c.var.auth, query.orgId, 'integrations:read')
+      : (member as ApiKeyAuthority);
     return c.json(await listApiKeys(ctx, query, authority));
   },
 );
@@ -124,8 +136,15 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const input = c.req.valid('json');
-    const authority = await authorizeApiKeys(ctx, c.var.auth, input.orgId, 'integrations:manage');
-    await retireApiKey(ctx, authority, c.req.valid('param').id, input.retireAt);
+    const { id } = c.req.valid('param');
+    // As revoke: a member may retire their own personal key (rotation: make a new one, retire the old).
+    let authority =
+      input.orgId === null
+        ? null
+        : await authorizeApiKeys(ctx, c.var.auth, input.orgId, 'org:read');
+    if (!authority || !(await isOwnPersonalKey(ctx, id, input.orgId, authority)))
+      authority = await authorizeApiKeys(ctx, c.var.auth, input.orgId, 'integrations:manage');
+    await retireApiKey(ctx, authority, id, input.retireAt);
     return c.json({ ok: true as const });
   },
 );

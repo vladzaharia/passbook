@@ -220,6 +220,79 @@ describe('personal keys', () => {
   });
 });
 
+describe('a member without integrations:read and their own personal keys', () => {
+  const personal = (over: object = {}) =>
+    orgBody({ kind: 'personal', expiresAt: h.clock.now() + 30 * DAY, ...over });
+  const ids = async (headers: Record<string, string>, state = '') => {
+    const r = await h.call(`/api/v1/api-keys?orgId=${org.id}${state}`, { headers });
+    expect(r.status).toBe(200);
+    const page = (await r.json()) as { items: { id: string }[]; revokedCount: number };
+    return { ids: page.items.map((i) => i.id), revoked: page.revokedCount };
+  };
+
+  it("lists only their own personal keys: never another member's or a service key", async () => {
+    const a = await member('template_author');
+    const b = await member('template_author');
+    const keyA = (await (await create(a.session.headers, personal())).json()) as CreatedKey;
+    const keyB = (await (await create(b.session.headers, personal())).json()) as CreatedKey;
+    const service = await mint('integration_admin');
+    expect((await ids(a.session.headers)).ids).toEqual([keyA.id]);
+    expect((await ids(b.session.headers)).ids).toEqual([keyB.id]);
+    for (const query of ['&state=live', '&state=revoked', '&limit=1'])
+      expect((await ids(a.session.headers, query)).ids).not.toContain(keyB.id);
+    expect((await ids(a.session.headers)).ids).not.toContain(service.key.id);
+    // A manager still sees every key of the org.
+    expect((await ids(service.session.headers)).ids).toEqual(
+      expect.arrayContaining([keyA.id, keyB.id, service.key.id]),
+    );
+  });
+
+  it('counts only their own revoked keys, and nothing leaks through the cursor', async () => {
+    const a = await member('template_author');
+    const b = await member('template_author');
+    const first = (await (await create(a.session.headers, personal())).json()) as CreatedKey;
+    const second = (await (await create(a.session.headers, personal())).json()) as CreatedKey;
+    const other = (await (await create(b.session.headers, personal())).json()) as CreatedKey;
+    await revoke(b.session.headers, other.id, org.id);
+    await revoke(a.session.headers, first.id, org.id);
+    expect((await ids(a.session.headers)).revoked).toBe(1);
+    const paged = await h.call(`/api/v1/api-keys?orgId=${org.id}&limit=1&cursor=${other.id}`, {
+      headers: a.session.headers,
+    });
+    const body = (await paged.json()) as { items: { id: string }[] };
+    expect(body.items.every((i) => [first.id, second.id].includes(i.id))).toBe(true);
+  });
+
+  it('is refused for a non-member, and an org they are not in stays closed', async () => {
+    const outsider = await platformSession();
+    await expectProblem(
+      await h.call(`/api/v1/api-keys?orgId=${org.id}`, { headers: outsider.headers }),
+      403,
+      'FORBIDDEN',
+    );
+  });
+
+  it("retires their own personal key, but not another member's or a service key", async () => {
+    const a = await member('template_author');
+    const b = await member('template_author');
+    const own = (await (await create(a.session.headers, personal())).json()) as CreatedKey;
+    const theirs = (await (await create(b.session.headers, personal())).json()) as CreatedKey;
+    const service = await mint('integration_admin');
+    const retire = (id: string) =>
+      h.call(`/api/v1/api-keys/${id}/retire`, {
+        method: 'POST',
+        headers: a.session.headers,
+        json: { orgId: org.id, retireAt: h.clock.now() + DAY },
+      });
+    expect((await retire(own.id)).status).toBe(200);
+    await expectProblem(await retire(theirs.id), 403, 'FORBIDDEN');
+    await expectProblem(await retire(service.key.id), 403, 'FORBIDDEN');
+    expect((await row(theirs.id))?.retire_at).toBeNull();
+    expect((await row(service.key.id))?.retire_at).toBeNull();
+    expect((await row(own.id))?.retire_at).toBe(h.clock.now() + DAY);
+  });
+});
+
 describe('platform keys', () => {
   it('need an expiry within 90 days and an IP allowlist, and hold no roles', async () => {
     const { headers } = await platformSession();
