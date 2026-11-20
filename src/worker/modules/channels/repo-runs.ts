@@ -32,6 +32,8 @@ export interface ApplyRun {
   to: Policy | null;
   toRevision: number | null;
   replace: Channel[];
+  /** An entitlement run: the channels the plan blocked before the change. Null for a template save. */
+  fromBlocked: Channel[] | null;
   requestedBy: string;
   dueAt: number;
   updatedAt: number;
@@ -53,6 +55,7 @@ interface RunRow {
   to_channels: string | null;
   to_revision: number | null;
   replace_channels: string;
+  from_blocked: string | null;
   requested_by: string;
   due_at: number;
   updated_at: number;
@@ -64,7 +67,7 @@ interface RunRow {
 }
 
 const COLUMNS = `id, org_id, mode, template_id, state, from_channels, from_revision, to_channels, to_revision,
-  replace_channels, requested_by, due_at, updated_at, cursor, counts, error_code, started_at, finished_at`;
+  replace_channels, from_blocked, requested_by, due_at, updated_at, cursor, counts, error_code, started_at, finished_at`;
 
 const map = (r: RunRow): ApplyRun => ({
   id: r.id,
@@ -77,6 +80,7 @@ const map = (r: RunRow): ApplyRun => ({
   to: r.to_channels === null ? null : parsePolicy(r.to_channels),
   toRevision: r.to_revision,
   replace: JSON.parse(r.replace_channels) as Channel[],
+  fromBlocked: r.from_blocked === null ? null : (JSON.parse(r.from_blocked) as Channel[]),
   requestedBy: r.requested_by,
   dueAt: r.due_at,
   updatedAt: r.updated_at,
