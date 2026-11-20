@@ -1,10 +1,10 @@
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
-import { formatTime } from '../../lib/format.ts';
 import type { ResolvedOutcome } from '../machine/access-events.ts';
 import { savedCount } from '../machine/derive.ts';
 import type { Recent, ScanState } from '../machine/types.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
 import type { StripEntry } from './last-scan-strip.tsx';
+import { sessionTime } from './session-time.ts';
 
 /** The dock strip for the newest scan. A tracked place says which way and where: `In · Gym · 6:41 PM`. */
 export function stripOf(
@@ -14,7 +14,7 @@ export function stripOf(
 ): StripEntry | null {
   if (!last) return null;
   const o = last.outcome;
-  const time = formatTime(last.at);
+  const time = sessionTime(last.at);
   const staff = (o as ResolvedOutcome).resolvedBy;
   const where = o.occupancy && o.kind === 'ok' && o.action?.id !== 'undo' ? o.occupancy : null;
   const meta = staff

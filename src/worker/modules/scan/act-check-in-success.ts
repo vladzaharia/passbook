@@ -227,7 +227,13 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const rest = committed.after.slice(counts.stmts.length);
   const place =
     occ && places
-      ? occupancyAfter(occ, rest.slice(bound.stmts.length + (access ? 1 : 0)), places.loss, wonIt)
+      ? occupancyAfter(
+          occ,
+          rest.slice(bound.stmts.length + (access ? 1 : 0)),
+          places.loss,
+          wonIt,
+          actor.scanner?.name ?? null,
+        )
       : null;
   const reason: ScanReason = closed?.reason ?? place?.lost ?? lost;
   if (!wonIt) {

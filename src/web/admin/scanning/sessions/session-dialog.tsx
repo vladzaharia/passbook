@@ -20,7 +20,7 @@ function withOrganization(draft: SessionDraft, orgId: string): SessionDraft {
   return {
     ...draft,
     orgId,
-    eventId: '',
+    eventIds: [],
     templateIds: [],
     checkIn,
     zoneIds: draft.zoneIds && [],

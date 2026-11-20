@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
+import { apiAs, createPass, uid } from './helpers/api.ts';
+import { cloneMemberBarcode } from './helpers/member-barcode.ts';
 import { pairScanner } from './helpers/pair.ts';
 import { publishTemplateVersion } from './helpers/releases.ts';
 import { readSeed } from './helpers/seed.ts';
@@ -14,11 +15,7 @@ test('scanner undo reverses the check-in, frees the pass, and the next scan chec
     reducedMotion: 'reduce',
   });
   try {
-    const template = await api.send(
-      'POST',
-      `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
-      { orgId, name: uid('Undo template') },
-    );
+    const template = await cloneMemberBarcode(api, orgId, uid('Undo template'));
     const release = await publishTemplateVersion(
       api,
       orgId,

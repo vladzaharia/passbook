@@ -415,6 +415,16 @@
     "name": "legacy-user-detail"
   },
   {
+    "role": "org",
+    "path": "/admin/o/{orgId}/retention",
+    "name": "admin-retention"
+  },
+  {
+    "role": "platform",
+    "path": "/admin/platform/retention",
+    "name": "admin-platform-retention"
+  },
+  {
     "role": "platform",
     "path": "/admin/platform/wallet-accounts",
     "name": "admin-wallet-accounts-migration",
