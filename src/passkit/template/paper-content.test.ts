@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DERIVED_PAPER, type PaperKind, resolvePaper } from './paper.ts';
-import { blueprintPass, SCAN_CODE } from './paper-blueprints.ts';
+import { blueprintPass, SCAN_CODE } from './paper-blueprint-fixtures.ts';
 import { paperContent } from './paper-content.ts';
 import { paperDate, paperZoneInfo, paperZoneOf } from './paper-format.ts';
 import { paperInk } from './paper-ink.ts';
