@@ -10,6 +10,7 @@ export interface TagRow {
   orgId: string;
   mode: Mode;
   system: 'uid' | 'sun';
+  typeId: string | null;
   hint: string;
   label: string | null;
   status: 'active' | 'retired';
@@ -212,6 +213,7 @@ interface TagRaw {
   org_id: string;
   mode: Mode;
   system: 'uid' | 'sun';
+  type_id: string | null;
   hint: string;
   label: string | null;
   status: 'active' | 'retired';
@@ -224,6 +226,7 @@ const toRow = (r: TagRaw): TagRow => ({
   orgId: r.org_id,
   mode: r.mode,
   system: r.system,
+  typeId: r.type_id,
   hint: r.hint,
   label: r.label,
   status: r.status,
@@ -239,7 +242,7 @@ export async function tagByRef(
 ): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, system, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
+    'SELECT id, org_id, mode, system, type_id, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE org_id = ? AND mode = ? AND tag_ref = ?',
     [orgId, mode, ref],
   );
   return r ? toRow(r) : null;
@@ -249,7 +252,7 @@ export async function tagByRef(
 export async function tagTarget(db: Db, id: string): Promise<TagRow | null> {
   const r = await first<TagRaw>(
     db,
-    'SELECT id, org_id, mode, system, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE id = ?',
+    'SELECT id, org_id, mode, system, type_id, hint, label, status, lost_at, lost_by FROM nfc_tags WHERE id = ?',
     [id],
   );
   return r ? toRow(r) : null;

@@ -8,6 +8,7 @@ export const PASSLESS_REASONS = [
   'tag_lost',
   'tag_not_allowed',
   'tag_invalid',
+  'tag_expired',
 ] as const satisfies readonly ScanReason[];
 export type PasslessReason = (typeof PASSLESS_REASONS)[number];
 

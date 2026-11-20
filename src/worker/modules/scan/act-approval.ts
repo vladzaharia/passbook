@@ -104,6 +104,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
           }
         : {}),
     }),
+    ...(actor.tag?.confirm === 'manager' ? [scanPolicy(pa, { kind: 'tag_confirm' })] : []),
     ...(override
       ? [
           // The door's own letInAgain follows the scan to whoever overrides it; `never` closes it for the desk.

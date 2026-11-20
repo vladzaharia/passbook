@@ -14,6 +14,7 @@ type Session = Extract<TenantPassWrite, { kind: 'session' }>;
 /** A tag edit is a console action: the captured session holds passes:operate. */
 export type TagAuthority = Session & { capability: 'passes:operate' };
 
+const DAY_MS = 86_400_000;
 const TAG_TABLES = ['nfc_tags', 'tag_bindings', 'nfc_tag_sun'] as const;
 /** What an enrollment grant writes: its own row, and the binding it creates. */
 export const ENROLL_TABLES = [
@@ -79,7 +80,14 @@ export function endBinding(
 export interface BindPlan {
   tagId: string;
   /** Set when the tag has not been seen: its row is created in the same batch. */
-  newTag: { ref: string; hint: string; label: string | null; system: TagSystemId } | null;
+  newTag: {
+    ref: string;
+    hint: string;
+    label: string | null;
+    system: TagSystemId;
+    /** The tag's type; null is Standard. */
+    typeId?: string | null;
+  } | null;
   /** A SUN read: a new tag's side row starts at its counter, a known tag's moves up to it (or the batch is refused). */
   sun?: SunSeen | null;
   bindingId: string;
@@ -93,6 +101,8 @@ export interface BindPlan {
   holderOwner: string | null;
   /** The tag is reported lost: this bind (a move or a restore) clears that. */
   clearsLost: boolean;
+  /** The binding ends by itself this many days after it is made (the type's `binding_days`). */
+  expiryDays?: number | null;
   /** The lost report this bind clears, kept on the binding so a scanner Undo can restore it. */
   cleared?: { at: number; by: string } | null;
   /** A scanner bind's idempotency key and request hash: a retry replays the result. */
@@ -132,8 +142,16 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
   if (p.newTag)
     g.upsert(
       'nfc_tags',
-      ['id', 'tag_ref', 'system', 'hint', 'label', 'created_at'],
-      [p.tagId, p.newTag.ref, p.newTag.system, p.newTag.hint, p.newTag.label, now],
+      ['id', 'tag_ref', 'system', 'type_id', 'hint', 'label', 'created_at'],
+      [
+        p.tagId,
+        p.newTag.ref,
+        p.newTag.system,
+        p.newTag.typeId ?? null,
+        p.newTag.hint,
+        p.newTag.label,
+        now,
+      ],
       { doNothing: true },
     );
   if (p.sun && p.newTag) enrolSun(g, p.tagId, p.sun, now);
@@ -158,6 +176,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       'request_hash',
       'cleared_lost_at',
       'cleared_lost_by',
+      'expires_at',
     ],
     values: [
       p.bindingId,
@@ -174,6 +193,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       p.idempotency?.hash ?? null,
       p.cleared?.at ?? null,
       p.cleared?.by ?? null,
+      p.expiryDays ? now + p.expiryDays * DAY_MS : null,
     ],
     returning: ['id'],
   });

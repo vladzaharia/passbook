@@ -10,7 +10,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { assertBindable } from './pass-state.ts';
-import { tagsEnabled } from './policy.ts';
+import { bindPolicy, tagsEnabled } from './policy.ts';
 import { ownerIsActive } from './repo-enrollments.ts';
 import { activeBinding, bindingTarget, type PassFacts, passFacts } from './repo-tag-bindings.ts';
 import { lastEndedBinding } from './repo-tag-history.ts';
@@ -65,6 +65,14 @@ async function place(
     const active = await activeBinding(ctx.env.DB, tagId);
     const decision = decideBind(tag, active, pass, { scope, move: false });
     if (decision.status === 'already_bound') return shown(ctx, a, tagId);
+    const policy = await bindPolicy(ctx, {
+      orgId: a.orgId,
+      passId: pass.id,
+      scope,
+      system: tag.system,
+      tag,
+      ending: decision.end?.id ?? null,
+    });
     const plan: BindPlan = {
       tagId,
       newTag: null,
@@ -76,6 +84,7 @@ async function place(
       holderGeneration: pass.credentialGeneration,
       holderOwner: pass.ownerUserId,
       clearsLost: false,
+      expiryDays: policy.expiryDays,
       audited: rebind !== null,
       source: 'admin',
       actor: { type: 'user', id: a.userId },

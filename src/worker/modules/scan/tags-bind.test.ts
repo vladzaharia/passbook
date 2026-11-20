@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { first, run } from '../../platform/db.ts';
-import { TAG_UNDO_MS } from './tags-bind.ts';
+import { TAG_UNDO_MS } from './tags-bind-replay.ts';
 import { type TagScanFixture, tagScanFixture } from './tags-scan-test-fixtures.ts';
 
 let f: TagScanFixture;

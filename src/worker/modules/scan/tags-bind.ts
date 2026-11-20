@@ -13,32 +13,23 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { assertTakesTag } from '../nfc/pass-state.ts';
-import { tagsEnabled } from '../nfc/policy.ts';
+import { assertSessionLevel, bindPolicy, tagsEnabled } from '../nfc/policy.ts';
 import { activeBinding, type PassFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
 import { addBind, type BindPlan, bindChecks, type TagActor } from '../nfc/repo-tags-write.ts';
 import { assuranceOfSystem } from '../nfc/systems/registry.ts';
 import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { verifyApproval } from './approval.ts';
 import type { ScanActor } from './guard.ts';
-import {
-  boundRow,
-  bumpTagCap,
-  cardFacts,
-  liveActorGuard,
-  ownerActiveCheck,
-  replayRow,
-} from './repo-tags-bind.ts';
-import { guardMiss } from './repo-undo-approval-guard.ts';
+import { boundRow, bumpTagCap, cardFacts, ownerActiveCheck } from './repo-tags-bind.ts';
 import { ROLE_RANK } from './rules.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
 import { skippedTitles } from './tag-assurance.ts';
+import { approve, replay, requestHash, TAG_UNDO_MS } from './tags-bind-replay.ts';
 import { cardPass, tagRights } from './tags-inspect.ts';
 import { assertReadMatches, identifyRead, sunUsedMeanwhile } from './tags-sun.ts';
 
@@ -46,70 +37,9 @@ type BindRequest = z.infer<typeof ScanTagBindRequestSchema>;
 type BindResult = z.infer<typeof ScanTagBindResultSchema>;
 type Warning = z.infer<typeof ScanTagWarningSchema>;
 
-/** Undo is on the device that assigned the tag, for this long. */
-export const TAG_UNDO_MS = 10 * 60_000;
 const ATTEMPTS = 3;
 export const TABLES = ['nfc_tags', 'tag_bindings', 'nfc_tag_sun'];
 const CODES = { lineage: 'TAG_HOLDER_CHANGED', stale: 'TAG_HOLDER_CHANGED' } as const;
-
-/** A Manager's PIN for this assign: verified here, pinned in the grant, stored nowhere. */
-async function approve(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  approval: BindRequest['approval'],
-): Promise<{ id: string; authEpoch: number }> {
-  if (actor.terminal || actor.apiKeyId)
-    throw new ForbiddenError('A till cannot approve.', 'API_KEY_NO_APPROVAL');
-  if (!approval) throw new ForbiddenError('A manager must approve this.', 'TAG_APPROVAL_REQUIRED');
-  if (!approval.staffId && actor.settings.staffSignIn)
-    throw new ValidationError('Choose the manager.', [], 'PIN_MANAGER_REQUIRED');
-  const now = ctx.clock.now();
-  const verified = await verifyApproval(ctx, actor, approval, liveActorGuard(actor, now));
-  if (!verified) throw (await guardMiss(ctx.env.DB, actor, now)) ?? new ForbiddenError();
-  return { id: verified.id, authEpoch: verified.authEpoch };
-}
-
-export /** What a bind asked for, without the tag's UID or the card's code. */
-const requestHash = (req: BindRequest, ref: string) =>
-  sha256Hex(JSON.stringify([ref, req.card, req.binding, req.move ?? false, req.label ?? null]));
-
-/** A retry of a bind this device already made: the stored answer, even after Undo. The same key for another request is refused. */
-async function replay(
-  ctx: ServiceContext,
-  scannerId: string,
-  req: BindRequest,
-  ref: string,
-): Promise<BindResult | null> {
-  if (req.preview) return null;
-  const row = await replayRow(ctx.env.DB, scannerId, req.idempotencyKey);
-  if (!row) return null;
-  if (row.requestHash !== (await requestHash(req, ref)))
-    throw new ConflictError(
-      'That request key was used for another assign.',
-      'IDEMPOTENCY_KEY_REUSED',
-    );
-  const live = row.endedAt === null && ctx.clock.now() - row.boundAt <= TAG_UNDO_MS;
-  return {
-    status: 'bound',
-    hint: row.hint,
-    assurance: assuranceOfSystem(row.system),
-    scope: row.scope,
-    bindingId: row.bindingId,
-    card: {
-      passId: row.passId,
-      title: row.title ?? row.templateName,
-      subtitle: row.subtitle,
-      templateName: row.templateName,
-      holderName: row.holderName,
-      photoUrl: null,
-    },
-    ownerAccount: row.ownerActive,
-    skipped: [],
-    warnings: [],
-    lostAt: row.lostAt,
-    undoUntil: live ? row.boundAt + TAG_UNDO_MS : null,
-  };
-}
 
 export const notFound = () => new NotFoundError('Tag not found.', 'TAG_NOT_FOUND');
 
@@ -148,6 +78,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   const { ref, hint } = identity;
   const replayed = await replay(ctx, scannerId, req, ref);
   if (replayed) return replayed;
+  assertSessionLevel(actor.settings.tags?.level, identity.system);
 
   // A Manager PIN stands in for a role below the setting, and is the only way to look a card up by id.
   const manager = rights.role === 'manager';
@@ -221,6 +152,19 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       else if (error.code === 'TAG_HELD_BY_OTHER') warnings.push('held_by_other');
       else throw error;
     }
+    const policy =
+      decision?.status === 'already_bound'
+        ? null
+        : await bindPolicy(ctx, {
+            orgId,
+            passId: pass.id,
+            candidate,
+            scope: req.binding,
+            system: identity.system,
+            tag,
+            typeId: req.typeId,
+            ending: decision?.end?.id ?? null,
+          });
     if (decision?.status === 'replaced')
       warnings.push(active?.scope === 'user' ? 'replaces_user_tag' : 'replaces_pass_tag');
     if (tag?.lostAt != null && !warnings.includes('lost')) warnings.push('lost');
@@ -233,6 +177,15 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       hint: tag?.hint ?? hint,
       assurance: assuranceOfSystem(identity.system),
       scope: req.binding,
+      ...(policy
+        ? {
+            type: policy.type && {
+              id: policy.type.id,
+              name: policy.type.name,
+              use: policy.type.use,
+            },
+          }
+        : {}),
       bindingId,
       card: summary,
       ownerAccount,
@@ -260,7 +213,16 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     const now = ctx.clock.now();
     const plan: BindPlan = {
       tagId: tag?.id ?? ctx.ids.id(),
-      newTag: tag ? null : { ref, hint, label: req.label ?? null, system: identity.system },
+      newTag: tag
+        ? null
+        : {
+            ref,
+            hint,
+            label: req.label ?? null,
+            system: identity.system,
+            typeId: policy?.type?.id ?? null,
+          },
+      expiryDays: policy?.expiryDays ?? null,
       sun: identity.sun,
       bindingId: ctx.ids.id(),
       passId: pass.id,

@@ -2,6 +2,8 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { tenantMatch } from '../../platform/authority-checks.ts';
 import { type SqlValue, stmt } from '../../platform/db.ts';
+import type { TagTypeFacts } from '../nfc/policy.ts';
+import type { TagSystemId } from '../nfc/systems/types.ts';
 import type { ScanTagAuthority } from './actor.ts';
 import { byIdsInStmt } from './repo-lookup.ts';
 import { missWindow } from './repo-miss-authority.ts';
@@ -12,16 +14,20 @@ const TAG_CANDIDATES_READ = 8;
 /** The tag row and its active binding, in the actor's org and mode. */
 export interface TagState {
   id: string;
-  system: string;
+  system: TagSystemId;
   status: string;
   hint: string;
   lostAt: number | null;
+  /** The tag's type; null is Standard. */
+  type: TagTypeFacts | null;
   binding: {
     id: string;
     scope: 'pass' | 'user';
     passId: string;
     userId: string | null;
     userActive: boolean;
+    /** The binding ends by itself at this time (the type's `binding_days`). */
+    expiresAt: number | null;
   } | null;
 }
 
@@ -51,8 +57,11 @@ export const tagStateStmt = (db: D1Database, orgId: string, mode: Mode, ref: str
   stmt(
     db,
     `SELECT t.id, t.system, t.status, t.hint, t.lost_at, b.id AS binding_id, b.scope, b.pass_id, b.user_id,
-      (SELECT u.status FROM users u WHERE u.id = b.user_id) AS user_status
-    FROM nfc_tags t LEFT JOIN tag_bindings b ON b.tag_id = t.id AND b.ended_at IS NULL
+      b.expires_at, (SELECT u.status FROM users u WHERE u.id = b.user_id) AS user_status,
+      y.id AS type_id, y.name AS type_name, y.use AS type_use, y.confirm AS type_confirm,
+      (SELECT group_concat(tt.template_id) FROM nfc_tag_type_templates tt WHERE tt.type_id = y.id) AS type_templates
+    FROM nfc_tags t LEFT JOIN nfc_tag_types y ON y.id = t.type_id
+    LEFT JOIN tag_bindings b ON b.tag_id = t.id AND b.ended_at IS NULL
     WHERE t.org_id = ? AND t.mode = ? AND t.tag_ref = ?`,
     [orgId, mode, ref],
   );
@@ -114,7 +123,7 @@ export const overriddenPassStmt = (db: D1Database, orgId: string, mode: Mode, sc
 
 interface RawTag {
   id: string;
-  system: string;
+  system: TagSystemId;
   status: string;
   hint: string;
   lost_at: number | null;
@@ -123,6 +132,13 @@ interface RawTag {
   pass_id: string | null;
   user_id: string | null;
   user_status: string | null;
+  expires_at: number | null;
+  type_id: string | null;
+  type_name: string | null;
+  type_use: TagTypeFacts['use'] | null;
+  type_confirm: TagTypeFacts['confirm'] | null;
+  /** Comma-separated template ids; ids are UUIDs, so none holds a comma. */
+  type_templates: string | null;
 }
 
 export function tagStateOf(result: D1Result | undefined): TagState | null {
@@ -134,6 +150,16 @@ export function tagStateOf(result: D1Result | undefined): TagState | null {
     status: row.status,
     hint: row.hint,
     lostAt: row.lost_at,
+    type:
+      row.type_id && row.type_name && row.type_use && row.type_confirm
+        ? {
+            id: row.type_id,
+            name: row.type_name,
+            use: row.type_use,
+            confirm: row.type_confirm,
+            templateIds: row.type_templates ? row.type_templates.split(',') : [],
+          }
+        : null,
     binding:
       row.binding_id && row.scope && row.pass_id
         ? {
@@ -142,6 +168,7 @@ export function tagStateOf(result: D1Result | undefined): TagState | null {
             passId: row.pass_id,
             userId: row.user_id,
             userActive: row.user_status === 'active',
+            expiresAt: row.expires_at,
           }
         : null,
   };

@@ -4,7 +4,7 @@ import { AppError, ConflictError, NotFoundError, ValidationError } from '../../p
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { assertPassTakesTag } from './pass-state.ts';
-import { tagsEnabled } from './policy.ts';
+import { bindPolicy, tagsEnabled } from './policy.ts';
 import { activeBinding, type BindingRow, type PassFacts, passFacts } from './repo-tag-bindings.ts';
 import { orgTagCount, type TagRow, tagByRef, tagView } from './repo-tags.ts';
 import {
@@ -28,6 +28,8 @@ export interface BindRequest {
   label?: string | null | undefined;
   /** Take the tag from another holder, or from a lost report. */
   move?: boolean | undefined;
+  /** The type of a new tag; absent: the only type that fits, else the org's default, else Standard. */
+  typeId?: string | undefined;
 }
 
 export type BindStatus = 'bound' | 'already_bound' | 'replaced' | 'moved';
@@ -82,6 +84,24 @@ export function triggerRefusal(error: unknown): AppError | null {
   if (text.includes('tag_binding_owner'))
     return conflict('The pass changed hands. Start again.', 'TAG_HOLDER_CHANGED');
   if (text.includes('tag_binding_tenant')) return notFound();
+  if (text.includes('tag_type_limit'))
+    return conflict('This pass has its tag of that type already.', 'TAG_TYPE_LIMIT');
+  if (text.includes('tag_type_scope'))
+    return conflict(
+      "This tag type can't be assigned that way. Choose another type.",
+      'TAG_TYPE_SCOPE',
+    );
+  if (text.includes('tag_type_template'))
+    return conflict("This tag type can't go on this pass.", 'TAG_TYPE_MISMATCH');
+  if (text.includes('tag_type_archived'))
+    return conflict('This tag type is archived.', 'TAG_TYPE_ARCHIVED');
+  if (text.includes('tag_type_system'))
+    return conflict(
+      'This tag type is for another kind of tag. Choose another type.',
+      'TAG_TYPE_SYSTEM',
+    );
+  if (text.includes('tag_type_tenant'))
+    return new NotFoundError('Tag type not found.', 'TAG_TYPE_NOT_FOUND');
   return null;
 }
 
@@ -120,7 +140,7 @@ export async function bindTag(
         [],
         'TAG_NO_ACCOUNT',
       );
-    await assertPassTakesTag(ctx, orgId, pass.id);
+    const candidate = await assertPassTakesTag(ctx, orgId, pass.id);
     const tag = await tagByRef(ctx.env.DB, orgId, mode, ref);
     // A typed ID is a UID, and a Secure tag is never its UID: it must be tapped.
     if (tag && tag.system !== 'uid')
@@ -129,11 +149,25 @@ export async function bindTag(
     const decision = decideBind(tag, active, pass, req);
     if (decision.status === 'already_bound')
       return { status: 'already_bound', tag: await shown(ctx, orgId, mode, decision.tagId) };
+    const policy = await bindPolicy(ctx, {
+      orgId,
+      passId: pass.id,
+      candidate,
+      scope: req.scope,
+      system: 'uid',
+      tag,
+      typeId: req.typeId,
+      ending: decision.end?.id ?? null,
+      typed: true,
+    });
     if (!tag && (await orgTagCount(ctx.env.DB, orgId, mode)) >= TAGS_PER_ORG_MODE)
       throw conflict('This organization has the most tags allowed.', 'TAG_LIMIT');
     const plan: BindPlan = {
       tagId: tag?.id ?? ctx.ids.id(),
-      newTag: tag ? null : { ref, hint, label: req.label ?? null, system: 'uid' },
+      newTag: tag
+        ? null
+        : { ref, hint, label: req.label ?? null, system: 'uid', typeId: policy.type?.id ?? null },
+      expiryDays: policy.expiryDays,
       bindingId: ctx.ids.id(),
       passId: pass.id,
       scope: req.scope,
