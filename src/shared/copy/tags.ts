@@ -20,7 +20,7 @@ export const TAG_COPY = {
   noAccount: 'No holder account',
   removePerson: {
     title: 'Remove {tag} from {name}?',
-    body: 'It stops working with all {n} of her passes.',
+    body: 'It stops working with all {n} of their passes.',
     confirm: 'Remove',
     passOnly: 'Works with this pass only',
   },

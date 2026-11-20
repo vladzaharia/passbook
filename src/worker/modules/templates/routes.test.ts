@@ -829,6 +829,12 @@ describe('read', () => {
     expect((await call('/previews?ids=')).status).toBe(422);
   });
 
+  it('names the selected org in a preview read with the org in the query', async () => {
+    const res = await call(`/previews?ids=${templateId}&orgId=${org.id}`);
+    const body = (await res.json()) as { items: { passJson: { organizationName: string } }[] };
+    expect(body.items[0]?.passJson.organizationName).toBe('Test Org');
+  });
+
   it('previews a shared starter with no org: no empty back field but the message, no template name as the org', async () => {
     const res = await post(`/${encodeURIComponent('baked:starter-coupon')}/preview`, {});
     expect(res.status).toBe(200);

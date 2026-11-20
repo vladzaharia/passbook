@@ -38,10 +38,12 @@ export const PRINT_COPY = {
   reprintConfirmBody: 'The earlier print stops working at the door.',
   /** Bulk Print on the passes list. */
   bulkNone: 'Nothing to print. Printing is off for these passes.',
-  bulkPreparing: (tickets: string, skipped: number) =>
-    skipped > 0 ? `Preparing ${tickets}. ${skipped} skipped.` : `Preparing ${tickets}.`,
-  bulkReady: (tickets: string, lossy: boolean, skipped = 0) =>
-    `${tickets} ready${skipped > 0 ? `, ${skipped} skipped` : ''}${lossy ? '. Some names could not be shown.' : ''}`,
+  bulkPreparing: (tickets: string, skipped: number, why = '') =>
+    skipped > 0
+      ? `Preparing ${tickets}. ${skipped} skipped${why ? `: ${why}` : ''}.`
+      : `Preparing ${tickets}.`,
+  bulkReady: (tickets: string, lossy: boolean, skipped = 0, why = '') =>
+    `${tickets} ready${skipped > 0 ? `, ${skipped} skipped${why ? `: ${why}` : ''}` : ''}${lossy ? '. Some names could not be shown.' : ''}`,
   bulkDownload: 'Download',
   bulkFailed: 'The PDF could not be made. Try again.',
   bulkSlow: 'The PDF is taking long. Try again shortly.',

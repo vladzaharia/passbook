@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { all } from '../../platform/db.ts';
+import { fixtures, makeOrg } from '../../../../test/helpers/factories.ts';
+import { all, run } from '../../platform/db.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
 import { oidcSignIn } from './test-oidc.ts';
@@ -36,6 +37,31 @@ describe('landing after Polaris ID', () => {
     const holder = await oidcSignIn(h, new Map(), person(['wallet-users']));
     expect(holder.res.headers.get('location')).toBe('/');
     const asked = await oidcSignIn(h, new Map(), person(['wallet-admins']), { next: '/' });
+    expect(asked.res.headers.get('location')).toBe('/');
+  });
+
+  it('sends org members to the console, still honouring next', async () => {
+    const who = person(['wallet-users']);
+    const jar = new Map();
+    await oidcSignIn(h, jar, who);
+    const { user } = await session(jar);
+    const org = await makeOrg(fixtures(h.env));
+    const now = h.clock.now();
+    await run(
+      h.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
+       VALUES ('inv-l', ?, ?, '["org_admin"]', 'th-l', ?, ?, ?)`,
+      [org.id, who.email, now, now + 3600_000, now],
+    );
+    await run(
+      h.env.DB,
+      `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
+       VALUES ('mem-l', ?, ?, 'inv-l', '["org_admin"]', ?)`,
+      [org.id, user.id, now],
+    );
+    const member = await oidcSignIn(h, new Map(), who);
+    expect(member.res.headers.get('location')).toBe('/admin');
+    const asked = await oidcSignIn(h, new Map(), who, { next: '/' });
     expect(asked.res.headers.get('location')).toBe('/');
   });
 

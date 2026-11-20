@@ -8,6 +8,7 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import type { ScopeArg } from '../passes/scope.ts';
+import { getTemplate } from '../templates/repo.ts';
 import { readBulkStatus, writeBulkStatus } from './bulk-status.ts';
 import { bulkKey, bulkMarkerKey } from './pdf-store.ts';
 import { adminWriter } from './repo-write.ts';
@@ -41,7 +42,7 @@ export async function startBulkPrint(
   const writer = adminWriter(authority, caller.actor);
   const printer = { writer, limit: ADMIN_PRINTS_PER_HOUR };
   const printed: string[] = [];
-  const skipped: { id: string; code: string }[] = [];
+  const skipped: BulkPrintStarted['skipped'] = [];
   for (const pass of passes) {
     if (pass.mode !== caller.mode) {
       skipped.push({ id: pass.id, code: 'MODE_MISMATCH' });
@@ -52,7 +53,11 @@ export async function startBulkPrint(
       printed.push(pass.id);
     } catch (error) {
       if (!(error instanceof AppError) || error.status >= 500) throw error;
-      skipped.push({ id: pass.id, code: error.code });
+      const reason =
+        error.code === 'PRINTING_OFF'
+          ? `Paper is off for ${(await getTemplate(ctx.env.DB, pass.templateId))?.name ?? 'this template'}`
+          : error.message;
+      skipped.push({ id: pass.id, code: error.code, reason });
     }
   }
   if (printed.length === 0) return { jobId: '', count: 0, skipped };
