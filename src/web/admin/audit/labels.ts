@@ -1,4 +1,4 @@
-import { Bot, type LucideIcon, Mail, Monitor, Settings, UserCheck } from 'lucide-react';
+import { Bot, Lock, type LucideIcon, Mail, Monitor, Settings, UserCheck } from 'lucide-react';
 import { humanize } from '@/web/lib/actions.ts';
 import { ENTITY, type EntityKind } from '@/web/lib/entities.ts';
 import { entityLabel } from '@/web/lib/entity-label.ts';
@@ -43,6 +43,7 @@ const REFS: Record<string, RefDef> = {
     to: (id) =>
       id.startsWith('org:') ? orgPath(id.slice(4), '/settings') : '/admin/platform/settings',
   },
+  retention_hold: { label: 'Legal hold', icon: Lock },
   system: { label: 'System', icon: Bot },
 };
 
