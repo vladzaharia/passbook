@@ -6,6 +6,7 @@
  * 429 must surface its `Retry-After`.
  */
 import type { z } from 'zod';
+import { MemberPhotoSchema } from '../../../shared/contracts/check-in.ts';
 import {
   ScanTagEnrollmentDoneSchema,
   ScanTagEnrollmentPendingSchema,
@@ -275,6 +276,14 @@ export function createScanApi(deps: ScanApiDeps) {
       request('POST', `/overrides/${encodeURIComponent(id)}/note`, null, { note }),
     markOut: (body: MarkOutRequest, call?: Call) =>
       request('POST', '/mark-out', MarkOutResultSchema, body, call),
+    addPhoto: (passId: string, png: string, call?: Call) =>
+      request(
+        'POST',
+        `/passes/${encodeURIComponent(passId)}/photo`,
+        MemberPhotoSchema,
+        { png, includeInPass: false },
+        call,
+      ),
   };
 }
 

@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { Button } from '../../ui/button.tsx';
+import type { ScanApi } from '../api/scan-api.ts';
 import { TagFlag } from '../assign/tag-flag.tsx';
 import { tagReasonLine } from '../assign/tag-lines.ts';
 import { DisplayPanels } from '../display/display-panels.tsx';
@@ -11,6 +12,7 @@ import { accessLines, directionPill } from '../machine/access-view.ts';
 import { admitLine } from '../machine/admit-line.ts';
 import type { Draft, PinNote, ScanOutcome } from '../machine/types.ts';
 import { verdictLine } from '../machine/verdict-lines.ts';
+import { AddPhoto } from './add-photo.tsx';
 import { ApprovalSheet } from './approval-sheet.tsx';
 import { GroupChip } from './group-chip.tsx';
 import { IdentityRow } from './identity-row.tsx';
@@ -31,7 +33,10 @@ export function ResultCard({
   clock,
   desk,
   tagRead = false,
+  addPhoto,
 }: {
+  /** Set when this device may add photos: the desk card offers it for a pass with none. */
+  addPhoto?: ScanApi | undefined;
   /** The scan was a tag read: an unknown one has its own words. */
   tagRead?: boolean;
   outcome: ScanOutcome;
@@ -218,6 +223,9 @@ export function ResultCard({
               onPass?.(o.card);
             }}
           />
+          {ready && o.card && addPhoto && !d?.identity.photo?.url ? (
+            <AddPhoto api={addPhoto} passId={o.card.passId} />
+          ) : null}
           {o.tag ? (
             <TagFlag
               tag={o.tag}

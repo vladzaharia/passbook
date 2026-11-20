@@ -21,7 +21,7 @@ import { reissueStalePasses } from '../modules/passes/stale-reissue.ts';
 import { remacCapabilityTokens } from '../modules/passes/token-remac.ts';
 import { sweepTransferAssetGc } from '../modules/passes/transfer-asset-gc.ts';
 import { sweepPrintPdfs } from '../modules/prints/pdf-sweep.ts';
-import { dailyReceipts } from '../modules/retention/jobs.ts';
+import { dailyPhotos, dailyReceipts } from '../modules/retention/jobs.ts';
 import { dailySandbox, sweepSandboxForwards } from '../modules/sandbox/jobs.ts';
 import { backfillScanLookups, dailyScans, reconcileScans } from '../modules/scan/jobs.ts';
 import { autoTapOut } from '../modules/scan/occupancy/jobs.ts';
@@ -99,6 +99,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'webhooks.retention', run: dailyWebhooks },
     { name: 'templates.fork_orphans', run: sweepForkOrphans },
     { name: 'message_rules.retention', run: dailyMessageRules },
+    { name: 'photos.retention', run: dailyPhotos },
     { name: 'retention.receipts', run: dailyReceipts },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },

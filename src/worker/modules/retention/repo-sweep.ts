@@ -1,6 +1,6 @@
 import { all, stmt } from '../../platform/db.ts';
 
-export type SweepClass = 'scans' | 'events' | 'delivery';
+export type SweepClass = 'scans' | 'events' | 'delivery' | 'photos';
 
 /** Days of failed and partial mail kept for support, whatever the class value. */
 export const FAILED_MAIL_DAYS = 90;
@@ -17,7 +17,10 @@ export type Scope =
   | { kind: 'platform'; exclude: readonly string[] }
   | { kind: 'org'; orgId: string };
 
-const COND: Record<SweepClass, { table: string; sql: string; params: (c: Cutoffs) => number[] }> = {
+const COND: Record<
+  SweepClass,
+  { table: string; sql: string; params: (c: Cutoffs) => number[]; idCol?: string }
+> = {
   scans: { table: 'scans', sql: "scans.mode = 'live' AND scans.at < ?", params: (c) => [c.cutoff] },
   events: {
     table: 'pass_events',
@@ -30,7 +33,20 @@ const COND: Record<SweepClass, { table: string; sql: string; params: (c: Cutoffs
       OR (outbox.state IN ('failed', 'partial') AND outbox.finished_at < ?))`,
     params: (c) => [c.cutoff, c.failedCutoff],
   },
+  // A photo of a voided or removed pass, once the photo and the pass have both been untouched since the cutoff.
+  photos: {
+    table: 'member_photos',
+    idCol: 'pass_id',
+    sql: `member_photos.updated_at < ? AND EXISTS (SELECT 1 FROM passes p
+      WHERE p.id = member_photos.pass_id AND p.org_id = member_photos.org_id AND p.modified_at < ?
+        AND (p.status = 'voided' OR p.removed_at IS NOT NULL))
+      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+        WHERE t.pass_id = member_photos.pass_id AND t.state = 'pending')`,
+    params: (c) => [c.cutoff, c.cutoff],
+  },
 };
+
+const idCol = (cls: SweepClass) => COND[cls].idCol ?? 'id';
 
 /** An org-wide hold, or a hold on this row's pass, keeps the row. */
 const heldSql = (table: string) =>
@@ -67,13 +83,14 @@ export async function selectChunk(
   const e = eligible(cls, scope, cutoffs);
   const rows = await all<{ id: string }>(
     db,
-    `SELECT ${e.table}.id AS id FROM ${e.table} WHERE ${e.sql} LIMIT ${CHUNK}`,
+    `SELECT ${e.table}.${idCol(cls)} AS id FROM ${e.table} WHERE ${e.sql} LIMIT ${CHUNK}`,
     e.params,
   );
   return rows.map((r) => r.id);
 }
 
-const IN_IDS = (table: string) => `${table}.id IN (SELECT value FROM json_each(?))`;
+const IN_IDS = (cls: SweepClass) =>
+  `${COND[cls].table}.${idCol(cls)} IN (SELECT value FROM json_each(?))`;
 
 /**
  * A condition for the receipt insert: it lands only while exactly `ids.length` of the chosen rows are still
@@ -87,7 +104,7 @@ export function receiptGate(
 ): { sql: string; params: (string | number)[] } {
   const e = eligible(cls, scope, cutoffs);
   return {
-    sql: `(SELECT count(*) FROM ${e.table} WHERE ${IN_IDS(e.table)} AND ${e.sql}) = ?`,
+    sql: `(SELECT count(*) FROM ${e.table} WHERE ${IN_IDS(cls)} AND ${e.sql}) = ?`,
     params: [JSON.stringify(ids), ...e.params, ids.length],
   };
 }
@@ -106,7 +123,7 @@ export function deleteChunkStmt(
 ): D1PreparedStatement {
   const e = eligible(cls, scope, cutoffs);
   const params = [JSON.stringify(ids), ...e.params, receiptId];
-  const where = `${IN_IDS(e.table)} AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
+  const where = `${IN_IDS(cls)} AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
   switch (cls) {
     case 'scans':
       return stmt(db, `DELETE FROM scans WHERE ${where}`, params);
@@ -114,5 +131,38 @@ export function deleteChunkStmt(
       return stmt(db, `DELETE FROM pass_events WHERE ${where}`, params);
     case 'delivery':
       return stmt(db, `DELETE FROM outbox WHERE ${where}`, params);
+    case 'photos':
+      return stmt(db, `DELETE FROM member_photos WHERE ${where}`, params);
   }
+}
+
+/**
+ * Photos only, in the delete's batch and gated on its receipt: the delete trigger stages a rollback hold for
+ * each object, which a later cleanup job would restore. Move each hold to the deletion queue and drop it, so the
+ * rows, the receipt and the queued object delete commit together or not at all.
+ */
+export function photoRetireStmts(
+  db: D1Database,
+  ids: readonly string[],
+  receiptId: string,
+  now: number,
+): D1PreparedStatement[] {
+  const ofPasses = `c.kind = 'photo' AND c.next_row IS NULL AND c.pass_id IN (SELECT value FROM json_each(?))
+    AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
+  const list = JSON.stringify(ids);
+  return [
+    stmt(
+      db,
+      `INSERT INTO pass_transfer_asset_gc (r2_key, transfer_id, source_pass_id, retired_at, next_attempt_at)
+       SELECT c.r2_key, NULL, NULL, ?, ? FROM pass_transfer_asset_candidates c
+       WHERE ${ofPasses}
+         AND NOT EXISTS (SELECT 1 FROM pass_transfer_asset_gc gc WHERE gc.r2_key = c.r2_key)
+       GROUP BY c.r2_key`,
+      [now, now, list, receiptId],
+    ),
+    stmt(db, `DELETE FROM pass_transfer_asset_candidates AS c WHERE ${ofPasses}`, [
+      list,
+      receiptId,
+    ]),
+  ];
 }

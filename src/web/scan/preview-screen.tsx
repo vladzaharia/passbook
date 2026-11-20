@@ -52,6 +52,8 @@ export interface ScanPreviewScreenProps {
   /** Where the logo is served for this viewer; the scanner's own URL when absent. */
   logoUrl?: string | null;
   onPass?: (card: ScanCard | null) => void;
+  /** The desk card's Add photo, as a device that may add photos would show it. */
+  addPhoto?: ScanApi;
 }
 
 function OperatorSidebar({
@@ -113,6 +115,7 @@ export function ScanPreviewScreen({
   branding = DEMO_BRANDING,
   logoUrl,
   onPass,
+  addPhoto,
 }: ScanPreviewScreenProps) {
   const store = useStaticStore();
   const [runtime] = useState(
@@ -154,7 +157,13 @@ export function ScanPreviewScreen({
           />
         }
         card={
-          <ResultCard outcome={outcome} phase={phase} onPass={onPass} onGroup={() => undefined} />
+          <ResultCard
+            outcome={outcome}
+            phase={phase}
+            onPass={onPass}
+            onGroup={() => undefined}
+            addPhoto={addPhoto}
+          />
         }
       />
     </ScanStoreContext.Provider>
