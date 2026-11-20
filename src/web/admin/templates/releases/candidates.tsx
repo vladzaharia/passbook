@@ -59,8 +59,8 @@ function CandidateCard({
     props.currentUserId !== null &&
     (candidate.authorId === props.currentUserId ||
       candidate.versionAuthorId === props.currentUserId);
-  const alreadyPublished =
-    props.releasedCandidates.has(candidate.id) || props.active?.version === candidate.version;
+  const alreadyPublished = props.releasedCandidates.has(candidate.id);
+  const isActiveVersion = props.active?.version === candidate.version;
   const cannotReview =
     props.busy || selfReview || !props.currentUserId || alreadyPublished || Boolean(approval);
   const cannotApproveAlone =
@@ -131,10 +131,9 @@ function CandidateCard({
         {!props.currentUserId && props.canReview ? (
           <Callout tone="warning">Your identity is unavailable. Sign in again to review.</Callout>
         ) : null}
-        {alreadyPublished ? (
+        {alreadyPublished || isActiveVersion ? (
           <p className="text-sm text-fg-muted">
-            {props.active?.candidateId === candidate.id ||
-            props.active?.version === candidate.version
+            {props.active?.candidateId === candidate.id || isActiveVersion
               ? 'This candidate is the active release.'
               : 'Already released. Roll back from the history to restore it.'}
           </p>
@@ -165,7 +164,7 @@ function CandidateCard({
           {props.canPublish ? (
             <Button
               size="sm"
-              disabled={props.busy || !approval || alreadyPublished}
+              disabled={props.busy || !approval || alreadyPublished || isActiveVersion}
               aria-label={`Publish candidate for ${name}`}
               onClick={() => approval && props.onPublish(candidate, approval)}
             >

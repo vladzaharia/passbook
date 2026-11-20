@@ -5,5 +5,5 @@ export const NO_RELEASE_COPY = {
     'This template has no released version. Approve and publish one before you issue a pass.',
   action: 'Open Templates',
   /** Under the template list: unreleased templates are left out. */
-  onlyReleased: 'Only released templates are listed. Publish a version in Templates to add one.',
+  onlyReleased: 'Only released templates are listed.',
 } as const;

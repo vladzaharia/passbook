@@ -11,7 +11,6 @@ import {
 import type { ValidationIssue } from '@/passkit/types.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../../lib/media.ts';
-import { useOrgScope } from '../../../lib/org-filter.tsx';
 import {
   Button,
   Callout,
@@ -31,6 +30,7 @@ import { useGoalFlow } from './goal-flow.tsx';
 import { Issues } from './issues.tsx';
 import { DesignerLayout } from './layout.tsx';
 import { type DesignDoc, findField, type Selection } from './model.ts';
+import { useOrgBrandedPass } from './org-logo-text.ts';
 import { Outline } from './outline.tsx';
 import {
   canRedo,
@@ -54,19 +54,6 @@ const MODES = [
   { value: 'pass', label: 'Pass' },
   { value: 'scan', label: 'Scan screen' },
 ] as const;
-
-/** An issued pass shows the org's name beside the logo; the draft card does too. */
-function withOrgLogoText(
-  passJson: Record<string, unknown> | undefined,
-  orgName: string | undefined,
-): Record<string, unknown> | null {
-  if (!passJson) return null;
-  if (!orgName) return passJson;
-  const next = { ...passJson };
-  for (const key of ['logoText', 'eventLogoText'])
-    if (typeof next[key] === 'string') next[key] = orgName;
-  return next;
-}
 
 /** A template that cannot be changed: the card and its issues stay, the structure is inert. */
 export interface ReadOnlyDesign {
@@ -128,7 +115,6 @@ export function Designer({
   const select = useMemo(() => validSelection(state), [state]);
   const base_ = assetBase(version);
   const stamps = useStampsPreview(state.doc, base_);
-  const orgName = useOrgScope().membership?.orgName;
   const check = useDesignCheck(
     templateId,
     state.doc,
@@ -136,10 +122,7 @@ export function Designer({
     stamps.checkCount,
     create ? { orgId: create.orgId, name: create.name } : undefined,
   );
-  const shownPass = useMemo(
-    () => withOrgLogoText(check.lastBuilt, orgName),
-    [check.lastBuilt, orgName],
-  );
+  const shownPass = useOrgBrandedPass(check.lastBuilt);
 
   const edit = useCallback(
     (op: Op, merge?: string) => {
@@ -200,7 +183,6 @@ export function Designer({
     check.isError || check.checking || check.isPlaceholderData || !check.data?.report.ok
       ? null
       : blocking;
-  // Save outlives this render: it reads the check as it is when its wait ends.
   const live = useRef({ blocked, checking: check.checking });
   live.current = { blocked, checking: check.checking };
   const created = useCreateFlow(create, blocked);
