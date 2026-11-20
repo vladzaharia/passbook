@@ -51,7 +51,6 @@ const FLAGS = [
   'migrate-only',
   'promote',
   'require-wallet-migrated',
-  'stamp-changelog',
 ] as const;
 
 /**

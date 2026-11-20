@@ -34,6 +34,7 @@
     "keys:retire": "node tools/keys.ts retire",
     "credentials": "node tools/credentials.ts",
     "identity:add": "node tools/identity-add.ts",
+    "changelog:release": "node tools/changelog-release.ts",
     "deploy:check": "node tools/deploy.ts --check",
     "deploy": "node tools/deploy.ts",
     "check:rules": "node tools/check-log-codes.ts && node tools/check-sizes.ts && node tools/check-sql-owner.ts && node tools/check-openapi.ts && node tools/check-developers.ts && node tools/gen-sdk-ts.ts --check && node tools/authority-scope.ts --strict && knip",
