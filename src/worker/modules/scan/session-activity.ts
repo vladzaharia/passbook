@@ -1,14 +1,16 @@
-import type { ScanRole } from '../../../shared/contracts/scan.ts';
+import { ScanReasonSchema, type ScanRole } from '../../../shared/contracts/scan.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { isDonePasslessRow } from './feed-projection-history.ts';
+import type { HistoryRow } from './history-row.ts';
 import {
   createHistoryEvidenceCache,
   historyEvidenceOf,
   withKeyset,
 } from './history-row-evidence.ts';
+import { undoWindowMinutes } from './outcome.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import {
   SESSION_READ,
@@ -18,6 +20,7 @@ import {
 } from './repo-read-authority.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { activitySelector } from './repo-session-activity.ts';
+import { isPasslessReason } from './scan-passless.ts';
 import { resolveSessionScope, type SessionReadAuthority } from './scanning-session-dto.ts';
 import { scanSessionCountAuthority } from './scanning-workspace.ts';
 import {
@@ -25,6 +28,22 @@ import {
   cloneObservedScanActor,
 } from './scanning-workspace-observation.ts';
 import { staleScanRead } from './stale-read.ts';
+
+/** The reason a viewer may read: with the pass, or a refusal that named none (an unknown code). */
+function reasonOf(scan: HistoryRow, disclosed: boolean) {
+  if (disclosed) {
+    const parsed = ScanReasonSchema.safeParse(scan.reason);
+    return parsed.success ? parsed.data : null;
+  }
+  return isDonePasslessRow(scan) &&
+    scan.passId === null &&
+    scan.templateId === null &&
+    scan.actionId === null &&
+    scan.outcome === 'refused' &&
+    isPasslessReason(scan.reason)
+    ? scan.reason
+    : null;
+}
 
 /**
  * The session's recent scans from one snapshot under the viewer's fence and the session row as it
@@ -38,6 +57,8 @@ export async function scanningSessionActivity(
   role: ScanRole,
   /** The console names who recorded a passless refusal; a device never does. */
   consoleView = false,
+  /** The viewing device: its own scans, inside the undo window, are `undoable`. */
+  viewer: { actorKey: string } | null = null,
 ) {
   if (
     !authority ||
@@ -52,6 +73,7 @@ export async function scanningSessionActivity(
   const selector = activitySelector(row);
   if (!selector) return null;
   const now = ctx.clock.now();
+  const undoMs = viewer ? (await undoWindowMinutes(ctx)) * 60_000 : 0;
   const auth = withSessionRow(authority.at(now), row);
   const page = await readHistoryPage(
     ctx.env.DB,
@@ -85,6 +107,19 @@ export async function scanningSessionActivity(
       outcome: scan.raw.raw_undone_by !== null ? ('undone' as const) : (scan.outcome ?? 'refused'),
       direction:
         policy && policy.action(scan.actionId, scan.actionKind) !== null ? scan.direction : null,
+      scanId: policy ? scan.id : null,
+      reason: reasonOf(scan, policy !== null),
+      staff: policy && role !== 'door' ? scan.staffName : null,
+      method: policy ? scan.method : null,
+      undoable:
+        viewer !== null &&
+        policy !== null &&
+        scan.outcome === 'ok' &&
+        scan.raw.raw_undone_by === null &&
+        scan.actionKind !== 'undo' &&
+        scan.raw.actor_key === viewer.actorKey &&
+        now - scan.at <= undoMs,
+      groupSize: policy && scan.raw.group_size >= 2 ? scan.raw.group_size : null,
     };
   });
 }
@@ -108,6 +143,8 @@ export async function sessionActivityFor(context: ServiceContext, sourceActor: S
     observed.parent,
     scanSessionCountAuthority(actor),
     actor.role,
+    false,
+    { actorKey: actor.actorKey },
   );
   if (rows === null) throw await staleScanRead(ctx, sourceActor);
   return {
