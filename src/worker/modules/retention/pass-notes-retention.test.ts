@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, run } from '../../platform/db.ts';
+import { dailyScans } from '../scan/jobs.ts';
 import { placeHold } from './holds.ts';
 import { DAY } from './policy.ts';
 import { type RetentionKit, retentionKit } from './retention-test-fixtures.ts';
@@ -65,11 +66,15 @@ describe('staff note retention', () => {
     expect(await present(keepAll)).toBe(true);
   });
 
-  it('leaves test-mode notes to the sandbox window', async () => {
+  it('test-mode notes keep the sandbox window, not the retention plan', async () => {
     const o = await rk.org();
     const pass = await rk.kit.pass({ orgId: o.orgId, mode: 'test' });
-    const test = await note(o.orgId, pass.id, 4000, 'test');
+    const old = await note(o.orgId, pass.id, 4000, 'test');
+    const fresh = await note(o.orgId, pass.id, 1, 'test');
     await sweep();
-    expect(await present(test)).toBe(true);
+    expect(await present(old)).toBe(true);
+    await dailyScans(rk.kit.ctx);
+    expect(await present(old)).toBe(false);
+    expect(await present(fresh)).toBe(true);
   });
 });

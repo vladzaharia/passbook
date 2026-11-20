@@ -741,7 +741,7 @@ Paired scanners and scanning consoles call these under `/api/v1/scan/passes/{id}
 - `GET .../notes` lists up to 100 notes, newest first. Desk and above; Door is 403 `NOTE_ROLE`.
 - `POST .../notes` `{ body, idempotencyKey }` adds one. `body` is one plain line of 1-280 characters; a repeated `idempotencyKey` returns the first note. Desk and above on a paired, non-terminal scan device; 20 per minute per device (429). A pass holds 100 notes (409 `NOTE_CAP`). Audited as `scan.note.add` with the length, never the text.
 
-Notes are staff-only: never on a customer screen, a pass or an email. They are deleted with the pass, age out with the scans retention window (holds honoured), and are in the org export and purge.
+Notes are staff-only: never on a customer screen, a pass or an email. They are deleted with the pass, age out with the scans retention window (holds honoured; Test-mode notes follow the sandbox window), and are in the org export and purge.
 
 ## Scanner history
 

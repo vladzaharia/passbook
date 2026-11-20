@@ -25,7 +25,7 @@ import {
   parseBackfillState,
   saveBackfillState,
 } from './repo-lookup-backfill.ts';
-import { deleteScansBefore, pendingScans } from './repo-scans.ts';
+import { deleteNotesBefore, deleteScansBefore, pendingScans } from './repo-scans.ts';
 
 const DAY = 86_400_000;
 const RECONCILE_AFTER_MS = 60_000;
@@ -225,6 +225,11 @@ export async function dailyScans(ctx: ServiceContext): Promise<void> {
     'test',
     now - settings['sandbox.purgeDays'] * DAY,
   );
-  ctx.log.info('scan.retention', { live, test, offline, notes });
+  const testNotes = await deleteNotesBefore(
+    ctx.env.DB,
+    'test',
+    now - settings['sandbox.purgeDays'] * DAY,
+  );
+  ctx.log.info('scan.retention', { live, test, offline, notes, testNotes });
   await sweepEnrollments(ctx);
 }

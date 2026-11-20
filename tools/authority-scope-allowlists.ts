@@ -79,8 +79,9 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/scan/repo-scans.ts': {
     reason:
-      "release, fail, quarantine and retention purge of the actor's own server-minted claim row: they run after authority is revoked and only close a claim; a scan takes effect only through scan.* grants",
+      "release, fail, quarantine and retention purge of the actor's own server-minted claim row: they run after authority is revoked and only close a claim; a scan takes effect only through scan.* grants. Also the daily test-mode window of staff notes (pass_notes by age), a platform job with no principal",
     writes: [
+      'pass_notes:eaa253f3ccef',
       'scans:1150c5ae6cbd',
       'scans:1150c5ae6cbd@use',
       'scans:1150c5ae6cbd@use',
