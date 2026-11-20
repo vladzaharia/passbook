@@ -56,8 +56,11 @@ describe('wallet retirement fences', () => {
     expect(predicate).toContain(
       'wallet_retention_instance.credential_generation < p.credential_generation',
     );
-    expect(predicate).toContain("retirement_reason = 'not_issued'");
-    expect(predicate).toContain("provider = 'samsung'");
+    expect(predicate).toContain('wallet_retention_instance.retirement_settled_at IS NULL');
+    expect(
+      predicate.length,
+      'the settle proof is a column, not a copy of the evidence',
+    ).toBeLessThan(700);
   });
 
   it('checks every incarnation for pass retention', () => {
