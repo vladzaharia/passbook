@@ -225,6 +225,7 @@ export const ScanRecordSchema = z.object({
   passVersion: z.number().int().nullable(),
   override: z.boolean(),
   offline: z.boolean(),
+  unverified: z.boolean().default(false),
   actor: z.object({ type: z.enum(['scanner', 'user']), id: z.string() }),
   undoneAt: TimestampSchema.nullable(),
   undoneBy: z.string().nullable(),

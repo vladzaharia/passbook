@@ -10,8 +10,15 @@ import { syncQueue } from './sync.ts';
 import { createMemoryKeyValue } from './wipe.ts';
 
 const NOW = 1_800_000_000_000;
-const LIVE = { asOf: NOW - 60_000, validUntil: NOW + 86_400_000, sig: 'sig', fullAt: NOW - 60_000 };
+const LIVE = {
+  asOf: NOW - 60_000,
+  validUntil: NOW + 86_400_000,
+  sig: 'sig',
+  fullAt: NOW - 60_000,
+  scopeKey: 'S:1',
+};
 
+const DAY_OF = (t: number) => new Date(t).toISOString().slice(0, 10);
 const base = { unverified: false, listAt: NOW - 60_000, counts: null, now: NOW } as const;
 
 describe('decide', () => {
@@ -80,12 +87,12 @@ describe('roster store', () => {
         page([{ h: 'a', status: 'active', state: null }]),
       ),
     };
-    await store.refresh(api, NOW);
+    await store.refresh(api, NOW, 'S:1', DAY_OF);
     expect(await store.find(['a'])).toEqual({ status: 'active', state: null });
     expect(api.roster).toHaveBeenLastCalledWith(undefined, undefined);
 
     api.roster.mockResolvedValueOnce(page([{ h: 'b', status: 'voided', state: null }]));
-    await store.refresh(api, NOW + 60_000);
+    await store.refresh(api, NOW + 60_000, 'S:1', DAY_OF);
     expect(api.roster.mock.calls.at(-1)?.[1]).toBeGreaterThan(0);
     expect(await store.find(['a'])).not.toBeNull();
     expect(await store.find(['b'])).toEqual({ status: 'voided', state: null });
@@ -97,12 +104,16 @@ describe('roster store', () => {
     await store.refresh(
       { roster: async () => page([{ h: 'a', status: 'active', state: null }]) },
       NOW,
+      'S:1',
+      DAY_OF,
     );
     const broken = vi
       .fn()
       .mockResolvedValueOnce(page([{ h: 'z', status: 'active', state: null }], { cursor: 'next' }))
       .mockRejectedValueOnce(new Error('offline'));
-    await expect(store.refresh({ roster: broken }, NOW + 11 * 60_000)).rejects.toThrow('offline');
+    await expect(
+      store.refresh({ roster: broken }, NOW + 11 * 60_000, 'S:1', DAY_OF),
+    ).rejects.toThrow('offline');
     expect(await store.find(['a'])).not.toBeNull();
     expect(await store.find(['z'])).toBeNull();
   });
@@ -173,9 +184,10 @@ function harness(
   const queueKv = createMemoryKeyValue<QueueRow>();
   const rosterKv = createMemoryKeyValue<RosterEntry>();
   const metaKv = createMemoryKeyValue<unknown>();
+  let clockNow = NOW;
   const timers: (() => void)[] = [];
   const clock: ClockPort = {
-    now: () => NOW,
+    now: () => clockNow,
     setTimeout: (fn) => timers.push(fn),
     clearTimeout: () => undefined,
   };
@@ -187,6 +199,7 @@ function harness(
     status: () => undefined,
   };
   let online = false;
+  let scope = 'S:1';
   const api = {
     roster: vi.fn(async () => ({
       entries: rosterEntries,
@@ -213,10 +226,21 @@ function harness(
       meta: metaKv as never,
       clock,
       online: () => online,
+      scope: () => scope,
+      timeZone: () => 'UTC',
       counts: () => null,
       emit,
     });
-  return { make, api, outcomes, queues, queueKv, setOnline: (v: boolean) => (online = v) };
+  return {
+    make,
+    api,
+    outcomes,
+    queues,
+    queueKv,
+    setOnline: (v: boolean) => (online = v),
+    setScope: (v: string) => (scope = v),
+    setNow: (v: number) => (clockNow = v),
+  };
 }
 
 const input = (code: string) =>
@@ -288,5 +312,33 @@ describe('controller', () => {
     expect(await createQueueStore(t.queueKv).all()).toEqual([]);
     await c.decide('k3', input('X'), true);
     expect((await createQueueStore(t.queueKv).all()).map((r) => r.door)).toEqual(['unverified']);
+  });
+
+  it('a list cut for another session or config is stale at once', async () => {
+    const h = await rosterHash('TICKET-0003');
+    const t = harness('list', [{ h, status: 'active', state: null }]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    t.setScope('S:2');
+    await c.decide('k1', input('TICKET-0003'), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'system', reason: 'network' });
+    expect(await createQueueStore(t.queueKv).all()).toEqual([]);
+  });
+
+  it('a daily check-in marked yesterday no longer holds today', async () => {
+    const h = await rosterHash('TICKET-0004');
+    const t = harness('list', [{ h, status: 'active', state: null, day: true } as never]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    t.setOnline(false);
+    await c.decide('k1', input('TICKET-0004'), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
+    await c.decide('k2', input('TICKET-0004'), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ reason: 'already_done' });
+    t.setNow(NOW + 23 * 3_600_000);
+    await c.decide('k3', input('TICKET-0004'), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
   });
 });

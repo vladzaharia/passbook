@@ -5,6 +5,7 @@
 
 import type { UnsureStorePort } from '../machine/ports.ts';
 import { collection } from './db.ts';
+import { forgetShell } from './sw-shell.ts';
 
 /** The v2 stores (queue, roster) and `meta` as plain key-value collections. */
 export interface KeyValue<T = unknown> {
@@ -56,6 +57,7 @@ export interface LocalStores {
 }
 
 export async function wipeLocal(stores: LocalStores): Promise<void> {
+  void forgetShell();
   await Promise.all([
     stores.unsure.clear(),
     stores.queue.clear(),

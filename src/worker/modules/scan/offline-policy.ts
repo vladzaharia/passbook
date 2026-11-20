@@ -21,10 +21,13 @@ import { sessionZoneIds } from './repo-zones.ts';
 const no = (code: string, message: string): OfflineVerdict => ({ ok: false, code, message });
 
 /** Every template in scope has only check-in actions that repeat once or daily, and no access rules. */
+/** Ok, with the templates whose check-in repeats daily: their `in` marks last one venue day. */
+type ListVerdict = OfflineVerdict | { ok: true; daily: ReadonlySet<string> };
+
 async function templatesOfflineVerdict(
   ctx: ServiceContext,
   actor: ScanActor,
-): Promise<OfflineVerdict> {
+): Promise<ListVerdict> {
   const stamps = await captureTemplateStamps(
     ctx.env.DB,
     actor.orgId,
@@ -38,6 +41,7 @@ async function templatesOfflineVerdict(
   if (!stamps || actor.templateIds.length === 0) return bad;
   const releases = new Map(stamps.releases.map((r) => [r.templateId, r.version] as const));
   const pinned = new Map(stamps.legacy.map((l) => [l.templateId, l.versions] as const));
+  const daily = new Set<string>();
   for (const id of actor.templateIds) {
     const legacy = pinned.get(id) ?? [];
     const version = releases.get(id) ?? (legacy.length === 1 ? legacy[0] : undefined);
@@ -51,18 +55,16 @@ async function templatesOfflineVerdict(
         )
       )
         return bad;
+      if (scan.actions.some((a) => a.repeat === 'daily')) daily.add(id);
     } catch (error) {
       if (isNotFound(error)) return bad;
       throw error;
     }
   }
-  return { ok: true };
+  return { ok: true, daily };
 }
 
-export async function offlineVerdict(
-  ctx: ServiceContext,
-  actor: ScanActor,
-): Promise<OfflineVerdict> {
+export async function offlineVerdict(ctx: ServiceContext, actor: ScanActor): Promise<ListVerdict> {
   const sessionId = scopeSessionId(actor);
   const zones = sessionId ? (await sessionZoneIds(ctx.env.DB, actor.orgId, sessionId)).length : 0;
   const byRules = settingsOfflineVerdict(actor.settings, zones);
@@ -90,15 +92,22 @@ const pairedDoor = (actor: ScanActor) =>
   actor.principal === 'scanner' && actor.scanner?.kind === 'device' && !actor.apiKeyId;
 
 /** The roster: the offline list is chosen, the actor is a paired door, and the session qualifies. */
-export async function requireOfflineList(ctx: ServiceContext, actor: ScanActor): Promise<void> {
+export async function requireOfflineList(
+  ctx: ServiceContext,
+  actor: ScanActor,
+): Promise<ReadonlySet<string>> {
   if (!pairedDoor(actor) || offlineModeOf(actor.settings) !== 'list')
     throw new ConflictError('This session does not use an offline list.', 'OFFLINE_OFF');
   const verdict = await offlineVerdict(ctx, actor);
   if (!verdict.ok) throw new ConflictError(verdict.message, verdict.code);
+  return 'daily' in verdict ? verdict.daily : new Set();
 }
 
-/** The batch: any offline mode accepts queued reads; Stop refuses them all. */
+/**
+ * The batch: a paired door may always send what it queued, whatever the session is now. Reads taken after
+ * the session closed, paused or went to Stop are recorded as ended, per item (`batch.ts`).
+ */
 export function requireOfflineQueue(actor: ScanActor): void {
-  if (!pairedDoor(actor) || offlineModeOf(actor.settings) === 'stop')
+  if (!pairedDoor(actor))
     throw new ConflictError('This session does not take offline scans.', 'OFFLINE_OFF');
 }

@@ -135,4 +135,15 @@ describe('the offline roster', () => {
     };
     expect(session.scanner.settings).toMatchObject({ whenOffline: 'decide', offline: false });
   });
+
+  it("marks entries of a daily check-in, so the door drops yesterday's in", async () => {
+    const tpl = await kit.scanTemplate('Daily', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'daily' }],
+    });
+    const pass = await kit.scanPass(tpl);
+    const door = await kit.scanner({ templateIds: [tpl], settings: LIST });
+    const h = await hashOf(pass.scanCode ?? '');
+    const entry = (await rosterOf(door.headers)).entries.find((e) => e.h === h);
+    expect(entry).toMatchObject({ day: true });
+  });
 });

@@ -17,6 +17,13 @@ type Entry = Roster['entries'][number];
 const PAGE = 2000;
 
 /**
+ * The session and its configuration revision. A switch of session, or a change to its settings or
+ * passes, makes every earlier roster stamp stop verifying, so a stale list cannot label a read `listed`.
+ */
+export const scopeKeyOf = (actor: ScanActor): string =>
+  `${scopeSessionId(actor) ?? ''}:${actor.scanningSession?.updatedAt ?? actor.scanner?.updatedAt ?? 0}`;
+
+/**
  * The window MAC. It binds the device's scope to `asOf` and `validUntil`, so `batch` can tell a
  * roster this server issued to this session from a made-up one.
  */
@@ -28,14 +35,7 @@ export async function rosterSig(
 ): Promise<string> {
   const key = await derivedHmacKey(ctx.env, 'scan-roster.v1');
   const frame = new TextEncoder().encode(
-    JSON.stringify([
-      actor.actorKey,
-      scopeSessionId(actor),
-      actor.orgId,
-      actor.mode,
-      asOf,
-      validUntil,
-    ]),
+    JSON.stringify([actor.actorKey, scopeKeyOf(actor), actor.orgId, actor.mode, asOf, validUntil]),
   );
   return toBase64Url(new Uint8Array(await crypto.subtle.sign('HMAC', key, frame)));
 }
@@ -48,7 +48,7 @@ const short = (hex: string) => hex.slice(0, 32);
  * one status and one state. Never a name, a title, an input or a template. The barcode hash is on
  * the list because a ticket's barcode is often its number; that makes it only as private as the number.
  */
-async function entriesOf(row: RosterRow, inside: boolean): Promise<Entry[]> {
+async function entriesOf(row: RosterRow, inside: boolean, day: boolean): Promise<Entry[]> {
   const status: Entry['status'] =
     row.removed_at !== null || row.deleted_at !== null
       ? 'removed'
@@ -60,7 +60,7 @@ async function entriesOf(row: RosterRow, inside: boolean): Promise<Entry[]> {
   if (row.barcode_hash) hashes.add(short(row.barcode_hash));
   if (row.print_hash) hashes.add(row.print_hash);
   const state: Entry['state'] = inside ? 'in' : null;
-  return [...hashes].map((h) => ({ h, status, state }));
+  return [...hashes].map((h) => ({ h, status, state, ...(day ? { day: true } : {}) }));
 }
 
 function gateScopes(actor: ScanActor, now: number): string[] {
@@ -83,7 +83,7 @@ export async function rosterFor(
   cursor: string | null,
   since: number | null,
 ): Promise<Roster> {
-  await requireOfflineList(ctx, actor);
+  const daily = await requireOfflineList(ctx, actor);
   const now = ctx.clock.now();
   const [after = '', countText = '0'] = (cursor ?? '').split('.');
   let count = Number(countText);
@@ -107,7 +107,7 @@ export async function rosterFor(
       personalization: JSON.parse(row.personalization),
     };
     if (!matchesEvent(actor, pass)) continue;
-    entries.push(...(await entriesOf(row, row.inside === 1)));
+    entries.push(...(await entriesOf(row, row.inside === 1, daily.has(row.template_id))));
   }
   count += entries.length;
   if (count > ROSTER_MAX_ENTRIES)

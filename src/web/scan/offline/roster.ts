@@ -8,13 +8,18 @@ import type { KeyValue } from './wipe.ts';
 
 type Page = z.infer<typeof ScanRosterSchema>;
 
-export type RosterEntry = Pick<Page['entries'][number], 'status' | 'state'>;
+/** `day` marks an `in` that holds for one venue day; `inDay` is the day it was marked. */
+export type RosterEntry = Pick<Page['entries'][number], 'status' | 'state' | 'day'> & {
+  inDay?: string;
+};
 
 /** The window of the last download, with the server's signature of it, which `batch` echoes. */
 export interface RosterMeta {
   asOf: number;
   validUntil: number;
   sig: string;
+  /** The session and config revision the list was cut for; another one makes it stale at once. */
+  scopeKey: string;
   /** When the whole list was last downloaded; deltas in between are topped up. */
   fullAt: number;
 }
@@ -34,8 +39,13 @@ export interface RosterStore {
   /** The entry of the first hash that is on the list. */
   find(hashes: readonly string[]): Promise<RosterEntry | null>;
   /** The door let this hash in: the next read of it is a repeat. */
-  markIn(hash: string): Promise<void>;
-  refresh(api: RosterApi, now: number): Promise<void>;
+  markIn(hash: string, day: string): Promise<void>;
+  refresh(
+    api: RosterApi,
+    now: number,
+    scopeKey: string,
+    dayOf: (t: number) => string,
+  ): Promise<void>;
 }
 
 export function createRosterStore(
@@ -51,13 +61,14 @@ export function createRosterStore(
       }
       return null;
     },
-    async markIn(hash) {
+    async markIn(hash, day) {
       const entry = await rows.get(hash);
-      if (entry) await rows.set(hash, { ...entry, state: 'in' });
+      if (entry) await rows.set(hash, { ...entry, state: 'in', inDay: day });
     },
-    async refresh(api, now) {
+    async refresh(api, now, scopeKey, dayOf) {
       const before = await meta.get(META);
-      const delta = before !== undefined && now - before.fullAt < FULL_EVERY_MS;
+      const delta =
+        before !== undefined && before.scopeKey === scopeKey && now - before.fullAt < FULL_EVERY_MS;
       const since = delta ? Math.max(0, before.asOf - OVERLAP_MS) : undefined;
       const fetched: (readonly [string, RosterEntry])[] = [];
       let first: Page | null = null;
@@ -65,7 +76,16 @@ export function createRosterStore(
       do {
         const page = await api.roster(cursor, since);
         first ??= page;
-        for (const e of page.entries) fetched.push([e.h, { status: e.status, state: e.state }]);
+        for (const e of page.entries)
+          fetched.push([
+            e.h,
+            {
+              status: e.status,
+              state: e.state,
+              ...(e.day ? { day: true } : {}),
+              ...(e.state === 'in' ? { inDay: dayOf(page.asOf) } : {}),
+            },
+          ]);
         cursor = page.cursor ?? undefined;
       } while (cursor);
       if (!first?.sig) return;
@@ -75,6 +95,7 @@ export function createRosterStore(
         asOf: first.asOf,
         validUntil: first.validUntil,
         sig: first.sig,
+        scopeKey,
         fullAt: delta && before ? before.fullAt : first.asOf,
       });
     },

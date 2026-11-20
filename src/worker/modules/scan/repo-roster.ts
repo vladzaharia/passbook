@@ -63,7 +63,18 @@ export const rosterPage = (
     ],
   );
 
+/** The scan a key already produced, so a replay after the session closed returns its first answer. */
+export const offlineReadScan = async (db: D1Database, actorKey: string, key: string) =>
+  (
+    await all<{ scan_id: string | null }>(
+      db,
+      'SELECT scan_id FROM scan_offline_reads WHERE actor_key = ? AND idempotency_key = ?',
+      [actorKey, key],
+    )
+  )[0]?.scan_id ?? null;
+
 export interface OfflineRead {
+  id: string;
   actorKey: string;
   idempotencyKey: string;
   orgId: string;
@@ -84,10 +95,12 @@ export interface OfflineRead {
 export const recordOfflineRead = (db: D1Database, r: OfflineRead) =>
   run(
     db,
-    `INSERT OR IGNORE INTO scan_offline_reads (actor_key, idempotency_key, org_id, mode, session_id, scanner_id,
-       door, scan_id, outcome, reason, conflict, client_ts, recorded_ts, synced_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT OR IGNORE INTO scan_offline_reads (id, pass_id, actor_key, idempotency_key, org_id, mode, session_id,
+       scanner_id, door, scan_id, outcome, reason, conflict, client_ts, recorded_ts, synced_at)
+     VALUES (?, (SELECT pass_id FROM scans WHERE id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
+      r.id,
+      r.scanId,
       r.actorKey,
       r.idempotencyKey,
       r.orgId,

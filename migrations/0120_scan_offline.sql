@@ -1,6 +1,8 @@
 -- Offline check-in (PS-12): what a door decided with no connection, kept next to the scan `act` wrote.
--- Ids, enums and times only: no code, name or pass data. A door refusal has no scan row, so this row is its record.
+-- Swept with the scans class (same window, holds, receipts). Ids, enums and times only: no code, name or pass data. A door refusal has no scan row, so this row is its record.
 CREATE TABLE scan_offline_reads (
+  id TEXT NOT NULL UNIQUE,
+  pass_id TEXT,
   actor_key TEXT NOT NULL,
   idempotency_key TEXT NOT NULL,
   org_id TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,

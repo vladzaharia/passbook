@@ -3,6 +3,7 @@
  * list fresh and the queue draining while it is up. The machine only sees verdicts and counts.
  */
 import type { OfflineMode } from '../../../shared/scan-offline.ts';
+import { todayKey } from '../../lib/format.ts';
 import { localOutcome } from '../machine/outcome.ts';
 import type { ClockPort } from '../machine/ports.ts';
 import type { Counts, ScanInput, ScanOutcome } from '../machine/types.ts';
@@ -35,6 +36,10 @@ export interface OfflineDeps {
   meta: KeyValue<number>;
   clock: ClockPort;
   online(): boolean;
+  /** The session and config revision the door is running now. A list cut for another is stale. */
+  scope(): string;
+  /** The venue's zone: a daily `in` lasts one day there. */
+  timeZone(): string;
   counts(): Counts | null;
   emit: OfflineEmit;
 }
@@ -48,6 +53,7 @@ async function hashesOf(code: string): Promise<string[]> {
 }
 
 export function createOfflineController(d: OfflineDeps) {
+  const dayOf = (t: number) => todayKey(d.timeZone(), t);
   let timer: unknown = null;
   let stopped = false;
   let running = false;
@@ -57,7 +63,11 @@ export function createOfflineController(d: OfflineDeps) {
 
   async function publish(syncing = false) {
     const stamp = await d.roster.meta();
-    const live = d.mode === 'list' && stamp !== null && stamp.validUntil > d.clock.now();
+    const live =
+      d.mode === 'list' &&
+      stamp !== null &&
+      stamp.scopeKey === d.scope() &&
+      stamp.validUntil > d.clock.now();
     d.emit.status({ listAt: live ? stamp.asOf : null, syncing });
     d.emit.queue({ ...pendingOf(await d.queue.all()), conflicts });
   }
@@ -70,7 +80,7 @@ export function createOfflineController(d: OfflineDeps) {
       if (d.online()) {
         const now = d.clock.now();
         if (d.mode === 'list' && now - refreshedAt >= REFRESH_MS) {
-          await d.roster.refresh(d.api, now);
+          await d.roster.refresh(d.api, now, d.scope(), dayOf);
           refreshedAt = now;
         }
         if ((await d.queue.all()).length > 0) {
@@ -118,11 +128,18 @@ export function createOfflineController(d: OfflineDeps) {
       }
       const hashes = d.mode === 'list' ? await hashesOf(code) : [];
       const stamp = await d.roster.meta();
+      const fresh = stamp !== null && stamp.scopeKey === d.scope() && stamp.validUntil > now;
+      const found = fresh ? await d.roster.find(hashes) : null;
+      // A daily `in` from an earlier venue day no longer holds.
+      const entry =
+        found?.day && found.state === 'in' && found.inDay !== dayOf(now)
+          ? { ...found, state: null }
+          : found;
       const verdict = decide({
         mode: d.mode,
         unverified,
-        entry: await d.roster.find(hashes),
-        listAt: stamp && stamp.validUntil > now ? stamp.asOf : null,
+        entry,
+        listAt: fresh && stamp ? stamp.asOf : null,
         counts: d.counts(),
         now,
       });
@@ -135,10 +152,15 @@ export function createOfflineController(d: OfflineDeps) {
           clientTs: now,
           door: verdict.door,
         });
-        if (verdict.markIn) for (const h of hashes) await d.roster.markIn(h);
+        if (verdict.markIn) for (const h of hashes) await d.roster.markIn(h, dayOf(now));
       }
       d.emit.outcome(key, verdict.outcome);
       await publish();
+    },
+    /** The session or its config changed: the list is stale; fetch the new one now. */
+    rescope() {
+      refreshedAt = 0;
+      void publish().then(() => this.kick());
     },
     /** Sync now: the button, `online` and a return to the page. */
     kick() {

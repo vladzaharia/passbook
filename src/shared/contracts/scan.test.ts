@@ -240,6 +240,7 @@ describe('scan records', () => {
     passVersion: 2,
     override: false,
     offline: false,
+    unverified: false,
     actor: { type: 'scanner', id },
     undoneAt: null,
     undoneBy: null,

@@ -9,7 +9,7 @@ const MINUTE = 60_000;
 
 /** The scope a gate row is keyed on: the event, else the venue day for `daily`, else none (SA 7.3). */
 export function gateScope(action: ResolvedScanAction, actor: ScanActor, now: number): string {
-  if (action.repeat === 'daily') return `day:${localDay(now, actor.timeZone)}`;
+  if (action.repeat === 'daily') return `day:${localDay(actor.gateAt ?? now, actor.timeZone)}`;
   if (action.repeat === 'once' && actor.event) return `event:${actor.event.id}`;
   return '';
 }

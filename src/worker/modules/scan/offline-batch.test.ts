@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { all, run } from '../../platform/db.ts';
+import { sweepClass } from '../retention/sweep.ts';
 import { act, kit, out, setupActionFixture } from './act-test-fixtures.ts';
 import { batch, batchOf, item, LIST, rosterOf, ticketTemplate } from './offline-test-fixtures.ts';
 
@@ -131,16 +132,98 @@ describe('syncing queued reads', () => {
     expect(res.items[1]).toMatchObject({ conflict: true, outcome: { kind: 'refused' } });
   });
 
-  it('Stop refuses the whole batch, and an admin cannot send one', async () => {
+  it('Stop records reads taken after the change as ended, and keeps those taken before it', async () => {
     const { tpl, headers } = await door({ offline: false, whenOffline: 'stop' });
-    const pass = await kit.scanPass(tpl);
-    const res = await batch(headers, [item(pass.scanCode ?? '')]);
-    expect(res.status).toBe(409);
-    expect(await res.json()).toMatchObject({ code: 'OFFLINE_OFF' });
-    expect(await rowsOf('SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toHaveLength(0);
-    expect((await batch(kit.admin(), [item(pass.scanCode ?? '')])).status).toBeGreaterThanOrEqual(
+    const [before, after] = [await kit.scanPass(tpl), await kit.scanPass(tpl)];
+    const now = kit.clock.now();
+    const res = await batch(headers, [
+      item(before.scanCode ?? '', { clientTs: now - 60_000 }),
+      item(after.scanCode ?? '', { clientTs: now + 1000 }),
+    ]);
+    expect(res.status).toBe(200);
+    const [kept, ended] = (await batchOf(res)).items;
+    expect(kept?.outcome.kind).toBe('ok');
+    expect(ended?.outcome).toMatchObject({ kind: 'heads_up', reason: 'ended' });
+    expect(await rowsOf('SELECT 1 FROM scans WHERE pass_id = ?', [after.id])).toHaveLength(0);
+    expect((await batch(kit.admin(), [item(before.scanCode ?? '')])).status).toBeGreaterThanOrEqual(
       400,
     );
+  });
+
+  it('marks Staff decide entries as unverified', async () => {
+    const { tpl, headers } = await door({ offline: false, whenOffline: 'decide' });
+    const pass = await kit.scanPass(tpl);
+    await batch(headers, [item(pass.scanCode ?? '', { door: 'unverified' })]);
+    expect(await rowsOf('SELECT offline FROM scans WHERE pass_id = ?', [pass.id])).toEqual([
+      { offline: 2 },
+    ]);
+  });
+
+  it('a list-mode read is marked 1; a replay keeps the first answer after the session went to Stop', async () => {
+    const { tpl, scanner, headers } = await door();
+    const pass = await kit.scanPass(tpl);
+    const roster = await rosterOf(headers);
+    const sent = item(pass.scanCode ?? '', { door: 'listed', clientTs: kit.clock.now() - 1000 });
+    await batch(headers, [sent], roster);
+    expect(await rowsOf('SELECT offline FROM scans WHERE pass_id = ?', [pass.id])).toEqual([
+      { offline: 1 },
+    ]);
+    await run(
+      kit.env.DB,
+      'UPDATE scanners SET settings = ?, updated_at = updated_at + 1 WHERE id = ?',
+      [
+        JSON.stringify({
+          ...LIST,
+          whenOffline: 'stop',
+          offline: false,
+          flow: 'auto',
+          defaultActionId: null,
+          roleWithoutSignIn: 'door',
+          staffSignIn: false,
+          letInAgain: 'anyone',
+          reader: 'none',
+          lookup: true,
+          dailyAmount: null,
+        }),
+        scanner.id,
+      ],
+    );
+    const again = (await batchOf(await batch(headers, [sent]))).items[0];
+    expect(again?.outcome).toMatchObject({ kind: 'ok', replay: true });
+  });
+
+  it('a stale roster stamp, cut before the config changed, does not label a read listed', async () => {
+    const { tpl, scanner, headers } = await door();
+    const pass = await kit.scanPass(tpl);
+    const roster = await rosterOf(headers);
+    await run(kit.env.DB, 'UPDATE scanners SET updated_at = updated_at + 1 WHERE id = ?', [
+      scanner.id,
+    ]);
+    const sent = item(pass.scanCode ?? '', { door: 'listed' });
+    await batch(headers, [sent], roster);
+    expect(
+      await rowsOf('SELECT door FROM scan_offline_reads WHERE idempotency_key = ?', [
+        sent.idempotencyKey,
+      ]),
+    ).toEqual([{ door: 'unverified' }]);
+  });
+
+  it('a daily check-in read at 23:50 and synced after midnight counts on its own day', async () => {
+    const tpl = await kit.scanTemplate('Daily', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'daily' }],
+    });
+    const scanner = await kit.scanner({ templateIds: [tpl], settings: LIST });
+    const pass = await kit.scanPass(tpl);
+    const now = kit.clock.now();
+    const midnight = now - (now % DAY);
+    const late = midnight - 10 * 60_000;
+    kit.clock.set(midnight + 5 * 60_000);
+    const [only] = (
+      await batchOf(await batch(scanner.headers, [item(pass.scanCode ?? '', { clientTs: late })]))
+    ).items;
+    expect(only?.outcome.kind).toBe('ok');
+    const today = await out(await act(scanner.headers, { code: pass.scanCode, method: 'camera' }));
+    expect(today.kind).toBe('ok');
   });
 
   it('clamps a read from the future and records one older than a day as ended', async () => {
@@ -182,5 +265,23 @@ describe('syncing queued reads', () => {
         forged.idempotencyKey,
       ]),
     ).toEqual([{ door: 'unverified' }]);
+  });
+
+  it('offline reads age out with scans, under a receipt', async () => {
+    const { tpl, headers } = await door();
+    const pass = await kit.scanPass(tpl);
+    const sent = item(pass.scanCode ?? '');
+    await batch(headers, [sent]);
+    const left = () =>
+      rowsOf('SELECT pass_id FROM scan_offline_reads WHERE idempotency_key = ?', [
+        sent.idempotencyKey,
+      ]);
+    expect(await left()).toEqual([{ pass_id: pass.id }]);
+    kit.clock.advance(5 * 365 * DAY);
+    await sweepClass(kit.ctx, 'scans', undefined, 'scan_offline');
+    expect(await left()).toEqual([]);
+    expect(
+      await rowsOf("SELECT 1 FROM retention_receipts WHERE class = 'scans' AND deleted >= 1"),
+    ).not.toHaveLength(0);
   });
 });

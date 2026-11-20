@@ -16,24 +16,15 @@ import { createDirectionPin } from '../machine/direction-pin.ts';
 import { initialState } from '../machine/initial-state.ts';
 import { createScanStore } from '../machine/store.ts';
 import type { OfflineController } from '../offline/controller.ts';
-import { openScanDb } from '../offline/db.ts';
-import {
-  createIdbUnsureStore,
-  createMemoryUnsureStore,
-  hydrateUnsure,
-} from '../offline/unsure-store.ts';
-import {
-  createIdbKeyValue,
-  createMemoryKeyValue,
-  reconcileScope,
-  wipeLocal,
-} from '../offline/wipe.ts';
+import { hydrateUnsure } from '../offline/unsure-store.ts';
+import { reconcileScope, wipeLocal } from '../offline/wipe.ts';
 import { sound } from '../sound/player.ts';
 import type { Announcement } from '../ui/live-announcer.tsx';
 import { cameraDisabledFor } from './camera-disabled.ts';
 import { customerBrandingOf } from './customer-branding.ts';
 import { focusTarget } from './focus-target.ts';
 import { scanId } from './id.ts';
+import { openLocalStores } from './local-stores.ts';
 import { getNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
 import { connectOffline } from './offline-runtime.ts';
 import { createWakeLock } from './wake-lock.ts';
@@ -49,24 +40,11 @@ export async function createRuntime(
     setTimeout: (fn: () => void, ms: number) => setTimeout(fn, ms),
     clearTimeout: (h: unknown) => clearTimeout(h as ReturnType<typeof setTimeout>),
   };
-  let db: IDBDatabase | null = null;
-  let unsure = createMemoryUnsureStore();
-  try {
-    db = await openScanDb();
-    unsure = createIdbUnsureStore(db);
-  } catch {
-    announce({
-      text: 'Storage unavailable. Keep this page open until all scans are confirmed.',
-      polite: true,
-      n: Date.now(),
-    });
-  }
-  const localStores = {
+  const {
+    db,
     unsure,
-    queue: db ? createIdbKeyValue(db, 'queue') : createMemoryKeyValue(),
-    roster: db ? createIdbKeyValue(db, 'roster') : createMemoryKeyValue(),
-    meta: db ? createIdbKeyValue(db, 'meta') : createMemoryKeyValue(),
-  };
+    stores: localStores,
+  } = await openLocalStores((text) => announce({ text, polite: true, n: Date.now() }));
   let scanner = session.scanner;
   const cameraDisabled = () => cameraDisabledFor(session, scanner);
   try {
@@ -137,7 +115,14 @@ export async function createRuntime(
     },
     state,
   );
-  offline = connectOffline({ scanner, api, stores: localStores, clock, store });
+  offline = connectOffline({
+    scanner,
+    api,
+    stores: localStores,
+    clock,
+    store,
+    session: () => session,
+  });
   const bus = createBus({
     dispatch: store.dispatch,
     clock,
@@ -300,6 +285,7 @@ export async function createRuntime(
       native?.customerBranding(customerBrandingOf(next));
       pending = next;
       applyPending();
+      offline?.rescope();
     },
     start() {
       store.dispatch({ type: 'start' });

@@ -16,9 +16,14 @@ import { type ScanActor, scopeSessionId } from './actor.ts';
 import { deepFreeze } from './freeze.ts';
 import { requireOfflineQueue } from './offline-policy.ts';
 import { unknownOutcome } from './outcome.ts';
-import { recordOfflineRead } from './repo-roster.ts';
+import { markScanOffline } from './repo-act-claim.ts';
+import { offlineReadScan, recordOfflineRead } from './repo-roster.ts';
 import { rosterSig } from './roster.ts';
-import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
+import {
+  captureObservedScanningSession,
+  cloneObservedScanActor,
+} from './scanning-workspace-observation.ts';
+import { openAt } from './session-hours.ts';
 
 type Request = z.infer<typeof ScanBatchRequestSchema>;
 type Item = Request['items'][number];
@@ -64,6 +69,21 @@ async function doorOf(
   return { door: 'listed', expired: item.clientTs > roster.validUntil };
 }
 
+/**
+ * Was the session taking reads at `t`? Once it is paused, ended or on Stop, a read made before that change
+ * still counts (the door was right to take it); one made after is recorded as ended. The change is dated by
+ * the session's last edit. Closed hours are read at the read's own time.
+ */
+export function sessionAcceptsAt(actor: ScanActor, t: number): boolean {
+  const changedAt = actor.scanningSession?.updatedAt ?? actor.scanner?.updatedAt ?? 0;
+  const live =
+    (actor.scanningSession ? actor.scanningSession.status === 'active' : true) &&
+    offlineModeOf(actor.settings) !== 'stop';
+  if (!live && t >= changedAt) return false;
+  const parent = captureObservedScanningSession(actor)?.parent;
+  return !parent || openAt(parent, t);
+}
+
 const endedOutcome = (at: number): ScanOutcome => ({
   ...unknownOutcome().outcome,
   kind: 'heads_up',
@@ -96,22 +116,33 @@ export async function syncBatch(
     const clientTs = item.clientTs > now + CLIENT_TS_SLACK_MS ? now : item.clientTs;
     let outcome: ScanOutcome;
     let scanId: string | null = null;
+    const taken =
+      door === 'refused' ||
+      sessionAcceptsAt(actor, clientTs) ||
+      (await offlineReadScan(ctx.env.DB, actor.actorKey, item.idempotencyKey)) !== null;
     if (door === 'refused') outcome = bare(unknownOutcome().outcome);
-    else if (expired || now - item.clientTs > CLIENT_TS_MAX_AGE_MS)
+    else if (expired || !taken || now - item.clientTs > CLIENT_TS_MAX_AGE_MS)
       outcome = endedOutcome(item.clientTs);
     else {
-      const done = await act(ctx, deepFreeze(cloneObservedScanActor(actor)), {
-        idempotencyKey: item.idempotencyKey,
-        input: { code: item.code, method: item.method },
-        clientTs,
-        actionId: 'auto',
-        ...(item.direction ? { direction: item.direction } : {}),
-      });
+      // The daily gate is the day the door read the code, not the day it synced.
+      const done = await act(
+        ctx,
+        deepFreeze({ ...cloneObservedScanActor(actor), gateAt: clientTs }),
+        {
+          idempotencyKey: item.idempotencyKey,
+          input: { code: item.code, method: item.method },
+          clientTs,
+          actionId: 'auto',
+          ...(item.direction ? { direction: item.direction } : {}),
+        },
+      );
       outcome = bare(done.outcome);
       scanId = outcome.scanId;
+      if (scanId) await markScanOffline(ctx.env.DB, scanId, door);
     }
     const conflict = door !== 'refused' && outcome.kind !== 'ok';
     await recordOfflineRead(ctx.env.DB, {
+      id: ctx.ids.id(),
       actorKey: actor.actorKey,
       idempotencyKey: item.idempotencyKey,
       orgId: actor.orgId,

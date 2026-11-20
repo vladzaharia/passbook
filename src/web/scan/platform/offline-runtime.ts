@@ -6,7 +6,12 @@ import type { ScanStore } from '../machine/store.ts';
 import { createOfflineController, type OfflineController } from '../offline/controller.ts';
 import { createQueueStore, type QueueRow } from '../offline/queue-store.ts';
 import { createRosterStore, type RosterEntry, type RosterMeta } from '../offline/roster.ts';
+import { registerShell } from '../offline/sw-shell.ts';
 import type { KeyValue, LocalStores } from '../offline/wipe.ts';
+
+/** The roster's scope on the device: the scanning session and its config revision. */
+export const offlineScopeOf = (s: ScanSession): string =>
+  `${s.workspace?.session?.id ?? s.scanner?.id ?? ''}:${s.counts.configRev}`;
 
 /** Offline check-in for a paired door whose session asks for it; null for Stop and for an admin. */
 export function connectOffline(a: {
@@ -15,6 +20,8 @@ export function connectOffline(a: {
   stores: LocalStores;
   clock: ClockPort;
   store: ScanStore;
+  /** The session as it is now: its id and config revision key the roster. */
+  session: () => ScanSession;
 }): OfflineController | null {
   const { scanner, store } = a;
   const mode = scanner ? offlineModeOf(scanner.settings) : 'stop';
@@ -31,6 +38,8 @@ export function connectOffline(a: {
     meta: a.stores.meta as KeyValue<number>,
     clock: a.clock,
     online: () => navigator.onLine,
+    scope: () => offlineScopeOf(a.session()),
+    timeZone: () => a.session().scanner?.timeZone ?? 'UTC',
     counts: () => store.getSnapshot().state.counts,
     emit: {
       outcome: (key, outcome) => store.dispatch({ type: 'offline', key, outcome }),
@@ -39,5 +48,6 @@ export function connectOffline(a: {
     },
   });
   void controller.start();
+  void registerShell();
   return controller;
 }

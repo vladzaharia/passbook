@@ -213,6 +213,8 @@ export const ScanRosterSchema = z.object({
       h: z.string().regex(/^[0-9a-f]{32}$/),
       status: z.enum(['active', 'voided', 'removed']),
       state: z.enum(['in', 'out']).nullable(),
+      /** `in` counts for one venue day (a daily check-in), not for good. */
+      day: z.boolean().optional(),
     }),
   ),
   cursor: z.string().nullable(),
