@@ -249,7 +249,7 @@ function detached(
 }
 
 /**
- * What a desk mark-out at an event place retains: the check-in gate it left as it was and the presence
+ * What a desk mark-out or auto exit at an event place retains: the check-in gate it left as it was and the presence
  * row it closed. The gate belongs to the earlier check-in, the presence to this exit. A ledger row without
  * `data.effect`, or one that does not fit the scan, retains nothing, as a row from before did.
  */
@@ -259,6 +259,7 @@ export function retainedExitEffect(
   scan: ScanRetentionSnapshot,
 ): { gateSnapshot: string | null; presenceSnapshot: string | null } {
   const none = { gateSnapshot: null, presenceSnapshot: null };
+  if (proofKind(scan) === 'undo') return none;
   const envelope = z
     .object({ effect: z.object({ gateAfter: z.unknown(), presenceAfter: z.unknown() }) })
     .safeParse(raw);

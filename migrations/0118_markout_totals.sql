@@ -1,4 +1,4 @@
--- A desk mark-out at an event place no longer drops the pass from the event's retained totals. The exit
+-- A desk mark-out or an auto exit at an event place no longer drops the pass from the event's retained totals. The exit
 -- moves the presence past the check-in's proof, so the retained gate comes from the exit's own signed
 -- proof. Proofs written before this carry no snapshots and retain nothing, as before.
 DROP TRIGGER scan_retained_gates_insert_guard;
@@ -78,8 +78,8 @@ WHEN EXISTS (SELECT 1 FROM scan_retained_gates WHERE scan_id=NEW.scan_id)
     JOIN scans anchor ON anchor.id=intent.scan_id AND anchor.pass_id=p.id
     WHERE s.id=NEW.scan_id AND s.org_id=NEW.org_id AND s.mode=NEW.mode AND s.event_id=NEW.event_id
       AND proof.pass_ref=NEW.pass_ref AND NEW.state='out' AND NEW.presence_state='out'
-      AND s.state='done' AND s.outcome='ok' AND s.out_cause='desk' AND s.direction='out'
-      AND s.action_kind IS NULL AND s.undoes IS NULL AND s.event_id IS NOT NULL
+      AND s.state='done' AND s.outcome='ok' AND s.out_cause IN ('desk','stay','clear','zone') AND s.direction='out'
+      AND s.action_kind IS NOT 'undo' AND s.undoes IS NULL AND s.event_id IS NOT NULL
       AND proof.gate_snapshot IS NOT NULL AND proof.presence_snapshot IS NOT NULL
       AND json_extract(proof.gate_snapshot,'$.kind')='check_in'
       AND json_extract(proof.presence_snapshot,'$.state')='out'
@@ -134,8 +134,8 @@ BEGIN
   JOIN scan_retention_delete_intents intent ON intent.org_id=s.org_id AND intent.mode=s.mode
     AND intent.pass_ref=proof.pass_ref
   JOIN scans anchor ON anchor.id=intent.scan_id AND anchor.pass_id=p.id
-  WHERE p.id=OLD.id AND s.pass_id=OLD.id AND s.state='done' AND s.outcome='ok' AND s.out_cause='desk' AND s.direction='out'
-  AND s.action_kind IS NULL AND s.undoes IS NULL AND s.event_id IS NOT NULL
+  WHERE p.id=OLD.id AND s.pass_id=OLD.id AND s.state='done' AND s.outcome='ok' AND s.out_cause IN ('desk','stay','clear','zone') AND s.direction='out'
+  AND s.action_kind IS NOT 'undo' AND s.undoes IS NULL AND s.event_id IS NOT NULL
   AND proof.gate_snapshot IS NOT NULL AND proof.presence_snapshot IS NOT NULL
   AND json_extract(proof.gate_snapshot,'$.kind')='check_in'
   AND json_extract(proof.presence_snapshot,'$.state')='out'

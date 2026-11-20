@@ -206,7 +206,7 @@ export async function prepareScanRetentionProof(
 /**
  * A proof for an exit or undo no scanner action decided: auto exit, desk mark-out, undo. Its source is the
  * ledger row's plain authority, cross-checked against the scan facts both rows are written with; there is
- * no event-time authority to verify. Only a desk mark-out at an event place retains a gate and presence.
+ * no event-time authority to verify. A mark-out or auto exit at an event place, and an undo of an event check-in, retain a gate and presence.
  */
 export async function prepareSystemScanRetentionProof(
   env: object,
@@ -269,9 +269,18 @@ export async function prepareSystemScanRetentionProof(
     passRef,
     eventDigest,
     scanDigest,
-    ...(kind === 'mark_out'
-      ? retainedExitEffect(raw, event, snapshot)
-      : { gateSnapshot: null, presenceSnapshot: null }),
+    ...(kind === 'undo'
+      ? retainedEffect(
+          {
+            authority: {
+              postUndoGate: (raw as Record<string, unknown>).postUndoGate,
+              postUndoPresence: (raw as Record<string, unknown>).postUndoPresence,
+            },
+          },
+          event,
+          snapshot,
+        )
+      : retainedExitEffect(raw, event, snapshot)),
   };
   const mac = await sign(env, 'scan-retention-proof.v1', signedProof(fields, kind));
   return Object.freeze({

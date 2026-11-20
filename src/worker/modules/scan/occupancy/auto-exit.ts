@@ -11,6 +11,7 @@ import {
   type ScanRetentionSnapshot,
 } from '../scan-retention-proof.ts';
 import { scanIs } from '../scan-write-grant.ts';
+import { markOutEffect } from './repo-mark-out.ts';
 import type { DueRow } from './repo-reads.ts';
 import type { ExitPlan } from './rules.ts';
 import { addExit } from './service.ts';
@@ -49,6 +50,13 @@ export async function exitGrant(
   const g = grantFor(ctx, row);
   const scanId = ctx.ids.id();
   const key = autoKey(row);
+  const eventId = row.scope.startsWith('event:') ? row.scope.slice(6) : null;
+  const effect = await markOutEffect(
+    ctx.env.DB,
+    { id: scanId, passId: row.pass_id, templateId: row.template_id, place: row.scope },
+    row.org_id,
+    row.mode,
+  );
   const event: EventRow = {
     id: ctx.ids.ordered(now),
     org_id: row.org_id,
@@ -66,10 +74,11 @@ export async function exitGrant(
       direction: 'out',
       outCause: cause,
       place: row.scope,
-      eventId: null,
+      eventId,
       scannerId: null,
       staffId: null,
       authority: { kind: 'system', job: OCCUPANCY_JOB, cause },
+      ...(effect ? { effect } : {}),
     }),
     at: now,
   };
@@ -79,7 +88,7 @@ export async function exitGrant(
     mode: row.mode,
     templateId: row.template_id,
     scannerId: null,
-    eventId: null,
+    eventId,
     actorType: 'system',
     actorId: 'occupancy',
     actorKey: OCCUPANCY_ACTOR_KEY,
@@ -135,6 +144,7 @@ export async function exitGrant(
       direction: 'out',
       presence_scope: row.scope,
       out_cause: cause,
+      event_id: eventId,
     },
     where: { id: scanId, state: 'pending', at: now },
     when: [won],

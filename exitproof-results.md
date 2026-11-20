@@ -13,7 +13,11 @@ Branch fix/desk-markout-totals. Migration 0118_markout_totals.sql. Gate: capped-
 - test/setup/schema-snapshot.generated.json regenerated.
 - Tests: occupancy/mark-out-totals.test.ts (totals intact and not inside, snapshots verify, tamper retains nothing, org/mode scoping, check-in proof untouched).
 
-## Not done
-- Auto exit still signs null snapshots. An auto exit at an event place has the same totals drop; the cron row has no event id on its scan. Name it as a follow-up.
-- Undo proof unchanged (null snapshots).
-- No existing security/authority test was changed. Tables touched: scan_retained_gates triggers only; none of 0115-0117's.
+## Follow-up (same branch, second commit)
+- 0118 capture and guard now cover auto exits (out_cause stay/clear/zone) as well as desk mark-outs.
+- Auto exit: scans.event_id and ledger eventId are set from an event place; `data.effect` (gate, presence) signs snapshots, same `markOutEffect`.
+- Undo of an event check-in: `postUndoGate`/`postUndoPresence` in the undo ledger row (not in `authority`), signed through the existing `retainedEffect`. The undo row is now captured too.
+- Tests added: auto exit keeps totals with snapshots; undo of an event check-in (gate undone, presence null, not retained); undo of a re-entry after a mark-out restores the exit and the pass counts once. A mark-out itself cannot be undone (no action id), so that is tested through the re-entry.
+- Changed an existing test: scan-retention-proof (occupancy fixtures) "captures the entry whose state an undo restored, not the unsigned undo row". It protected: an undo row without a proof is never captured and does not block the restored entry. Now new undo rows carry snapshots, so the undo row is captured (state in) and the entry is still captured; count stays 1. Correct because the proof now exists.
+- Zone-place exits and value undos still sign null snapshots.
+- Gate: capped-check PASS (30 files).
