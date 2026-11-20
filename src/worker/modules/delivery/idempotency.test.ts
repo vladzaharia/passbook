@@ -51,7 +51,7 @@ describe('bulk email honours Idempotency-Key', () => {
     expect(await emails(a.id)).toHaveLength(1);
     expect(await emails(b.id)).toHaveLength(1);
     const other = await post('/passes/bulk', { ...body, ids: [a.id] }, 'bulk-key-1');
-    expect(other.status).toBe(409);
+    expect(other.status).toBe(422);
     expect(await other.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
     expect(await emails(a.id)).toHaveLength(1);
   });
