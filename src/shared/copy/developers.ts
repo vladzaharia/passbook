@@ -79,10 +79,6 @@ export const DEV_COPY = {
     note: 'Test mode never issues a real pass.',
   },
   slots: {
-    quickstart: {
-      title: 'Quickstart',
-      line: 'Not available yet. A sandbox, a first request and your pass, live.',
-    },
     playground: {
       title: 'Playground',
       line: 'Edit a pass and watch Apple, Google, Samsung and paper change.',

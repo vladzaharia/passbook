@@ -7,6 +7,7 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
+import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
 import { DEVELOPERS_INDEXABLE, PATHS, twin } from '../../shared/developers.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { HEAD_HTML } from '../../worker/ssr/head.ts';
@@ -31,6 +32,7 @@ import {
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
 import { PlaygroundPage } from './playground/page.tsx';
+import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
 
 interface Doc {
   url: string;
@@ -233,14 +235,21 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
   page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'logs', <LogsView />);
   page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />);
   out.push({ file: PATHS.logsOps, body: JSON.stringify(opIndex(site)) });
-  for (const which of ['quickstart', 'guides'] as const)
-    page(
-      PATHS[which],
-      DEV_COPY.slots[which].title,
-      DEV_COPY.slots[which].line,
-      which,
-      <SlotView which={which} />,
-    );
+  page(
+    PATHS.quickstart,
+    QS_COPY.title,
+    QS_COPY.lede,
+    'quickstart',
+    <QuickstartView />,
+    <QuickstartSide />,
+  );
+  page(
+    PATHS.guides,
+    DEV_COPY.slots.guides.title,
+    DEV_COPY.slots.guides.line,
+    'guides',
+    <SlotView which="guides" />,
+  );
 
   out.push({ file: PATHS.llms, body: llmsTxt(site) });
   return out;

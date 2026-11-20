@@ -43,6 +43,18 @@ async function failure(res: Response): Promise<LiveError> {
   return new LiveError(res.status, code, detail);
 }
 
+/** One call, as the quickstart shows it: the status and timing beside the body or the problem. */
+export interface Sent<T> {
+  ok: boolean;
+  status: number;
+  ms: number;
+  requestId: string | null;
+  replayed: boolean;
+  etag: string | null;
+  body: T | null;
+  problem: { code: string | undefined; detail: string } | null;
+}
+
 export type Connection =
   | { state: 'signed-out' }
   | { state: 'no-sandbox' }
@@ -91,6 +103,43 @@ export class LiveClient {
     });
     if (!res.ok) throw await failure(res);
     return (await res.json()) as T;
+  }
+
+  /** Any call with the Try it token; an answer that is not 2xx comes back as `problem`, not a throw. */
+  async send<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    headers: Record<string, string> = {},
+  ): Promise<Sent<T>> {
+    const bearer = await this.#bearer();
+    const started = performance.now();
+    let res: Response;
+    try {
+      res = await fetch(`${API}${path}`, {
+        method,
+        headers: {
+          accept: 'application/json',
+          authorization: `Bearer ${bearer}`,
+          ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+          ...headers,
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+    } catch {
+      throw new LiveError(0, 'NETWORK', 'PassBook did not answer.');
+    }
+    const ms = Math.round(performance.now() - started);
+    const meta = {
+      status: res.status,
+      ms,
+      requestId: res.headers.get('x-request-id'),
+      replayed: res.headers.get('idempotent-replayed') === 'true',
+      etag: res.headers.get('etag'),
+    };
+    if (res.ok) return { ok: true, ...meta, body: (await res.json()) as T, problem: null };
+    const err = await failure(res);
+    return { ok: false, ...meta, body: null, problem: { code: err.code, detail: err.message } };
   }
 
   template(id: string): Promise<Template> {

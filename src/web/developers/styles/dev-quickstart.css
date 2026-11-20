@@ -1,0 +1,247 @@
+/* The quickstart's page: steps on the left, the live pass on the right. Present on first paint, so it stays small;
+   what only the signed-in island needs is in quickstart/quickstart.css. No inline styles anywhere (the CSP forbids them). */
+.docs:has(.qs) > .main {
+  padding: 0;
+  max-width: none;
+  width: 100%;
+}
+.docs:has(.qs) > .sidenav {
+  align-self: stretch;
+  position: static;
+  max-height: none;
+}
+.qs {
+  display: grid;
+  grid-template-columns: minmax(0, 44rem) minmax(0, 1fr);
+  min-height: calc(100dvh - 59px - 64px);
+}
+.qs-main {
+  padding: 32px 40px 64px;
+  min-width: 0;
+}
+/* The rule between the columns belongs to the steps, which run the full height; the pass column sticks beside them. */
+.qs-main {
+  border-right: 1px solid var(--pk-border-subtle);
+}
+.qs-stage {
+  padding: 28px 28px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  position: sticky;
+  top: 59px;
+  align-self: start;
+  max-height: calc(100dvh - 59px);
+  overflow-y: auto;
+}
+.qs-stage-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+}
+
+/* ---------- Progress ---------- */
+.qs-progress {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+}
+.qs-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--pk-state-hover-tint);
+  overflow: hidden;
+}
+.qs-bar > span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--wl-foil);
+  transition: width var(--pk-duration-moderate, 280ms) var(--pk-ease-standard, ease);
+}
+.qs-bar[data-done="1"] > span {
+  width: 20%;
+}
+.qs-bar[data-done="2"] > span {
+  width: 40%;
+}
+.qs-bar[data-done="3"] > span {
+  width: 60%;
+}
+.qs-bar[data-done="4"] > span {
+  width: 80%;
+}
+.qs-bar[data-done="5"] > span {
+  width: 100%;
+}
+.qs-count {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Steps ---------- */
+.qs-steps {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+}
+.qs-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  column-gap: 16px;
+  padding-bottom: 30px;
+}
+.qs-step:last-child {
+  padding-bottom: 0;
+}
+.qs-step::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 34px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--pk-border-subtle);
+}
+.qs-step:last-child::before {
+  display: none;
+}
+.qs-step[data-state="done"]::before {
+  background: var(--pk-accent);
+}
+.qs-dot {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 600 13px / 1 var(--pk-font-mono);
+  color: var(--pk-text-muted);
+  background: var(--pk-surface-page);
+  border: 2px solid var(--pk-border-strong);
+}
+.qs-dot .lucide {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.6;
+}
+.qs-step[data-state="done"] .qs-dot {
+  background: var(--pk-accent);
+  border-color: var(--pk-accent);
+  color: var(--pk-accent-on);
+}
+.qs-step[data-state="current"] .qs-dot {
+  color: var(--pk-accent-fg);
+  border-color: var(--pk-accent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--pk-accent) 22%, transparent);
+}
+.qs-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+.qs-h {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 15px;
+  min-height: 24px;
+}
+.qs-step[data-state="todo"] .qs-h {
+  color: var(--pk-text-muted);
+  font-weight: 500;
+}
+.qs-tag {
+  font-weight: 500;
+}
+
+/* ---------- Narrow: one column, the pass between steps 3 and 4 ---------- */
+@media (max-width: 1239px) {
+  .qs {
+    display: flex;
+    flex-direction: column;
+    padding-inline: 40px;
+  }
+  .qs-main,
+  .qs-steps {
+    display: contents;
+  }
+  .qs-step[data-step="1"] {
+    margin-top: 28px;
+  }
+  .qs-main > .eyebrow {
+    margin-top: 28px;
+  }
+  .qs-step[data-step="1"],
+  .qs-step[data-step="2"],
+  .qs-step[data-step="3"] {
+    order: 1;
+  }
+  .qs-stage {
+    order: 2;
+    align-self: stretch;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    border: 1px solid var(--pk-border-subtle);
+    border-radius: var(--pk-radius-xl);
+    margin: 0 0 30px;
+    padding: 18px 16px 20px;
+  }
+  .qs-step[data-step="4"],
+  .qs-step[data-step="5"] {
+    order: 3;
+  }
+  .qs-step:last-child {
+    padding-bottom: 56px;
+  }
+  .qs-stage-card {
+    min-height: 0;
+  }
+}
+@media (max-width: 720px) {
+  .qs {
+    padding-inline: 16px;
+  }
+  .qs-progress {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .qs-bar {
+    flex-basis: 100%;
+    order: 2;
+  }
+  .qs-step {
+    grid-template-columns: 30px minmax(0, 1fr);
+    column-gap: 12px;
+  }
+  .qs-dot {
+    width: 30px;
+    height: 30px;
+  }
+  .qs-step::before {
+    left: 14px;
+  }
+}
+@keyframes qs-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes qs-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}

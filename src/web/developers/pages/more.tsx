@@ -208,7 +208,7 @@ export function WebhooksView({ site }: { site: Site }) {
   );
 }
 
-export function SlotView({ which }: { which: 'quickstart' | 'guides' }) {
+export function SlotView({ which }: { which: 'guides' }) {
   const s = DEV_COPY.slots[which];
   return (
     <>
