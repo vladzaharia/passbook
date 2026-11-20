@@ -1,5 +1,6 @@
 import { Download } from 'lucide-react';
 import { useState } from 'react';
+import { formatCount } from '@/web/lib/format.ts';
 import { Button, toast } from '@/web/ui/index.ts';
 import { EXPORT_MAX, exportAudit } from './export.ts';
 
@@ -19,7 +20,7 @@ export function ExportButton({
       variant="outline"
       loading={busy}
       iconStart={<Download aria-hidden />}
-      title={`Saves the entries these filters match, up to ${EXPORT_MAX.toLocaleString('en')}, as CSV.`}
+      title={`Saves the entries these filters match, up to ${formatCount(EXPORT_MAX)}, as CSV.`}
       onClick={() => {
         setBusy(true);
         exportAudit(path, query, orgName)
