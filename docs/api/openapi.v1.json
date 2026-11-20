@@ -26821,7 +26821,19 @@
         "x-sdk": {
           "resource": "developer.sandbox",
           "method": "create"
-        }
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
       },
       "get": {
         "security": [
@@ -26920,7 +26932,18 @@
         "x-sdk": {
           "resource": "developer.sandbox",
           "method": "retrieve"
-        }
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
       },
       "delete": {
         "security": [
@@ -27008,7 +27031,18 @@
         "x-sdk": {
           "resource": "developer.sandbox",
           "method": "close"
-        }
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
       }
     },
     "/api/v1/developer/try-token": {
@@ -27064,7 +27098,18 @@
           "method": "create",
           "sdk": false,
           "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
-        }
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
       },
       "delete": {
         "security": [
@@ -27116,7 +27161,18 @@
           "method": "revokeAll",
           "sdk": false,
           "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
-        }
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "RATE_LIMITED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
       }
     },
     "/api/v1/orgs/{id}/entitlements": {
@@ -126717,7 +126773,16 @@
           "reason": "Public page of a sandbox pass; the signed link in the URL is the credential."
         },
         "security": [],
-        "x-public": true
+        "x-public": true,
+        "x-codes": [
+          "ASSET_NOT_FOUND",
+          "LINK_NOT_FOUND",
+          "NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
       }
     },
     "/preview/{token}/assets/{name}": {
@@ -126770,7 +126835,16 @@
           "reason": "Public page or capability link; the signed link in the URL is the credential."
         },
         "security": [],
-        "x-public": true
+        "x-public": true,
+        "x-codes": [
+          "ASSET_NOT_FOUND",
+          "LINK_NOT_FOUND",
+          "NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
       }
     },
     "/b/{token}": {

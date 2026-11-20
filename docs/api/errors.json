@@ -1612,6 +1612,15 @@
       ]
     },
     {
+      "code": "KEY_IN_BROWSER",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "KEY_TEST_ONLY",
       "statuses": [
         403
@@ -2770,6 +2779,42 @@
       ],
       "modules": [
         "wallet-providers"
+      ]
+    },
+    {
+      "code": "SANDBOX_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_KEY_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "developer"
       ]
     },
     {
@@ -4410,7 +4455,8 @@
         403
       ],
       "modules": [
-        "auth"
+        "auth",
+        "developer"
       ]
     },
     {
@@ -4513,6 +4559,7 @@
         404
       ],
       "modules": [
+        "developer",
         "scan",
         "users"
       ]

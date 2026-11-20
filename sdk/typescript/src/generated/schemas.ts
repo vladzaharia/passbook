@@ -541,6 +541,10 @@ export type CreatedScanningDevice = {
   } | null;
 };
 
+export type DeveloperSandboxCreateParams = {
+  turnstileToken: string;
+};
+
 export type EmailFailedEvent = {
   id: string;
   type: "email.failed";
@@ -1015,6 +1019,7 @@ export type PassDetail = {
   }>;
   downloadUrl: string;
   publicUrl: string;
+  testPreview?: boolean;
   channels?: {
     mobile?: {
       on: boolean;
@@ -3399,6 +3404,8 @@ export type TemplateDetail = {
   passesBlocked?: number;
   restorable?: boolean;
 };
+
+export type TemplateInputSchema = Record<string, unknown>;
 
 export type TemplatePage = {
   items: Array<TemplateSummary>;
