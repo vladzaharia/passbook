@@ -5,15 +5,20 @@ import {
   type RollCallCurrent,
   type RollCallStatus,
 } from '../../../../shared/contracts/scan-roll-call.ts';
-import { exists } from '../../../platform/authority-cond.ts';
+import type { Grant } from '../../../platform/authority.ts';
+import { exists, type GrantCond } from '../../../platform/authority-cond.ts';
 import { lt } from '../../../platform/authority-expr.ts';
 import { classifyD1Error } from '../../../platform/db.ts';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { grantedAudit } from '../../audit/repo-granted.ts';
 import { occupancyZones } from '../occupancy/service.ts';
 import type { Caller } from './caller.ts';
-import { reenter } from './exit.ts';
 import { nudgeDevices } from './nudge.ts';
 import {
   type CallRow,
@@ -148,6 +153,56 @@ export async function readRollCall(ctx: ServiceContext, c: Caller, id: string): 
   return rollCallView(ctx, c, await owned(ctx, c, id));
 }
 
+interface MarkWrite {
+  id: string;
+  passId: string;
+  status: RollCallStatus;
+  by: string;
+  scannerId: string | null;
+  at: number;
+  person: SnapshotPerson | null;
+  exitScan: string | null;
+}
+
+/** The mark's row, by (call, pass): the later time wins. `bump` raises the call's revision in a grant of its own. */
+function addMark(g: Grant, w: MarkWrite, when: GrantCond[] = [], bump = false): void {
+  if (bump) g.update('roll_calls', { inc: ['rev'], where: { id: w.id, ended_at: null }, when });
+  g.upsert(
+    'roll_call_marks',
+    [
+      'roll_call_id',
+      'pass_id',
+      'status',
+      'by_name',
+      'scanner_id',
+      'late',
+      'marked_at',
+      'exit_scan_id',
+    ],
+    [
+      w.id,
+      w.passId,
+      w.status,
+      w.by,
+      w.scannerId,
+      w.person ? JSON.stringify(w.person) : null,
+      w.at,
+      w.exitScan,
+    ],
+    {
+      update: ['status', 'by_name', 'scanner_id', 'marked_at', 'exit_scan_id'],
+      where: { marked_at: lt(w.at) },
+      when: [exists('roll_calls', { id: w.id, ended_at: null }), ...when],
+    },
+  );
+}
+
+/** The undo found the exit no longer the person's last scan: they have scanned since. */
+const scannedSince = (error: unknown) =>
+  error instanceof AppError &&
+  error.status === 409 &&
+  ['UNDO_SUPERSEDED', 'SCAN_PASS_CHANGED', 'SCAN_IN_PROGRESS'].includes(error.code);
+
 export interface MarkInput {
   rollCallId: string;
   passId: string;
@@ -185,7 +240,8 @@ export async function markRollCall(
       if (!late.has(s) && !here.some((r) => r.passId === s))
         throw new ForbiddenError('That person is not on this roll call.', 'ROLL_CALL_NOT_LISTED');
   }
-  // The later mark by time wins; one that wins as Out exits the person, one that takes it back undoes the exit.
+  // The later mark by time wins. One that wins as Out exits the person, and one that takes it back undoes
+  // that exit; either runs the mark's own write inside the exit's or the undo's grant, so they commit together.
   const held = new Map((await marksOf(ctx.env.DB, c.orgId, c.mode, id)).map((m) => [m.passId, m]));
   const place = new Map([...call.snapshot, ...late.values()].map((p) => [p.passId, p.place]));
   const g = c.grant(now);
@@ -194,17 +250,34 @@ export async function markRollCall(
     const at = Math.min(m.at ?? now, now);
     const prior = held.get(m.passId);
     if (prior && prior.at >= at) continue;
-    let exitScan = prior?.exitScanId ?? null;
     const where = place.get(m.passId);
-    if (m.status === 'out' && !exitScan && c.exit && where)
-      exitScan = await c.exit(m.passId, where);
-    else if (
-      m.status !== 'out' &&
-      exitScan &&
-      where &&
-      (await reenter(ctx, c.grant, c.orgId, m.passId, where))
-    )
+    const mark = (exitScan: string | null): MarkWrite => ({
+      id,
+      passId: m.passId,
+      status: m.status,
+      by: c.by,
+      scannerId: c.scannerId,
+      at,
+      person: late.get(m.passId) ?? null,
+      exitScan,
+    });
+    let exitScan = prior?.exitScanId ?? null;
+    if (m.status === 'out' && !exitScan && c.exit && where) {
+      const scan = await c.exit(m.passId, where, (eg, scanId, won) =>
+        addMark(eg, mark(scanId), [won], true),
+      );
+      if (scan) exitScan = scan;
+      else addMark(g, mark(null));
+    } else if (m.status !== 'out' && exitScan && c.undoExit) {
+      try {
+        await c.undoExit(exitScan, (ug) => addMark(ug, mark(null), [], true));
+      } catch (error) {
+        throw scannedSince(error)
+          ? new ConflictError("They've scanned since, so the Out stays.", 'ROLL_CALL_SCANNED_SINCE')
+          : error;
+      }
       exitScan = null;
+    } else addMark(g, mark(exitScan));
     held.set(m.passId, {
       passId: m.passId,
       status: m.status,
@@ -213,35 +286,6 @@ export async function markRollCall(
       late: null,
       exitScanId: exitScan,
     });
-    const person = late.get(m.passId);
-    g.upsert(
-      'roll_call_marks',
-      [
-        'roll_call_id',
-        'pass_id',
-        'status',
-        'by_name',
-        'scanner_id',
-        'late',
-        'marked_at',
-        'exit_scan_id',
-      ],
-      [
-        id,
-        m.passId,
-        m.status,
-        c.by,
-        c.scannerId,
-        person ? JSON.stringify(person) : null,
-        at,
-        exitScan,
-      ],
-      {
-        update: ['status', 'by_name', 'scanner_id', 'marked_at', 'exit_scan_id'],
-        where: { marked_at: lt(at) },
-        when: [exists('roll_calls', { id, ended_at: null })],
-      },
-    );
   }
   await g.commit();
   const after = await owned(ctx, c, id);

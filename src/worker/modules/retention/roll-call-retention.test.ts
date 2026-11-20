@@ -48,6 +48,11 @@ describe('roll call retention', () => {
     );
     await sweepClass(rk.kit.ctx, 'scans');
     expect(await present(old)).toBe(false);
+    const receipts = await all<{ deleted: number }>(
+      db(),
+      "SELECT deleted FROM retention_receipts WHERE class = 'scans' AND kind = 'sweep'",
+    );
+    expect(receipts.map((r) => r.deleted)).toContain(1);
     expect(
       await all(db(), 'SELECT 1 FROM roll_call_marks WHERE roll_call_id = ?', [old]),
     ).toHaveLength(0);

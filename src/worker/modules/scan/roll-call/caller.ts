@@ -2,6 +2,7 @@
 // own scope (the places), names, and write grant; the service does not care which.
 import type { Mode } from '../../../../shared/contracts/common.ts';
 import type { ScanWhosInList } from '../../../../shared/contracts/scan-whos-in.ts';
+import type { SessionAuth } from '../../../platform/auth.ts';
 import { type Grant, grant } from '../../../platform/authority.ts';
 import { ConflictError } from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
@@ -19,6 +20,7 @@ import { whosIn } from '../occupancy/whos-in.ts';
 import { sessionZoneIds } from '../repo-zones.ts';
 import { scanWriteGrant } from '../scan-write-grant.ts';
 import { consoleExits, deviceExits, type Exits } from './exit.ts';
+import { ROLL_TABLES } from './tables.ts';
 
 export type ListQuery = { cursor?: string; limit: number };
 
@@ -41,9 +43,10 @@ export interface Caller {
   allowed?: ReadonlySet<string>;
   /** Out also exits the person. Absent for an API key, whose Out is a confirmation alone. */
   exit?: Exits['exit'];
+  undoExit?: Exits['undoExit'];
 }
 
-const TABLES = ['roll_calls', 'roll_call_marks', 'scan_presence', 'scan_place_revs'];
+const TABLES = ROLL_TABLES;
 
 export function deviceCaller(ctx: ServiceContext, actor: ScanActor): Caller {
   const session = actor.scanningSession;
@@ -86,6 +89,7 @@ export function tenantCaller(
   who: { type: 'user' | 'api_key'; id: string | null; name: string },
   sessionId: string | null,
   allowed?: ReadonlySet<string>,
+  session?: SessionAuth,
 ): Caller {
   const { orgId, mode } = authority;
   const db = ctx.env.DB;
@@ -125,6 +129,6 @@ export function tenantCaller(
         checks: capabilityChecks(authority),
         tables: TABLES,
       }),
-    ...(authority.kind === 'session' ? consoleExits(ctx, authority) : {}),
+    ...(session && authority.kind === 'session' ? consoleExits(ctx, session, authority) : {}),
   };
 }

@@ -32,6 +32,7 @@ export function useRollCall({
   onAppear,
   connect = connectDeviceSocket,
   store,
+  onRefused,
 }: {
   port: RollCallPort;
   enabled: boolean;
@@ -43,14 +44,16 @@ export function useRollCall({
   connect?: typeof connectDeviceSocket;
   /** Where unsent taps live across a reload; wiped when the scanner is unpaired. */
   store?: KeyValue<QueuedMark[]>;
+  /** The server kept an Out because the person scanned since: the taps for it are dropped. */
+  onRefused?: () => void;
 }) {
   const [server, setServer] = useState<RollCall | null>(null);
   const [queue, setQueue] = useState<QueuedMark[]>([]);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [asOf, setAsOf] = useState<number | null>(null);
-  const live = useRef({ server, queue, onAppear });
-  live.current = { server, queue, onAppear };
+  const live = useRef({ server, queue, onAppear, onRefused });
+  live.current = { server, queue, onAppear, onRefused };
   const sending = useRef(false);
   // The device's clock against the server's, measured on every read; taps carry the corrected time.
   const offset = useRef(0);
@@ -110,6 +113,10 @@ export function useRollCall({
     } catch (error) {
       if (gone(error)) {
         setQueue([]);
+        await reload();
+      } else if (error instanceof ApiError && error.code === 'ROLL_CALL_SCANNED_SINCE') {
+        setQueue((q) => q.filter((m) => !batch.includes(m)));
+        live.current.onRefused?.();
         await reload();
       } else setError(true);
     } finally {

@@ -263,7 +263,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     writes: [
       'outbox:90161c5a75f9',
       'pass_events:4a717a8505a1',
-      'roll_calls:e6928ea80600',
+      'roll_calls:475b813fc377',
       'scans:06e74b44b9ac',
     ],
   },

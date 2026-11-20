@@ -13,6 +13,7 @@ import { type AdminAuthority, adminPrincipal } from '../repo-admin-grant.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
 import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import { orgZoneRows } from '../repo-zones.ts';
+import { ROLL_TABLES, type WithGrant } from '../roll-call/tables.ts';
 import { scanPassChecks } from '../scan-pass-checks.ts';
 import { SCAN_COMMIT_TABLES, scanIs } from '../scan-write-grant.ts';
 import { ledgerEvent } from '../scan-write-statements.ts';
@@ -112,6 +113,7 @@ export async function consoleMarkOut(
   authority: AdminAuthority,
   t: ConsoleTarget,
   input: { passId: string; place: string },
+  extra?: WithGrant,
 ): Promise<string> {
   const { orgId, mode } = authority;
   const scope = await consoleScope(ctx, orgId, mode, t);
@@ -181,7 +183,7 @@ export async function consoleMarkOut(
     purpose: 'org_mode.scan.mark_out',
     principal: adminPrincipal(authority),
     checks: [...capabilityChecks(authority), ...scanPassChecks(pass.id, { pass, credential: {} })],
-    tables: [...SCAN_COMMIT_TABLES],
+    tables: extra ? [...SCAN_COMMIT_TABLES, ...ROLL_TABLES] : [...SCAN_COMMIT_TABLES],
     codes: { lineage: 'SCAN_PASS_CHANGED' },
     target: pass.id,
   });
@@ -210,6 +212,7 @@ export async function consoleMarkOut(
     },
     [scanIs(scanId, { state: 'done' })],
   );
+  extra?.(g, scanId, won);
   const committed = await g.commit();
   if (!(committed[g.indexOf(inserted)]?.results ?? []).length)
     throw new ConflictError('They are already out.', 'NOT_INSIDE');

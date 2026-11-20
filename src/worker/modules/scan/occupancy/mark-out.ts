@@ -15,6 +15,7 @@ import { blankOutcome } from '../outcome.ts';
 import { assertUnderOverrideCap, countOverride } from '../repo-override-cap.ts';
 import { includeSystemRetentionProof } from '../repo-scan-retention-part.ts';
 import { scanByKey } from '../repo-scans.ts';
+import { ROLL_TABLES, type WithGrant } from '../roll-call/tables.ts';
 import { scanPolicy } from '../rules.ts';
 import { SCAN_COMMIT_TABLES, scanIs, scanWriteGrant } from '../scan-write-grant.ts';
 import { ledgerEvent } from '../scan-write-statements.ts';
@@ -72,6 +73,7 @@ export async function markOut(
   ctx: ServiceContext,
   actor: ScanActor,
   req: MarkOutRequest,
+  extra?: WithGrant,
 ): Promise<ScanOutcome> {
   if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
     throw new ForbiddenError('Only Desk and above can mark someone out.', 'FORBIDDEN');
@@ -156,7 +158,7 @@ export async function markOut(
     now,
     pausedSession: true,
     pass: { id: pass.id, facts: { pass, credential: {} } },
-    tables: SCAN_COMMIT_TABLES,
+    tables: extra ? [...SCAN_COMMIT_TABLES, ...ROLL_TABLES] : SCAN_COMMIT_TABLES,
   });
   const { won } = addExit(g, {
     passId: pass.id,
@@ -193,6 +195,7 @@ export async function markOut(
     },
     [scanIs(scanId, { state: 'done' })],
   );
+  extra?.(g, scanId, won);
   try {
     const committed = await g.commit();
     if (!(committed[g.indexOf(inserted)]?.results ?? []).length) {

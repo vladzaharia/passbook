@@ -13,12 +13,14 @@ import {
   CHUNK,
   type Cutoffs,
   deleteChunkStmt,
-  deleteRollCalls,
+  deleteRollCallsStmt,
   FAILED_MAIL_DAYS,
   receiptGate,
+  rollCallsGate,
   type Scope,
   type SweepClass,
   selectChunk,
+  selectRollCalls,
 } from './repo-sweep.ts';
 
 export const SWEEP_LIMITS = { platformChunks: 50, orgChunks: 50, orgBudgetMs: 15_000 };
@@ -79,6 +81,37 @@ async function sweepChunk(
   throw new ConflictError('Retention receipt chain is busy.', 'RETENTION_RECEIPT_BUSY');
 }
 
+/** Ended roll calls leave with the scans window, one receipt per chunk like any other row. Returns the calls removed. */
+async function sweepRollCalls(ctx: ServiceContext, t: Target, cutoffs: Cutoffs): Promise<number> {
+  let removed = 0;
+  for (let i = 0; i < t.maxChunks; i++) {
+    const ids = await selectRollCalls(ctx.env.DB, t.scope, cutoffs);
+    if (ids.length === 0) break;
+    const prepared = await prepareReceipt(
+      ctx,
+      {
+        orgId: t.orgId,
+        cls: 'scans',
+        kind: 'sweep',
+        policyDays: t.days,
+        cutoffAt: cutoffs.cutoff,
+        deleted: ids.length,
+      },
+      rollCallsGate(t.scope, cutoffs, ids),
+    );
+    const [receipt] = await ctx.env.DB.batch([
+      prepared.stmt,
+      deleteRollCallsStmt(ctx.env.DB, t.scope, cutoffs, ids, prepared.receipt.id),
+    ]);
+    // A lost race or a hold changed the rows: they are chosen again next run.
+    if (receipt?.meta.changes !== 1) break;
+    await recordHead(ctx, prepared.receipt);
+    removed += ids.length;
+    if (ids.length < CHUNK) break;
+  }
+  return removed;
+}
+
 /** Returns rows removed and whether the target stopped at its cap with rows left. */
 async function sweepTarget(
   ctx: ServiceContext,
@@ -95,10 +128,7 @@ async function sweepTarget(
     if (n < CHUNK) break;
     capped = i === t.maxChunks - 1;
   }
-  if (cls === 'scans') {
-    const calls = await deleteRollCalls(ctx.env.DB, t.scope, cutoffs);
-    if (calls > 0) ctx.log.info('retention.roll_calls', { orgId: t.orgId, removed: calls });
-  }
+  if (cls === 'scans') removed += await sweepRollCalls(ctx, t, cutoffs);
   if (capped)
     ctx.log.warn('retention.backlog', { cls, orgId: t.orgId, removed, code: 'RETENTION_BACKLOG' });
   return { removed, capped };

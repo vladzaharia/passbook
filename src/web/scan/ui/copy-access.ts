@@ -72,6 +72,7 @@ export const ACCESS_COPY = {
     print: 'Print',
     failed: "Couldn't update the roll call. Try again.",
     ended: 'This roll call ended.',
+    scannedSince: "They've scanned since. The Out stays.",
     empty: 'No one on the list.',
     printTitle: 'Roll call · {place}',
     printMeta: 'Started {time} by {name}',

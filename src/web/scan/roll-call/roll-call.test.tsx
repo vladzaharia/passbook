@@ -99,6 +99,30 @@ const memoryStore = (initial?: QueuedMark[]) => {
   };
 };
 
+describe('useRollCall: a refused take-back', () => {
+  it('drops the tap, tells the desk, and keeps the Out the server holds', async () => {
+    const out = { status: 'out' as const, by: 'Sam K.', at: T0 };
+    const refused = vi.fn();
+    const port = fakeRollCall(call([person(0, { mark: out })]));
+    port.fail = new ApiError({ status: 409, code: 'ROLL_CALL_SCANNED_SINCE' });
+    const h = renderHook(() =>
+      useRollCall({
+        port,
+        enabled: true,
+        online: true,
+        by: '',
+        connect: connect as never,
+        onRefused: refused,
+      }),
+    );
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    act(() => h.result.current.mark(person(0).passId, 'none'));
+    await waitFor(() => expect(refused).toHaveBeenCalled());
+    expect(h.result.current.pending).toBe(0);
+    expect(h.result.current.call?.people[0]?.mark?.status).toBe('out');
+  });
+});
+
 describe('useRollCall: queue identity, clock and storage', () => {
   it('stamps taps with the server-corrected time', async () => {
     const h = setup(call([person(0)], { serverNow: Date.now() + 600_000 }));

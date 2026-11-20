@@ -217,6 +217,7 @@ describe('roll call: Out exits the person', () => {
     const p = await personInside(tpl, 'Leaver', [`zone:${pool.id}`]);
     const a = await station([tpl], [pool.id]);
     const call = (await start(a)).body;
+    kit.clock.advance(3_600_000);
     const t = kit.clock.now();
     const out = await mark(a, call.id, [{ passId: p.id, status: 'out', at: t - 3000 }]);
     expect(out.status).toBe(200);
@@ -241,6 +242,102 @@ describe('roll call: Out exits the person', () => {
         )
       )[0]?.exit_scan_id,
     ).toBeNull();
+  });
+
+  it('take-back restores entered_at, and the exit is a real undone scan', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const entered = kit.clock.now() - 90 * 60_000;
+    const p = await personInside(tpl, 'Keeps Clock', [place], { at: entered });
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    kit.clock.advance(3_600_000);
+    const t = kit.clock.now();
+    await mark(a, call.id, [{ passId: p.id, status: 'out', at: t - 3000 }]);
+    const [row] = await all<{ exit_scan_id: string }>(
+      kit.env.DB,
+      'SELECT exit_scan_id FROM roll_call_marks WHERE pass_id = ?',
+      [p.id],
+    );
+    const [exit] = await all<{ out_cause: string; undone_by: string | null }>(
+      kit.env.DB,
+      'SELECT out_cause, undone_by FROM scans WHERE id = ?',
+      [row?.exit_scan_id],
+    );
+    expect(exit).toMatchObject({ out_cause: 'desk', undone_by: null });
+    await mark(a, call.id, [{ passId: p.id, status: 'none', at: t - 1000 }]);
+    const [back] = await all<{ state: string; entered_at: number }>(
+      kit.env.DB,
+      'SELECT state, entered_at FROM scan_presence WHERE pass_id = ?',
+      [p.id],
+    );
+    expect(back).toMatchObject({ state: 'in', entered_at: entered });
+    const [undone] = await all<{ undone_by: string | null }>(
+      kit.env.DB,
+      'SELECT undone_by FROM scans WHERE id = ?',
+      [row?.exit_scan_id],
+    );
+    expect(undone?.undone_by).toBeTruthy();
+    const ledger = await all(
+      kit.env.DB,
+      "SELECT 1 FROM pass_events WHERE pass_id = ? AND kind = 'scan.undone'",
+      [p.id],
+    );
+    expect(ledger).toHaveLength(1);
+  });
+
+  it('take-back after a later door scan is refused and the Out stays', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const p = await personInside(tpl, 'Scanned Since', [place], { at: kit.clock.now() - 60_000 });
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    kit.clock.advance(3_600_000);
+    const t = kit.clock.now();
+    await mark(a, call.id, [{ passId: p.id, status: 'out', at: t - 3000 }]);
+    // The door tapped them in again: the exit is no longer their last scan.
+    await run(
+      kit.env.DB,
+      "UPDATE scan_presence SET state = 'in', last_scan_id = 'door-tap', entered_at = ? WHERE pass_id = ?",
+      [t - 500, p.id],
+    );
+    const res = await mark(a, call.id, [{ passId: p.id, status: 'none', at: t - 1000 }]);
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('ROLL_CALL_SCANNED_SINCE');
+    const [m] = await all<{ status: string }>(
+      kit.env.DB,
+      'SELECT status FROM roll_call_marks WHERE pass_id = ?',
+      [p.id],
+    );
+    expect(m?.status).toBe('out');
+    expect(
+      (
+        await all<{ last_scan_id: string }>(
+          kit.env.DB,
+          'SELECT last_scan_id FROM scan_presence WHERE pass_id = ?',
+          [p.id],
+        )
+      )[0]?.last_scan_id,
+    ).toBe('door-tap');
+  });
+
+  it('an Out for someone already out is a confirmation alone, with no exit to take back', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const p = await personInside(tpl, 'Already Out', [place]);
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    await run(kit.env.DB, "UPDATE scan_presence SET state = 'out' WHERE pass_id = ?", [p.id]);
+    const res = await mark(a, call.id, [
+      { passId: p.id, status: 'out', at: kit.clock.now() - 1000 },
+    ]);
+    expect(res.status).toBe(200);
+    const [m] = await all<{ status: string; exit_scan_id: string | null }>(
+      kit.env.DB,
+      'SELECT status, exit_scan_id FROM roll_call_marks WHERE pass_id = ?',
+      [p.id],
+    );
+    expect(m).toMatchObject({ status: 'out', exit_scan_id: null });
   });
 
   it('Safe leaves presence alone, and an older Out that loses the race exits no one', async () => {

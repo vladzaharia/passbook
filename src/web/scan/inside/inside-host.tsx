@@ -54,6 +54,7 @@ export default function InsideHost({
     online,
     by: '',
     onAppear: onOpen,
+    onRefused: () => toast.info(COPY.scannedSince),
     ...(store ? { store } : {}),
   });
   const [confirm, setConfirm] = useState<'start' | 'end' | null>(null);

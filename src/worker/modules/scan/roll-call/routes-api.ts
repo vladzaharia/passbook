@@ -79,7 +79,14 @@ async function callerOf(c: C, q: z.infer<typeof OrgQuerySchema>, write: boolean)
     auth.kind === 'api_key' && auth.scopes.includes('scans:write')
       ? await keyScopes(ctx.env.DB, auth.keyId)
       : undefined;
-  return tenantCaller(ctx, authority, who, q.sessionId ?? null, allowed);
+  return tenantCaller(
+    ctx,
+    authority,
+    who,
+    q.sessionId ?? null,
+    allowed,
+    auth.kind === 'session' ? auth : undefined,
+  );
 }
 
 register(
