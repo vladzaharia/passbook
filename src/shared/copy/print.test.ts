@@ -9,4 +9,13 @@ describe('bulk ready line', () => {
       '3 tickets ready, 1 skipped. Some names could not be shown.',
     );
   });
+
+  it('says why passes were skipped', () => {
+    expect(PRINT_COPY.bulkPreparing('1 ticket', 4, 'Paper is off for Day pass')).toBe(
+      'Preparing 1 ticket. 4 skipped: Paper is off for Day pass.',
+    );
+    expect(PRINT_COPY.bulkReady('1 ticket', false, 4, 'Paper is off for Day pass')).toBe(
+      '1 ticket ready, 4 skipped: Paper is off for Day pass',
+    );
+  });
 });
