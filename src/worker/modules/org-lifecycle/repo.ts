@@ -32,12 +32,14 @@ export const closedOrgs = (db: D1Database, limit: number) =>
     [limit],
   );
 
-/** Closed orgs whose window is over, no purge running or done. A hold is checked again by the purge. */
+/** Closed orgs whose window is over and not purged yet, or purged without their receipt. A hold is checked again by the purge. */
 export const purgeDue = (db: D1Database, now: number, limit: number) =>
   all<LifecycleRow>(
     db,
     `${SELECT} WHERE status = 'deleted' AND purge_after IS NOT NULL AND purge_after <= ?
-       AND purged_at IS NULL AND NOT ${HELD}
+       AND ((purged_at IS NULL AND NOT ${HELD})
+         OR (purged_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM retention_receipts r
+           WHERE r.org_id = orgs.id AND r.class = 'org_purge')))
      ORDER BY (purge_started_at IS NOT NULL), purge_after, id LIMIT ?`,
     [now, limit],
   );

@@ -134,7 +134,11 @@ export async function casConnector(ctx: ServiceContext, w: ConnectorWrite): Prom
         })
       : jobGrant(ctx, {
           ...common,
-          purpose: c ? 'org_mode.job.connection.pass_publish' : 'org_mode.job.pass.publish',
+          purpose: c
+            ? 'org_mode.job.connection.pass_publish'
+            : w.closedOk
+              ? 'org_mode.job.org.purge_void'
+              : 'org_mode.job.pass.publish',
           job: c ? 'connection-sync' : 'pass-publish',
           orgId: p.orgId,
           mode: p.mode,
