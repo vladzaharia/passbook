@@ -17,6 +17,14 @@ CREATE TABLE nfc_tag_systems (
   enabled INTEGER NOT NULL CHECK (enabled IN (0, 1))
 );
 INSERT INTO nfc_tag_systems (id, assurance, enabled) VALUES ('uid', 'basic', 1), ('sun', 'secure', 0);
+-- Read-only: `enabled` is what keeps Secure tags out until 0129, and no grant or lint covers this table. 0129 drops
+-- these triggers, enables 'sun' and creates them again.
+CREATE TRIGGER nfc_tag_systems_no_insert BEFORE INSERT ON nfc_tag_systems
+BEGIN SELECT RAISE(ABORT, 'tag_system_fixed'); END;
+CREATE TRIGGER nfc_tag_systems_fixed BEFORE UPDATE ON nfc_tag_systems
+BEGIN SELECT RAISE(ABORT, 'tag_system_fixed'); END;
+CREATE TRIGGER nfc_tag_systems_no_delete BEFORE DELETE ON nfc_tag_systems
+BEGIN SELECT RAISE(ABORT, 'tag_system_fixed'); END;
 
 CREATE TABLE nfc_tag_types (
   id TEXT PRIMARY KEY,
@@ -39,10 +47,11 @@ CREATE UNIQUE INDEX nfc_tag_types_name ON nfc_tag_types (org_id, name) WHERE arc
 CREATE INDEX nfc_tag_types_org ON nfc_tag_types (org_id, id);
 CREATE INDEX nfc_tag_types_system ON nfc_tag_types (system);
 
--- Templates a type works with; no rows means any template.
+-- Templates a type works with; no rows means any template. No cascade from templates: deleting a template a type
+-- names is refused, so a type never loses its last row and silently takes every template.
 CREATE TABLE nfc_tag_type_templates (
   type_id TEXT NOT NULL REFERENCES nfc_tag_types (id) ON DELETE CASCADE,
-  template_id TEXT NOT NULL REFERENCES templates (id) ON DELETE CASCADE,
+  template_id TEXT NOT NULL REFERENCES templates (id),
   PRIMARY KEY (type_id, template_id)
 );
 CREATE INDEX nfc_tag_type_templates_template ON nfc_tag_type_templates (template_id);
@@ -101,7 +110,7 @@ CREATE TABLE tag_bindings (
   request_hash TEXT,
   cleared_lost_at INTEGER,
   cleared_lost_by TEXT,
-  expires_at INTEGER,
+  expires_at INTEGER CHECK (expires_at IS NULL OR expires_at > bound_at),
   CHECK ((scope = 'user') = (user_id IS NOT NULL)),
   CHECK ((ended_at IS NULL) = (end_cause IS NULL) AND (ended_at IS NULL) = (ended_by_type IS NULL))
 );
@@ -288,6 +297,8 @@ BEGIN SELECT RAISE(ABORT, 'tag_type_fixed'); END;
 CREATE TRIGGER nfc_tag_types_version BEFORE UPDATE ON nfc_tag_types
 WHEN NEW.version IS NOT OLD.version + 1
 BEGIN SELECT RAISE(ABORT, 'tag_type_version'); END;
+CREATE TRIGGER nfc_tag_type_templates_fixed BEFORE UPDATE ON nfc_tag_type_templates
+BEGIN SELECT RAISE(ABORT, 'tag_type_fixed'); END;
 CREATE TRIGGER nfc_tag_type_templates_tenant BEFORE INSERT ON nfc_tag_type_templates
 BEGIN
   SELECT RAISE(ABORT, 'tag_type_tenant') WHERE NOT EXISTS (

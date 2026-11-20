@@ -191,7 +191,11 @@ export function tagWorld() {
     db,
     rolledBack,
     sql: (text: string) => db.exec(text),
-    enableSun: () => db.exec("UPDATE nfc_tag_systems SET enabled = 1 WHERE id = 'sun'"),
+    // As 0129 will: drop the read-only trigger, enable, and (here) leave it off for the rollback.
+    enableSun: () => {
+      db.exec('DROP TRIGGER nfc_tag_systems_fixed');
+      db.exec("UPDATE nfc_tag_systems SET enabled = 1 WHERE id = 'sun'");
+    },
     type: (id: string, over: Over = {}) =>
       row(db, 'nfc_tag_types', {
         id,

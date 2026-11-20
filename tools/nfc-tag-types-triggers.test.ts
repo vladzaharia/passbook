@@ -40,6 +40,43 @@ describe('systems', () => {
   });
 });
 
+describe('read-only systems, template links and expiry', () => {
+  it('refuses any write to nfc_tag_systems', () => {
+    refuses(
+      () => sql("UPDATE nfc_tag_systems SET enabled = 1 WHERE id = 'sun'"),
+      /tag_system_fixed/,
+    );
+    refuses(() => sql("DELETE FROM nfc_tag_systems WHERE id = 'sun'"), /tag_system_fixed/);
+    refuses(
+      () =>
+        sql("INSERT INTO nfc_tag_systems (id, assurance, enabled) VALUES ('desfire', 'secure', 1)"),
+      /tag_system_fixed/,
+    );
+  });
+
+  it('refuses deleting a template a type names, and an update of a template link', () => {
+    rolledBack(() => {
+      type('y');
+      sql("INSERT INTO nfc_tag_type_templates (type_id, template_id) VALUES ('y', 't2-o1')");
+      refuses(() => sql("DELETE FROM templates WHERE id = 't2-o1'"), /FOREIGN KEY/);
+      refuses(
+        () => sql("UPDATE nfc_tag_type_templates SET template_id = 't2-o2' WHERE type_id = 'y'"),
+        /tag_type_fixed/,
+      );
+      sql("DELETE FROM nfc_tag_type_templates WHERE type_id = 'y'");
+      sql("DELETE FROM templates WHERE id = 't2-o1'");
+    });
+  });
+
+  it('an expiry must be after the binding', () => {
+    rolledBack(() => {
+      tag('x');
+      refuses(() => bind('bx', 'x', { expires_at: 7 }), /CHECK/);
+      bind('bx', 'x', { expires_at: 8 });
+    });
+  });
+});
+
 describe('type rows', () => {
   it('holds org, creation and the version', () => {
     rolledBack(() => {
