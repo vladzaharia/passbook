@@ -9,8 +9,7 @@ import { describeOwnKey } from './service.ts';
 /** GET /api/v1/api-keys/me: the calling key, by bearer. Mounted ahead of the session-only key routes. */
 export const apiKeyMeRoutes = createRouter();
 // Only the bare path, for reads: `/me/rotate` and anything else belong to the router that checks `api-keys:write`.
-apiKeyMeRoutes.on(
-  ['GET', 'HEAD'],
+apiKeyMeRoutes.get(
   '/',
   declareKeyAccess(
     async (c, next) => {
