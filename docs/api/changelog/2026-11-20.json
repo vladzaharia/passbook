@@ -165,6 +165,138 @@
         "webhooks.getWebhookEndpointsByIdDeliveriesByEventId"
       ],
       "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "List your sandbox Test calls from the last 7 days.",
+      "ops": ["developer.getLogs"]
+    },
+    {
+      "kind": "Added",
+      "text": "Read one logged Test call; bodies are kept for 24 hours.",
+      "ops": ["developer.getLog"]
+    },
+    {
+      "kind": "Added",
+      "text": "Your sandbox key, its scopes and tier, and the calls of the last hour.",
+      "ops": ["developer.getRail"]
+    },
+    {
+      "kind": "Changed",
+      "text": "Endpoints carry target: url or capture.",
+      "ops": ["webhooks.getWebhookEndpointsById"]
+    },
+    {
+      "kind": "Added",
+      "text": "List the requests a capture endpoint stored.",
+      "ops": ["webhooks.getWebhookEndpointsByIdCaptures"]
+    },
+    {
+      "kind": "Added",
+      "text": "Read one stored capture, with its headers and body.",
+      "ops": ["webhooks.getWebhookEndpointsByIdCapturesByCaptureId"]
+    },
+    {
+      "kind": "Changed",
+      "text": "Endpoints carry target: url or capture.",
+      "ops": ["webhooks.patchWebhookEndpointsById"]
+    },
+    {
+      "kind": "Changed",
+      "text": "Endpoints carry target: url or capture.",
+      "ops": ["webhooks.postWebhookEndpoints"]
+    },
+    {
+      "kind": "Added",
+      "text": "Replay a stored capture to a URL and get the result.",
+      "ops": ["webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay"]
+    },
+    {
+      "kind": "Added",
+      "text": "Reveal the capture endpoint signing secret; audited.",
+      "ops": ["webhooks.postWebhookEndpointsByIdCapturesSecret"]
+    },
+    {
+      "kind": "Changed",
+      "text": "The test result returns captureId when the endpoint is a capture endpoint.",
+      "ops": ["webhooks.postWebhookEndpointsByIdTest"]
+    },
+    {
+      "kind": "Added",
+      "text": "Create the org capture endpoint that stores what it receives.",
+      "ops": ["webhooks.postWebhookEndpointsCapture"]
+    },
+    {
+      "kind": "Added",
+      "text": "List your sandbox Test calls from the last 7 days.",
+      "ops": ["developer.getLogs"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Read one logged Test call; bodies are kept for 24 hours.",
+      "ops": ["developer.getLog"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Your sandbox key, its scopes and tier, and the calls of the last hour.",
+      "ops": ["developer.getRail"],
+      "covers": true
+    },
+    {
+      "kind": "Changed",
+      "text": "Endpoints carry target: url or capture.",
+      "ops": ["webhooks.getWebhookEndpointsById"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "List the requests a capture endpoint stored.",
+      "ops": ["webhooks.getWebhookEndpointsByIdCaptures"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Read one stored capture, with its headers and body.",
+      "ops": ["webhooks.getWebhookEndpointsByIdCapturesByCaptureId"],
+      "covers": true
+    },
+    {
+      "kind": "Changed",
+      "text": "Endpoints carry target: url or capture.",
+      "ops": ["webhooks.patchWebhookEndpointsById"],
+      "covers": true
+    },
+    {
+      "kind": "Changed",
+      "text": "Endpoints carry target: url or capture.",
+      "ops": ["webhooks.postWebhookEndpoints"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Replay a stored capture to a URL and get the result.",
+      "ops": ["webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Reveal the capture endpoint signing secret; audited.",
+      "ops": ["webhooks.postWebhookEndpointsByIdCapturesSecret"],
+      "covers": true
+    },
+    {
+      "kind": "Changed",
+      "text": "The test result returns captureId when the endpoint is a capture endpoint.",
+      "ops": ["webhooks.postWebhookEndpointsByIdTest"],
+      "covers": true
+    },
+    {
+      "kind": "Added",
+      "text": "Create the org capture endpoint that stores what it receives.",
+      "ops": ["webhooks.postWebhookEndpointsCapture"],
+      "covers": true
     }
   ]
 }
