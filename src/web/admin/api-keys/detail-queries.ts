@@ -1,15 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { z } from 'zod';
+import { z } from 'zod';
 import {
   ApiKeyActivitySchema,
   ApiKeyDetailSchema,
   ApiKeyListSchema,
-  RotatedApiKeySchema,
+  ApiKeySchema,
+  CreatedApiKeySchema,
 } from '@/shared/contracts/api-keys.ts';
 import { MODE_HEADER } from '@/shared/contracts/common.ts';
 import { api } from '@/web/lib/api.ts';
 import type { ApiKey } from './queries.ts';
 
+// A first call returns the secret; the console never sends an Idempotency-Key, so it never sees a replay.
+const RotatedSchema = z.object({ key: CreatedApiKeySchema, previous: ApiKeySchema });
 export type ApiKeyDetail = z.infer<typeof ApiKeyDetailSchema>;
 export type ApiKeyActivity = z.infer<typeof ApiKeyActivitySchema>;
 
@@ -67,7 +70,7 @@ export function useRotateKey(principal: string) {
     }) =>
       api.post(
         path(key.id, '/rotate'),
-        RotatedApiKeySchema,
+        RotatedSchema,
         { orgId: key.orgId, overlapHours },
         { headers: { [MODE_HEADER]: key.mode } },
       ),

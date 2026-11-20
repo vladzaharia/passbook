@@ -13,9 +13,22 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
+import { idempotentSecret } from './idempotent-secret.ts';
 import { isOwnPersonalKey } from './service.ts';
 import { getApiKey, getApiKeyActivity } from './service-detail.ts';
 import { rotateApiKey } from './service-rotate.ts';
+
+/** A rotation as stored for a replay: the new key without its secret. */
+const withoutSecret = ({
+  key: { secret: _secret, ...key },
+  previous,
+}: {
+  key: { secret: string };
+  previous: unknown;
+}) => ({
+  key,
+  previous,
+});
 
 type Router = ReturnType<typeof createRouter>;
 
@@ -59,7 +72,15 @@ export function registerKeyFamilyRoutes(router: Router): void {
       const authority = await authorizeApiKeys(ctx, auth, auth.orgId, 'integrations:manage');
       const { overlapHours } = c.req.valid('json');
       c.header('cache-control', 'no-store');
-      return c.json(await rotateApiKey(ctx, authority, auth.keyId, overlapHours), 201);
+      return idempotentSecret(
+        c,
+        ctx,
+        auth.orgId,
+        { overlapHours },
+        201,
+        () => rotateApiKey(ctx, authority, auth.keyId, overlapHours),
+        withoutSecret,
+      );
     },
   );
   register(
@@ -80,7 +101,15 @@ export function registerKeyFamilyRoutes(router: Router): void {
       const { orgId, overlapHours } = c.req.valid('json');
       const authority = await authorizeKey(ctx, c.var.auth, orgId, id, 'integrations:manage');
       c.header('cache-control', 'no-store');
-      return c.json(await rotateApiKey(ctx, authority, id, overlapHours), 201);
+      return idempotentSecret(
+        c,
+        ctx,
+        orgId,
+        { orgId, overlapHours },
+        201,
+        () => rotateApiKey(ctx, authority, id, overlapHours),
+        withoutSecret,
+      );
     },
   );
   register(

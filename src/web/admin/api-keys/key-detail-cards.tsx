@@ -158,7 +158,7 @@ export function ChildrenCard({
       ) : error ? (
         <ErrorState inline subject="child keys" error={error} onRetry={onRetry} />
       ) : !rows?.length ? (
-        <Empty>No child keys. A key with the manage-child-keys permission mints them.</Empty>
+        <Empty>No child keys</Empty>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((child) => {

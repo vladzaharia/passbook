@@ -140,8 +140,10 @@ export const RotateApiKeySchema = z.object({
   /** Hours the old key keeps working beside the new one; 0 retires it at once. */
   overlapHours: z.number().int().min(0).max(168).default(24),
 });
+/** What a call with an `Idempotency-Key` returns when it replays: the key, never its secret again. */
+export const ReplayedApiKeySchema = ApiKeySchema;
 export const RotatedApiKeySchema = z.object({
-  key: CreatedApiKeySchema,
+  key: z.union([CreatedApiKeySchema, ReplayedApiKeySchema]),
   previous: ApiKeySchema,
 });
 export const ApiKeyActivityQuerySchema = z.object({

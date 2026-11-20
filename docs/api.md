@@ -71,7 +71,7 @@ retires the old one `overlapHours` later (never after its `expiresAt`), in one b
 is shown once and works at once. The new key has the old one's stored scopes, roles, mode, addresses, expiry, limits and terminals,
 and `rotatedFrom` names the old key. A member can rotate a key only if they could mint it (`403 API_KEY_SCOPE_EXCEEDS_CREATOR`), in
 the key's mode (`403 API_KEY_MODE_MISMATCH`); a personal key only its own member. A key that is revoked, retiring or expired is
-`409 API_KEY_NOT_ROTATABLE`. A key with `api-keys:write` rotates itself with `POST /api-keys/me/rotate` (`{"overlapHours"}`).
+`409 API_KEY_NOT_ROTATABLE`. Rotate and mint take `Idempotency-Key`: a retry returns the stored key without its secret (`Idempotent-Replayed: true`), so it never makes a second key; a client that lost the response rotates again. A key with `api-keys:write` rotates itself with `POST /api-keys/me/rotate` (`{"overlapHours"}`).
 
 **Child keys.** A service key with `api-keys:write` mints a child with `POST /api-keys` (the same body: `orgId` is the key's own).
 The child is narrower than its parent in every dimension: scopes (never `api-keys:write` or `scans:write`: one level only),

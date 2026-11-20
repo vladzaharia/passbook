@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   ApiKeyListQuerySchema,
   ApiKeyListSchema,
@@ -6,6 +7,7 @@ import {
   CreatedApiKeySchema,
   IdParamSchema,
   OkSchema,
+  ReplayedApiKeySchema,
   RetireApiKeySchema,
 } from '../../../shared/contracts/index.ts';
 import { requireCaller } from '../../platform/auth.ts';
@@ -16,6 +18,7 @@ import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
+import { idempotentSecret } from './idempotent-secret.ts';
 import { authorizeKey, registerKeyFamilyRoutes } from './routes-family.ts';
 import { createApiKey, listApiKeys, retireApiKey, revokeApiKey } from './service.ts';
 
@@ -100,7 +103,7 @@ register(
     summary: 'Create an organization or platform API key (secret shown once)',
     body: CreateApiKeySchema,
     status: 201,
-    response: CreatedApiKeySchema,
+    response: z.union([CreatedApiKeySchema, ReplayedApiKeySchema]),
   },
   async (c) => {
     const ctx = serviceContext(c);
@@ -108,7 +111,15 @@ register(
     // A member makes their own personal key with any role; every other key needs `integrations:manage`.
     const capability = input.kind === 'personal' ? 'org:read' : 'integrations:manage';
     const authority = await authorizeApiKeys(ctx, c.var.auth, input.orgId, capability);
-    return c.json(await createApiKey(ctx, authority, input), 201);
+    return idempotentSecret(
+      c,
+      ctx,
+      input.orgId,
+      input,
+      201,
+      () => createApiKey(ctx, authority, input),
+      ({ secret: _secret, ...stored }) => stored,
+    );
   },
 );
 register(
