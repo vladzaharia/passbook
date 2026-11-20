@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureCard, fixtureOutcome } from '../../machine/fixture-data.test-support.ts';
 import type { ScanOutcome } from '../../machine/types.ts';
+import { factsOf, markOutPlace, membersOf, nextStepOf } from './record-facts.ts';
 import {
   type ActionFacts,
   actionsOf,
   bandOf,
-  factsOf,
   identityOf,
-  markOutPlace,
-  membersOf,
-  nextStepOf,
   presenceOf,
   type Rights,
 } from './record-model.ts';

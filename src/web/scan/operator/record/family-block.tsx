@@ -5,7 +5,7 @@ import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import type { ScanOutcome } from '../../machine/types.ts';
 import { GroupChip } from '../../result/group-chip.tsx';
 import { PersonAvatar } from '../lists/person-avatar.tsx';
-import { type BundleMember, membersOf } from './record-model.ts';
+import { type BundleMember, membersOf } from './record-facts.ts';
 
 const R = OPERATOR_COPY.record;
 

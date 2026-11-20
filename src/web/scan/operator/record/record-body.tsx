@@ -4,7 +4,8 @@ import { DisplayPanels } from '../../display/display-panels.tsx';
 import type { Draft, ScanOutcome } from '../../machine/types.ts';
 import { ValuePicker } from '../../result/value-picker.tsx';
 import { FamilyBlock } from './family-block.tsx';
-import { displayOf, type Fact, factsOf } from './record-model.ts';
+import { type Fact, factsOf } from './record-facts.ts';
+import { displayOf } from './record-model.ts';
 
 const PassPreview = lazy(() =>
   import('../../result/pass-preview.tsx').then((m) => ({ default: m.PassPreview })),

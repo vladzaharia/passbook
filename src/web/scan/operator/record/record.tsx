@@ -16,6 +16,7 @@ import { RecordActions } from './record-actions.tsx';
 import { RecordBand } from './record-band.tsx';
 import { type PickerDesk, RecordBody } from './record-body.tsx';
 import { RecordBuddy } from './record-buddy.tsx';
+import { markOutPlace } from './record-facts.ts';
 import { PhotoSlot, RecordIdentity } from './record-identity.tsx';
 import {
   type Act,
@@ -23,7 +24,6 @@ import {
   bandOf,
   displayOf,
   identityOf,
-  markOutPlace,
   presenceOf,
   type Rights,
   rightsOf,
