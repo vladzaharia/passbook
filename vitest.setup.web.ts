@@ -13,7 +13,8 @@ configure({ asyncUtilTimeout: 10_000 });
 // is torn down ("window is not defined", an unhandled error that fails the run). Let it finish.
 let toastsShown = false;
 afterEach(() => {
-  toastsShown ||= document.querySelector('[data-sonner-toast]') !== null;
+  toastsShown ||=
+    typeof document !== 'undefined' && document.querySelector('[data-sonner-toast]') !== null;
   cleanup();
   sonnerToast.dismiss();
 });
