@@ -15,6 +15,7 @@ import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
 import { useVerdictHaptic } from './platform/use-verdict-haptic.ts';
+import { canAddPhoto } from './result/add-photo.tsx';
 import { deskOf, resultOf } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { ResultCard } from './result/result-card.tsx';
@@ -208,6 +209,7 @@ export function ScanLoop({
               holdMs={l.s === 'verdict' && l.closeAt ? Math.max(0, l.closeAt - l.since) : null}
               onAction={(actionId) => dispatch({ type: 'pick', actionId })}
               desk={deskOf(l, session, dispatch)}
+              addPhoto={canAddPhoto(session) ? api : undefined}
               tagRead={'input' in l && Boolean(l.input.tag)}
             />
           ) : l.s === 'paused' ? (

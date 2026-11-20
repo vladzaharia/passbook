@@ -5,6 +5,7 @@ import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
+import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
@@ -179,6 +180,13 @@ function ScanResultVisual({
   );
 }
 
+/** The desk card of a pass with no photo: Add photo, as a Desk device shows it. */
+function PhotoVisual() {
+  const [api] = useState(() => ({ addPhoto: async () => ({}) }) as unknown as ScanApi);
+  const [outcome] = useState(() => fixtureOutcome('ready', 'choose'));
+  return <ScanPreviewScreen outcome={outcome} surface="operator" addPhoto={api} />;
+}
+
 export function ScanVisualGallery() {
   const params = new URLSearchParams(location.search);
   const surface = params.get('surface') ?? 'scanner';
@@ -187,6 +195,7 @@ export function ScanVisualGallery() {
   if (!selected) return null;
   const status = params.get('status') ?? 'accepted';
   const phase = params.get('phase') === 'rising' ? 'rising' : 'up';
+  if (surface === 'photo') return <PhotoVisual />;
   if (surface === 'closed') return <ClosedVisual who={params.get('who') ?? 'manager'} />;
   if (surface === 'monitor' && params.has('desk'))
     return (
