@@ -19,13 +19,13 @@ import {
   completeWalletOperation,
   getWalletInstance,
   newWalletClaimHandle,
-  queueWalletOperation,
   readWalletPassSnapshot,
   requestWalletRetirement,
   retireWalletInstance,
 } from './instance.ts';
 import { onWalletPassRetired } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 

@@ -42,11 +42,16 @@ export interface WalletInstanceProof extends WalletScope {
   policyRevision: number;
   /**
    * The pass row_version and the account authority_epoch the reconcile read. The queue grant refuses when either
-   * moved. A caller that does not carry them gets the values current at the call.
+   * moved.
    */
   passRowVersion?: number;
   accountEpoch?: number;
 }
+/** The proof of queued reconcile work: the lost-update pin is required. */
+export type WalletQueueProof = WalletInstanceProof & {
+  passRowVersion: number;
+  accountEpoch: number;
+};
 
 interface WalletInstanceBase extends WalletScope {
   id: string;

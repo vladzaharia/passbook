@@ -3,8 +3,14 @@
 // owner or deploy-time item (review-wa6a-merge.md, open question).
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import { Binds } from '../../platform/authority-principal.ts';
 import { all } from '../../platform/db.ts';
-import { walletOpCurrentSql, walletOpReadCurrentSql } from './repo-instance-current.ts';
+import { PART_CURRENT_OPERATION } from './repo-instance-claim-sql.ts';
+import {
+  walletOpCurrentCheck,
+  walletOpCurrentSql,
+  walletOpReadCurrentSql,
+} from './repo-instance-current.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
@@ -52,6 +58,10 @@ const bindingSql = projectionReleaseBindingPredicateSql({
   credentialKeysetCommitmentSql: 'op.credential_keyset_commitment',
 });
 
+const CHECK_DEPTH = 31;
+const CHECK_TERMS = 51;
+const CTE_DEPTH = 25;
+
 describe('expression depth of the largest wallet-provider predicates', () => {
   // Measured when written (the depth is an upper bound): ceilings, so a growing predicate fails here first.
   it.each([
@@ -68,6 +78,19 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       expect(terms(predicate)).toBeLessThanOrEqual(n);
     },
   );
+
+  it('measures the composed grant check and the settle CTE of the epoch queue', async () => {
+    const b = new Binds();
+    const check = walletOpCurrentCheck('i1', 1).ok(b, 'org_mode');
+    await all(
+      env.DB,
+      `SELECT 1 FROM (SELECT 'o' AS org_id, 'live' AS mode) a WHERE COALESCE((${check}), 0) = 1`,
+      b.params,
+    );
+    expect(exprDepth(check)).toBeLessThanOrEqual(CHECK_DEPTH);
+    expect(terms(check)).toBeLessThanOrEqual(CHECK_TERMS);
+    expect(exprDepth(PART_CURRENT_OPERATION)).toBeLessThanOrEqual(CTE_DEPTH);
+  });
 
   it('measures every trigger the migrations leave on the projection paths', async () => {
     const triggers = await all<{ name: string; sql: string }>(

@@ -26,13 +26,13 @@ import {
   getWalletInstance,
   getWalletInstanceById,
   newWalletClaimHandle,
-  queueWalletOperation,
   readWalletPassSnapshot,
   requestWalletRetirement,
   retireWalletInstance,
 } from './instance.ts';
 import { onWalletPassRetired, reconcileWalletInstance } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { putSamsungFetchRef } from './repo-callbacks.ts';
 import { findSamsungTombstones, putSamsungTombstone } from './repo-callbacks-tombstone.ts';
 import { providerRetirementCompleteSql, providerRetirementPending } from './repo-sync-retention.ts';

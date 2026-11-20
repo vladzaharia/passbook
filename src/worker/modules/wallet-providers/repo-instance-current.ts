@@ -30,11 +30,11 @@ export const previousGenerationsSettledSql = (i: string) =>
 /** The account's credential is of the identity the instance was created under (D6): a rotation keeps it, a change loses it. */
 export const revokeIdentitySql = (i: string) =>
   `EXISTS (SELECT 1 FROM wallet_provider_accounts account
-    JOIN wallet_provider_credentials credential ON credential.id = account.credential_id
+    LEFT JOIN wallet_provider_credentials credential ON credential.id = account.credential_id
     WHERE ${allOf([
       `account.id = ${i}.account_id`,
       'account.revoked_at IS NULL',
-      `credential.identity_hash = (SELECT original.provider_identity_hash
+      `COALESCE(account.identity_hash, credential.identity_hash) = (SELECT original.provider_identity_hash
         FROM template_releases rel JOIN template_candidates original ON original.id = rel.candidate_id
         WHERE rel.id = ${i}.identity_projection_release_id)`,
     ])})`;
@@ -181,5 +181,14 @@ export function instanceCheck(instanceId: string, desiredVersion?: number): Chec
       AND i.org_id = a.org_id AND i.mode = a.mode${
         desiredVersion === undefined ? '' : ` AND i.desired_version = ${b.bind(desiredVersion)}`
       })`,
+  };
+}
+
+/** The operation is a revoke: the always-run grants serve revokes only (an upsert never runs for a closed org). */
+export function revokeKindCheck(instanceId: string, version: number): Check {
+  return {
+    reason: 'lineage',
+    ok: (b) => `EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
+      WHERE op.instance_id = ${b.bind(instanceId)} AND op.version = ${b.bind(version)} AND op.kind = 'revoke')`,
   };
 }

@@ -3,7 +3,7 @@ import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WalletOperationRef, WalletScope } from './instance-types.ts';
 import { PART_CURRENT, PART_SCOPE } from './repo-instance-claim-sql.ts';
-import { walletOpCurrentCheck } from './repo-instance-current.ts';
+import { revokeKindCheck, walletOpCurrentCheck } from './repo-instance-current.ts';
 import { walletNoProviderArtifactsSql } from './repo-instance-retirement.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { commitWalletGrant, walletQueueGrant } from './repo-queue-grant.ts';
@@ -46,7 +46,18 @@ export async function deferWalletSyncOperation(
     delayMs > 300_000
   )
     return false;
-  const g = walletQueueGrant(ctx, 'sync', op, [walletOpCurrentCheck(op.instanceId, op.version)]);
+  // A revoke defers under the revoke grant, which runs for a suspended or closed org: a refused defer would leave
+  // it at the head of the queue and starve everything behind it.
+  const stored = await first<{ kind: string }>(
+    ctx.env.DB,
+    'SELECT kind FROM wallet_provider_instance_operations WHERE instance_id = ? AND version = ?',
+    [op.instanceId, op.version],
+  );
+  const revoke = stored?.kind === 'revoke';
+  const g = walletQueueGrant(ctx, revoke ? 'revoke' : 'sync', op, [
+    walletOpCurrentCheck(op.instanceId, op.version),
+    ...(revoke ? [revokeKindCheck(op.instanceId, op.version)] : []),
+  ]);
   g.include(
     writePart(
       `UPDATE wallet_provider_instance_operations AS op SET next_attempt_at = ?
@@ -58,5 +69,12 @@ export async function deferWalletSyncOperation(
     ),
   );
   const committed = await commitWalletGrant(g);
-  return 'results' in committed && (committed.results[0]?.results.length ?? 0) === 1;
+  if (!('results' in committed)) {
+    ctx.log.warn('wallet.sync_defer_refused', {
+      code: 'WALLET_SYNC_DEFER',
+      reason: committed.refused,
+    });
+    return false;
+  }
+  return (committed.results[0]?.results.length ?? 0) === 1;
 }

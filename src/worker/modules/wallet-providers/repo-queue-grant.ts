@@ -15,13 +15,18 @@ import type { WalletScope } from './instance-types.ts';
 export type WalletQueuePurpose = 'sync' | 'revoke' | 'record' | 'reconcile' | 'retire';
 const ALWAYS: readonly WalletQueuePurpose[] = ['revoke', 'record', 'retire'];
 
-const WALLET_QUEUE_TABLES = [
-  'wallet_provider_instances',
-  'wallet_provider_instance_operations',
-  'wallet_provider_instance_outcomes',
-  'wallet_provider_instance_dirty',
-  'wallet_provider_sync_targets',
-] as const;
+const TABLES: Record<WalletQueuePurpose, readonly string[]> = {
+  sync: ['wallet_provider_instance_operations'],
+  revoke: ['wallet_provider_instance_operations'],
+  record: [
+    'wallet_provider_instances',
+    'wallet_provider_instance_operations',
+    'wallet_provider_instance_outcomes',
+    'wallet_provider_sync_targets',
+  ],
+  reconcile: ['wallet_provider_instances', 'wallet_provider_instance_operations'],
+  retire: ['wallet_provider_instances', 'wallet_provider_instance_operations'],
+};
 
 const CODES: Record<string, DenyReason> = {
   WALLET_OP_STALE: 'stale',
@@ -45,7 +50,7 @@ export function walletQueueGrant(
     orgId: scope.orgId,
     mode: scope.mode,
     ...(always ? { inactiveOk: true as const, closedOk: true as const } : {}),
-    tables: WALLET_QUEUE_TABLES,
+    tables: TABLES[purpose],
     checks,
     codes: {
       stale: 'WALLET_OP_STALE',

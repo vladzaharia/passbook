@@ -13,7 +13,7 @@ import {
   SCOPE,
   scope,
 } from './repo-instance-claim-sql.ts';
-import { instanceCheck, walletOpCurrentCheck } from './repo-instance-current.ts';
+import { instanceCheck, revokeKindCheck, walletOpCurrentCheck } from './repo-instance-current.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { commitWalletGrant, walletQueueGrant } from './repo-queue-grant.ts';
 
@@ -31,8 +31,10 @@ export async function claimOperation(ctx: ServiceContext, p: Claim): Promise<Wal
     'SELECT kind FROM wallet_provider_instance_operations WHERE instance_id = ? AND version = ?',
     [p.instanceId, p.version],
   );
-  const g = walletQueueGrant(ctx, kind?.kind === 'revoke' ? 'revoke' : 'sync', p, [
+  const revoke = kind?.kind === 'revoke';
+  const g = walletQueueGrant(ctx, revoke ? 'revoke' : 'sync', p, [
     walletOpCurrentCheck(p.instanceId, p.version),
+    ...(revoke ? [revokeKindCheck(p.instanceId, p.version)] : []),
   ]);
   g.include(
     writePart(

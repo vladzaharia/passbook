@@ -65,6 +65,7 @@ export interface ApprovedProjection {
     sourceReleaseHash: string;
     accountId: string;
     accountRevision: number;
+    accountEpoch: number;
     providerIdentityHash: string;
   };
   projection: NativeProjection;
@@ -148,6 +149,7 @@ export function releaseDto(
     sourceReleaseHash: candidate.sourceReleaseHash,
     accountId: candidate.accountId,
     accountRevision: candidate.accountRevision,
+    accountEpoch: candidate.accountEpoch,
     providerIdentityHash: candidate.providerIdentityHash,
   };
 }

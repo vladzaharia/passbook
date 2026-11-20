@@ -10,12 +10,13 @@ import {
   getWalletOperation,
   listDueWalletOperations,
   newWalletClaimHandle,
-  queueWalletOperation,
   recordWalletOperationOutcome,
   walletOperationFresh,
 } from './instance.ts';
 import { fixture, reference } from './instance-test-fixtures.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
+import { deferWalletSyncOperation } from './repo-sync-queue.ts';
 
 const bumpPass = (db: D1Database, passId: string) =>
   run(db, 'UPDATE passes SET revision = revision + 1 WHERE id = ?', [passId]);
@@ -291,5 +292,32 @@ describe('PE5b: reconcile writes on grants', () => {
         [op.instanceId],
       ),
     ).toEqual({ kind: 'revoke' });
+  });
+});
+
+describe('review fixes: deferral', () => {
+  it('defers a suspended org revoke so it leaves the head of the queue', async () => {
+    const f = await fixture();
+    const db = f.kit.env.DB;
+    const ctx = jobCtxOf(f.kit);
+    const op = await f.create();
+    const now = f.kit.clock.now();
+    const revoke = await queueWalletOperation(ctx, {
+      ...queueInput(await f.current()),
+      instanceId: op.instanceId,
+      expectedVersion: op.version,
+      kind: 'revoke',
+      now,
+    });
+    if (!revoke) throw new Error('Revoke not queued');
+    await run(db, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [f.pass.orgId]);
+    const mine = async (at: number) =>
+      (await listDueWalletOperations(db, at, 50))
+        .filter((o) => o.instanceId === op.instanceId)
+        .map((o) => o.id);
+    expect(await mine(now)).toEqual([revoke.id]);
+    expect(await deferWalletSyncOperation(ctx, reference(revoke), now, 60_000)).toBe(true);
+    expect(await mine(now)).toEqual([]);
+    expect(await mine(now + 60_000)).toEqual([revoke.id]);
   });
 });

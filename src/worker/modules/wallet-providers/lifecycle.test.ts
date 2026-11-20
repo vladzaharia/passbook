@@ -204,6 +204,37 @@ describe('native wallet holder transitions', () => {
     expect(mocks.approved).not.toHaveBeenCalled();
   });
 
+  it('schedules an upsert across a same-identity rotation and blocks on a moved account epoch (D2)', async () => {
+    const active: WalletInstance = {
+      ...instance,
+      credentialGeneration: pass.credentialGeneration,
+      retirementRequestedAt: null,
+    };
+    mocks.pass.mockResolvedValue({ ...pass, passRowVersion: 7 });
+    mocks.epoch.mockResolvedValue(3);
+    const approved = (accountEpoch: number) => ({
+      // The release keeps the revision it was approved under; only the epoch is authority.
+      release: {
+        id: 'native-2',
+        accountId: 'account-1',
+        accountRevision: 1,
+        accountEpoch,
+        providerIdentityHash: 'a'.repeat(64),
+      },
+      projection: { provider: 'samsung' },
+    });
+    mocks.approved.mockResolvedValue(approved(3));
+    expect(await reconcileWalletInstance(ctx, active)).toBe('scheduled');
+    expect(mocks.queue).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ kind: 'upsert', accountEpoch: 3, passRowVersion: 7 }),
+    );
+    mocks.queue.mockClear();
+    mocks.approved.mockResolvedValue(approved(2));
+    expect(await reconcileWalletInstance(ctx, active)).toBe('blocked');
+    expect(mocks.queue).not.toHaveBeenCalled();
+  });
+
   it('never schedules a target-generation instance while its transfer is blocked', async () => {
     mocks.pass.mockResolvedValue({
       ...pass,

@@ -13,11 +13,11 @@ import {
   claimWalletOperation,
   completeWalletOperation,
   newWalletClaimHandle,
-  queueWalletOperation,
   readWalletPassSnapshot,
   walletClaimHash,
 } from './instance.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import {
   inspectSamsungRetirement,
   retireSamsungUnpromotedRef,

@@ -7,7 +7,7 @@
 import { passRow } from '../../platform/authority-checks.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { WalletInstanceProof, WalletOperationKind } from './instance-types.ts';
+import type { WalletOperationKind, WalletQueueProof } from './instance-types.ts';
 import { sourcePinSql } from './repo-account-source.ts';
 import {
   accountEpochCheck,
@@ -20,16 +20,13 @@ import { commitWalletGrant, walletQueueGrant } from './repo-queue-grant.ts';
 
 // The extra equalities in the instance UPDATE keep the op row coherent with the pass and account rows the caller read
 // (the data columns it stores); the authority is still the grant's row_version and epoch checks.
-export type DesiredOperationInput = WalletInstanceProof & {
+export type DesiredOperationInput = WalletQueueProof & {
   instanceId: string;
   operationId: string;
   requestHash: string;
   expectedVersion: number;
   kind: WalletOperationKind;
   now: number;
-  /** The pass row_version and the account authority_epoch the caller read. */
-  passRowVersion: number;
-  accountEpoch: number;
 };
 
 /** The refusal reason, or `queued` (the rows may still not exist: the caller reads the request back). */
@@ -64,6 +61,7 @@ export async function grantDesiredOperation(
           WHERE previous.id = i.desired_operation_id AND previous.instance_id = i.id
             AND previous.version = i.desired_version
             AND previous.credential_keyset_commitment = i.credential_keyset_commitment)
+        AND (? = 'revoke' OR i.retirement_requested_at IS NULL)
         AND ((? = 'upsert' AND (i.lifecycle = 'active' OR (i.lifecycle IN ('revoking', 'revoked')
           AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations last
             WHERE last.id = i.desired_operation_id AND last.kind = 'revoke'
@@ -102,6 +100,7 @@ export async function grantDesiredOperation(
         p.accountId,
         p.expectedVersion,
         p.kind,
+        p.kind,
         p.lifecycleGeneration,
         p.kind,
         p.passCredentialGeneration,
@@ -133,14 +132,13 @@ export async function grantDesiredOperation(
         (id, instance_id, version, kind, request_hash, pass_version, pass_revision, lifecycle_generation,
          pass_credential_generation, issuing_release_id, projection_release_id, account_revision, adapter_revision, policy_revision,
          credential_keyset_commitment, created_at, credential_version_id, pass_row_version, account_epoch)
-      SELECT ?, i.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${pinnedKeysetSql}, ?, ${sourcePinSql('i.account_id')}, ?, ?
+      SELECT ?, i.id, ?, '${p.kind}', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${pinnedKeysetSql}, ?, ${sourcePinSql('i.account_id')}, ?, ?
       FROM wallet_provider_instances i
       WHERE i.id = ? AND i.desired_operation_id = ? AND i.org_id = {org} AND i.mode = {mode}
         AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND {grant}`,
       [
         p.operationId,
         next,
-        p.kind,
         p.requestHash,
         p.passVersion,
         p.passRevision,

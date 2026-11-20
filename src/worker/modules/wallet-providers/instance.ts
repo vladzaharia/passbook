@@ -6,6 +6,7 @@ import type {
   WalletOperation,
   WalletOperationKind,
   WalletOperationRef,
+  WalletQueueProof,
   WalletScope,
 } from './instance-types.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
@@ -104,7 +105,7 @@ export async function createWalletInstance(
  */
 export async function queueWalletOperation(
   ctx: ServiceContext,
-  p: WalletInstanceProof & {
+  p: WalletQueueProof & {
     instanceId: string;
     expectedVersion: number;
     kind: WalletOperationKind;
@@ -123,17 +124,11 @@ export async function queueWalletOperation(
   )
     return null;
   const db = ctx.env.DB;
-  const passRowVersion = p.passRowVersion ?? (await readPassSnapshot(db, p))?.passRowVersion;
-  const accountEpoch = p.accountEpoch ?? (await readAccountEpoch(db, p.accountId));
-  if (passRowVersion === undefined || accountEpoch === null || accountEpoch === undefined)
-    return null;
   const hash = await requestHash(p.requestKey);
   const queued = await grantDesiredOperation(ctx, {
     ...p,
     operationId: p.newId(),
     requestHash: hash,
-    passRowVersion,
-    accountEpoch,
   });
   if (queued === 'stale') return null;
   const op = await getOperationByRequest(db, { ...p, requestHash: hash });

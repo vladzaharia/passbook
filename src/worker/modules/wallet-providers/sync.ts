@@ -18,6 +18,7 @@ import { walletProviderEnabled, walletProviderReleaseReason } from './provider-p
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback-replay.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { walletSyncHasWork } from './repo-sync-work.ts';
+import { refreshExpiringSamsungEvidence } from './samsung-evidence-refresh.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
 
@@ -40,6 +41,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
   const db = ctx.env.DB;
   await purgeExpiredWalletOffers(db, ctx.clock.now(), BATCH_SIZE);
   await purgeExpiredGoogleCallbackReplays(db, ctx.clock.now());
+  await refreshExpiringSamsungEvidence(ctx, 10);
   // Nothing queued means nothing to pin: a fresh deployment has no keyset until its first pass.
   if (!(await walletSyncHasWork(db, ctx.clock.now()))) return;
   try {

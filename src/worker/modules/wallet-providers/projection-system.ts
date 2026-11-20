@@ -1,5 +1,5 @@
 import type { JobOf } from '../../jobs/types.ts';
-import { ConflictError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getVersion } from '../templates/repo.ts';
@@ -48,6 +48,17 @@ export async function runSystemProjection(
   ctx: ServiceContext,
   job: SystemProjectionJob,
 ): Promise<void> {
+  try {
+    await projectOnce(ctx, job);
+  } catch (error) {
+    // An org that is no longer active refuses the grant: a skip, not a failure the queue retries to the DLQ.
+    if (error instanceof ForbiddenError && error.code === 'ORG_ACCESS_CHANGED')
+      return skipped(ctx, job, 'org not active');
+    throw error;
+  }
+}
+
+async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promise<void> {
   ctx = pinProjectionContext(ctx);
   const { orgId, mode, provider, templateId } = job;
   if (!publishableSchema(provider, 2)) return skipped(ctx, job, 'provider not open');

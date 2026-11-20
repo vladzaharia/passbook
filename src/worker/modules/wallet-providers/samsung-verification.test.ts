@@ -27,6 +27,7 @@ import {
   failSamsungProjectionProbe,
   hasSamsungProjectionEvidence,
 } from './repo-samsung-verification.ts';
+import { refreshExpiringSamsungEvidence } from './samsung-evidence-refresh.ts';
 import {
   ensureSamsungProjectionEvidence,
   refreshSamsungProjectionEvidence,
@@ -413,6 +414,26 @@ describe('authenticated Samsung card-state evidence', () => {
     expect(await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, 'a'.repeat(64))).toBe(
       false,
     );
+  });
+
+  it('keeps a request path on the cached proof and lets the sync job refresh it before it lapses', async () => {
+    const f = await fixture();
+    await f.approve();
+    const plain = createServiceContext(f.kit.env, { clock: f.kit.clock });
+    respond(success);
+    expect(
+      await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
+    ).toBe(true);
+    f.kit.clock.advance(240_000);
+    expect(await refreshExpiringSamsungEvidence(f.kit.ctx, 10)).toBe(1);
+    f.kit.clock.advance(100_000);
+    expect(await hasSamsungProjectionEvidence(plain, await f.stored())).toBe(true);
+    // Without the job the proof lapses, and a request path cannot write one: it fails closed.
+    f.kit.clock.advance(300_000);
+    expect(
+      await ensureSamsungProjectionEvidence(plain, f.candidate.id, f.candidate.candidateHash),
+    ).toBe(false);
+    expect(await hasSamsungProjectionEvidence(plain, await f.stored())).toBe(false);
   });
 
   it('refuses to write evidence without an authority outside a job', async () => {

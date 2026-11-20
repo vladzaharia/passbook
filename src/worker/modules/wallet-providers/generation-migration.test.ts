@@ -446,6 +446,10 @@ describe('0043 provider generation fences', () => {
       JOIN template_releases r ON r.id = i.identity_projection_release_id WHERE i.id = ?`,
         [operationId, 'f'.repeat(64), generation, kit.clock.now(), instanceId],
       );
+    // The pending transfer on the current generation still refuses any new operation (lineage, 0149).
+    await expect(insertRevoke(oldGeneration)).rejects.toThrow(
+      /provider operation is not authorized/,
+    );
     await statements[1]!.run();
     expect(
       await first(

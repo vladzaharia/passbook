@@ -36,7 +36,6 @@ import {
   listDirtyWalletInstances,
   markWalletClaimUncertain,
   newWalletClaimHandle,
-  queueWalletOperation,
   readWalletPassSnapshot,
   recordWalletOperationOutcome,
   requestWalletRetirement,
@@ -50,6 +49,7 @@ import {
 import { fixture, reference } from './instance-test-fixtures.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { googleRetirementTargetSql } from './repo-accounts.ts';
 import { consumeOffer, readOffer } from './repo-instance-offers.ts';
 import {

@@ -12,7 +12,6 @@ import { setupKit } from '../passes/pass-test-fixtures.ts';
 import {
   claimWalletOperation,
   newWalletClaimHandle,
-  queueWalletOperation,
   readWalletPassSnapshot,
   requestWalletRetirement,
 } from './instance.ts';
@@ -22,6 +21,7 @@ import { approveProjectionCandidate, publishProjectionRelease } from './projecti
 import { runSystemProjection } from './projection-system.ts';
 import { SYSTEM_AUTHOR, SYSTEM_REVIEWER } from './projection-system-authority.ts';
 import { jobCtx, updateCompiler } from './projection-v2-test-fixtures.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { selectProjectionCandidates } from './repo-projection-store.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
 import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';

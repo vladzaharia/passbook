@@ -2,7 +2,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getWalletProviderReadiness } from './account-service.ts';
 import { queueWalletOperation } from './instance.ts';
-import type { WalletInstance, WalletInstanceProof, WalletOperationKind } from './instance-types.ts';
+import type { WalletInstance, WalletOperationKind, WalletQueueProof } from './instance-types.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { getInstanceById, readAccountEpoch, type WalletPassSnapshot } from './repo-instance.ts';
@@ -65,7 +65,8 @@ export async function scheduleInstance(
     if (
       !approved ||
       approved.release.accountId !== instance.accountId ||
-      approved.release.accountRevision !== account.revision ||
+      // D2: a same-identity rotation moves the revision, not the epoch; the identity hash is compared below.
+      approved.release.accountEpoch !== accountEpoch ||
       approved.release.providerIdentityHash !== original.providerIdentityHash ||
       approved.projection.provider !== instance.provider
     )
@@ -75,7 +76,7 @@ export async function scheduleInstance(
     adapterRevision = policy.adapterRevision;
     policyRevision = policy.audiencePolicyRevision;
   }
-  const proof: WalletInstanceProof = {
+  const proof: WalletQueueProof = {
     ...scope,
     passId: pass.passId,
     passVersion: pass.passVersion,
