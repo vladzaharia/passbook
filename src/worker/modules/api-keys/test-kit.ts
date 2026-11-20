@@ -13,10 +13,14 @@ export let h: TestHarness;
 export let org: OrgRow;
 export let other: OrgRow;
 export const f = () => fixtures(h.env, h.clock);
+/** A platform key (no org) needs an expiry and an IP allowlist. */
 export const keyBody = (orgId: string | null) => ({
   name: 'Tenant key',
   scopes: ['passes:read'],
   orgId,
+  ...(orgId === null
+    ? { expiresAt: h.clock.now() + 30 * 86_400_000, ipAllow: ['198.51.100.0/24'] }
+    : {}),
 });
 
 export async function setup() {

@@ -78,6 +78,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     org: null,
     edges: [edge('key_id', 'api_keys'), edge('scanner_id', 'scanners')],
   },
+  // Template and pass-style restrictions, written once with the key (migration 0142 refuses any later change).
+  api_key_resources: { org: null, edges: [edge('key_id', 'api_keys')] },
   scans: { org: 'org_id', mode: 'mode', conflict: ['actor_key', 'idempotency_key'] },
   scan_gates: { org: 'org_id', mode: 'mode', conflict: ['pass_id', 'action_id', 'scope'] },
   // `mode` from 0074: the pass decides it (insert triggers). No holder writes, so no `pass` pin.

@@ -1,4 +1,5 @@
 import type { SqlValue } from './db.ts';
+import { keyHoldsScope, keyLive, withParams } from './repo-api-key-sql.ts';
 
 export type Mode = 'live' | 'test';
 export type GrantScope = 'org' | 'org_mode' | 'platform';
@@ -174,9 +175,9 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       // A key with no org (platform key) may name the org it acts on; an org-bound key may only name its own.
       const named = p.orgId ?? null;
       const orgCol = `COALESCE(k.org_id, ${b.bind(named)})`;
-      const live = `k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ${b.bind(now)})
+      const live = `${withParams(b.params, keyLive('k', now))}
         AND (k.org_id IS NULL OR ${b.bind(named)} IS NULL OR k.org_id = ${b.bind(named)})
-        AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = ${b.bind(p.scope)})`;
+        AND ${withParams(b.params, keyHoldsScope('k', p.scope))}`;
       const orgNone = `COALESCE(k.org_id, ${b.bind(named)}) IS NULL`;
       const org = orgOk(b, p.orgAccessRevision);
       return `SELECT ${orgCol} AS org_id, k.mode AS mode, ${flag(live)} AS actor_ok,

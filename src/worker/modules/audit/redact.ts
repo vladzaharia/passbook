@@ -33,7 +33,7 @@ const READ_SENSITIVE_KEY =
   /email|e.?mail|url|uri|link|address|phone|contact|external.?ref|(?:^|[._-])id$|id$|secret|token|password|passphrase|private|credential|authorization|cookie|personalization|api[_-]?key|pkcs12|(^|[._-])key([._-]|$)/i;
 // Conservatively match email-like text rather than duplicating the supported addr-spec grammar.
 const SENSITIVE_VALUE =
-  /[^\s@]+@[^\s@]+|(?:https?:\/\/|www\.)|(?:wlt|wls)_[A-Za-z0-9_-]+|(?:^|[^A-Za-z0-9_-])[A-Za-z0-9_-]{32,}(?:$|[^A-Za-z0-9_-])/i;
+  /[^\s@]+@[^\s@]+|(?:https?:\/\/|www\.)|\b(?:wlt|wls|pb|pbp|pbo)_[A-Za-z0-9_-]+|(?:^|[^A-Za-z0-9_-])[A-Za-z0-9_-]{32,}(?:$|[^A-Za-z0-9_-])/i;
 const TENANT_ENUM_FIELDS: Record<string, true> = {
   mode: true,
   kind: true,

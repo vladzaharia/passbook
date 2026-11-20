@@ -1,5 +1,6 @@
 import type { Check } from '../../platform/authority-checks.ts';
 import { first } from '../../platform/db.ts';
+import { keyLive, withParams } from '../../platform/repo-api-key-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { BroadcastRow } from './repo.ts';
 
@@ -18,11 +19,12 @@ export async function creatorIsActive(
 ): Promise<boolean> {
   if (!row.created_by_id) return true;
   if (row.created_by_type === 'api_key') {
+    const live = keyLive('k', now);
     const key = await first<{ one: number }>(
       db,
-      `SELECT 1 AS one FROM api_keys WHERE id = ? AND (org_id IS NULL OR org_id = ?) AND mode = ?
-         AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > ?)`,
-      [row.created_by_id, row.org_id, row.mode, now],
+      `SELECT 1 AS one FROM api_keys k WHERE k.id = ? AND (k.org_id IS NULL OR k.org_id = ?) AND k.mode = ?
+         AND ${live.sql}`,
+      [row.created_by_id, row.org_id, row.mode, ...live.params],
     );
     return key !== null;
   }
@@ -63,7 +65,7 @@ export function creatorLive(
       if (row.created_by_type === 'api_key')
         return `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ${b.bind(row.created_by_id)}
           AND (k.org_id IS NULL OR k.org_id = a.org_id) AND k.mode = ${b.bind(row.mode)}
-          AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ${b.bind(now)}))`;
+          AND ${withParams(b.params, keyLive('k', now))})`;
       if (row.created_by_type !== 'user') return '1 = 1';
       const holds = (capability: 'messages:manage' | 'passes:operate') =>
         `EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.type = 'text'

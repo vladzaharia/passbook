@@ -127,7 +127,7 @@ export function withSecurity(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
       apiKey: {
         type: 'http',
         scheme: 'bearer',
-        bearerFormat: 'wlt_<prefix>_<secret>',
+        bearerFormat: 'pb_<live|test>_<prefix>_<secret>',
         description:
           'An API key. A key with any one of the listed scopes may call the operation, in its own organization and mode.',
       },

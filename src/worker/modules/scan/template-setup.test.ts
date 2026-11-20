@@ -265,7 +265,10 @@ describe('template scan setup', () => {
     expect(await sessions(id)).toHaveLength(0);
   });
 
-  it('is not open to an API key, scoped or not, or to a signed-out caller', async () => {
+  // Before: no key reached this route (scanning had no key scope), so any key was 401. Now a key with
+  // `scanning:write` may call it (template-setup-key.test.ts); a key without it is still refused,
+  // as 403 MISSING_SCOPE, and a signed-out caller is still 401.
+  it('is not open to a key without scanning:write, or to a signed-out caller', async () => {
     const { kit } = fixture;
     const id = await kit.scanTemplate('Keyed', {
       actions: [{ id: 'enter', label: 'Let in', kind: 'check_in' }],
@@ -274,10 +277,11 @@ describe('template scan setup', () => {
       ['scans:read', 'scans:write', 'templates:read'],
       ['passes:read'],
     ] as const)
-      expect(
-        (await post(id, {}, fixture.fake.apiKey({ orgId: kit.org.id, scopes: [...scopes] })))
-          .status,
-      ).toBe(401);
+      await expectProblem(
+        await post(id, {}, fixture.fake.apiKey({ orgId: kit.org.id, scopes: [...scopes] })),
+        403,
+        'MISSING_SCOPE',
+      );
     expect((await post(id, {}, {})).status).toBe(401);
     expect(await sessions(id)).toHaveLength(0);
   });
