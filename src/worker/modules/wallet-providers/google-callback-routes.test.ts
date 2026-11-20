@@ -40,7 +40,7 @@ import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import {
   isGoogleCallbackRedelivery,
   purgeExpiredGoogleCallbackReplays,
-} from './repo-google-callback.ts';
+} from './repo-google-callback-replay.ts';
 import { googleCallbackRoutes } from './routes-google-callbacks.ts';
 import { seedHistoricalProviderInstance } from './runtime-historical-fixtures.ts';
 import { historicalGoogleRelease } from './runtime-integration-fixtures.ts';
@@ -1042,6 +1042,38 @@ describe('Google Wallet callbacks', () => {
     expect(await send(await eventBody(f, rawEvent(f, 'redelivered-nonce', 'del')))).toBe(401);
     // Keys are downloaded once for the whole sequence.
     expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it('records one pass event per admitted save or removal and reports it as the provider status', async () => {
+    const f = await fixture();
+    const app = callbackApp(f.f, []);
+    vi.stubGlobal('fetch', async () =>
+      Response.json(await callbackKeyset(keys.root, f.f.kit.clock.now() + 60_000)),
+    );
+    const send = async (value: string) =>
+      (await app.request(f.callbackUrl, { method: 'POST', body: value }, f.f.kit.env)).status;
+    const events = () =>
+      all<{ kind: string; data: string }>(
+        f.f.kit.env.DB,
+        "SELECT kind, data FROM pass_events WHERE pass_id = ? AND kind LIKE 'wallet.%' ORDER BY at, id",
+        [f.f.pass.id],
+      );
+    const saved = await eventBody(f, rawEvent(f, 'event-save'));
+    expect(await send(saved)).toBe(204);
+    expect(await send(saved)).toBe(204);
+    expect(await send(await eventBody(f, rawEvent(f, 'event-save', 'del')))).toBe(401);
+    expect((await events()).map((e) => e.kind)).toEqual(['wallet.saved']);
+    f.f.kit.clock.advance(1000);
+    expect(await send(await eventBody(f, rawEvent(f, 'event-del', 'del')))).toBe(204);
+    const rows = await events();
+    expect(rows.map((e) => e.kind)).toEqual(['wallet.saved', 'wallet.removed']);
+    expect(JSON.parse(rows[1]?.data ?? '{}')).toEqual({ provider: 'google' });
+    const instance = await first<{ saved_at: number; holder_removed_at: number }>(
+      f.f.kit.env.DB,
+      'SELECT saved_at, holder_removed_at FROM wallet_provider_instances WHERE id = ?',
+      [f.instance.id],
+    );
+    expect(instance?.holder_removed_at).toBeGreaterThan(instance?.saved_at ?? Infinity);
   });
 
   it('answers 503 when the keys cannot be downloaded and nothing is cached, then recovers', async () => {

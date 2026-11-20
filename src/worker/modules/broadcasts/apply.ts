@@ -11,6 +11,7 @@ import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
+import { budgetOutcomes, providerBudgets } from '../wallet-providers/notify-budget.ts';
 import {
   type BroadcastRow,
   casState,
@@ -148,6 +149,9 @@ async function applyOne(
       const written = await hasVersionFrom(ctx.env.DB, passId, source, row.started_at ?? 0);
       return { ...base, outcome: written ? 'updated' : 'unchanged' };
     }
+    // Google and Samsung copies count against their own limits, apart from Apple's.
+    const budget =
+      notify && !result.silenced ? budgetOutcomes(await providerBudgets(ctx, result.pass)) : null;
     await recordPassEvent(ctx, {
       orgId: row.org_id,
       passId,
@@ -158,6 +162,7 @@ async function applyOne(
         broadcastId: row.id,
         notified: notify && !result.silenced,
         overBudget: !!result.silenced,
+        ...(budget ? { budget } : {}),
       },
     });
     return { ...base, outcome: 'updated', silent: !!result.silenced };

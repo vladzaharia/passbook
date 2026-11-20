@@ -1,4 +1,5 @@
 import { EMAIL_BADGE } from '../../../shared/email-art.ts';
+import { NATIVE_WALLET_BADGES } from '../../../shared/wallet-choice.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderBundleEmail } from '../../email/bundle.ts';
 import { passEmailImages } from '../../email/pass-images.ts';
@@ -26,6 +27,7 @@ import { bundleImages } from './assets.ts';
 import { BundleEmailIntentSchema, bundleEmailSnapshot, matchesBundle } from './email-binding.ts';
 import { passDetails } from './email-detail.ts';
 import { bundleChecks } from './repo-delivery-fence.ts';
+import { bundleWalletHref, bundleWalletProviders } from './wallet-links.ts';
 
 /**
  * Sends a claimed outbox row whose payload names a bundle (`deliverEmail` hands it over once the
@@ -116,6 +118,7 @@ export async function deliverBundleEmail(
   const addable = (pass: (typeof passes)[number]) =>
     pass.status === 'active' && pass.removedAt === null;
   const details = await passDetails(ctx, passes);
+  const wallets = await Promise.all(passes.map((pass) => bundleWalletProviders(ctx, pass)));
   const email = renderBundleEmail({
     orgName: org?.name ?? 'PassBook',
     bundleName: bundle.name,
@@ -130,6 +133,10 @@ export async function deliverBundleEmail(
       title: pass.displayTitle ?? pass.serial,
       detail: details[i] ?? null,
       addUrl: addable(pass) && appleOn[i] ? `${page}/${pass.id}/pass.pkpass` : null,
+      wallets: (wallets[i] ?? []).map((provider) => ({
+        label: NATIVE_WALLET_BADGES[provider].label,
+        url: `${base}${bundleWalletHref(bundleToken, pass.id, provider)}`,
+      })),
       ...(addable(pass) && !appleOn[i] ? { off: true } : {}),
     })),
     iconUrl,

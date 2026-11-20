@@ -178,7 +178,7 @@ function walletActionsHtml(base: string, offers: readonly EmailWalletOffer[]): s
     .map(({ provider, href }) => {
       const badge = NATIVE_WALLET_BADGES[provider];
       const link = escapeHtml(href);
-      return `<tr><td style="padding:0 0 16px"><a href="${link}" style="display:block;text-decoration:none"><img src="${escapeHtml(`${base}${badge.path}`)}" alt="${badge.label}" width="${badge.width}" height="${badge.height}" style="display:block;width:${badge.width}px;max-width:100%;height:auto;border:0"></a><a class="e-link" href="${link}" style="display:inline-block;margin:8px 0 0;${type('xs')};color:${c.text};text-decoration:underline">${badge.label}</a></td></tr>`;
+      return `<tr><td style="padding:0 0 16px"><a href="${link}" style="display:block;text-decoration:none"><img src="${escapeHtml(`${base}${badge.emailPath}`)}" alt="${badge.label}" width="${badge.width}" height="${badge.height}" style="display:block;width:${badge.width}px;max-width:100%;height:auto;border:0"></a><a class="e-link" href="${link}" style="display:inline-block;margin:8px 0 0;${type('xs')};color:${c.text};text-decoration:underline">${badge.label}</a></td></tr>`;
     })
     .join('');
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse">${rows}</table>`;

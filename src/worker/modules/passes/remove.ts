@@ -3,6 +3,7 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { recordPassEvent } from '../events/record.ts';
+import { removalWallets } from '../wallet-providers/removal.ts';
 import { currentSummary } from './detail.ts';
 import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
@@ -147,7 +148,11 @@ export async function removePass(
     mode: pass.mode,
     kind: 'pass.removed',
     actor,
-    data: { version: published.pass.version, message: staged.message !== null },
+    data: {
+      version: published.pass.version,
+      message: staged.message !== null,
+      wallets: await removalWallets(db, pass),
+    },
   });
   await recordAudit(ctx, {
     orgId: pass.orgId,

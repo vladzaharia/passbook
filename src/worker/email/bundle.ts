@@ -27,7 +27,14 @@ export interface BundleEmailInput {
   addAllUrl: string | null;
   badgeUrl: string;
   /** One row each; a voided pass has no link, `off` marks a live one Apple is off for. */
-  passes: { title: string; addUrl: string | null; off?: boolean; detail?: string | null }[];
+  passes: {
+    title: string;
+    addUrl: string | null;
+    off?: boolean;
+    detail?: string | null;
+    /** Native wallets allowed for this pass: a text link each, since a badge per row would crowd it. */
+    wallets?: { label: string; url: string }[];
+  }[];
   iconUrl?: string | null;
   senderName?: string | null;
   /** The org's own From name (already checked): shown as "<fromName> via <sender>". */
@@ -48,7 +55,18 @@ const row = (p: BundleEmailInput['passes'][number]) => {
   const detail = p.detail
     ? `<br><span class="e-muted" style="font-weight:400;color:${c.muted}">${escapeHtml(p.detail)}</span>`
     : '';
-  return `<tr><td class="e-strong e-line" valign="middle" style="padding:12px 12px 12px 0;${edge};${type('sm')};font-weight:500;color:${c.strong};word-break:break-word">${escapeHtml(p.title)}${detail}</td><td class="e-line" align="right" valign="middle" style="padding:0;${edge};${type('sm')};white-space:nowrap">${
+  const wallets = (p.wallets ?? [])
+    .flatMap((w) => {
+      const url = safeUrl(w.url);
+      return url
+        ? [
+            `<a class="e-link" href="${escapeHtml(url)}" style="font-weight:400;color:${c.text};text-decoration:underline">${escapeHtml(w.label)}</a>`,
+          ]
+        : [];
+    })
+    .map((link) => `<br>${link}`)
+    .join('');
+  return `<tr><td class="e-strong e-line" valign="middle" style="padding:12px 12px 12px 0;${edge};${type('sm')};font-weight:500;color:${c.strong};word-break:break-word">${escapeHtml(p.title)}${detail}${wallets}</td><td class="e-line" align="right" valign="middle" style="padding:0;${edge};${type('sm')};white-space:nowrap">${
     p.addUrl
       ? `<a class="e-link" href="${escapeHtml(p.addUrl)}" style="${link}">Add</a>`
       : `<span class="e-muted" style="display:inline-block;padding:12px 0 12px 12px;color:${c.muted}">${p.off ? '' : 'Voided'}</span>`
@@ -74,9 +92,11 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
     `${input.bundleName} · ${HOLDER_COPY.count(input.passes.length)}`,
     ...(input.mode === 'test' ? [HOLDER_COPY.testNote('bundle')] : []),
     '',
-    ...input.passes.map(
-      (p) =>
+    ...input.passes.map((p) =>
+      [
         `${p.title}${p.detail ? ` (${p.detail})` : ''}${p.addUrl ? `: ${p.addUrl}` : p.off ? '' : ' (voided)'}`,
+        ...(p.wallets ?? []).flatMap((w) => (safeUrl(w.url) ? [`  ${w.label}: ${w.url}`] : [])),
+      ].join('\n'),
     ),
     '',
     ...(input.addAllUrl ? [`Add all to Apple Wallet: ${input.addAllUrl}`] : []),
