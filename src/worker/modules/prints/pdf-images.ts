@@ -3,10 +3,38 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { openPublicAsset } from '../public/service.ts';
 import type { PaperFiles } from './paper.ts';
-import type { ImageSource, RenderOptions } from './pdf-render.ts';
+import { MAX_IMAGE_BYTES } from './pdf-png.ts';
+import { type ImageSource, MAX_DISTINCT_IMAGES, type RenderOptions } from './pdf-render.ts';
 
-/** PNGs by etag, so a bulk job reads a template's logo and art once, not once per pass. */
-export type ImageCache = Map<string, ImageSource>;
+/** PNGs by etag, so a bulk job reads a template's logo and art once, not once per pass. `null`: refused. */
+export type ImageCache = Map<string, ImageSource | null>;
+
+/** Reads a body, giving up past `max` bytes so a crafted file never fills the isolate. */
+async function readCapped(
+  body: ReadableStream<Uint8Array>,
+  max: number,
+): Promise<Uint8Array | null> {
+  const reader = body.getReader();
+  const parts: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > max) {
+      await reader.cancel();
+      return null;
+    }
+    parts.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const part of parts) {
+    bytes.set(part, at);
+    at += part.length;
+  }
+  return bytes;
+}
 
 async function load(
   ctx: ServiceContext,
@@ -17,12 +45,27 @@ async function load(
   try {
     const asset = await openPublicAsset(ctx, pass, name);
     // A member's photo is not the template's art; paper never prints it.
-    const hit = asset.memberPhoto ? undefined : cache.get(asset.etag);
-    if (asset.memberPhoto || hit) {
+    const known = asset.memberPhoto ? null : cache.get(asset.etag);
+    if (asset.memberPhoto || known !== undefined) {
       await asset.body.cancel();
-      return hit;
+      return known ?? undefined;
     }
-    const bytes = new Uint8Array(await new Response(asset.body).arrayBuffer());
+    // Past the cap no further image is read: the PDF would leave it out anyway.
+    if (cache.size >= MAX_DISTINCT_IMAGES) {
+      await asset.body.cancel();
+      cache.set(asset.etag, null);
+      ctx.log.warn('prints.pdf_image_refused', { code: 'PRINT_PDF_IMAGE_LIMIT', passId: pass.id });
+      return undefined;
+    }
+    const bytes = await readCapped(asset.body, MAX_IMAGE_BYTES);
+    if (!bytes) {
+      cache.set(asset.etag, null);
+      ctx.log.warn('prints.pdf_image_refused', {
+        code: 'PRINT_PDF_IMAGE_INVALID',
+        passId: pass.id,
+      });
+      return undefined;
+    }
     const source = { id: asset.etag, bytes };
     cache.set(asset.etag, source);
     return source;
