@@ -261,12 +261,11 @@ describe('disabled providers', () => {
   it('leaves no provider state that could block pass retirement', async () => {
     const f = await kitFor({ google: 'configured', samsung: 'published' });
     const db = f.kit.env.DB;
-    const commitment = await requireCredentialRefKeyset(db, f.kit.env);
     // Nothing can create an instance while disabled, so the retirement predicate has nothing to wait on.
     await expect(issueWalletOffer(f.kit.ctx, f.pass.downloadToken, 'google')).rejects.toMatchObject(
       disabled,
     );
-    expect(await providerRetirementPending(db, f.pass.id, commitment)).toBe(false);
+    expect(await providerRetirementPending(db, f.pass.id)).toBe(false);
   });
 
   it('defers a due provider operation without claiming it or calling the provider', async () => {

@@ -105,7 +105,6 @@ describe('a served ref nobody confirms', () => {
       passRevision: pass.passRevision,
       lifecycleGeneration: pass.lifecycleGeneration,
       passCredentialGeneration: pass.credentialGeneration,
-      credentialKeysetCommitment: pass.credentialKeysetCommitment,
     });
     const retiring = await getWalletInstance(db, {
       ...scope,

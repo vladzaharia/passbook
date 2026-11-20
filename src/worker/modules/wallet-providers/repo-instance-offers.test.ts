@@ -31,7 +31,7 @@ async function withoutTrigger(
 }
 
 describe('wallet offer reference keyset authority', () => {
-  it('binds insertion, reads and consumption to the captured instance and operation commitment', async () => {
+  it('binds insertion, reads and consumption to the pinned instance and operation commitment', async () => {
     const t = await setupSamsungCallbacks();
     const db = t.kit.env.DB;
     const now = t.kit.clock.now();
@@ -45,13 +45,11 @@ describe('wallet offer reference keyset authority', () => {
       instanceId: t.operation.instanceId,
       version: t.operation.version,
       operationId: t.operation.id,
-      credentialKeysetCommitment: commitment,
       hash: await sha256Hex(t.kit.ctx.ids.token(32)),
       authority: { kind: 'download' as const, token: t.pass.downloadToken },
       now,
       expiresAt: now + 60_000,
     };
-    const wrongInput = { ...input, credentialKeysetCommitment: other };
     await seedHistoricalOfferRef(db, {
       refHash: hash,
       instanceId: t.operation.instanceId,
@@ -62,42 +60,29 @@ describe('wallet offer reference keyset authority', () => {
       deliveredAt: null,
     });
 
-    expect(await readOffer(db, hash, now, commitment)).toMatchObject({
+    expect(await readOffer(db, hash, now)).toMatchObject({
       instanceId: t.operation.instanceId,
-      credentialKeysetCommitment: commitment,
     });
-    expect(await readOffer(db, hash, now, other)).toBeNull();
-    expect(await consumeOffer(db, hash, now, other)).toBeNull();
-    expect(await insertOffer(db, wrongInput)).toBe(false);
     // The independent issuance/consumption gates remain closed even for a valid keyset.
     await expect(insertOffer(db, input)).rejects.toThrow('provider offer is unavailable');
-    await expect(consumeOffer(db, hash, now, commitment)).rejects.toThrow(
-      'provider offer is unavailable',
-    );
+    await expect(consumeOffer(db, hash, now)).rejects.toThrow('provider offer is unavailable');
 
     // Isolate the repository CAS while leaving the real provider gates in place outside the fixture.
     await withoutTrigger(db, 'wallet_provider_generation_offer_insert', async () => {
-      expect(await insertOffer(db, wrongInput)).toBe(false);
       expect(await insertOffer(db, input)).toBe(true);
     });
-    expect(await readOffer(db, input.hash, now, commitment)).toMatchObject({
-      credentialKeysetCommitment: commitment,
+    expect(await readOffer(db, input.hash, now)).toMatchObject({
+      instanceId: t.operation.instanceId,
     });
 
     await withoutTrigger(db, 'credential_ref_keyset_no_update', async () => {
       await run(db, 'UPDATE credential_ref_keyset SET commitment = ? WHERE id = 1', [other]);
       try {
-        for (const captured of [commitment, other]) {
-          expect(await readOffer(db, hash, now, captured)).toBeNull();
-          expect(await consumeOffer(db, hash, now, captured)).toBeNull();
-          expect(
-            await insertOffer(db, {
-              ...input,
-              hash: await sha256Hex(t.kit.ctx.ids.token(32)),
-              credentialKeysetCommitment: captured,
-            }),
-          ).toBe(false);
-        }
+        expect(await readOffer(db, hash, now)).toBeNull();
+        expect(await consumeOffer(db, hash, now)).toBeNull();
+        expect(
+          await insertOffer(db, { ...input, hash: await sha256Hex(t.kit.ctx.ids.token(32)) }),
+        ).toBe(false);
         expect(
           await first(db, 'SELECT consumed_at FROM wallet_provider_offer_refs WHERE ref_hash = ?', [
             hash,
@@ -127,8 +112,8 @@ describe('wallet offer reference keyset authority', () => {
               value,
               id,
             ]);
-            expect(await readOffer(db, hash, now, commitment)).toBeNull();
-            expect(await consumeOffer(db, hash, now, commitment)).toBeNull();
+            expect(await readOffer(db, hash, now)).toBeNull();
+            expect(await consumeOffer(db, hash, now)).toBeNull();
             expect(
               await insertOffer(db, { ...input, hash: await sha256Hex(t.kit.ctx.ids.token(32)) }),
             ).toBe(false);
@@ -164,23 +149,22 @@ describe('wallet offer reference keyset authority', () => {
       },
     });
     await withoutTrigger(db, 'wallet_provider_generation_offer_consume', async () => {
-      expect(await consumeOffer(db, hash, now, other)).toBeNull();
       expect(
         await first(db, 'SELECT consumed_at FROM wallet_provider_offer_refs WHERE ref_hash = ?', [
           hash,
         ]),
       ).toEqual({ consumed_at: null });
-      expect(await consumeOffer(captureDb, hash, now, commitment)).toMatchObject({
-        credentialKeysetCommitment: commitment,
+      expect(await consumeOffer(captureDb, hash, now)).toMatchObject({
+        instanceId: t.operation.instanceId,
       });
-      expect(await consumeOffer(db, hash, now, commitment)).toBeNull();
+      expect(await consumeOffer(db, hash, now)).toBeNull();
     });
     const updates = captured.filter(({ sql }) =>
       /UPDATE wallet_provider_offer_refs AS ref/.test(sql),
     );
     expect(updates).toHaveLength(1);
     const update = updates[0]!;
-    expect(update.params).toEqual([hash, now, commitment, commitment, now, now]);
+    expect(update.params).toEqual([hash, now, now, now]);
     await db
       .prepare(`EXPLAIN ${update.sql}`)
       .bind(...update.params)

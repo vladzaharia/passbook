@@ -30,7 +30,6 @@ export async function seedHistoricalProviderInstance(
         orgId: input.orgId,
         mode: input.mode,
         provider: input.provider,
-        credentialKeysetCommitment: input.credentialKeysetCommitment,
         version: 1,
       })
     : null;

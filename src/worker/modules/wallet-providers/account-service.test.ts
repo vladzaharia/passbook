@@ -287,21 +287,19 @@ describe('wallet provider accounts', () => {
         ),
       ),
     ).rejects.toThrow(/Decryption failed/);
-    const expected = {
-      accountId: configured.accountId,
-      accountRevision: 1,
-      credentialKeysetCommitment: await ensureCredentialRefKeyset(env.DB, env),
-    };
+    await ensureCredentialRefKeyset(env.DB, env);
+    const expected = { accountId: configured.accountId, accountRevision: 1 };
     const firstSnapshot = await readConfiguredWalletProviderCredentials(ctx, scope, expected);
     if (firstSnapshot?.provider !== 'google') throw new Error('Missing Google snapshot');
     expect(firstSnapshot.objectIdHmacKey).toHaveLength(32);
-    expect(firstSnapshot.credentialKeysetCommitment).toBe(expected.credentialKeysetCommitment);
+    // A mismatched pin at entry refuses before any account is read.
     await expect(
-      readConfiguredWalletProviderCredentials(ctx, scope, {
-        ...expected,
-        credentialKeysetCommitment: '0'.repeat(64),
-      }),
-    ).rejects.toMatchObject({ code: 'WALLET_CREDENTIALS_UNAVAILABLE' });
+      readConfiguredWalletProviderCredentials(
+        { ...ctx, env: { ...ctx.env, KEK_V1: btoa('z'.repeat(32)) } },
+        scope,
+        expected,
+      ),
+    ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
     const callback = await readGoogleCallbackVerification(ctx, {
       ...scope,
       ...expected,
@@ -350,12 +348,12 @@ describe('wallet provider accounts', () => {
       (await dto(await call('POST', '/revoke', session.headers, { ...scope, expectedRevision: 2 })))
         .state,
     ).toBe('revoked');
+    await ensureCredentialRefKeyset(env.DB, env);
     expect(
       await readGoogleCallbackVerification(ctx, {
         ...scope,
         accountId: configured.accountId,
         accountRevision: 3,
-        credentialKeysetCommitment: await ensureCredentialRefKeyset(env.DB, env),
       }),
     ).toBeNull();
     await dto(
@@ -474,16 +472,14 @@ describe('wallet provider accounts', () => {
       }),
     );
     if (!live.accountId || !test.accountId) throw new Error('Missing account IDs');
-    const credentialKeysetCommitment = await ensureCredentialRefKeyset(env.DB, env);
+    await ensureCredentialRefKeyset(env.DB, env);
     const liveSecret = await readConfiguredWalletProviderCredentials(ctx, scope, {
       accountId: live.accountId,
       accountRevision: 1,
-      credentialKeysetCommitment,
     });
     const testSecret = await readConfiguredWalletProviderCredentials(ctx, testScope, {
       accountId: test.accountId,
       accountRevision: 1,
-      credentialKeysetCommitment,
     });
     if (liveSecret?.provider !== 'google' || testSecret?.provider !== 'google')
       throw new Error('Missing snapshots');
@@ -492,7 +488,7 @@ describe('wallet provider accounts', () => {
       await readConfiguredWalletProviderCredentials(
         ctx,
         { ...scope, orgId: other.id },
-        { accountId: live.accountId, accountRevision: 1, credentialKeysetCommitment },
+        { accountId: live.accountId, accountRevision: 1 },
       ),
     ).toBeNull();
     expect(
@@ -577,11 +573,11 @@ describe('wallet provider accounts', () => {
       }),
     ).toBeNull();
     await expect(
-      readWalletProviderRetirementCredentials(ctx, {
-        ...proof,
-        credentialKeysetCommitment: '0'.repeat(64),
-      }),
-    ).rejects.toMatchObject({ code: 'WALLET_CREDENTIALS_UNAVAILABLE' });
+      readWalletProviderRetirementCredentials(
+        { ...ctx, env: { ...ctx.env, KEK_V1: btoa('z'.repeat(32)) } },
+        proof,
+      ),
+    ).rejects.toMatchObject({ code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE' });
     await expect(
       readWalletProviderRetirementCredentials(ctx, { ...proof, credentialGeneration: 0 }),
     ).rejects.toMatchObject({ code: 'VALIDATION' });
@@ -622,7 +618,7 @@ describe('wallet provider accounts', () => {
     if (!account) throw new Error('Missing configured credential');
     const authority = await tenantAuthorityOf(ctx, auth, org.id, 'integrations:manage');
     if (authority.kind !== 'session') throw new Error('Missing session authority');
-    const commitment = await ensureCredentialRefKeyset(env.DB, env);
+    await ensureCredentialRefKeyset(env.DB, env);
     const credentialId = f.ids.id();
     const envelope = await encryptSecret(
       await loadKekRing(env),
@@ -640,7 +636,6 @@ describe('wallet provider accounts', () => {
         credentialId,
         eventId: f.ids.id(),
         envelope,
-        credentialKeysetCommitment: commitment,
       }),
     ).toBe(false);
     expect(
@@ -650,7 +645,6 @@ describe('wallet provider accounts', () => {
         expectedRevision: 99,
         eventId: f.ids.id(),
         kind: 'revoke',
-        credentialKeysetCommitment: commitment,
       }),
     ).toBe(false);
     expect(

@@ -149,9 +149,7 @@ describe('provider credential generation transitions', () => {
     expect(await markWalletClaimUncertain(db, oldClaim)).toBe(true);
     await expect(passForToken(f.kit.ctx, oldToken)).rejects.toMatchObject({ status: 404 });
     expect((await f.call({ token: await f.token() })).status).not.toBe(200);
-    expect(
-      await consumeWalletOfferRef(db, wrapper, f.kit.clock.now(), credentialKeysetCommitment),
-    ).toBeNull();
+    expect(await consumeWalletOfferRef(db, wrapper, f.kit.clock.now())).toBeNull();
     expect(
       await first(db, 'SELECT consumed_at FROM wallet_provider_offer_refs WHERE ref_hash = ?', [
         wrapperHash,
@@ -228,7 +226,6 @@ describe('provider credential generation transitions', () => {
         mode: scope.mode,
         instanceId: old.id,
         operationVersion: revoke.version,
-        credentialKeysetCommitment,
       }),
     ).toBe(true);
     const wrongEnv = {
@@ -240,47 +237,6 @@ describe('provider credential generation transitions', () => {
     await expect(ensureCredentialRefKeyset(db, wrongEnv)).rejects.toMatchObject({
       code: 'CREDENTIAL_REF_KEYSET_UNAVAILABLE',
     });
-    const beforeMismatch = await first(db, 'SELECT * FROM wallet_provider_instances WHERE id = ?', [
-      old.id,
-    ]);
-    const operationsBeforeMismatch = await all(
-      db,
-      'SELECT * FROM wallet_provider_instance_operations WHERE instance_id = ? ORDER BY version',
-      [old.id],
-    );
-    const refsBeforeMismatch = await all(
-      db,
-      'SELECT * FROM wallet_samsung_fetch_refs WHERE instance_id = ?',
-      [old.id],
-    );
-    const tombstoneBeforeMismatch = await first(
-      db,
-      'SELECT * FROM wallet_samsung_tombstones WHERE ref_hash = ?',
-      [oldRefHash],
-    );
-    expect(
-      await retireWalletInstance(db, {
-        ...revokeClaim,
-        credentialKeysetCommitment: wrongCommitment,
-        now: f.kit.clock.now(),
-      }),
-    ).toBe(false);
-    expect(
-      await first(db, 'SELECT * FROM wallet_provider_instances WHERE id = ?', [old.id]),
-    ).toEqual(beforeMismatch);
-    expect(
-      await all(
-        db,
-        'SELECT * FROM wallet_provider_instance_operations WHERE instance_id = ? ORDER BY version',
-        [old.id],
-      ),
-    ).toEqual(operationsBeforeMismatch);
-    expect(
-      await all(db, 'SELECT * FROM wallet_samsung_fetch_refs WHERE instance_id = ?', [old.id]),
-    ).toEqual(refsBeforeMismatch);
-    expect(
-      await first(db, 'SELECT * FROM wallet_samsung_tombstones WHERE ref_hash = ?', [oldRefHash]),
-    ).toEqual(tombstoneBeforeMismatch);
     expect(await retireWalletInstance(db, { ...revokeClaim, now: f.kit.clock.now() })).toBe(true);
     expect(
       await first(db, 'SELECT ref_hash FROM wallet_samsung_tombstones WHERE ref_hash = ?', [
@@ -303,16 +259,12 @@ describe('provider credential generation transitions', () => {
     const currentPass = await getPass(db, f.pass.id);
     const snapshot = await readWalletPassSnapshot(db, { ...scope, passId: f.pass.id });
     if (!currentPass?.releaseId || !snapshot) throw new Error('Missing transferred pass');
-    const approved = await getApprovedProjection(
-      f.kit.ctx,
-      {
-        ...scope,
-        templateId: currentPass.templateId,
-        templateVersion: currentPass.templateVersion,
-        appleReleaseId: currentPass.releaseId,
-      },
-      { credentialKeysetCommitment },
-    );
+    const approved = await getApprovedProjection(f.kit.ctx, {
+      ...scope,
+      templateId: currentPass.templateId,
+      templateVersion: currentPass.templateVersion,
+      appleReleaseId: currentPass.releaseId,
+    });
     if (!approved) throw new Error('Missing independently reviewed Samsung projection');
     const policy = projectionPolicy('samsung');
     expect(

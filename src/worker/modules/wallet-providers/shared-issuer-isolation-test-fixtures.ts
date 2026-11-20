@@ -37,7 +37,6 @@ export async function googleOrg(db: D1Database) {
     mode: 'live',
     accountId: account.id,
     accountRevision: account.revision,
-    credentialKeysetCommitment,
   });
   if (!verification) throw new Error('Missing Google fixture verification.');
   const releaseId = await historicalGoogleRelease(f);

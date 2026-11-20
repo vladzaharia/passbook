@@ -388,7 +388,6 @@ describe('Samsung refs that served card data', () => {
           mode: gone.mode,
           instanceId: gone.instanceId,
           operationVersion: gone.version,
-          credentialKeysetCommitment: u.credentialKeysetCommitment,
         },
         u.kit.clock.now(),
       ),

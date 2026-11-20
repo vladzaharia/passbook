@@ -4,8 +4,6 @@ import { batch, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import { accountCredentialLineageSql } from './repo-account-lineage.ts';
 
 type AccountAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
 
@@ -21,7 +19,6 @@ export async function saveAccountConfiguration(
     credentialId: string;
     eventId: string;
     envelope: Envelope;
-    credentialKeysetCommitment: string;
   },
 ): Promise<boolean> {
   const { DB: db } = ctx.env;
@@ -35,18 +32,9 @@ export async function saveAccountConfiguration(
         db,
         `INSERT INTO wallet_provider_accounts
       (id, org_id, mode, provider, revision, created_at, updated_at)
-      SELECT ?, ?, ?, ?, 0, ?, ? WHERE ${tenantPassAuthoritySql(authority)} AND ${credentialRefKeysetSql}
+      SELECT ?, ?, ?, ?, 0, ?, ? WHERE ${tenantPassAuthoritySql(authority)}
       ON CONFLICT(org_id, mode, provider) DO NOTHING`,
-        [
-          input.accountId,
-          scope.orgId,
-          scope.mode,
-          scope.provider,
-          now,
-          now,
-          ...params,
-          input.credentialKeysetCommitment,
-        ],
+        [input.accountId, scope.orgId, scope.mode, scope.provider, now, now, ...params],
       ),
     );
   }
@@ -57,7 +45,7 @@ export async function saveAccountConfiguration(
     (id, account_id, org_id, mode, provider, kek_version, iv, wrapped_dek, ciphertext, created_at)
     SELECT ?, a.id, a.org_id, a.mode, a.provider, ?, ?, ?, ?, ?
     FROM wallet_provider_accounts a WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ?
-      AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0 AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard}`,
+      AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0 AND ${guard}`,
       [
         input.credentialId,
         input.envelope.kekVersion,
@@ -70,7 +58,6 @@ export async function saveAccountConfiguration(
         scope.mode,
         scope.provider,
         input.expectedRevision,
-        input.credentialKeysetCommitment,
         ...params,
       ],
     ),
@@ -84,7 +71,7 @@ export async function saveAccountConfiguration(
     FROM wallet_provider_accounts a WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ?
       AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0 AND EXISTS (SELECT 1 FROM wallet_provider_credentials c
         WHERE c.id = ? AND c.account_id = a.id AND c.org_id = a.org_id AND c.mode = a.mode AND c.provider = a.provider)
-      AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard}`,
+      AND ${guard}`,
       [
         input.eventId,
         input.credentialId,
@@ -97,7 +84,6 @@ export async function saveAccountConfiguration(
         scope.provider,
         input.expectedRevision,
         input.credentialId,
-        input.credentialKeysetCommitment,
         ...params,
       ],
     ),
@@ -110,7 +96,7 @@ export async function saveAccountConfiguration(
     WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ? AND a.revision = ? AND a.credential_source_id IS NULL AND a.enrolment_revision = 0
       AND EXISTS (SELECT 1 FROM wallet_provider_account_events e WHERE e.id = ? AND e.account_id = a.id
         AND e.revision = a.revision + 1 AND e.kind = 'configure' AND e.credential_id = ?)
-      AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard} RETURNING id`,
+      AND ${guard} RETURNING id`,
       [
         input.credentialId,
         now,
@@ -121,7 +107,6 @@ export async function saveAccountConfiguration(
         input.expectedRevision,
         input.eventId,
         input.credentialId,
-        input.credentialKeysetCommitment,
         ...params,
       ],
     ),
@@ -140,7 +125,6 @@ export async function transitionAccount(
     expectedRevision: number;
     eventId: string;
     kind: 'revoke';
-    credentialKeysetCommitment: string;
   },
 ): Promise<boolean> {
   const db = ctx.env.DB;
@@ -157,7 +141,7 @@ export async function transitionAccount(
       SELECT ?, a.id, a.org_id, a.mode, a.provider, a.revision + 1, ?, a.credential_id, ?, ?, ?
       FROM wallet_provider_accounts a WHERE a.id = ? AND a.org_id = ? AND a.mode = ? AND a.provider = ?
         AND a.revision = ? AND a.credential_id = ? AND ${condition}
-        AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard}`,
+        AND ${guard}`,
       [
         input.eventId,
         input.kind,
@@ -170,7 +154,6 @@ export async function transitionAccount(
         scope.provider,
         input.expectedRevision,
         input.credentialId,
-        input.credentialKeysetCommitment,
         ...params,
       ],
     ),
@@ -182,7 +165,7 @@ export async function transitionAccount(
         AND a.credential_id = ? AND ${condition}
         AND EXISTS (SELECT 1 FROM wallet_provider_account_events e WHERE e.id = ? AND e.account_id = a.id
           AND e.revision = a.revision + 1 AND e.kind = ? AND e.credential_id = a.credential_id)
-        AND ${credentialRefKeysetSql} AND ${accountCredentialLineageSql} AND ${guard} RETURNING id`,
+        AND ${guard} RETURNING id`,
       [
         now,
         now,
@@ -194,7 +177,6 @@ export async function transitionAccount(
         input.credentialId,
         input.eventId,
         input.kind,
-        input.credentialKeysetCommitment,
         ...params,
       ],
     ),

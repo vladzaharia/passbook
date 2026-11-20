@@ -32,7 +32,6 @@ export async function runtimeSamsungLegacyFixture(kind: 'refresh' | 'retirement'
     orgId: pass.orgId,
     mode: pass.mode,
     passId: pass.id,
-    credentialKeysetCommitment,
   });
   if (!snapshot?.issuingReleaseId) throw new Error('Missing issued pass fixture');
   const generation = await readHistoricalCredentialGeneration(kit.env.DB, pass.id);
@@ -42,25 +41,20 @@ export async function runtimeSamsungLegacyFixture(kind: 'refresh' | 'retirement'
     generation.credentialGeneration < 1
   )
     throw new Error('Missing credential generation fixture');
-  const approved = await getApprovedProjection(
-    kit.ctx,
-    {
-      orgId: pass.orgId,
-      mode: pass.mode,
-      provider: 'samsung',
-      templateId: snapshot.templateId,
-      templateVersion: snapshot.templateVersion,
-      appleReleaseId: snapshot.issuingReleaseId,
-    },
-    { credentialKeysetCommitment },
-  );
+  const approved = await getApprovedProjection(kit.ctx, {
+    orgId: pass.orgId,
+    mode: pass.mode,
+    provider: 'samsung',
+    templateId: snapshot.templateId,
+    templateVersion: snapshot.templateVersion,
+    appleReleaseId: snapshot.issuingReleaseId,
+  });
   if (approved?.projection.provider !== 'samsung' || !f.samsungRelease?.candidateId)
     throw new Error('Missing verified Samsung release fixture');
   const scope: WalletRuntimeScope = {
     orgId: pass.orgId,
     mode: pass.mode,
     accountId: approved.release.accountId,
-    credentialKeysetCommitment,
     accountRevision: approved.release.accountRevision,
     providerIdentityHash: approved.release.providerIdentityHash,
     providerReleaseId: approved.release.id,
@@ -88,7 +82,7 @@ export async function runtimeSamsungLegacyFixture(kind: 'refresh' | 'retirement'
     mode: pass.mode,
     provider: 'samsung',
     credentialGeneration: generation.credentialGeneration,
-    credentialKeysetCommitment: scope.credentialKeysetCommitment,
+    credentialKeysetCommitment,
     accountId: scope.accountId,
     releaseId: scope.providerReleaseId,
     operationId: initialOperationId,
@@ -99,7 +93,7 @@ export async function runtimeSamsungLegacyFixture(kind: 'refresh' | 'retirement'
     id: refRow,
     refHash,
     instanceId,
-    credentialKeysetCommitment: scope.credentialKeysetCommitment,
+    credentialKeysetCommitment,
     createdAt: now,
     initialExpiresAt: now + 300_000,
     promotedAt: promoted ? now : null,
@@ -113,7 +107,7 @@ export async function runtimeSamsungLegacyFixture(kind: 'refresh' | 'retirement'
       requestHash: await sha256Hex(operationId),
       snapshot,
       credentialGeneration: generation.credentialGeneration,
-      scope,
+      scope: { ...scope, credentialKeysetCommitment },
       policy,
       claimHash,
       now,

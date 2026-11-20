@@ -4,20 +4,18 @@ import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
 import { requestWalletRetirement, retireUnissuedWalletPlaceholder } from './instance.ts';
 import type {
-  WalletCredentialKeysetProof,
   WalletInstance,
   WalletMode,
   WalletOperationKind,
   WalletProvider,
 } from './instance-types.ts';
-import { isCredentialKeysetCommitment } from './instance-types.ts';
 import { type ScheduleResult, scheduleInstance } from './lifecycle-instance-schedule.ts';
 import { getInstanceById, getInstanceByPass, readPassSnapshot } from './repo-instance.ts';
 import { walletRetirementIntentStatements } from './repo-instance-retirement.ts';
 import { requestChannelOffRetirement } from './repo-instance-retirement-staging.ts';
 
 /** Captured after the pass write. A stale notification cannot enqueue work for a later revision. */
-export interface WalletPassRevision extends WalletCredentialKeysetProof {
+export interface WalletPassRevision {
   orgId: string;
   mode: WalletMode;
   passId: string;
@@ -39,20 +37,10 @@ export async function reconcileWalletInstance(
   instance: WalletInstance,
   expected?: WalletPassRevision,
   forceRetirement = false,
-  expectedCredentialKeysetCommitment?: string,
 ): Promise<ScheduleResult | 'stale'> {
   ctx = snapshotWalletCredentialContext(ctx);
   instance = { ...instance };
   if (expected) expected = { ...expected };
-  const credentialKeysetCommitment = instance.credentialKeysetCommitment;
-  if (
-    !isCredentialKeysetCommitment(credentialKeysetCommitment) ||
-    (expected && expected.credentialKeysetCommitment !== credentialKeysetCommitment) ||
-    (expectedCredentialKeysetCommitment !== undefined &&
-      expectedCredentialKeysetCommitment !== credentialKeysetCommitment) ||
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment
-  )
-    return 'blocked';
   const pass = await readPassSnapshot(ctx.env.DB, instance);
   if (
     !pass ||
@@ -82,7 +70,6 @@ export async function reconcileWalletInstance(
       provider: instance.provider,
       credentialGeneration: instance.credentialGeneration,
       passCredentialGeneration: pass.credentialGeneration,
-      credentialKeysetCommitment,
       now: ctx.clock.now(),
     });
     return retired ? 'unchanged' : 'blocked';
@@ -103,7 +90,6 @@ export async function reconcileWalletInstance(
       lifecycleGeneration: pass.lifecycleGeneration,
       passCredentialGeneration: pass.credentialGeneration,
       issuingReleaseId: pass.issuingReleaseId,
-      credentialKeysetCommitment,
     });
     if (!staged) return 'blocked';
   } else if (instance.retirementRequestedAt === null) {
@@ -117,7 +103,6 @@ export async function reconcileWalletInstance(
       now: ctx.clock.now(),
       credentialGeneration: instance.credentialGeneration,
       passCredentialGeneration: pass.credentialGeneration,
-      credentialKeysetCommitment,
     });
     if (retired) {
       ctx.log.info('wallet.instance.channel_off', {
@@ -155,13 +140,8 @@ async function schedulePass(
 ): Promise<WalletLifecycleScheduleResult> {
   ctx = snapshotWalletCredentialContext(ctx);
   revision = { ...revision };
-  const credentialKeysetCommitment = revision.credentialKeysetCommitment;
-  if (
-    !isCredentialKeysetCommitment(credentialKeysetCommitment) ||
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== credentialKeysetCommitment
-  )
-    return { scheduled: 0, blocked: 0, stale: true };
-  const pass = await readPassSnapshot(ctx.env.DB, { ...revision, credentialKeysetCommitment });
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const pass = await readPassSnapshot(ctx.env.DB, revision);
   if (
     !pass ||
     pass.passVersion !== revision.passVersion ||
@@ -185,7 +165,6 @@ async function schedulePass(
           lifecycleGeneration: pass.lifecycleGeneration,
           passCredentialGeneration: pass.credentialGeneration,
           issuingReleaseId: pass.issuingReleaseId,
-          credentialKeysetCommitment,
           now: ctx.clock.now(),
         },
         { sql: '1 = 1', params: [] },
@@ -196,13 +175,7 @@ async function schedulePass(
   for (const provider of ['google', 'samsung'] as const satisfies readonly WalletProvider[]) {
     const instance = await getInstanceByPass(ctx.env.DB, { ...revision, provider });
     if (!instance) continue;
-    const outcome = await reconcileWalletInstance(
-      ctx,
-      instance,
-      revision,
-      action !== 'current',
-      credentialKeysetCommitment,
-    );
+    const outcome = await reconcileWalletInstance(ctx, instance, revision, action !== 'current');
     if (outcome === 'stale') result.stale = true;
     else if (outcome === 'blocked') result.blocked++;
     else if (outcome === 'scheduled') result.scheduled++;

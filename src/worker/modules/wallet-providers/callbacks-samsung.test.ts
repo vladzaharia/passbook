@@ -162,7 +162,6 @@ describe('Samsung authenticated callback route', () => {
       t.kit.env.DB,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
       false,
     );
     if (!snapshot) throw new Error('Missing unpromoted fixture');
@@ -190,7 +189,6 @@ describe('Samsung authenticated callback route', () => {
         t.kit.env.DB,
         await sha256Hex(t.refId),
         t.kit.clock.now(),
-        t.credentialKeysetCommitment,
         true,
       ),
     ).toBeNull();
@@ -353,7 +351,6 @@ describe('Samsung authenticated callback route', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
       true,
     );
     if (!pass || !expected || !snapshot) throw new Error('Missing transfer snapshot fixture');
@@ -371,18 +368,8 @@ describe('Samsung authenticated callback route', () => {
       consumedAt: null,
       deliveredAt: null,
     });
-    expect(
-      await readOffer(db, wrapperHash, offeredAt, t.credentialKeysetCommitment),
-    ).not.toBeNull();
-    expect(
-      await whileDisabledForTest(
-        walletOfferFresh,
-        db,
-        wrapperRef,
-        offeredAt,
-        t.credentialKeysetCommitment,
-      ),
-    ).toBe(false);
+    expect(await readOffer(db, wrapperHash, offeredAt)).not.toBeNull();
+    expect(await whileDisabledForTest(walletOfferFresh, db, wrapperRef, offeredAt)).toBe(false);
     const oldRequest = await t.token();
 
     await startCredentialTransfer(
@@ -399,39 +386,22 @@ describe('Samsung authenticated callback route', () => {
       orgId: pass.orgId,
       mode: pass.mode,
       passId: pass.id,
-      credentialKeysetCommitment: t.credentialKeysetCommitment,
     });
     if (!current || !wallet) throw new Error('Missing transfer state');
     expect(current.credentialGeneration).toBe(pass.credentialGeneration + 1);
     expect(wallet.transferPending).toBe(1);
-    expect(await offerPassSnapshot(t.kit.ctx, current, t.credentialKeysetCommitment)).toBeNull();
+    expect(await offerPassSnapshot(t.kit.ctx, current)).toBeNull();
     expect(await listWalletOffers(t.kit.ctx, pass.id)).toEqual([]);
     await expect(
       issueWalletOffer(t.kit.ctx, current.downloadToken, 'samsung'),
     ).rejects.toMatchObject({ status: 404 });
+    expect(await readOffer(db, wrapperHash, t.kit.clock.now())).toBeNull();
+    expect(await whileDisabledForTest(walletOfferFresh, db, wrapperRef, t.kit.clock.now())).toBe(
+      false,
+    );
+    expect(await consumeWalletOfferRef(db, wrapperRef, t.kit.clock.now())).toBeNull();
     expect(
-      await readOffer(db, wrapperHash, t.kit.clock.now(), t.credentialKeysetCommitment),
-    ).toBeNull();
-    expect(
-      await whileDisabledForTest(
-        walletOfferFresh,
-        db,
-        wrapperRef,
-        t.kit.clock.now(),
-        t.credentialKeysetCommitment,
-      ),
-    ).toBe(false);
-    expect(
-      await consumeWalletOfferRef(db, wrapperRef, t.kit.clock.now(), t.credentialKeysetCommitment),
-    ).toBeNull();
-    expect(
-      await findSamsungFetchSnapshot(
-        db,
-        await sha256Hex(t.refId),
-        t.kit.clock.now(),
-        t.credentialKeysetCommitment,
-        true,
-      ),
+      await findSamsungFetchSnapshot(db, await sha256Hex(t.refId), t.kit.clock.now(), true),
     ).toBeNull();
     expect(await samsungFetchSnapshotCurrent(db, snapshot, raw, t.kit.clock.now())).toBe(false);
     const now = t.kit.clock.now();
@@ -488,7 +458,6 @@ describe('Samsung authenticated callback route', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot) throw new Error('Missing fetch snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
@@ -531,7 +500,6 @@ describe('Samsung authenticated callback route', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot) throw new Error('Missing fetch snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
@@ -608,7 +576,6 @@ describe('Samsung authenticated callback route', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot || !t.samsungRelease?.candidateId) throw new Error('Missing evidence fixture');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);

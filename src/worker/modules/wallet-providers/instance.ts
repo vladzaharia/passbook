@@ -1,6 +1,5 @@
 import { nonnegative, requestHash, sameProof, validProof, validRequest } from './instance-input.ts';
 import type {
-  WalletCredentialKeysetProof,
   WalletInstance,
   WalletInstanceProof,
   WalletOperation,
@@ -8,7 +7,6 @@ import type {
   WalletOperationRef,
   WalletScope,
 } from './instance-types.ts';
-import { isCredentialKeysetCommitment as validCommitment } from './instance-types.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
 import {
   ackDirtyInstance,
@@ -86,12 +84,7 @@ export async function createWalletInstance(
     return null;
   const hash = await requestHash(p.requestKey);
   const existing = await getInstanceByPass(db, p);
-  if (
-    existing &&
-    (existing.credentialKeysetCommitment !== p.credentialKeysetCommitment ||
-      (existing.lifecycle !== 'ready' && existing.lifecycle !== 'active'))
-  )
-    return null;
+  if (existing && existing.lifecycle !== 'ready' && existing.lifecycle !== 'active') return null;
   const instanceId = existing?.id ?? p.instanceId;
   await insertInstance(db, {
     ...p,
@@ -133,50 +126,33 @@ export function listDueWalletOperations(
   db: D1Database,
   now: number,
   limit: number,
-  credentialKeysetCommitment: string,
   afterId: string | null = null,
 ): Promise<WalletOperation[]> {
-  if (!validCommitment(credentialKeysetCommitment)) return Promise.resolve([]);
-  return listDueOperations(
-    db,
-    now,
-    Math.max(1, Math.min(100, Math.trunc(limit))),
-    afterId,
-    credentialKeysetCommitment,
-  );
+  return listDueOperations(db, now, Math.max(1, Math.min(100, Math.trunc(limit))), afterId);
 }
 export function listDirtyWalletInstances(
   db: D1Database,
   now: number,
   limit: number,
-  credentialKeysetCommitment: string,
   afterInstanceId: string | null = null,
 ) {
-  if (!validCommitment(credentialKeysetCommitment)) return Promise.resolve([]);
   return listDirtyInstances(
     db,
     now,
     Math.max(1, Math.min(100, Math.trunc(limit))),
     afterInstanceId,
-    credentialKeysetCommitment,
   );
 }
 export function deferDirtyWalletInstance(
   db: D1Database,
-  p: WalletScope &
-    WalletCredentialKeysetProof & {
-      instanceId: string;
-      generation: number;
-      now: number;
-      delayMs: number;
-    },
+  p: WalletScope & {
+    instanceId: string;
+    generation: number;
+    now: number;
+    delayMs: number;
+  },
 ): Promise<boolean> {
-  if (
-    !validCommitment(p.credentialKeysetCommitment) ||
-    !nonnegative(p.now) ||
-    !nonnegative(p.delayMs)
-  )
-    return Promise.resolve(false);
+  if (!nonnegative(p.now) || !nonnegative(p.delayMs)) return Promise.resolve(false);
   return deferDirtyInstance(db, {
     ...p,
     nextAttemptAt: p.now + Math.max(1_000, Math.min(300_000, p.delayMs)),
@@ -186,28 +162,15 @@ export function listWalletRetirementsReady(
   db: D1Database,
   now: number,
   limit: number,
-  credentialKeysetCommitment: string,
   afterId: string | null = null,
 ) {
-  if (!validCommitment(credentialKeysetCommitment)) return Promise.resolve([]);
-  return listRetirementsReady(
-    db,
-    now,
-    Math.max(1, Math.min(100, Math.trunc(limit))),
-    afterId,
-    credentialKeysetCommitment,
-  );
+  return listRetirementsReady(db, now, Math.max(1, Math.min(100, Math.trunc(limit))), afterId);
 }
 export function deferWalletRetirement(
   db: D1Database,
-  p: WalletOperationRef & WalletCredentialKeysetProof & { now: number; delayMs: number },
+  p: WalletOperationRef & { now: number; delayMs: number },
 ): Promise<boolean> {
-  if (
-    !validCommitment(p.credentialKeysetCommitment) ||
-    !nonnegative(p.now) ||
-    !nonnegative(p.delayMs)
-  )
-    return Promise.resolve(false);
+  if (!nonnegative(p.now) || !nonnegative(p.delayMs)) return Promise.resolve(false);
   return deferRetirement(db, {
     ...p,
     nextAttemptAt: p.now + Math.max(1_000, Math.min(300_000, p.delayMs)),

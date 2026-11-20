@@ -1,7 +1,6 @@
 import { credentialAad, type Envelope, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { requireSamsungCredentialKeyset } from './callbacks-ref.ts';
 import type { SamsungCallbackInput, SamsungCallbackResult } from './callbacks-samsung-types.ts';
 import {
   claimSamsungIssuedDelivery,
@@ -23,7 +22,7 @@ export async function answerSamsungIssuedRef(
   input: SamsungCallbackInput,
 ): Promise<SamsungCallbackResult | null> {
   const { request, refId, refHash, method, countryHint, event, requestId, body } = input;
-  const refs = await findSamsungIssuedRefs(ctx.env.DB, refHash, input.credentialKeysetCommitment);
+  const refs = await findSamsungIssuedRefs(ctx.env.DB, refHash);
   // Nothing is sealed until a token has verified: crypto work before authentication is free for an attacker.
   const receiptId = method === 'POST' ? ctx.ids.id() : null;
   let sealed: Envelope | null = null;
@@ -68,7 +67,6 @@ export async function answerSamsungIssuedRef(
         throw new UnavailableError('Samsung Wallet service is unavailable.', 'SAMSUNG_UNAVAILABLE');
       throw error;
     }
-    await requireSamsungCredentialKeyset(ctx, ref.credentialKeysetCommitment);
     ctx.log.info('wallet.callback_state', {
       code: delivery.duplicate ? 'WALLET_CALLBACK_DUPLICATE' : 'WALLET_CALLBACK_ISSUED',
       provider: 'samsung',

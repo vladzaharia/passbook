@@ -1,7 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
   readSamsungIssuedRefVerification,
   readSamsungTombstoneVerification,
@@ -23,7 +22,6 @@ interface SamsungTombstoneRuntimeScope {
   mode: Mode;
   accountId: string;
   accountRevision: number;
-  credentialKeysetCommitment: string;
   refHash: string;
 }
 
@@ -61,14 +59,8 @@ export async function verifySamsungTombstoneRuntimeRequest(
   let method: 'GET' | 'POST';
   let source: 'tombstone' | 'issued';
   let claimReplay: SamsungTombstoneRuntimeRequest['claimReplay'];
-  if (
-    typeof inputScope?.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(inputScope.credentialKeysetCommitment)
-  )
-    throw runtimeAccountUnavailable();
   try {
-    const { orgId, mode, accountId, accountRevision, refHash, credentialKeysetCommitment } =
-      inputScope;
+    const { orgId, mode, accountId, accountRevision, refHash } = inputScope;
     ({ request, refId, method = 'GET', source = 'tombstone', claimReplay } = input);
     if (
       typeof orgId !== 'string' ||
@@ -85,20 +77,9 @@ export async function verifySamsungTombstoneRuntimeRequest(
       (await sha256Hex(refId)) !== refHash
     )
       throw new SamsungTokenError();
-    scope = { orgId, mode, accountId, accountRevision, refHash, credentialKeysetCommitment };
+    scope = { orgId, mode, accountId, accountRevision, refHash };
   } catch {
     throw new SamsungTokenError();
-  }
-
-  async function assertKeyset(): Promise<void> {
-    try {
-      if (
-        (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== scope.credentialKeysetCommitment
-      )
-        throw runtimeAccountUnavailable();
-    } catch {
-      throw runtimeAccountUnavailable();
-    }
   }
 
   async function readHistorical() {
@@ -125,9 +106,7 @@ export async function verifySamsungTombstoneRuntimeRequest(
     let account: ValidatedSamsungCallbackCredentials;
     try {
       account = await validateSamsungCallbackCredentials(candidate, ctx.clock.now());
-      await assertKeyset();
     } catch (error) {
-      await assertKeyset();
       if (error instanceof SamsungCredentialError) continue;
       throw new WalletRuntimeError('provider_failure');
     }
@@ -137,23 +116,18 @@ export async function verifySamsungTombstoneRuntimeRequest(
         refId,
         method,
         now: ctx.clock.now(),
-        claimReplay: async (key, expiresAt, signedAt, queryBound) => {
-          await assertKeyset();
-          const claimed = await claimReplay(
+        claimReplay: (key, expiresAt, signedAt, queryBound) =>
+          claimReplay(
             key,
             expiresAt,
             signedAt,
             queryBound,
             'writable' in candidate && candidate.writable === true,
-          );
-          await assertKeyset();
-          return claimed;
-        },
+          ),
       });
       chosen = index;
       break;
     } catch (error) {
-      await assertKeyset();
       if (error instanceof SamsungTokenError) continue;
       if (error instanceof SamsungReplayStoreError) throw new SamsungReplayStoreError();
       throw new WalletRuntimeError('provider_failure');

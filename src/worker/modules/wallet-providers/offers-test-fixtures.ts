@@ -169,7 +169,6 @@ export async function setupWalletOfferKit(
     const current = await readConfiguredWalletProviderCredentials(kit.ctx, scope('samsung'), {
       accountId: readiness.accountId ?? '',
       accountRevision: readiness.revision,
-      credentialKeysetCommitment,
     });
     if (current?.provider !== 'samsung')
       throw new Error('Samsung account missing in wallet offer fixture.');

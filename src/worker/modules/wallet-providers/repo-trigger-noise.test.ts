@@ -49,7 +49,6 @@ describe('row counts, not trigger counts', () => {
         provider: operation.provider,
         instanceId: operation.instanceId,
         version: operation.version,
-        credentialKeysetCommitment: operation.credentialKeysetCommitment,
         hash: 'a'.repeat(64),
         now,
       };
@@ -59,7 +58,7 @@ describe('row counts, not trigger counts', () => {
       results.push(await claimOperation(db, claim));
       results.push(await markUncertain(db, { ...claim, hash: 'f'.repeat(64) }));
       results.push(await markUncertain(db, claim));
-      results.push(await expireClaims(db, now + 600_000, 10, claim.credentialKeysetCommitment));
+      results.push(await expireClaims(db, now + 600_000, 10));
       await run(
         db,
         `INSERT INTO wallet_provider_sync_targets
@@ -134,7 +133,6 @@ describe('row counts, not trigger counts', () => {
         db,
         await sha256Hex(t.refId),
         t.kit.clock.now(),
-        t.credentialKeysetCommitment,
       );
       if (!snapshot) throw new Error('Missing fetch snapshot');
       const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
@@ -189,7 +187,6 @@ describe('row counts, not trigger counts', () => {
       db,
       await sha256Hex(t.refId),
       t.kit.clock.now(),
-      t.credentialKeysetCommitment,
     );
     if (!snapshot) throw new Error('Missing fetch snapshot');
     const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);

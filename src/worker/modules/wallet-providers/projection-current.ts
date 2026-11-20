@@ -12,7 +12,6 @@ export interface ProjectionApprovalBinding {
   accountId: string;
   accountRevision: number;
   providerIdentityHash: string;
-  credentialKeysetCommitment: string;
   releaseId: string;
 }
 
@@ -24,13 +23,7 @@ export async function isCurrentApprovedProjection(
   ctx = snapshotWalletCredentialContext(ctx);
   Object.freeze(ctx.env);
   binding = { ...binding };
-  if (
-    typeof binding.credentialKeysetCommitment !== 'string' ||
-    !/^[0-9a-f]{64}$/.test(binding.credentialKeysetCommitment)
-  )
-    return false;
-  const proof = Object.freeze({ credentialKeysetCommitment: binding.credentialKeysetCommitment });
-  const metadata = await getProjectionRetirementMetadata(ctx.env.DB, binding.releaseId, proof);
+  const metadata = await getProjectionRetirementMetadata(ctx.env.DB, binding.releaseId);
   if (
     !metadata ||
     metadata.orgId !== binding.orgId ||
@@ -41,19 +34,15 @@ export async function isCurrentApprovedProjection(
     metadata.providerIdentityHash !== binding.providerIdentityHash
   )
     return false;
-  const approved = await getApprovedProjection(
-    ctx,
-    {
-      orgId: binding.orgId,
-      mode: binding.mode,
-      provider: binding.provider,
-      templateId: metadata.templateId,
-      templateVersion: metadata.version,
-      appleReleaseId: metadata.sourceReleaseId,
-      adapterRevision: metadata.adapterRevision,
-      audiencePolicyRevision: metadata.policyRevision,
-    },
-    proof,
-  );
+  const approved = await getApprovedProjection(ctx, {
+    orgId: binding.orgId,
+    mode: binding.mode,
+    provider: binding.provider,
+    templateId: metadata.templateId,
+    templateVersion: metadata.version,
+    appleReleaseId: metadata.sourceReleaseId,
+    adapterRevision: metadata.adapterRevision,
+    audiencePolicyRevision: metadata.policyRevision,
+  });
   return approved?.release.id === binding.releaseId;
 }

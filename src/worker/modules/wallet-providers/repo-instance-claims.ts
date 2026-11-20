@@ -1,19 +1,13 @@
 import { all, batch, first, stmt } from '../../platform/db.ts';
-import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
-import type {
-  WalletClaimResult,
-  WalletCredentialKeysetProof,
-  WalletOperationRef,
-} from './instance-types.ts';
-import { isCredentialKeysetCommitment } from './instance-types.ts';
+import type { WalletClaimResult, WalletOperationRef } from './instance-types.ts';
 import { walletEnrolmentIssuesSql } from './repo-enrolment-gate.ts';
 import { type Claim, CURRENT, CURRENT_OPERATION, SCOPE, scope } from './repo-instance-claim-sql.ts';
+import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export { finishOperation } from './repo-instance-finish.ts';
 
 export async function claimOperation(db: D1Database, p: Claim): Promise<WalletClaimResult> {
   p = { ...p };
-  if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return 'not_claimable';
   const claimed = await first(
     db,
     `UPDATE wallet_provider_instance_operations AS op
@@ -43,9 +37,8 @@ export async function claimOperation(db: D1Database, p: Claim): Promise<WalletCl
 /** Without a handle this is a current offer proof; with one it is a pre-dispatch claim proof. */
 export async function operationFresh(
   db: D1Database,
-  p: WalletOperationRef & WalletCredentialKeysetProof & { now: number; hash?: string },
+  p: WalletOperationRef & { now: number; hash?: string },
 ): Promise<boolean> {
-  if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
   return (
     (await first(
       db,
@@ -66,7 +59,6 @@ export async function operationFresh(
 }
 
 export async function markUncertain(db: D1Database, p: Claim): Promise<boolean> {
-  if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
   const row = await first(
     db,
     `UPDATE wallet_provider_instance_operations AS op SET state = 'uncertain'
@@ -79,29 +71,17 @@ export async function markUncertain(db: D1Database, p: Claim): Promise<boolean> 
 }
 
 /** Expiry never releases the serial fence: uncertain work requires explicit transport settlement. */
-export async function expireClaims(
-  db: D1Database,
-  now: number,
-  limit: number,
-  credentialKeysetCommitment: string,
-): Promise<number> {
-  if (!isCredentialKeysetCommitment(credentialKeysetCommitment)) return 0;
+export async function expireClaims(db: D1Database, now: number, limit: number): Promise<number> {
   const rows = await all(
     db,
     `UPDATE wallet_provider_instance_operations AS op SET state = 'uncertain'
-    WHERE op.credential_keyset_commitment = ? AND ${credentialRefKeysetSql}
+    WHERE op.credential_keyset_commitment = ${pinnedKeysetSql}
       AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE i.id = op.instance_id
         AND i.credential_keyset_commitment = op.credential_keyset_commitment)
       AND op.id IN (SELECT id FROM wallet_provider_instance_operations WHERE state = 'claimed'
-        AND credential_keyset_commitment = ? AND claim_expires_at <= ? ORDER BY claim_expires_at, id LIMIT ?)
+        AND credential_keyset_commitment = ${pinnedKeysetSql} AND claim_expires_at <= ? ORDER BY claim_expires_at, id LIMIT ?)
     RETURNING id`,
-    [
-      credentialKeysetCommitment,
-      credentialKeysetCommitment,
-      credentialKeysetCommitment,
-      now,
-      limit,
-    ],
+    [now, limit],
   );
   return rows.length;
 }
@@ -109,9 +89,8 @@ export async function expireClaims(
 /** Call only after the transport is known to have stopped; uncertain remote writes cannot overlap. */
 export async function settleClaim(
   db: D1Database,
-  p: WalletOperationRef & WalletCredentialKeysetProof & { now: number },
+  p: WalletOperationRef & { now: number },
 ): Promise<boolean> {
-  if (!isCredentialKeysetCommitment(p.credentialKeysetCommitment)) return false;
   const results = await batch(db, [
     // Runs before the operation moves: the target follows the operation's uncertain state.
     stmt(

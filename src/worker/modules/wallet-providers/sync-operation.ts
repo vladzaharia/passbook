@@ -16,7 +16,6 @@ import {
   walletOperationFresh,
 } from './instance.ts';
 import type { WalletClaimRef, WalletOperation } from './instance-types.ts';
-import { isCredentialKeysetCommitment } from './instance-types.ts';
 import { walletProviderDisabledReason, walletProviderReleaseReason } from './provider-policy.ts';
 import type { OutcomeReceipt } from './repo-instance-outcomes.ts';
 import {
@@ -39,11 +38,7 @@ export async function runWalletProviderOperation(
 ): Promise<WalletSyncRunResult> {
   ctx = snapshotWalletCredentialContext(ctx);
   candidate = { ...candidate };
-  if (
-    !isCredentialKeysetCommitment(candidate.credentialKeysetCommitment) ||
-    (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !== candidate.credentialKeysetCommitment
-  )
-    return 'not_claimed';
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   let unissuedCandidate = false;
   let unconfirmed = false;
   if (candidate.provider === 'samsung') {
@@ -52,14 +47,8 @@ export async function runWalletProviderOperation(
       orgId: candidate.orgId,
       mode: candidate.mode,
       operationVersion: candidate.version,
-      credentialKeysetCommitment: candidate.credentialKeysetCommitment,
     };
     const target = await getSamsungRefreshTarget(ctx, scope);
-    if (
-      (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) !==
-      candidate.credentialKeysetCommitment
-    )
-      return 'not_claimed';
     if (!target || target.countryCodes.length === 0) {
       if (candidate.kind !== 'revoke') return 'deferred';
       // A served ref that was never confirmed and has no known market is closed, not waited for
@@ -94,11 +83,10 @@ export async function runWalletProviderOperation(
     version: candidate.version,
     claimHandle: newWalletClaimHandle(),
     now: ctx.clock.now(),
-    credentialKeysetCommitment: candidate.credentialKeysetCommitment,
   };
   if ((await claimWalletOperation(ctx.env.DB, claim)) !== 'claimed') return 'not_claimed';
   const op = await getWalletOperation(ctx.env.DB, claim);
-  if (!op || op.credentialKeysetCommitment !== claim.credentialKeysetCommitment) return 'uncertain';
+  if (!op) return 'uncertain';
   let responseSequence = 0;
   const execution: WalletSyncOperationExecution = {
     ctx,
@@ -112,12 +100,7 @@ export async function runWalletProviderOperation(
     },
     assertCurrent: async () => {
       try {
-        if (
-          (await requireCredentialRefKeyset(ctx.env.DB, ctx.env)) ===
-            claim.credentialKeysetCommitment &&
-          (await walletOperationFresh(ctx.env.DB, { ...claim, now: ctx.clock.now() }))
-        )
-          return;
+        if (await walletOperationFresh(ctx.env.DB, { ...claim, now: ctx.clock.now() })) return;
       } catch {
         execution.fenceLost = true;
         ctx.log.warn('wallet.sync_keyset_unavailable', { code: 'WALLET_SYNC_KEYSET' });
@@ -175,7 +158,6 @@ export async function runWalletProviderOperation(
       mode: op.mode,
       operationVersion: op.version,
       claimHandle: claim.claimHandle,
-      credentialKeysetCommitment: claim.credentialKeysetCommitment,
     });
     if (disposition !== 'no_external_card') {
       return (await complete(ctx, claim, op, {

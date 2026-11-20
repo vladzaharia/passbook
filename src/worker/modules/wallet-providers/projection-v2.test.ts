@@ -29,7 +29,6 @@ import {
   lookup,
   manifest,
   pinsOf,
-  proof,
   released,
   request,
   S,
@@ -134,7 +133,7 @@ describe('schema 1 and the Google publish path', () => {
         expectedGeneration: 0,
       }),
     ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_SCHEMA' });
-    expect(await getApprovedProjection(kit.ctx, lookup(kit), await proof())).toBeNull();
+    expect(await getApprovedProjection(kit.ctx, lookup(kit))).toBeNull();
     await expect(
       run(
         S.env.DB,
@@ -156,7 +155,7 @@ describe('schema 1 and the Google publish path', () => {
     const candidate = await candidateOf(kit, request(pins.approvedOmissions));
     const release = await released(kit, candidate);
     expect(release).toMatchObject({ provider: 'google', generation: 1, candidateId: candidate.id });
-    expect(await getApprovedProjection(kit.ctx, lookup(kit), await proof())).toMatchObject({
+    expect(await getApprovedProjection(kit.ctx, lookup(kit))).toMatchObject({
       release: { id: release.id, sourceReleaseId: kit.sourceId },
       projection: pins,
     });

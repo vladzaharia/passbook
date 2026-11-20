@@ -74,12 +74,12 @@ describe('two orgs on the platform issuer (live Google)', () => {
       // Class and object ids come from the issuer and the copied key: unchanged.
       expect(await currentIds(k, acct)).toEqual(before[i]);
     }
+    await ensureCredentialRefKeyset(env.DB, k.env);
     const copied = await readGoogleCallbackVerification(k.ctx, {
       orgId: a.orgId,
       mode: 'live',
       accountId: a.id,
       accountRevision: 1,
-      credentialKeysetCommitment: await ensureCredentialRefKeyset(env.DB, k.env),
     });
     expect(copied?.objectIdHmacKey).toEqual(fromBase64Url(a.hmacKey ?? ''));
     expect((await stateOf(a.id)).identity_hash).toBe(
