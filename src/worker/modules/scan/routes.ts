@@ -15,11 +15,11 @@ import {
   ScanSummarySchema,
   ScanSummaryScopeSchema,
 } from '../../../shared/contracts/scan-session.ts';
+import { SessionDevicesSchema } from '../../../shared/contracts/scanning-session-devices.ts';
 import {
   ReportScanDeviceSchema,
   ScanWorkspaceSchema,
   SessionActivitySchema,
-  SessionDevicesSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';

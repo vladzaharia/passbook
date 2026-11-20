@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SessionDevicesSchema } from '../../../shared/contracts/scanning-sessions.ts';
+import { SessionDevicesSchema } from '../../../shared/contracts/scanning-session-devices.ts';
 import { run } from '../../platform/db.ts';
 import {
   activityFixture,
@@ -15,9 +15,9 @@ async function devices(response: Response) {
 describe('GET /scan/devices', () => {
   it("lists the scanners of the device's own session, marks itself, and none of another session", async () => {
     const f = await activityFixture({ role: 'desk' });
-    const mate = await f.kit.scanner({ name: 'Pool gate' });
+    const mate = await f.kit.scanner();
     await attach(f.kit, mate, f.sessionId);
-    const elsewhere = await f.kit.scanner({ name: 'Other session' });
+    const elsewhere = await f.kit.scanner();
     await workspace(f.kit, elsewhere, null);
     const items = await devices(await f.request('/scan/devices', f.scanner.headers));
     expect(items.map((d) => d.id).sort()).toEqual([mate.id, f.scanner.id].sort());
@@ -28,7 +28,7 @@ describe('GET /scan/devices', () => {
 
   it('is online by contact in the last two minutes, offline after', async () => {
     const f = await activityFixture({ role: 'desk' });
-    const mate = await f.kit.scanner({ name: 'Studio door' });
+    const mate = await f.kit.scanner();
     await attach(f.kit, mate, f.sessionId);
     const seen = (at: number | null) =>
       run(f.kit.env.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [at, mate.id]);
@@ -46,7 +46,7 @@ describe('GET /scan/devices', () => {
 
   it('leaves out a revoked device', async () => {
     const f = await activityFixture({ role: 'manager' });
-    const mate = await f.kit.scanner({ name: 'Gone' });
+    const mate = await f.kit.scanner();
     await attach(f.kit, mate, f.sessionId);
     await run(f.kit.env.DB, 'UPDATE scanners SET revoked_at = ? WHERE id = ?', [
       f.kit.clock.now(),
@@ -58,7 +58,7 @@ describe('GET /scan/devices', () => {
 
   it('shows a Door device no names', async () => {
     const f = await activityFixture({ role: 'door' });
-    const mate = await f.kit.scanner({ name: 'Pool gate' });
+    const mate = await f.kit.scanner();
     await attach(f.kit, mate, f.sessionId);
     expect(await devices(await f.request('/scan/devices', f.scanner.headers))).toEqual([]);
   });

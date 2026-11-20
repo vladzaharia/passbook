@@ -1,4 +1,4 @@
-import type { SessionDevices } from '../../../shared/contracts/scanning-sessions.ts';
+import type { SessionDevices } from '../../../shared/contracts/scanning-session-devices.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
