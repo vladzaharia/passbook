@@ -311,7 +311,7 @@ describe('offboard', () => {
       const ref = kit.fx.ids.id().replace(/-/g, '').padEnd(64, 'a').slice(0, 64);
       await run(
         kit.env.DB,
-        `INSERT INTO nfc_tags (id, org_id, mode, tag_ref, kind, hint, created_at)
+        `INSERT INTO nfc_tags (id, org_id, mode, tag_ref, system, hint, created_at)
          VALUES (?, ?, 'live', ?, 'uid', ?, 1)`,
         [tagId, kit.org.id, ref, ref.slice(0, 4).toUpperCase()],
       );
