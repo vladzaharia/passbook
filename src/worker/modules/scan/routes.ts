@@ -21,7 +21,6 @@ import {
   ScanWorkspaceSchema,
   SessionActivitySchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
-import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { act } from './act.ts';
@@ -37,7 +36,7 @@ import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
-import { registerScanPhotoRoute } from './routes-photo.ts';
+import { limitScanBodies, registerScanPhotoRoute } from './routes-photo.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanSessionHoursRoutes } from './routes-session-hours.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
@@ -56,9 +55,7 @@ import { undo } from './undo.ts';
 const liveMethod = (input: ScanInput) => ('tag' in input ? 'manual' : input.method);
 
 export const scanRoutes = createRouter({ bodyLimit: false });
-scanRoutes.use('*', defaultBodyLimit(/\/passes\/[^/]+\/photo$/));
-// Before the guards, which read the body.
-scanRoutes.use('/passes/:passId/photo', limitBody(1_410_000));
+limitScanBodies(scanRoutes);
 
 // Admin scope rides the query on a GET (`?orgId&eventId&templateIds&timeZone`); the guard reads it.
 const DayStart = z.object({ dayStart: z.coerce.number().int().nonnegative().optional() });

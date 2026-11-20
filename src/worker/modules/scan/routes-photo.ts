@@ -1,11 +1,18 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { MemberPhotoSchema, PutMemberPhotoSchema } from '../../../shared/contracts/check-in.ts';
+import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { scanActorOf } from './guard.ts';
 import { captureDeskPhoto } from './photo-capture.ts';
+
+/** Before the guards, which read the body: the default cap, and the photo route's own. */
+export function limitScanBodies(router: OpenAPIHono<AppBindings>): void {
+  router.use('*', defaultBodyLimit(/\/passes\/[^/]+\/photo$/));
+  router.use('/passes/:passId/photo', limitBody(1_410_000));
+}
 
 /** Register on the guarded scanner router, so the device credential stays mandatory. */
 export function registerScanPhotoRoute(router: OpenAPIHono<AppBindings>): void {

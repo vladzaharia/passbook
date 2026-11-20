@@ -5,10 +5,11 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { healHead } from './head-store.ts';
-import { photoKeys, retirePhotoObjects } from './photo-keys.ts';
+import { retirePhotoObjects } from './photo-keys.ts';
 import { retentionPlan } from './plan.ts';
 import { DAY, excludedFromPlatformPass, nextBatch } from './policy.ts';
 import { prepareReceipt, recordHead } from './receipt-service.ts';
+import { photoKeys } from './repo-photo-keys.ts';
 import { chainHead } from './repo-receipts.ts';
 import {
   CHUNK,
