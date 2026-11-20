@@ -4,7 +4,7 @@ import { type AfterRead, afterRead } from '../../../platform/authority-after.ts'
 import { all, type SqlValue, stmt } from '../../../platform/db.ts';
 import type { PresenceRow } from '../admission-types.ts';
 import { HOLD_HORIZON_MS } from '../roll-call/hold.ts';
-import { LIVE, marks } from './repo.ts';
+import { LIVE, marks, VIA_JOIN, VIA_SQL } from './repo.ts';
 
 /** A pass's row at a zone as a scan reads it before its batch; `changed_at` is when it last moved. */
 export interface PlaceRow extends PresenceRow {
@@ -18,9 +18,9 @@ export interface PlaceRow extends PresenceRow {
 export const zoneRowsStmt = (db: D1Database, orgId: string, passId: string): D1PreparedStatement =>
   stmt(
     db,
-    `SELECT x.*, CASE WHEN x.state = 'in' THEN x.entered_at ELSE s.at END AS changed_at, sc.name AS via
+    `SELECT x.*, CASE WHEN x.state = 'in' THEN x.entered_at ELSE s.at END AS changed_at, ${VIA_SQL} AS via
      FROM scan_presence x LEFT JOIN scans s ON s.id = x.last_scan_id AND s.org_id = x.org_id
-     LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = x.org_id
+     ${VIA_JOIN}
      WHERE x.org_id = ? AND x.pass_id = ? AND x.scope LIKE 'zone:%'`,
     [orgId, passId],
   );

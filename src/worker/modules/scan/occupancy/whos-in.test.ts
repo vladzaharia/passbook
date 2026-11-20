@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ScanWhosInList } from '../../../../shared/contracts/scan-whos-in.ts';
+import { first } from '../../../platform/db.ts';
 import { accessTemplate } from '../access-test-fixtures.ts';
-import { kit, setupActionFixture } from '../act-test-fixtures.ts';
+import { act, kit, out, setupActionFixture } from '../act-test-fixtures.ts';
+import { codeOf } from '../test-kit.ts';
 import {
   DISPLAY_TPL,
   personInside,
@@ -182,5 +184,25 @@ describe("who's in: access plan and host", () => {
     const rows = Object.fromEntries(body.items.map((i) => [i.holder, i]));
     expect(rows.Visitor).toMatchObject({ plan: 'Guest day', host: 'Ana R.' });
     expect(rows.Member).toMatchObject({ plan: '24/7 Gold', host: null });
+  });
+});
+
+describe("who's in: who let them in", () => {
+  it('names the scanner and the person signed in on it, in the result and in the list', async () => {
+    const access = await accessTemplate();
+    const pool = await trackedZone();
+    const s = await station([access], [pool.id], { signedIn: true });
+    const staff = await first<{ name: string }>(
+      kit.env.DB,
+      'SELECT st.name FROM scan_staff st JOIN scanners sc ON sc.staff_id = st.id WHERE sc.id = ?',
+      [s.scanner.id],
+    );
+    const pass = await kit.scanPass(access, { plan: 'gold' });
+    const outcome = await out(await act(s.headers, codeOf(pass), { actionId: 'check_in' }));
+    expect(outcome.kind).toBe('ok');
+    const via = outcome.occupancy?.via;
+    expect(via).toMatch(new RegExp(` · ${staff?.name}$`));
+    const { body } = await list(s.headers);
+    expect(body.items.map((i) => i.via)).toEqual([via]);
   });
 });
