@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Card, CardBody, CardHeader, ErrorState, KeyValue, SkeletonRows } from '@/web/ui/index.ts';
 import { PassEmailPreview } from '../orgs/pass-email-preview.tsx';
+import { BrandSection } from './brand-section.tsx';
 import { ORG_FIELDS } from './fields-org.ts';
 import { useSettings } from './queries.ts';
 import { ReplyToStatus } from './reply-to-status.tsx';
@@ -70,6 +71,7 @@ export function OrgSettingsSections({
   const scope = `org:${orgId}`;
   return (
     <>
+      <BrandSection orgId={orgId} />
       <FormCard title="Pass email">
         <SettingsForm
           scope={scope}
