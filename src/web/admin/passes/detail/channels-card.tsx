@@ -86,9 +86,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
                     key={channel}
                     channel={channel}
                     status={status}
-                    level="pass"
-                    orgId={pass.orgId}
-                    templateId={pass.templateId}
+                    locked={!canSwitch(status)}
                     extra={
                       overridden ? (
                         <Button

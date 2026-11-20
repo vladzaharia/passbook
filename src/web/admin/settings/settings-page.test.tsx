@@ -105,9 +105,9 @@ describe('settings page', () => {
     const paper = await screen.findByRole('switch', {
       name: 'Paper tickets for all organizations',
     });
-    expect(paper.closest('li')).toHaveTextContent('Off for the platform');
-    expect(screen.getByText('Waiting for Apple approval')).toBeInTheDocument();
-    expect(screen.getAllByText('Not released yet')).toHaveLength(2);
+    expect(paper.closest('li')).not.toHaveTextContent('Not available');
+    expect(screen.getAllByText('Not available')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/Not released yet/)).toHaveLength(2);
     await user.click(paper);
     await waitFor(() => expect(bodies[0]).toMatchObject({ values: { 'print.enabled': true } }));
     await user.click(screen.getByRole('switch', { name: 'Apple phone tap' }));

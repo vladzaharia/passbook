@@ -96,6 +96,8 @@ export const CHANNEL_FIX_LABEL: Record<ChannelFix, string> = {
 
 export const CHANNEL_COPY = {
   templateDefault: 'Template default',
+  notAvailable: 'Not available',
+  disabled: 'Disabled',
   applyExisting: 'Apply to existing passes',
   applyTitle: 'Apply to existing passes?',
   applyBody: 'Passes with their own channel choices follow this template again.',

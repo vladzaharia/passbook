@@ -42,7 +42,7 @@ export function OrgChannelsCard({ orgId }: { orgId: string }) {
   const tagsOn = (tags?.value as { enabled?: boolean } | undefined)?.enabled === true;
   const status = (c: Channel): ChannelStatus => {
     if (blocked.includes(c)) return { on: false, source: 'org', reason: 'blocked' };
-    if (c === 'nfc' && tags?.blockedByPlatform) return OFF('not_released');
+    if (c === 'nfc' && tags?.blockedByPlatform) return OFF('printing_off');
     if (c === 'nfc' && !tagsOn) return { on: false, source: 'org', reason: 'tags_off' };
     return { on: true, source: 'org' };
   };
@@ -72,8 +72,7 @@ export function OrgChannelsCard({ orgId }: { orgId: string }) {
                     key={c}
                     channel={c}
                     status={s}
-                    level="org"
-                    orgId={orgId}
+                    locked={c === 'nfc' && tags?.blockedByPlatform === true}
                     control={
                       <Switch
                         aria-label={`${CHANNEL_LABEL[c]} allowed`}
@@ -115,7 +114,6 @@ export function PlatformChannelsCards() {
             <ChannelRow
               channel="paper"
               status={paperOn ? ON : OFF('printing_off')}
-              level="platform"
               control={
                 <Switch
                   aria-label={CHANNEL_COPY.paperPlatform}
@@ -143,7 +141,7 @@ export function PlatformChannelsCards() {
                 key={c}
                 channel={c}
                 status={released?.[c] ? ON : OFF('not_released')}
-                level="platform"
+                locked
               />
             ))}
           </ChannelList>
@@ -157,7 +155,6 @@ export function PlatformChannelsCards() {
               channel="apple"
               label={CHANNEL_COPY.appleTap}
               status={tapOn ? ON : OFF('not_released')}
-              level="platform"
               reasonText={CHANNEL_COPY.appleTapWaiting}
               control={
                 <Switch

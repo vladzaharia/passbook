@@ -140,25 +140,20 @@ export function TemplateChannelsPanel({
                   key={c}
                   channel={c}
                   status={status}
-                  level="template"
-                  stack
-                  orgId={orgId}
-                  templateId={templateId}
+                  locked={limited}
                   control={
-                    limited ? undefined : (
-                      <SegmentedControl
-                        label={CHANNEL_LABEL[c]}
-                        options={OPTIONS.map((o) => ({ ...o, disabled: !canPublish }))}
-                        value={value(c)}
-                        onValueChange={(v) =>
-                          setEdits((e) => {
-                            const next = { ...e, [c]: v };
-                            if (v === stored(c)) delete next[c];
-                            return next;
-                          })
-                        }
-                      />
-                    )
+                    <SegmentedControl
+                      label={CHANNEL_LABEL[c]}
+                      options={OPTIONS.map((o) => ({ ...o, disabled: !canPublish }))}
+                      value={value(c)}
+                      onValueChange={(v) =>
+                        setEdits((e) => {
+                          const next = { ...e, [c]: v };
+                          if (v === stored(c)) delete next[c];
+                          return next;
+                        })
+                      }
+                    />
                   }
                 />
               );
