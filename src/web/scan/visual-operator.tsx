@@ -7,19 +7,34 @@ import { WedgeFieldsContext } from './input/wedge-field.tsx';
 import { createWedgeSource, WedgeFields } from './input/wedge-source.ts';
 import { fixtureCounts, fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import { states } from './machine/fixtures.test-support.ts';
-import { fakeDeps } from './machine/store.test-support.ts';
+import { fakeClock, fakeDeps } from './machine/store.test-support.ts';
 import { createScanStore } from './machine/store.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorWorkspace } from './operator/workspace/workspace.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
-import { ResultCard } from './result/result-card.tsx';
 import { ReaderChip } from './ui/chips.tsx';
+import {
+  GALLERY_NOW,
+  mara,
+  PASS_VIEW,
+  RECORD_CASES,
+  recordSession,
+  recordState,
+} from './visual-operator-record.ts';
 
-export const OPERATOR_CASES = ['idle', 'search', 'record', 'problems', 'empty', 'refusal'] as const;
+export const OPERATOR_CASES = [
+  'idle',
+  'search',
+  'record',
+  'problems',
+  'empty',
+  'refusal',
+  ...RECORD_CASES,
+] as const;
 export type OperatorCase = (typeof OPERATOR_CASES)[number];
 
 const ID = '01900000-0000-7000-8000-000000000001';
-const NOW = Date.now();
+const NOW = GALLERY_NOW;
 const MIN = 60_000;
 type Row = {
   name: string | null;
@@ -119,6 +134,8 @@ function apiFor(rows: Row[]): ScanApi {
           ...fixtureOutcome('ready').card,
           title: 'Mara Lopez',
           subtitle: '10-visit pack',
+          display: mara(),
+          passView: PASS_VIEW,
         } as never,
       }),
     override: async () => fixtureOutcome('ok'),
@@ -176,13 +193,13 @@ const setNative = (input: HTMLInputElement, value: string) => {
 };
 
 export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
-  const session = useMemo(sessionOf, []);
+  const session = useMemo(() => recordSession(sessionOf(), scenario), [scenario]);
   const api = useMemo(() => apiFor(scenario === 'empty' ? [] : ROWS), [scenario]);
   const store = useMemo(
     () =>
       createScanStore(
-        fakeDeps().deps,
-        scenario === 'refusal' ? states.verdict('refused', 'guest_visits_used') : states.ready(),
+        fakeDeps(fakeClock(GALLERY_NOW)).deps,
+        recordState(scenario) ?? states.ready(),
       ),
     [scenario],
   );
@@ -223,7 +240,6 @@ export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
       for (const t of timers) clearTimeout(t);
     };
   }, [scenario]);
-  const outcome = fixtureOutcome('refused', 'guest_visits_used');
   return (
     <ScanStoreContext.Provider value={store}>
       <WedgeFieldsContext.Provider value={fields}>
@@ -238,7 +254,7 @@ export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
           chips={<ReaderChip state="ready" />}
           testing={null}
           menu={null}
-          scanCard={scenario === 'refusal' ? <ResultCard outcome={outcome} /> : null}
+          scanCard={null}
           announcement={null}
           onTitle={() => undefined}
         />
