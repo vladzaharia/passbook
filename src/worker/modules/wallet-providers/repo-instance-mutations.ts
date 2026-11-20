@@ -124,11 +124,9 @@ export async function insertInstance(
         1 AS desired_version, operation_id AS desired_operation_id, ${channelEpoch} AS channel_epoch FROM proof), ${NEW_OP_CTE}
       INSERT OR IGNORE INTO wallet_provider_instances
         (id, pass_id, org_id, mode, provider, account_id, identity_projection_release_id,
-         credential_generation, channel_epoch, credential_keyset_commitment, desired_version, desired_operation_id,
-         created_at, updated_at, card_type)
+         credential_generation, channel_epoch, credential_keyset_commitment, desired_version, desired_operation_id, created_at, updated_at, card_type)
       SELECT i.id, i.pass_id, i.org_id, i.mode, i.provider, i.account_id, i.identity_projection_release_id,
-        i.credential_generation, i.channel_epoch, i.credential_keyset_commitment, 1, i.desired_operation_id, ?, ?,
-        (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = i.identity_projection_release_id) FROM i, op
+        i.credential_generation, i.channel_epoch, i.credential_keyset_commitment, 1, i.desired_operation_id, ?, ?, (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = i.identity_projection_release_id) FROM i, op
       WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')} AND ${credentialRefKeysetSql}
         AND ${slotFreeSql}
         ${channelEpoch === 1 ? '' : successorGuardSql}
