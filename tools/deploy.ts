@@ -33,6 +33,7 @@ import {
   waitForBakedHeads,
 } from './lib/baked-sync-wait.ts';
 import { buildProblem, gitState, stampPath } from './lib/build-stamp.ts';
+import { readPending, stampRelease as stampChangelog } from './lib/changelog-files.ts';
 import {
   deployFlags,
   deployStage,
@@ -103,6 +104,17 @@ const checkSecrets = () => {
     process.exit(1);
   }
 };
+// Local file step: unreleased.json becomes today's dated changelog file. Commit it, rebuild, then deploy.
+if (args.has('--stamp-changelog')) {
+  const date = new Date().toISOString().slice(0, 10);
+  const n = stampChangelog(root, date);
+  console.log(
+    n
+      ? `Stamped ${n} entries into docs/api/changelog/${date}.json. Commit, then rebuild.`
+      : 'No unreleased entries.',
+  );
+  process.exit(0);
+}
 if (args.has('--check')) {
   if (args.has('--secrets')) checkSecrets();
   requireWalletMigrated();
@@ -151,6 +163,12 @@ if (!args.has('--apply')) {
 
 // Migrations come from this working tree and the Worker from dist/: both must be the same clean HEAD.
 const git = gitState(root);
+if (readPending(root).length > 0) {
+  console.error(
+    'Not deploying. docs/api/changelog/unreleased.json has entries: run deploy --stamp-changelog, commit, rebuild.',
+  );
+  process.exit(1);
+}
 const buildRefusal = buildProblem({
   servesUploaded: stage === 'promote' && !first,
   git,

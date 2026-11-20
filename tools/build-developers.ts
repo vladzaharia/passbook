@@ -26,7 +26,6 @@ export interface BuildOptions {
   /** Script and stylesheet tags for every page's head (from Vite's developers.html). */
   head: string;
   apiDir?: string;
-  docsDir?: string;
   origin?: string;
 }
 
@@ -39,6 +38,7 @@ const TYPES: Record<string, string> = {
   '.md': 'text/markdown; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml; charset=utf-8',
+  '.atom': 'application/atom+xml; charset=utf-8',
 };
 
 /** What the asset layer is asked for: `.html` stripped (it redirects otherwise), a directory index as `dir/`. */
@@ -58,7 +58,7 @@ export async function buildDevelopers(
   options: BuildOptions,
 ): Promise<{ files: string[]; manifest: Manifest }> {
   const origin = options.origin ?? publicBaseUrl(join(root, 'wrangler.jsonc'));
-  const inputs = loadInputs(root, options.apiDir, options.docsDir);
+  const inputs = loadInputs(root, options.apiDir);
   const site = buildSite(inputs);
   const { module } = await runnerImport<Renderer>(join(root, 'src/web/developers/render.tsx'), {
     configFile: false,

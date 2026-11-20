@@ -1,9 +1,10 @@
 // Fails when docs/api/openapi.v1.json breaks clients of the version on the base ref, or breaks the SDK naming and coverage rules (tools/lib/openapi-ratchet.ts). Run in `npm run check:rules`.
 // Base: $OPENAPI_BASE or origin/main. Without that ref (shallow clone) the check is skipped with a notice;
 // src/worker/platform/openapi-snapshot.test.ts still pins the snapshot to the live document.
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { hasNewVersion, type Versions } from './lib/changelog.ts';
+import { showAt } from './lib/git-show.ts';
 import { breakingChanges, type Doc } from './lib/openapi-diff.ts';
 import { coverage, FLAGS, ratchetFailures, type SdkNames } from './lib/openapi-ratchet.ts';
 
@@ -12,18 +13,7 @@ const NAMES = 'docs/api/sdk-names.json';
 const root = resolve(import.meta.dirname, '..');
 const base = process.env.OPENAPI_BASE ?? 'origin/main';
 
-const show = (ref: string, file: string): string | null => {
-  try {
-    return execFileSync('git', ['show', `${ref}:${file}`], {
-      cwd: root,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-      maxBuffer: 64 * 1024 * 1024,
-    });
-  } catch {
-    return null;
-  }
-};
+const show = (ref: string, file: string): string | null => showAt(root, ref, file);
 const read = <T>(file: string): T => JSON.parse(readFileSync(resolve(root, file), 'utf8')) as T;
 const parse = <T>(raw: string | null): T | null => (raw === null ? null : (JSON.parse(raw) as T));
 
@@ -35,8 +25,19 @@ const failures = ratchetFailures({
   baseNames: parse<SdkNames>(show(base, NAMES)),
   nextNames: read<SdkNames>(NAMES),
 });
-if (prev) failures.push(...breakingChanges(prev, next));
-else
+if (prev) {
+  // A breaking change ships only with a new dated PassBook-Version (docs/api/versions.json) that carries a migration note.
+  const broken = breakingChanges(prev, next);
+  const versions = read<Versions>('docs/api/versions.json');
+  if (
+    broken.length &&
+    hasNewVersion(versions, parse<Versions>(show(base, 'docs/api/versions.json')))
+  )
+    console.log(
+      `check-openapi: ${broken.length} breaking change(s) carried by a new PassBook-Version`,
+    );
+  else failures.push(...broken);
+} else
   console.log(
     `check-openapi: no ${SNAPSHOT} on ${base}; breaking-change and coverage checks skipped`,
   );

@@ -9,13 +9,14 @@ import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { DEVELOPERS_INDEXABLE, PATHS, twin } from '../../shared/developers.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { HEAD_HTML } from '../../worker/ssr/head.ts';
+import { atomFeed } from './model/changelog.ts';
 import { operations } from './model/dates.ts';
 import { homeMarkdown, llmsTxt, pageMarkdown, pagePath } from './model/markdown.ts';
 import type { OutFile, Site } from './model/types.ts';
+import { ChangelogView } from './pages/changelog.tsx';
 import { HomeView } from './pages/home.tsx';
 import { type NavKey, Shell, SideNav } from './pages/layout.tsx';
 import {
-  ChangelogView,
   ErrorEntryView,
   ErrorsIndex,
   ProtocolsView,
@@ -32,6 +33,8 @@ interface Doc {
   body: string;
   /** Pages with a twin name it; others have none. */
   md?: boolean;
+  /** Extra `<link>`s for the head. */
+  head?: string;
 }
 
 const ROBOTS = DEVELOPERS_INDEXABLE ? '' : '<meta name="robots" content="noindex, nofollow">';
@@ -43,7 +46,7 @@ function document(doc: Doc, origin: string, assets: string): string {
     '<!doctype html><html lang="en" data-theme-pref="system"><head>' +
     `${HEAD_HTML}${ROBOTS}<title>${escapeHtml(doc.title)}</title>` +
     `<meta name="description" content="${escapeHtml(doc.description)}">` +
-    `<link rel="canonical" href="${url}">${md}` +
+    `<link rel="canonical" href="${url}">${md}${doc.head ?? ''}` +
     `<link rel="alternate" type="application/json" href="${PATHS.openapi}">` +
     `<meta property="og:site_name" content="PassBook Developers"><meta property="og:title" content="${escapeHtml(doc.title)}">` +
     `<meta property="og:url" content="${url}"><script src="/theme-init.js"></script>${assets}` +
@@ -72,12 +75,14 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
     child: ReactElement,
     withSide?: ReactElement,
     dir = false,
+    head?: string,
   ) =>
     add(
       {
         url,
         title: `${title} · ${base}`,
         description,
+        head,
         body: html(
           <Shell site={site} active={active} side={withSide}>
             {child}
@@ -183,7 +188,11 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
     'Changes to the API.',
     undefined,
     <ChangelogView site={site} />,
+    undefined,
+    false,
+    `<link rel="alternate" type="application/atom+xml" title="PassBook API changelog" href="${PATHS.changelogFeed}">`,
   );
+  out.push({ file: PATHS.changelogFeed, body: atomFeed(site, origin) });
   for (const which of ['quickstart', 'playground', 'guides'] as const)
     page(
       PATHS[which],

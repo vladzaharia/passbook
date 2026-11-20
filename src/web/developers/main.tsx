@@ -11,14 +11,17 @@ import './styles/dev-code.css';
 import './styles/dev-ticket.css';
 import './styles/dev-home.css';
 import './styles/dev-reference.css';
+import './styles/dev-changelog.css';
 import './styles/dev-responsive.css';
 import { initCopy } from './shell/copy.ts';
+import { initChangelogFilter } from './shell/filter.ts';
 import { mountIslands } from './shell/islands.ts';
 import { initLanguage } from './shell/language.ts';
 import { initMenu } from './shell/menu.ts';
 import { initTryBar } from './shell/try-bar.ts';
 
 initCopy();
+initChangelogFilter();
 initLanguage();
 initMenu();
 initTryBar();

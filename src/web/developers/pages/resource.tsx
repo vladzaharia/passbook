@@ -136,6 +136,14 @@ function Operation({ op, site, known }: { op: OpView; site: Site; known: Set<str
             </a>
           </h2>
           {op.deprecated ? <span className="pill neutral">Deprecated</span> : null}
+          {op.changedIn ? (
+            <a
+              className={`pill changed-in ${op.changedIn.breaking ? 'warn' : 'neutral'}`}
+              href={`${PATHS.changelog}#${op.changedIn.date}`}
+            >
+              {op.changedIn.kind === 'Added' ? 'New in' : 'Changed in'} {op.changedIn.date}
+            </a>
+          ) : null}
         </div>
         <div className="endpoint row g3">
           <MethodPill method={op.method} />

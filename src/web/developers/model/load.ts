@@ -2,9 +2,10 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Inputs } from './site.ts';
 import {
-  type ChangeEntry,
+  type ApiVersion,
   type Dict,
   METHODS,
+  type RawChangeFile,
   type RawDoc,
   type ReferenceEntry,
   type SdkName,
@@ -13,12 +14,20 @@ import {
 const read = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
 const optional = <T>(path: string): T | undefined => (existsSync(path) ? read<T>(path) : undefined);
 
+/** The dated files, not unreleased.json. */
+const changeFiles = (dir: string): RawChangeFile[] =>
+  existsSync(dir)
+    ? readdirSync(dir)
+        .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+        .map((f) => read<RawChangeFile>(join(dir, f)))
+    : [];
+
 /**
  * The portal's inputs: the OpenAPI snapshot (the keys' view of the API), the frozen SDK names
- * for any operation the snapshot leaves unnamed, and the per-operation reference data. `apiDir`
- * is docs/api; `docsDir` is docs/developers (the changelog until PX12 owns it).
+ * for any operation the snapshot leaves unnamed, the per-operation reference data, the dated
+ * changelog files and the API versions. `apiDir` is docs/api.
  */
-export function loadInputs(root: string, apiDir = 'docs/api', docsDir = 'docs/developers'): Inputs {
+export function loadInputs(root: string, apiDir = 'docs/api'): Inputs {
   const api = resolve(root, apiDir);
   const doc = read<RawDoc>(join(api, 'openapi.v1.json'));
   const names = read<Record<string, SdkName>>(join(api, 'sdk-names.json'));
@@ -37,7 +46,8 @@ export function loadInputs(root: string, apiDir = 'docs/api', docsDir = 'docs/de
   return {
     doc,
     reference,
-    changelog: optional<ChangeEntry[]>(join(root, docsDir, 'changelog.json')) ?? [],
+    changelog: changeFiles(join(api, 'changelog')),
+    versions: optional<{ versions: ApiVersion[] }>(join(api, 'versions.json'))?.versions ?? [],
     errors: optional(join(api, 'errors.json')),
     guide: optional<Record<string, Dict>>(join(api, 'error-guide.json')),
   };

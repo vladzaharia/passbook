@@ -1,6 +1,6 @@
 import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { operations, shortDate } from '../model/dates.ts';
+import { operations } from '../model/dates.ts';
 import { pagePath } from '../model/markdown.ts';
 import type { ErrorEntry, Site } from '../model/types.ts';
 import { MethodPill } from '../ui/method-pill.tsx';
@@ -202,29 +202,6 @@ export function SlotView({ which }: { which: 'quickstart' | 'playground' | 'guid
           {DEV_COPY.home.reference}
         </a>
       </p>
-    </>
-  );
-}
-
-export function ChangelogView({ site }: { site: Site }) {
-  return (
-    <>
-      <Head
-        title="Changelog"
-        line="Changes to the API, newest first. The API changes only additively."
-      />
-      <div className="list card mt8">
-        {site.changelog.length === 0 ? <p className="lrow muted">No entries yet.</p> : null}
-        {site.changelog.map((c) => (
-          <div key={`${c.date}${c.text}`} className="lrow">
-            <span className={`pill ${c.kind === 'Added' ? 'accent' : 'neutral'}`}>{c.kind}</span>
-            <span className="sm">{c.text}</span>
-            <time className="push xs muted nowrap" dateTime={c.date}>
-              {shortDate(c.date)}
-            </time>
-          </div>
-        ))}
-      </div>
     </>
   );
 }
