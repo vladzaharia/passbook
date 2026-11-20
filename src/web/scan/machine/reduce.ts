@@ -16,6 +16,7 @@ import {
   arm,
   disarm,
   dismiss,
+  groupAll,
   keepHeld,
   override,
   switchHeld,
@@ -75,6 +76,8 @@ function step(s: MachineState, event: MachineEvent, env: Env): Out {
       return s.assign ? cancelAssign(s, env) : dismiss(s, env);
     case 'override':
       return override(s, event, env);
+    case 'group':
+      return groupAll(s, env);
     case 'arm':
       return arm(s, event, env);
     case 'disarm':

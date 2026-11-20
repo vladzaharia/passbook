@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ScanReason } from '../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../shared/contracts/scan-setups.ts';
 import type { ScanApi } from './api/scan-api.ts';
@@ -6,6 +7,7 @@ import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
 import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
+import type { ScanOutcome } from './machine/types.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
@@ -152,6 +154,34 @@ function DuoVisual({ status }: { status: string }) {
   });
   return <CustomerDisplayPage />;
 }
+/** `?group=chip` offers Check in all; `?group=partial` shows a group with a refused member. */
+function withGroup(o: ScanOutcome, mode: string | null): ScanOutcome {
+  if (mode !== 'chip' && mode !== 'partial') return o;
+  const bundle = { id: ID, name: 'Chen family', size: 4, checkedIn: 1 };
+  if (mode === 'chip') return { ...o, bundle };
+  const m = (name: string, state: 'done' | 'already' | 'refused', reason: ScanReason | null) => ({
+    name,
+    state,
+    reason,
+  });
+  return {
+    ...o,
+    bundle,
+    group: {
+      total: 4,
+      done: 2,
+      already: 1,
+      refused: 1,
+      members: [
+        m('Taylor Chen', 'done', null),
+        m('Jo Chen', 'done', null),
+        m('Sam Chen', 'already', 'already_done'),
+        m('Kid Chen', 'refused', 'voided'),
+      ],
+    },
+  };
+}
+
 function ScanResultVisual({
   surface,
   selected,
@@ -163,10 +193,11 @@ function ScanResultVisual({
 }) {
   const [inspection, setInspection] = useState<PassInspection | null>(null);
   const [api] = useState(() => ({ resolve: async () => selected.outcome }) as unknown as ScanApi);
+  const outcome = withGroup(selected.outcome, new URLSearchParams(location.search).get('group'));
   return (
     <>
       <ScanPreviewScreen
-        outcome={selected.outcome}
+        outcome={outcome}
         surface={surface === 'operator' ? 'operator' : 'phone'}
         phase={phase}
         onPass={(card) => {

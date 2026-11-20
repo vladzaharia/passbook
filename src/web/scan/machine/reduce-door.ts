@@ -76,6 +76,22 @@ export function override(s: MachineState, ev: Of<'override'>, env: Env): Out {
     draft.override = true;
     draft.overrideOf = l.outcome.scanId;
   } else return same(s);
+  return resend(s, l, draft, env);
+}
+
+/** "Check in all N": the scanned pass again with `group: 'bundle'`, under a new key. */
+export function groupAll(s: MachineState, env: Env): Out {
+  const l = s.loop;
+  if (l.s !== 'verdict' || !l.outcome.bundle || l.outcome.group) return same(s);
+  return resend(s, l, { actionId: 'auto', amount: null, group: true }, env);
+}
+
+function resend(
+  s: MachineState,
+  l: Extract<MachineState['loop'], { s: 'verdict' }>,
+  draft: Draft,
+  env: Env,
+): Out {
   const key = env.id();
   const now = env.now;
   return out(

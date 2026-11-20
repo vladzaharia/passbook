@@ -2,7 +2,6 @@
  * The command runner: executes what the reducer asks for over the injected ports, and feeds the
  * results back as events. It owns the in-flight requests, their timeouts and the unsure retries.
  */
-
 import { doneResult } from '../assign/enroll-result.ts';
 import type { ScanInput } from '../input/types.ts';
 import { SCAN_TIMING } from '../timing.ts';
@@ -72,6 +71,7 @@ export function createRunner(deps: ScanDeps, host: Host) {
       ...(d?.value !== undefined ? { value: d.value as ActBody['value'] } : {}),
       ...(d?.expectedVersion !== undefined ? { expectedVersion: d.expectedVersion } : {}),
       ...(d?.confirmed ? { confirmed: true } : {}),
+      ...(d?.group ? { group: 'bundle' as const } : {}),
       ...(d?.approval ? { approval: d.approval } : {}),
     };
   }
