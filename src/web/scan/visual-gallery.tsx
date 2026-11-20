@@ -219,6 +219,21 @@ export function ScanVisualGallery() {
         scenario={TAG_SCENARIOS.find((c) => c === params.get('case')) ?? 'assign-tag-android'}
       />
     );
+  if (surface === 'replaced')
+    return (
+      <ScanPreviewScreen
+        outcome={fixtureOutcome('refused', 'code_replaced', {
+          display: {
+            ...selected.outcome.display,
+            identity: { holder: '', initials: '', photo: null },
+          } as never,
+          card: null,
+        })}
+        surface="operator"
+        phase={phase}
+        onPass={() => {}}
+      />
+    );
   const session = sessionFor(surface);
   if (surface === 'customer') return <LiveVisual session={session} status={status} />;
   return <ScanResultVisual surface={surface} selected={selected} phase={phase} />;

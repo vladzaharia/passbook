@@ -183,6 +183,7 @@ export function occupancyAfter(
   results: readonly D1Result[],
   loss: number,
   won: boolean,
+  scannerName: string | null,
 ): { view: ScanOccupancy; lost: ScanReason | null; hard: boolean } {
   const o = c.found;
   const [count] = placeCounts([o.place], results.slice(loss));
@@ -203,7 +204,13 @@ export function occupancyAfter(
       ? lostEntry(c.entry, results.slice(0, loss), c.now, { waivers: c.waivers })
       : null;
   return {
-    view: occupancyView(o, { state, since, stayMs, inNow }),
+    view: occupancyView(o, {
+      state,
+      since,
+      stayMs,
+      inNow,
+      via: won ? scannerName : (o.row?.via ?? null),
+    }),
     lost: why?.reason ?? null,
     hard: hardLimited(o.zones, o.zone.id),
   };
