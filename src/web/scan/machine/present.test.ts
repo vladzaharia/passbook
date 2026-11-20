@@ -52,6 +52,14 @@ describe('presentOutcome: kind x posture', () => {
     expect(view.beat).toBe('fan');
   });
 
+  it('Check in more counts, a milestone still fans', () => {
+    const group = { total: 4, done: 3, already: 1, refused: 0, members: [] };
+    expect(presentOutcome(fixtureOutcome('ok', null, { group }), 'door', OPTS).beat).toBe('count');
+    expect(
+      presentOutcome(fixtureOutcome('ok', null, { group, milestone: 'all_in' }), 'door', OPTS).beat,
+    ).toBe('fan');
+  });
+
   it('heads_up holds until a tap and focuses Done, at the door and the desk', () => {
     for (const posture of ['door', 'desk'] as const) {
       const view = presentOutcome(fixtureOutcome('heads_up', 'already_done'), posture, OPTS);

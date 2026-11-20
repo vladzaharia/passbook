@@ -10,6 +10,7 @@ import './scan-capsule.css';
 import './scan-dock.css';
 import './scan-duo.css';
 import './scan-phone.css';
+import './scan-sun.css';
 import { type Announcement, LiveAnnouncer } from './live-announcer.tsx';
 import { type Tint, VerdictRing, VerdictTint } from './verdict-tint.tsx';
 
@@ -65,6 +66,8 @@ export interface ScanShellProps {
   branding?: ScanBranding | null;
   sidebar?: ReactNode;
   tint?: Tint;
+  /** Sunlight mode paints the verdict as an opaque field; `leftHand` mirrors the thumb row. */
+  look?: { sun: boolean; leftHand: boolean } | undefined;
   /** A tap on the tint outside the card (a handheld's verdict). */
   onTint?: () => void;
   /** Boot cards and the result card, in the card layer. */
@@ -90,6 +93,7 @@ export function ScanShell({
   layout,
   sidebar,
   tint = 'none',
+  look,
   onTint,
   card,
   cardMode = 'result',
@@ -108,6 +112,9 @@ export function ScanShell({
       aria-label="Scanner"
       className="scan-shell"
       data-surface={surface}
+      data-tint={tint}
+      data-sun={look?.sun ? '' : undefined}
+      data-hand={look?.leftHand ? 'left' : undefined}
       style={style}
       lang="en"
     >

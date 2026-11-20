@@ -26,6 +26,8 @@ describe('durations', () => {
     [40_000, '40 s ago'],
     [5 * 60_000, '5 min ago'],
     [3 * 3_600_000, '3 h ago'],
+    [23 * 3_600_000, '23 h ago'],
+    [352 * 3_600_000, '14 d ago'],
   ])('ago %i is %s', (ms, text) => expect(agoText(ms)).toBe(text));
 });
 

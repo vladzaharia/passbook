@@ -20,6 +20,7 @@ import { GlanceTail } from './glance-tail.tsx';
 import { GroupChip } from './group-chip.tsx';
 import { IdentityRow } from './identity-row.tsx';
 import { isDenied, outcomeNotes } from './notes.ts';
+import { useScrollCue } from './use-scroll-cue.ts';
 import { ValuePicker } from './value-picker.tsx';
 import { VerdictBand } from './verdict-band.tsx';
 import './result.css';
@@ -78,6 +79,7 @@ export function ResultCard({
 }) {
   const [pin, setPin] = useState(false);
   const root = useRef<HTMLElement>(null);
+  useScrollCue(root);
   const refused = desk?.note;
   // A refused PIN brings the sheet back with the tries left.
   useEffect(() => {
@@ -99,6 +101,7 @@ export function ResultCard({
     verdictLine(o, clock ?? Date.now(), {
       desk: desk?.approvals === 'desk',
       group: density === 'glance',
+      short: density === 'glance',
     });
   const held = accessLines(o, now);
   const admit = admitLine(o);

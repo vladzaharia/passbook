@@ -22,7 +22,7 @@ export function initialState(now: number): ScanState {
     ignore: [],
     recent: [],
     counts: null,
-    prefs: { holdResults: false, sound: true },
+    prefs: { holdResults: false, sound: true, sunlight: false, leftHand: false },
     lastActivity: now,
   };
 }

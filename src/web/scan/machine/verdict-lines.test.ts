@@ -154,16 +154,43 @@ describe('what the lines say', () => {
     expect(l?.sub).toBe('Used 2 of 3 visits.');
   });
 
+  it('dates a sub without the year or the time, unless it is another year', () => {
+    const at = Date.UTC(2026, 10, 16, 15, 34);
+    expect(line('voided', { at })?.sub).toBe('Voided Nov 16. Ask for a new pass.');
+    expect(line('voided', { at: Date.UTC(2025, 10, 16, 15, 34) })?.sub).toBe(
+      'Voided Nov 16, 2025. Ask for a new pass.',
+    );
+    expect(line('expired', { at })?.sub).toBe('Ended Nov 16.');
+  });
+
+  it('never sends staff to a name lookup the dock already offers', () => {
+    expect(line('not_found')?.sub).toBe("This code isn't a pass here.");
+    for (const reason of REASONS)
+      expect(line(reason)?.sub ?? '', String(reason)).not.toMatch(/look it up/i);
+  });
+
+  it('says when and where on a glance card, without the instruction the note carries', () => {
+    const o = fixtureOutcome('heads_up', 'already_done', { previous: PREVIOUS });
+    expect(verdictLine(o, NOW, { short: true })?.sub).toBe('5 min ago · Door 2');
+    expect(verdictLine(o, NOW)?.sub).toBe('5 min ago at Door 2. Check ID.');
+  });
+
+  it('keeps Ask for a new pass for voided, removed and replaced only', () => {
+    for (const reason of REASONS) {
+      const sub = line(reason)?.sub ?? '';
+      if (/Ask for a new pass/.test(sub))
+        expect(['voided', 'removed'], String(reason)).toContain(reason);
+    }
+  });
+
   it('tells staff what to do next on every refusal', () => {
-    const next = /(Ask|Use|Look it up|Hold|Try|Scan|Check|Redeem|Keep|Change|Tap|Pick)/;
+    const next = /(Ask|Use|Hold|Try|Scan|Check|Redeem|Keep|Change|Tap|Pick)/;
     for (const reason of [
-      'not_found',
       'test_pass',
       'live_pass',
       'not_accepted',
       'removed',
       'voided',
-      'expired',
       'managed_elsewhere',
       'limit_reached',
       'zone_not_included',

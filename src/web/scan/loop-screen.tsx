@@ -41,9 +41,26 @@ export function tagExtraActions(addTag: (() => void) | null | undefined) {
     : [];
 }
 
-/** A tap on the tint dismisses a settled verdict. A hold waiting for a manager stays until Done or the PIN, not until a stray tap. */
-export function tintDismissible(result: ScanOutcome | null, blocked: boolean) {
+/**
+ * A handheld's verdict is dismissed by a tap on the tint, except a hold waiting for a manager: it
+ * stays until Done or the PIN, not until a stray tap.
+ */
+export function tintDismisses(
+  handheld: boolean,
+  result: ScanOutcome | null,
+  covered: boolean,
+): boolean {
   return Boolean(
-    result && result.kind !== 'ready' && result.reason !== 'needs_approval' && !blocked,
+    handheld && result && result.kind !== 'ready' && result.reason !== 'needs_approval' && !covered,
   );
+}
+
+/** The capsule's state line: offline over checking over paused over scanning. */
+export function capsuleStateOf(
+  online: boolean,
+  loop: string,
+): 'offline' | 'checking' | 'paused' | 'scanning' {
+  if (!online) return 'offline';
+  if (loop === 'checking' || loop === 'applying') return 'checking';
+  return loop === 'paused' ? 'paused' : 'scanning';
 }

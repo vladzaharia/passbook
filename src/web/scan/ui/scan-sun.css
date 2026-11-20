@@ -1,0 +1,210 @@
+/* Sunlight mode and the left hand (handheld design 4 and 10). Loaded after scan-phone.css.
+   Sunlight: the verdict is an opaque field in its hue, so glare cannot wash it out. No camera, ring,
+   wash or card chrome; the capsule and dock turn black. Nothing animates: the field switches in
+   one frame. On-colours are the verdict pairs (>= 6.5:1). Only the shell's data-sun reaches this. */
+@media (max-width: 639px) {
+  .scan-shell[data-hand="left"] .scan-dock-row {
+    flex-direction: row-reverse;
+  }
+
+  .scan-shell[data-sun] {
+    --sun: var(--scan-camera);
+    --sun-on: #ffffff;
+  }
+  .scan-shell[data-sun][data-tint="green"] {
+    --sun: var(--scan-ok);
+    --sun-on: var(--scan-ok-on);
+  }
+  .scan-shell[data-sun][data-tint="amber"] {
+    --sun: var(--scan-heads);
+    --sun-on: var(--scan-heads-on);
+  }
+  .scan-shell[data-sun][data-tint="red"] {
+    --sun: var(--scan-refused);
+    --sun-on: var(--scan-refused-on);
+  }
+  .scan-shell[data-sun][data-tint="slate"] {
+    --sun: var(--scan-system);
+    --sun-on: var(--scan-system-on);
+  }
+  .scan-shell[data-sun]:not([data-tint="none"]) {
+    background: var(--sun);
+  }
+  .scan-shell[data-sun]:not([data-tint="none"]) .scan-cam {
+    visibility: hidden;
+  }
+  .scan-shell[data-sun] :is(.scan-scrim, .scan-wash, .scan-ring) {
+    display: none;
+  }
+  /* The buddy is garnish and would sit over the instruction; a verdict field has none. */
+  .scan-shell[data-sun]:not([data-tint="none"]) .scan-buddy-seat {
+    display: none;
+  }
+
+  /* Black chrome, white text: the dark palette, whatever the theme. */
+  .scan-shell[data-sun] :is(.scan-capsule, .scan-dock) {
+    --scan-glass: #000000;
+    --scan-glass-solid: #000000;
+    --scan-accent-on: #04201c;
+    --sd-strong: #ffffff;
+    --sd-muted: #c3c9d6;
+    --sd-line: rgb(255 255 255 / 0.18);
+    --sd-fill-gray: #2f333b;
+    --sd-accent: #2dd4bf;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* The card layer holds the verdict from the top; the dock stays black below it. */
+  .scan-shell[data-sun]
+    .scan-card-layer[data-mode="result"]:has(.scan-result[data-density="glance"]) {
+    align-items: flex-start;
+    padding-inline: 0;
+    padding-block: calc(var(--scan-card-top) + 8px) var(--scan-dock-total);
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] {
+    --on: var(--sun-on);
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--on);
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"][data-more]::after {
+    background: linear-gradient(transparent, color-mix(in oklab, var(--sun) 88%, transparent));
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"][data-phase] {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band,
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band[data-layout] {
+    display: block;
+    min-height: 0;
+    padding: 0 28px;
+    overflow: visible;
+    background: var(--sun);
+    color: var(--on);
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-verdict-glyph,
+  .scan-shell[data-sun]
+    .scan-result[data-density="glance"]
+    .scan-result-band[data-layout]
+    .scan-verdict-glyph {
+    width: 150px;
+    height: 133px;
+    margin: 0 0 16px;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band h1,
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band[data-layout] h1 {
+    margin: 0;
+    font-size: 72px;
+    line-height: 74px;
+    font-weight: 750;
+    letter-spacing: -0.035em;
+  }
+  /* Two-word headlines (Checked in, Already checked in) keep a line each. */
+  .scan-shell[data-sun]
+    .scan-result[data-density="glance"]:is([data-kind="ok"], [data-kind="heads_up"])
+    .scan-result-band
+    h1 {
+    font-size: 60px;
+    line-height: 62px;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band p {
+    margin: 12px 0 0;
+    font-size: 26px;
+    line-height: 32px;
+    font-weight: 600;
+    opacity: 1;
+    text-wrap: balance;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-hold-rail {
+    display: none;
+  }
+
+  /* Under a 4 px rule: who, and the template. Everything else is in the pass sheet. */
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-body {
+    gap: 12px;
+    margin: 24px 28px 0;
+    padding: 20px 0 0;
+    border-top: 4px solid var(--on);
+    overflow: visible;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-identity {
+    min-height: 0;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-holder {
+    color: var(--on);
+    font-size: 32px;
+    line-height: 38px;
+    font-weight: 650;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-identity-meta {
+    color: var(--on);
+    font-size: 20px;
+    line-height: 26px;
+    font-weight: 600;
+  }
+  .scan-shell[data-sun]
+    .scan-result[data-density="glance"]
+    :is(
+      .scan-pass-tile,
+      .scan-pass-open,
+      .scan-identity-chip,
+      .scan-keyfact,
+      .scan-group-people,
+      .scan-glance-more
+    ) {
+    display: none;
+  }
+  /* A note is an instruction: it stays, as plain words. */
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-notes {
+    padding: 0;
+    background: none;
+    color: var(--on);
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 600;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-notes > svg {
+    display: none;
+  }
+  .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-glance-open:focus-visible {
+    outline-color: var(--on);
+  }
+  /* A short screen (an SE, or zoomed text): a smaller glyph and word keep the instruction in view. */
+  @media (max-height: 700px) {
+    .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-verdict-glyph,
+    .scan-shell[data-sun]
+      .scan-result[data-density="glance"]
+      .scan-result-band[data-layout]
+      .scan-verdict-glyph {
+      width: 96px;
+      height: 85px;
+      margin-bottom: 8px;
+    }
+    .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band h1,
+    .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band[data-layout] h1,
+    .scan-shell[data-sun]
+      .scan-result[data-density="glance"]:is([data-kind="ok"], [data-kind="heads_up"])
+      .scan-result-band
+      h1 {
+      font-size: 48px;
+      line-height: 50px;
+    }
+    .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-band p {
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 28px;
+    }
+    .scan-shell[data-sun] .scan-result[data-density="glance"] .scan-result-body {
+      margin-top: 16px;
+      padding-top: 14px;
+    }
+  }
+}

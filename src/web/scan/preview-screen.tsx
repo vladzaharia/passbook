@@ -4,7 +4,7 @@ import type { ScanBranding, ScanSession } from '../../shared/contracts/scan-sess
 import { SCAN_COPY } from '../../shared/copy/scan.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
 import type { ScanApi } from './api/scan-api.ts';
-import { ScanAppView } from './app.tsx';
+import { ScanAppView, type ScanAppViewProps } from './app.tsx';
 import type { ShownDirection } from './machine/direction-view.ts';
 import { initialState } from './machine/initial-state.ts';
 import { moodOf, viewOf } from './machine/present.ts';
@@ -80,6 +80,8 @@ export interface ScanPreviewScreenProps {
   clock?: number;
   /** The device's recent scans, for the pass sheet's Recent tab. */
   recent?: Recent[];
+  /** Sunlight mode and the mirrored thumb row, as a handheld's device settings set them. */
+  look?: ScanAppViewProps['look'];
   /** A handheld's Manager PIN: the dock offers the tray for a `needs_approval` hold. */
   approval?: DockApproval;
   /** A Manager's PIN let this through: the sub names them. */
@@ -161,6 +163,7 @@ export function ScanPreviewScreen({
   clock,
   approval,
   approvedBy,
+  look,
   children,
 }: ScanPreviewScreenProps) {
   const store = useStaticStore(recent, clock ?? Date.now());
@@ -179,6 +182,7 @@ export function ScanPreviewScreen({
         surface={surface}
         branding={branding}
         tint={tint}
+        look={look}
         {...(onTint ? { onTint } : {})}
         capsule={{
           name: scannerName,

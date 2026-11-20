@@ -10,9 +10,10 @@ import { useTagUi } from './assign/use-tag-ui.tsx';
 import { needsSessionRefetch } from './boot/use-scan-session.ts';
 import { loopCard } from './loop-card.tsx';
 import { LoopMenu } from './loop-menu.tsx';
-import { loopScreen, tagExtraActions, tintDismissible } from './loop-screen.tsx';
+import { capsuleStateOf, loopScreen, tagExtraActions, tintDismisses } from './loop-screen.tsx';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
+import { LazyOperatorPanel } from './operator/lazy-operator-panel.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { scanBrandLogoUrl } from './platform/scan-branding.tsx';
 import { useNativeCapabilities } from './platform/use-native-capabilities.ts';
@@ -32,9 +33,6 @@ import { useAccessUi } from './ui/use-access-ui.tsx';
 import { useOfflineSince } from './ui/use-offline-since.ts';
 import './buddy/beats.css';
 
-const OperatorPanel = lazy(() =>
-  import('./operator/operator-panel.tsx').then((m) => ({ default: m.OperatorPanel })),
-);
 const OperatorWorkspace = lazy(() =>
   import('./operator/workspace/workspace.tsx').then((m) => ({ default: m.OperatorWorkspace })),
 );
@@ -144,7 +142,19 @@ export function ScanLoop({
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
   const menu = (
     <LoopMenu
-      {...{ s, session, api, runtime, tags, dispatch, refetch, leave, operator, duoLayout }}
+      {...{
+        s,
+        session,
+        api,
+        runtime,
+        tags,
+        dispatch,
+        refetch,
+        leave,
+        operator,
+        duoLayout,
+        handheld,
+      }}
       {...{ readerUsable, cameraChoice, setCameraChoice, setCameraError, showPanel }}
     />
   );
@@ -170,9 +180,7 @@ export function ScanLoop({
       layout={nativeCapabilities?.layout}
       sidebar={
         operatorPane ? (
-          <Suspense fallback={null}>
-            <OperatorPanel api={api} runtime={runtime} session={session} />
-          </Suspense>
+          <LazyOperatorPanel api={api} runtime={runtime} session={session} />
         ) : null
       }
       screen={loopScreen(session, s.started)}
@@ -185,13 +193,7 @@ export function ScanLoop({
         ...(handheld && access.direction
           ? { direction: SCAN_COPY.direction[access.direction.value] }
           : {}),
-        state: !s.online
-          ? 'offline'
-          : l.s === 'checking' || l.s === 'applying'
-            ? 'checking'
-            : l.s === 'paused'
-              ? 'paused'
-              : 'scanning',
+        state: capsuleStateOf(s.online, l.s),
         menu,
         onTitle: () => showPanel('shift'),
         chips: (
@@ -216,7 +218,8 @@ export function ScanLoop({
       }
       card={cardNode}
       tint={tags.tint ?? view.tint}
-      {...(handheld && tintDismissible(result, Boolean(s.overlay || tags.card))
+      look={{ sun: handheld && s.prefs.sunlight, leftHand: handheld && s.prefs.leftHand }}
+      {...(tintDismisses(handheld, result, Boolean(s.overlay || tags.card))
         ? { onTint: () => dispatch({ type: 'dismiss' }) }
         : {})}
       buddy={

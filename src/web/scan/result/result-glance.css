@@ -9,6 +9,27 @@
   box-shadow:
     0 24px 48px -12px rgb(0 0 0 / 0.45),
     0 0 0 0.5px rgb(0 0 0 / 0.08);
+  /* At 200 % text, or on a short screen, the card grows to its top limit and then scrolls under
+     the band. The card scrolls, not the body, so a touch on the open button still scrolls it. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* A fade over the foot says there is more below (`data-more`, set by useScrollCue until the end). */
+.scan-result[data-density="glance"][data-more]::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  flex: none;
+  height: 32px;
+  margin-top: -32px;
+  background: linear-gradient(transparent, color-mix(in oklab, var(--scan-card) 90%, transparent));
+  pointer-events: none;
+}
+.scan-result[data-density="glance"] .scan-result-band {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 .scan-glance-open {
   position: absolute;

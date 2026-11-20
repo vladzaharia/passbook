@@ -131,7 +131,10 @@ describe('visibility and idle', () => {
     const cleared = step(s, { type: 'tick' }, at(SCAN_TIMING.CARD_IDLE_CLEAR));
     expect(cleared.state.loop.s).toBe('ready');
     expect(cleared.cmds).toContainEqual({ c: 'card.tuck' });
-    const held = fixtureState({ ...s, prefs: { holdResults: true, sound: true } });
+    const held = fixtureState({
+      ...s,
+      prefs: { holdResults: true, sound: true, sunlight: false, leftHand: false },
+    });
     expect(nextDeadline(held, at(1))).toBeNull();
   });
 

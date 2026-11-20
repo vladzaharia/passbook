@@ -80,7 +80,9 @@ describe('answer', () => {
   });
 
   it('holdResults holds every verdict', () => {
-    const s = fixtureState({ prefs: { holdResults: true, sound: true } });
+    const s = fixtureState({
+      prefs: { holdResults: true, sound: true, sunlight: false, leftHand: false },
+    });
     const { state, key } = sent(s);
     const r = step(state, answerOf(key), at(100));
     expect(r.state.loop).toMatchObject({ closeAt: null, settleAt: null });
