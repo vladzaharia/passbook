@@ -1,7 +1,6 @@
 /**
  * The scan machine's frozen contract (AC 3.1-3.3 with SA 7.5's amendments and the B card layer).
  * One pure reducer `reduce(state, event, { now, id }) -> { state, cmds }` serves both postures.
- * Stream CC implements it; the UI streams build against these shapes and the fixtures.
  */
 import type {
   ScanCard,
@@ -33,8 +32,7 @@ export interface Draft {
   /** A `set`: the card's version the staff read, so a card that moved answers `stale`. */
   expectedVersion?: number;
   override?: boolean;
-  /** Check in every pass of the scanned pass's bundle. */
-  group?: boolean;
+  group?: boolean; // check in every pass of the scanned pass's bundle
   overrideOf?: string;
   confirmed?: boolean;
   /** A Manager's PIN approval for this one action. The PIN sheet re-sends the draft under a new key. */
@@ -191,8 +189,7 @@ export type ScanEvent =
   | { type: 'switch' }
   | { type: 'keep' }
   | { type: 'override'; actionId: string }
-  /** "Check in all N": the same scan with `group: 'bundle'` under a new key. */
-  | { type: 'group' }
+  | { type: 'group' } // "Check in all N": the same scan with `group: 'bundle'` under a new key
   /** The Manager PIN sheet's Approve: re-sends the same draft under a new key with `approval`. */
   | { type: 'approve'; staffId?: string; pin: string }
   | { type: 'arm'; actionId: string; amount: number | null; sticky: boolean }
@@ -201,8 +198,7 @@ export type ScanEvent =
   | { type: 'undo'; scanId: string; approval?: Approval }
   | { type: 'undone'; key: string; outcome: ScanOutcome }
   | { type: 'dismiss' }
-  /** A deadline from `nextDeadline()` passed. */
-  | { type: 'tick' }
+  | { type: 'tick' } // a deadline from `nextDeadline()` passed
   | { type: 'visible'; visible: boolean }
   | { type: 'focus'; focused: boolean }
   | { type: 'online'; online: boolean }

@@ -6,11 +6,11 @@
  * 429 must surface its `Retry-After`.
  */
 import type { z } from 'zod';
-import { MemberPhotoSchema } from '../../../shared/contracts/check-in.ts';
 import {
   type SignOutRequestSchema,
   SignOutResultSchema,
 } from '../../../shared/contracts/access-business.ts';
+import { MemberPhotoSchema } from '../../../shared/contracts/check-in.ts';
 import {
   ScanTagEnrollmentDoneSchema,
   ScanTagEnrollmentPendingSchema,

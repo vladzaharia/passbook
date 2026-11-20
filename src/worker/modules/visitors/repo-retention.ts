@@ -28,7 +28,7 @@ const heldSql = (pass: string, org: string) =>
 const notHeld = (visitId: string): Check => ({
   reason: 'retention',
   ok: (b) =>
-    `NOT ${heldSql('(SELECT v.pass_id FROM visitors v WHERE v.id = ' + b.bind(visitId) + ')', 'a.org_id')}`,
+    `NOT ${heldSql(`(SELECT v.pass_id FROM visitors v WHERE v.id = ${b.bind(visitId)})`, 'a.org_id')}`,
 });
 
 /** Refuses the commit unless the receipt that records it is in the same batch. */

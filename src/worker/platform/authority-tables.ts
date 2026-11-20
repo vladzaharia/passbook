@@ -116,15 +116,12 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
     edges: [edge('tag_id', 'nfc_tags'), edge('pass_id', 'passes')],
     pass: 'pass_id',
   },
-  // Tag types (0128): an org's named tag policies. nfc_tag_systems has no writer outside migrations.
   nfc_tag_types: { org: 'org_id' },
-  // Its trigger holds type and template to one org.
   nfc_tag_type_templates: {
     org: null,
     edges: [edge('type_id', 'nfc_tag_types'), edge('template_id', 'templates')],
   },
-  // Outbound webhooks (0090). Endpoints and secrets are written through grants; delivery bookkeeping by a
-  // reviewed raw-write allowlist entry. event_feed is written only by the pass_events trigger.
+  // Outbound webhooks (0090): endpoints and secrets via grants, delivery bookkeeping via the raw-write allowlist, event_feed by the pass_events trigger.
   webhook_endpoints: { org: 'org_id', mode: 'mode' },
   webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
   webhook_deliveries: { org: 'org_id', mode: 'mode', conflict: ['endpoint_id', 'event_seq'] },
@@ -134,7 +131,6 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   tag_enrollments: { org: 'org_id', mode: 'mode' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
-  // A visit around a pass (0121): written by tenant and scan grants only.
   visitors: { org: 'org_id', mode: 'mode' },
   pass_imports: { org: 'org_id', mode: 'mode' },
   pass_import_rows: { org: null, edges: [edge('import_id', 'pass_imports')] },
@@ -142,8 +138,7 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_import_mappings: { org: 'org_id', conflict: ['org_id', 'template_id'] },
   // The bundle counterpart (0087).
   bundle_remac_marks: { org: null, edges: [edge('bundle_id', 'bundles')] },
-  // Trust pack (0101). Floors ride the settings grant; holds are placed and released by org:manage or a
-  // platform admin; receipts and anchors are bookkeeping of platform jobs (raw-write allowlist).
+  // Trust pack (0101): floors ride the settings grant; holds by org:manage or a platform admin; receipts and anchors by platform jobs.
   retention_floors: { org: 'org_id', conflict: ['org_id', 'class'] },
   retention_holds: { org: 'org_id' },
   retention_receipts: { org: 'org_id' },
@@ -169,15 +164,13 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   pass_prints: { org: 'org_id', mode: 'mode', pass: 'pass_id' },
   data_requests: { org: 'org_id' },
   data_request_passes: { org: null, edges: [edge('request_id', 'data_requests')] },
-  // Wallet provider credentials (0112). A platform-scope row has a null org_id, as a platform api_keys row: an
-  // org grant never matches it. Versions, events and checks hang off the credential and take its tenant.
+  // Wallet provider credentials (0112): a platform-scope row has a null org_id, so no org grant matches it; children take its tenant.
   wallet_credentials: { org: 'org_id', mode: 'mode' },
   wallet_credential_versions: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
   wallet_credential_events: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
   wallet_credential_checks: { org: null, edges: [edge('credential_id', 'wallet_credentials')] },
   // An enrolment's events (the account row itself is written by `include` parts, tied to {org} and {mode}).
   wallet_enrolment_events: { org: 'org_id', mode: 'mode' },
-  // Entitlements (0134): what the org may use. Written only by platform purposes (RESTRICTED_TABLES), never by an org.
   org_entitlements: { org: 'org_id' },
   org_entitlement_overrides: { org: 'org_id', conflict: ['org_id', 'key'] },
   entitlement_preset_meta: {
@@ -190,11 +183,10 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
 /**
  * Guarded tables only the listed purposes may write, whatever the principal or the grant's `tables`. The
  * credential check job is the one writer of a check: no org_mode or platform.wallet.* grant inserts one.
- * Entitlements are written by the platform purposes of design-multi-tenancy.md section 2.2 only.
+ * Entitlements (0134) are platform-only (design-multi-tenancy.md section 2.2): an org never writes its own.
  */
 export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   wallet_credential_checks: ['platform.job.wallet.credential_check'],
-  // The org cannot write its own entitlements: no org or org_mode purpose is listed, whatever its tables.
   org_entitlements: [
     'platform.org.create',
     'platform.job.template_sync',
@@ -256,7 +248,6 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'template_imports',
   'workflow_runs',
   'broadcasts',
-  'idempotent_requests',
   'message_rules',
   'message_rule_fires',
   'vas_keys',

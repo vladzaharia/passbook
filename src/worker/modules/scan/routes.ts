@@ -1,4 +1,3 @@
-import { routePath } from 'hono/route';
 import { z } from 'zod';
 import {
   ScanActRequestSchema,
@@ -27,7 +26,7 @@ import { notifyHostOfArrival } from '../visitors/arrival.ts';
 import { registerScanVisitorRoutes } from '../visitors/routes-scan.ts';
 import { deepFreeze } from './freeze.ts';
 import { actGroup, undoGroup, withBundle } from './group.ts';
-import { requireScanActor, scanActorOf } from './guard.ts';
+import { scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
@@ -38,7 +37,7 @@ import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
-import { tillKeyAccess } from './routes-key-access.ts';
+import { mountScanGuards } from './routes-guards.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
 import { registerScanOfflineRoutes } from './routes-offline.ts';
 import { limitScanBodies, registerScanPhotoRoute } from './routes-photo.ts';
@@ -64,58 +63,7 @@ limitScanBodies(scanRoutes);
 // Admin scope rides the query on a GET (`?orgId&eventId&templateIds&timeZone`); the guard reads it.
 const DayStart = z.object({ dayStart: z.coerce.number().int().nonnegative().optional() });
 
-const readActor = requireScanActor({ capability: 'scanning:read' });
-const operateActor = requireScanActor({ capability: 'passes:operate' });
-const manageActor = requireScanActor({ capability: 'scanning:manage' });
-const readSessionActor = requireScanActor({
-  capability: 'scanning:read',
-  staffOptional: true,
-  screens: true,
-});
-const manageSessionActor = requireScanActor({
-  capability: 'scanning:manage',
-  staffOptional: true,
-  screens: true,
-});
-
-scanRoutes.use('/session', (c, next) =>
-  (c.req.method === 'GET' ? readSessionActor : manageSessionActor)(c, next),
-);
-scanRoutes.use('/branding/logo', readSessionActor);
-scanRoutes.use(
-  '/device',
-  requireScanActor({ capability: 'scanning:manage', staffOptional: true, screens: true }),
-);
-scanRoutes.use('/role', manageSessionActor);
-scanRoutes.use('/session/open-now', operateActor);
-scanRoutes.use(
-  '/staff',
-  requireScanActor({ capability: 'scanning:manage', staffOptional: true, screenActions: true }),
-);
-scanRoutes.use('/actions', (c, next) =>
-  (c.req.method === 'POST' ? operateActor : manageActor)(c, next),
-);
-// A Desk-actions monitor opens the photos Who's in lists.
-const photoActor = requireScanActor({ capability: 'scanning:read', screenActions: true });
-for (const path of ['/summary', '/stats', '/activity'])
-  scanRoutes.use(path, (c, next) => (c.req.method === 'GET' ? readActor : manageActor)(c, next));
-scanRoutes.use('/passes/*', (c, next) =>
-  (c.req.method === 'GET'
-    ? photoActor
-    : c.req.method === 'POST' && c.req.path.endsWith('/photo')
-      ? operateActor
-      : manageActor)(c, next),
-);
-for (const path of ['/resolve', '/lookup'])
-  scanRoutes.use(path, (c, next) => (c.req.method === 'POST' ? readActor : manageActor)(c, next));
-// Hono's /scans/* also matches /scans itself, so choose exactly one guard here.
-scanRoutes.use('/scans/*', (c, next) => {
-  const suffix = c.req.path.slice(routePath(c).length - 2);
-  if (c.req.method === 'GET' && suffix === '') return readActor(c, next);
-  if (c.req.method === 'POST' && /^\/[^/]+\/undo$/.test(suffix)) return operateActor(c, next);
-  return manageActor(c, next);
-});
-scanRoutes.use('*', tillKeyAccess);
+mountScanGuards(scanRoutes);
 scanRoutes.use('*', async (c, next) => {
   await next();
   if (!c.res.headers.has('cache-control')) c.header('cache-control', 'no-store');

@@ -134,7 +134,6 @@ export function LoadedPassDetail({
       }),
     [source, template.data, p.personalization, p.templateVersion],
   );
-
   const stage = (size: 'column' | 'card' | 'sheet') => (
     <div className="relative">
       {size === 'sheet' ? null : <Celebrate when={created.mark?.first === true} />}
