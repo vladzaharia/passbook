@@ -100,7 +100,9 @@ describe('join card: readiness', () => {
   }
 
   it('shows only the one line when the barcode cannot work, no fields', async () => {
-    server(stateOf(null, { ready: false, issues: [{ code: 'barcode_input', label: 'Member id' }] }));
+    server(
+      stateOf(null, { ready: false, issues: [{ code: 'barcode_input', label: 'Member id' }] }),
+    );
     await card();
     expect(open()).toBeDisabled();
     expect(screen.queryByText(JOIN_COPY.card.askFor)).toBeNull();
@@ -113,7 +115,7 @@ describe('join card: readiness', () => {
     await card();
     expect(open()).not.toBeChecked();
     expect(screen.queryByRole('switch', { name: JOIN_COPY.card.email })).toBeNull();
-    expect(screen.queryByRole('textbox', { name: JOIN_COPY.card.dailyLimit })).toBeNull();
+    expect(screen.queryByRole('spinbutton', { name: JOIN_COPY.card.dailyLimit })).toBeNull();
   });
 
   it('says Test in a test-mode line and shows the test note', async () => {

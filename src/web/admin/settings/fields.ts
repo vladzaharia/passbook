@@ -19,6 +19,8 @@ export interface SettingField {
   optional?: boolean;
   /** The stored value is `{ enabled }` rather than a bare boolean. */
   wrapped?: boolean;
+  /** Key of the boolean that gates this field: hidden while it is off, the value kept. */
+  parent?: string;
   schema: ZodType;
 }
 

@@ -2,6 +2,7 @@ import { CalendarClock, Combine, Hand, Layers, type LucideIcon, Radio } from 'lu
 import type { VoidRule } from '@/shared/contracts/connections.ts';
 import {
   CheckboxField,
+  DependentSettings,
   FormField,
   Input,
   NumberField,
@@ -140,7 +141,7 @@ export function LifecycleFields({
         </div>
       </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
-        {scheduled(value.mode) ? (
+        <DependentSettings open={scheduled(value.mode)}>
           <FormField
             label="Interval"
             help={
@@ -163,7 +164,7 @@ export function LifecycleFields({
               />
             )}
           </FormField>
-        ) : null}
+        </DependentSettings>
         <FormField
           label="Holder email"
           help="Field that holds the holder's email, for example /email."
