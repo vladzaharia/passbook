@@ -225,9 +225,11 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'credentials',
   'signing_identities',
   'idempotency_keys',
+  'idempotent_requests',
   'template_imports',
   'workflow_runs',
   'broadcasts',
+  'idempotent_requests',
   'message_rules',
   'message_rule_fires',
   'vas_keys',
@@ -259,6 +261,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
+  'idempotent_requests',
   'message_rules',
   'message_rule_fires',
   'scanner_setups',

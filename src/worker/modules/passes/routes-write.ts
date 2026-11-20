@@ -6,6 +6,7 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
+import { idempotentJson, principalOf } from '../../platform/idempotency.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { issuanceEmailOutcome } from '../delivery/issuance-outcome.ts';
 import { createPassIdempotent } from './create.ts';
@@ -93,32 +94,38 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
           releaseGeneration: body.releaseGeneration,
         };
       }
-      const detail = await createPassIdempotent(
+      const create = async () => {
+        const detail = await createPassIdempotent(
+          ctx,
+          {
+            orgId,
+            templateId: body.templateId,
+            ...review,
+            ...(body.identityId ? { identityId: body.identityId } : {}),
+            input: body.input,
+            holderEmail: body.holderEmail ?? null,
+            externalId: body.externalId ?? null,
+            ...(body.serial ? { serial: body.serial } : {}),
+            connectionId: body.connectionId ?? null,
+            externalRef: body.externalRef ?? null,
+            sendEmail: body.sendEmail ?? false,
+            source: 'manual',
+            mode,
+            execution: { kind: 'tenant', authority },
+            actor: actorFor(c),
+          },
+          key,
+          { serverResolvedRelease: pinned.every((v) => v === undefined) },
+        );
+        const sending = Boolean(body.sendEmail && body.holderEmail);
+        return sending ? { ...detail, email: await issuanceEmailOutcome(ctx, detail.id) } : detail;
+      };
+      return idempotentJson(
+        c,
         ctx,
-        {
-          orgId,
-          templateId: body.templateId,
-          ...review,
-          ...(body.identityId ? { identityId: body.identityId } : {}),
-          input: body.input,
-          holderEmail: body.holderEmail ?? null,
-          externalId: body.externalId ?? null,
-          ...(body.serial ? { serial: body.serial } : {}),
-          connectionId: body.connectionId ?? null,
-          externalRef: body.externalRef ?? null,
-          sendEmail: body.sendEmail ?? false,
-          source: 'manual',
-          mode,
-          execution: { kind: 'tenant', authority },
-          actor: actorFor(c),
-        },
-        key,
-        { serverResolvedRelease: pinned.every((v) => v === undefined) },
-      );
-      const sending = Boolean(body.sendEmail && body.holderEmail);
-      return c.json(
-        sending ? { ...detail, email: await issuanceEmailOutcome(ctx, detail.id) } : detail,
+        { orgId, mode, principal: principalOf(auth), body },
         201,
+        create,
       );
     },
   );

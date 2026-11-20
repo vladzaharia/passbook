@@ -35,6 +35,7 @@ import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
 import type { AppEnv } from '../platform/env.ts';
+import { sweepIdempotency } from '../platform/idempotency.ts';
 import { purgeRetiredIds } from '../platform/retired-ids.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 import { CRON_QUERY_BUDGET, countQueries } from './query-counter.ts';
@@ -79,6 +80,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'authority.sweep', run: async (ctx) => void (await sweepLeakedGrants(ctx)) },
     { name: 'authority.retired_ids', run: async (ctx) => void (await purgeRetiredIds(ctx)) },
     { name: 'passes.retention', run: dailyPasses },
+    { name: 'idempotency.sweep', run: sweepIdempotency },
     { name: 'prints.pdf_sweep', run: sweepPrintPdfs },
     { name: 'passes.import_retention', run: dailyImports },
     { name: 'connections.retention', run: dailyConnections },

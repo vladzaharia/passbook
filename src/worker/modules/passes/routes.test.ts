@@ -115,7 +115,7 @@ describe('create and read', () => {
     expect(b.status).toBe(201);
     expect(((await b.json()) as { id: string }).id).toBe(((await a.json()) as { id: string }).id);
     const other = await create(auth.admin(), { input: { memberName: 'Different' } }, key);
-    expect(other.status).toBe(409);
+    expect(other.status).toBe(422);
     expect(((await other.json()) as { code: string }).code).toBe('IDEMPOTENCY_KEY_REUSED');
     expect((await create(auth.admin(), {}, { 'idempotency-key': 'x'.repeat(201) })).status).toBe(
       400,
@@ -360,7 +360,7 @@ describe('refresh, email and bulk reissue', () => {
       [created.id],
     );
     expect(count?.n).toBe(1);
-    await expectProblem(await send({ attach: true }, 'k1'), 409, 'IDEMPOTENCY_KEY_REUSED');
+    await expectProblem(await send({ attach: true }, 'k1'), 422, 'IDEMPOTENCY_KEY_REUSED');
   });
 
   it('starts a tenant bulk reissue for a session and records the run', async () => {
