@@ -4,6 +4,7 @@ import { type AuditRow, type AuditWhen, buildAudit } from './authority-audit.ts'
 import { grantedBatch, grantedBatchWith, registerPrepare } from './authority-batch.ts';
 import type { Check } from './authority-checks.ts';
 import { buildAssert, type GrantCond } from './authority-cond.ts';
+import { limitHitOf } from './authority-entitled.ts';
 import { AuthorityError } from './authority-error.ts';
 import { identifier } from './authority-expr.ts';
 import {
@@ -41,7 +42,7 @@ import {
 import { restrictedWriteRefusal } from './authority-tables.ts';
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
 import { exactStmt, type SqlValue } from './db.ts';
-import { authorityDenied, type DenyReason } from './errors.ts';
+import { authorityDenied, type DenyReason, type LimitHit } from './errors.ts';
 import { hasJobAuthority } from './job-authority.ts';
 import type { ServiceContext } from './service-context.ts';
 
@@ -278,6 +279,9 @@ export class Grant {
       ...(this.#input.codes ? { codes: this.#input.codes } : {}),
     });
   }
+  /** @internal After a `limit` refusal: the limit this grant's checks ran into, or null. */
+  limitHit = (): Promise<LimitHit | null> =>
+    limitHitOf(this.#db, this.scope, this.principal, this.#now, this.#input.checks ?? []);
 
   /** Runs the grant and its writes as one D1 batch. Results are for the writes, in order. */
   async commit(): Promise<D1Result[]> {

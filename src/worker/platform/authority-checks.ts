@@ -1,3 +1,5 @@
+import type { EntitlementKey } from '../../shared/contracts/entitlements.ts';
+import type { GrantCond } from './authority-cond.ts';
 import { AuthorityError } from './authority-error.ts';
 import { identifier, renderCond, type WhereValue } from './authority-expr.ts';
 import type { Binds, GrantScope } from './authority-principal.ts';
@@ -14,6 +16,8 @@ import type { DenyReason } from './errors.ts';
 export interface Check {
   reason: DenyReason;
   ok(b: Binds, scope: GrantScope): string;
+  /** A `withinLimit` check: which limit and what it counts, so a refusal can say how far the org is. */
+  limit?: { key: EntitlementKey; count: GrantCond };
 }
 
 /** The target row belongs to the tenant of `t`: the actor row `a`, or a grant row `g`. */

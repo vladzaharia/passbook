@@ -1,11 +1,14 @@
 // One D1 transaction for several grants. Kept apart from `Grant` so the class stays small.
 import { type AfterRead, prepareAfter } from './authority-after.ts';
 import { AuthorityError } from './authority-error.ts';
+import { authorityDenial } from './authority-granted.ts';
+import { AppError, FeatureLimitError, type LimitHit } from './errors.ts';
 
 /** What a batch needs of a grant; `Grant` is the only implementation. */
 export interface BatchGrant {
   readonly codesKey: string;
   translate(error: unknown): unknown;
+  limitHit(): Promise<LimitHit | null>;
 }
 
 let prepare: (g: BatchGrant) => D1PreparedStatement[];
@@ -13,6 +16,19 @@ let prepare: (g: BatchGrant) => D1PreparedStatement[];
 /** Called once by the `Grant` class so the batch can reach its private `#prepare`. */
 export function registerPrepare(fn: (g: BatchGrant) => D1PreparedStatement[]): void {
   prepare = fn;
+}
+
+/**
+ * A refused batch as the error the caller sees. A refused limit says which cap and how many, asked of
+ * each grant's own checks after the rollback.
+ */
+async function refusalOf(grants: BatchGrant[], error: unknown): Promise<unknown> {
+  let hit: LimitHit | null = null;
+  if (authorityDenial(error) === 'limit') for (const g of grants) hit ??= await g.limitHit();
+  const translated = grants.reduce((e, g) => g.translate(e), error);
+  return hit && translated instanceof AppError
+    ? new FeatureLimitError(hit, translated.code)
+    : translated;
 }
 
 export const prepareOf = (g: BatchGrant): D1PreparedStatement[] => prepare(g);
@@ -50,7 +66,7 @@ export async function grantedBatchWith(
   try {
     results = await db.batch([...before, ...prepared.flat(), ...reads]);
   } catch (error) {
-    throw grants.reduce((e, g) => g.translate(e), error);
+    throw await refusalOf(grants, error);
   }
   const out: D1Result[][] = [];
   let at = before.length;

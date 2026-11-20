@@ -1,5 +1,7 @@
 import { HTTPException } from 'hono/http-exception';
 import { ZodError } from 'zod';
+import type { EntitlementKey } from '../../shared/contracts/entitlements.ts';
+import { limitRefusal } from '../../shared/copy/entitlements.ts';
 
 export interface FieldIssue {
   path: string;
@@ -13,6 +15,9 @@ export interface AppErrorOptions {
   headers?: Record<string, string>;
   /** The entitlement key a FEATURE_NOT_INCLUDED refusal names. */
   feature?: string;
+  /** A FEATURE_LIMIT_REACHED refusal: the cap and what the organization holds. */
+  limit?: number;
+  used?: number;
   cause?: unknown;
 }
 
@@ -23,6 +28,8 @@ export class AppError extends Error {
   readonly issues?: FieldIssue[];
   readonly headers?: Record<string, string>;
   readonly feature?: string;
+  readonly limit?: number;
+  readonly used?: number;
 
   constructor(code: string, status: number, message: string, options: AppErrorOptions = {}) {
     super(message, options.cause === undefined ? undefined : { cause: options.cause });
@@ -32,6 +39,8 @@ export class AppError extends Error {
     if (options.issues) this.issues = options.issues;
     if (options.headers) this.headers = options.headers;
     if (options.feature) this.feature = options.feature;
+    if (options.limit !== undefined) this.limit = options.limit;
+    if (options.used !== undefined) this.used = options.used;
   }
 }
 
@@ -124,6 +133,20 @@ export const DENY_REASONS = [
 ] as const;
 export type DenyReason = (typeof DENY_REASONS)[number];
 
+/** The limit a refused grant ran into: the entitlement key, its cap and the org's count. */
+export interface LimitHit {
+  key: EntitlementKey;
+  limit: number;
+  used: number;
+}
+
+/** 403 `FEATURE_LIMIT_REACHED`: a create at the organization's cap; the problem carries the key, cap and count. */
+export class FeatureLimitError extends AppError {
+  constructor({ key, limit, used }: LimitHit, code = 'FEATURE_LIMIT_REACHED') {
+    super(code, 403, limitRefusal(key, limit, used), { feature: key, limit, used });
+  }
+}
+
 export interface DenialOptions {
   /** A scanner whose credential no longer matches must re-pair (401), not retry. */
   scanner?: boolean;
@@ -177,7 +200,7 @@ export function authorityDenied(
     case 'limit':
       return new ForbiddenError(
         'This organization has reached its limit. Ask PassBook for more.',
-        code ?? 'ORG_LIMIT',
+        code ?? 'FEATURE_LIMIT_REACHED',
       );
     case 'stale':
       return new ConflictError('The resource changed. Reload and retry.', code ?? 'STALE');
@@ -202,6 +225,8 @@ export interface Problem {
   requestId?: string;
   issues?: FieldIssue[];
   feature?: string;
+  limit?: number;
+  used?: number;
 }
 
 const TITLES: Record<number, string> = {
@@ -240,9 +265,11 @@ export function toProblem(
   let issues: FieldIssue[] | undefined;
   let headers: Record<string, string> | undefined;
   let feature: string | undefined;
+  let limit: number | undefined;
+  let used: number | undefined;
 
   if (error instanceof AppError) {
-    ({ status, code, issues, headers, feature } = error);
+    ({ status, code, issues, headers, feature, limit, used } = error);
     detail = error.message;
   } else if (error instanceof ZodError) {
     status = 422;
@@ -263,6 +290,8 @@ export function toProblem(
     ...(requestId ? { requestId } : {}),
     ...(issues?.length ? { issues } : {}),
     ...(feature ? { feature } : {}),
+    ...(limit === undefined ? {} : { limit }),
+    ...(used === undefined ? {} : { used }),
     ...(headers ? { headers } : {}),
   };
 }
