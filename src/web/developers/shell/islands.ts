@@ -4,10 +4,12 @@ export interface Island {
 
 /**
  * Placeholders the prerendered pages carry as `data-island="<name>"`, each a lazy chunk. Add a
- * loader here and the island mounts when its element nears the viewport. Registered so far:
- * none; the static markup inside a placeholder is its signed-out state.
+ * loader here and the island mounts when its element nears the viewport. The static markup inside a
+ * placeholder is its signed-out state.
  */
-export const ISLANDS: Record<string, () => Promise<Island>> = {};
+export const ISLANDS: Record<string, () => Promise<Island>> = {
+  playground: () => import('../playground/index.tsx'),
+};
 
 export function mountIslands(root: ParentNode = document): void {
   const pending = [...root.querySelectorAll<HTMLElement>('[data-island]')].filter(

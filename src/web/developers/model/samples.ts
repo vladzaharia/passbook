@@ -1,6 +1,9 @@
 import type { Lang } from './highlight.ts';
 import type { Json, OpView } from './types.ts';
 
+/** The parts of an operation a sample is written from; the playground builds one without a page. */
+export type SampleOp = Pick<OpView, 'method' | 'path' | 'idempotent' | 'requestExample'>;
+
 export interface Sample {
   lang: Lang;
   label: string;
@@ -9,10 +12,10 @@ export interface Sample {
 }
 
 const KEY = 'PASSBOOK_KEY';
-const hasBody = (op: OpView) => op.requestExample !== undefined && op.method !== 'get';
+const hasBody = (op: SampleOp) => op.requestExample !== undefined && op.method !== 'get';
 
 /** Path templates as a person fills them: `{id}` becomes `<id>`. */
-const target = (op: OpView, base: string) => `${base}${op.path.replace(/\{(\w+)\}/g, '<$1>')}`;
+const target = (op: SampleOp, base: string) => `${base}${op.path.replace(/\{(\w+)\}/g, '<$1>')}`;
 const json = (v: Json) => JSON.stringify(v, null, 2);
 
 /** A TypeScript literal for a JSON value: bare keys, single quotes. */
@@ -31,7 +34,7 @@ function tsValue(v: Json, pad = ''): string {
   return `{\n${entries.map(([k, x]) => `${inner}${key(k)}: ${tsValue(x, inner)}`).join(',\n')},\n${pad}}`;
 }
 
-function curl(op: OpView, base: string): string {
+function curl(op: SampleOp, base: string): string {
   const parts = [
     `curl -X ${op.method.toUpperCase()} "${target(op, base)}"`,
     `  -H "Authorization: Bearer $${KEY}"`,
@@ -44,7 +47,7 @@ function curl(op: OpView, base: string): string {
   return parts.join(' \\\n');
 }
 
-function ts(op: OpView, base: string): string {
+function ts(op: SampleOp, base: string): string {
   const headers = [`    Authorization: \`Bearer \${process.env.${KEY}}\`,`];
   if (op.idempotent) headers.push("    'Idempotency-Key': crypto.randomUUID(),");
   if (hasBody(op)) headers.push("    'Content-Type': 'application/json',");
@@ -79,7 +82,7 @@ function pyValue(v: Json, pad = ''): string {
   return `{\n${rows.join(',\n')},\n${pad}}`;
 }
 
-function py(op: OpView, base: string): string {
+function py(op: SampleOp, base: string): string {
   const headers = [`"Authorization": f"Bearer {os.environ['${KEY}']}"`];
   if (op.idempotent) headers.push('"Idempotency-Key": str(uuid.uuid4())');
   const args = [`    "${target(op, base)}",`, `    headers={${headers.join(', ')}},`];
@@ -96,7 +99,7 @@ function py(op: OpView, base: string): string {
   ].join('\n');
 }
 
-function go(op: OpView, base: string): string {
+function go(op: SampleOp, base: string): string {
   const body = hasBody(op);
   return [
     'package main',
@@ -133,7 +136,7 @@ function go(op: OpView, base: string): string {
 }
 
 /** The request in four languages. None needs an SDK: every sample runs as written with a key. */
-export function samplesFor(op: OpView, base: string): Sample[] {
+export function samplesFor(op: SampleOp, base: string): Sample[] {
   return [
     { lang: 'curl', label: 'curl', file: 'request.sh', code: curl(op, base) },
     { lang: 'ts', label: 'TypeScript', file: 'request.ts', code: ts(op, base) },

@@ -24,6 +24,7 @@ import {
   WebhooksView,
 } from './pages/more.tsx';
 import { ResourceView } from './pages/resource.tsx';
+import { PlaygroundPage } from './playground/page.tsx';
 
 interface Doc {
   url: string;
@@ -184,7 +185,13 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
     undefined,
     <ChangelogView site={site} />,
   );
-  for (const which of ['quickstart', 'playground', 'guides'] as const)
+  add({
+    url: PATHS.playground,
+    title: `${DEV_COPY.slots.playground.title} · ${base}`,
+    description: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
+    body: html(<PlaygroundPage site={site} />),
+  });
+  for (const which of ['quickstart', 'guides'] as const)
     page(
       PATHS[which],
       DEV_COPY.slots[which].title,
