@@ -126,6 +126,8 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
         { orgId, mode, principal: principalOf(auth), body },
         201,
         create,
+        // The v1 path re-checks the release and re-reads the email outcome; a stored body would not.
+        create,
       );
     },
   );

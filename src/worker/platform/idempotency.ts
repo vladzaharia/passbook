@@ -119,6 +119,8 @@ export async function idempotentJson<T>(
   scope: Omit<IdempotencyScope, 'request' | 'key' | 'operation'> & { body: unknown },
   status: 200 | 201 | 202,
   execute: () => Promise<T>,
+  /** Recomputes the body on a replay when the stored one can go stale (a send outcome, a superseded release). */
+  replay?: () => Promise<T>,
 ): Promise<Response> {
   const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
   if (key === undefined) return c.json((await execute()) as never, status);
@@ -132,8 +134,9 @@ export async function idempotentJson<T>(
     },
     async () => ({ status, body: await execute() }),
   );
-  if (result.replayed) c.header('Idempotent-Replayed', 'true');
-  return c.json(result.body as never, result.status as 200);
+  if (!result.replayed) return c.json(result.body as never, result.status as 200);
+  c.header('Idempotent-Replayed', 'true');
+  return c.json((replay ? await replay() : result.body) as never, result.status as 200);
 }
 
 /** Daily cron hook: drops expired responses. */
