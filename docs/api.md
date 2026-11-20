@@ -733,6 +733,16 @@ A roll call freezes who is inside and records who is confirmed present or out. C
 
 `orgId` is for signed-in users; an org-bound key names its org. Each person carries `presence` (`in`, `left`, `lapsed`), `late` (tapped in after the start) and `notConfirmedOut` (the clock closed the stay and no one confirmed it). Out also exits the person from the place and taking it back puts them back in; for an API key Out is a confirmation alone. A key with `scans:write` acts as its terminals: it reaches only the calls of their sessions (`sessionId`), anything else is 404. Names are read from the pass when a call is shown, never stored; ended calls leave with the scans retention window (holds honoured) and a deleted pass takes its marks. Scanners use the same calls under `/scan/roll-call` with the device's own sign-in; a key reaches only `/roll-calls`.
 
+## Person history and staff notes
+
+Paired scanners and scanning consoles call these under `/api/v1/scan/passes/{id}`; the pass must be in the device's org, mode and template scope, else 404 `PASS_NOT_FOUND`.
+
+- `GET .../history?filter=all|visits|changes&cursor=&limit=` (1-50, default 20) is the last 30 days, newest first. `nextCursor` is null on the last page; send it back as `cursor`. Each line has `event` (`scanned`, `checked_in`, `checked_out`, `refused`, `held`, `let_in`, `undone`, `value`, `note`), `reason`, `label`, `place`, `staff` and `amount`. Door sees visits only, with no `staff`, `amount` or notes; Desk and above see all. A scan whose signed policy does not hold is `scanned` with only its time. An undo is not a line: the scan it undid is `undone`. Notes appear as `note` lines without their text.
+- `GET .../notes` lists up to 100 notes, newest first. Desk and above; Door is 403 `NOTE_ROLE`.
+- `POST .../notes` `{ body, idempotencyKey }` adds one. `body` is one plain line of 1-280 characters; a repeated `idempotencyKey` returns the first note. Desk and above on a paired, non-terminal scan device; 20 per minute per device (429). A pass holds 100 notes (409 `NOTE_CAP`). Audited as `scan.note.add` with the length, never the text.
+
+Notes are staff-only: never on a customer screen, a pass or an email. They are deleted with the pass, age out with the scans retention window (holds honoured), and are in the org export and purge.
+
 ## Scanner history
 
 Scanning lists and forms use an explicit `orgId` and the caller's scanning capabilities. The
