@@ -2,7 +2,7 @@ import { all, stmt } from '../../platform/db.ts';
 
 export type SweepClass = 'scans' | 'events' | 'delivery' | 'photos';
 /** What a pass deletes from: a class's own table, or a table that ages with it. */
-export type SweepTable = SweepClass | 'scan_offline';
+export type SweepTable = SweepClass | 'scan_offline' | 'pass_notes';
 
 /** Days of failed and partial mail kept for support, whatever the class value. */
 export const FAILED_MAIL_DAYS = 90;
@@ -27,6 +27,12 @@ const COND: Record<
   scan_offline: {
     table: 'scan_offline_reads',
     sql: "scan_offline_reads.mode = 'live' AND scan_offline_reads.synced_at < ?",
+    params: (c) => [c.cutoff],
+  },
+  // Staff notes age with the scans window; they also go with their pass (the cascade).
+  pass_notes: {
+    table: 'pass_notes',
+    sql: "pass_notes.mode = 'live' AND pass_notes.created_at < ?",
     params: (c) => [c.cutoff],
   },
   events: {
@@ -136,6 +142,8 @@ export function deleteChunkStmt(
       return stmt(db, `DELETE FROM scans WHERE ${where}`, params);
     case 'scan_offline':
       return stmt(db, `DELETE FROM scan_offline_reads WHERE ${where}`, params);
+    case 'pass_notes':
+      return stmt(db, `DELETE FROM pass_notes WHERE ${where}`, params);
     case 'events':
       return stmt(db, `DELETE FROM pass_events WHERE ${where}`, params);
     case 'delivery':

@@ -38,6 +38,7 @@ import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { mountScanGuards } from './routes-guards.ts';
+import { registerScanHistoryRoutes } from './routes-history.ts';
 import { registerScanOccupancyRoutes } from './routes-occupancy.ts';
 import { registerScanOfflineRoutes } from './routes-offline.ts';
 import { limitScanBodies, registerScanPhotoRoute } from './routes-photo.ts';
@@ -104,6 +105,7 @@ registerScanEnrollmentRoutes(scanRoutes);
 registerScanOfflineRoutes(scanRoutes);
 registerScanBrandingRoute(scanRoutes);
 registerScanPhotoRoute(scanRoutes);
+registerScanHistoryRoutes(scanRoutes);
 
 register(
   scanRoutes,

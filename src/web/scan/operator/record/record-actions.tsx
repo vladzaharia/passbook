@@ -9,6 +9,7 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  StickyNote,
   Users,
   Zap,
 } from 'lucide-react';
@@ -24,13 +25,14 @@ const ICON: Record<Act['icon'], ReactNode> = {
   out: <LogOut aria-hidden />,
   shield: <ShieldCheck aria-hidden />,
   photo: <Camera aria-hidden />,
+  note: <StickyNote aria-hidden />,
   value: <Sparkles aria-hidden />,
   again: <RotateCcw aria-hidden />,
   tap: <Zap aria-hidden />,
   pass: <IdCard aria-hidden />,
   search: <Search aria-hidden />,
 };
-const KEY = { Enter: '↵', O: 'O', P: 'P' } as const;
+const KEY = { Enter: '↵', O: 'O', N: 'N', P: 'P' } as const;
 
 function ActButton({
   act,

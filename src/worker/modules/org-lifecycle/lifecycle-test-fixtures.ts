@@ -69,6 +69,12 @@ export async function populateOrg(rk: RetentionKit, label: string): Promise<Popu
   );
   await run(
     env.DB,
+    `INSERT INTO pass_notes (id, org_id, mode, pass_id, credential_generation, body, author_name, idempotency_key, created_at)
+     VALUES (?, ?, 'live', ?, 1, ?, 'Desk', ?, ?)`,
+    [fx.ids.id(), orgId, live.id, `note-${label}`, `n-${label}`, clock.now()],
+  );
+  await run(
+    env.DB,
     "INSERT INTO idempotency_keys (org_id, key, request_hash, created_at) VALUES (?, ?, 'h', ?)",
     [orgId, `key-${label}`, clock.now()],
   );

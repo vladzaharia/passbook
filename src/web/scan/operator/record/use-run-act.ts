@@ -16,11 +16,14 @@ export interface RunDeps {
   markOut: (place: string) => Promise<void>;
   ask: () => void;
   photo: RefObject<HTMLInputElement | null>;
+  /** Open the add-a-note field. */
+  note: () => void;
 }
 
 /** Each action of the bar, as the machine, the runtime or the workspace takes it. */
 export function useRunAct(d: RunDeps) {
-  const { machine, runtime, release, showPass, lookUp, outcome, place, markOut, ask, photo } = d;
+  const { machine, runtime, release, showPass, lookUp, outcome, place, markOut, ask, photo, note } =
+    d;
   return useCallback(
     (act: Act) => {
       const r = act.run;
@@ -37,6 +40,8 @@ export function useRunAct(d: RunDeps) {
           return ask();
         case 'photo':
           return photo.current?.click();
+        case 'note':
+          return note();
         case 'mark-out':
           return place ? void markOut(place) : undefined;
         case 'show-pass':
@@ -54,6 +59,6 @@ export function useRunAct(d: RunDeps) {
           return runtime.emit({ method: 'manual', passId: r.passId });
       }
     },
-    [machine, runtime, release, showPass, lookUp, outcome, place, markOut, ask, photo],
+    [machine, runtime, release, showPass, lookUp, outcome, place, markOut, ask, photo, note],
   );
 }

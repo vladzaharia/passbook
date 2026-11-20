@@ -66,6 +66,7 @@ import {
   MarkOutResultSchema,
 } from '../inside/inside-types.ts';
 import { canReload, ScanApiError } from './errors.ts';
+import { personCalls } from './scan-api-person.ts';
 import {
   type AdminScope,
   activityPath,
@@ -87,7 +88,7 @@ export function createScanApi(deps: ScanApiDeps) {
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
 
   async function once(
-    method: 'GET' | 'POST' | 'DELETE',
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
     path: string,
     body: unknown,
     call: Call,
@@ -136,7 +137,7 @@ export function createScanApi(deps: ScanApiDeps) {
   }
 
   async function request<S extends z.ZodType>(
-    method: 'GET' | 'POST' | 'DELETE',
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
     path: string,
     schema: S | null,
     body?: unknown,
@@ -310,6 +311,7 @@ export function createScanApi(deps: ScanApiDeps) {
         { png, includeInPass: false },
         call,
       ),
+    ...personCalls(request),
     visitors: (day: { start: number; end: number }, call?: Call) =>
       request(
         'GET',
