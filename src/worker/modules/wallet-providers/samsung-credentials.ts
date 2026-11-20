@@ -1,5 +1,6 @@
 import * as asn1 from 'asn1js';
 import * as pki from 'pkijs';
+import { DEFAULT_CARD_TYPE, samsungCardEntries, samsungCardId } from './samsung-cards.ts';
 
 /** Samsung's certificate is the public certificate received through partner onboarding. */
 interface SamsungCallbackCredentials {
@@ -10,6 +11,7 @@ interface SamsungCallbackCredentials {
 }
 
 export interface SamsungPartnerCredentials extends SamsungCallbackCredentials {
+  cardIds?: Record<string, string>;
   partnerPrivateKeyPem: string;
   partnerCertificatePem: string;
 }
@@ -97,7 +99,10 @@ async function certificate(
   }
 }
 
-function validateCallbackIdentity(input: SamsungCallbackCredentials, now: number): void {
+function validateCallbackIdentity(
+  input: SamsungCallbackCredentials & { cardIds?: Record<string, string> },
+  now: number,
+): void {
   if (
     !input ||
     !Number.isSafeInteger(now) ||
@@ -105,8 +110,9 @@ function validateCallbackIdentity(input: SamsungCallbackCredentials, now: number
     !/^[A-Za-z0-9_-]{1,32}$/.test(input.partnerId) ||
     typeof input.certificateId !== 'string' ||
     !/^[A-Za-z0-9]{4}$/.test(input.certificateId) ||
-    typeof input.cardId !== 'string' ||
-    !/^[A-Za-z0-9_-]{1,32}$/.test(input.cardId)
+    !samsungCardEntries(input).every(
+      ([, id]) => typeof id === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(id),
+    )
   )
     throw new SamsungCredentialError();
 }
@@ -138,6 +144,7 @@ export async function validateSamsungCallbackCredentials(
 export async function validateSamsungCredentials(
   input: SamsungPartnerCredentials,
   now: number,
+  cardType: string = DEFAULT_CARD_TYPE,
 ): Promise<ValidatedSamsungCredentials> {
   validateCallbackIdentity(input, now);
 
@@ -168,7 +175,7 @@ export async function validateSamsungCredentials(
     const account = Object.freeze({
       partnerId: input.partnerId,
       certificateId: input.certificateId,
-      cardId: input.cardId,
+      cardId: samsungCardId(input, cardType),
       partnerSigningKey,
       samsungVerificationKey: samsung.publicKey,
       samsungCertificatePem: input.samsungCertificatePem,
