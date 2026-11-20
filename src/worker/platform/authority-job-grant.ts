@@ -36,11 +36,12 @@ const INACTIVE_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
 };
 
 /**
- * The purposes that may act while the org is closed, with the tables each may write. The org purge voids a
- * closed org's passes (the last version devices fetch) before it removes them.
+ * The one purpose that acts on a closed org, with the tables it may write: the org purge voids the org's
+ * passes (the last version devices fetch) before it removes them. It holds only while the org is in purge
+ * and under no legal hold; the generic publish purpose never does.
  */
 const CLOSED_OK_PURPOSES: Readonly<Record<string, readonly string[]>> = {
-  'org_mode.job.pass.publish': ['passes', 'scan_code_rotations'],
+  'org_mode.job.org.purge_void': ['passes', 'scan_code_rotations'],
 };
 
 /** The checked input of a `system:` grant: a job purpose, `inactiveOk` only where allowlisted, the job principal. */

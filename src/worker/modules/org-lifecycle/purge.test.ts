@@ -5,6 +5,7 @@ import { readReceipts } from '../retention/receipt-service.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
 import { dailyOrgLifecycle } from './jobs.ts';
 import { fakeStep, populateOrg } from './lifecycle-test-fixtures.ts';
+import { purgeDue } from './repo.ts';
 import { PURGE_KEEP } from './repo-plan.ts';
 import { closeOrg, reopenOrg } from './service.ts';
 
@@ -170,6 +171,31 @@ describe('org purge', () => {
     expect((await purge(org.orgId)).state).toBe('purged');
     expect(await readReceipts(kit.ctx, org.orgId, 'org_purge')).toHaveLength(1);
     expect(await passCount(org.orgId)).toBe(0);
+  });
+
+  it('a receipt that failed after the stub was claimed is written by the next run', async () => {
+    const org = await closed('late-receipt');
+    await run(
+      kit.env.DB,
+      "CREATE TRIGGER zz_no_receipt BEFORE INSERT ON retention_receipts BEGIN SELECT RAISE(ABORT, 'no receipts today'); END",
+    );
+    await expect(purge(org.orgId)).rejects.toThrow();
+    await run(kit.env.DB, 'DROP TRIGGER zz_no_receipt');
+    const stub = await first<{ purged_at: number | null }>(
+      kit.env.DB,
+      'SELECT purged_at FROM orgs WHERE id = ?',
+      [org.orgId],
+    );
+    expect(stub?.purged_at).not.toBeNull();
+    expect(await readReceipts(kit.ctx, org.orgId, 'org_purge')).toHaveLength(0);
+    expect((await purgeDue(kit.env.DB, kit.clock.now(), 50)).map((o) => o.id)).toContain(org.orgId);
+    expect((await purge(org.orgId)).state).toBe('done');
+    expect(await readReceipts(kit.ctx, org.orgId, 'org_purge')).toHaveLength(1);
+    expect((await purge(org.orgId)).state).toBe('done');
+    expect(await readReceipts(kit.ctx, org.orgId, 'org_purge')).toHaveLength(1);
+    expect((await purgeDue(kit.env.DB, kit.clock.now(), 50)).map((o) => o.id)).not.toContain(
+      org.orgId,
+    );
   });
 
   it('refuses an org that is open or whose window is still running', async () => {
