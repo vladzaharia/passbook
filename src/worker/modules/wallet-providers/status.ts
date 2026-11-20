@@ -13,7 +13,15 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 import { tenantPassForRead } from '../passes/pass-access.ts';
 import type { PassScope } from '../passes/scope.ts';
 import { walletProviderIssuance } from './provider-policy.ts';
-import { readWalletProviderStatus } from './repo-status.ts';
+import { readWalletProviderStatus, type WalletProviderStatusRow } from './repo-status.ts';
+
+/** The newer of the provider's save and removal reports; absent when it sent neither. */
+function holderReport(row: Pick<WalletProviderStatusRow, 'savedAt' | 'removedAt'>) {
+  const { savedAt, removedAt } = row;
+  if (removedAt !== null && (savedAt === null || removedAt >= savedAt))
+    return { reported: { event: 'removed' as const, at: removedAt } };
+  return savedAt === null ? {} : { reported: { event: 'saved' as const, at: savedAt } };
+}
 
 /** Authorize the actual pass, then fence both its incarnation and authority in the status read. */
 export async function getWalletProviderPassStatus(
@@ -62,6 +70,7 @@ export async function getWalletProviderPassStatus(
               },
         priorGenerationRetirementPending: row.priorRetirementPending === 1,
         installation: 'unknown',
+        ...holderReport(row),
         issuance: walletProviderIssuance(row.provider, pass.mode),
       })),
     });

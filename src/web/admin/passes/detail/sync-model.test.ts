@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PassEventDto } from '@/shared/contracts/events.ts';
-import { duration, eventLabel, groupEvents, pushReason } from './sync-model.ts';
+import { duration, eventDetail, eventLabel, groupEvents, pushReason } from './sync-model.ts';
 
 let n = 0;
 const ev = (
@@ -152,6 +152,38 @@ describe('notified and silenced', () => {
     ]);
     expect(rows[0]?.broadcastId).toBe('b1');
     expect(rows[0]?.facts.map((f) => f.text)).toEqual(['Notified']);
+  });
+
+  it('names a wallet whose own daily limit was reached', () => {
+    const rows = groupEvents([
+      ev('message.applied', 1, {
+        broadcastId: 'b1',
+        notified: true,
+        providers: { google: 'deferred', samsung: 'over' },
+      }),
+    ]);
+    expect(rows[0]?.facts.map((f) => f.text)).toEqual([
+      'Notified',
+      'Samsung Wallet: daily limit reached',
+    ]);
+  });
+});
+
+describe('wallet events', () => {
+  it('titles a provider report and names the wallet', () => {
+    const [saved] = groupEvents([ev('wallet.saved', 1, { provider: 'google' })]);
+    expect(saved?.title).toBe('Holder saved the pass');
+    expect(eventDetail(saved?.events[0] as PassEventDto)).toBe('Google Wallet');
+    const [gone] = groupEvents([ev('wallet.removed', 1, { provider: 'samsung' })]);
+    expect(gone?.title).toBe('Holder removed the pass');
+    expect(eventDetail(gone?.events[0] as PassEventDto)).toBe('Samsung Wallet');
+  });
+
+  it('lists the wallets a removal reached', () => {
+    const [row] = groupEvents([
+      ev('pass.removed', 1, { version: 2, message: false, wallets: ['apple', 'google'] }),
+    ]);
+    expect(eventDetail(row?.events[0] as PassEventDto)).toContain('Apple Wallet, Google Wallet');
   });
 });
 

@@ -94,3 +94,22 @@ describe('/b with nothing to add', () => {
     expect(body).not.toContain('were removed.');
   });
 });
+
+describe('native wallet links in a bundle', () => {
+  const walletOf = (id: string): BundlePageItem => ({
+    ...item(id, 'active', 'Tier: Plus'),
+    walletOffers: [{ provider: 'google', href: `/b/t/${id}/wallet/google` }],
+  });
+
+  it('links Google under the pass that has an offer and under no other', () => {
+    const html = render([walletOf('a'), item('b', 'active', 'Tier: Pro')]);
+    expect(html).toContain('href="/b/t/a/wallet/google"');
+    expect(html).toContain('Add to Google Wallet');
+    expect(html).not.toContain('/b/t/b/wallet/');
+  });
+
+  it('shows no wallet link for a voided pass', () => {
+    const html = render([{ ...walletOf('a'), state: 'voided' }]);
+    expect(html).not.toContain('/wallet/google');
+  });
+});
