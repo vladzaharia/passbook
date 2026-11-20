@@ -31,7 +31,12 @@ function ProblemRow({
 }) {
   const row = viewOf(item);
   return (
-    <li className="op-row" data-selected={selected || undefined} data-tone={row.tone}>
+    <li
+      className="op-row"
+      data-row-key={item.id}
+      data-selected={selected || undefined}
+      data-tone={row.tone}
+    >
       <button
         type="button"
         className="op-row-main"

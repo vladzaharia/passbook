@@ -1,13 +1,10 @@
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { Dialog, DialogContent } from '../../../ui/dialog.tsx';
-import { SHORTCUTS, type ShortcutRow } from '../keys.ts';
+import { keyLabel, SHORTCUTS, type ShortcutRow } from '../keys.ts';
 import { Kbd } from './command-field.tsx';
 
 const H = OPERATOR_COPY.help;
 const GROUPS = ['find', 'record', 'lists', 'anywhere'] as const;
-
-const isMac = () => typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
-const keyLabel = (key: string) => (isMac() ? key : key.replace('⌘', 'Ctrl+').replace('⌥', 'Alt+'));
 
 /** Which rows show: a key that does nothing here is left off. */
 export function shortcutsFor(facts: {

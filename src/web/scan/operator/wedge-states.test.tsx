@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { RawRead } from '../input/types.ts';
 import { useWedgeField, WedgeFieldsContext } from '../input/wedge-field.tsx';
@@ -33,13 +33,17 @@ function Harness({
   clock,
   commands,
   dialog,
+  submits,
 }: {
   fields: WedgeFields;
   clock: ReturnType<typeof fakeClock>;
   commands: Command[];
   dialog: boolean;
+  submits: string[];
 }) {
+  const [pin, setPin] = useState('');
   const [q, setQ] = useState('mar');
+  const keyOptions = useMemo(() => ({ clock, timeOf: () => clock.now() }), [clock]);
   useOperatorKeys(
     () => ({
       views: ['activity', 'problems'],
@@ -50,7 +54,7 @@ function Harness({
       undoable: true,
     }),
     (command) => commands.push(command),
-    clock,
+    keyOptions,
   );
   const body: ReactNode = (
     <>
@@ -79,6 +83,19 @@ function Harness({
       {dialog ? (
         <div role="dialog" data-state="open">
           <button type="button">Close</button>
+          {/* A Manager PIN field: an input the app never registered, as `CodeField` is. */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submits.push(pin);
+            }}
+          >
+            <input
+              aria-label="PIN"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            />
+          </form>
         </div>
       ) : null}
     </>
@@ -87,13 +104,14 @@ function Harness({
 }
 
 function setup(dialog = false) {
+  const submits: string[] = [];
   const clock = fakeClock();
   const fields = new WedgeFields();
   const scans: RawRead[] = [];
   const commands: Command[] = [];
   const stop = createWedgeSource({ clock, fields }).start((read) => scans.push(read));
   const view = render(
-    <Harness fields={fields} clock={clock} commands={commands} dialog={dialog} />,
+    <Harness fields={fields} clock={clock} commands={commands} dialog={dialog} submits={submits} />,
   );
   function key(target: Element, init: KeyboardEventInit) {
     const ev = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
@@ -120,7 +138,7 @@ function setup(dialog = false) {
     key(document.activeElement ?? document.body, { code: codeFor(ch), key: ch });
     clock.advance(500);
   }
-  return { clock, scans, commands, scan, type, key, view, stop };
+  return { clock, scans, commands, scan, type, key, view, stop, submits };
 }
 
 let stop: (() => void) | undefined;
@@ -175,6 +193,17 @@ describe('a scan lands from every focus state (rule 1)', () => {
     expect(h.commands).toEqual([]);
   });
 
+  it('three scans with the Manager PIN focused land as scans and never submit a PIN (H1)', () => {
+    const h = setup(true);
+    stop = h.stop;
+    const pin = screen.getByLabelText('PIN') as HTMLInputElement;
+    pin.focus();
+    for (const code of ['4829103756', '9999000011', 'OABC1234']) h.scan(code);
+    expect(h.scans.map((s) => s.code)).toEqual(['4829103756', '9999000011', 'OABC1234']);
+    expect(h.submits).toEqual([]);
+    expect(pin.value).toBe('');
+  });
+
   it('two scans in a row both land', () => {
     const h = setup();
     stop = h.stop;
@@ -191,6 +220,83 @@ describe('a scan lands from every focus state (rule 1)', () => {
     screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
     h.scan('AAAA1111');
     expect(h.commands.some((c) => c.c === 'primary')).toBe(false);
+  });
+});
+
+describe('Space and slow readers', () => {
+  it('Space on a focused row does nothing and focus stays (H3)', () => {
+    const h = setup();
+    stop = h.stop;
+    const row = screen.getByRole('button', { name: 'Row' });
+    row.focus();
+    h.type(' ');
+    expect(h.commands).toEqual([]);
+    expect(document.activeElement).toBe(row);
+  });
+
+  it('a reader at 100 ms per key: its Enter is not the primary action (M1)', () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    const target = document.activeElement as Element;
+    for (const ch of 'AAAA1111') {
+      h.key(target, { code: codeFor(ch), key: ch, shiftKey: /[A-Z]/.test(ch) });
+      h.clock.advance(100);
+    }
+    h.key(target, { code: 'Enter', key: 'Enter' });
+    expect(h.commands.some((c) => c.c === 'primary')).toBe(false);
+  });
+});
+
+describe('Enter in the field belongs to the person, even after fast keys (L2)', () => {
+  it('opens', () => {
+    const h = setup();
+    stop = h.stop;
+    const input = screen.getByRole('combobox');
+    input.focus();
+    for (const ch of 'mar') {
+      h.key(input, { code: codeFor(ch), key: ch });
+      h.clock.advance(20);
+    }
+    h.key(input, { code: 'Enter', key: 'Enter' });
+    expect(h.commands).toContainEqual({ c: 'open' });
+  });
+});
+
+describe('a fast typist keeps the first letters (80 ms gap)', () => {
+  it('two keys inside the gap that the wedge does not take are replayed into search', () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    const target = document.activeElement as Element;
+    h.key(target, { code: 'KeyM', key: 'm' });
+    h.clock.advance(50);
+    h.key(target, { code: 'KeyA', key: 'a' });
+    h.clock.advance(500);
+    expect(h.commands).toEqual([{ c: 'type', ch: 'ma' }]);
+    expect(h.scans).toEqual([]);
+  });
+
+  it('a scan claims its held keys: nothing is replayed', () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    h.scan('MARA1234');
+    expect(h.commands).toEqual([]);
+  });
+
+  it('a code sent with no terminator is a scan after the idle flush, and is not replayed either', () => {
+    const h = setup();
+    stop = h.stop;
+    screen.getByRole('heading', { name: 'Maya Okafor' }).focus();
+    const target = document.activeElement as Element;
+    for (const ch of '01234567') {
+      h.key(target, { code: codeFor(ch), key: ch });
+      h.clock.advance(5);
+    }
+    h.clock.advance(600);
+    expect(h.scans).toEqual([{ method: 'wedge', code: '01234567' }]);
+    expect(h.commands).toEqual([]);
   });
 });
 
@@ -231,13 +337,13 @@ describe('a person still has the keys (so the guard above is not just a dead lis
     expect(h.commands).toEqual([]);
   });
 
-  it('chords act at once, in the field too', () => {
+  it('chords act at once in the field; ⌘Z leaves the field its own undo while it has text', () => {
     const h = setup();
     stop = h.stop;
     screen.getByRole('combobox').focus();
-    h.key(document.activeElement as Element, { code: 'KeyZ', key: 'z', metaKey: true });
-    h.key(document.activeElement as Element, { code: 'KeyK', key: 'k', metaKey: true });
-    expect(h.commands).toEqual([{ c: 'undo' }, { c: 'focus-search' }]);
+    h.key(document.activeElement as Element, { code: 'KeyZ', key: 'z', ctrlKey: true });
+    h.key(document.activeElement as Element, { code: 'KeyK', key: 'k', ctrlKey: true });
+    expect(h.commands).toEqual([{ c: 'focus-search' }]);
   });
 
   it('a slow reader inside the wedge gap is still a scan, not shortcuts', () => {

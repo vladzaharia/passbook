@@ -39,7 +39,25 @@ export interface KeyInput {
   composing: boolean;
 }
 
+export type Platform = 'mac' | 'win' | 'linux';
+
+export function detectPlatform(): Platform {
+  const p = typeof navigator === 'undefined' ? '' : navigator.platform;
+  return /Mac|iPhone|iPad/.test(p) ? 'mac' : /Linux|X11/.test(p) ? 'linux' : 'win';
+}
+
+/** Shortcut text for this platform: ⌘ is Ctrl off a Mac, ⌥ is Alt (Alt+Shift on Linux, where Alt+digit switches tabs). */
+export function keyLabel(text: string, platform: Platform = detectPlatform()): string {
+  if (platform === 'mac') return text;
+  return text.replace('⌘', 'Ctrl+').replace('⌥', platform === 'linux' ? 'Alt+Shift+' : 'Alt+');
+}
+
 export interface KeyContext {
+  platform: Platform;
+  /** The focused control holds text, so ⌘Z there is its own undo. */
+  textHere: boolean;
+  /** A printable key came in the last 250 ms: an Enter now may be the end of a slow reader's code. */
+  typingRecently: boolean;
   zone: Zone;
   /** The key's target takes Enter itself: a button, link, tab, option or menu item. */
   interactive: boolean;
@@ -74,15 +92,19 @@ export function isPrintable(k: KeyInput): boolean {
 }
 
 function chord(k: KeyInput, c: KeyContext): Resolved | null {
-  const mod = k.ctrl || k.meta;
+  const mod = c.platform === 'mac' ? k.meta : k.ctrl;
+  const stray = c.platform === 'mac' ? k.ctrl : k.meta;
   const letter = k.key.toLowerCase();
+  if (stray) return null;
   if (mod && !k.alt) {
     if (letter === 'k') return now({ c: 'focus-search' });
-    // With nothing to undo the browser keeps ⌘Z, so a text field still undoes its own typing.
-    if (letter === 'z' && !k.shift) return c.undoable ? now({ c: 'undo' }) : null;
+    // A text control keeps its own undo; with nothing to undo the browser keeps ⌘Z too.
+    if (letter === 'z' && !k.shift)
+      return c.undoable && (c.zone === 'record' || !c.textHere) ? now({ c: 'undo' }) : null;
     return null;
   }
-  if (k.alt && !mod) {
+  const alt = k.alt && !mod && (c.platform !== 'linux' || k.shift);
+  if (alt) {
     if (k.code === 'KeyN') return c.walkIn ? now({ c: 'walk-in' }) : null;
     const digit = /^Digit([1-9])$/.exec(k.code);
     const view = digit ? c.views[Number(digit[1]) - 1] : undefined;
@@ -101,8 +123,11 @@ function inField(k: KeyInput, c: KeyContext): Resolved | null {
 
 function inRecord(k: KeyInput, c: KeyContext): Resolved | null {
   if (k.key === 'Escape') return c.record ? now({ c: 'close-record' }) : null;
-  if (k.key === 'Enter') return c.record && !c.interactive ? now({ c: 'primary' }) : null;
+  if (k.key === 'Enter')
+    return c.record && !c.interactive && !c.typingRecently ? now({ c: 'primary' }) : null;
   if (!isPrintable(k)) return null;
+  // Space is a button's key and a page's scroll: never the start of a search.
+  if (k.key === ' ') return null;
   const letter = k.key.toLowerCase();
   if (k.key === '/') return later({ c: 'focus-search' });
   if (k.key === '?') return later({ c: 'help' });
@@ -119,7 +144,7 @@ function inRecord(k: KeyInput, c: KeyContext): Resolved | null {
 export function resolveKey(k: KeyInput, c: KeyContext): Resolved | null {
   if (k.composing) return null;
   const chorded = chord(k, c);
-  if (chorded || k.ctrl || k.meta) return chorded;
+  if (chorded || k.ctrl || k.meta || k.alt) return chorded;
   if (c.zone === 'text') return null;
   return c.zone === 'search' ? inField(k, c) : inRecord(k, c);
 }

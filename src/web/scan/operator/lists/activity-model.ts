@@ -15,7 +15,8 @@ export interface ActivityRowView {
   verdict: string;
   tone: Tone;
   where: string;
-  byName: boolean;
+  /** Entered by hand: a typed code or a picked name; the page cannot tell which. */
+  manual: boolean;
   at: number;
   scanId: string | null;
   passId: string | null;
@@ -65,7 +66,7 @@ export function viewOf(item: ActivityItem): ActivityRowView {
     verdict: verdictOf(item),
     tone: toneOf(item),
     where: item.deviceName,
-    byName: item.method === 'manual',
+    manual: item.method === 'manual',
     at: item.at,
     scanId: item.scanId,
     passId: item.passId,

@@ -18,8 +18,8 @@ import { sessionTime } from '../../ui/session-time.ts';
 
 const R = OPERATOR_COPY.record;
 
-/** Where the record was opened from: a scan, a list row, or a highlighted search hit (a preview). */
-export type Source = 'scan' | 'open' | 'search';
+/** Where the record was opened from: a scan, or a list row or an opened search hit. */
+export type Source = 'scan' | 'open';
 
 export interface Rights {
   role: ScanRole | null;
@@ -62,8 +62,6 @@ export function bandOf(
   source: Source,
   opts: { now: number; desk: boolean; timeZone?: string | undefined },
 ): Band | null {
-  if (source === 'search')
-    return { tone: 'preview', title: R.preview, sub: null, pill: null, at: null };
   if (o.kind === 'ready')
     return source === 'scan'
       ? { tone: 'preview', title: R.choose, sub: null, pill: null, at: null }

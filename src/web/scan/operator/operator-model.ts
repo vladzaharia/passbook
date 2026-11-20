@@ -7,7 +7,7 @@ import type { OperatorView } from './keys.ts';
 
 /** A person's record, whichever list or key opened it. */
 export type RecordRef =
-  | { kind: 'pass'; passId: string; from: 'activity' | 'problems' | 'search' | 'open' }
+  | { kind: 'pass'; passId: string; from: 'activity' | 'problems' | 'search' | 'preview' | 'open' }
   | { kind: 'scan'; scanId: string };
 
 export interface OperatorState {
@@ -37,6 +37,12 @@ export type OperatorEvent =
   | { t: 'clear' }
   | { t: 'help'; open: boolean };
 
+/** Moving to another hit leaves a record opened from search: the new hit is previewed instead. */
+function withHighlight(s: OperatorState, index: number): OperatorState {
+  const fromSearch = s.record?.kind === 'pass' && s.record.from === 'search';
+  return { ...s, highlight: index, record: fromSearch && index !== s.highlight ? null : s.record };
+}
+
 export function reduceOperator(s: OperatorState, e: OperatorEvent): OperatorState {
   switch (e.t) {
     case 'view':
@@ -44,11 +50,11 @@ export function reduceOperator(s: OperatorState, e: OperatorEvent): OperatorStat
     case 'query':
       return { ...s, query: e.q, highlight: e.q.trim() ? s.highlight : -1 };
     case 'highlight':
-      return { ...s, highlight: e.index };
+      return withHighlight(s, e.index);
     case 'move': {
-      if (e.count <= 0) return { ...s, highlight: -1 };
+      if (e.count <= 0) return withHighlight(s, -1);
       const next = s.highlight + e.by;
-      return { ...s, highlight: Math.min(e.count - 1, Math.max(0, next)) };
+      return withHighlight(s, Math.min(e.count - 1, Math.max(0, next)));
     }
     case 'open':
       return { ...s, record: e.ref };

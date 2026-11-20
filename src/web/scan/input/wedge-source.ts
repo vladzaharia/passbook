@@ -27,9 +27,24 @@ export class WedgeFields {
   has(el: Element): boolean {
     return this.setters.has(el);
   }
+  /** A registered field is set by its owner; any other text field is put back through its native setter. */
   restore(el: Element, value: string): void {
-    this.setters.get(el)?.(value);
+    const set = this.setters.get(el);
+    if (set) set(value);
+    else nativeRestore(el, value);
   }
+}
+
+/** A window event after every scan the source takes, for UI that held keys while it could not tell. */
+export const WEDGE_SCAN_EVENT = 'passbook:wedge-scan';
+
+function nativeRestore(el: Element, value: string): void {
+  const proto =
+    el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+  if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+  Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(el, value);
+  // React's controlled inputs hear the restore as an input event.
+  el.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 export interface WedgeSourceDeps {
@@ -62,26 +77,37 @@ function isEditable(el: Element): boolean {
   return el instanceof HTMLElement && el.isContentEditable;
 }
 
+/** A text field the scan app owns but did not register (a PIN or code field): a burst is still a scan. */
+function isTextField(el: Element): boolean {
+  if (el instanceof HTMLInputElement) return !NON_TEXT.has(el.type);
+  return el instanceof HTMLTextAreaElement;
+}
+
 interface Pressed {
+  /** The key came from an input method editor (`Process` or `isComposing`). */
+  composing: boolean;
   key: WedgeKey;
   /** The character came from `event.key` because `event.code` was empty. */
   fallback: string | null;
 }
 
 function toKey(e: KeyboardEvent, t: number): Pressed {
-  if (e.repeat || e.isComposing || e.ctrlKey || e.metaKey || e.altKey)
-    return { key: { k: 'other', t }, fallback: null };
-  if (e.key === 'Shift' || e.key === 'CapsLock') return { key: { k: 'ignore', t }, fallback: null };
+  // An input method editor reports `Process` and `isComposing`: its keys still carry `code`.
+  const composing = e.isComposing || e.key === 'Process';
+  const other = (): Pressed => ({ composing, key: { k: 'other', t }, fallback: null });
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return other();
+  if (e.key === 'Shift' || e.key === 'CapsLock')
+    return { composing, key: { k: 'ignore', t }, fallback: null };
+  // A composing Enter commits the person's composition: it is theirs.
+  if (composing && (e.key === 'Enter' || e.code === 'Enter')) return other();
   if (e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter')
-    return { key: { k: 'end', key: 'Enter', t }, fallback: null };
+    return { composing, key: { k: 'end', key: 'Enter', t }, fallback: null };
   if (e.key === 'Tab' || e.code === 'Tab')
-    return { key: { k: 'end', key: 'Tab', t }, fallback: null };
+    return { composing, key: { k: 'end', key: 'Tab', t }, fallback: null };
   const ch = charOf(e.code, e.shiftKey);
-  if (ch !== null) return { key: { k: 'char', ch, t }, fallback: null };
+  if (ch !== null) return { composing, key: { k: 'char', ch, t }, fallback: null };
   const fb = e.code === '' ? fromKey(e.key) : null;
-  return fb !== null
-    ? { key: { k: 'char', ch: fb, t }, fallback: fb }
-    : { key: { k: 'other', t }, fallback: null };
+  return fb !== null ? { composing, key: { k: 'char', ch: fb, t }, fallback: fb } : other();
 }
 
 export function createWedgeSource(deps: WedgeSourceDeps): InputSource & { badLayout(): number } {
@@ -93,6 +119,7 @@ export function createWedgeSource(deps: WedgeSourceDeps): InputSource & { badLay
   let snapshot = '';
   let fallbackChars: string[] = [];
   let bad = 0;
+  let composed = false;
 
   function detectorFor(): WedgeDetector {
     const next = (deps.config ?? (() => WEDGE_STANDARD))();
@@ -112,6 +139,13 @@ export function createWedgeSource(deps: WedgeSourceDeps): InputSource & { badLay
       deps.onBadLayout?.(0);
     }
     fallbackChars = [];
+    // A scan typed through an IME leaves a composition open in the field: end it.
+    if (field && composed) {
+      field.blur();
+      field.focus();
+    }
+    composed = false;
+    win.dispatchEvent(new Event(WEDGE_SCAN_EVENT));
     emit({ method: 'wedge', code: verdict.code });
   }
 
@@ -129,15 +163,18 @@ export function createWedgeSource(deps: WedgeSourceDeps): InputSource & { badLay
     const onKeydown = (e: KeyboardEvent) => {
       const target = e.target instanceof Element ? e.target : document.body;
       const registered = deps.fields.has(target);
-      if (isEditable(target) && !registered) return;
+      // A select or an editable region we do not own keeps its keys; any text field of the app is scan-aware.
+      if (isEditable(target) && !registered && !isTextField(target)) return;
       const det = detectorFor();
       const t = deps.clock.now();
       const pressed = toKey(e, t);
       if (pressed.key.k === 'char' && det.startsBuffer(t)) {
-        field = registered ? (target as Field) : null;
+        field = registered || isTextField(target) ? (target as Field) : null;
         snapshot = field ? field.value : '';
         fallbackChars = [];
+        composed = false;
       }
+      if (pressed.composing) composed = true;
       if (pressed.fallback !== null) fallbackChars.push(pressed.fallback);
       const verdict = det.push(pressed.key);
       if (pressed.key.k === 'char') arm();

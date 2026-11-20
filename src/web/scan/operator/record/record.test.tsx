@@ -138,6 +138,49 @@ describe('the operator record for a scan', () => {
     expect(screen.queryByTestId('scan-action-let-in')).toBeNull();
   });
 
+  it('runs Open pass and Look up on a refusal', () => {
+    const c = ctx();
+    render(
+      <RecordScan
+        ctx={c}
+        passId={PASS}
+        desk={desk}
+        outcome={fixtureOutcome('refused', 'guest_visits_used', {
+          card: fixtureCard({ title: 'Leo Park' }),
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open pass' }));
+    expect(c.showPass).toHaveBeenCalledWith(PASS);
+    fireEvent.click(screen.getByRole('button', { name: 'Look up' }));
+    expect(c.lookUp).toHaveBeenCalled();
+    expect(screen.getByText('Ask them to renew.')).toBeInTheDocument();
+  });
+
+  it('lists each family member when the bundle carries them', () => {
+    const bundleWith = {
+      ...bundle,
+      size: 2,
+      members: [
+        { initials: 'MO', checkedIn: true },
+        { initials: 'CO', checkedIn: false },
+      ],
+    };
+    render(
+      <RecordScan
+        ctx={ctx()}
+        passId={PASS}
+        desk={desk}
+        outcome={fixtureOutcome('ok', null, {
+          action: checkIn,
+          bundle: bundleWith as typeof bundle,
+        })}
+      />,
+    );
+    expect(screen.getByTestId('op-family')).toHaveTextContent('MO');
+    expect(screen.getByTestId('op-family')).toHaveTextContent('Out');
+  });
+
   it('shows Undo only when this device may undo this scan', () => {
     const undo = vi.fn();
     render(

@@ -3,7 +3,6 @@ import type { Json } from '../../shared/contracts/common.ts';
 import type { ScanDisplay } from '../../shared/contracts/scan-display.ts';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import {
-  FIXTURE_NOW,
   fixtureCard,
   fixtureDisplay,
   fixtureInput,
@@ -16,6 +15,10 @@ import { VISUAL_PASS_JSON } from './visual-pass-fixtures.test-support.ts';
 
 export const RECORD_CASES = ['ok', 'manager', 'family', 'photo', 'viewonly'] as const;
 
+/** One clock for the gallery: the lists, the record and the machine all read it. */
+export const GALLERY_NOW = Date.now();
+const NOW = GALLERY_NOW;
+const MIN = 60_000;
 const ID = '01900000-0000-7000-8000-000000000001';
 const ZONE = { kind: 'zone' as const, id: ID, name: 'Gym floor' };
 const OCC = (state: 'in' | 'out') => ({
@@ -23,7 +26,7 @@ const OCC = (state: 'in' | 'out') => ({
   direction: state,
   auto: false,
   state,
-  since: FIXTURE_NOW - 5 * 60_000,
+  since: NOW - (state === 'in' ? 1 : 80) * MIN,
   via: 'Front desk',
   stayMs: null,
   inNow: 42,
@@ -99,17 +102,17 @@ const verdict = (outcome: ScanOutcome, recent = false): ScanState => {
     input: fixtureInput({ passId: ID }),
     card: null,
     outcome,
-    since: FIXTURE_NOW,
+    since: NOW,
     closeAt: null,
     settleAt: null,
-    openFrom: FIXTURE_NOW + SCAN_TIMING.NEXT_SCAN_AFTER_VERDICT,
+    openFrom: NOW + SCAN_TIMING.NEXT_SCAN_AFTER_VERDICT,
     next: null,
   };
   return fixtureState({
     loop,
     posture: 'desk',
     card: { phase: 'up', id: ID, kind: 'result' },
-    recent: recent ? [{ scanId: ID, at: FIXTURE_NOW, outcome, undoable: true }] : [],
+    recent: recent ? [{ scanId: ID, at: NOW, outcome, undoable: true }] : [],
   });
 };
 
@@ -120,10 +123,69 @@ export const PASS_VIEW = {
   assetNames: [],
 };
 const checkIn = { id: 'check_in', label: 'Check in', kind: 'check_in' as const };
-const bundle = { id: ID, name: 'Okafor family', size: 3, checkedIn: 1 };
+const bundle = { id: ID, name: 'Okafor family', size: 5, checkedIn: 3 };
+/** What `ScanBundleSchema.members` will carry: initials and whether each is in. */
+const FAMILY = [
+  { initials: 'MO', checkedIn: true },
+  { initials: 'KO', checkedIn: true },
+  { initials: 'AO', checkedIn: true },
+  { initials: 'CO', checkedIn: false },
+  { initials: 'NO', checkedIn: false, refusedReason: 'guest_visits_used' },
+];
+
+/** Leo Park, a guest with no visits left, three minutes ago: the same person as the Activity row. */
+function leo(screen: ScanDisplay['screen']): ScanDisplay {
+  const d = maya({}, screen);
+  return {
+    ...d,
+    identity: { holder: 'Leo Park', initials: 'LP', photo: null },
+    header: {
+      ...d.header,
+      title: 'Leo Park',
+      meta: 'Guest of Maya Okafor',
+      chips: [{ id: 'g', text: 'Guest', tone: 'violet', icon: null }],
+    },
+  };
+}
+
+function denied(
+  reason: 'guest_visits_used' | 'needs_approval',
+  visits: { used: number; limit: number },
+  over: Partial<ScanOutcome> = {},
+): ScanOutcome {
+  return fixtureOutcome('refused', reason, {
+    display: leo('refused'),
+    occupancy: OCC('out'),
+    card: fixtureCard({
+      title: 'Leo Park',
+      validUntil: NOW + 9 * 86_400_000,
+      passView: PASS_VIEW,
+      actions: [],
+    }),
+    previous: {
+      scanId: ID,
+      at: NOW - 95 * MIN,
+      scannerName: 'Turnstile A',
+      staffName: null,
+      actionLabel: 'Check in',
+      override: false,
+    },
+    access: {
+      plan: { id: 'g', label: 'Guest pass', kind: 'guest' },
+      zone: null,
+      closesAt: null,
+      nextOpenAt: null,
+      visits,
+      visit: false,
+      timeZone: 'America/New_York',
+    },
+    at: NOW - 3 * MIN,
+    ...over,
+  });
+}
 
 export function recordState(scenario: string): ScanState | null {
-  const at = FIXTURE_NOW;
+  const at = NOW - MIN;
   switch (scenario) {
     case 'ok':
       return verdict(
@@ -138,39 +200,21 @@ export function recordState(scenario: string): ScanState | null {
         true,
       );
     case 'refusal':
-      return verdict(
-        fixtureOutcome('refused', 'guest_visits_used', {
-          display: maya({}, 'refused'),
-          occupancy: OCC('out'),
-          access: {
-            plan: { id: 'g', label: 'Guest pass', kind: 'guest' },
-            zone: null,
-            closesAt: null,
-            nextOpenAt: null,
-            visits: { used: 1, limit: 1 },
-            visit: false,
-            timeZone: 'UTC',
-          },
-          at,
-        }),
-      );
+      return verdict(denied('guest_visits_used', { used: 1, limit: 1 }));
     case 'manager':
       return verdict(
-        fixtureOutcome('refused', 'needs_approval', {
-          action: checkIn,
-          approvals: true,
-          overridable: true,
-          display: maya({}, 'refused'),
-          occupancy: OCC('out'),
-          at,
-        }),
+        denied(
+          'needs_approval',
+          { used: 1, limit: 1 },
+          { action: checkIn, approvals: true, overridable: true },
+        ),
       );
     case 'family':
       return verdict(
         fixtureOutcome('ok', null, {
           action: checkIn,
           at,
-          bundle,
+          bundle: { ...bundle, members: FAMILY } as typeof bundle,
           occupancy: OCC('in'),
           display: maya(),
           undoUntil: Date.now() + 600_000,
@@ -199,7 +243,7 @@ export function recordState(scenario: string): ScanState | null {
             door: { state: 'out' },
             passView: PASS_VIEW,
           }),
-          since: FIXTURE_NOW,
+          since: NOW,
           band: null,
           picker: null,
           held: null,

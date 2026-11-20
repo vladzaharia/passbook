@@ -4,16 +4,17 @@ import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { WedgeFieldsContext } from './input/wedge-field.tsx';
-import { WedgeFields } from './input/wedge-source.ts';
+import { createWedgeSource, WedgeFields } from './input/wedge-source.ts';
 import { fixtureCounts, fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import { states } from './machine/fixtures.test-support.ts';
-import { fakeDeps } from './machine/store.test-support.ts';
+import { fakeClock, fakeDeps } from './machine/store.test-support.ts';
 import { createScanStore } from './machine/store.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorWorkspace } from './operator/workspace/workspace.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
 import { ReaderChip } from './ui/chips.tsx';
 import {
+  GALLERY_NOW,
   mara,
   PASS_VIEW,
   RECORD_CASES,
@@ -33,7 +34,7 @@ export const OPERATOR_CASES = [
 export type OperatorCase = (typeof OPERATOR_CASES)[number];
 
 const ID = '01900000-0000-7000-8000-000000000001';
-const NOW = Date.now();
+const NOW = GALLERY_NOW;
 const MIN = 60_000;
 type Row = {
   name: string | null;
@@ -195,12 +196,29 @@ export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
   const session = useMemo(() => recordSession(sessionOf(), scenario), [scenario]);
   const api = useMemo(() => apiFor(scenario === 'empty' ? [] : ROWS), [scenario]);
   const store = useMemo(
-    () => createScanStore(fakeDeps().deps, recordState(scenario) ?? states.ready()),
+    () =>
+      createScanStore(
+        fakeDeps(fakeClock(GALLERY_NOW)).deps,
+        recordState(scenario) ?? states.ready(),
+      ),
     [scenario],
   );
   const fields = useMemo(() => new WedgeFields(), []);
   const runtime = useMemo(
     () => ({ emit: () => undefined, checkIn: () => undefined, fields }) as unknown as ScanRuntime,
+    [fields],
+  );
+  // The real wedge source, so a reader's burst is a scan here as it is on a device.
+  useEffect(
+    () =>
+      createWedgeSource({
+        fields,
+        clock: {
+          now: () => Date.now(),
+          setTimeout: (fn, ms) => window.setTimeout(fn, ms),
+          clearTimeout: (handle) => window.clearTimeout(handle as number),
+        },
+      }).start(() => undefined),
     [fields],
   );
   useEffect(() => {

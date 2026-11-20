@@ -6,7 +6,7 @@ import { Buddy } from '../../../ui/art/buddy.tsx';
 import { Button } from '../../../ui/button.tsx';
 import { CountUp } from '../../../ui/count-up.tsx';
 import { sessionTime } from '../../ui/session-time.ts';
-import type { ShortcutRow } from '../keys.ts';
+import { keyLabel, type ShortcutRow } from '../keys.ts';
 import { type ActivityItem, nameOf, toneOf, verdictOf, viewOf } from '../lists/activity-model.ts';
 import { PersonAvatar } from '../lists/person-avatar.tsx';
 import { Kbd } from './command-field.tsx';
@@ -163,7 +163,7 @@ export function IdleView({
         {keys.map((row) => (
           <span key={row.id}>
             {row.keys.map((key) => (
-              <Kbd key={key}>{key}</Kbd>
+              <Kbd key={key}>{keyLabel(key)}</Kbd>
             ))}{' '}
             {row.label}
           </span>

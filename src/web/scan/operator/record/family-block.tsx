@@ -30,7 +30,7 @@ function Members({ members }: { members: BundleMember[] }) {
       {members.map((m, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: members have no id on the wire
         <li key={i} data-in={m.checkedIn || undefined}>
-          <PersonAvatar name={m.initials} initials={m.initials} />
+          <PersonAvatar name={m.initials} initials={m.initials || '–'} />
           <span className="op-family-state">
             {m.checkedIn
               ? SCAN_GROUP_COPY.state.done

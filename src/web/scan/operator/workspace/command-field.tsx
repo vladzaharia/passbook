@@ -44,7 +44,7 @@ export function CommandField({
           role="combobox"
           aria-label={C.field.label}
           aria-expanded={searching}
-          aria-controls={RESULT_LIST_ID}
+          aria-controls={searching ? RESULT_LIST_ID : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeId}
           aria-keyshortcuts="/ Meta+K Control+K"

@@ -36,6 +36,7 @@ export const resultsLine = (n: number) =>
 export function SearchResults({
   result,
   busy,
+  missed = false,
   highlight,
   hint,
   error,
@@ -45,6 +46,8 @@ export function SearchResults({
 }: {
   result: SearchResult | null;
   busy: boolean;
+  /** Enter on a code or name found nothing to open. */
+  missed?: boolean;
   highlight: number;
   hint: string | null;
   error: string;
@@ -110,7 +113,7 @@ export function SearchResults({
             );
           })}
         </div>
-        {result && !items.length && !busy ? (
+        {(missed || (result && !items.length)) && !busy ? (
           <div className="op-empty">
             <Search aria-hidden />
             <p className="op-empty-title">{S.none}</p>

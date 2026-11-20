@@ -32,7 +32,7 @@ export const OPERATOR_COPY = {
     empty: 'Check-ins appear here.',
     unavailable: 'Activity unavailable. Retrying.',
     unknown: 'Unknown code',
-    byName: 'by name',
+    manual: 'manual',
     letInBy: 'Let in by {staff}',
     undoneBy: 'Undone by {staff}',
     undone: 'Undone',
@@ -137,7 +137,7 @@ export const OPERATOR_COPY = {
     viewOnly: "View only. This scanner can't change this pass.",
     usesVisit: 'Uses 1 visit. {left} left after this.',
     usesLast: 'Uses 1 visit. None left after this.',
-    needsManager: 'Needs a manager.',
+    needsManager: 'A manager can approve this entry.',
     openPass: 'Open pass',
     lookUp: 'Look up',
     facts: {

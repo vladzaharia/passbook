@@ -1,5 +1,62 @@
 /* The record's pass, family and the PIN dialog. */
 /* body */
+.op-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--op-inset);
+}
+.op-facts dt {
+  color: var(--op-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+.op-facts dd {
+  margin: 0;
+  color: var(--pk-text-strong);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+.op-family-members {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.op-family-members li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--op-line);
+  border-radius: 10px;
+}
+.op-family-members .op-av {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+}
+.op-family-state {
+  margin-inline-start: auto;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--op-chip);
+  color: var(--op-chip-fg);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 22px;
+}
+.op-family-members li[data-in] .op-family-state {
+  background: var(--pk-success-subtle);
+  color: var(--pk-success);
+}
+
 .op-rec-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

@@ -9,6 +9,7 @@ import type { Loop, ScanOutcome } from '../../machine/types.ts';
 import type { ScanRuntime } from '../../platform/runtime.ts';
 import type { Command } from '../keys.ts';
 import type { RecordRef } from '../operator-model.ts';
+import { focusHeading } from '../workspace/focus.ts';
 import { type PinDesk, PinDialog } from './pin-dialog.tsx';
 import { RecordActions } from './record-actions.tsx';
 import { RecordBand } from './record-band.tsx';
@@ -234,8 +235,12 @@ export function RecordPass({
   ctx: RecordContext;
   record: Extract<RecordRef, { kind: 'pass' }>;
 }) {
-  const preview = record.from === 'search';
-  const { outcome, failed } = useResolved(ctx.api, record.passId, preview ? 140 : 0);
+  const { outcome, failed } = useResolved(ctx.api, record.passId, 0);
+  // The heading exists once the pass has loaded; focus waiting on the pane goes there.
+  const loaded = outcome !== null;
+  useEffect(() => {
+    if (loaded && document.activeElement?.hasAttribute('data-operator-record')) focusHeading();
+  }, [loaded]);
   if (failed)
     return (
       <article className="op-rec" data-testid="op-record">
@@ -255,12 +260,5 @@ export function RecordPass({
         </p>
       </article>
     );
-  return (
-    <RecordView
-      ctx={ctx}
-      outcome={outcome}
-      source={preview ? 'search' : 'open'}
-      passId={record.passId}
-    />
-  );
+  return <RecordView ctx={ctx} outcome={outcome} source="open" passId={record.passId} />;
 }

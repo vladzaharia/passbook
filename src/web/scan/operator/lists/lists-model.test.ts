@@ -47,7 +47,7 @@ describe('activity rows', () => {
   it('marks a row undoable only with a scan to undo', () => {
     expect(viewOf(item({ undoable: true })).undoable).toBe(true);
     expect(viewOf(item({ undoable: true, scanId: null })).undoable).toBe(false);
-    expect(viewOf(item({ method: 'manual' })).byName).toBe(true);
+    expect(viewOf(item({ method: 'manual' })).manual).toBe(true);
   });
 });
 

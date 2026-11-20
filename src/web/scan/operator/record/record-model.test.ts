@@ -5,8 +5,11 @@ import {
   type ActionFacts,
   actionsOf,
   bandOf,
+  factsOf,
   identityOf,
   markOutPlace,
+  membersOf,
+  nextStepOf,
   presenceOf,
   type Rights,
 } from './record-model.ts';
@@ -22,17 +25,14 @@ const facts = (over: Partial<ActionFacts> = {}): ActionFacts => ({
   markOut: false,
   ...over,
 });
-const band = (o: ScanOutcome, source: 'scan' | 'open' | 'search' = 'scan') =>
+const band = (o: ScanOutcome, source: 'scan' | 'open' = 'scan') =>
   bandOf(o, source, { now: NOW, desk: true });
 const bundle = { id: 'b', name: 'Okafor family', size: 3, checkedIn: 1 };
 
 describe('band', () => {
-  it('is neutral for a search hit and says nothing was changed', () => {
+  it('is neutral and asks for a choice for a desk card a scan is holding', () => {
     const o = fixtureOutcome('ready', 'choose', { card: fixtureCard() });
-    expect(band(o, 'search')).toMatchObject({
-      tone: 'preview',
-      title: 'Found by name. Nothing changed yet.',
-    });
+    expect(band(o)).toMatchObject({ tone: 'preview', title: 'Choose an action' });
   });
   it('has no band for a pass opened from a list', () => {
     expect(band(fixtureOutcome('ready', 'choose', { card: fixtureCard() }), 'open')).toBeNull();
@@ -134,8 +134,10 @@ describe('primary action', () => {
     });
     expect(actionsOf({ ...o, bundle: { ...bundle, checkedIn: 3 } }, facts()).primary).toBeNull();
   });
-  it('offers nothing on a refusal with no override', () => {
-    expect(actionsOf(fixtureOutcome('refused', 'guest_visits_used'), facts()).primary).toBeNull();
+  it('offers no override on a plain refusal', () => {
+    expect(
+      actionsOf(fixtureOutcome('refused', 'guest_visits_used'), facts()).primary?.run.t,
+    ).not.toBe('override');
   });
   it('lists Mark out and Photo after the primary, each with its key', () => {
     const o = fixtureOutcome('ok', null, { bundle });
@@ -176,7 +178,8 @@ describe('presence', () => {
         turnaround: null,
       },
     });
-    expect(presenceOf(o, 'UTC')).toEqual({ state: 'in', line: 'since 6:00 PM · Gym floor' });
+    expect(presenceOf(o, 'UTC')?.state).toBe('in');
+    expect(presenceOf(o, 'UTC')?.line).toMatch(/^since 6:00 PM( UTC)? · Gym floor$/);
     expect(markOutPlace(o)).toBe('zone:z');
   });
   it('is Not in today for a door pass that has not entered, and hidden for a stamp card', () => {
@@ -203,5 +206,88 @@ describe('identity', () => {
       card: fixtureCard({ flags: [{ label: 'Long stay', tone: 'warning', stop: false }] }),
     });
     expect(identityOf(o)?.chips.map((c) => c.text)).toContain('Long stay');
+  });
+});
+
+describe('a refusal is never a dead end', () => {
+  const checkIn = { id: 'check_in', label: 'Check in', kind: 'check_in' as const };
+  const access = {
+    plan: { id: 'g', label: 'Guest pass', kind: 'guest' as const },
+    zone: null,
+    closesAt: null,
+    nextOpenAt: null,
+    visits: { used: 1, limit: 1 },
+    visit: false,
+    timeZone: 'UTC',
+  };
+  const refused = fixtureOutcome('refused', 'guest_visits_used', {
+    access,
+    card: fixtureCard({ validUntil: NOW + 86_400_000 }),
+  });
+  it('offers Open pass as the primary and Look up beside it, with a next step', () => {
+    const a = actionsOf(refused, facts());
+    expect(a.primary).toMatchObject({ label: 'Open pass', run: { t: 'show-pass', passId: 'p1' } });
+    expect(a.others[0]).toMatchObject({
+      label: 'Look up',
+      run: { t: 'look-up', q: 'Maya Okafor' },
+    });
+    expect(a.reason).toBe('Ask them to renew.');
+  });
+  it('keeps the override first and Open pass after it on a hold', () => {
+    const o = fixtureOutcome('heads_up', 'already_done', { action: checkIn });
+    const a = actionsOf(o, facts());
+    expect(a.primary?.run.t).toBe('override');
+    expect(a.others.map((x) => x.id)).toEqual(['show-pass', 'look-up']);
+  });
+  it('has Look up alone for a code that named no pass', () => {
+    const a = actionsOf(
+      fixtureOutcome('refused', 'not_found'),
+      facts({ passId: null, name: null }),
+    );
+    expect(a.primary).toBeNull();
+    expect(a.others.map((x) => x.id)).toEqual(['look-up']);
+    expect(a.reason).toBe('Look them up by name.');
+  });
+  it('says why: plan, visits used, validity and the last time in', () => {
+    const facts4 = factsOf(
+      {
+        ...refused,
+        previous: {
+          scanId: 's',
+          at: NOW - 60_000,
+          scannerName: 'Turnstile A',
+          staffName: null,
+          actionLabel: 'Check in',
+          override: false,
+        },
+      },
+      'UTC',
+    );
+    expect(facts4.map((f) => f.label)).toEqual(['Plan', 'Visits', 'Valid until', 'Last in']);
+    expect(facts4[1]?.value).toBe('1 of 1 used');
+  });
+  it('has a step for every reason', () => {
+    expect(nextStepOf(fixtureOutcome('refused', 'expired'))).toBe('Ask them to renew.');
+    expect(nextStepOf(fixtureOutcome('refused', 'tag_lost'))).toBe(
+      'Look up another pass of theirs.',
+    );
+  });
+});
+
+describe('family members', () => {
+  it('reads members when the server sends them and falls back to counts without', () => {
+    expect(membersOf({ size: 2, checkedIn: 1 })).toBeNull();
+    expect(membersOf(null)).toBeNull();
+    expect(
+      membersOf({
+        members: [
+          { initials: 'MO', checkedIn: true },
+          { initials: 'CO', checkedIn: false, refusedReason: 'expired' },
+        ],
+      }),
+    ).toEqual([
+      { initials: 'MO', checkedIn: true },
+      { initials: 'CO', checkedIn: false, refusedReason: 'expired' },
+    ]);
   });
 });

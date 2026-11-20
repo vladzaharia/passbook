@@ -19,7 +19,7 @@ import {
   withSessionRow,
 } from './repo-read-authority.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
-import { activitySelector } from './repo-session-activity.ts';
+import { activitySelector, PROBLEMS_WINDOW_MS } from './repo-session-activity.ts';
 import { isPasslessReason } from './scan-passless.ts';
 import { resolveSessionScope, type SessionReadAuthority } from './scanning-session-dto.ts';
 import { scanSessionCountAuthority } from './scanning-workspace.ts';
@@ -59,6 +59,8 @@ export async function scanningSessionActivity(
   consoleView = false,
   /** The viewing device: its own scans, inside the undo window, are `undoable`. */
   viewer: { actorKey: string } | null = null,
+  /** The problems page: refusals and holds of the last window. */
+  problems = false,
 ) {
   if (
     !authority ||
@@ -70,9 +72,9 @@ export async function scanningSessionActivity(
     return null;
   const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
   if (!(await resolveSessionScope(ctx, row)).valid) return null;
-  const selector = activitySelector(row);
-  if (!selector) return null;
   const now = ctx.clock.now();
+  const selector = activitySelector(row, problems ? now - PROBLEMS_WINDOW_MS : undefined);
+  if (!selector) return null;
   const undoMs = viewer ? (await undoWindowMinutes(ctx)) * 60_000 : 0;
   const auth = withSessionRow(authority.at(now), row);
   const page = await readHistoryPage(
@@ -108,8 +110,14 @@ export async function scanningSessionActivity(
       direction:
         policy && policy.action(scan.actionId, scan.actionKind) !== null ? scan.direction : null,
       scanId: policy ? scan.id : null,
-      reason: reasonOf(scan, policy !== null),
-      staff: policy && role !== 'door' ? scan.staffName : null,
+      reason: reasonOf(
+        scan,
+        policy !== null && policy.action(scan.actionId, scan.actionKind) !== null,
+      ),
+      staff:
+        policy && role !== 'door' && scan.staffName !== null && policy.valueSafe(scan.staffName)
+          ? scan.staffName
+          : null,
       method: policy ? scan.method : null,
       undoable:
         viewer !== null &&
@@ -125,7 +133,11 @@ export async function scanningSessionActivity(
 }
 
 /** Device activity under the device's own fence; an invalid scope is configuration, not credential. */
-export async function sessionActivityFor(context: ServiceContext, sourceActor: ScanActor) {
+export async function sessionActivityFor(
+  context: ServiceContext,
+  sourceActor: ScanActor,
+  problems = false,
+) {
   const ctx = { ...context, env: snapshotCredentialEnv(context.env) };
   const actor = cloneObservedScanActor(sourceActor);
   const observed = actor.scanningSession ? captureObservedScanningSession(actor) : null;
@@ -145,6 +157,7 @@ export async function sessionActivityFor(context: ServiceContext, sourceActor: S
     actor.role,
     false,
     { actorKey: actor.actorKey },
+    problems,
   );
   if (rows === null) throw await staleScanRead(ctx, sourceActor);
   return {

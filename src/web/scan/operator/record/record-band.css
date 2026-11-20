@@ -9,19 +9,19 @@
   background: var(--band);
   color: var(--band-on);
 }
-.op-band[data-tone="ok"] {
+.op-rec[data-tone="ok"] {
   --band: var(--scan-ok);
   --band-on: var(--scan-ok-on);
 }
-.op-band[data-tone="hu"] {
+.op-rec[data-tone="hu"] {
   --band: var(--scan-heads);
   --band-on: var(--scan-heads-on);
 }
-.op-band[data-tone="no"] {
+.op-rec[data-tone="no"] {
   --band: var(--scan-refused);
   --band-on: var(--scan-refused-on);
 }
-.op-band[data-tone="sys"] {
+.op-rec[data-tone="sys"] {
   --band: var(--scan-system);
   --band-on: var(--scan-system-on);
 }
@@ -122,4 +122,40 @@
   border-color: color-mix(in oklab, currentColor 40%, transparent);
   box-shadow: none;
   color: inherit;
+}
+
+/* Flood, then settle: the card takes the verdict's wash for a beat and clears to the band. */
+@media (prefers-reduced-motion: no-preference) {
+  .op-rec[data-source="scan"][data-tone]:not([data-tone="preview"])::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--band);
+    pointer-events: none;
+    animation: op-flood 1200ms var(--pk-ease-out, ease-out) both;
+  }
+  .op-band {
+    position: relative;
+    z-index: 2;
+  }
+  @keyframes op-flood {
+    0%,
+    40% {
+      opacity: 0.92;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .op-band {
+    animation: op-band-fade 150ms ease-out;
+  }
+  @keyframes op-band-fade {
+    from {
+      opacity: 0;
+    }
+  }
 }

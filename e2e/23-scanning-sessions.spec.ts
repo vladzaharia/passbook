@@ -82,11 +82,10 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     const phone = await pair(second.pairing.code, 390);
     await desk.getByTestId('scan-start').click();
     await phone.getByTestId('scan-start').click();
-    for (const scanner of [desk, phone]) {
-      await scanner.getByRole('button', { name: 'Menu', exact: true }).click();
-      await scanner.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
-      await scanner.keyboard.press('Escape');
-    }
+    // The operator holds results from the start; only the phone needs the switch.
+    await phone.getByRole('button', { name: 'Menu', exact: true }).click();
+    await phone.getByRole('menuitemcheckbox', { name: 'Keep results until tapped' }).click();
+    await phone.keyboard.press('Escape');
     await expect(desk.getByTestId('operator-workspace')).toBeVisible();
     await expect(customer.getByTestId('duo-customer-display')).toHaveAttribute(
       'data-status',

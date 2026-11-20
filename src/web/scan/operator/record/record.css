@@ -1,9 +1,19 @@
 /* The person record: band, identity, actions, then the pass and the family. */
+.op-rec-wrap {
+  position: relative;
+  max-width: 980px;
+  margin: 14px auto 0;
+}
+.op-buddy {
+  --wl-buddy-inset: 150px;
+}
+body:has([role="dialog"][data-state="open"]) .op-buddy {
+  visibility: hidden;
+}
 .op-rec {
   --band: var(--op-inset);
+  position: relative;
   --band-on: var(--op-muted);
-  max-width: 980px;
-  margin: 0 auto;
   overflow: hidden;
   border: 1px solid var(--op-line);
   border-radius: 16px;
