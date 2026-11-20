@@ -21,7 +21,7 @@ import { whosInList } from './inside-list.ts';
 import { type InsideScope, zoneScope } from './inside-scope.ts';
 import { signMarkOut } from './mark-out-retention.ts';
 import { eventPlaceRead, passTitlesRead, presenceRead } from './repo-inside.ts';
-import { type MarkOutScan, markOutScan } from './repo-mark-out.ts';
+import { type MarkOutScan, markOutEffect, markOutScan } from './repo-mark-out.ts';
 import { runReads } from './repo-reads.ts';
 import { exitAsGiven, liveIn } from './rules.ts';
 import { addExit } from './service.ts';
@@ -170,10 +170,13 @@ export async function consoleMarkOut(
       direction: 'out',
     },
   );
-  const { event, retention } = await signMarkOut(ctx.env, ledger, scanRow, {
-    kind: 'console',
-    purpose: 'org_mode.scan.mark_out',
-  });
+  const { event, retention } = await signMarkOut(
+    ctx.env,
+    ledger,
+    scanRow,
+    { kind: 'console', purpose: 'org_mode.scan.mark_out' },
+    await markOutEffect(ctx.env.DB, scanRow, orgId),
+  );
   const g = grant(ctx, {
     purpose: 'org_mode.scan.mark_out',
     principal: adminPrincipal(authority),

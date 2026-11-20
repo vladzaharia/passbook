@@ -1,6 +1,7 @@
 // Mark as out (SA §20.9): the exit's scans row, written in the exit's own batch and only if the exit won.
 import type { Grant, GrantedStatement } from '../../../platform/authority.ts';
 import type { GrantCond } from '../../../platform/authority-cond.ts';
+import { first } from '../../../platform/db.ts';
 
 export interface MarkOutScan {
   id: string;
@@ -73,4 +74,53 @@ export function markOutScan(g: Grant, s: MarkOutScan, when: GrantCond[]): Grante
     ],
     { doNothing: true, when, returning: ['id'] },
   );
+}
+
+/** The presence row an exit at an event place writes, for the proof that follows the pass past its deletion. */
+export interface MarkOutEffect {
+  presenceAfter: Record<string, string | number | null>;
+}
+
+interface Held {
+  state: string;
+  tracking: number;
+  enteredAt: number | null;
+  firstAt: number;
+  lastEntryAt: number;
+  lastScanId: string;
+}
+
+/** The presence row the exit writes, from the row the desk read. Null unless the place is an event with a row. */
+export async function markOutEffect(
+  db: D1Database,
+  s: Pick<MarkOutScan, 'id' | 'passId' | 'place'>,
+  orgId: string,
+): Promise<MarkOutEffect | null> {
+  if (!s.place.startsWith('event:')) return null;
+  const held = await first<Held>(
+    db,
+    `SELECT state, tracking, entered_at AS enteredAt, first_at AS firstAt, last_entry_at AS lastEntryAt,
+       last_scan_id AS lastScanId FROM scan_presence WHERE org_id = ? AND pass_id = ? AND scope = ?`,
+    [orgId, s.passId, s.place],
+  );
+  if (!held) return null;
+  return {
+    presenceAfter: {
+      passId: s.passId,
+      orgId,
+      scope: s.place,
+      state: 'out',
+      tracking: held.tracking,
+      enteredAt: null,
+      firstAt: held.firstAt,
+      lastEntryAt: held.lastEntryAt,
+      lastScanId: s.id,
+      prevState: held.state,
+      prevTracking: held.tracking,
+      prevEnteredAt: held.enteredAt,
+      prevFirstAt: held.firstAt,
+      prevLastEntryAt: held.lastEntryAt,
+      prevScanId: held.lastScanId,
+    },
+  };
 }
