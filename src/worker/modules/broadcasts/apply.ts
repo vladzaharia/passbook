@@ -149,8 +149,8 @@ async function applyOne(
       const written = await hasVersionFrom(ctx.env.DB, passId, source, row.started_at ?? 0);
       return { ...base, outcome: written ? 'updated' : 'unchanged' };
     }
-    // Google and Samsung copies count against their own limits, apart from Apple's.
-    const budget =
+    // Google and Samsung copies have their own limits, apart from Apple's; nothing is sent to them yet.
+    const providers =
       notify && !result.silenced ? budgetOutcomes(await providerBudgets(ctx, result.pass)) : null;
     await recordPassEvent(ctx, {
       orgId: row.org_id,
@@ -162,7 +162,7 @@ async function applyOne(
         broadcastId: row.id,
         notified: notify && !result.silenced,
         overBudget: !!result.silenced,
-        ...(budget ? { budget } : {}),
+        ...(providers ? { providers } : {}),
       },
     });
     return { ...base, outcome: 'updated', silent: !!result.silenced };

@@ -133,10 +133,19 @@ export async function deliverBundleEmail(
       title: pass.displayTitle ?? pass.serial,
       detail: details[i] ?? null,
       addUrl: addable(pass) && appleOn[i] ? `${page}/${pass.id}/pass.pkpass` : null,
-      wallets: (wallets[i] ?? []).map((provider) => ({
-        label: NATIVE_WALLET_BADGES[provider].label,
-        url: `${base}${bundleWalletHref(bundleToken, pass.id, provider)}`,
-      })),
+      wallets: (wallets[i] ?? []).map((provider) => {
+        const badge = NATIVE_WALLET_BADGES[provider];
+        // Same size rule as the pass email, scaled to a row: 30 px tall, proportional.
+        return {
+          label: badge.label,
+          url: `${base}${bundleWalletHref(bundleToken, pass.id, provider)}`,
+          badge: {
+            url: emailAssetUrl(base, badge.emailPath),
+            width: Math.round((badge.width * 30) / badge.height),
+            height: 30,
+          },
+        };
+      }),
       ...(addable(pass) && !appleOn[i] ? { off: true } : {}),
     })),
     iconUrl,

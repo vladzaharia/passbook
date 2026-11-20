@@ -3,7 +3,10 @@ import type { createApp as CreateApp } from '../../app.ts';
 import { all, run } from '../../platform/db.ts';
 import type { runBroadcast as RunBroadcast } from '../../workflows/broadcast.ts';
 import type { getPass as GetPass } from '../passes/repo-read-pass.ts';
-import type { providerBudgets as ProviderBudgets } from '../wallet-providers/notify-budget.ts';
+import type {
+  budgetOutcomes as BudgetOutcomes,
+  providerBudgets as ProviderBudgets,
+} from '../wallet-providers/notify-budget.ts';
 import type { BroadcastAuth, BroadcastKit, broadcastKit as MakeKit } from './test-kit.ts';
 
 // Google and Samsung copies are stubbed as live; the provider runtime itself is tested elsewhere.
@@ -12,12 +15,19 @@ vi.mock('../wallet-providers/instance.ts', async (importOriginal) => ({
   getWalletInstance: vi.fn(async () => ({ lifecycle: 'active' })),
 }));
 
+// Both wallets are on for the org; enrolment itself is tested with the channel gate.
+vi.mock('../channels/gate.ts', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  channelOn: vi.fn(async () => true),
+}));
+
 const ORIGIN = 'https://wallet.test';
 let kit: BroadcastKit;
 let auth: BroadcastAuth;
 let app: ReturnType<typeof CreateApp>;
 let runBroadcast: typeof RunBroadcast;
 let providerBudgets: typeof ProviderBudgets;
+let budgetOutcomes: typeof BudgetOutcomes;
 let getPass: typeof GetPass;
 let restore: () => void;
 
@@ -27,7 +37,7 @@ beforeAll(async () => {
   const { broadcastAuth } = await import('./test-kit.ts');
   const { createApp }: { createApp: typeof CreateApp } = await import('../../app.ts');
   ({ runBroadcast } = await import('../../workflows/broadcast.ts'));
-  ({ providerBudgets } = await import('../wallet-providers/notify-budget.ts'));
+  ({ providerBudgets, budgetOutcomes } = await import('../wallet-providers/notify-budget.ts'));
   ({ getPass } = await import('../passes/repo-read-pass.ts'));
   const { clearSettingsCache } = await import('../settings/service.ts');
   restore = (
@@ -88,10 +98,10 @@ const applied = async (passId: string) =>
       "SELECT data FROM pass_events WHERE pass_id = ? AND kind = 'message.applied' ORDER BY at, id",
       [passId],
     )
-  ).map((r) => JSON.parse(r.data) as { budget?: Record<string, string> });
+  ).map((r) => JSON.parse(r.data) as { providers?: Record<string, string> });
 
 describe('broadcast budget per wallet', () => {
-  it('counts each live wallet against its own limit and rolls with the window', async () => {
+  it('defers instead of sending, counts nothing, and would skip over a full budget', async () => {
     const pass = await kit.makePass();
     const budgets = async () =>
       providerBudgets(kit.ctx, (await getPass(kit.env.DB, pass.id)) ?? pass);
@@ -99,16 +109,37 @@ describe('broadcast budget per wallet', () => {
       google: { used: 0, limit: 3, resetsAt: null },
       samsung: { used: 0, limit: 0, resetsAt: null },
     });
-    // Google takes three notifying messages a day; Samsung has no notifying message at all.
     for (const text of ['One', 'Two', 'Three', 'Four']) {
       await send(text);
       kit.clock.advance(1000);
     }
+    // No provider message exists yet: every message is deferred and nothing is counted.
     const events = await applied(pass.id);
-    expect(events.map((e) => e.budget?.google)).toEqual(['within', 'within', 'within', 'over']);
-    expect(events.every((e) => e.budget?.samsung === 'over')).toBe(true);
-    expect((await budgets()).google).toMatchObject({ used: 3, limit: 3 });
+    expect(events.map((e) => e.providers?.google)).toEqual([
+      'deferred',
+      'deferred',
+      'deferred',
+      'deferred',
+    ]);
+    expect(events.every((e) => e.providers?.samsung === 'over')).toBe(true);
+    expect((await budgets()).google).toMatchObject({ used: 0, limit: 3 });
+    // The gate a real send calls: three sent messages in the window fill Google's budget.
+    for (let i = 0; i < 3; i++)
+      await run(
+        kit.env.DB,
+        "INSERT INTO pass_events (id, org_id, pass_id, mode, kind, actor_type, data, at) VALUES (?, ?, ?, 'live', 'message.applied', 'system', ?, ?)",
+        [
+          `sent-${i}`,
+          kit.org.id,
+          pass.id,
+          JSON.stringify({ providers: { google: 'sent' } }),
+          kit.clock.now(),
+        ],
+      );
+    const full = await budgets();
+    expect(full.google).toMatchObject({ used: 3, limit: 3 });
+    expect(budgetOutcomes(full)).toMatchObject({ google: 'over', samsung: 'over' });
     kit.clock.advance(25 * 3_600_000);
-    expect((await budgets()).google).toMatchObject({ used: 0 });
+    expect(budgetOutcomes(await budgets())).toMatchObject({ google: 'deferred' });
   });
 });

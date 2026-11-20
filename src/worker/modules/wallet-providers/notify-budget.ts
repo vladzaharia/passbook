@@ -13,7 +13,12 @@ import { providerNotifiedSince } from './repo-notify-budget.ts';
  */
 export const PROVIDER_NOTIFY_LIMIT = { google: 3, samsung: 0 } as const;
 
-export type BudgetOutcome = 'within' | 'over';
+/**
+ * What a message did in a wallet. No provider message is sent yet (the sends are WA7's), so a
+ * message that fits its budget is `deferred`, never `sent`: only `sent` counts against the limit.
+ * WA7's send calls providerBudgets and budgetOutcomes before sending and records `sent`.
+ */
+export type BudgetOutcome = 'deferred' | 'over' | 'sent';
 
 /** Each live Google or Samsung copy of the pass against its own daily limit; Apple's is not here. */
 export async function providerBudgets(
@@ -22,7 +27,7 @@ export async function providerBudgets(
 ): Promise<Partial<Record<'google' | 'samsung', PushBudgetDto>>> {
   const out: Partial<Record<'google' | 'samsung', PushBudgetDto>> = {};
   const since = ctx.clock.now() - BUDGET_WINDOW_MS;
-  for (const wallet of await removalWallets(ctx.env.DB, pass)) {
+  for (const wallet of await removalWallets(ctx, pass)) {
     if (wallet === 'apple') continue;
     const { used, oldest } = await providerNotifiedSince(ctx.env.DB, pass.id, wallet, since);
     out[wallet] = {
@@ -34,14 +39,14 @@ export async function providerBudgets(
   return out;
 }
 
-/** The outcome per provider for one more notifying message. */
+/** The outcome per provider for one more notifying message: over its limit it must skip. */
 export function budgetOutcomes(
   budgets: Partial<Record<'google' | 'samsung', PushBudgetDto>>,
 ): Record<string, BudgetOutcome> {
   return Object.fromEntries(
     Object.entries(budgets).map(([provider, b]) => [
       provider,
-      b.used < b.limit ? 'within' : 'over',
+      b.used < b.limit ? 'deferred' : 'over',
     ]),
   );
 }

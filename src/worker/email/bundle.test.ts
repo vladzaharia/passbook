@@ -88,14 +88,25 @@ describe('renderBundleEmail', () => {
           title: 'Mia',
           addUrl: 'https://w.test/b/t/p1/pass.pkpass',
           wallets: [
-            { label: 'Add to Google Wallet', url: 'https://w.test/b/t/p1/wallet/google' },
-            { label: 'Add to Samsung Wallet', url: 'javascript:alert(1)' },
+            {
+              label: 'Add to Google Wallet',
+              url: 'https://w.test/b/t/p1/wallet/google',
+              badge: { url: 'https://w.test/g.png', width: 170, height: 30 },
+            },
+            {
+              label: 'Add to Samsung Wallet',
+              url: 'javascript:alert(1)',
+              badge: { url: 'https://w.test/s.png', width: 145, height: 30 },
+            },
           ],
         },
         { title: 'Noor', addUrl: 'https://w.test/b/t/p2/pass.pkpass' },
       ],
     });
     expect(on.html).toContain('href="https://w.test/b/t/p1/wallet/google"');
+    expect(on.html).toContain(
+      'src="https://w.test/g.png" alt="Add to Google Wallet" width="170" height="30"',
+    );
     expect(on.html).not.toContain('Samsung');
     expect(on.html).not.toContain('p2/wallet');
     expect(on.html).not.toMatch(/\.svg/);

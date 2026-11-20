@@ -30,6 +30,7 @@ export async function bundleWalletLocation(
   provider: WalletProvider,
 ): Promise<string> {
   const pass = await addablePass(ctx, bundle, passId);
+  await assertBundleMember(ctx, bundle, pass);
   const token = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
   const location = await issueWalletOffer(ctx, token, provider);
   await assertBundleMember(ctx, bundle, pass);

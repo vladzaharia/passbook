@@ -159,7 +159,7 @@ describe('notified and silenced', () => {
       ev('message.applied', 1, {
         broadcastId: 'b1',
         notified: true,
-        budget: { google: 'within', samsung: 'over' },
+        providers: { google: 'deferred', samsung: 'over' },
       }),
     ]);
     expect(rows[0]?.facts.map((f) => f.text)).toEqual([

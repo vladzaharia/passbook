@@ -2,6 +2,7 @@ import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { walletHolderEventStmt } from './repo-holder-events.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import type { WalletRuntimeScope } from './runtime-core.ts';
 
@@ -270,6 +271,14 @@ export async function putGoogleCallbackReceipt(
         input.id,
       ],
     ),
+    walletHolderEventStmt(db, {
+      receiptTable: 'wallet_google_callback_receipts',
+      receiptId: input.id,
+      instanceId: binding.instanceId,
+      provider: 'google',
+      event: input.eventType === 'save' ? 'saved' : 'removed',
+      at: input.now,
+    }),
     // The provider's report, applied only with the receipt it came from. Nothing here revokes.
     stmt(
       db,

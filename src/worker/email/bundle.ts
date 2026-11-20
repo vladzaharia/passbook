@@ -32,8 +32,12 @@ export interface BundleEmailInput {
     addUrl: string | null;
     off?: boolean;
     detail?: string | null;
-    /** Native wallets allowed for this pass: a text link each, since a badge per row would crowd it. */
-    wallets?: { label: string; url: string }[];
+    /** Native wallets allowed for this pass: the unmodified PNG badge (Gmail cannot draw SVG), then a text link. */
+    wallets?: {
+      label: string;
+      url: string;
+      badge: { url: string; width: number; height: number };
+    }[];
   }[];
   iconUrl?: string | null;
   senderName?: string | null;
@@ -58,13 +62,13 @@ const row = (p: BundleEmailInput['passes'][number]) => {
   const wallets = (p.wallets ?? [])
     .flatMap((w) => {
       const url = safeUrl(w.url);
-      return url
-        ? [
-            `<a class="e-link" href="${escapeHtml(url)}" style="font-weight:400;color:${c.text};text-decoration:underline">${escapeHtml(w.label)}</a>`,
-          ]
-        : [];
+      const art = safeUrl(w.badge.url);
+      if (!url || !art) return [];
+      const { width, height } = w.badge;
+      return [
+        `<a href="${escapeHtml(url)}" style="display:block;margin:8px 0 0;text-decoration:none"><img src="${escapeHtml(art)}" alt="${escapeHtml(w.label)}" width="${width}" height="${height}" style="display:block;width:${width}px;max-width:100%;height:auto;border:0"></a><a class="e-link" href="${escapeHtml(url)}" style="display:inline-block;margin:4px 0 0;font-weight:400;color:${c.text};text-decoration:underline">${escapeHtml(w.label)}</a>`,
+      ];
     })
-    .map((link) => `<br>${link}`)
     .join('');
   return `<tr><td class="e-strong e-line" valign="middle" style="padding:12px 12px 12px 0;${edge};${type('sm')};font-weight:500;color:${c.strong};word-break:break-word">${escapeHtml(p.title)}${detail}${wallets}</td><td class="e-line" align="right" valign="middle" style="padding:0;${edge};${type('sm')};white-space:nowrap">${
     p.addUrl

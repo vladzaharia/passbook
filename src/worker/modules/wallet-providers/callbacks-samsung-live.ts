@@ -5,13 +5,11 @@ import { canPresent } from '../public/presentation.ts';
 import { filterSamsungCardFields } from './callbacks-fields.ts';
 import { requireSamsungCredentialKeyset } from './callbacks-ref.ts';
 import type { SamsungCallbackInput, SamsungCallbackResult } from './callbacks-samsung-types.ts';
-import { recordWalletHolderEvent } from './holder-events.ts';
 import { offerPassSnapshot } from './offers-eligibility.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { renderSamsungProjection } from './render-projection.ts';
 import { type SamsungFetchSnapshot, samsungFetchSnapshotCurrent } from './repo-callbacks.ts';
 import { claimSamsungFetch, claimSamsungReceipt } from './repo-callbacks-events.ts';
-import { samsungRefLive } from './repo-callbacks-live.ts';
 import { samsungTokenRecorded } from './repo-callbacks-state.ts';
 import {
   samsungRuntimeCardDataResponse,
@@ -161,17 +159,6 @@ export async function serveSamsungLive(
       orgId: snapshot.orgId,
       event: event ?? 'unknown',
     });
-    if (!delivery.duplicate && (event === 'ADDED' || event === 'DELETED')) {
-      // A retired ref's holder is not this pass's holder: its callbacks are recorded, never shown.
-      if (await samsungRefLive(ctx.env.DB, snapshot.referenceId))
-        await recordWalletHolderEvent(ctx, {
-          orgId: snapshot.orgId,
-          passId: snapshot.passId,
-          mode: snapshot.mode,
-          provider: 'samsung',
-          event: event === 'ADDED' ? 'saved' : 'removed',
-        });
-    }
     return { kind: 'accepted' };
   }
   if (!projection) return { kind: 'missing' };

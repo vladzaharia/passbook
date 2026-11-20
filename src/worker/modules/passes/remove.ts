@@ -151,7 +151,7 @@ export async function removePass(
     data: {
       version: published.pass.version,
       message: staged.message !== null,
-      wallets: await removalWallets(db, pass),
+      wallets: await removalWallets(ctx, pass),
     },
   });
   await recordAudit(ctx, {

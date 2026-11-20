@@ -17,7 +17,6 @@ import {
   verifyGoogleCallback,
 } from './google-callback-crypto.ts';
 import { googleObjectIds } from './google-ids.ts';
-import { recordWalletHolderEvent } from './holder-events.ts';
 import { walletProviderDisabledReason } from './provider-policy.ts';
 import {
   findGoogleCallbackAccount,
@@ -179,14 +178,6 @@ export async function handleGoogleCallback(
       await findGoogleCallbackBinding(ctx.env.DB, scope, classIdHash, objectIdHash);
       throw rejected();
     }
-    // Redeliveries returned above, so each admitted receipt records one event.
-    await recordWalletHolderEvent(ctx, {
-      orgId: binding.orgId,
-      passId: binding.passId,
-      mode: binding.mode,
-      provider: 'google',
-      event: event.eventType === 'save' ? 'saved' : 'removed',
-    });
   } catch (error) {
     if (error instanceof PayloadTooLargeError) throw error;
     if (error instanceof GoogleCallbackInvalid || error instanceof UnauthenticatedError) {

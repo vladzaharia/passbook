@@ -54,7 +54,7 @@ export function walletDetail(e: PassEventDto): string | null {
 
 /** A wallet whose own daily limit a message hit. */
 export function budgetFacts(data: PassEventDto['data']): { text: string; tone: 'warning' }[] {
-  const budget = data.budget;
+  const budget = data.providers;
   if (!budget || typeof budget !== 'object' || Array.isArray(budget)) return [];
   return Object.entries(budget)
     .filter(([, outcome]) => outcome === 'over')

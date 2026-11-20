@@ -1,23 +1,31 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { channelOn } from '../channels/gate.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getWalletInstance } from './instance.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { removalWallets } from './removal.ts';
 
 vi.mock('./instance.ts', () => ({ getWalletInstance: vi.fn() }));
+vi.mock('../channels/gate.ts', () => ({ channelOn: vi.fn(async () => true) }));
 
 const pass = { id: 'p1', orgId: 'o1', mode: 'live' } as Pass;
+const ctx = { env: { DB: {} } } as unknown as ServiceContext;
 const instance = vi.mocked(getWalletInstance);
+const channel = vi.mocked(channelOn);
 const lifecycles = (map: Record<string, string>) =>
   instance.mockImplementation((async (_db: unknown, scope: { provider: string }) =>
     map[scope.provider] ? { lifecycle: map[scope.provider] } : null) as never);
 
-afterEach(() => instance.mockReset());
+afterEach(() => {
+  instance.mockReset();
+  channel.mockImplementation(async () => true);
+});
 
 describe('removalWallets', () => {
   it('is Apple alone while Google and Samsung are not released, whatever copies exist', async () => {
     lifecycles({ google: 'active', samsung: 'active' });
-    expect(await removalWallets({} as D1Database, pass)).toEqual(['apple']);
+    expect(await removalWallets(ctx, pass)).toEqual(['apple']);
     expect(instance).not.toHaveBeenCalled();
   });
 
@@ -25,11 +33,22 @@ describe('removalWallets', () => {
     const restore = setWalletProvidersEnabledForTest(true);
     try {
       lifecycles({ google: 'active', samsung: 'revoked' });
-      expect(await removalWallets({} as D1Database, pass)).toEqual(['apple', 'google']);
+      expect(await removalWallets(ctx, pass)).toEqual(['apple', 'google']);
       lifecycles({});
-      expect(await removalWallets({} as D1Database, pass)).toEqual(['apple']);
+      expect(await removalWallets(ctx, pass)).toEqual(['apple']);
       lifecycles({ google: 'active', samsung: 'active' });
-      expect(await removalWallets({} as D1Database, pass)).toEqual(['apple', 'google', 'samsung']);
+      expect(await removalWallets(ctx, pass)).toEqual(['apple', 'google', 'samsung']);
+    } finally {
+      restore();
+    }
+  });
+
+  it('leaves out a wallet that is off for the pass org, however live its copy', async () => {
+    const restore = setWalletProvidersEnabledForTest(true);
+    try {
+      lifecycles({ google: 'active', samsung: 'active' });
+      channel.mockImplementation(async (_ctx, _pass, c) => c !== 'google');
+      expect(await removalWallets(ctx, pass)).toEqual(['apple', 'samsung']);
     } finally {
       restore();
     }

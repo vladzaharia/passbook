@@ -1,6 +1,7 @@
 import type { Envelope } from '../../platform/crypto.ts';
 import { all, batch, first, type SqlValue, stmt } from '../../platform/db.ts';
 import { credentialRefKeysetSql } from '../passes/repo-credential-keyset.ts';
+import { walletHolderEventStmt } from './repo-holder-events.ts';
 
 export type SamsungCardEvent = 'ADDED' | 'DELETED' | 'UPDATED' | 'PROVISIONED';
 
@@ -79,8 +80,23 @@ function effectStatements(
     WHERE rc.id = ? AND rc.event = ?)`;
   // A retired ref belongs to a previous holder or generation: its callbacks are recorded, never applied.
   const live = `EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs live WHERE live.id = ? AND live.retired_at IS NULL)`;
+  const reported = (event: 'saved' | 'removed') =>
+    walletHolderEventStmt(db, {
+      receiptTable: 'wallet_samsung_callback_receipts',
+      receiptId: receipt.id,
+      instanceId: ref.instanceId,
+      provider: 'samsung',
+      event,
+      at: claim.now,
+      // A retired ref's holder is not this pass's holder: recorded, never shown.
+      also: {
+        sql: 'EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs live WHERE live.id = ? AND live.retired_at IS NULL)',
+        params: [ref.referenceId],
+      },
+    });
   if (receipt.event === 'DELETED')
     return [
+      reported('removed'),
       stmt(
         db,
         `UPDATE wallet_provider_instances SET holder_removed_at = MAX(COALESCE(holder_removed_at, 0), ?)
@@ -90,6 +106,7 @@ function effectStatements(
     ];
   if (receipt.event !== 'ADDED') return [];
   const statements = [
+    reported('saved'),
     stmt(
       db,
       `UPDATE wallet_provider_instances SET saved_at = MAX(COALESCE(saved_at, 0), ?)

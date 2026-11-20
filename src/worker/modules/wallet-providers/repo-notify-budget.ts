@@ -1,6 +1,6 @@
 import { all } from '../../platform/db.ts';
 
-/** Message events of one pass since `since` that reserved a notifying slot in `provider`. */
+/** Message events of one pass since `since` whose notifying message was sent to `provider`. */
 export async function providerNotifiedSince(
   db: D1Database,
   passId: string,
@@ -11,7 +11,7 @@ export async function providerNotifiedSince(
     db,
     `SELECT at FROM pass_events
      WHERE pass_id = ? AND kind = 'message.applied' AND at > ?
-       AND json_extract(data, '$.budget.' || ?) = 'within'
+       AND json_extract(data, '$.providers.' || ?) = 'sent'
      ORDER BY at`,
     [passId, since, provider],
   );

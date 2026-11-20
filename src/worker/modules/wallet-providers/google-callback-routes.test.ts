@@ -928,6 +928,27 @@ describe('Google Wallet callbacks', () => {
         [f.account.id],
       ),
     ).toEqual({ claim_id: receipt!.id });
+    // The event committed with the receipt, so the failed acknowledgement cannot lose it, and
+    // Google's redelivery after the binding is back answers 204 without a second one.
+    const count = () =>
+      first<{ n: number }>(
+        f.f.kit.env.DB,
+        "SELECT count(*) AS n FROM pass_events WHERE pass_id = ? AND kind = 'wallet.saved'",
+        [f.f.pass.id],
+      );
+    expect((await count())?.n).toBe(1);
+    await run(
+      f.f.kit.env.DB,
+      'UPDATE wallet_google_callback_bindings SET class_id_hash = ? WHERE instance_id = ?',
+      [originalHash, f.instance.id],
+    );
+    const again = await callbackApp(f.f).request(
+      f.callbackUrl,
+      { method: 'POST', body },
+      f.f.kit.env,
+    );
+    expect(again.status).toBe(204);
+    expect((await count())?.n).toBe(1);
   });
 
   it('fails closed when the canonical origin is not HTTPS or publishing has no provider proof', async () => {
