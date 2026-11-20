@@ -7,6 +7,7 @@ import {
   type PutPassChannelsSchema,
 } from '@/shared/contracts/channels.ts';
 import { api } from '../../lib/api.ts';
+import { useDebounced } from '../../lib/debounce.ts';
 import { passKeys } from './api.ts';
 
 type PassChange = z.input<typeof PutPassChannelsSchema>['channels'];
@@ -41,7 +42,9 @@ export function useBulkPassChannels() {
 }
 
 /** What a bulk change would do, asked again whenever the choice changes. Writes nothing. */
-export function useBulkChannelsPreview(body: BulkBody, enabled: boolean) {
+export function useBulkChannelsPreview(choice: BulkBody, enabled: boolean) {
+  // Ticking boxes quickly asks once, 300 ms after the last change.
+  const body = useDebounced(choice, 300);
   return useQuery({
     queryKey: ['admin', 'passes', 'bulk-channels-preview', body] as const,
     queryFn: ({ signal }) =>
@@ -54,7 +57,8 @@ export function useBulkChannelsPreview(body: BulkBody, enabled: boolean) {
         },
         { signal },
       ),
-    enabled,
+    // The choice that was last settled, not the one still being typed.
+    enabled: enabled && body.action === 'off' && body.channels.length > 0,
     placeholderData: keepPreviousData,
     staleTime: 0,
     gcTime: 0,

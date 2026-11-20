@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { z } from 'zod';
 import { isDigital, templateDefault } from '@/shared/channels.ts';
 import {
@@ -27,7 +27,7 @@ import {
 import { usePutTemplateChannels, useTemplateChannels } from './api.ts';
 import { ChannelRuns } from './channel-runs.tsx';
 import { impactLines } from './impact.ts';
-import { blockingWindow, ReplaceOption } from './replace-option.tsx';
+import { ReplaceOption } from './replace-option.tsx';
 import { ReviewDialog } from './review-dialog.tsx';
 
 type Draft = Partial<Record<Channel, TemplateChannelState>>;
@@ -63,6 +63,8 @@ export function TemplateChannelsPanel({
 }) {
   const query = useTemplateChannels(templateId, orgId);
   const put = usePutTemplateChannels(templateId, orgId);
+  /** The newest dry run; an older answer that lands late is dropped. */
+  const latest = useRef(0);
   const [edits, setEdits] = useState<Draft>({});
   const [review, setReview] = useState<Review | null>(null);
   const data = query.data;
@@ -80,13 +82,6 @@ export function TemplateChannelsPanel({
   });
   /** Turning a digital channel off or never: the one change that can issue new codes. */
   const turnsOff = changed.some((c) => isDigital(c) && value(c) !== 'on');
-  /** No digital channel would stay on, so there is no code to send holders to. */
-  const allOff = !CHANNELS.some((c) => {
-    const s = data.effective[c];
-    return (
-      isDigital(c) && value(c) === 'on' && (s.on || (s.reason !== undefined && OWN.has(s.reason)))
-    );
-  });
   const discard = () => setEdits({});
 
   const dryRun = (replace = false) => put.mutateAsync({ ...body(replace), dryRun: true });
@@ -106,11 +101,13 @@ export function TemplateChannelsPanel({
   }
   /** Ticking re-asks the server with the box on, so the counts and windows are the ones saved. */
   async function tick(replace: boolean) {
+    const mine = ++latest.current;
     setReview((r) => (r ? { ...r, replace, loading: true } : r));
     try {
       const dry = await dryRun(replace);
-      setReview({ dry, replace, loading: false });
+      if (mine === latest.current) setReview({ dry, replace, loading: false });
     } catch (error) {
+      if (mine !== latest.current) return;
       toast.error(error, 'Could not check channels.');
       setReview((r) => (r ? { ...r, replace: !replace, loading: false } : r));
     }
@@ -130,8 +127,8 @@ export function TemplateChannelsPanel({
     toast.success(CHANNEL_COPY.saved);
   }
 
-  const replacing = Boolean(review?.replace) && !allOff;
-  const refused = replacing && review ? blockingWindow(review.dry.windows) !== undefined : false;
+  const replacing = Boolean(review?.replace) && !review?.dry.allOff;
+  const refused = replacing && Boolean(review?.dry.blocked);
 
   return (
     <div className="flex flex-col gap-4">
@@ -193,7 +190,9 @@ export function TemplateChannelsPanel({
           {review && turnsOff ? (
             <ReplaceOption
               supported={review.dry.replaceSupported}
-              allOff={allOff}
+              allOff={review.dry.allOff}
+              blocked={review.dry.blocked}
+              loading={review.loading}
               windows={review.dry.windows}
               checked={review.replace}
               note={false}

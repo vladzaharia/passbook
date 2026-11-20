@@ -53,6 +53,12 @@ export function useChannelRuns(templateId: string, orgId: string) {
         query: { orgId },
         signal,
       }),
-    refetchInterval: (q) => (q.state.data?.some((r) => ACTIVE.has(r.state)) ? 5000 : false),
+    // A run held by a window changes slowly: look every 30 s, otherwise every 5 s while one is active.
+    refetchInterval: (q) =>
+      q.state.data?.some((r) => r.waiting)
+        ? 30_000
+        : q.state.data?.some((r) => ACTIVE.has(r.state))
+          ? 5000
+          : false,
   });
 }

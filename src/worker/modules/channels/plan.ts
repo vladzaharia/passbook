@@ -14,10 +14,10 @@ import {
 } from '../../../shared/contracts/channels.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
-import { rotationOwed } from './replace.ts';
 import { passReplaceable } from './replaceable.ts';
+import { rotationOwed } from './repo-replace.ts';
 import { loadPass } from './service.ts';
-import { openWindows } from './windows.ts';
+import { openWindows, splitWindows } from './windows.ts';
 
 /**
  * What changing a pass's overrides does: effective before and after, the transition actions, and
@@ -75,6 +75,7 @@ export async function previewBulk(
   const rotated = new Map<Channel, number>();
   let unsupported = 0;
   let allOff = 0;
+  const replaceable = new Map<string, Promise<boolean>>();
   const templates = new Map<string, Pass>();
   for (const pass of passes) {
     const plan = await planPass(ctx, pass, { channels, replaceCodes });
@@ -90,15 +91,20 @@ export async function previewBulk(
       continue;
     }
     if (!plan.owed || plan.rotation?.kind !== 'rotate_codes') continue;
-    if (!(await passReplaceable(ctx, pass))) {
+    // One manifest read per pinned version, however many passes share it.
+    const key = `${pass.templateId}:${pass.templateVersion}`;
+    if (!replaceable.has(key)) replaceable.set(key, passReplaceable(ctx, pass));
+    if (!(await replaceable.get(key))) {
       unsupported += 1;
       continue;
     }
     for (const c of plan.rotation.channels) rotated.set(c, (rotated.get(c) ?? 0) + 1);
   }
+  // One window query per template, not per pass.
   const seen = new Map<string, ChannelWindow>();
+  const now = ctx.clock.now();
   for (const pass of templates.values())
-    for (const w of await openWindows(ctx, pass.orgId, pass.mode, pass.templateId, ctx.clock.now()))
+    for (const w of await openWindows(ctx, pass.orgId, pass.mode, pass.templateId, now))
       seen.set(w.id, w);
   return {
     done: 0,
@@ -111,7 +117,7 @@ export async function previewBulk(
       ),
       unsupported,
       allOff,
-      windows: [...seen.values()],
+      ...splitWindows([...seen.values()]),
     },
   };
 }

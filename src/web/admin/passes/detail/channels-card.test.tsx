@@ -35,7 +35,13 @@ const effective = (over: Record<string, unknown> = {}) => ({
 const handlers = (
   eff: Record<string, unknown>,
   overrides = {},
-  replace: Record<string, unknown> = { supported: false, windows: [] },
+  replace: Record<string, unknown> = {
+    supported: false,
+    owed: false,
+    blocked: null,
+    lastDigital: [],
+    windows: [],
+  },
 ) => ({
   '/api/v1/passes/p1/channels': (_u: URL, init?: RequestInit) =>
     json({ effective: eff, overrides: init?.method === 'PUT' ? {} : overrides, replace }),
@@ -75,7 +81,11 @@ describe('Channels card', () => {
   it('offers new codes only when the barcode allows it, and sends replaceCodes', async () => {
     const { fetchMock } = renderTags(
       <ChannelsCard pass={pass()} readOnly={false} />,
-      handlers(effective(), {}, { supported: true, windows: [] }),
+      handlers(
+        effective(),
+        {},
+        { supported: true, owed: true, blocked: null, lastDigital: [], windows: [] },
+      ),
     );
     await userEvent.click(await screen.findByRole('switch', { name: 'Apple Wallet' }));
     const dialog = await screen.findByRole('dialog');
@@ -110,7 +120,17 @@ describe('Channels card', () => {
     });
     renderTags(
       <ChannelsCard pass={pass()} readOnly={false} />,
-      handlers(effective(), {}, { supported: true, windows: [win({ open: true })] }),
+      handlers(
+        effective(),
+        {},
+        {
+          supported: true,
+          owed: true,
+          blocked: { name: 'Gala', closesAt: 1_800_003_600_000 },
+          lastDigital: [],
+          windows: [win({ id: 'e2', name: 'Expo' })],
+        },
+      ),
     );
     await userEvent.click(await screen.findByRole('switch', { name: 'Apple Wallet' }));
     const dialog = await screen.findByRole('dialog');

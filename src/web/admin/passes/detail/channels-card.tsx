@@ -28,7 +28,7 @@ import {
   Switch,
   toast,
 } from '../../../ui/index.ts';
-import { ReplaceOption, windowRefusal } from '../../templates/channels/replace-option.tsx';
+import { ReplaceOption } from '../../templates/channels/replace-option.tsx';
 import { ReviewDialog } from '../../templates/channels/review-dialog.tsx';
 import { usePutPassChannels } from '../channels-api.ts';
 import { usePassChannels } from '../print-api.ts';
@@ -130,9 +130,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
     setReplace(false);
     setAsk(channel);
   };
-  /** Turning this off leaves no digital channel on: there is no code to send the holder to. */
-  const allOff = (off: Channel) =>
-    !CHANNELS.some((c) => c !== off && isDigital(c) && data?.effective[c].on);
+  const allOff = (off: Channel) => replaceInfo?.lastDigital.includes(off) ?? false;
   const replaceInfo = data?.replace;
 
   return (
@@ -172,9 +170,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
           onOpenChange={(open) => !open && setAsk(null)}
           title={channelOffConfirm(CHANNEL_LABEL[ask], ask === 'paper').title}
           confirmLabel="Turn off"
-          disabled={
-            replace && !allOff(ask) && windowRefusal(replaceInfo?.windows ?? []) !== undefined
-          }
+          disabled={replace && !allOff(ask) && Boolean(replaceInfo?.blocked)}
           lines={
             replace && !allOff(ask)
               ? []
@@ -186,6 +182,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
             <ReplaceOption
               supported={replaceInfo.supported}
               allOff={allOff(ask)}
+              blocked={replaceInfo.blocked}
               windows={replaceInfo.windows}
               checked={replace}
               onChange={setReplace}

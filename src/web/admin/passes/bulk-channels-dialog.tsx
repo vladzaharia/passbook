@@ -68,6 +68,14 @@ export function BulkChannelsDialog({
     },
     open && action === 'off' && picked.length > 0,
   );
+  const offConfirm = {
+    ...bulkChannelsOffConfirm(
+      picked.map((c) => CHANNEL_LABEL[c]),
+      ids.length,
+    ),
+    // "Copies keep working" is wrong once new codes are issued.
+    ...(canReplace && replace ? { description: undefined } : {}),
+  };
   async function apply() {
     try {
       const result = await bulk.mutateAsync({
@@ -154,9 +162,7 @@ export function BulkChannelsDialog({
                 onCheckedChange={(v) => setReplace(v === true)}
               />
               {replace ? (
-                <p className="text-xs text-fg-muted">
-                  {CHANNEL_COPY.replaceNote} {CHANNEL_COPY.bulkReplaced}
-                </p>
+                <p className="text-xs text-fg-muted">{CHANNEL_COPY.bulkReplaced}</p>
               ) : null}
             </div>
           ) : null}
@@ -165,11 +171,7 @@ export function BulkChannelsDialog({
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
-        {...bulkChannelsOffConfirm(
-          picked.map((c) => CHANNEL_LABEL[c]),
-          ids.length,
-        )}
-        {...(canReplace && replace ? { description: CHANNEL_COPY.replaceNote } : {})}
+        {...offConfirm}
         onConfirm={apply}
       />
     </Dialog>

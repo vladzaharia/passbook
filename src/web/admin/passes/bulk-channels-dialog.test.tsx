@@ -77,7 +77,8 @@ it('adds replaceCodes only when asked, for a digital channel turned off', async 
   await userEvent.click(screen.getByRole('checkbox', { name: 'Also issue new codes' }));
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   const ask = await screen.findByRole('alertdialog');
-  expect(ask).toHaveTextContent('Holders get a new code. Printed tickets keep working.');
+  expect(ask).toHaveTextContent('for 1 pass?');
+  expect(ask).not.toHaveTextContent('Copies keep working');
   await userEvent.click(within(ask).getByRole('button', { name: 'Turn off' }));
   await waitFor(() => expect(applies(fetchMock)).toHaveLength(1));
   const [, init] = applies(fetchMock)[0] ?? [];
@@ -102,17 +103,8 @@ it('previews counts and windows before applying, and applies nothing', async () 
             impact: [{ channel: 'apple', passes: 2, rotated: 1 }],
             unsupported: 1,
             allOff: 0,
-            windows: [
-              {
-                kind: 'event',
-                id: 'e1',
-                name: 'Gala',
-                opensAt: 1_800_000_000_000,
-                closesAt: 1_800_003_600_000,
-                open: true,
-                scheduled: true,
-              },
-            ],
+            blocked: { name: 'Gala', closesAt: 1_800_003_600_000 },
+            windows: [],
           },
         }),
     },
@@ -129,4 +121,32 @@ it('previews counts and windows before applying, and applies nothing', async () 
   );
   expect(bodies.at(-1)).toMatchObject({ dryRun: true, replaceCodes: true, channels: ['apple'] });
   expect(bodies.every((b) => b.dryRun === true)).toBe(true);
+});
+
+it('asks once for a burst of choices, 300 ms after the last', async () => {
+  const { fetchMock } = renderTags(
+    <BulkChannelsDialog open onOpenChange={() => {}} orgId="o1" ids={['a']} onDone={() => {}} />,
+    {
+      '/api/v1/passes/bulk/channels': () =>
+        json({
+          done: 0,
+          skipped: [],
+          preview: { impact: [], unsupported: 0, allOff: 0, blocked: null, windows: [] },
+        }),
+    },
+  );
+  await userEvent.click(await screen.findByRole('checkbox', { name: 'Apple Wallet' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Google Wallet' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Also issue new codes' }));
+  await waitFor(() => expect(calls(fetchMock, 'POST', '/bulk/channels').length).toBeGreaterThan(0));
+  await new Promise((r) => setTimeout(r, 450));
+  const sent = calls(fetchMock, 'POST', '/bulk/channels').map(([, init]) =>
+    JSON.parse(String(init?.body)),
+  );
+  expect(sent).toHaveLength(1);
+  expect(sent[0]).toMatchObject({
+    channels: ['apple', 'google'],
+    replaceCodes: true,
+    dryRun: true,
+  });
 });

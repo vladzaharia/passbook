@@ -110,11 +110,28 @@ describe('replace codes: one pass', () => {
       (await (
         await t.kit.api(`/passes/${t.ids[0]}/channels`, { headers: t.kit.auth.admin() })
       ).json()) as {
-        replace: { supported: boolean; windows: { open: boolean }[] };
+        replace: {
+          supported: boolean;
+          owed: boolean;
+          blocked: { name: string } | null;
+          lastDigital: string[];
+          windows: unknown[];
+        };
       };
-    expect((await get()).replace).toEqual({ supported: true, windows: [] });
+    expect((await get()).replace).toEqual({
+      supported: true,
+      owed: true,
+      blocked: null,
+      lastDigital: [],
+      windows: [],
+    });
     await makeScanEvent(t.kit.fx, { orgId: t.orgId, templateIds: [t.templateId] });
-    expect((await get()).replace.windows).toEqual([expect.objectContaining({ open: true })]);
+    const held = (await get()).replace;
+    expect(held.blocked).toMatchObject({ name: 'Event' });
+    expect(held.windows).toEqual([]);
+    // With mobile off, Apple is the last digital channel: turning it off leaves no code to send.
+    await putPass(t, { channels: { mobile: 'off' } });
+    expect((await get()).replace.lastDigital).toEqual(['apple']);
     const plain = await passKit({ scan: false });
     const res = await plain.kit.api(`/passes/${plain.ids[0]}/channels`, {
       headers: plain.kit.auth.admin(),
@@ -167,13 +184,15 @@ describe('replace codes: bulk', () => {
         impact: unknown[];
         unsupported: number;
         allOff: number;
-        windows: { open: boolean }[];
+        blocked: { name: string } | null;
+        windows: unknown[];
       };
     };
     expect(body.done).toBe(0);
     expect(body.preview.impact).toEqual([{ channel: 'apple', passes: 1, rotated: 1 }]);
     expect(body.preview).toMatchObject({ unsupported: 0, allOff: 0 });
-    expect(body.preview.windows).toMatchObject([{ open: true }]);
+    expect(body.preview.blocked).toMatchObject({ name: 'Event' });
+    expect(body.preview.windows).toEqual([]);
     expect(await scanCode(t)).toBe(before);
     expect(jobs(t, 'channel.replace_code')).toHaveLength(0);
     // Without the box the same dry run owes no code.
@@ -204,5 +223,21 @@ describe('replace codes: bulk', () => {
     };
     expect(preview.unsupported).toBe(1);
     expect(preview.impact[0]?.rotated).toBe(0);
+  });
+
+  it('dry run counts every pass of a template once per channel', async () => {
+    const t = await applyKit(3, { scan: true });
+    for (const id of t.ids)
+      await insertCopy(t.db, { id, orgId: t.orgId, mode: 'live' }, 'apple', t.kit.clock.now());
+    const res = await t.kit.send('POST', '/passes/bulk/channels', {
+      orgId: t.orgId,
+      ids: t.ids,
+      action: 'off',
+      channels: ['apple'],
+      replaceCodes: true,
+      dryRun: true,
+    });
+    const { preview } = (await res.json()) as { preview: { impact: unknown[] } };
+    expect(preview.impact).toEqual([{ channel: 'apple', passes: 3, rotated: 3 }]);
   });
 });

@@ -30,11 +30,20 @@ const win = (over: Record<string, unknown> = {}) => ({
 const handlers = (
   passes: number,
   cleared = 0,
-  extra: { supported?: boolean; windows?: unknown[]; runs?: unknown[] } = {},
+  extra: {
+    supported?: boolean;
+    windows?: unknown[];
+    runs?: unknown[];
+    blocked?: unknown;
+    allOff?: boolean;
+    delayReplace?: number;
+  } = {},
 ) => ({
   '/api/v1/templates/t1/channels/runs': () => json(extra.runs ?? []),
-  '/api/v1/templates/t1/channels': (_u: URL, init?: RequestInit) =>
-    init?.method === 'PUT'
+  '/api/v1/templates/t1/channels': async (_u: URL, init?: RequestInit) => {
+    if (init?.method === 'PUT' && JSON.parse(String(init.body)).replaceCodes && extra.delayReplace)
+      await new Promise((r) => setTimeout(r, extra.delayReplace));
+    return init?.method === 'PUT'
       ? json({
           channels: null,
           revision: 1,
@@ -50,8 +59,11 @@ const handlers = (
           workflowInstanceId: null,
           replaceSupported: extra.supported ?? false,
           windows: extra.windows ?? [],
+          blocked: extra.blocked ?? null,
+          allOff: extra.allOff ?? false,
         })
-      : json({ channels: null, revision: 0, effective }),
+      : json({ channels: null, revision: 0, effective });
+  },
 });
 const group = (name: string) => screen.getByRole('radiogroup', { name });
 const choose = (name: string, state: string) =>
@@ -147,6 +159,8 @@ describe('Template channels', () => {
             workflowInstanceId: null,
             replaceSupported: false,
             windows: [],
+            blocked: null,
+            allOff: false,
           });
         puts += 1;
         dryCleared = 5;
@@ -209,7 +223,8 @@ describe('Template channels', () => {
   it('refuses inside an open window and warns about one opening soon', async () => {
     const { dialog } = await openReplace({
       supported: true,
-      windows: [win({ open: true, name: 'Gala' }), win({ id: 'e2', name: 'Expo', open: false })],
+      blocked: { name: 'Gala', closesAt: 1_800_003_600_000 },
+      windows: [win({ id: 'e2', name: 'Expo', open: false })],
     });
     await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Also issue new codes' }));
     await waitFor(() => expect(dialog).toHaveTextContent("Codes can't change while Gala is open."));
@@ -245,5 +260,21 @@ describe('Template channels', () => {
       screen.getByText('Codes were not replaced: you no longer can publish.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
+  });
+
+  it('renders the server answer only: allOff disables the box, no client rule', async () => {
+    const { dialog } = await openReplace({ supported: true, allOff: true });
+    expect(within(dialog).getByRole('checkbox', { name: 'Also issue new codes' })).toBeDisabled();
+    expect(dialog).toHaveTextContent('Keep one digital channel on to replace codes.');
+  });
+
+  it('holds the box while its dry run loads, so a late answer cannot land', async () => {
+    const { dialog } = await openReplace({ supported: true, delayReplace: 150 });
+    const box = within(dialog).getByRole('checkbox', { name: 'Also issue new codes' });
+    await userEvent.click(box);
+    expect(box).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
+    await waitFor(() => expect(box).toBeEnabled());
+    expect(dialog).toHaveTextContent('issues new codes');
   });
 });
