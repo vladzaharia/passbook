@@ -56,7 +56,7 @@ export function reenrolGrant(
       a,
       keysetId: move.from,
       action: 'tag_keyset.reenrol',
-      detail: { to: move.to, toVersion: move.toVersion, tags: move.tags },
+      detail: { to: move.to, toVersion: move.toVersion, planned: move.tags },
     },
     exists('nfc_tag_keysets', { id: move.to }),
   );

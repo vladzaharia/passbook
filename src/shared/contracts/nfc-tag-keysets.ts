@@ -51,7 +51,7 @@ export const TagImportProblemSchema = z.object({
   line: z.number().int().positive(),
   /** The tag ID as read, never the key. */
   uid: z.string().max(40).nullable(),
-  reason: z.enum(['bad_uid', 'bad_key', 'weak_key', 'dup_file', 'exists']),
+  reason: z.enum(['bad_uid', 'bad_key', 'weak_key', 'dup_file', 'dup_key', 'meta_key', 'exists']),
 });
 export const TagImportResultSchema = z.object({
   dryRun: z.boolean(),

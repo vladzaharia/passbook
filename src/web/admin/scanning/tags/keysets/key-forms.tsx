@@ -95,8 +95,8 @@ function KeysDialog({
   return (
     <Dialog open onOpenChange={(open) => !open && !busy && !made && onClose()}>
       <DialogContent
-        title={made ? 'Keys' : title}
-        description={made ? undefined : 'Keys are stored encrypted and never shown again.'}
+        title={made ? `Keys of ${made.name}` : title}
+        description={made ? undefined : KEYSET_COPY.help}
         closeButton={!busy && !made}
         footer={
           made ? null : (

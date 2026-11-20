@@ -2,7 +2,14 @@ import { TAG_IMPORT_MAX_ROWS } from '../../../shared/contracts/nfc-tag-keysets.t
 import { ValidationError } from '../../platform/errors.ts';
 import { normalizeTagId } from './tag-ref.ts';
 
-export type ImportProblemReason = 'bad_uid' | 'bad_key' | 'weak_key' | 'dup_file' | 'exists';
+export type ImportProblemReason =
+  | 'bad_uid'
+  | 'bad_key'
+  | 'weak_key'
+  | 'dup_file'
+  | 'dup_key'
+  | 'meta_key'
+  | 'exists';
 
 export interface ImportRow {
   line: number;
@@ -99,5 +106,14 @@ export function parseImportCsv(text: string): {
       rows.push({ line, uid, key });
     }
   }
-  return { rows, problems, count: lines.length };
+  // A key two rows share is not per tag: one extracted tag would forge the other. None of them is imported.
+  const uses = new Map<string, number>();
+  for (const r of rows) uses.set(r.key, (uses.get(r.key) ?? 0) + 1);
+  const shared = rows.filter((r) => (uses.get(r.key) ?? 0) > 1);
+  for (const r of shared) problems.push({ line: r.line, uid: r.uid, reason: 'dup_key' });
+  return {
+    rows: rows.filter((r) => !shared.includes(r)),
+    problems,
+    count: lines.length,
+  };
 }

@@ -4,14 +4,15 @@ import type {
   TagImportResultSchema,
 } from '../../../shared/contracts/nfc-tag-keysets.ts';
 import { loadKekRing } from '../../platform/crypto.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ImportProblem, parseImportCsv } from './import-csv.ts';
-import { sealTagKey } from './keyset-seal.ts';
+import { openVersion, sealTagKey } from './keyset-seal.ts';
 import { commitKeyset, conflict, keysetIn, scopeOf } from './keysets.ts';
 import { existingRefs, type ImportedTag, importGrant } from './repo-import.ts';
-import { keyVersionsOf } from './repo-keysets.ts';
+import { keyVersionsOf, versionEnvelopes } from './repo-keysets.ts';
 import type { KeysetAuthority } from './repo-keysets-write.ts';
-import { hexToBytes } from './sun.ts';
+import { bytesToHex, hexToBytes } from './sun.ts';
 import { tagRef } from './tag-ref.ts';
 
 export type ImportResult = z.infer<typeof TagImportResultSchema>;
@@ -40,6 +41,24 @@ export async function importTags(
   if (!active) throw conflict('Rotate the keyset first.', 'KEYSET_NO_ACTIVE_KEY');
   const parsed = parseImportCsv(input.csv);
   const problems: ImportProblem[] = [...parsed.problems];
+  // A tag key equal to the shared meta key would let any reader of a tap's PICC data forge its MAC.
+  const [current] = await versionEnvelopes(ctx.env.DB, keyset.id, ['active']);
+  const meta = current
+    ? bytesToHex(
+        (
+          await openVersion(
+            await loadKekRing(ctx.env),
+            { ...scopeOf(keyset), keyId: current.id, version: current.version },
+            current.envelope,
+          )
+        ).meta,
+      )
+    : '';
+  parsed.rows = parsed.rows.filter((r) => {
+    if (r.key !== meta) return true;
+    problems.push({ line: r.line, uid: r.uid, reason: 'meta_key' });
+    return false;
+  });
   const refs = await Promise.all(
     parsed.rows.map(async (r) => ({ row: r, ...(await tagRef(ctx.env, a.orgId, a.mode, r.uid)) })),
   );
@@ -75,7 +94,14 @@ export async function importTags(
         { id: keyset.id, version: active.version },
         tags,
       );
-      const results = await commitKeyset(grant);
+      const results = await commitKeyset(grant).catch((error: unknown) => {
+        if (added > 0 && error instanceof AppError)
+          throw conflict(
+            `${added} tags were imported before the keyset changed. Check the file again for the rest.`,
+            'IMPORT_PARTIAL',
+          );
+        throw error;
+      });
       added += inserts.filter(
         (s) => (results[grant.indexOf(s)]?.results?.length ?? 0) === 1,
       ).length;

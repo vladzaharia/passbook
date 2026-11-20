@@ -50,6 +50,15 @@ describe('parseImportCsv', () => {
     expect(JSON.stringify(out.problems)).not.toContain(K1);
   });
 
+  it('imports none of the rows that share a key: that is not a key per tag', () => {
+    const out = parseImportCsv(`04aa0000000001,${K1}\n04aa0000000002,${K2}\n04aa0000000003,${K1}`);
+    expect(out.rows.map((r) => r.uid)).toEqual(['04aa0000000002']);
+    expect(out.problems.map((p) => [p.line, p.reason])).toEqual([
+      [1, 'dup_key'],
+      [3, 'dup_key'],
+    ]);
+  });
+
   it('refuses an empty file, a header with no uid or key column, and too many rows', () => {
     const code = (text: string) => {
       try {

@@ -102,8 +102,8 @@ export function ReenrolDialog({
   return (
     <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
       <DialogContent
-        title={`${C.title}: ${keyset.name}`}
-        description={C.body}
+        title={fill(C.title, { name: keyset.name })}
+        description={fill(C.body, { n: tagCount(keyset) })}
         closeButton={!busy}
         footer={
           <>

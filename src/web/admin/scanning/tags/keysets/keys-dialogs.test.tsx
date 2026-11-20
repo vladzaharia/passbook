@@ -35,7 +35,7 @@ describe('New keyset', () => {
       generate: true,
       diversify: true,
     });
-    const keys = await screen.findByRole('dialog', { name: 'Keys' });
+    const keys = await screen.findByRole('dialog', { name: 'Keys of Staff badges' });
     expect(keys).toHaveTextContent('Copy the secret now');
     expect(within(keys).getByRole('region', { name: 'Tag settings' })).toHaveTextContent(
       '/t/abcd1234',
@@ -50,7 +50,9 @@ describe('New keyset', () => {
     expect(done).toBeDisabled();
     await user.click(within(keys).getByRole('checkbox', { name: 'I saved the keys' }));
     await user.click(done);
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Keys' })).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Keys of Staff badges' })).toBeNull(),
+    );
     expect(document.body.textContent).not.toContain(META);
   });
 
@@ -177,6 +179,6 @@ describe('Rotate keys', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Rotate keys' }));
     await waitFor(() => expect(posted(fetchMock, '/k1/rotate')).toHaveLength(1));
     expect(bodyOf(posted(fetchMock, '/k1/rotate')[0])).toEqual({ generate: true });
-    expect(await screen.findByRole('dialog', { name: 'Keys' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Keys of Staff badges' })).toBeInTheDocument();
   });
 });

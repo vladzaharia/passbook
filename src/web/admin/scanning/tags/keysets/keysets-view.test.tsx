@@ -57,7 +57,7 @@ describe('Secure keys', () => {
     expect(within(sheet).getByText(/\/t\/abcd1234$/)).toBeInTheDocument();
     const profile = within(sheet).getByRole('region', { name: 'Tag settings' });
     expect(profile).toHaveTextContent('input the UID only');
-    expect(profile).toHaveTextContent('over empty input');
+    expect(profile).toHaveTextContent('Over empty input');
   });
 
   it('revokes a version after a confirm that names the tags it leaves', async () => {
@@ -70,7 +70,7 @@ describe('Secure keys', () => {
     await user.click(within(sheet).getByRole('button', { name: 'Revoke version 1' }));
     const confirm = await screen.findByRole('alertdialog');
     expect(confirm).toHaveTextContent('Revoke version 1?');
-    expect(confirm).toHaveTextContent('2 tags on it stop working.');
+    expect(confirm).toHaveTextContent('2 tags on it work again only once written');
     await user.click(within(confirm).getByRole('button', { name: 'Revoke' }));
     await waitFor(() => expect(posted(fetchMock, '/keys/1/revoke')).toHaveLength(1));
   });
@@ -113,7 +113,7 @@ describe('Secure keys', () => {
     });
     await user.click(await screen.findByRole('button', { name: 'Staff badges' }));
     await user.click(await screen.findByRole('button', { name: 'Move tags' }));
-    const dialog = await screen.findByRole('dialog', { name: /Move tags to a new keyset/ });
+    const dialog = await screen.findByRole('dialog', { name: /Move tags from Staff badges/ });
     await user.click(within(dialog).getByRole('button', { name: 'Move tags' }));
     await waitFor(() => expect(posted(fetchMock, '/k1/reenrol')).toHaveLength(1));
     expect(bodyOf(posted(fetchMock, '/k1/reenrol')[0])).toEqual({ toKeysetId: 'k3' });

@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { gte, lt, lte } from '../../platform/authority-expr.ts';
+import { gte, lt, lte, ne } from '../../platform/authority-expr.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { first, stmt } from '../../platform/db.ts';
 import { type EnvelopeRaw, envelopeOf } from './keyset-seal.ts';
@@ -113,12 +113,22 @@ export const sunActiveCheck = (seen: SunSeen): Check =>
     'stale',
   );
 
+/** The key version that verified the read is still live: a version revoked or retired since the read refuses the batch. */
+const sunVersionCheck = (seen: SunSeen): Check =>
+  exactlyOne(
+    'nfc_tag_keys',
+    { keyset_id: seen.keysetId, version: seen.keyVersion, state: ne('retired') },
+    'keyset_id',
+    'stale',
+  );
+
 /**
  * Refuses the batch unless the keyset is still enabled and this read is still newer than the tag's counter,
  * in the grant's own transaction: of two acts on one read exactly one passes.
  */
 export const sunFreshCheck = (tagId: string, seen: SunSeen): Check[] => [
   sunKeysetCheck(seen),
+  sunVersionCheck(seen),
   exactlyOne('nfc_tag_sun', fresh(tagId, seen), 'tag_id', 'stale'),
 ];
 
@@ -134,6 +144,7 @@ export const sunFollowCheck = (
   since: number,
 ): Check[] => [
   sunKeysetCheck(seen),
+  sunVersionCheck(seen),
   exactlyOne(
     'nfc_tag_sun',
     { tag_id: tagId, keyset_id: seen.keysetId, ctr: seen.ctr, key_version: seen.keyVersion },

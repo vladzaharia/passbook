@@ -4,6 +4,8 @@ import { sunTap } from '../scan/sun-test-fixtures.ts';
 import { createKeyset, disableKeyset, retireKeyVersion, rotateKeyset } from './keysets.ts';
 import { reenrolTags, revokeKeyVersion } from './keysets-recover.ts';
 import { keysetFixture } from './keysets-test-fixtures.ts';
+import { keysetGrant } from './repo-keysets-write.ts';
+import { sunFreshCheck } from './repo-sun.ts';
 import { hexToBytes } from './sun.ts';
 import { verifySunTap } from './systems/sun.ts';
 import { tagRef } from './tag-ref.ts';
@@ -166,6 +168,35 @@ describe('revoke one key version', () => {
   });
 });
 
+describe('a revoke lands between a read and its commit', () => {
+  it('refuses the write of a read the revoked version verified', async () => {
+    const t = await f.org();
+    const authority = await t.admin.authority();
+    const { keyset } = await made(authority);
+    const a = await tag(t.org.id, keyset.id, 3);
+    await rotateKeyset(ctx(), authority, keyset.id, { generate: true });
+    const seen = { keysetId: keyset.id, slug: keyset.slug, keyVersion: 1, ctr: 10 };
+    const write = (label: string) => {
+      const g = keysetGrant(
+        ctx(),
+        'org_mode.nfc.keyset.reenrol',
+        authority,
+        sunFreshCheck(a.id, seen),
+        ['nfc_tags'],
+      );
+      g.update('nfc_tags', { set: { label }, where: { id: a.id }, require: 'one' });
+      return g.commit();
+    };
+    // Retiring still verifies: the write goes through.
+    await write('before');
+    await revokeKeyVersion(ctx(), authority, keyset.id, 1);
+    await expect(write('after')).rejects.toMatchObject({ code: 'KEYSET_CHANGED' });
+    expect(await first(db(), 'SELECT label FROM nfc_tags WHERE id = ?', [a.id])).toEqual({
+      label: 'before',
+    });
+  });
+});
+
 describe('a retiring version enrols no new tag', () => {
   it('is held by the database: a side row goes on the active version only', async () => {
     const t = await f.org();
@@ -211,7 +242,9 @@ describe('re-enrol tags into a new keyset', () => {
       { keyset_id: to.id, key_version: 1, ctr: 9 },
     ]);
     const logged = await audit(from.id, 'tag_keyset.reenrol');
-    expect(logged.map((r) => JSON.parse(r.detail))).toEqual([{ to: to.id, toVersion: 1, tags: 2 }]);
+    expect(logged.map((r) => JSON.parse(r.detail))).toEqual([
+      { to: to.id, toVersion: 1, planned: 2 },
+    ]);
     // Nothing left to move: no second audit row.
     expect(await reenrolTags(ctx(), authority, from.id, to.id)).toMatchObject({ moved: 0 });
     expect(await audit(from.id, 'tag_keyset.reenrol')).toHaveLength(1);

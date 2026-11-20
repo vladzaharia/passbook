@@ -97,7 +97,7 @@ export function importGrant(
     a,
     keysetId: keyset.id,
     action: 'tag_keyset.import',
-    detail: { tags: tags.length, version: keyset.version },
+    detail: { attempted: tags.length, version: keyset.version },
   });
   return { grant: g, inserts };
 }

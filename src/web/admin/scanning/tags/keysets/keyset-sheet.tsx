@@ -228,7 +228,7 @@ function Versions({
                 <span className="font-medium text-fg-strong">
                   Version {v.version} · {state}
                 </span>
-                <span className="text-fg-muted">
+                <span className={revoked && v.tags > 0 ? 'text-warning' : 'text-fg-muted'}>
                   {v.tags === 0
                     ? 'No tags'
                     : revoked

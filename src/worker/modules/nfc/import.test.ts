@@ -19,6 +19,7 @@ const refused = (promise: Promise<unknown>, code: string) =>
 const K1 = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
 const K2 = '0f1e2d3c4b5a69788796a5b4c3d2e1f0';
 const K3 = '5a4b3c2d1e0f90817263544536271809';
+const K4 = '1122334455667788990011223344aabb';
 const META = 'c3'.repeat(16);
 
 async function perTag() {
@@ -93,7 +94,7 @@ describe('import', () => {
       `04aa0000000002,${K3}`,
       `04aa0000000003,${K3}`,
       `04aa0000000004,${'0'.repeat(32)}`,
-      `04aa0000000005,${K3}`,
+      `04aa0000000005,${K4}`,
     ].join('\n');
     const out = await importTags(ctx(), authority, made.id, { csv, dryRun: false });
     expect(out).toMatchObject({ rows: 6, ok: 3, added: 3 });
@@ -165,9 +166,26 @@ describe('import', () => {
       [made.id],
     );
     expect(audits).toHaveLength(1);
-    expect(JSON.parse(audits[0]?.detail ?? '{}')).toMatchObject({ tags: 2, version: 1 });
+    expect(JSON.parse(audits[0]?.detail ?? '{}')).toMatchObject({ attempted: 2, version: 1 });
     expect(JSON.stringify(audits)).not.toContain(K1);
     for (const r of rows) expect(Buffer.from(r.ciphertext).toString('hex')).not.toContain(K1);
+  });
+
+  it('refuses a tag key equal to the keyset meta key, and keys two rows share', async () => {
+    const { authority, made } = await perTag();
+    const csv = [
+      `04aa0000000001,${META}`,
+      `04aa0000000002,${K1}`,
+      `04aa0000000003,${K2}`,
+      `04aa0000000004,${K2}`,
+    ].join('\n');
+    const out = await importTags(ctx(), authority, made.id, { csv, dryRun: false });
+    expect(out).toMatchObject({ ok: 1, added: 1 });
+    expect(out.problems.map((p) => [p.line, p.reason])).toEqual([
+      [1, 'meta_key'],
+      [3, 'dup_key'],
+      [4, 'dup_key'],
+    ]);
   });
 
   it('refuses a keyset that takes no imported tags, a disabled one, and a file that is too big', async () => {
