@@ -31,7 +31,7 @@ import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
 import { withParentHint } from './occupancy/parent-hint.ts';
-import { touchOnlineAt, touchOnlineScan } from './repo-roster.ts';
+import { touchOnlineAt } from './repo-roster.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
@@ -185,9 +185,6 @@ register(
     const ctx = capturingContext(serviceContext(c)),
       actor = deepFreeze(cloneObservedScanActor(scanActorOf(c))),
       req = deepFreeze(c.req.valid('json'));
-    // An online scan is server-side proof the door was in touch: it floors the dates a queued read may carry.
-    if (actor.principal === 'scanner' && actor.scanner)
-      await touchOnlineScan(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
     const input = req.input;
     const evaluation =
       'tag' in input

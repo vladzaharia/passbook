@@ -157,15 +157,6 @@ export const touchOnlineAt = (db: D1Database, scannerId: string, orgId: string, 
     [scannerId, orgId, now],
   );
 
-/**
- * The door scanned online: it was in touch with the server then, whatever its queue says. A queued read dated
- * more than this before that scan is backdated. The slack lets an honest door that scans before its queue
- * has drained still sync reads from a short outage; a longer one waits for the door's own clean contact.
- */
-export const ONLINE_SCAN_SLACK_MS = 15 * 60_000;
-export const touchOnlineScan = (db: D1Database, scannerId: string, orgId: string, now: number) =>
-  touchOnlineAt(db, scannerId, orgId, now - ONLINE_SCAN_SLACK_MS);
-
 export const onlineAtOf = async (db: D1Database, scannerId: string): Promise<number> =>
   (
     await all<{ online_at: number }>(
