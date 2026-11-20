@@ -5,6 +5,8 @@ import {
   DEV_FORBIDDEN,
   FORBIDDEN,
   initialAssets,
+  islandAssets,
+  PLAYGROUND_BUDGET_BYTES,
   SCAN_BUDGET_BYTES,
   SCAN_FORBIDDEN,
 } from './check-bundle.ts';
@@ -90,5 +92,27 @@ describe('check-bundle', () => {
     const css = Array.from({ length: 80_000 }, () => Math.random().toString(36)).join('');
     const over = checkBundle(() => css, html, DEV_BUDGET_BYTES, DEV_FORBIDDEN, true);
     expect(over.errors.some((e) => e.includes('exceeds budget 60000 B'))).toBe(true);
+  });
+
+  it('finds the playground island from the portal script and keeps the initial load out of it', () => {
+    const files: Record<string, string> = {
+      '/assets/developers-a.js': 'import("./playground-Abc_12.js")',
+      '/assets/playground-Abc_12.js':
+        'const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/boot-x.js","assets/react-y.js","assets/boot-x.css","assets/developers-a.js"])))=>i',
+    };
+    const initial = ['/assets/developers-a.js', '/assets/developers-b.css'];
+    expect(islandAssets((url) => files[url] ?? '', initial)).toEqual([
+      '/assets/playground-Abc_12.js',
+      '/assets/boot-x.js',
+      '/assets/react-y.js',
+      '/assets/boot-x.css',
+    ]);
+    // No island named in the scripts: nothing to measure, which the build reports as a failure.
+    expect(islandAssets(() => 'nothing', initial)).toEqual([]);
+  });
+
+  it('the playground island has a budget of its own, above the portal’s and below the console’s', () => {
+    expect(PLAYGROUND_BUDGET_BYTES).toBeGreaterThan(DEV_BUDGET_BYTES);
+    expect(PLAYGROUND_BUDGET_BYTES).toBeLessThan(235_000);
   });
 });

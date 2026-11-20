@@ -10,6 +10,7 @@ export interface Island {
 export const ISLANDS: Record<string, () => Promise<Island>> = {
   'webhook-tester': () => import('../webhooks/index.tsx'),
   snippets: () => import('./personal.ts'),
+  playground: () => import('../playground/index.tsx'),
 };
 
 export function mountIslands(root: ParentNode = document): void {

@@ -77,7 +77,7 @@ export const DEV_COPY = {
     },
     playground: {
       title: 'Playground',
-      line: 'Not available yet. Edit a pass and watch Apple, Google, Samsung and paper change.',
+      line: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
     },
     guides: {
       title: 'Guides',

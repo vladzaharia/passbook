@@ -1,7 +1,7 @@
+import { goRawString, goString, jsonText, pyLiteral, pyString, shQuote } from './code-literals.ts';
 import type { Lang } from './highlight.ts';
 import { pathValue } from './ids.ts';
-import { bodyOf, queryOf, tsSample } from './sample-ts.ts';
-import type { Json, OpView } from './types.ts';
+import { bodyOf, queryOf, type SampleOp, tsSample } from './sample-ts.ts';
 
 export interface Sample {
   lang: Lang;
@@ -11,13 +11,12 @@ export interface Sample {
 }
 
 const KEY = 'PASSBOOK_KEY';
-const json = (v: Json) => JSON.stringify(v, null, 2);
 
-const hasBody = (op: OpView) => bodyOf(op) !== undefined || op.binary;
-const bodyJson = (op: OpView) => json(bodyOf(op) ?? {});
+const hasBody = (op: SampleOp) => bodyOf(op) !== undefined || op.binary;
+const bodyJson = (op: SampleOp) => jsonText(bodyOf(op) ?? {});
 
 /** The path with example ids in it, and the query the call needs. */
-function target(op: OpView, base: string): string {
+function target(op: SampleOp, base: string): string {
   const type = (name: string) => op.fields.find((f) => f.where === 'path' && f.name === name)?.type;
   const path = op.path.replace(/\{(\w+)\}/g, (_, n: string) =>
     pathValue(op.path, n, type(n) ?? 'string'),
@@ -28,46 +27,35 @@ function target(op: OpView, base: string): string {
   return `${base}${path}${query ? `?${query}` : ''}`;
 }
 
-function curl(op: OpView, base: string): string {
+/** Text as one shell word: the plain double-quoted form when it holds nothing a shell reads, else single-quoted. */
+const shWord = (text: string) => (/^[\w:/.<>@%?=&, -]*$/.test(text) ? `"${text}"` : shQuote(text));
+
+function curl(op: SampleOp, base: string): string {
   const parts = [
-    `curl -X ${op.method.toUpperCase()} "${target(op, base)}"`,
+    `curl -X ${op.method.toUpperCase()} ${shWord(target(op, base))}`,
     `  -H "Authorization: Bearer $${KEY}"`,
   ];
   if (op.idempotent) parts.push('  -H "Idempotency-Key: $(uuidgen)"');
-  for (const [k, v] of Object.entries(op.sample.headers)) parts.push(`  -H "${k}: ${v}"`);
+  for (const [k, v] of Object.entries(op.sample.headers))
+    parts.push(`  -H ${shWord(`${k}: ${v}`)}`);
   if (op.binary) {
     parts.push('  -H "Content-Type: image/png"', '  --data-binary @image.png');
   } else if (hasBody(op)) {
-    parts.push('  -H "Content-Type: application/json"', `  -d '${bodyJson(op)}'`);
+    // Single quotes expand nothing; shQuote turns each `'` in a value into `'\''`.
+    parts.push('  -H "Content-Type: application/json"', `  -d ${shQuote(bodyJson(op))}`);
   }
   return parts.join(' \\\n');
 }
 
-/** A Python literal for a JSON value. */
-function pyValue(v: Json, pad = ''): string {
-  if (v === null) return 'None';
-  if (typeof v === 'boolean') return v ? 'True' : 'False';
-  if (typeof v !== 'object') return JSON.stringify(v);
-  const inner = `${pad}    `;
-  if (Array.isArray(v)) {
-    return v.length === 0
-      ? '[]'
-      : `[\n${v.map((x) => inner + pyValue(x, inner)).join(',\n')},\n${pad}]`;
-  }
-  const entries = Object.entries(v);
-  if (entries.length === 0) return '{}';
-  const rows = entries.map(([k, x]) => `${inner}${JSON.stringify(k)}: ${pyValue(x, inner)}`);
-  return `{\n${rows.join(',\n')},\n${pad}}`;
-}
-
-function py(op: OpView, base: string): string {
+function py(op: SampleOp, base: string): string {
   const headers = [`"Authorization": f"Bearer {os.environ['${KEY}']}"`];
   if (op.idempotent) headers.push('"Idempotency-Key": str(uuid.uuid4())');
-  for (const [k, v] of Object.entries(op.sample.headers)) headers.push(`"${k}": "${v}"`);
+  for (const [k, v] of Object.entries(op.sample.headers))
+    headers.push(`${pyString(k)}: ${pyString(v)}`);
   if (op.binary) headers.push('"Content-Type": "image/png"');
-  const args = [`    "${target(op, base)}",`, `    headers={${headers.join(', ')}},`];
+  const args = [`    ${pyString(target(op, base))},`, `    headers={${headers.join(', ')}},`];
   if (op.binary) args.push('    content=open("image.png", "rb").read(),');
-  else if (hasBody(op)) args.push(`    json=${pyValue(bodyOf(op) ?? {}, '    ')},`);
+  else if (hasBody(op)) args.push(`    json=${pyLiteral(bodyOf(op) ?? {}, '    ')},`);
   return [
     `import os${op.idempotent ? ', uuid' : ''}`,
     'import httpx',
@@ -80,7 +68,7 @@ function py(op: OpView, base: string): string {
   ].join('\n');
 }
 
-function go(op: OpView, base: string): string {
+function go(op: SampleOp, base: string): string {
   const body = hasBody(op);
   return [
     'package main',
@@ -95,12 +83,13 @@ function go(op: OpView, base: string): string {
     ')',
     '',
     'func main() {',
+    // A raw string keeps the JSON readable; goRawString joins in any backtick as its own literal.
     ...(op.binary
       ? ['\tbody, err := os.Open("image.png")', '\tif err != nil {', '\t\tpanic(err)', '\t}']
       : body
-        ? [`\tbody := strings.NewReader(\`${bodyJson(op)}\`)`]
+        ? [`\tbody := strings.NewReader(${goRawString(bodyJson(op))})`]
         : []),
-    `\treq, err := http.NewRequest("${op.method.toUpperCase()}", "${target(op, base)}", ${body ? 'body' : 'nil'})`,
+    `\treq, err := http.NewRequest(${goString(op.method.toUpperCase())}, ${goString(target(op, base))}, ${body ? 'body' : 'nil'})`,
     '\tif err != nil {',
     '\t\tpanic(err)',
     '\t}',
@@ -108,7 +97,9 @@ function go(op: OpView, base: string): string {
     ...(op.idempotent
       ? ['\treq.Header.Set("Idempotency-Key", fmt.Sprint(time.Now().UnixNano()))']
       : []),
-    ...Object.entries(op.sample.headers).map(([k, v]) => `\treq.Header.Set("${k}", "${v}")`),
+    ...Object.entries(op.sample.headers).map(
+      ([k, v]) => `\treq.Header.Set(${goString(k)}, ${goString(v)})`,
+    ),
     ...(body
       ? [`\treq.Header.Set("Content-Type", "${op.binary ? 'image/png' : 'application/json'}")`]
       : []),
@@ -124,7 +115,7 @@ function go(op: OpView, base: string): string {
 }
 
 /** The request in four languages: TypeScript through @passbook/sdk, the rest plain HTTP until the Python and Go SDKs ship. */
-export function samplesFor(op: OpView, base: string): Sample[] {
+export function samplesFor(op: SampleOp, base: string): Sample[] {
   return [
     { lang: 'curl', label: 'curl', file: 'request.sh', code: curl(op, base) },
     { lang: 'ts', label: 'TypeScript', file: 'request.ts', code: tsSample(op) },

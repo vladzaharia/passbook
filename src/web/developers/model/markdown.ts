@@ -23,7 +23,7 @@ function opMarkdown(op: OpView, base: string): string {
     ...(op.idempotent ? ['Idempotent with an `Idempotency-Key` header'] : []),
     `SDK name: \`${op.sdkCall}\``,
   ];
-  out.push('', facts.join('. ') + '.');
+  out.push('', `${facts.join('. ')}.`);
   if (op.fields.length > 0) {
     out.push(
       '',

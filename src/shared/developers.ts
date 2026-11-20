@@ -12,6 +12,8 @@ export const PATHS = {
   changelogFeed: '/developers/changelog.atom',
   llms: '/developers/llms.txt',
   sitemap: '/developers/sitemap.xml',
+  /** Every starter's sample, built at deploy: the anonymous playground's only data. */
+  previews: '/developers/blueprint-previews.json',
   assets: '/developers/assets',
   openapi: '/api/v1/openapi.json',
 } as const;

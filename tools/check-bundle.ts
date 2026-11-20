@@ -31,6 +31,30 @@ export const SCAN_FORBIDDEN = [...FORBIDDEN, 'routeTree', '__passbookScan'] as c
 /** The portal never pulls the SPA's router tree either. */
 export const DEV_FORBIDDEN = [...FORBIDDEN, 'routeTree'] as const;
 
+/**
+ * The playground island: what it loads on top of the portal's initial load (its entry, the page it
+ * opens, their static imports and styles), in gzip bytes. The wallet compilers and the barcode
+ * encoder are dynamic imports and stay out; react, the card renderers and the kit pieces are in.
+ * 197 kB measured.
+ */
+export const PLAYGROUND_BUDGET_BYTES = 215_000;
+
+/**
+ * The island's files: its entry (named in the portal's initial scripts) and what the entry's
+ * preload list names, minus the initial load. `read` takes `/assets/x.js` style urls.
+ */
+export function islandAssets(read: (url: string) => string, initial: readonly string[]): string[] {
+  const entry = initial
+    .map((url) => /(?:^|\/)(playground-[\w-]+\.js)/.exec(read(url))?.[1])
+    .find((name) => name);
+  if (!entry) return [];
+  const url = `/assets/${entry}`;
+  const list = /m\.f\|\|\(m\.f=(\[[^\]]*\])\)/.exec(read(url))?.[1];
+  const deps = list ? (JSON.parse(list) as string[]).map((d) => `/${d}`) : [];
+  const skip = new Set(initial);
+  return [...new Set([url, ...deps])].filter((u) => !skip.has(u));
+}
+
 export function initialAssets(html: string, stylesheets = false): string[] {
   const urls = [
     ...html.matchAll(/<script[^>]*type="module"[^>]*src="([^"]+)"/g),
@@ -93,6 +117,19 @@ if (import.meta.main) {
       process.stderr.write(`${errors.join('\n')}\n`);
       failed = true;
     }
+  }
+  const read = (url: string) => readFileSync(join(dist, url.replace(/^\//, '')), 'utf8');
+  const initial = initialAssets(readFileSync(join(dist, 'developers.html'), 'utf8'), true);
+  const island = islandAssets(read, initial);
+  const total = island.reduce((n, url) => n + gzipSync(read(url)).length, 0);
+  process.stdout.write(`playground island gzip: ${total} B (${island.length} files)\n`);
+  if (island.length === 0 || total > PLAYGROUND_BUDGET_BYTES) {
+    process.stderr.write(
+      island.length === 0
+        ? 'playground island: no entry found in the portal scripts\n'
+        : `playground island gzip ${total} B exceeds budget ${PLAYGROUND_BUDGET_BYTES} B\n`,
+    );
+    failed = true;
   }
   if (failed) process.exit(1);
 }

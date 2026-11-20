@@ -1,5 +1,8 @@
 import { PREVIEW_COPY, walletName } from '@/shared/copy/previews.ts';
-import { Badge, Callout, EmptyState, Skeleton } from '../ui/index.ts';
+import { Badge } from '../ui/badge.tsx';
+import { Callout } from '../ui/callout.tsx';
+import { EmptyState } from '../ui/empty-state.tsx';
+import { Skeleton } from '../ui/skeleton.tsx';
 import { GoogleCard } from '../wallet-previews/google/google-card.tsx';
 import { SamsungCard } from '../wallet-previews/samsung/samsung-card.tsx';
 import { FidelityNotes } from './fidelity-notes.tsx';
