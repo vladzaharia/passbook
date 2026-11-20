@@ -58,6 +58,8 @@ const instanceFields = {
   accountId: 'account-1',
   identityProjectionReleaseId: 'native-1',
   credentialGeneration: 1,
+  channelEpoch: 1,
+  retirementCause: null,
   lifecycle: 'active',
   desiredVersion: 1,
   desiredOperationId: 'old-op',

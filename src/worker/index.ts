@@ -7,6 +7,7 @@ import { createAuthStores } from './stores.ts';
 export { ScanHub } from './modules/scan/scan-hub.ts';
 export { Broadcast } from './workflows/broadcast.ts';
 export { BulkReissue } from './workflows/bulk-reissue.ts';
+export { ChannelApply } from './workflows/channel-apply.ts';
 export { ConnectionSync } from './workflows/connection-sync.ts';
 export { PassImport } from './workflows/pass-import.ts';
 export { TemplateImport } from './workflows/template-import.ts';

@@ -92,6 +92,16 @@ export async function writePassChannels(
   await g.commit();
 }
 
+/** The channel-apply run a save opens, or joins when one is already pending. */
+export interface ApplyRequest {
+  runId: string;
+  /** The stored policy before this save. */
+  from: Partial<Record<Channel, TemplateChannelState>>;
+  dueAt: number;
+  /** The channels whose codes this run replaces: the pending run's, plus this save's. */
+  replace: Channel[];
+}
+
 /** Saves a template's policy; a `never` also clears that channel's pass overrides (N1). */
 export async function writeTemplatePolicy(
   ctx: ServiceContext,
@@ -103,12 +113,13 @@ export async function writeTemplatePolicy(
   cleared: Channel[],
   detail: Record<string, unknown>,
   revision: number,
+  apply: ApplyRequest,
 ): Promise<void> {
   const g = grant(ctx, {
     purpose: 'org_mode.channels.policy',
     principal: tenantPrincipal(authority),
     target: templateId,
-    tables: ['template_channel_policies', 'pass_channels'],
+    tables: ['template_channel_policies', 'pass_channels', 'channel_apply_runs'],
     checks: capabilityChecks(authority),
     codes: { stale: 'TEMPLATE_CHANNELS_CHANGED' },
   });
@@ -131,6 +142,41 @@ export async function writeTemplatePolicy(
       inc: ['revision'],
       where: { template_id: templateId, channel },
     });
+  // The save joins the template's pending run and pushes its start back, or opens one that begins
+  // from the policy before this save.
+  const now = ctx.clock.now();
+  g.update('channel_apply_runs', {
+    set: { due_at: apply.dueAt, replace_channels: JSON.stringify(apply.replace), updated_at: now },
+    where: { template_id: templateId, state: 'pending' },
+  });
+  g.insertSelect(
+    'channel_apply_runs',
+    [
+      'id',
+      'template_id',
+      'state',
+      'from_channels',
+      'from_revision',
+      'replace_channels',
+      'requested_by',
+      'due_at',
+      'created_at',
+      'updated_at',
+    ],
+    [
+      apply.runId,
+      templateId,
+      'pending',
+      JSON.stringify(apply.from),
+      revision,
+      JSON.stringify(apply.replace),
+      by,
+      apply.dueAt,
+      now,
+      now,
+    ],
+    { when: [notExists('channel_apply_runs', { template_id: templateId, state: 'pending' })] },
+  );
   g.audit(
     auditRow(ctx, authority, actor, {
       action: 'template.channels_change',

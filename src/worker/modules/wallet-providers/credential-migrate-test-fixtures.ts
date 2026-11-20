@@ -118,6 +118,7 @@ export async function currentIds(k: Kit, a: Seeded) {
     mode: a.mode,
     releaseId: 'r1',
     passId: 'p1',
+    channelEpoch: 1,
     credentialGeneration: 1,
   });
 }

@@ -94,8 +94,8 @@ export type ChannelAction =
   | { kind: 'rotate_codes'; channels: Channel[] };
 
 export interface TransitionOptions {
-  /** The explicit "Turn off and replace codes" action. */
-  replaceCodes?: boolean;
+  /** The explicit "Turn off and replace codes" action; a set limits it to those channels. */
+  replaceCodes?: boolean | ReadonlySet<Channel>;
   /** Channels where the pass has copy evidence. */
   copies?: ReadonlySet<Channel>;
   /** Channels with retired_at set now. */
@@ -132,7 +132,19 @@ export function channelTransition(
     else actions.push({ kind: 'retire', channel: c });
     if (isDigital(c) && copies.has(c)) turnedOff.push(c);
   }
-  if (opts.replaceCodes && turnedOff.length > 0 && anyDigitalOn(after))
-    actions.push({ kind: 'rotate_codes', channels: turnedOff });
+  // A digital channel that is off after the change, with copies, and was turned off now or earlier
+  // (retired): its copies still scan the old code. That covers "re-enable after all off" too.
+  const replace = opts.replaceCodes;
+  const rotate = replace
+    ? DIGITAL_CHANNELS.filter(
+        (c) =>
+          !after[c].on &&
+          copies.has(c) &&
+          (turnedOff.includes(c) || retired.has(c)) &&
+          (replace === true || replace.has(c)),
+      )
+    : [];
+  if (rotate.length > 0 && anyDigitalOn(after))
+    actions.push({ kind: 'rotate_codes', channels: rotate });
   return actions;
 }
