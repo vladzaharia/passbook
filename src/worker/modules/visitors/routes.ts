@@ -27,7 +27,7 @@ import {
 import { resendHostNotice } from './arrival.ts';
 import { offboard } from './offboard.ts';
 import { hostChoices, visitorById } from './repo.ts';
-import { cancelVisit, checkOutVisit, createVisit, listVisits } from './service.ts';
+import { cancelVisit, canTypeHost, checkOutVisit, createVisit, listVisits } from './service.ts';
 
 /**
  * /api/v1/visitors: visits and their hosts. A console session or an API key (`passes:read` to read,
@@ -80,7 +80,9 @@ register(
   async (c) => {
     const ctx = svc(c);
     const a = await tenantAuthorityOf(ctx, authOf(c), c.req.valid('query').orgId, 'passes:read');
-    return c.json({ items: await hostChoices(ctx.env.DB, a.orgId) });
+    const emails = await canTypeHost(ctx, a);
+    const items = await hostChoices(ctx.env.DB, a.orgId);
+    return c.json({ items: items.map((h) => ({ ...h, email: emails ? h.email : null })) });
   },
 );
 

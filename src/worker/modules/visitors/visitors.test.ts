@@ -150,6 +150,8 @@ describe('visitor status, from scans and the window', () => {
 
 describe('host email on arrival', () => {
   it('mails the host once, with the visitor name and no other personal detail', async () => {
+    // Earlier tests' arrival mails are sent in the background: let them land first.
+    await new Promise((r) => setTimeout(r, 500));
     sent.length = 0;
     const door = await makeDoor([tpl]);
     const v = await visit({ email: 'leo.guest@example.test' });

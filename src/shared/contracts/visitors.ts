@@ -35,23 +35,31 @@ export type Visitor = z.infer<typeof VisitorSchema>;
 
 export const VisitorListSchema = z.object({ items: z.array(VisitorSchema) });
 
-export const NewVisitorSchema = z.strictObject({
-  orgId: IdSchema,
-  name: PlainLineSchema(80),
-  email: EmailSchema.optional(),
-  hostName: PlainLineSchema(80),
-  hostEmail: EmailSchema,
-  windowFrom: TimestampSchema,
-  windowUntil: TimestampSchema,
-  note: PlainLineSchema(100).optional(),
-  /** A guest-plan template of the org; the newest one when left out. */
-  templateId: IdSchema.optional(),
-});
+export const NewVisitorSchema = z
+  .strictObject({
+    orgId: IdSchema,
+    name: PlainLineSchema(80),
+    email: EmailSchema.optional(),
+    /** A member of the org, chosen from the host list. Or type a host: name and email (members:manage). */
+    hostUserId: IdSchema.optional(),
+    hostName: PlainLineSchema(80).optional(),
+    hostEmail: EmailSchema.optional(),
+    windowFrom: TimestampSchema,
+    windowUntil: TimestampSchema,
+    note: PlainLineSchema(100).optional(),
+    /** A guest-plan template of the org; the newest one when left out. */
+    templateId: IdSchema.optional(),
+  })
+  .refine((v) => v.hostUserId !== undefined || (v.hostName && v.hostEmail), {
+    message: 'Choose a host.',
+    path: ['hostUserId'],
+  });
 export type NewVisitor = z.infer<typeof NewVisitorSchema>;
 
 export const VisitorParamsSchema = z.object({ id: IdSchema });
 export const VisitorOrgQuerySchema = z.object({ orgId: IdSchema });
 
 export const HostListSchema = z.object({
-  items: z.array(z.object({ name: z.string(), email: z.string() })),
+  /** Emails come only with members:manage. */
+  items: z.array(z.object({ id: IdSchema, name: z.string(), email: z.string().nullable() })),
 });

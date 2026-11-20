@@ -33,9 +33,10 @@ export function NewVisitorDialog({
 }) {
   const create = useNewVisitor(orgId);
   const hosts = useHosts(orgId).data?.items ?? [];
-  // A member is chosen by email; OTHER (or no members) shows the typed name and email.
+  // A member is chosen by id (emails are for members:manage); OTHER (or no members) shows the typed name and email.
   const [pick, setPick] = useState('');
-  const typed = pick === OTHER || hosts.length === 0;
+  const canType = hosts.length === 0 || hosts.some((h) => h.email !== null);
+  const typed = canType && (pick === OTHER || hosts.length === 0);
   const [f, setF] = useState({
     name: '',
     email: '',
@@ -53,8 +54,14 @@ export function NewVisitorDialog({
   const until = at(f.date, f.until);
   const check = useFormErrors({
     ...(f.name.trim() ? {} : { name: 'Required.' }),
-    ...(f.hostName.trim() ? {} : { hostName: 'Required.' }),
-    ...(f.hostEmail.trim() ? {} : { hostEmail: 'Required.' }),
+    ...(typed
+      ? {
+          ...(f.hostName.trim() ? {} : { hostName: 'Required.' }),
+          ...(f.hostEmail.trim() ? {} : { hostEmail: 'Required.' }),
+        }
+      : pick
+        ? {}
+        : { hostUserId: 'Choose a host.' }),
     ...(Number.isFinite(from) && Number.isFinite(until) && until > from
       ? {}
       : { until: 'Choose a later time.' }),
@@ -75,8 +82,9 @@ export function NewVisitorDialog({
       const made = await create.mutateAsync({
         name: f.name.trim(),
         ...(f.email.trim() ? { email: f.email.trim() } : {}),
-        hostName: f.hostName.trim(),
-        hostEmail: f.hostEmail.trim(),
+        ...(typed
+          ? { hostName: f.hostName.trim(), hostEmail: f.hostEmail.trim() }
+          : { hostUserId: pick }),
         windowFrom: from,
         windowUntil: until,
         ...(f.note.trim() ? { note: f.note.trim() } : {}),
@@ -145,7 +153,7 @@ export function NewVisitorDialog({
               label={VISITOR_COPY.form.host}
               help={typed ? undefined : VISITOR_COPY.form.hostHelp}
               required
-              error={typed ? undefined : (errors.hostName ?? errors.hostEmail)}
+              error={typed ? undefined : errors.hostUserId}
             >
               {(p) => (
                 <Select
@@ -153,18 +161,13 @@ export function NewVisitorDialog({
                   value={pick || undefined}
                   placeholder={VISITOR_COPY.form.hostPick}
                   options={[
-                    ...hosts.map((h) => ({ value: h.email, label: `${h.name} · ${h.email}` })),
-                    { value: OTHER, label: VISITOR_COPY.form.hostOther },
+                    ...hosts.map((h) => ({
+                      value: h.id,
+                      label: h.email ? `${h.name} · ${h.email}` : h.name,
+                    })),
+                    ...(canType ? [{ value: OTHER, label: VISITOR_COPY.form.hostOther }] : []),
                   ]}
-                  onValueChange={(next) => {
-                    setPick(next);
-                    const chosen = hosts.find((h) => h.email === next);
-                    set(
-                      chosen
-                        ? { hostName: chosen.name, hostEmail: chosen.email }
-                        : { hostName: '', hostEmail: '' },
-                    );
-                  }}
+                  onValueChange={setPick}
                 />
               )}
             </FormField>

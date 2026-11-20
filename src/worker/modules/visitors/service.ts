@@ -17,7 +17,7 @@ import type { ScopeArg } from '../passes/scope.ts';
 import { type Actor, voidPass } from '../passes/service.ts';
 import { deriveVisit } from './derive.ts';
 import {
-  hostChoices,
+  hostById,
   listVisitors as listRows,
   orgTemplates,
   type VisitorRow,
@@ -88,13 +88,13 @@ export async function createVisit(
     throw new ValidationError('Choose an end after the start, within 14 days.', [
       { path: 'windowUntil', message: 'Choose a later end.' },
     ]);
-  const typedHost = await assertHost(ctx, authority, body.orgId, body.hostEmail);
+  const host = await resolveHost(ctx, authority, body);
   const templates = visitorTemplates(await orgTemplates(ctx.env.DB, authority.orgId));
   const template = body.templateId ? templates.find((t) => t.id === body.templateId) : templates[0];
   if (!template) throw new ConflictError(VISITOR_COPY.noTemplate, 'VISITOR_TEMPLATE_MISSING');
   const input = visitorInput(template.manifest, {
     name: body.name,
-    hostName: body.hostName,
+    hostName: host.name,
     windowFrom: body.windowFrom,
     note: body.note ?? null,
     code: `V-${ctx.ids.id().slice(-8).toUpperCase()}`,
@@ -129,12 +129,12 @@ export async function createVisit(
     id,
     passId: pass.id,
     name: body.name,
-    hostName: body.hostName,
-    hostEmail: body.hostEmail,
+    hostName: host.name,
+    hostEmail: host.email,
     windowFrom: body.windowFrom,
     windowUntil: body.windowUntil,
     note: body.note ?? null,
-    typedHost,
+    typedHost: host.typed,
   });
   try {
     await g.commit();
@@ -147,22 +147,27 @@ export async function createVisit(
 }
 
 /**
- * The host is a member of the org. A typed address is for people who manage members, and is audited as typed;
- * an API key must name a member.
+ * The host is a member of the org, chosen by id. A typed name and address is for people who manage members, and
+ * is audited as typed; an API key must name a member.
  */
-async function assertHost(
+async function resolveHost(
   ctx: ServiceContext,
   authority: TenantPassWrite,
-  orgId: string,
-  email: string,
-): Promise<boolean> {
-  const members = await hostChoices(ctx.env.DB, orgId);
-  if (members.some((m) => m.email.toLowerCase() === email)) return false;
-  const access =
-    authority.kind === 'session' ? await getOrgAccess(ctx, authority.userId, orgId) : null;
-  if (!access?.capabilities.includes('members:manage'))
+  body: NewVisitor,
+): Promise<{ name: string; email: string; typed: boolean }> {
+  if (body.hostUserId) {
+    const m = await hostById(ctx.env.DB, authority.orgId, body.hostUserId);
+    if (!m) throw new NotFoundError('Host not found.', 'VISITOR_HOST_UNKNOWN');
+    return { name: m.name, email: m.email, typed: false };
+  }
+  if (!(await canTypeHost(ctx, authority)))
     throw new ForbiddenError('Choose a member as the host.', 'VISITOR_HOST_UNKNOWN');
-  return true;
+  return { name: body.hostName ?? '', email: body.hostEmail ?? '', typed: true };
+}
+
+export async function canTypeHost(ctx: ServiceContext, a: TenantPassWrite): Promise<boolean> {
+  const access = a.kind === 'session' ? await getOrgAccess(ctx, a.userId, a.orgId) : null;
+  return access?.capabilities.includes('members:manage') === true;
 }
 
 const scopeOf = (a: TenantPassWrite): ScopeArg => ({

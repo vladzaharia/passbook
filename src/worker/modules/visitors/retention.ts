@@ -1,15 +1,26 @@
+import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { deletePass } from '../passes/service.ts';
 import { healHead } from '../retention/head-store.ts';
 import { type PreparedReceipt, prepareReceipt, recordHead } from '../retention/receipt-service.ts';
 import { chainHead } from '../retention/repo-receipts.ts';
 import type { Scope } from '../retention/repo-sweep.ts';
 import { retentionTargets } from '../retention/targets.ts';
-import { deleteVisit, endedVisits } from './repo-retention.ts';
+import { deleteVisit, endedVisits, type RetentionVisit } from './repo-retention.ts';
 
 const DAY = 86_400_000;
 const BATCH = 50;
 /** Visits one run removes: the platform pass, then all org passes together. A backlog drains over days. */
 export const VISIT_LIMITS = { platform: 200, orgs: 200 };
+
+/** Soft-deletes the visit's pass as the system. A pass already gone is settled. */
+async function removePass(ctx: ServiceContext, v: RetentionVisit): Promise<void> {
+  try {
+    await deletePass(ctx, { type: 'system', id: null }, v.pass_id, v.org_id);
+  } catch (error) {
+    if (!(error instanceof NotFoundError)) throw error;
+  }
+}
 
 /**
  * Daily: visits whose window ended more days ago than the `visitors` retention plan allows (the org's days,
@@ -41,9 +52,11 @@ export async function dailyVisitors(ctx: ServiceContext): Promise<void> {
             kind: 'visitor',
             policyDays: days,
             cutoffAt: now - days * DAY,
-            deleted: 1,
+            deleted: 2,
             anonymised: 0,
           });
+          // The visitor pass goes first (its name, host and copies follow pass retention), then the visit row.
+          await removePass(ctx, v);
           await deleteVisit(ctx, v, receipt);
           await recordHead(ctx, receipt.receipt);
           removed++;

@@ -95,4 +95,15 @@ describe('visitors API, by key or session', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ dryRun: true, holders: 0, passes: 0, tags: 0 });
   });
+
+  it('lists host names to passes:read keys and emails only to members who manage members', async () => {
+    const read = await fake.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] });
+    const asKey = await call('GET', `/visitors/hosts?orgId=${kit.org.id}`, read);
+    const keyBody = (await asKey.json()) as { items: { id: string; email: string | null }[] };
+    expect(asKey.status).toBe(200);
+    expect(keyBody.items.every((h) => h.email === null)).toBe(true);
+    const asAdmin = await call('GET', `/visitors/hosts?orgId=${kit.org.id}`, fake.admin());
+    const adminBody = (await asAdmin.json()) as { items: { email: string | null }[] };
+    expect(adminBody.items.some((h) => h.email !== null)).toBe(true);
+  });
 });

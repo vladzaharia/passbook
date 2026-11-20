@@ -50,6 +50,26 @@ describe('visitors retention', () => {
     expect(await has(held.id)).toBe(true);
   });
 
+  it('soft-deletes the visitor pass with the visit, and nothing returns the name or host', async () => {
+    const old = await visit(500);
+    await dailyVisitors(ctx());
+    expect(await has(old.id)).toBe(false);
+    const pass = await first<{ deleted_at: number | null }>(
+      kit.env.DB,
+      'SELECT deleted_at FROM passes WHERE id = ?',
+      [old.pass.id],
+    );
+    expect(pass?.deleted_at).not.toBeNull();
+    expect(
+      await first(kit.env.DB, 'SELECT 1 AS x FROM visitors WHERE pass_id = ?', [old.pass.id]),
+    ).toBeNull();
+    const receipt = await first<{ deleted: number }>(
+      kit.env.DB,
+      "SELECT deleted FROM retention_receipts WHERE class = 'visitors' ORDER BY ran_at DESC LIMIT 1",
+    );
+    expect(receipt?.deleted).toBe(2);
+  });
+
   it('goes with its pass when the pass is deleted', async () => {
     const v = await visit(1);
     await run(kit.env.DB, 'DELETE FROM passes WHERE id = ?', [v.pass.id]);

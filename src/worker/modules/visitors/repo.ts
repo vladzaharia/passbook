@@ -217,19 +217,39 @@ export async function activeBindingsOn(
 }
 
 export interface HostChoice {
+  id: string;
   name: string;
   email: string;
 }
 
+const HOSTS = `SELECT u.id AS id, u.name AS name, ${knownEmailSql('u.primary_email')} AS email FROM org_memberships m
+  JOIN users u ON u.id = m.user_id
+  WHERE m.org_id = ? AND m.revoked_at IS NULL AND ${knownEmailSql('u.primary_email')} IS NOT NULL`;
+const toHost = (r: { id: string; name: string | null; email: string }): HostChoice => ({
+  id: r.id,
+  name: r.name?.trim() || r.email,
+  email: r.email,
+});
+
 /** Members of the org with a verified email: who a visitor may be hosted by. */
 export async function hostChoices(db: D1Database, orgId: string): Promise<HostChoice[]> {
-  const rows = await all<{ name: string | null; email: string }>(
+  const rows = await all<{ id: string; name: string | null; email: string }>(
     db,
-    `SELECT u.name AS name, ${knownEmailSql('u.primary_email')} AS email FROM org_memberships m
-     JOIN users u ON u.id = m.user_id
-     WHERE m.org_id = ? AND m.revoked_at IS NULL AND ${knownEmailSql('u.primary_email')} IS NOT NULL
-     ORDER BY COALESCE(u.name, u.primary_email) LIMIT 200`,
+    `${HOSTS} ORDER BY COALESCE(u.name, u.primary_email) LIMIT 200`,
     [orgId],
   );
-  return rows.map((r) => ({ name: r.name?.trim() || r.email, email: r.email }));
+  return rows.map(toHost);
+}
+
+export async function hostById(
+  db: D1Database,
+  orgId: string,
+  userId: string,
+): Promise<HostChoice | null> {
+  const r = await first<{ id: string; name: string | null; email: string }>(
+    db,
+    `${HOSTS} AND u.id = ?`,
+    [orgId, userId],
+  );
+  return r ? toHost(r) : null;
 }

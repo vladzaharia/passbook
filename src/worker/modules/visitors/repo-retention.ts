@@ -9,6 +9,7 @@ export interface RetentionVisit {
   id: string;
   org_id: string;
   mode: 'live' | 'test';
+  pass_id: string;
 }
 
 const CODES = {
@@ -53,7 +54,7 @@ export function endedVisits(
         };
   return all<RetentionVisit>(
     db,
-    `SELECT v.id, v.org_id, v.mode FROM visitors v
+    `SELECT v.id, v.org_id, v.mode, v.pass_id FROM visitors v
      WHERE v.window_until < ? AND v.id > ? AND ${where.sql} AND NOT ${heldSql('v.pass_id', 'v.org_id')}
      ORDER BY v.id LIMIT ?`,
     [before, after, where.param, limit],

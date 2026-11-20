@@ -26,7 +26,11 @@ export async function mailHost(
     ctx.log.info('visitor.host_notice_test_mode', { orgId: v.orgId, visitorId: v.id });
     return true;
   }
-  const limit = await limitReached(ctx, v.mode, v.orgId, v.hostEmail);
+  const rate = await emailRate(ctx, v.mode, v.orgId, v.hostEmail);
+  const limit =
+    rate.platformAvailableAt > 0
+      ? 'recipient'
+      : await limitReached(ctx, v.mode, v.orgId, v.hostEmail);
   if (limit) {
     ctx.log.warn('visitor.host_notice_capped', {
       orgId: v.orgId,
@@ -48,7 +52,7 @@ export async function mailHost(
     });
     return false;
   }
-  const rate = await emailRate(ctx, v.mode, v.orgId, v.hostEmail);
+  await bump(ctx.env.DB, rate.platformKey, rate.platformWindow);
   await bump(ctx.env.DB, rate.orgKey, rate.orgWindow);
   await bump(ctx.env.DB, rate.recipientKey, rate.recipientWindow);
   return true;
@@ -60,7 +64,7 @@ async function notify(ctx: ServiceContext, actor: ScanActor, scanId: string): Pr
   const v = await visitorByPass(ctx.env.DB, scan.orgId, scan.mode, scan.passId);
   if (!v || v.cancelled) return;
   // The first check-in of the visit mails once; a re-entry the same day does not.
-  if ((await bump(ctx.env.DB, `visitors:host:${v.id}`, 0)) !== 1) return;
+  if ((await bump(ctx.env.DB, `visitors:host:${v.id}`, v.windowUntil)) !== 1) return;
   await mailHost(ctx, v, scan.at, actor.name || VISITOR_COPY.email.place, actor.timeZone);
 }
 
@@ -88,7 +92,7 @@ export async function resendHostNotice(
   const now = ctx.clock.now();
   if ((await bump(ctx.env.DB, `visitors:resend:${v.id}`, now - (now % RESEND_GAP_MS))) > 1)
     throw new RateLimitedError(Math.ceil((RESEND_GAP_MS - (now % RESEND_GAP_MS)) / 1000));
-  if ((await bump(ctx.env.DB, `visitors:resend-total:${v.id}`, 0)) > RESEND_MAX)
+  if ((await bump(ctx.env.DB, `visitors:resend-total:${v.id}`, v.windowUntil)) > RESEND_MAX)
     throw new ConflictError('The host was emailed three times already.', 'VISITOR_RESEND_LIMIT');
   if (!(await mailHost(ctx, v, v.arrivedAt, VISITOR_COPY.email.place, timeZone)))
     throw new ConflictError("Couldn't email the host. Try again.", 'VISITOR_HOST_NOTICE_FAILED');

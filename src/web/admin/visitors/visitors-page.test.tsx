@@ -148,7 +148,7 @@ describe('Visitors page', () => {
     const user = userEvent.setup();
     const { fetchMock } = await open([], {
       '/api/v1/visitors/hosts': () =>
-        json({ items: [{ name: 'Ana Ruiz', email: 'ana@northwind.test' }] }),
+        json({ items: [{ id: 'u9', name: 'Ana Ruiz', email: 'ana@northwind.test' }] }),
       '/api/v1/visitors': (_url, init) =>
         init?.method === 'POST' ? json(visitor({}), 201) : json({ items: [] }),
     });
@@ -161,9 +161,8 @@ describe('Visitors page', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Invite' }));
     await waitFor(() => expect(callsTo(fetchMock, 'POST', '/visitors')).toHaveLength(1));
     const [, init] = callsTo(fetchMock, 'POST', '/visitors')[0] ?? [];
-    expect(JSON.parse(String((init as RequestInit).body))).toMatchObject({
-      hostName: 'Ana Ruiz',
-      hostEmail: 'ana@northwind.test',
-    });
+    const sent = JSON.parse(String((init as RequestInit).body));
+    expect(sent).toMatchObject({ hostUserId: 'u9' });
+    expect(sent).not.toHaveProperty('hostEmail');
   });
 });
