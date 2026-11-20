@@ -2,6 +2,7 @@
 
 import type { PassJson } from './schema/pass-types.ts';
 import type { PaperManifest } from './template/paper.ts';
+import type { ScanCheckIn } from './template/scan-check-in.ts';
 import type { ScanDisplayDoc } from './template/scan-display/schema.ts';
 import type { WalletsManifest } from './template/wallets/schema.ts';
 import type { CounterManifest } from './types-counters.ts';
@@ -233,6 +234,7 @@ export interface ScanManifest {
   access?: AccessManifest;
   /** The weakest tag that may be bound to or admit on this pass. Absent means `basic`. */
   tags?: { min?: 'basic' | 'secure' };
+  checkIn?: ScanCheckIn;
 }
 
 /** A card that fills a strip with stamps; the compositor draws one strip pair per count at save. */

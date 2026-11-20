@@ -13,7 +13,6 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
@@ -31,6 +30,7 @@ import {
   revokeCredential,
   saveCredential,
 } from './repo-credentials.ts';
+import { samsungCardMap } from './samsung-cards.ts';
 import { validateSamsungCredentials } from './samsung-credentials.ts';
 
 export function credentialDto(row: CredentialRow): WalletCredential {
@@ -106,7 +106,7 @@ async function identityOf(input: SaveWalletCredential) {
     return { id: input.credentials.issuerId, cards: {} as Record<string, string> };
   return {
     id: input.credentials.partnerId,
-    cards: { generic: await sha256Hex(input.credentials.cardId) },
+    cards: await samsungCardMap(input.credentials),
   };
 }
 
@@ -133,8 +133,9 @@ async function save(
   if (current && current.identity_hash !== identityHash)
     throw new ConflictError('The provider identity cannot change.', 'WALLET_IDENTITY_IMMUTABLE');
   const previous = await cardMapOf(ctx.env.DB, current?.current_version_id ?? null);
+  // Card ids are append-only: a rotation keeps every type's card.
   for (const [type, hash] of Object.entries(previous))
-    if (identity.cards[type] !== undefined && identity.cards[type] !== hash)
+    if (identity.cards[type] !== hash)
       throw new ConflictError('The provider identity cannot change.', 'WALLET_IDENTITY_IMMUTABLE');
   const credentialId = current?.id ?? ctx.ids.id();
   const versionId = ctx.ids.id();

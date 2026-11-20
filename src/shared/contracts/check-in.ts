@@ -13,6 +13,8 @@ export const CheckInPolicySchema = z
     validUntil: TimestampSchema.nullable().optional(),
     durationMinutes: z.number().int().min(1).max(5_256_000).nullable().optional(),
     durationFrom: z.enum(['first_scan', 'issued']).optional(),
+    /** Ends at local midnight after this many days, counted from `durationFrom` (1 = tonight). */
+    days: z.number().int().min(1).max(366).nullable().optional(),
   })
   .refine((p) => p.validFrom == null || p.validUntil == null || p.validUntil > p.validFrom, {
     message: 'End must be after start.',

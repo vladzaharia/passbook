@@ -7,6 +7,7 @@ import { InsideSheet } from './inside/inside-sheet.tsx';
 import { useInside } from './inside/use-inside.ts';
 import type { ResolvedOutcome } from './machine/access-events.ts';
 import { exit, full, grant, heldIn, heldOut } from './machine/access-fixtures.test-support.ts';
+import { FIXTURE_NOW, fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import { fixtureDisplay } from './machine/fixtures.test-support.ts';
 import { moodOf, presentOutcome } from './machine/present.ts';
 import type { ScanOutcome } from './machine/types.ts';
@@ -23,6 +24,24 @@ const verdicts: Record<string, ScanOutcome> = {
   'held-in': heldIn({ display: fixtureDisplay('heads_up') }),
   'held-out': heldOut({ display: fixtureDisplay('heads_up') }),
   full: full({ display: fixtureDisplay('heads_up') }),
+  'admit-day': fixtureOutcome('ok', null, {
+    display,
+    at: FIXTURE_NOW,
+    admit: {
+      type: 'Day pass',
+      rule: { kind: 'until', at: FIXTURE_NOW + 6 * 3_600_000 },
+      timeZone: 'UTC',
+    },
+  }),
+  'admit-guest': {
+    ...grant({ display }),
+    admit: { type: 'Guest', rule: { kind: 'visit', n: 2, of: 3 }, timeZone: 'UTC' },
+  },
+  'admit-ended': fixtureOutcome('refused', 'ended', {
+    display: fixtureDisplay('refused'),
+    at: FIXTURE_NOW,
+    admit: { type: 'Day pass', rule: null, timeZone: 'UTC' },
+  }),
   resolved: { ...grant({ display }), resolvedBy: 'Sam K.' } as ResolvedOutcome,
 };
 

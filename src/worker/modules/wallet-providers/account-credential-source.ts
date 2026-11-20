@@ -20,6 +20,7 @@ import {
   findPinnedVersions,
   type SourceVersionRow,
 } from './repo-account-source.ts';
+import { samsungCardMap } from './samsung-cards.ts';
 
 /** What a version envelope holds: the provider secret only; the HMAC key stays with the enrolment. */
 export type SourceCredentials =
@@ -102,16 +103,21 @@ export async function openSourceVersion(
   if (identityHash !== row.version_identity || identityHash !== row.credential_identity)
     throw corrupt();
   if (source.provider === 'samsung') {
-    // The version's card map is the card allow-list: the secret's card must be one of its cards.
+    // The version's card map is the card allow-list: each card the secret names must equal the map's entry for its type.
     let cards: unknown;
     try {
       cards = JSON.parse(row.card_map);
     } catch {
       throw corrupt();
     }
-    const hash = await sha256Hex(source.credentials.cardId);
-    if (!cards || typeof cards !== 'object' || !Object.values(cards).includes(hash))
+    const stored = (cards && typeof cards === 'object' ? cards : {}) as Record<string, unknown>;
+    let wanted: Record<string, string>;
+    try {
+      wanted = await samsungCardMap(source.credentials);
+    } catch {
       throw corrupt();
+    }
+    for (const [type, hash] of Object.entries(wanted)) if (stored[type] !== hash) throw corrupt();
   }
   return {
     ...source,
