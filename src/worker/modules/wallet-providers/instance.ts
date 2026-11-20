@@ -1,3 +1,4 @@
+import type { ServiceContext } from '../../platform/service-context.ts';
 import { nonnegative, requestHash, sameProof, validProof, validRequest } from './instance-input.ts';
 import type {
   WalletInstance,
@@ -5,6 +6,7 @@ import type {
   WalletOperation,
   WalletOperationKind,
   WalletOperationRef,
+  WalletQueueProof,
   WalletScope,
 } from './instance-types.ts';
 import { walletProviderEnabled } from './provider-policy.ts';
@@ -15,12 +17,12 @@ import {
   getInstanceByPass,
   getOperation,
   getOperationByRequest,
-  insertDesiredOperation,
   insertInstance,
   listDirtyInstances,
   listDueOperations,
   readPassSnapshot,
 } from './repo-instance.ts';
+import { grantDesiredOperation } from './repo-instance-desired.ts';
 import {
   deferRetirement,
   listRetirementsReady,
@@ -96,9 +98,13 @@ export async function createWalletInstance(
   return op && sameProof(op, p, 'upsert') ? op : null;
 }
 
+/**
+ * Queues the next desired operation under the reconcile grant (retire grant for a revoke). The proof carries what the
+ * caller read; a pass or account that moved since refuses `stale` and returns null with nothing written.
+ */
 export async function queueWalletOperation(
-  db: D1Database,
-  p: WalletInstanceProof & {
+  ctx: ServiceContext,
+  p: WalletQueueProof & {
     instanceId: string;
     expectedVersion: number;
     kind: WalletOperationKind;
@@ -116,8 +122,14 @@ export async function queueWalletOperation(
     p.expectedVersion === 0
   )
     return null;
+  const db = ctx.env.DB;
   const hash = await requestHash(p.requestKey);
-  await insertDesiredOperation(db, { ...p, operationId: p.newId(), requestHash: hash });
+  const queued = await grantDesiredOperation(ctx, {
+    ...p,
+    operationId: p.newId(),
+    requestHash: hash,
+  });
+  if (queued === 'stale') return null;
   const op = await getOperationByRequest(db, { ...p, requestHash: hash });
   return op && sameProof(op, p, p.kind) ? op : null;
 }

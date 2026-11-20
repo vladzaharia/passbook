@@ -10,6 +10,7 @@ import {
   listSamsungSyncTargets,
   samsungSyncCountryHints,
 } from './repo-sync-targets.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 async function withoutTrigger(
   db: D1Database,
@@ -61,7 +62,7 @@ describe('Samsung sync target keyset authority', () => {
       );
 
     expect(await samsungSyncCountryHints(t.kit.ctx, instance)).toEqual(['GB', 'US']);
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     await withoutTrigger(db, 'wallet_samsung_ref_keyset_immutable', async () => {
       try {
         for (const value of [null, other]) {

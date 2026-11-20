@@ -845,7 +845,7 @@ describe('sandbox native wallet retention', () => {
     if (!reference) throw new Error('Missing Samsung reference');
     expect(reference.promoted_at).toBeNull();
     expect(await purgeTestPasses(kit.ctx, before)).toBe(0);
-    await drainWalletProviderSync(kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(kit));
     const instance = await first<{
       id: string;
       account_id: string;

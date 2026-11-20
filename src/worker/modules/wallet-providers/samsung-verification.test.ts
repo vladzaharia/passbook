@@ -7,6 +7,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { SamsungWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
 import { createApp } from '../../app.ts';
 import { all, batch, first, run, stmt } from '../../platform/db.ts';
+import { createJobContext, createServiceContext } from '../../platform/service-context.ts';
 import { createSession, createSessionStore, resolveSession } from '../auth/sessions.ts';
 import { approveAppleRelease, grantKitMembership } from '../passes/apple-release-test-fixtures.ts';
 import {
@@ -14,12 +15,13 @@ import {
   requireCredentialRefKeyset,
 } from '../passes/credential-keyset.ts';
 import { setupKit } from '../passes/pass-test-fixtures.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
+import { configureWalletProviderAccount, revokeWalletProviderAccount } from './account-service.ts';
 import { replaceCallbackKeysetForTest } from './callbacks-test-fixtures.ts';
 import { makeProviderTestTemplate } from './offers-test-fixtures.ts';
 import { approveProjectionCandidate, createProjectionCandidate } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
+import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
 import {
   beginSamsungProjectionProbe,
   completeSamsungProjectionProbe,
@@ -122,7 +124,8 @@ async function fixture(mode: Mode = 'live') {
     return value;
   };
   return {
-    kit,
+    // An expired proof is refreshed by an admin or a job, which is a job context here.
+    kit: { ...kit, ctx: createJobContext(kit.env, 'test', { clock: kit.clock }) },
     apple,
     auth,
     session,
@@ -413,7 +416,36 @@ describe('authenticated Samsung card-state evidence', () => {
     );
   });
 
-  it('cannot commit an in-flight response after credential rotation or a newer failed probe', async () => {
+  it('keeps a request path on the cached proof and lets the sync job refresh it before it lapses', async () => {
+    const f = await fixture();
+    await f.approve();
+    const plain = createServiceContext(f.kit.env, { clock: f.kit.clock });
+    respond(success);
+    expect(
+      await ensureSamsungProjectionEvidence(f.kit.ctx, f.candidate.id, f.candidate.candidateHash),
+    ).toBe(true);
+    f.kit.clock.advance(240_000);
+    expect(await refreshExpiringSamsungEvidence(f.kit.ctx, 500)).toBeGreaterThanOrEqual(1);
+    f.kit.clock.advance(100_000);
+    expect(await hasSamsungProjectionEvidence(plain, await f.stored())).toBe(true);
+    // Without the job the proof lapses, and a request path cannot write one: it fails closed.
+    f.kit.clock.advance(300_000);
+    expect(
+      await ensureSamsungProjectionEvidence(plain, f.candidate.id, f.candidate.candidateHash),
+    ).toBe(false);
+    expect(await hasSamsungProjectionEvidence(plain, await f.stored())).toBe(false);
+  });
+
+  it('refuses to write evidence without an authority outside a job', async () => {
+    const f = await fixture();
+    await f.approve();
+    const plain = createServiceContext(f.kit.env, { clock: f.kit.clock });
+    expect(await beginSamsungProjectionProbe(plain, null, await f.stored(), plain.ids.id())).toBe(
+      false,
+    );
+  });
+
+  it('commits an in-flight response across a rotation under the same identity', async () => {
     const f = await fixture();
     await f.approve();
     vi.stubGlobal(
@@ -423,6 +455,25 @@ describe('authenticated Samsung card-state evidence', () => {
           ...f.scope,
           expectedRevision: f.configured.revision,
           credentials: f.credentials,
+        });
+        return success();
+      }),
+    );
+    expect((await refreshSamsungProjectionEvidence(f.kit.ctx, f.auth, f.input)).verified).toBe(
+      true,
+    );
+    expect(await hasSamsungProjectionEvidence(f.kit.ctx, await f.stored())).toBe(true);
+  });
+
+  it('cannot commit an in-flight response after a revoke or a newer failed probe', async () => {
+    const f = await fixture();
+    await f.approve();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        await revokeWalletProviderAccount(f.kit.ctx, f.auth, {
+          ...f.scope,
+          expectedRevision: f.configured.revision,
         });
         return success();
       }),
@@ -633,7 +684,7 @@ describe('authenticated Samsung card-state evidence', () => {
     f.kit.env.KEK_V1 = newKey;
     await replaceCallbackKeysetForTest(db, newProof.credentialKeysetCommitment);
     try {
-      await failSamsungProjectionProbe(f.kit.ctx, candidate.id, probeId);
+      await failSamsungProjectionProbe(f.kit.ctx, null, candidate, probeId);
       expect(
         await completeSamsungProjectionProbe(
           f.kit.ctx,

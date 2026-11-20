@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import {
   configureWalletProviderAccount,
   getWalletProviderReadiness,
@@ -18,14 +19,15 @@ import {
   completeWalletOperation,
   getWalletInstance,
   newWalletClaimHandle,
-  queueWalletOperation,
   readWalletPassSnapshot,
   requestWalletRetirement,
   retireWalletInstance,
 } from './instance.ts';
 import { onWalletPassRetired } from './lifecycle.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
+import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 // These cases cover historical provider instances, which exist only while a provider is enabled.
 beforeAll(() => {
@@ -97,7 +99,7 @@ describe('a served ref nobody confirms', () => {
         passCredentialGeneration: pass.credentialGeneration,
       }),
     ).toBe(true);
-    await onWalletPassRetired(t.kit.ctx, {
+    await onWalletPassRetired(jobCtxOf(t.kit), {
       orgId: scope.orgId,
       mode: scope.mode,
       passId: pass.passId,
@@ -136,12 +138,12 @@ describe('a served ref nobody confirms', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
       await retireExpiredUnpromotedRef(t.kit.ctx, { ...revoke, claimHandle: claim.claimHandle }),
     ).toBe('no_external_card');
     expect(
-      await completeWalletOperation(t.kit.ctx, { ...claim, result: { kind: 'not_issued' } }),
+      await completeWalletOperation(jobCtxOf(t.kit), { ...claim, result: { kind: 'not_issued' } }),
     ).toBe('succeeded');
     expect(await persistSamsungTombstone(t.kit.ctx, revoke)).toBe(true);
     expect(await retireWalletInstance(db, { ...claim, now: t.kit.clock.now() })).toBe(true);
@@ -157,7 +159,7 @@ describe('a served ref nobody confirms', () => {
   it('cannot close a served ref inside the wait, even under the revoke lease', async () => {
     const t = await setupSamsungCallbacks({ promoted: false });
     expect((await t.call({ token: await t.token() })).status).toBe(200);
-    const revoke = await queueWalletOperation(t.kit.env.DB, {
+    const revoke = await queueWalletOperation(walletJobCtx(t.kit.env.DB), {
       ...t.operation,
       kind: 'revoke',
       expectedVersion: t.operation.version,
@@ -182,7 +184,7 @@ describe('a served ref nobody confirms', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(t.kit.env.DB, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(t.kit.env.DB), claim)).toBe('claimed');
     expect(
       await retireExpiredUnpromotedRef(t.kit.ctx, { ...scope, claimHandle: claim.claimHandle }),
     ).toBe('needs_notification');

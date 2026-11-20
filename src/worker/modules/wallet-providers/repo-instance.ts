@@ -5,7 +5,7 @@ import type {
   WalletOperationRef,
   WalletScope,
 } from './instance-types.ts';
-import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
+import { walletOpReadCurrentSql } from './repo-instance-current.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 
 export {
@@ -91,6 +91,7 @@ export function getOperationByRequest(
 
 export interface WalletPassSnapshot {
   passId: string;
+  passRowVersion: number;
   orgId: string;
   mode: 'live' | 'test';
   templateId: string;
@@ -113,13 +114,23 @@ export function readPassSnapshot(
   return first(
     db,
     `SELECT p.id AS passId, p.org_id AS orgId, p.mode, p.template_id AS templateId,
-    p.template_version AS templateVersion, p.version AS passVersion, p.revision AS passRevision,
+    p.template_version AS templateVersion, p.version AS passVersion, p.row_version AS passRowVersion, p.revision AS passRevision,
     p.lifecycle_generation AS lifecycleGeneration, p.credential_generation AS credentialGeneration, p.release_id AS issuingReleaseId, p.status,
     p.removed_at AS removedAt, p.deleted_at AS deletedAt, p.test_data_quarantined AS quarantined,
     EXISTS (SELECT 1 FROM pass_credential_transfers transfer WHERE transfer.pass_id = p.id AND transfer.state = 'pending') AS transferPending
     FROM passes p WHERE p.id = ? AND p.org_id = ? AND p.mode = ?`,
     [s.passId, s.orgId, s.mode],
   );
+}
+
+/** The account's authority epoch, or null when the account is gone. */
+export async function readAccountEpoch(db: D1Database, accountId: string): Promise<number | null> {
+  const row = await first<{ epoch: number }>(
+    db,
+    'SELECT authority_epoch AS epoch FROM wallet_provider_accounts WHERE id = ?',
+    [accountId],
+  );
+  return row?.epoch ?? null;
 }
 
 export async function listDueOperations(
@@ -145,9 +156,9 @@ export async function listDueOperations(
     SELECT ${OPERATION_COLUMNS} FROM due
     JOIN wallet_provider_instance_operations op ON op.id = due.id
     JOIN wallet_provider_instances i ON i.id = op.instance_id
-    WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')}
+    WHERE ${walletOpReadCurrentSql('i', 'op')}
     ORDER BY op.id LIMIT ?`,
-    [now, ...(afterId === null ? [] : [afterId]), now, limit],
+    [now, ...(afterId === null ? [] : [afterId]), limit],
   );
 }
 export interface DirtyWalletInstance extends WalletScope {

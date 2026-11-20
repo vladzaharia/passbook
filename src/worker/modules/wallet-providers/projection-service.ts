@@ -7,12 +7,10 @@ import type {
   TemplateReleaseScope,
 } from '../../../shared/contracts/template-releases.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { batch } from '../../platform/db.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
-import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
 import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import {
@@ -24,12 +22,8 @@ import {
   scopedTemplate,
 } from './projection-service-support.ts';
 import { isSystemAuthored } from './projection-system-authority.ts';
-import {
-  insertProjectionApprovalStmt,
-  insertProjectionCandidateStmt,
-  selectProjectionApprovals,
-  selectProjectionCandidates,
-} from './repo-projection-store.ts';
+import { selectProjectionApprovals, selectProjectionCandidates } from './repo-projection-store.ts';
+import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
 
 export {
   activeProjectionRelease,
@@ -91,28 +85,17 @@ export async function createProjectionCandidate(
     },
     credentialKeysetCommitment,
   );
-  const db = ctx.env.DB;
-  const results = await batch(db, [
-    insertProjectionCandidateStmt(db, candidate, authority, ctx.clock.now()),
-    releaseAuditStmt(
-      db,
-      ctx,
-      'candidate',
-      candidate.id,
-      scope.orgId,
-      authority.userId,
-      templateId,
-      'template.candidate',
-      {
-        candidateId: candidate.id,
-        version: candidate.version,
-        mode: scope.mode,
-        provider: scope.provider,
-        candidateHash: candidate.candidateHash,
-      },
-    ),
-  ]);
-  if (!results[0]?.meta.changes) return failedWrite(ctx, authority);
+  const written = await writeProjectionCandidate(ctx, candidate, authority, {
+    action: 'template.candidate',
+    detail: {
+      candidateId: candidate.id,
+      version: candidate.version,
+      mode: scope.mode,
+      provider: scope.provider,
+      candidateHash: candidate.candidateHash,
+    },
+  });
+  if (!written) return failedWrite(ctx, authority);
   return candidateDto(candidate, []);
 }
 
@@ -142,27 +125,16 @@ export async function approveProjectionCandidate(
     kind: 'peer',
     createdAt: ctx.clock.now(),
   };
-  const db = ctx.env.DB;
-  const results = await batch(db, [
-    insertProjectionApprovalStmt(db, approval, candidate, authority, ctx.clock.now()),
-    releaseAuditStmt(
-      db,
-      ctx,
-      'approval',
-      approval.id,
-      scope.orgId,
-      authority.userId,
-      templateId,
-      'template.approve',
-      {
-        candidateId,
-        approvalId: approval.id,
-        candidateHash: candidate.candidateHash,
-        mode: scope.mode,
-        provider: scope.provider,
-      },
-    ),
-  ]);
-  if (!results[0]?.meta.changes) return failedWrite(ctx, authority);
+  const written = await writeProjectionApproval(ctx, approval, candidate, authority, {
+    action: 'template.approve',
+    detail: {
+      candidateId,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      mode: scope.mode,
+      provider: scope.provider,
+    },
+  });
+  if (!written) return failedWrite(ctx, authority);
   return approval;
 }

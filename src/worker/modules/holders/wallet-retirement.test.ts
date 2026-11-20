@@ -34,6 +34,7 @@ import { whileDisabledForTest } from '../wallet-providers/provider-policy.ts';
 import { readOffer } from '../wallet-providers/repo-instance-offers.ts';
 import { seedHistoricalOfferRef } from '../wallet-providers/runtime-historical-fixtures.ts';
 import { finishWalletProviderRetirement } from '../wallet-providers/sync-operation-retirement.ts';
+import { walletJobCtx } from '../wallet-providers/wallet-job-ctx-test-fixtures.ts';
 import { getHolderPass } from './repo.ts';
 import {
   assignHolder,
@@ -174,7 +175,7 @@ describe('holder changes and native wallet retirement', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     // Model the authenticated provider acceptance, not installation on a holder device.
     expect(
       await completeWalletOperation(jobCtxOf(t.kit), {

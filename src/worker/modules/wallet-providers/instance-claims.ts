@@ -44,11 +44,11 @@ export function newWalletClaimHandle(): string {
   return toBase64Url(randomBytes(32));
 }
 export async function claimWalletOperation(
-  db: D1Database,
+  ctx: ServiceContext,
   p: WalletClaimRef,
 ): Promise<WalletClaimResult> {
   if (!validHandle(p.claimHandle) || !validTime(p.now)) return 'not_claimable';
-  return claimOperation(db, { ...p, hash: await walletClaimHash(p.claimHandle) });
+  return claimOperation(ctx, { ...p, hash: await walletClaimHash(p.claimHandle) });
 }
 export async function walletOperationFresh(
   db: D1Database,
@@ -65,23 +65,27 @@ export async function walletOperationFresh(
   });
 }
 export async function markWalletClaimUncertain(
-  db: D1Database,
+  ctx: ServiceContext,
   p: WalletClaimRef,
 ): Promise<boolean> {
   return validHandle(p.claimHandle) && validTime(p.now)
-    ? markUncertain(db, { ...p, hash: await walletClaimHash(p.claimHandle) })
+    ? markUncertain(ctx, { ...p, hash: await walletClaimHash(p.claimHandle) })
     : false;
 }
 /** Only after independently confirming the old transport is no longer in flight. */
 export async function settleWalletClaim(
-  db: D1Database,
+  ctx: ServiceContext,
   p: WalletOperationRef & { now: number },
 ): Promise<boolean> {
-  return validTime(p.now) ? settleClaim(db, p) : false;
+  return validTime(p.now) ? settleClaim(ctx, p) : false;
 }
-export function expireWalletClaims(db: D1Database, now: number, limit: number): Promise<number> {
+export function expireWalletClaims(
+  ctx: ServiceContext,
+  now: number,
+  limit: number,
+): Promise<number> {
   if (!validTime(now) || !Number.isFinite(limit)) return Promise.resolve(0);
-  return expireClaims(db, now, Math.max(1, Math.min(100, Math.trunc(limit))));
+  return expireClaims(ctx, now, Math.max(1, Math.min(100, Math.trunc(limit))));
 }
 
 /** Only status/reason enter columns; an optional bounded raw body is encrypted with org/event AAD. */
@@ -129,7 +133,7 @@ export async function completeWalletOperation(
       ),
     };
   }
-  return finishOperation(ctx.env.DB, {
+  return finishOperation(ctx, {
     ...p,
     hash: await walletClaimHash(p.claimHandle),
     operationId: op.id,
@@ -176,7 +180,7 @@ export async function recordWalletOperationOutcome(
     p.body,
     credentialAad(id, p.orgId, 'wallet.provider.outcome'),
   );
-  return insertOutcome(ctx.env.DB, {
+  return insertOutcome(ctx, {
     ...p,
     id,
     operationId: op.id,

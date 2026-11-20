@@ -15,29 +15,13 @@ export {
 } from './repo-instance-retirement-staging.ts';
 export { walletNoProviderArtifactsSql };
 
-export function walletUnissuedPlaceholderSql(instanceAlias: string): string {
-  return `${instanceAlias}.lifecycle = 'retired' AND ${instanceAlias}.retirement_reason = 'not_issued'
-    AND ${walletNoProviderArtifactsSql(instanceAlias)}`;
-}
-
-/** An issued Google object cannot retire until an independent replay guarantee exists. */
+/**
+ * Set once by the wallet_provider_instances_settle trigger (0148) when the retirement evidence holds.
+ * An issued Google object cannot retire until an independent replay guarantee exists, so it stays NULL.
+ */
 export function walletRetiredInstanceSettledSql(instanceAlias: string): string {
   if (!/^[a-z][a-z0-9_]*$/i.test(instanceAlias)) throw new Error('Invalid trusted SQL alias');
-  const i = instanceAlias;
-  return `(((${walletUnissuedPlaceholderSql(i)}) OR (${i}.lifecycle = 'retired' AND ${i}.provider = 'samsung'
-    AND ${i}.retirement_reason IS NULL AND ${i}.retirement_requested_at IS NOT NULL AND ${i}.account_id IS NOT NULL
-    AND EXISTS (SELECT 1 FROM wallet_provider_accounts settled_account WHERE settled_account.id = ${i}.account_id
-      AND settled_account.org_id = ${i}.org_id AND settled_account.mode = ${i}.mode AND settled_account.provider = ${i}.provider)
-    AND ${samsungRetirementProjectionSql(i)}
-    AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations settled_revoke
-      WHERE settled_revoke.id = ${i}.desired_operation_id AND settled_revoke.instance_id = ${i}.id
-        AND settled_revoke.version = ${i}.desired_version AND settled_revoke.kind = 'revoke' AND settled_revoke.state = 'succeeded'
-        AND settled_revoke.credential_keyset_commitment = ${i}.credential_keyset_commitment)
-    AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations unsettled
-      WHERE unsettled.instance_id = ${i}.id AND unsettled.state IN ('pending', 'retry', 'claimed', 'uncertain'))
-    AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs settled_ref WHERE settled_ref.instance_id = ${i}.id
-      AND NOT EXISTS (SELECT 1 FROM wallet_samsung_tombstones settled_tomb
-        WHERE ${samsungTombstoneBindingSql(i, 'settled_ref', 'settled_tomb')})))))`;
+  return `${instanceAlias}.retirement_settled_at IS NOT NULL`;
 }
 
 export async function retireInstance(

@@ -89,12 +89,12 @@ async function probe(
     const scope = { orgId: candidate.orgId, mode: candidate.mode, provider: 'samsung' as const };
     const account = await readConfiguredWalletProviderCredentials(ctx, scope, {
       accountId: candidate.accountId,
-      accountRevision: candidate.accountRevision,
+      authorityEpoch: candidate.accountEpoch,
     });
     if (
       account?.provider !== 'samsung' ||
       account.accountId !== candidate.accountId ||
-      account.revision !== candidate.accountRevision ||
+      account.authorityEpoch !== candidate.accountEpoch ||
       (await providerIdentityHash(account, candidate.projection.cardType)) !==
         candidate.providerIdentityHash
     )
@@ -137,7 +137,7 @@ async function probe(
     // Never log upstream errors, credentials, identifiers, tokens, or response bodies.
     ctx.log.warn('wallet.verification_failed', { code: 'WALLET_VERIFY_FAILED' });
   }
-  await failSamsungProjectionProbe(ctx, candidate.id, probeId);
+  await failSamsungProjectionProbe(ctx, authority, candidate, probeId);
   return unverified();
 }
 
@@ -172,6 +172,18 @@ export async function refreshSamsungProjectionEvidence(
   return result;
 }
 
+/** The sync job's refresh: probes again although the cached proof still holds, so it does not lapse under readers. */
+export async function reprobeSamsungProjectionEvidence(
+  ctx: ServiceContext,
+  candidateId: string,
+  expectedHash: string,
+): Promise<boolean> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+  const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
+  return candidate ? (await probe(ctx, candidate, null)).verified : false;
+}
+
 /**
  * Trusted issuance/publish callers may refresh an expired proof without an administrative session.
  * The candidate and separate human review are checked again at the database write. This establishes
@@ -181,11 +193,12 @@ export async function ensureSamsungProjectionEvidence(
   ctx: ServiceContext,
   candidateId: string,
   expectedHash: string,
+  authority: Authority | null = null,
 ): Promise<boolean> {
   ctx = snapshotWalletCredentialContext(ctx);
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
   if (!candidate) return false;
   if (await hasSamsungProjectionEvidence(ctx, candidate)) return true;
-  return (await probe(ctx, candidate, null)).verified;
+  return (await probe(ctx, candidate, authority)).verified;
 }

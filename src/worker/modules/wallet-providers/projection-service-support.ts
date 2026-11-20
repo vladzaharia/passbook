@@ -65,6 +65,7 @@ export interface ApprovedProjection {
     sourceReleaseHash: string;
     accountId: string;
     accountRevision: number;
+    accountEpoch: number;
     providerIdentityHash: string;
   };
   projection: NativeProjection;
@@ -148,6 +149,7 @@ export function releaseDto(
     sourceReleaseHash: candidate.sourceReleaseHash,
     accountId: candidate.accountId,
     accountRevision: candidate.accountRevision,
+    accountEpoch: candidate.accountEpoch,
     providerIdentityHash: candidate.providerIdentityHash,
   };
 }
@@ -197,7 +199,7 @@ export async function verifiedCandidate(
         mode: candidate.mode,
         provider: candidate.provider,
       },
-      { accountId: candidate.accountId, accountRevision: candidate.accountRevision },
+      { accountId: candidate.accountId, authorityEpoch: candidate.accountEpoch },
     );
   } catch (error) {
     if (error instanceof UnavailableError) return false;
@@ -207,7 +209,7 @@ export async function verifiedCandidate(
     !account ||
     account.provider !== candidate.provider ||
     account.accountId !== candidate.accountId ||
-    account.revision !== candidate.accountRevision ||
+    account.authorityEpoch !== candidate.accountEpoch ||
     (await providerIdentityHash(
       account,
       candidate.projection.schema === 1 && candidate.projection.provider === 'samsung'

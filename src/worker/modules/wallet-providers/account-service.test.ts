@@ -721,7 +721,7 @@ describe('wallet provider accounts', () => {
         expectedRevision: 0,
         credentials: google(),
       }),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: 'ACTOR_CHANGED' });
     expect(injected).toBe(true);
     expect(
       await first(env.DB, 'SELECT id FROM wallet_provider_accounts WHERE org_id = ?', [org.id]),

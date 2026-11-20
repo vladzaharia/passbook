@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { setupSamsungChannelOff } from './channel-off-test-fixtures.ts';
 import { getWalletInstance, getWalletOperation } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
@@ -11,21 +12,21 @@ describe('Samsung and Google channel_off retirement', () => {
   it('stages nothing without a retired marker (a kill switch never sets one)', async () => {
     const t = await setup();
     const before = await t.instance();
-    await reconcileWalletInstance(t.kit.ctx, before);
+    await reconcileWalletInstance(jobCtxOf(t.kit), before);
     expect(await t.instance()).toMatchObject({
       retirementRequestedAt: null,
       retirementCause: null,
       channelEpoch: 1,
     });
     await t.marker(null);
-    await reconcileWalletInstance(t.kit.ctx, await t.instance());
+    await reconcileWalletInstance(jobCtxOf(t.kit), await t.instance());
     expect(await t.instance()).toMatchObject({ retirementRequestedAt: null });
   });
 
   it('turns a retired marker into a revoke with the channel_off cause', async () => {
     const t = await setup();
     await t.marker(t.kit.clock.now());
-    expect(await reconcileWalletInstance(t.kit.ctx, await t.instance())).toBe('scheduled');
+    expect(await reconcileWalletInstance(jobCtxOf(t.kit), await t.instance())).toBe('scheduled');
     const staged = await t.instance();
     expect(staged).toMatchObject({
       retirementCause: 'channel_off',
@@ -39,7 +40,7 @@ describe('Samsung and Google channel_off retirement', () => {
     });
     expect(revoke).toMatchObject({ kind: 'revoke', channelEpoch: 1 });
     // A second pass is idempotent: the cause and request time are write-once.
-    await reconcileWalletInstance(t.kit.ctx, await t.instance());
+    await reconcileWalletInstance(jobCtxOf(t.kit), await t.instance());
     expect(await t.instance()).toMatchObject({
       retirementRequestedAt: staged.retirementRequestedAt,
       desiredVersion: staged.desiredVersion,
@@ -95,7 +96,7 @@ describe('Samsung and Google channel_off retirement', () => {
 
     // Turning it off again retires the successor through the same path.
     await t.marker(t.kit.clock.now());
-    expect(await reconcileWalletInstance(t.kit.ctx, successor)).toBe('scheduled');
+    expect(await reconcileWalletInstance(jobCtxOf(t.kit), successor)).toBe('scheduled');
     expect(await t.instance(input.instanceId)).toMatchObject({
       retirementCause: 'channel_off',
       channelEpoch: 2,
@@ -105,7 +106,7 @@ describe('Samsung and Google channel_off retirement', () => {
   it('refuses a successor while the predecessor is still revoking', async () => {
     const t = await setup();
     await t.marker(t.kit.clock.now());
-    await reconcileWalletInstance(t.kit.ctx, await t.instance());
+    await reconcileWalletInstance(jobCtxOf(t.kit), await t.instance());
     await t.marker(null);
     expect(await t.instance()).toMatchObject({ lifecycle: 'revoking' });
     await t.insertInstance(await t.successorInput());
@@ -115,7 +116,7 @@ describe('Samsung and Google channel_off retirement', () => {
   it('clears the dirty row of a settled channel_off copy instead of deferring it forever', async () => {
     const t = await setup();
     await t.marker(t.kit.clock.now());
-    await reconcileWalletInstance(t.kit.ctx, await t.instance());
+    await reconcileWalletInstance(jobCtxOf(t.kit), await t.instance());
     await t.settleRevoke();
     expect(await t.instance()).toMatchObject({ lifecycle: 'revoked' });
     await run(
@@ -124,7 +125,7 @@ describe('Samsung and Google channel_off retirement', () => {
       ON CONFLICT(instance_id) DO UPDATE SET generation = generation + 1, next_attempt_at = 0`,
       [(await t.instance()).id],
     );
-    await drainWalletProviderSync(t.kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(t.kit));
     expect(
       await all(t.db, 'SELECT 1 FROM wallet_provider_instance_dirty WHERE instance_id = ?', [
         (await t.instance()).id,

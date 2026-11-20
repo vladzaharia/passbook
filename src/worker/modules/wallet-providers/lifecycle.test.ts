@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   approved: vi.fn(),
   original: vi.fn(),
   countries: vi.fn(),
+  epoch: vi.fn(async () => 1),
 }));
 vi.mock('./account-service.ts', async () => {
   const actual = await vi.importActual<typeof accountService>('./account-service.ts');
@@ -34,6 +35,7 @@ vi.mock('./repo-instance.ts', () => ({
   readPassSnapshot: mocks.pass,
   getInstanceById: mocks.instance,
   getInstanceByPass: mocks.instanceByPass,
+  readAccountEpoch: mocks.epoch,
 }));
 vi.mock('./repo-sync-targets.ts', () => ({ samsungSyncCountryHints: mocks.countries }));
 
@@ -148,7 +150,7 @@ describe('native wallet holder transitions', () => {
   it('reconciles an active reassigned pass as retirement, never as an update for the new holder', async () => {
     expect(await reconcileWalletInstance(ctx, instance)).toBe('scheduled');
     expect(mocks.queue).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         kind: 'revoke',
         passId: pass.passId,
@@ -173,7 +175,7 @@ describe('native wallet holder transitions', () => {
       }),
     );
     expect(mocks.queue).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         kind: 'revoke',
         passCredentialGeneration: pass.credentialGeneration,
@@ -193,13 +195,44 @@ describe('native wallet holder transitions', () => {
     );
     expect(mocks.requestRetirement).toHaveBeenCalledOnce();
     expect(mocks.queue).toHaveBeenCalledWith(
-      sameDb(ctx.env.DB),
+      expect.objectContaining({ env: expect.objectContaining({ DB: sameDb(ctx.env.DB) }) }),
       expect.objectContaining({
         kind: 'revoke',
         passCredentialGeneration: pass.credentialGeneration,
       }),
     );
     expect(mocks.approved).not.toHaveBeenCalled();
+  });
+
+  it('schedules an upsert across a same-identity rotation and blocks on a moved account epoch (D2)', async () => {
+    const active: WalletInstance = {
+      ...instance,
+      credentialGeneration: pass.credentialGeneration,
+      retirementRequestedAt: null,
+    };
+    mocks.pass.mockResolvedValue({ ...pass, passRowVersion: 7 });
+    mocks.epoch.mockResolvedValue(3);
+    const approved = (accountEpoch: number) => ({
+      // The release keeps the revision it was approved under; only the epoch is authority.
+      release: {
+        id: 'native-2',
+        accountId: 'account-1',
+        accountRevision: 1,
+        accountEpoch,
+        providerIdentityHash: 'a'.repeat(64),
+      },
+      projection: { provider: 'samsung' },
+    });
+    mocks.approved.mockResolvedValue(approved(3));
+    expect(await reconcileWalletInstance(ctx, active)).toBe('scheduled');
+    expect(mocks.queue).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ kind: 'upsert', accountEpoch: 3, passRowVersion: 7 }),
+    );
+    mocks.queue.mockClear();
+    mocks.approved.mockResolvedValue(approved(2));
+    expect(await reconcileWalletInstance(ctx, active)).toBe('blocked');
+    expect(mocks.queue).not.toHaveBeenCalled();
   });
 
   it('never schedules a target-generation instance while its transfer is blocked', async () => {

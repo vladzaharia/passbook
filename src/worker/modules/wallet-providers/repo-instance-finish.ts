@@ -1,19 +1,29 @@
+import { writePart } from '../../platform/authority-include.ts';
 import type { Envelope } from '../../platform/crypto.ts';
-import { batch, first, stmt } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WalletOperationState, WalletProviderResult } from './instance-types.ts';
 import {
   type Claim,
-  CURRENT,
-  CURRENT_OPERATION,
+  PART_CURRENT,
+  PART_CURRENT_OPERATION,
+  PART_SCOPE,
+  partScope,
   RETRY_DELAY,
   SCOPE,
   scope,
 } from './repo-instance-claim-sql.ts';
+import { instanceCheck } from './repo-instance-current.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
+import { commitWalletGrant, walletQueueGrant } from './repo-queue-grant.ts';
 import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
 
+/**
+ * Records the result under the record grant, whatever the org's state: lineage only. `is_current` stays a value of
+ * the UPDATE (a stale operation becomes `superseded`), never a refusal, so a provider response is never lost.
+ */
 export async function finishOperation(
-  db: D1Database,
+  ctx: ServiceContext,
   p: Claim & {
     operationId: string;
     attempt: number;
@@ -22,6 +32,7 @@ export async function finishOperation(
   },
 ): Promise<WalletOperationState | null> {
   p = { ...p };
+  const db = ctx.env.DB;
   const success = p.result.kind !== 'failure';
   const retryable = p.result.kind === 'failure' && p.result.retryable;
   const reason =
@@ -36,7 +47,7 @@ export async function finishOperation(
       AND op.claim_hash = ? AND op.state IN ('claimed', 'uncertain')
       AND NOT EXISTS (SELECT 1 FROM wallet_provider_sync_targets target
         WHERE target.operation_id = op.id AND target.state IN ('inflight', 'uncertain'))
-      AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${SCOPE})
+      AND EXISTS (SELECT 1 FROM wallet_provider_instances i WHERE ${PART_SCOPE}) AND {grant}
       ${
         p.result.kind === 'not_issued'
           ? `AND op.kind = 'revoke' AND EXISTS (
@@ -51,15 +62,15 @@ export async function finishOperation(
     p.version,
     p.attempt,
     p.hash,
-    ...scope(p),
+    ...partScope(p),
     ...(p.result.kind === 'not_issued' ? [p.now - SAMSUNG_UNCONFIRMED_SERVE_MS, p.now] : []),
   ];
-  const statements: D1PreparedStatement[] = [];
+  const g = walletQueueGrant(ctx, 'record', p, [instanceCheck(p.instanceId)]);
+  const cte = [p.instanceId, p.version, ...partScope(p)];
   if (p.raw)
-    statements.push(
-      stmt(
-        db,
-        `WITH ${CURRENT_OPERATION}
+    g.include(
+      writePart(
+        `WITH ${PART_CURRENT_OPERATION}
       INSERT INTO wallet_provider_instance_outcomes
       (id, operation_id, attempt, sequence, event_hash, payload_hash, reason_code, http_status,
        kek_version, iv, wrapped_dek, ciphertext, received_at)
@@ -69,10 +80,7 @@ export async function finishOperation(
     WHERE proven.is_current = 1 AND ${claimedWhere}
     RETURNING id`,
         [
-          p.instanceId,
-          p.version,
-          ...scope(p),
-          p.now,
+          ...cte,
           p.raw.id,
           p.raw.eventHash,
           p.raw.payloadHash,
@@ -87,10 +95,9 @@ export async function finishOperation(
         ],
       ),
     );
-  statements.push(
-    stmt(
-      db,
-      `WITH ${CURRENT_OPERATION}
+  g.include(
+    writePart(
+      `WITH ${PART_CURRENT_OPERATION}
       UPDATE wallet_provider_instance_operations AS op SET
       state = CASE WHEN NOT proven.is_current THEN 'superseded'
         WHEN ? = 1 THEN 'succeeded' WHEN ? = 1 AND op.attempts < 8 THEN 'retry' ELSE 'failed' END,
@@ -104,10 +111,7 @@ export async function finishOperation(
     WHERE ${claimedWhere}
     RETURNING id`,
       [
-        p.instanceId,
-        p.version,
-        ...scope(p),
-        p.now,
+        ...cte,
         success,
         retryable,
         success,
@@ -125,20 +129,22 @@ export async function finishOperation(
     ),
   );
   if (success)
-    statements.push(
-      stmt(
-        db,
+    g.include(
+      writePart(
         `UPDATE wallet_provider_instances AS i SET lifecycle = 'revoked',
-      revoked_at = ?, retirement_next_attempt_at = 0, updated_at = ? WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ?
+      revoked_at = ?, retirement_next_attempt_at = 0, updated_at = ?
+    WHERE i.id = ? AND org_id = {org} AND mode = {mode} AND i.provider = ?
+    AND pass_id IN (SELECT pass.id FROM passes pass WHERE pass.org_id = {org} AND pass.mode = {mode})
     AND i.credential_keyset_commitment = ${pinnedKeysetSql}
     AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op WHERE op.id = ? AND op.kind = 'revoke'
       AND op.credential_keyset_commitment = ${pinnedKeysetSql} AND op.state = 'succeeded'
-      AND op.claim_hash = ? AND op.attempts = ? AND op.last_result_at = ? AND ${CURRENT})`,
-        [p.now, p.now, ...scope(p), p.operationId, p.hash, p.attempt, p.now, p.now],
+      AND op.claim_hash = ? AND op.attempts = ? AND op.last_result_at = ? AND ${PART_CURRENT}) AND {grant}`,
+        [p.now, p.now, p.instanceId, p.provider, p.operationId, p.hash, p.attempt, p.now],
       ),
     );
-  const results = await batch(db, statements);
-  if (results[p.raw ? 1 : 0]?.results.length !== 1) return null;
+  const committed = await commitWalletGrant(g);
+  if (!('results' in committed)) return null;
+  if (committed.results[p.raw ? 1 : 0]?.results.length !== 1) return null;
   const stored = await first<{ state: WalletOperationState }>(
     db,
     `SELECT op.state FROM wallet_provider_instance_operations op
