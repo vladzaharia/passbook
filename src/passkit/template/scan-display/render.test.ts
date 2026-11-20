@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ScanDisplaySchema } from '../../../shared/contracts/scan-display.ts';
+import { loadBaked } from '../baked-fixtures.ts';
 import type { ScanDisplayDoc } from './schema.ts';
 import { NOW, renderDoc, scopeOf } from './test-kit.ts';
 import { hasVerdictWord } from './validate-rules.ts';
@@ -537,5 +538,16 @@ describe('time', () => {
     const s = scopeOf({ at: NOW });
     const eastern = rowsOf(renderDoc(d, s))[0] as { value: string };
     expect(eastern.value).toBe('1:00 PM');
+  });
+});
+
+describe("Henry's scan display", () => {
+  it('shows the access input on the membership card', async () => {
+    const { template } = await loadBaked('henrys-blue', { strips: false });
+    const display = template.manifest.scan?.display as ScanDisplayDoc;
+    const out = renderDoc(display, scopeOf({ memberName: 'Alex Morgan', access: 'all' }), {
+      role: 'door',
+    });
+    expect(rowsOf(out)).toContainEqual(expect.objectContaining({ label: 'Access', value: 'all' }));
   });
 });

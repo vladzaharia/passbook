@@ -68,6 +68,20 @@ export const issueOf = (
   ...(params ? { params } : {}),
 });
 
+/** Built-in roots an input of the same name would hide, as the display reads them. */
+const SHADOWED = [
+  'holder',
+  'inputs',
+  'fields',
+  'scan',
+  'history',
+  'event',
+  'scanner',
+  'access',
+  'occupancy',
+  'now',
+];
+
 const HOLDER_PARTS = new Set(['name', 'firstName', 'initials']);
 
 /** Checks one binding path. Returns the input it reads, if any. */
@@ -76,6 +90,14 @@ export function checkPath(ctx: Ctx, path: string, at: string): string | null {
   if (!split) return null;
   const { root, rest } = split;
   const first = rest[0];
+  if (root !== 'inputs' && SHADOWED.includes(root) && root in ctx.inputs)
+    ctx.push(
+      'warning',
+      'SHADOWED',
+      at,
+      `The scanner display cannot read "${root}" directly. Write inputs.${root} to show it.`,
+      { name: root },
+    );
   if (root === 'pass') {
     if (first && SECRET_PASS_KEYS.has(first))
       ctx.push('error', 'SECRET', at, `pass.${first} is never shown on scanners.`);
