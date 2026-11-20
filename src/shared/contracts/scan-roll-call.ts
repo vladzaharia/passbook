@@ -76,3 +76,19 @@ export type RollCall = z.infer<typeof RollCallSchema>;
 /** `GET /scan/roll-call`: the session's open call, or null. */
 export const RollCallCurrentSchema = z.object({ rollCall: RollCallSchema.nullable() });
 export type RollCallCurrent = z.infer<typeof RollCallCurrentSchema>;
+
+/** What the marks endpoint did with each mark: applied (or already merged), or refused with a code. */
+export const RollCallMarkResultSchema = z.object({
+  rollCallId: IdSchema,
+  passId: IdSchema,
+  status: z.enum(['applied', 'refused']),
+  /** Why a mark was refused, for the operator: `ROLL_CALL_SCANNED_SINCE`, `SCAN_UNDO_FORBIDDEN`, ... */
+  code: z.string().optional(),
+});
+export type RollCallMarkResult = z.infer<typeof RollCallMarkResultSchema>;
+
+/** `POST /scan/roll-call/{id}/marks`: the call, and one result per mark. A refused mark never fails the others. */
+export const RollCallMarksResponseSchema = RollCallSchema.extend({
+  results: z.array(RollCallMarkResultSchema).max(ROLL_CALL_MAX_MARKS),
+});
+export type RollCallMarksResponse = z.infer<typeof RollCallMarksResponseSchema>;

@@ -124,7 +124,12 @@ export function RollCallPanel({
         <div className="scan-rc-top">
           <Siren aria-hidden size={18} />
           <h2>{call.placeNames.join(', ') || COPY.title}</h2>
-          {roll.pending > 0 || !online ? (
+          {roll.blocked ? (
+            <span className="scan-chip" data-tone="slate" role="status">
+              <CloudOff aria-hidden size={14} />
+              {COPY.blocked}
+            </span>
+          ) : roll.pending > 0 || !online ? (
             <span className="scan-chip" data-tone="slate" role="status">
               <CloudOff aria-hidden size={14} />
               {fill(COPY.offline, { n: roll.pending })}

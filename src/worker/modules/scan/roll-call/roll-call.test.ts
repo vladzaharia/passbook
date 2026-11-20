@@ -151,7 +151,9 @@ describe('roll call: confirmations', () => {
     const a = await station([tpl], [pool.id]);
     const call = (await start(a)).body;
     const res = await mark(a, call.id, [{ passId: stranger.id, status: 'present' }]);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
+    expect(res.body.results).toMatchObject([{ status: 'refused', code: 'ROLL_CALL_NOT_LISTED' }]);
+    expect(res.body.counts.present).toBe(0);
   });
 
   it('refuses marks after the call ended, and ending twice answers with the record', async () => {
@@ -181,8 +183,10 @@ describe('roll call: mark time and call identity', () => {
     const res = await kit.post(a.headers, `/roll-call/${second.id}/marks`, {
       marks: [{ rollCallId: first.id, passId: p.id, status: 'present' }],
     });
-    expect(res.status).toBe(409);
-    expect(await res.text()).toContain('ROLL_CALL_MARK_MISMATCH');
+    expect(res.status).toBe(200);
+    expect(JSON.stringify(((await res.json()) as { results: unknown }).results)).toContain(
+      'ROLL_CALL_MARK_MISMATCH',
+    );
     expect((await read(a, second.id)).counts.present).toBe(0);
   });
 
@@ -199,6 +203,51 @@ describe('roll call: mark time and call identity', () => {
     kit.clock.advance(1000);
     const out = await mark(a, call.id, [{ passId: p.id, status: 'out', at: kit.clock.now() }]);
     expect(out.body.people[0]?.mark?.status).toBe('out');
+  });
+});
+
+describe('roll call: one refused mark does not fail the batch', () => {
+  it('applies the good marks around a refused take-back, a stranger and a stale call id', async () => {
+    const pool = await trackedZone();
+    const place = `zone:${pool.id}`;
+    const gone = await personInside(tpl, 'Scanned Again', [place], {
+      at: kit.clock.now() - 60_000,
+    });
+    const ok1 = await personInside(tpl, 'Fine One', [place]);
+    const ok2 = await personInside(tpl, 'Fine Two', [place]);
+    const stranger = await personInside(tpl, 'Not Here', [`zone:${(await trackedZone()).id}`]);
+    const a = await station([tpl], [pool.id]);
+    const call = (await start(a)).body;
+    kit.clock.advance(3_600_000);
+    const t = kit.clock.now();
+    await mark(a, call.id, [{ passId: gone.id, status: 'out', at: t - 9000 }]);
+    await run(
+      kit.env.DB,
+      "UPDATE scan_presence SET state = 'in', last_scan_id = 'door-tap' WHERE pass_id = ?",
+      [gone.id],
+    );
+    const res = await kit.post(a.headers, `/roll-call/${call.id}/marks`, {
+      marks: [
+        { rollCallId: call.id, passId: ok1.id, status: 'present', at: t - 5000 },
+        { rollCallId: call.id, passId: gone.id, status: 'none', at: t - 4000 },
+        { rollCallId: call.id, passId: stranger.id, status: 'present', at: t - 3000 },
+        { rollCallId: 'an-earlier-call', passId: ok2.id, status: 'present', at: t - 2000 },
+        { rollCallId: call.id, passId: ok2.id, status: 'present', at: t - 1000 },
+      ],
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      results: { passId: string; status: string; code?: string }[];
+    };
+    const by = (id: string) =>
+      body.results.filter((r) => r.passId === id).map((r) => r.code ?? r.status);
+    expect(by(ok1.id)).toEqual(['applied']);
+    expect(by(gone.id)).toEqual(['ROLL_CALL_SCANNED_SINCE']);
+    expect(by(stranger.id)).toEqual(['ROLL_CALL_NOT_LISTED']);
+    expect(by(ok2.id).sort()).toEqual(['ROLL_CALL_MARK_MISMATCH', 'applied']);
+    const after = await read(a, call.id);
+    expect(after.counts.present).toBe(2);
+    expect(after.people.find((p) => p.passId === gone.id)?.mark?.status).toBe('out');
   });
 });
 
@@ -302,8 +351,10 @@ describe('roll call: Out exits the person', () => {
       [t - 500, p.id],
     );
     const res = await mark(a, call.id, [{ passId: p.id, status: 'none', at: t - 1000 }]);
-    expect(res.status).toBe(409);
-    expect(JSON.stringify(res.body)).toContain('ROLL_CALL_SCANNED_SINCE');
+    expect(res.status).toBe(200);
+    expect(res.body.results).toMatchObject([
+      { status: 'refused', code: 'ROLL_CALL_SCANNED_SINCE' },
+    ]);
     const [m] = await all<{ status: string }>(
       kit.env.DB,
       'SELECT status FROM roll_call_marks WHERE pass_id = ?',

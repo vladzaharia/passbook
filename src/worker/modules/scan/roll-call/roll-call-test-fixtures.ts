@@ -2,7 +2,10 @@ import type { RollCall, RollCallCurrent } from '../../../../shared/contracts/sca
 import { kit } from '../act-test-fixtures.ts';
 import type { Station } from '../occupancy/whos-in-test-fixtures.ts';
 
-export type Call = RollCall & { code?: string };
+export type Call = RollCall & {
+  code?: string;
+  results: { passId: string; status: 'applied' | 'refused'; code?: string }[];
+};
 
 export const start = async (s: Station) => {
   const res = await kit.post(s.headers, '/roll-call', {});

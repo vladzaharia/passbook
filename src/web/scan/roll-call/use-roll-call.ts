@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { RollCall, RollCallStatus } from '../../../shared/contracts/scan-roll-call.ts';
+import type {
+  RollCall,
+  RollCallMarksResponse,
+  RollCallStatus,
+} from '../../../shared/contracts/scan-roll-call.ts';
 import { ApiError } from '../../lib/errors.ts';
 import { connectDeviceSocket, deviceSocketUrl } from '../enroll/device-socket.ts';
 import type { KeyValue } from '../offline/wipe.ts';
@@ -9,7 +13,7 @@ import { type QueuedMark, withQueue } from './roll-call-model.ts';
 export interface RollCallPort {
   current(call?: { signal?: AbortSignal }): Promise<{ rollCall: RollCall | null }>;
   start(): Promise<RollCall>;
-  marks(id: string, marks: QueuedMark[]): Promise<RollCall>;
+  marks(id: string, marks: QueuedMark[]): Promise<RollCallMarksResponse>;
   end(id: string): Promise<RollCall>;
 }
 
@@ -33,6 +37,7 @@ export function useRollCall({
   connect = connectDeviceSocket,
   store,
   onRefused,
+  onBlocked,
 }: {
   port: RollCallPort;
   enabled: boolean;
@@ -44,16 +49,21 @@ export function useRollCall({
   connect?: typeof connectDeviceSocket;
   /** Where unsent taps live across a reload; wiped when the scanner is unpaired. */
   store?: KeyValue<QueuedMark[]>;
-  /** The server kept an Out because the person scanned since: the taps for it are dropped. */
-  onRefused?: () => void;
+  /** The server refused these taps (each with its code): they are dropped, and the desk is told why. */
+  onRefused?: (items: { passId: string; code: string }[]) => void;
+  /** The device as a whole may not sync (signed out, revoked): syncing stops until it is signed in again. */
+  onBlocked?: (error: unknown) => void;
 }) {
   const [server, setServer] = useState<RollCall | null>(null);
   const [queue, setQueue] = useState<QueuedMark[]>([]);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [asOf, setAsOf] = useState<number | null>(null);
-  const live = useRef({ server, queue, onAppear, onRefused });
-  live.current = { server, queue, onAppear, onRefused };
+  const [blocked, setBlocked] = useState(false);
+  const live = useRef({ server, queue, onAppear, onRefused, onBlocked, blocked });
+  live.current = { server, queue, onAppear, onRefused, onBlocked, blocked };
+  // Transient failures (network, 5xx) retry with a growing delay, never in a tight loop.
+  const retry = useRef({ fails: 0, at: 0 });
   const sending = useRef(false);
   // The device's clock against the server's, measured on every read; taps carry the corrected time.
   const offset = useRef(0);
@@ -101,24 +111,41 @@ export function useRollCall({
   }, [port, take]);
 
   const flush = useCallback(async () => {
-    const { server: call, queue: all } = live.current;
+    const { server: call, queue: all, blocked: stopped } = live.current;
     const pending = all.filter((m) => m.callId === call?.id);
-    if (sending.current || !call || pending.length === 0) return;
+    if (stopped || sending.current || !call || pending.length === 0) return;
+    if (Date.now() < retry.current.at) return;
     sending.current = true;
     const batch = pending.slice(0, BATCH);
+    const drop = () => setQueue((q) => q.filter((m) => !batch.includes(m)));
     try {
       const next = await port.marks(call.id, batch);
-      setQueue((q) => q.filter((m) => !batch.includes(m)));
+      retry.current = { fails: 0, at: 0 };
+      drop();
+      const refused = next.results.filter((r) => r.status === 'refused');
+      if (refused.length)
+        live.current.onRefused?.(refused.map((r) => ({ passId: r.passId, code: r.code ?? '' })));
       take(next, true);
     } catch (error) {
+      const status = error instanceof ApiError ? error.status : 0;
       if (gone(error)) {
         setQueue([]);
         await reload();
-      } else if (error instanceof ApiError && error.code === 'ROLL_CALL_SCANNED_SINCE') {
-        setQueue((q) => q.filter((m) => !batch.includes(m)));
-        live.current.onRefused?.();
+      } else if (status === 401 || status === 403) {
+        // Not this call's fault: the device itself may not act. Stop, and say so.
+        setBlocked(true);
+        setError(true);
+        live.current.onBlocked?.(error);
+      } else if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+        drop();
+        const code = error instanceof ApiError ? error.code : '';
+        live.current.onRefused?.(batch.map((m) => ({ passId: m.passId, code })));
         await reload();
-      } else setError(true);
+      } else {
+        const fails = retry.current.fails + 1;
+        retry.current = { fails, at: Date.now() + Math.min(60_000, 1000 * 2 ** fails) };
+        setError(true);
+      }
     } finally {
       sending.current = false;
     }
@@ -184,6 +211,6 @@ export function useRollCall({
   }, [port, flush, reload]);
 
   const call = useMemo(() => (server ? withQueue(server, queue, by) : null), [server, queue, by]);
-  return { call, pending: queue.length, error, busy, asOf, mark, start, end, reload };
+  return { call, pending: queue.length, error, busy, asOf, blocked, mark, start, end, reload };
 }
 export type RollCallState = ReturnType<typeof useRollCall>;

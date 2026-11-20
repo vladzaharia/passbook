@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ConfirmDialog } from '../../ui/alert-dialog.tsx';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
+import { toFail } from '../api/to-fail.ts';
 import type { FailInfo } from '../machine/ports.ts';
 import type { KeyValue } from '../offline/wipe.ts';
 import { rollCallPort } from '../roll-call/roll-call-api.ts';
@@ -54,7 +55,15 @@ export default function InsideHost({
     online,
     by: '',
     onAppear: onOpen,
-    onRefused: () => toast.info(COPY.scannedSince),
+    onRefused: (items) => {
+      const people = new Map(roll.call?.people.map((p) => [p.passId, p.holder]) ?? []);
+      const reasons = COPY.refused as Record<string, string>;
+      for (const { passId, code } of items.slice(0, 3))
+        toast.info(
+          `${people.get(passId) ?? ACCESS_COPY.inside.unnamed}: ${reasons[code] ?? COPY.refused.other}`,
+        );
+    },
+    onBlocked: (error) => onFail(toFail(error)),
     ...(store ? { store } : {}),
   });
   const [confirm, setConfirm] = useState<'start' | 'end' | null>(null);

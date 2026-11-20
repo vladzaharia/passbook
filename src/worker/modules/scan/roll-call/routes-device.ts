@@ -3,6 +3,7 @@ import { IdParamSchema } from '../../../../shared/contracts/common.ts';
 import {
   RollCallCurrentSchema,
   RollCallMarksRequestSchema,
+  RollCallMarksResponseSchema,
   RollCallSchema,
 } from '../../../../shared/contracts/scan-roll-call.ts';
 import type { AppBindings } from '../../../platform/context.ts';
@@ -12,13 +13,8 @@ import { requireScanActor, scanActorOf } from '../guard.ts';
 import { admitWhosIn } from '../occupancy/whos-in.ts';
 import { cloneObservedScanActor } from '../scanning-workspace-observation.ts';
 import { deviceCaller } from './caller.ts';
-import {
-  currentRollCall,
-  endRollCall,
-  markRollCall,
-  readRollCall,
-  startRollCall,
-} from './service.ts';
+import { markRollCall } from './marks.ts';
+import { currentRollCall, endRollCall, readRollCall, startRollCall } from './service.ts';
 
 /** A device's roll call: `/scan/roll-call`. Desk and above, as Who's in; a monitor needs Desk actions on. */
 export function registerDeviceRollCallRoutes(scanRoutes: OpenAPIHono<AppBindings>): void {
@@ -78,7 +74,7 @@ export function registerDeviceRollCallRoutes(scanRoutes: OpenAPIHono<AppBindings
       summary: 'Confirm people present or out',
       params: IdParamSchema,
       body: RollCallMarksRequestSchema,
-      response: RollCallSchema,
+      response: RollCallMarksResponseSchema,
     },
     async (c) =>
       c.json(

@@ -99,12 +99,11 @@ const memoryStore = (initial?: QueuedMark[]) => {
   };
 };
 
-describe('useRollCall: a refused take-back', () => {
-  it('drops the tap, tells the desk, and keeps the Out the server holds', async () => {
-    const out = { status: 'out' as const, by: 'Sam K.', at: T0 };
-    const refused = vi.fn();
-    const port = fakeRollCall(call([person(0, { mark: out })]));
-    port.fail = new ApiError({ status: 409, code: 'ROLL_CALL_SCANNED_SINCE' });
+describe('useRollCall: refused and failed syncs', () => {
+  const rig = (over: Partial<Parameters<typeof useRollCall>[0]> = {}) => {
+    const port = fakeRollCall(call([person(0), person(1), person(2)]));
+    const onRefused = vi.fn();
+    const onBlocked = vi.fn();
     const h = renderHook(() =>
       useRollCall({
         port,
@@ -112,14 +111,80 @@ describe('useRollCall: a refused take-back', () => {
         online: true,
         by: '',
         connect: connect as never,
-        onRefused: refused,
+        onRefused,
+        onBlocked,
+        ...over,
       }),
     );
+    return { port, onRefused, onBlocked, h };
+  };
+
+  it('removes applied and refused taps, tells the desk why, and keeps the rest of the batch', async () => {
+    const { port, onRefused, h } = rig();
     await waitFor(() => expect(h.result.current.call).not.toBeNull());
-    act(() => h.result.current.mark(person(0).passId, 'none'));
-    await waitFor(() => expect(refused).toHaveBeenCalled());
+    port.refuse.set(person(1).passId, 'ROLL_CALL_SCANNED_SINCE');
+    act(() => {
+      h.result.current.mark(person(0).passId, 'present');
+      h.result.current.mark(person(1).passId, 'none');
+      h.result.current.mark(person(2).passId, 'present');
+    });
+    await waitFor(() => expect(h.result.current.pending).toBe(0));
+    expect(onRefused).toHaveBeenCalledWith([
+      { passId: person(1).passId, code: 'ROLL_CALL_SCANNED_SINCE' },
+    ]);
+    expect(h.result.current.call?.counts.present).toBe(2);
+  });
+
+  it('a 403 for the device stops syncing and says so, instead of retrying', async () => {
+    const { port, onBlocked, h } = rig();
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    port.fail = new ApiError({ status: 403, code: 'FORBIDDEN' });
+    act(() => h.result.current.mark(person(0).passId, 'present'));
+    await waitFor(() => expect(h.result.current.blocked).toBe(true));
+    expect(onBlocked).toHaveBeenCalledTimes(1);
+    const sent = port.calls.marks.length;
+    await act(async () => void (await h.result.current.reload()));
+    act(() => h.result.current.mark(person(1).passId, 'present'));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(port.calls.marks).toHaveLength(sent);
+    expect(h.result.current.pending).toBeGreaterThan(0);
+  });
+
+  it('a 500 keeps the taps and retries later with a delay, not at once', async () => {
+    const { port, h } = rig();
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    port.fail = new ApiError({ status: 500, code: 'INTERNAL' });
+    act(() => h.result.current.mark(person(0).passId, 'present'));
+    await waitFor(() => expect(port.calls.marks).toHaveLength(1));
+    expect(h.result.current.pending).toBe(1);
+    act(() => h.result.current.mark(person(1).passId, 'present'));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(port.calls.marks).toHaveLength(1);
+    port.fail = null;
+    await act(async () => void (await vi.advanceTimersByTimeAsync(5000)));
+    await act(async () => void (await h.result.current.reload()));
+    await waitFor(() => expect(h.result.current.pending).toBe(0));
+  });
+
+  it('a 404 means the call is gone: the queue is cleared', async () => {
+    const { port, h } = rig();
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    port.fail = new ApiError({ status: 404, code: 'ROLL_CALL_NOT_FOUND' });
+    port.server = null;
+    act(() => h.result.current.mark(person(0).passId, 'present'));
+    await waitFor(() => expect(h.result.current.call).toBeNull());
     expect(h.result.current.pending).toBe(0);
-    expect(h.result.current.call?.people[0]?.mark?.status).toBe('out');
+  });
+
+  it('another 4xx drops the batch with its code rather than retrying forever', async () => {
+    const { port, onRefused, h } = rig();
+    await waitFor(() => expect(h.result.current.call).not.toBeNull());
+    port.fail = new ApiError({ status: 422, code: 'VALIDATION' });
+    act(() => h.result.current.mark(person(0).passId, 'present'));
+    await waitFor(() =>
+      expect(onRefused).toHaveBeenCalledWith([{ passId: person(0).passId, code: 'VALIDATION' }]),
+    );
+    expect(h.result.current.pending).toBe(0);
   });
 });
 

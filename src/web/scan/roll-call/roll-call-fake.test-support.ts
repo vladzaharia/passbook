@@ -52,6 +52,8 @@ export interface FakeRoll extends RollCallPort {
   calls: { marks: { id: string; marks: unknown[] }[]; end: string[]; start: number };
   server: RollCall | null;
   fail: Error | null;
+  /** Marks for these people are refused with the code. */
+  refuse: Map<string, string>;
 }
 
 /** A server that applies marks by the later `at`, as the real one does. */
@@ -60,6 +62,7 @@ export function fakeRollCall(start: RollCall | null): FakeRoll {
     calls: { marks: [], end: [], start: 0 },
     server: start,
     fail: null,
+    refuse: new Map(),
     current: async () => ({ rollCall: f.server }),
     start: async () => {
       f.calls.start++;
@@ -72,6 +75,7 @@ export function fakeRollCall(start: RollCall | null): FakeRoll {
       const cur = f.server;
       if (!cur) throw new Error('no call');
       const people = cur.people.map((p) => {
+        if (f.refuse.has(p.passId)) return p;
         const m = marks.filter((x) => x.passId === p.passId).sort((a, b) => b.at - a.at)[0];
         if (!m || (p.mark && p.mark.at >= m.at)) return p;
         return {
@@ -80,7 +84,15 @@ export function fakeRollCall(start: RollCall | null): FakeRoll {
         };
       });
       f.server = call(people, { id: cur.id, rev: cur.rev + 1 });
-      return f.server;
+      const results = marks.map((m) => {
+        const code = f.refuse.get(m.passId);
+        return {
+          rollCallId: cur.id,
+          passId: m.passId,
+          ...(code ? { status: 'refused' as const, code } : { status: 'applied' as const }),
+        };
+      });
+      return { ...f.server, results };
     },
     end: async (cid) => {
       f.calls.end.push(cid);

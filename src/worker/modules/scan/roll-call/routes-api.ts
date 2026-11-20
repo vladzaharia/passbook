@@ -4,6 +4,7 @@ import { IdParamSchema, IdSchema } from '../../../../shared/contracts/common.ts'
 import {
   RollCallCurrentSchema,
   RollCallMarksRequestSchema,
+  RollCallMarksResponseSchema,
   RollCallSchema,
 } from '../../../../shared/contracts/scan-roll-call.ts';
 import { assertOrgAccess } from '../../../platform/auth.ts';
@@ -20,14 +21,9 @@ import {
   tenantAuthorityOf,
 } from '../../passes/http.ts';
 import { type Caller, tenantCaller } from './caller.ts';
+import { markRollCall } from './marks.ts';
 import { keyScopes } from './repo.ts';
-import {
-  currentRollCall,
-  endRollCall,
-  markRollCall,
-  readRollCall,
-  startRollCall,
-} from './service.ts';
+import { currentRollCall, endRollCall, readRollCall, startRollCall } from './service.ts';
 
 const TAG = 'roll-calls';
 const OrgQuerySchema = z.object({
@@ -146,7 +142,7 @@ register(
     params: IdParamSchema,
     query: OrgQuerySchema,
     body: RollCallMarksRequestSchema,
-    response: RollCallSchema,
+    response: RollCallMarksResponseSchema,
   },
   async (c) => {
     const caller = await callerOf(c, c.req.valid('query'), true);
