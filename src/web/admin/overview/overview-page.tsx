@@ -104,9 +104,6 @@ function GovernanceSummary({
               formatCount(organizations)
             )}
           </p>
-          <p className="text-sm text-fg-muted">
-            {filtered ? 'Matching the organization filter.' : 'Not deleted.'}
-          </p>
           <Button asChild variant="link" className="mt-auto">
             <Link to="/admin/platform/orgs">View organizations</Link>
           </Button>
@@ -115,7 +112,6 @@ function GovernanceSummary({
       <Card>
         <CardBody className="flex h-full flex-col items-start gap-2">
           <h2 className="text-sm font-semibold text-fg-strong">Users</h2>
-          <p className="text-sm text-fg-muted">Every account on the platform.</p>
           <Button asChild variant="link" className="mt-auto">
             <Link to="/admin/platform/users">View users</Link>
           </Button>
@@ -124,7 +120,6 @@ function GovernanceSummary({
       <Card>
         <CardBody className="flex h-full flex-col items-start gap-2">
           <h2 className="text-sm font-semibold text-fg-strong">Wallet accounts</h2>
-          <p className="text-sm text-fg-muted">Signing identities and their certificates.</p>
           <Button asChild variant="link" className="mt-auto">
             <Link to="/admin/platform/wallet-accounts">View wallet accounts</Link>
           </Button>

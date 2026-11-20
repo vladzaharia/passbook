@@ -169,7 +169,6 @@ export function CreateKeyDialog({
       <DialogContent
         size="md"
         title="New API key"
-        description="Choose the permissions and expiry for this credential."
         footer={
           <>
             <Button variant="outline" onClick={close}>

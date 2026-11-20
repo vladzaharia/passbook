@@ -122,7 +122,6 @@ export function WebhooksTab() {
           <EmptyState
             art="plugs"
             title="No webhooks"
-            description="PassBook posts pass, device and scan events to your URL."
             action={canManage ? <AddEndpointButton /> : undefined}
           />
         }

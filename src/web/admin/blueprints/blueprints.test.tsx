@@ -110,7 +110,6 @@ describe('Blueprints', () => {
       `/admin/blueprints/${ID}`,
     );
     expect(seen[0]?.searchParams.get('blueprint')).toBe('true');
-    expect(screen.getByText(/Designs to start from/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use Balance card' })).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });

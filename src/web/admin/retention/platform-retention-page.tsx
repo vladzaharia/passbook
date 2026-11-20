@@ -10,7 +10,7 @@ export function PlatformRetentionPage() {
         title="Retention"
         description={
           <>
-            Deletions of platform records, with their policy. Windows are in{' '}
+            Windows are in{' '}
             <Link
               to="/admin/platform/settings"
               className="text-accent-fg underline underline-offset-2"
