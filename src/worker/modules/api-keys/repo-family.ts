@@ -56,3 +56,13 @@ export const callSummary = (db: Db, keyId: string, since: number) =>
      GROUP BY action ORDER BY n DESC, action LIMIT 30`,
     [keyId, since],
   );
+
+/** The scanners a terminal key acts as: a rotated key acts as the same ones. */
+export const terminalsOf = async (db: Db, keyId: string) =>
+  (
+    await all<{ scanner_id: string }>(
+      db,
+      'SELECT scanner_id FROM api_key_terminals WHERE key_id = ?',
+      [keyId],
+    )
+  ).map((row) => row.scanner_id);

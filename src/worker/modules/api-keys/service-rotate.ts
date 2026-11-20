@@ -1,9 +1,9 @@
-import { all } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
 import { getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
+import { terminalsOf } from './repo-family.ts';
 import type { ApiKeyRow } from './repo-row.ts';
 import { reachable } from './service.ts';
 import { invalid, newSecret } from './service-create.ts';
@@ -11,16 +11,6 @@ import type { ApiKeyDto } from './service-dto.ts';
 import { type Resources, toDto } from './service-dto.ts';
 
 const HOUR = 3_600_000;
-
-/** The scanners a terminal key acts as: a rotated key acts as the same ones. */
-const terminalsOf = async (ctx: ServiceContext, keyId: string) =>
-  (
-    await all<{ scanner_id: string }>(
-      ctx.env.DB,
-      'SELECT scanner_id FROM api_key_terminals WHERE key_id = ?',
-      [keyId],
-    )
-  ).map((row) => row.scanner_id);
 
 /**
  * Replaces a key: the new secret works at once, and the old key retires `overlapHours` later (never after its own
@@ -64,7 +54,7 @@ export async function rotateApiKey(
   const retireAt = Math.min(now + overlapHours * HOUR, old.expires_at ?? Infinity);
   const [rows, terminalIds] = await Promise.all([
     keyResources(ctx.env.DB, [old.id]),
-    terminalsOf(ctx, old.id),
+    terminalsOf(ctx.env.DB, old.id),
   ]);
   const resources: Resources = {
     templateIds: rows.filter((r) => r.kind === 'template').map((r) => r.value),

@@ -53,6 +53,7 @@ import { Route as AdminOOrgIdIndexRouteImport } from './routes/admin/o/$orgId/in
 import { Route as AdminPassesImportIndexRouteImport } from './routes/admin/passes/import/index'
 import { Route as AdminPassesImportImportIdRouteImport } from './routes/admin/passes/import/$importId'
 import { Route as AdminPlatformApiKeysIndexRouteImport } from './routes/admin/platform/api-keys/index'
+import { Route as AdminPlatformApiKeysKeyIdRouteImport } from './routes/admin/platform/api-keys/$keyId'
 import { Route as AdminPlatformAuditIndexRouteImport } from './routes/admin/platform/audit/index'
 import { Route as AdminPlatformOrgsIndexRouteImport } from './routes/admin/platform/orgs/index'
 import { Route as AdminPlatformOrgsOrgIdRouteImport } from './routes/admin/platform/orgs/$orgId'
@@ -69,6 +70,7 @@ import { Route as AdminScanningSessionsSessionIdRouteImport } from './routes/adm
 import { Route as AdminTemplatesTemplateIdDesignRouteImport } from './routes/admin/templates/$templateId_.design'
 import { Route as AdminTemplatesTemplateIdJoinSignRouteImport } from './routes/admin/templates/$templateId_.join-sign'
 import { Route as AdminOOrgIdApiKeysIndexRouteImport } from './routes/admin/o/$orgId/api-keys/index'
+import { Route as AdminOOrgIdApiKeysKeyIdRouteImport } from './routes/admin/o/$orgId/api-keys/$keyId'
 import { Route as AdminOOrgIdAuditIndexRouteImport } from './routes/admin/o/$orgId/audit/index'
 import { Route as AdminOOrgIdBlueprintsIndexRouteImport } from './routes/admin/o/$orgId/blueprints/index'
 import { Route as AdminOOrgIdBlueprintsBlueprintIdRouteImport } from './routes/admin/o/$orgId/blueprints/$blueprintId'
@@ -332,6 +334,12 @@ const AdminPlatformApiKeysIndexRoute =
     path: '/api-keys/',
     getParentRoute: () => AdminPlatformRouteRoute,
   } as any)
+const AdminPlatformApiKeysKeyIdRoute =
+  AdminPlatformApiKeysKeyIdRouteImport.update({
+    id: '/api-keys/$keyId',
+    path: '/api-keys/$keyId',
+    getParentRoute: () => AdminPlatformRouteRoute,
+  } as any)
 const AdminPlatformAuditIndexRoute = AdminPlatformAuditIndexRouteImport.update({
   id: '/audit/',
   path: '/audit/',
@@ -421,6 +429,11 @@ const AdminTemplatesTemplateIdJoinSignRoute =
 const AdminOOrgIdApiKeysIndexRoute = AdminOOrgIdApiKeysIndexRouteImport.update({
   id: '/api-keys/',
   path: '/api-keys/',
+  getParentRoute: () => AdminOOrgIdRouteRoute,
+} as any)
+const AdminOOrgIdApiKeysKeyIdRoute = AdminOOrgIdApiKeysKeyIdRouteImport.update({
+  id: '/api-keys/$keyId',
+  path: '/api-keys/$keyId',
   getParentRoute: () => AdminOOrgIdRouteRoute,
 } as any)
 const AdminOOrgIdAuditIndexRoute = AdminOOrgIdAuditIndexRouteImport.update({
@@ -656,6 +669,7 @@ export interface FileRoutesByFullPath {
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
+  '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -674,6 +688,7 @@ export interface FileRoutesByFullPath {
   '/admin/platform/status/': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts/': typeof AdminPlatformWalletAccountsIndexRoute
+  '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
   '/admin/o/$orgId/connections/new': typeof AdminOOrgIdConnectionsNewRoute
@@ -748,6 +763,7 @@ export interface FileRoutesByTo {
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
+  '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -766,6 +782,7 @@ export interface FileRoutesByTo {
   '/admin/platform/status': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts': typeof AdminPlatformWalletAccountsIndexRoute
+  '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
   '/admin/o/$orgId/connections/new': typeof AdminOOrgIdConnectionsNewRoute
@@ -844,6 +861,7 @@ export interface FileRoutesById {
   '/admin/connections/webhooks/$endpointId': typeof AdminConnectionsWebhooksEndpointIdRoute
   '/admin/connections/webhooks/new': typeof AdminConnectionsWebhooksNewRoute
   '/admin/passes/import/$importId': typeof AdminPassesImportImportIdRoute
+  '/admin/platform/api-keys/$keyId': typeof AdminPlatformApiKeysKeyIdRoute
   '/admin/platform/orgs/$orgId': typeof AdminPlatformOrgsOrgIdRoute
   '/admin/platform/users/$userId': typeof AdminPlatformUsersUserIdRoute
   '/admin/platform/wallet-accounts/$identityId': typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -862,6 +880,7 @@ export interface FileRoutesById {
   '/admin/platform/status/': typeof AdminPlatformStatusIndexRoute
   '/admin/platform/users/': typeof AdminPlatformUsersIndexRoute
   '/admin/platform/wallet-accounts/': typeof AdminPlatformWalletAccountsIndexRoute
+  '/admin/o/$orgId/api-keys/$keyId': typeof AdminOOrgIdApiKeysKeyIdRoute
   '/admin/o/$orgId/blueprints/$blueprintId': typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   '/admin/o/$orgId/connections/$connectionId': typeof AdminOOrgIdConnectionsConnectionIdRoute
   '/admin/o/$orgId/connections/new': typeof AdminOOrgIdConnectionsNewRoute
@@ -941,6 +960,7 @@ export interface FileRouteTypes {
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
+    | '/admin/platform/api-keys/$keyId'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -959,6 +979,7 @@ export interface FileRouteTypes {
     | '/admin/platform/status/'
     | '/admin/platform/users/'
     | '/admin/platform/wallet-accounts/'
+    | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
     | '/admin/o/$orgId/connections/new'
@@ -1033,6 +1054,7 @@ export interface FileRouteTypes {
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
+    | '/admin/platform/api-keys/$keyId'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1051,6 +1073,7 @@ export interface FileRouteTypes {
     | '/admin/platform/status'
     | '/admin/platform/users'
     | '/admin/platform/wallet-accounts'
+    | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
     | '/admin/o/$orgId/connections/new'
@@ -1128,6 +1151,7 @@ export interface FileRouteTypes {
     | '/admin/connections/webhooks/$endpointId'
     | '/admin/connections/webhooks/new'
     | '/admin/passes/import/$importId'
+    | '/admin/platform/api-keys/$keyId'
     | '/admin/platform/orgs/$orgId'
     | '/admin/platform/users/$userId'
     | '/admin/platform/wallet-accounts/$identityId'
@@ -1146,6 +1170,7 @@ export interface FileRouteTypes {
     | '/admin/platform/status/'
     | '/admin/platform/users/'
     | '/admin/platform/wallet-accounts/'
+    | '/admin/o/$orgId/api-keys/$keyId'
     | '/admin/o/$orgId/blueprints/$blueprintId'
     | '/admin/o/$orgId/connections/$connectionId'
     | '/admin/o/$orgId/connections/new'
@@ -1500,6 +1525,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlatformApiKeysIndexRouteImport
       parentRoute: typeof AdminPlatformRouteRoute
     }
+    '/admin/platform/api-keys/$keyId': {
+      id: '/admin/platform/api-keys/$keyId'
+      path: '/api-keys/$keyId'
+      fullPath: '/admin/platform/api-keys/$keyId'
+      preLoaderRoute: typeof AdminPlatformApiKeysKeyIdRouteImport
+      parentRoute: typeof AdminPlatformRouteRoute
+    }
     '/admin/platform/audit/': {
       id: '/admin/platform/audit/'
       path: '/audit'
@@ -1610,6 +1642,13 @@ declare module '@tanstack/react-router' {
       path: '/api-keys'
       fullPath: '/admin/o/$orgId/api-keys/'
       preLoaderRoute: typeof AdminOOrgIdApiKeysIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
+    '/admin/o/$orgId/api-keys/$keyId': {
+      id: '/admin/o/$orgId/api-keys/$keyId'
+      path: '/api-keys/$keyId'
+      fullPath: '/admin/o/$orgId/api-keys/$keyId'
+      preLoaderRoute: typeof AdminOOrgIdApiKeysKeyIdRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
     '/admin/o/$orgId/audit/': {
@@ -1848,6 +1887,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminPlatformRouteRouteChildren {
   AdminPlatformIndexRoute: typeof AdminPlatformIndexRoute
+  AdminPlatformApiKeysKeyIdRoute: typeof AdminPlatformApiKeysKeyIdRoute
   AdminPlatformOrgsOrgIdRoute: typeof AdminPlatformOrgsOrgIdRoute
   AdminPlatformUsersUserIdRoute: typeof AdminPlatformUsersUserIdRoute
   AdminPlatformWalletAccountsIdentityIdRoute: typeof AdminPlatformWalletAccountsIdentityIdRoute
@@ -1863,6 +1903,7 @@ interface AdminPlatformRouteRouteChildren {
 
 const AdminPlatformRouteRouteChildren: AdminPlatformRouteRouteChildren = {
   AdminPlatformIndexRoute: AdminPlatformIndexRoute,
+  AdminPlatformApiKeysKeyIdRoute: AdminPlatformApiKeysKeyIdRoute,
   AdminPlatformOrgsOrgIdRoute: AdminPlatformOrgsOrgIdRoute,
   AdminPlatformUsersUserIdRoute: AdminPlatformUsersUserIdRoute,
   AdminPlatformWalletAccountsIdentityIdRoute:
@@ -1882,6 +1923,7 @@ const AdminPlatformRouteRouteWithChildren =
 
 interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdIndexRoute: typeof AdminOOrgIdIndexRoute
+  AdminOOrgIdApiKeysKeyIdRoute: typeof AdminOOrgIdApiKeysKeyIdRoute
   AdminOOrgIdBlueprintsBlueprintIdRoute: typeof AdminOOrgIdBlueprintsBlueprintIdRoute
   AdminOOrgIdConnectionsConnectionIdRoute: typeof AdminOOrgIdConnectionsConnectionIdRoute
   AdminOOrgIdConnectionsNewRoute: typeof AdminOOrgIdConnectionsNewRoute
@@ -1920,6 +1962,7 @@ interface AdminOOrgIdRouteRouteChildren {
 
 const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdIndexRoute: AdminOOrgIdIndexRoute,
+  AdminOOrgIdApiKeysKeyIdRoute: AdminOOrgIdApiKeysKeyIdRoute,
   AdminOOrgIdBlueprintsBlueprintIdRoute: AdminOOrgIdBlueprintsBlueprintIdRoute,
   AdminOOrgIdConnectionsConnectionIdRoute:
     AdminOOrgIdConnectionsConnectionIdRoute,
