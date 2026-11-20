@@ -2,6 +2,7 @@ import { Info } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ScanCard } from '../../../shared/contracts/scan.ts';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
 import { Button } from '../../ui/button.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { TagFlag } from '../assign/tag-flag.tsx';
@@ -91,7 +92,10 @@ export function ResultCard({
   const now = o.at ?? 0;
   const line =
     tagReasonLine(o, tagRead) ??
-    verdictLine(o, clock ?? Date.now(), { desk: desk?.approvals === 'desk' });
+    verdictLine(o, clock ?? Date.now(), {
+      desk: desk?.approvals === 'desk',
+      group: density === 'glance',
+    });
   const held = accessLines(o, now);
   const admit = admitLine(o);
   const pill = directionPill(o);
@@ -115,7 +119,15 @@ export function ResultCard({
     o.action?.id !== 'undo' &&
     o.checkIn?.direction !== 'out' &&
     pill !== 'out';
-  const title = noExit ? 'Check-out not allowed' : noReentry ? 'No re-entry' : systemTitle;
+  // After Check in more the word counts them: Checked in 3 more.
+  const grouped = ok && Boolean(o.group) && density === 'glance' && !held && line;
+  const title = noExit
+    ? 'Check-out not allowed'
+    : noReentry
+      ? 'No re-entry'
+      : grouped
+        ? grouped.headline
+        : systemTitle;
   // The verdict word is always the headline; a template's own line sits under it.
   const glance = density === 'glance' && !ready;
   const nameInBand = custom && !glance && Boolean(d) && d?.header.title === d?.identity.holder;
@@ -127,7 +139,11 @@ export function ResultCard({
   const layout =
     custom && !glance ? 'custom' : shown === 'ok' || shown === 'heads_up' ? 'row' : 'stack';
   const denied = isDenied(o, now);
-  const notes = outcomeNotes(o, d, eventNote, denied);
+  // A saved read says what is true: the server has not confirmed it yet.
+  const notes =
+    glance && o.kind === 'queued'
+      ? [SCAN_HANDHELD_COPY.queue.notConfirmedNote]
+      : outcomeNotes(o, d, eventNote, denied);
   useLayoutEffect(() => {
     const el = root.current;
     if (!el || phase !== 'rising' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -172,6 +188,7 @@ export function ResultCard({
           sub={held ? held.sub : line?.sub}
           admit={admit}
           holdMs={holdMs}
+          saved={o.kind === 'queued'}
         />
       ) : (
         <h1 className="scan-ready-heading" id="scan-result-heading" tabIndex={-1}>

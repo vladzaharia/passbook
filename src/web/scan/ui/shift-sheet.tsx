@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { z } from 'zod';
 import type { ScanReason } from '@/shared/contracts/scan.ts';
 import type { ScanSummarySchema } from '@/shared/contracts/scan-session.ts';
@@ -11,6 +11,7 @@ import { ErrorState } from '../../ui/error-state.tsx';
 import { Sheet, SheetContent } from '../../ui/sheet.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import type { ScanState } from '../machine/types.ts';
+import type { QueueView } from '../offline/queue-view.ts';
 import { OfflineStatus } from './offline-status.tsx';
 
 type Summary = z.infer<typeof ScanSummarySchema>;
@@ -142,9 +143,12 @@ export function ShiftSheet({
   onEnd,
   pending,
   offline,
+  focus,
 }: {
   open: boolean;
   ending: boolean;
+  /** `queue`: scrolled to the offline queue when it opens (the strip's View). */
+  focus?: 'queue';
   api: ScanApi;
   since: number;
   /** A Manager in a session may switch to the whole session's totals. */
@@ -153,7 +157,13 @@ export function ShiftSheet({
   onEnd: () => void;
   pending: number;
   /** The offline mode, the list's age and what is queued; absent in tests that do not care. */
-  offline?: { state: ScanState['offline']; queue: ScanState['queue']; onSync: () => void };
+  offline?: {
+    state: ScanState['offline'];
+    queue: ScanState['queue'];
+    onSync: () => void;
+    /** What is saved on the device, read through the offline helpers. */
+    rows?: () => Promise<QueueView[]>;
+  };
 }) {
   const [scope, setScope] = useState<Scope>('device');
   const query = useQuery({
@@ -163,6 +173,12 @@ export function ShiftSheet({
     staleTime: 0,
     gcTime: 0,
   });
+  const toQueue = useCallback(
+    (el: HTMLElement | null) => {
+      if (el && focus === 'queue') el.scrollIntoView?.({ block: 'start' });
+    },
+    [focus],
+  );
   const summary = query.data;
   const timeZone = summary?.timeZone ?? null;
   return (
@@ -192,12 +208,15 @@ export function ShiftSheet({
             </fieldset>
           ) : null}
           {offline ? (
-            <OfflineStatus
-              offline={offline.state}
-              queue={offline.queue}
-              {...(timeZone ? { timeZone } : {})}
-              onSync={offline.onSync}
-            />
+            <div ref={toQueue} className="scroll-mt-4">
+              <OfflineStatus
+                offline={offline.state}
+                queue={offline.queue}
+                {...(timeZone ? { timeZone } : {})}
+                {...(offline.rows ? { rows: offline.rows } : {})}
+                onSync={offline.onSync}
+              />
+            </div>
           ) : null}
           {query.isError ? (
             <ErrorState error={query.error} onRetry={() => query.refetch()} />

@@ -155,3 +155,30 @@
     --scan-card-bottom: calc(var(--scan-dock-total) + 16px);
   }
 }
+
+/* The queue line's View sits where Undo does. */
+@media (max-width: 639px) {
+  .scan-strip-view {
+    flex: none;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+    border: 0;
+    background: none;
+    color: var(--sd-accent);
+    font: 600 16px / 20px var(--pk-font-sans);
+    cursor: pointer;
+  }
+}
+
+/* The offline chip is the cloud and its count on a handheld; the word stays for screen readers. */
+@media (max-width: 639px) {
+  .scan-chip-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

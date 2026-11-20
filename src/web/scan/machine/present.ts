@@ -5,6 +5,7 @@
  */
 import { SCAN_TIMING } from '../timing.ts';
 import { accessBeatOf, accessLines } from './access-view.ts';
+import { groupAction, groupHeadline, groupSub, groupView } from './group-view.ts';
 import { headlineOf } from './outcome.ts';
 import type {
   BuddyBeat,
@@ -27,6 +28,8 @@ export type ScanBuddyView = Omit<BuddyView, 'pose'> & { pose: BuddyView['pose'] 
 export type ScanView = Presentation & { buddy: ScanBuddyView };
 
 const HOLD_REASONS = new Set(['ambiguous']);
+/** A bundle with people left: the dock offers Check in more for this long (handheld design 5). */
+const GROUP_HOLD = 6000;
 
 /** An available `take` with a reward label that the card's values now cover (SA 7.5). */
 export function promotedAction(card: Card | null | undefined) {
@@ -45,7 +48,7 @@ export function promotedAction(card: Card | null | undefined) {
 }
 
 function beatFor(o: ScanOutcome): BuddyBeat | null {
-  if (o.milestone) return 'fan';
+  if (o.milestone || (o.group && o.group.refused === 0)) return 'fan';
   switch (o.kind) {
     case 'ok': {
       const held = accessBeatOf(o);
@@ -83,7 +86,10 @@ export function announcementFor(o: ScanOutcome): string | null {
       o.kind === 'queued'
         ? 'Saved offline'
         : (accessLines(o, o.at ?? 0)?.title ?? o.action?.label ?? 'Done');
-    return who ? `${what}. ${who}` : what;
+    const group = o.kind === 'ok' ? groupView(o) : null;
+    const said = group?.done ? groupHeadline(group) : what;
+    const line = who ? `${said}. ${who}` : said;
+    return group ? `${line}. ${groupSub(group)}` : line;
   }
   return headlineOf(o.reason);
 }
@@ -93,10 +99,9 @@ function holdFor(o: ScanOutcome, posture: 'door' | 'desk', opts: PresentOpts): n
   switch (o.kind) {
     case 'ok':
     case 'queued':
-      // A bundle chip to tap, or a group with a refusal to read, stays longer.
-      return (o.bundle && !o.group) || (o.group && o.group.refused > 0)
-        ? SCAN_TIMING.REFUSED_HOLD
-        : SCAN_TIMING.OK_HOLD;
+      // A bundle with people left to check in waits for the button; a group with a refusal to read stays too.
+      if (o.bundle && !o.group) return groupAction(o) ? GROUP_HOLD : SCAN_TIMING.OK_HOLD;
+      return o.group && o.group.refused > 0 ? SCAN_TIMING.REFUSED_HOLD : SCAN_TIMING.OK_HOLD;
     case 'refused':
       return posture === 'desk' || HOLD_REASONS.has(String(o.reason))
         ? null

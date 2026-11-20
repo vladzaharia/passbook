@@ -3,10 +3,14 @@ import { useEffect, useState } from 'react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import { TAG_EXTRA_COPY } from '../assign/copy.ts';
 import { holdVerbs } from '../machine/access-view.ts';
+import type { ShownDirection } from '../machine/direction-view.ts';
+import { groupAction } from '../machine/group-view.ts';
 import type { ScanOutcome } from '../machine/types.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
+import { DirectionButton } from './direction-button.tsx';
 import { DockButton, DoorThumbRow } from './dock.tsx';
+import { GroupDock } from './group-dock.tsx';
 
 export function DoorDock({
   outcome,
@@ -16,8 +20,14 @@ export function DoorDock({
   inside,
   visitors,
   tags,
+  handheld = false,
+  direction,
 }: {
   outcome: ScanOutcome | null;
+  /** The phone's dock: a bundle's Check in more lives here, not in the card. */
+  handheld?: boolean;
+  /** The way this scanner reads; `onCycle` only on a Both scanner. */
+  direction?: { value: ShownDirection; onCycle?: () => void } | undefined;
   runtime: ScanRuntime;
   open: (sheet: boolean) => void;
   onError: (message: string) => void;
@@ -35,12 +45,18 @@ export function DoorDock({
   useEffect(() => {
     if (state.camera !== 'live') setTorch(false);
   }, [state.camera]);
+  // Check in more is for entry: an Out door has no group to let in.
+  const group = handheld && outcome && direction?.value !== 'out' ? groupAction(outcome) : null;
+  if (group) return <GroupDock label={group.label} />;
   if (!outcome || (outcome.kind === 'ok' && !state.prefs.holdResults))
     return (
       <DoorThumbRow
         {...(inside ? { inside } : {})}
         {...(visitors ? { visitors } : {})}
         {...(tags?.tapToRead ? { tapToRead: tags.tapToRead } : {})}
+        {...(handheld && direction?.onCycle
+          ? { direction: <DirectionButton value={direction.value} onCycle={direction.onCycle} /> }
+          : {})}
         canTorch={runtime.camera.hasTorch()}
         torchOn={torch}
         onTorch={() => {

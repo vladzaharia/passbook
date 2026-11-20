@@ -48,6 +48,16 @@ function enterMember(s: MachineState, ev: Answer, env: Env): Out {
   return out(next.state, [...cmds, ...next.cmds]);
 }
 
+/**
+ * Check in more answers as the first pass it made. The card should still be about the person scanned:
+ * their display and card come from the verdict the group was started from, the newest scan.
+ */
+function leadOf(s: MachineState, o: ScanOutcome): ScanOutcome {
+  const lead = s.recent[0]?.outcome;
+  if (!o.group || !lead?.bundle || !lead.display) return o;
+  return { ...o, display: lead.display, template: lead.template ?? o.template, card: lead.card };
+}
+
 const withoutApproval = ({ approval: _pin, ...draft }: Draft): Draft => draft;
 
 const asDraft = (d: Draft | 'auto'): Draft =>
@@ -70,7 +80,7 @@ export function answer(s: MachineState, ev: Answer, env: Env): Out {
     {
       input: l.input,
       card: l.s === 'applying' ? l.card : null,
-      outcome: ev.outcome,
+      outcome: l.s === 'applying' && l.draft.group ? leadOf(s, ev.outcome) : ev.outcome,
       resumeCamera: l.s === 'checking',
       next: l.next,
       // The Manager's PIN is spent: the draft a later approval re-sends never holds one.

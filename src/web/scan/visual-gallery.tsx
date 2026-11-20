@@ -16,6 +16,7 @@ import { CountChip } from './ui/chips.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
+import { DOOR_CASES, DoorVisual } from './visual-door.tsx';
 import { recentRows, TINT, withCard, withKind } from './visual-handheld.ts';
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
@@ -264,6 +265,8 @@ export function ScanVisualGallery() {
     return (
       <AccessVisual scenario={ACCESS_SCENARIOS.find((c) => c === params.get('case')) ?? 'grant'} />
     );
+  if (surface === 'door')
+    return <DoorVisual scenario={DOOR_CASES.find((c) => c === params.get('case')) ?? 'ready'} />;
   if (surface === 'offline')
     return (
       <OfflineVisual

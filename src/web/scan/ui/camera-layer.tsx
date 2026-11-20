@@ -1,8 +1,10 @@
 import { Camera, ScanBarcode } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
 import { Button } from '../../ui/button.tsx';
 import type { CameraStatus } from '../machine/types.ts';
 import './camera.css';
+import './scan-direction.css';
 
 export function CameraLayer({
   videoRef,
@@ -11,7 +13,10 @@ export function CameraLayer({
   result,
   reader,
   onRetry,
+  out = false,
 }: {
+  /** The door is checking people out: dashed marks, and the pill says so. */
+  out?: boolean;
   videoRef: { current: HTMLVideoElement | null };
   status: CameraStatus;
   checking: boolean;
@@ -55,6 +60,7 @@ export function CameraLayer({
           aria-hidden={result || undefined}
           data-hidden={result || undefined}
           data-checking={checking || undefined}
+          data-direction={out ? 'out' : undefined}
         >
           <div className="scan-reticle" aria-hidden>
             <i />
@@ -62,7 +68,9 @@ export function CameraLayer({
             <i />
             <i />
           </div>
-          <p className="scan-live-pill">{checking ? 'Checking…' : 'Scan anywhere in view'}</p>
+          <p className="scan-live-pill">
+            {checking ? 'Checking…' : out ? SCAN_HANDHELD_COPY.aimOut : 'Scan anywhere in view'}
+          </p>
         </div>
       ) : (
         <div

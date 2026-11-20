@@ -35,6 +35,7 @@ export interface ScanAppViewProps {
     staff?: string | null;
     state: CapsuleState;
     mode?: string;
+    direction?: string;
     chips?: ReactNode;
     menu?: ReactNode;
     onTitle?: () => void;
@@ -65,6 +66,8 @@ export interface ScanAppViewProps {
     blockAction?: () => void;
     openRecent?: () => void;
     undo?: () => void;
+    /** The queue line's View: This shift, scrolled to what is waiting. */
+    viewQueue?: () => void;
   };
 }
 
@@ -138,6 +141,7 @@ export function ScanAppView({
                 entry={strip}
                 {...(on.openRecent ? { onOpen: on.openRecent } : {})}
                 {...(on.undo ? { onUndo: on.undo } : {})}
+                {...(on.viewQueue ? { onView: on.viewQueue } : {})}
               />
             }
           >
@@ -155,6 +159,7 @@ export function ScanAppView({
             staff={capsule.staff ?? null}
             state={capsule.state}
             {...(capsule.mode ? { mode: capsule.mode } : {})}
+            {...(capsule.direction ? { direction: capsule.direction } : {})}
             chips={capsule.chips}
             menu={capsule.menu}
             {...(capsule.onTitle ? { onTitle: capsule.onTitle } : {})}

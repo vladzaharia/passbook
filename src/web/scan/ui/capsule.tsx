@@ -25,9 +25,12 @@ export function Capsule({
   logoUrl,
   orgName = '',
   mode,
+  direction,
 }: {
   /** The device's mode, shown beside the state. */
   mode?: string;
+  /** The way it reads, after the state: Scanning · Out. A handheld's word; the chip does it elsewhere. */
+  direction?: string;
   name: string;
   staff?: string | null;
   state: CapsuleState;
@@ -49,6 +52,7 @@ export function Capsule({
           <span className="scan-dot" />
           {mode ? `${mode} · ` : ''}
           {STATE_TEXT[state]}
+          {direction ? ` · ${direction}` : ''}
         </span>
       </button>
       <div className="scan-chips">{chips}</div>

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
+import { SCAN_COPY } from '../../shared/copy/scan.ts';
 import { PHONE, useMediaQuery } from '../lib/media.ts';
 import { getMode } from '../lib/mode.ts';
 import { Buddy } from '../ui/art/buddy.tsx';
@@ -31,6 +32,7 @@ import { ScanOverlays, type ScanPanel } from './ui/scan-overlays.tsx';
 import { setSessionZone } from './ui/session-time.ts';
 import { dockStrip } from './ui/strip-of.ts';
 import { useAccessUi } from './ui/use-access-ui.tsx';
+import { useOfflineSince } from './ui/use-offline-since.ts';
 import './buddy/beats.css';
 
 const OperatorPanel = lazy(() =>
@@ -62,11 +64,12 @@ export function ScanLoop({
   const [cameraError, setCameraError] = useState('');
   const [shiftStart, setShiftStart] = useState(Date.now);
   const sync = syncChipOf(s, now);
+  const offlineSince = useOfflineSince(s.online);
   const showPanel = (value: typeof panel) => {
     setPanel(value);
     dispatch({
       type: 'overlay',
-      open: value === 'tips' ? 'settings' : value === 'end' ? 'shift' : value,
+      open: value === 'tips' ? 'settings' : value === 'end' || value === 'queue' ? 'shift' : value,
     });
   };
   useEffect(() => {
@@ -128,6 +131,8 @@ export function ScanLoop({
     online: s.online,
     overlay: s.overlay,
     dispatch,
+    handheld,
+    scopeDirection: s.scope.direction,
   });
   const tags = useTagUi({ runtime, session, api, state: s, result, open, dispatch });
   const lastUndo = last?.scanId && last.undoable && (last.outcome.undoUntil ?? 0) > now;
@@ -157,6 +162,9 @@ export function ScanLoop({
           name: scanner?.name ?? 'Scan as admin',
           staff: session.staff?.name,
           mode: modeLabel(session),
+          ...(handheld && access.direction
+            ? { direction: SCAN_COPY.direction[access.direction.value] }
+            : {}),
           state: !s.online
             ? 'offline'
             : l.s === 'checking' || l.s === 'applying'
@@ -185,6 +193,7 @@ export function ScanLoop({
               result={Boolean(result) || l.s === 'paused' || Boolean(s.block) || tags.dim}
               onRetry={runtime.camera.start}
               reader={readerUsable}
+              out={handheld && access.direction?.value === 'out'}
             />
           )
         }
@@ -255,10 +264,15 @@ export function ScanLoop({
               inside={access.inside}
               visitors={access.visitors}
               tags={tags}
+              handheld={handheld}
+              direction={access.direction}
             />
           )
         }
-        strip={tags.strip ?? dockStrip(s, last, Boolean(lastUndo), now)}
+        strip={
+          tags.strip ??
+          dockStrip(s, last, Boolean(lastUndo), now, handheld ? { since: offlineSince } : undefined)
+        }
         announcement={announcement}
         on={{
           start: () => {
@@ -270,6 +284,7 @@ export function ScanLoop({
             setPass({ outcome: o, card: o?.card ?? null, tab: o ? 'pass' : 'recent' });
             dispatch({ type: 'overlay', open: 'recent' });
           },
+          viewQueue: () => showPanel('queue'),
           undo: () => {
             if (tags.strip && tags.onUndo) tags.onUndo();
             else if (last?.scanId) dispatch({ type: 'undo', scanId: last.scanId });

@@ -46,10 +46,14 @@ describe('the glance card', () => {
   it('keeps what the full card offered: the pass, the group and the manager PIN', () => {
     const bundle = { id: 'b1', name: 'Chen family', size: 4, checkedIn: 1 };
     const onGroup = vi.fn();
-    const { unmount } = render(
-      <ResultCard outcome={{ ...ok, bundle }} density="glance" onGroup={onGroup} />,
-    );
-    screen.getByTestId('scan-group-chip').querySelector('button')?.click();
+    // An ok card leaves Check in more to the dock; a heads-up card has no dock button for it.
+    const heads = fixtureOutcome('heads_up', 'already_done', {
+      card: fixtureCard(),
+      display: fixtureDisplay('heads_up'),
+      bundle,
+    });
+    const { unmount } = render(<ResultCard outcome={heads} density="glance" onGroup={onGroup} />);
+    screen.getByRole('button', { name: 'Check in 3 more' }).click();
     expect(onGroup).toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'View pass' })).toBeVisible();
     unmount();

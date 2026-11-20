@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
+import { CloudUpload, type LucideIcon } from 'lucide-react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { VerdictGlyph } from './verdict-glyph.tsx';
 
@@ -19,6 +19,8 @@ export interface VerdictBandProps {
   sub: string | null | undefined;
   admit: string | null;
   holdMs: number | null | undefined;
+  /** A check-in the door has saved and not yet sent: the glyph wears an upload badge. */
+  saved?: boolean;
 }
 
 /** The verdict: glyph, the word, its line. A hold draws a rail that runs down. */
@@ -40,6 +42,13 @@ export function VerdictBand(p: VerdictBandProps) {
             <CustomGlyph aria-hidden />
             <span className="scan-custom-badge">
               <VerdictGlyph kind="ok" />
+            </span>
+          </span>
+        ) : p.saved ? (
+          <span className="scan-saved-glyph">
+            <VerdictGlyph kind={p.kind} />
+            <span className="scan-saved-badge" data-testid="scan-saved-badge">
+              <CloudUpload aria-hidden size={20} strokeWidth={2.5} />
             </span>
           </span>
         ) : (

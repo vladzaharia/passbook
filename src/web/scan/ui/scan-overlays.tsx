@@ -13,7 +13,8 @@ const PassInspector = lazy(() =>
   import('../result/pass-inspector.tsx').then((m) => ({ default: m.PassInspector })),
 );
 const ShiftSheet = lazy(() => import('./shift-sheet.tsx').then((m) => ({ default: m.ShiftSheet })));
-export type ScanPanel = 'shift' | 'end' | 'tips' | null;
+/** `queue` is This shift, scrolled to what is waiting to sync. */
+export type ScanPanel = 'shift' | 'end' | 'queue' | 'tips' | null;
 export function ScanOverlays({
   sheet,
   panel,
@@ -84,15 +85,21 @@ export function ScanOverlays({
             onClose={closePass}
           />
         ) : null}
-        {panel === 'shift' || panel === 'end' ? (
+        {panel === 'shift' || panel === 'end' || panel === 'queue' ? (
           <ShiftSheet
             open
             ending={panel === 'end'}
+            {...(panel === 'queue' ? { focus: 'queue' as const } : {})}
             api={api}
             since={shiftStart}
             sessionTotals={sessionTotals}
             pending={state.unsure.length + state.queue.pending}
-            offline={{ state: state.offline, queue: state.queue, onSync: runtime.syncNow }}
+            offline={{
+              state: state.offline,
+              queue: state.queue,
+              onSync: runtime.syncNow,
+              rows: runtime.queueRows,
+            }}
             onClose={() => showPanel(null)}
             onEnd={() => location.reload()}
           />

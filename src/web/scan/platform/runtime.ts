@@ -16,6 +16,7 @@ import { createDirectionPin } from '../machine/direction-pin.ts';
 import { initialState } from '../machine/initial-state.ts';
 import { createScanStore } from '../machine/store.ts';
 import type { OfflineController } from '../offline/controller.ts';
+import type { QueueView } from '../offline/queue-view.ts';
 import { hydrateUnsure } from '../offline/unsure-store.ts';
 import { reconcileScope, wipeLocal } from '../offline/wipe.ts';
 import { sound } from '../sound/player.ts';
@@ -262,6 +263,8 @@ export async function createRuntime(
     clear: () => wipeLocal(localStores),
     /** Send what is queued now: the shift sheet's Sync now. */
     syncNow: () => offline?.kick(),
+    /** What is saved on the device and waiting to sync, for the shift sheet. */
+    queueRows: (): Promise<QueueView[]> => offline?.queueRows() ?? Promise.resolve([]),
     rollCallQueue: localStores.meta,
     fields,
     emit,
