@@ -16,7 +16,7 @@ const SUN = {
   },
 };
 
-describe('a SUN-shaped read with a UID', () => {
+describe('a SUN-shaped read of a keyset the org does not have', () => {
   it('inspect refuses it and stores nothing', async () => {
     const s = await f.desk();
     const res = await f.inspect(s, SUN);
@@ -28,7 +28,7 @@ describe('a SUN-shaped read with a UID', () => {
     const s = await f.desk();
     const { card } = await f.pass();
     const res = await f.bind(s, { card, tag: SUN });
-    expect(await res.json()).toMatchObject({ code: 'TAG_UNREADABLE' });
+    expect(await res.json()).toMatchObject({ code: 'TAG_CHECK_FAILED' });
     expect(await f.count('SELECT count(*) AS n FROM nfc_tags')).toBe(0);
   });
 });

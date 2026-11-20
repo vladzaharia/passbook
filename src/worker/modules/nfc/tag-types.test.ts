@@ -111,10 +111,9 @@ describe('tag type CRUD', () => {
     expect(dupe.status).toBe(409);
     expect(await dupe.json()).toMatchObject({ code: 'TAG_TYPE_NAME_TAKEN' });
     const secure = { ...body, name: 'Secure', system: 'sun', typed: false };
-    // S3 removes this guard: until the SUN plugin verifies taps, a sun type is refused.
-    const notReady = await call(admin, 'POST', `?orgId=${org.id}`, secure);
-    expect(notReady.status).toBe(409);
-    expect(await notReady.json()).toMatchObject({ code: 'NFC_SYSTEM_NOT_READY' });
+    const made = await call(admin, 'POST', `?orgId=${org.id}`, secure);
+    expect(made.status).toBe(201);
+    expect(await made.json()).toMatchObject({ system: 'sun', typed: false });
     expect(
       (await call(admin, 'POST', `?orgId=${org.id}`, { ...body, name: 'S', system: 'sun' })).status,
     ).toBe(422);
@@ -137,18 +136,25 @@ describe('tag type CRUD', () => {
     expect(next.nextCursor).toBeNull();
   });
 
-  it('refuses to update a sun type until the SUN plugin lands', async () => {
+  it('creates, updates and archives a sun type', async () => {
     const { org, admin } = await setup();
-    const id = f.kit.fx.ids.id();
-    await run(
-      f.kit.env.DB,
-      `INSERT INTO nfc_tag_types (id, org_id, name, system, use, typed, created_at, created_by, updated_at)
-       VALUES (?, ?, 'Badge', 'sun', 'staff', 0, 1, 'x', 1)`,
-      [id, org.id],
-    );
-    const res = await call(admin, 'PATCH', `/${id}`, { version: 1, name: 'Badge 2' });
-    expect(res.status).toBe(409);
-    expect(await res.json()).toMatchObject({ code: 'NFC_SYSTEM_NOT_READY' });
+    const made = await call(admin, 'POST', `?orgId=${org.id}`, {
+      name: 'Badge',
+      use: 'staff',
+      system: 'sun',
+      typed: false,
+    });
+    expect(made.status).toBe(201);
+    const type = (await made.json()) as TagType;
+    expect(type).toMatchObject({ system: 'sun', typed: false });
+    const res = await call(admin, 'PATCH', `/${type.id}`, {
+      version: type.version,
+      name: 'Badge 2',
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ system: 'sun', name: 'Badge 2', version: 2 });
+    const typed = await call(admin, 'PATCH', `/${type.id}`, { version: 2, typed: true });
+    expect(typed.status).toBe(422);
   });
 
   it('refuses a template of another org on create and on update', async () => {

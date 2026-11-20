@@ -2,6 +2,7 @@ import type { Grant } from '../../platform/authority.ts';
 import { AuthorityError } from '../../platform/authority-error.ts';
 import { writePart } from '../../platform/authority-include.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { consumeSun, sunFreshCheck } from '../nfc/repo-sun.ts';
 import { credentialRefKeysetInitializeStmt } from '../passes/repo-credential-keyset.ts';
 import type { ScanActor } from './guard.ts';
 import type { Claim } from './repo-scans.ts';
@@ -11,12 +12,23 @@ import { partSql, scanWriteGrant } from './scan-write-grant.ts';
 /** Tables the claim batch writes: the claim row and, once, the credential keyset. */
 const CLAIM_TABLES = ['scans', 'credential_ref_keyset'];
 
-/** The grant that opens a key's claim. The actor must still be who the guard saw. */
+/**
+ * The grant that opens a key's claim. The actor must still be who the guard saw. A SUN read is consumed here:
+ * the grant is refused (`TAG_SUN_REPLAY`) unless the read is still newer than the tag's counter.
+ */
 export function claimGrant(ctx: ServiceContext, actor: ScanActor, claim: Claim): Grant {
+  const sun = claim.tagId && claim.sun ? { tagId: claim.tagId, seen: claim.sun } : null;
   return scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.claim',
     now: claim.now,
-    tables: claim.tagId ? [...CLAIM_TABLES, 'nfc_tags'] : CLAIM_TABLES,
+    tables: [
+      ...CLAIM_TABLES,
+      ...(claim.tagId ? ['nfc_tags'] : []),
+      ...(sun ? ['nfc_tag_sun'] : []),
+    ],
+    ...(sun
+      ? { checks: [sunFreshCheck(sun.tagId, sun.seen)], codes: { stale: 'TAG_SUN_REPLAY' } }
+      : {}),
   });
 }
 
@@ -73,6 +85,11 @@ export function claimOnGrant(g: Grant, claim: Claim) {
 export function tagSeenOnGrant(g: Grant, claim: Claim): void {
   if (claim.tagId)
     g.update('nfc_tags', { set: { last_seen_at: claim.now }, where: { id: claim.tagId } });
+}
+
+/** A SUN read is used when its scan is claimed: the tag's counter moves up to it. */
+export function sunSeenOnGrant(g: Grant, claim: Claim): void {
+  if (claim.tagId && claim.sun) consumeSun(g, claim.tagId, claim.sun, claim.now);
 }
 
 /** The one-time keyset initialization rides the claim's grant instead of a claim-proving predicate. */

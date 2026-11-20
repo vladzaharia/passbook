@@ -21,7 +21,7 @@ import { tagsEnabled } from '../nfc/policy.ts';
 import { activeBinding, type PassFacts } from '../nfc/repo-tag-bindings.ts';
 import { orgTagCount, tagByRef } from '../nfc/repo-tags.ts';
 import { addBind, type BindPlan, bindChecks, type TagActor } from '../nfc/repo-tags-write.ts';
-import { UID_SYSTEM } from '../nfc/systems/uid.ts';
+import { assuranceOfSystem } from '../nfc/systems/registry.ts';
 import { decideBind, TAGS_PER_ORG_MODE, triggerRefusal } from '../nfc/tags.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { verifyApproval } from './approval.ts';
@@ -39,7 +39,8 @@ import { ROLE_RANK } from './rules.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
 import { skippedTitles } from './tag-assurance.ts';
-import { cardPass, tagRights, tagUid } from './tags-inspect.ts';
+import { cardPass, tagRights } from './tags-inspect.ts';
+import { assertReadMatches, identifyRead, sunUsedMeanwhile } from './tags-sun.ts';
 
 type BindRequest = z.infer<typeof ScanTagBindRequestSchema>;
 type BindResult = z.infer<typeof ScanTagBindResultSchema>;
@@ -48,7 +49,7 @@ type Warning = z.infer<typeof ScanTagWarningSchema>;
 /** Undo is on the device that assigned the tag, for this long. */
 export const TAG_UNDO_MS = 10 * 60_000;
 const ATTEMPTS = 3;
-export const TABLES = ['nfc_tags', 'tag_bindings'];
+export const TABLES = ['nfc_tags', 'tag_bindings', 'nfc_tag_sun'];
 const CODES = { lineage: 'TAG_HOLDER_CHANGED', stale: 'TAG_HOLDER_CHANGED' } as const;
 
 /** A Manager's PIN for this assign: verified here, pinned in the grant, stored nowhere. */
@@ -91,7 +92,7 @@ async function replay(
   return {
     status: 'bound',
     hint: row.hint,
-    assurance: 'basic',
+    assurance: assuranceOfSystem(row.system),
     scope: row.scope,
     bindingId: row.bindingId,
     card: {
@@ -142,9 +143,9 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   if (!(await tagsEnabled(ctx, orgId)))
     throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
   await bumpTagCap(db, req.preview ? 'preview' : 'bind', scannerId, ctx.clock.now());
-  const uid = tagUid(req.tag);
   await ensureCredentialRefKeyset(db, ctx.env);
-  const { ref, hint } = await UID_SYSTEM.identify(ctx.env, orgId, mode, uid);
+  const identity = await identifyRead(ctx, actor, req.tag);
+  const { ref, hint } = identity;
   const replayed = await replay(ctx, scannerId, req, ref);
   if (replayed) return replayed;
 
@@ -167,7 +168,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
       : { code: req.card.code, method: req.card.method };
   const { candidate, refs } = await cardPass(ctx, actor, input);
   const { pass } = candidate;
-  assertTakesTag(ctx, candidate);
+  assertTakesTag(ctx, candidate, assuranceOfSystem(identity.system));
   const card = await cardFacts(db, pass.templateId, pass.ownerUserId);
   const ownerAccount = pass.ownerUserId !== null && card.ownerActive;
   if (req.binding === 'user' && !ownerAccount)
@@ -194,13 +195,21 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
   };
   const skipped =
     req.binding === 'user' && pass.ownerUserId
-      ? await skippedTitles(ctx, actor, orgId, mode, pass.ownerUserId)
+      ? await skippedTitles(
+          ctx,
+          actor,
+          orgId,
+          mode,
+          pass.ownerUserId,
+          assuranceOfSystem(identity.system),
+        )
       : [];
   const staff = actor.staff;
   const by: TagActor = staff ? { type: 'staff', id: staff.id } : { type: 'scanner', id: scannerId };
 
   for (let attempt = 1; ; attempt++) {
     const tag = await tagByRef(db, orgId, mode, ref);
+    await assertReadMatches(ctx, actor, identity, tag);
     const active = tag ? await activeBinding(db, tag.id) : null;
     const warnings: Warning[] = [];
     let decision: ReturnType<typeof decideBind> | null = null;
@@ -222,7 +231,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     ) => ({
       status,
       hint: tag?.hint ?? hint,
-      assurance: UID_SYSTEM.assurance,
+      assurance: assuranceOfSystem(identity.system),
       scope: req.binding,
       bindingId,
       card: summary,
@@ -251,7 +260,8 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     const now = ctx.clock.now();
     const plan: BindPlan = {
       tagId: tag?.id ?? ctx.ids.id(),
-      newTag: tag ? null : { ref, hint, label: req.label ?? null },
+      newTag: tag ? null : { ref, hint, label: req.label ?? null, system: identity.system },
+      sun: identity.sun,
       bindingId: ctx.ids.id(),
       passId: pass.id,
       scope: req.binding,
@@ -305,6 +315,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
         );
       }
     } catch (error) {
+      await sunUsedMeanwhile(ctx, actor, identity, error);
       const refusal = triggerRefusal(error);
       if (refusal) throw refusal;
       if (classifyD1Error(error)?.kind !== 'unique' || attempt >= ATTEMPTS) throw error;

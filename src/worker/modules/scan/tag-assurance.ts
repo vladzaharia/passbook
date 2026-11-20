@@ -33,8 +33,11 @@ export function tagFit(
   return meetsAssurance(tag, templateMinAssurance(templates.active.manifest)) ? 'ok' : 'low';
 }
 
-export const candidateTakesTag = (ctx: ServiceContext, c: Candidate): boolean =>
-  tagFit(ctx, c) === 'ok';
+export const candidateTakesTag = (
+  ctx: ServiceContext,
+  c: Candidate,
+  tag: Assurance = UID_SYSTEM.assurance,
+): boolean => tagFit(ctx, c, tag) === 'ok';
 
 /** Titles of the owner's live passes this scanner takes and a Basic tag will not open, for the user-fob preview. */
 export async function skippedTitles(
@@ -43,6 +46,7 @@ export async function skippedTitles(
   orgId: string,
   mode: 'live' | 'test',
   ownerUserId: string,
+  tag: Assurance = UID_SYSTEM.assurance,
 ): Promise<string[]> {
   const ids = await ownerPassIds(ctx.env.DB, orgId, mode, ownerUserId);
   const found = await candidatesByScopes(
@@ -50,7 +54,7 @@ export async function skippedTitles(
     ids.map((passId) => ({ orgId, mode, passId })),
   );
   return found
-    .filter((c) => accepts(actor, c.pass) && tagFit(ctx, c) === 'low')
+    .filter((c) => accepts(actor, c.pass) && tagFit(ctx, c, tag) === 'low')
     .map(
       (c) =>
         c.pass.displayTitle ?? resolveCandidateReadTemplates(c)?.active.manifest.name ?? 'Pass',

@@ -148,7 +148,8 @@ async function evaluateObserved(
   const matchedBy = one.matchedBy;
   delete one.matchedBy;
   // The release read at commit may differ from the one the tag was chosen on.
-  if (actor.tag && !candidateTakesTag(ctx, one)) return stop('refused', 'tag_not_allowed');
+  if (actor.tag && !candidateTakesTag(ctx, one, actor.tag.assurance))
+    return stop('refused', 'tag_not_allowed');
   if (one.orgRevision == null || one.templateRevision == null || !hasScanPolicy(one))
     return stop('refused', 'not_found', { stale: true });
   const printed = printRefusal(one);

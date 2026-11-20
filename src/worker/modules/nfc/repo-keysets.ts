@@ -55,6 +55,14 @@ export async function keysetById(db: D1Database, id: string): Promise<KeysetRow 
   return row && keysetOf(row);
 }
 
+/** The keyset a SUN URL names. The slug is public; whether it is this caller's is the caller's check. */
+export async function keysetBySlug(db: D1Database, slug: string): Promise<KeysetRow | null> {
+  const row = await first<RawKeyset>(db, `SELECT ${KEYSET} FROM nfc_tag_keysets WHERE slug = ?`, [
+    slug,
+  ]);
+  return row && keysetOf(row);
+}
+
 /** Newest first (ids are UUIDv7). */
 export async function keysetsOf(db: D1Database, orgId: string, mode: Mode): Promise<KeysetRow[]> {
   const rows = await all<RawKeyset>(

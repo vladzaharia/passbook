@@ -1,4 +1,6 @@
 export interface SunUrl {
+  /** Lower-case host with its port, as `URL.host` gives it. */
+  host: string;
   slug: string;
   p: string;
   m: string;
@@ -21,5 +23,5 @@ export function parseSunUrl(value: string): SunUrl | null {
   const p = url.searchParams.get('p');
   const m = url.searchParams.get('m');
   if (!slug || !p || !m || !P.test(p) || !M.test(m)) return null;
-  return { slug, p, m };
+  return { host: url.host, slug, p, m };
 }
