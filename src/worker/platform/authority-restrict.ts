@@ -215,3 +215,30 @@ export const keyMayRow = (table: string, from?: { table: string }): boolean =>
 /** `keyMayWrite` for `joined()`: the edge it reaches the parent by, the first when none is named. */
 export const keyMayJoin = (table: string, via?: string): boolean =>
   keyMayWrite(table.toLowerCase(), via ?? GUARDED_TABLES[table.toLowerCase()]?.edges?.[0]?.column);
+
+/** What a keyed update assigns: the template-column test (placed before the grant test) and whether the key is refused. */
+export function keyedSet(
+  grantId: string,
+  table: string,
+  assigned: Parameters<typeof setRestriction>[1],
+  keyed: boolean,
+): { sql: string; params: SqlValue[]; refuse: boolean } {
+  if (!keyed) return { sql: '', params: [], refuse: false };
+  const limit = setRestriction(table, assigned);
+  return { ...restrictAssigned(grantId, limit.checks), refuse: limit.refuse };
+}
+
+/** An insert's template test, or a refusal (and a statement that cannot match) when it carries no template column. */
+export function keyedInsert(
+  table: string,
+  columns: readonly string[],
+  values: readonly SqlValue[],
+  copy: Record<string, string> | undefined,
+  keyed: boolean,
+): { sql: string; params: SqlValue[]; refuse: boolean } {
+  if (!keyed) return { sql: '', params: [], refuse: false };
+  const limit = restrictInsert(table, columns, values, copy);
+  return limit
+    ? { ...limit, refuse: false }
+    : { sql: ' AND g.limit_key IS NULL', params: [], refuse: true };
+}

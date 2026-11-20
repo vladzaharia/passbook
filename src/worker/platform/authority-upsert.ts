@@ -8,7 +8,7 @@ import {
   type WhereValue,
 } from './authority-expr.ts';
 import type { GrantScope } from './authority-principal.ts';
-import { restrictAssigned, restrictRow, setRestriction } from './authority-restrict.ts';
+import { keyedSet, restrictRow } from './authority-restrict.ts';
 import {
   type BuiltStatement,
   buildInsertSelect,
@@ -132,19 +132,18 @@ export function buildUpsert(
   const limited = keyed ? restrictRow(table, table, 'k.limit_key') : '';
   if (limited) params.push(grantId);
   // A template column it assigns must also be inside the key's limit; any other reference column is refused.
-  const limit = keyed ? setRestriction(table, o) : null;
-  const assigned = limit ? restrictAssigned(grantId, limit.checks) : null;
-  if (assigned) params.push(...assigned.params);
+  const assigned = keyedSet(grantId, table, o, keyed);
+  params.push(...assigned.params);
   const guard = [
     ...tenantGuard(t, table, scope),
     ...(limited ? [`EXISTS (SELECT 1 FROM authority_grants k WHERE k.id = ?${limited})`] : []),
-    ...(assigned?.sql ? [assigned.sql] : []),
+    ...(assigned.sql ? [assigned.sql] : []),
     ...Object.entries(o.where ?? {}).map(([c, v]) => renderCond(`${table}.`, c, v, params)),
   ];
   const tail = guard.length > 0 ? ` WHERE ${guard.join(' AND ')}` : '';
   return {
     sql: `${base.sql} ${key} DO UPDATE SET ${parts.join(', ')}${tail}${returningSql(o.returning)}`,
     params,
-    ...(base.limitRefused || limit?.refuse ? { limitRefused: true as const } : {}),
+    ...(base.limitRefused || assigned.refuse ? { limitRefused: true as const } : {}),
   };
 }
