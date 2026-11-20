@@ -46,7 +46,7 @@ record below for subsequent changes.
 > - **Capacity** becomes Manager-only to override and exact (inside the entry statement) for events too; 7.4's soft
 >   limit is superseded.
 > - **Migrations:** `0014` takes `scans.actor_type` `system` and `scans.method` `auto` now (P0-9); `0020_scan_access.sql`
->   is extended (not built yet), no `0021`. Phase 0 also takes the two reasons (P0-10). Everything else is additive.
+>   is extended (built as `0073` and `0074`), no `0021`. Phase 0 also takes the two reasons (P0-10). Everything else is additive.
 > - **Detail reference:** `addendum/occupancy/occupancy.md` (**OC**; reference code `addendum/occupancy/gen/
 >   occupancy.mjs`, 23 tests on next/n8-p0's migrations; sheets `addendum/occupancy/sheets/occ-*`). This file wins
 >   where they differ (section 1, rows 11-05 occ).
@@ -3194,7 +3194,7 @@ adds `'auto'`. Both CHECKs sit on `CREATE TABLE scans`; after the merge, auto ta
 busiest table. Checked on next/n8-p0 at `18ca03c`: both still lack the values, and the reference's auto tap-out insert
 fails without them.
 
-**`0020_scan_access.sql`, extended** (not built; AX.1 writes 19.7 plus this, verbatim; no `0021`):
+**`0020_scan_access.sql`, extended** (built as `0073` zones and `0074` occupancy; the plan's numbers differ from the repository's):
 
 ```sql
 -- inside CREATE TABLE scan_zones (after sort):
