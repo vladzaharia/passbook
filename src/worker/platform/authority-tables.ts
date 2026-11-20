@@ -256,6 +256,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'bundle_token_seals',
   'join_link_seals',
   'org_reply_to',
+  // Org lifecycle (0136): a closed org's admins request exports, so no member grant exists to write it.
+  'org_exports',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',

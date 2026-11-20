@@ -289,6 +289,8 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
     'deleteInBatches takes its table from the caller; a call that names a guarded table is a raw-guarded-write finding at the call site',
   'src/worker/platform/db.ts':
     'casUpdate takes its table from the caller (identifier-checked); a call that names a guarded table is a raw-guarded-write finding at the call site',
+  'src/worker/modules/org-lifecycle/repo-purge.ts':
+    'the org purge (platform job, no principal) deletes the tables of PURGE_STEPS; every delete repeats the closed, in-purge and no-hold test, and a schema test proves each table is a step, a cascade of one, kept or not tenant data',
   'src/worker/modules/passes/repo-credential-transfer.ts':
     'deviceRows builds a writePart: buildPart lints the expanded target at runtime (one target, no guarded table, tenant and pass ties)',
 };

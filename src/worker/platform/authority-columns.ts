@@ -66,7 +66,15 @@ export const EPOCH_TABLES: EpochTable[] = [
       access_revision: ['status'],
       config_revision: ['name', 'slug', 'branding', 'default_identity_id'],
     },
-    volatile: ['updated_at', 'branding_dirty_at'],
+    volatile: [
+      'updated_at',
+      'branding_dirty_at',
+      'closed_at',
+      'closed_identity_id',
+      'purge_after',
+      'purge_started_at',
+      'purged_at',
+    ],
     fixed: ['id', 'created_at'],
   },
   {

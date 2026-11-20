@@ -575,6 +575,8 @@ Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed h
 
 **WP7 (fence) and W1-13 (logic):** `scan/repo-lookup-backfill.ts`. WP7 converts its fence; W1-13 keeps the backfill logic.
 
+**MT11:** `org-lifecycle/repo.ts` (the export request and the closed-org fence repeat the admin session test in SQL: no member grant exists on a closed org)
+
 ## Appendix B. Guarded tables
 
 Raw writes to these tables are banned outside `platform/authority.ts`:
