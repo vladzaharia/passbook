@@ -1,0 +1,45 @@
+import { FEATURES_KEPT, impactSentence } from '@/shared/copy/entitlement-admin.ts';
+import { type EntitlementImpact, reducing } from '@/shared/entitlement-impact.ts';
+import type { ConfirmCopy } from './confirms.ts';
+
+/** What a change takes away is spelled out; nothing the org made is ever deleted. */
+const describe = (impact: EntitlementImpact) =>
+  reducing(impact) > 0 ? `${impactSentence(impact)} ${FEATURES_KEPT}` : impactSentence(impact);
+
+/** Moving an organization to another preset; its overrides stay. */
+export function applyPresetConfirm(
+  preset: string,
+  orgName: string,
+  impact: EntitlementImpact,
+): ConfirmCopy {
+  return {
+    title: `Apply ${preset} to ${orgName}?`,
+    confirmLabel: 'Apply',
+    description: describe(impact),
+    typed: false,
+  };
+}
+
+/** One feature set by hand, for as long as the override stands. */
+export function overrideConfirm(feature: string, impact: EntitlementImpact): ConfirmCopy {
+  return {
+    title: `Override ${feature}?`,
+    confirmLabel: 'Override',
+    description: describe(impact),
+    typed: false,
+  };
+}
+
+/** Dropping an override: the feature returns to what the preset gives. */
+export function resetOverrideConfirm(
+  feature: string,
+  preset: string,
+  impact: EntitlementImpact,
+): ConfirmCopy {
+  return {
+    title: `Reset ${feature} to ${preset}?`,
+    confirmLabel: 'Reset',
+    description: describe(impact),
+    typed: false,
+  };
+}
