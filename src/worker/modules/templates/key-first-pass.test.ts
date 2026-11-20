@@ -209,6 +209,33 @@ describe('a Test key from blueprint to first pass', () => {
       candidateHash: candidate.candidateHash,
       alone: true,
     });
-    await expectProblem(gone, 403, 'KEY_CREATOR_GONE');
+    await expectProblem(gone, 403, 'KEY_CREATOR_NOT_MEMBER');
+  });
+
+  it('writes the acting user and membership into the audit detail', async () => {
+    const row = await first<{ detail: string }>(
+      kit.env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'template.approved_alone' AND actor_type = 'api_key' ORDER BY rowid DESC LIMIT 1",
+    );
+    expect(JSON.parse(row?.detail ?? '{}')).toMatchObject({
+      actingUserId: expect.any(String),
+      membershipId: expect.any(String),
+    });
+  });
+
+  it('keeps preview inside the key org', async () => {
+    const a = await makeOrg(kit.f);
+    const b = await makeOrg(kit.f);
+    const ownerA = await kit.member(a.id, ['org_admin']);
+    const ownerB = await kit.member(b.id, ['org_admin']);
+    const keyB = await keyFor(b.id, ownerB.userId, 'test');
+    const used = await send('POST', `/templates/${STORE}/use`, keyB, {
+      orgId: b.id,
+      name: 'B Card',
+    });
+    const template = (await used.json()) as { id: string };
+    const keyA = await keyFor(a.id, ownerA.userId, 'test');
+    const res = await send('POST', `/templates/${template.id}/preview`, keyA, {});
+    expect(res.status).toBe(404);
   });
 });

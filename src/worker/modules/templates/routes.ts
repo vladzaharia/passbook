@@ -50,7 +50,7 @@ export const templatesRoutes = createRouter({ bodyLimit: false });
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
 /** Writes that declare their own `auth` (keys included): the router guard leaves them to it. */
 const OWN_AUTH_WRITES =
-  /\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|preview)\/?$/;
+  /^\/api\/v1\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|preview)\/?$/;
 
 // Template reads allow scoped API keys; mutations require a session and are authorized per org.
 templatesRoutes.use(

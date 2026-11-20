@@ -79,8 +79,10 @@ async function keyTemplateAuthority(
     userId === null ? null : await creatorMembership(ctx.env.DB, orgId, userId, capability);
   if (userId === null || membershipId === null)
     throw new ForbiddenError(
-      "The key's creator is no longer a member who can do this. Create a new key.",
-      'KEY_CREATOR_GONE',
+      userId === null
+        ? "The key's creator no longer exists. Create a new key."
+        : "The key's creator is not a member of this organization who can do this. Create a new key.",
+      userId === null ? 'KEY_CREATOR_GONE' : 'KEY_CREATOR_NOT_MEMBER',
     );
   return { ...authority, userId, membershipId, capability };
 }
