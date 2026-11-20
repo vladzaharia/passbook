@@ -10,6 +10,7 @@ import type { Counts, ScanInput, ScanOutcome } from '../machine/types.ts';
 import { decide } from './decide.ts';
 import { rosterHash } from './hash.ts';
 import { pendingOf, type QueueStore } from './queue-store.ts';
+import { type QueueView, queueView } from './queue-view.ts';
 import type { RosterApi, RosterStore } from './roster.ts';
 import { type BatchApi, syncQueue } from './sync.ts';
 import type { KeyValue } from './wipe.ts';
@@ -161,6 +162,10 @@ export function createOfflineController(d: OfflineDeps) {
     rescope() {
       refreshedAt = 0;
       void publish().then(() => this.kick());
+    },
+    /** The queue as the shift sheet lists it. */
+    async queueRows(): Promise<QueueView[]> {
+      return queueView(await d.queue.all());
     },
     /** Sync now: the button, `online` and a return to the page. */
     kick() {

@@ -28,7 +28,11 @@ import { ManualClock } from '../../platform/clock.ts';
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
 import { first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
+import {
+  createJobContext,
+  createServiceContext,
+  type ServiceContext,
+} from '../../platform/service-context.ts';
 import { interveneAtD1 } from '../apple/credential-transfer-test-fixtures.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import {
@@ -67,12 +71,9 @@ import {
   projectionReleaseBindingPredicateSql,
   projectionReleaseBindingValid,
 } from './repo-projection.ts';
-import {
-  getProjectionCandidate,
-  insertProjectionCandidateStmt,
-  insertProjectionReleaseStmt,
-  projectionCandidateEnvelope,
-} from './repo-projection-store.ts';
+import { writeProjectionRelease } from './repo-projection-release-write.ts';
+import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
+import { writeProjectionCandidate } from './repo-projection-write.ts';
 import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
 
 // Publishing a Samsung projection probes Samsung, which only runs while the provider is enabled.
@@ -230,7 +231,7 @@ async function setup(
   const reviewer = await member(org.id, testEnv, testFixtures);
   const otherReviewer = await member(org.id, testEnv, testFixtures);
   const foreign = await member(otherOrg.id, testEnv, testFixtures);
-  const ctx = createServiceContext(testEnv, { clock });
+  const ctx = createJobContext(testEnv, 'test', { clock });
   const imported = await importZip(testEnv, clock, {
     orgId: org.id,
     createdBy: author.userId,
@@ -740,9 +741,15 @@ describe('native projection approval', () => {
         accountCandidate.candidateHash,
       ),
     ).toBe(true);
-    await configureWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
+    // A rotation under the same identity keeps the candidate (projection-epochs.test.ts); a revoke
+    // and a new configure moves the account epoch and voids it.
+    await revokeWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
       ...staleAccount.scope,
       expectedRevision: 1,
+    });
+    await configureWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
+      ...staleAccount.scope,
+      expectedRevision: 2,
       credentials,
     });
     await expect(
@@ -760,7 +767,7 @@ describe('native projection approval', () => {
     ).toBe(true);
     await revokeWalletProviderAccount(staleAccount.ctx, staleAccount.author, {
       ...staleAccount.scope,
-      expectedRevision: 2,
+      expectedRevision: 3,
     });
     await expect(
       insertDirectProjectionRelease(staleAccount, revokedCandidate, revokedApproval),
@@ -904,6 +911,7 @@ describe('native projection approval', () => {
       test.scope.orgId,
       'templates:author',
     );
+    const auditOf = { action: 'template.candidate', detail: {} };
     for (const stale of [
       { ...stored, id: test.ctx.ids.id(), adapterRevision: stored.adapterRevision + 1 },
       { ...stored, id: test.ctx.ids.id(), adapterCapabilities: [] },
@@ -913,12 +921,11 @@ describe('native projection approval', () => {
         audiencePolicyRevision: stored.audiencePolicyRevision + 1,
       },
     ]) {
-      expect(
-        (await insertProjectionCandidateStmt(env.DB, stale, authority, clock.now()).run()).meta
-          .changes,
-      ).toBe(0);
+      await expect(
+        writeProjectionCandidate(test.ctx, stale, authority, auditOf),
+      ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
     }
-    await insertProjectionCandidateStmt(env.DB, forged, authority, clock.now()).run();
+    await writeProjectionCandidate(test.ctx, forged, authority, auditOf);
     await expect(
       approveProjectionCandidate(test.ctx, test.reviewer, test.templateId, forged.id, {
         ...test.scope,
@@ -1125,18 +1132,20 @@ describe('native projection approval', () => {
     expect(
       await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
     ).toBe(true);
-    const statement = insertProjectionReleaseStmt(env.DB, {
-      id: test.ctx.ids.id(),
-      candidate: stored,
-      approval: storedApproval,
-      authority,
-      expectedGeneration: 0,
-      expectedReleaseId: null,
-      action: 'release',
-      targetReleaseId: null,
-      now: clock.now(),
-      ...test.proof,
-    });
+    const statement = () =>
+      writeProjectionRelease(test.ctx, {
+        id: test.ctx.ids.id(),
+        candidate: stored,
+        approval: storedApproval,
+        authority,
+        expectedGeneration: 0,
+        expectedReleaseId: null,
+        action: 'release',
+        targetReleaseId: null,
+        now: clock.now(),
+        audit: { action: 'template.release', detail: {} },
+        ...test.proof,
+      });
     const next = await createCandidate(test.ctx, test.author, test.templateId, {
       ...test.apple,
       version: test.version,
@@ -1152,7 +1161,7 @@ describe('native projection approval', () => {
       candidateHash: next.candidateHash,
       expectedGeneration: 1,
     });
-    expect((await statement.run()).meta.changes).toBe(0);
+    await expect(statement()).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
   });
 
   it('rejects provider evidence that expires before the publication statement', async () => {
@@ -1171,19 +1180,21 @@ describe('native projection approval', () => {
     expect(
       await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
     ).toBe(true);
-    const statement = insertProjectionReleaseStmt(env.DB, {
-      id: test.ctx.ids.id(),
-      candidate: stored,
-      approval: storedApproval,
-      authority,
-      expectedGeneration: 0,
-      expectedReleaseId: null,
-      action: 'release',
-      targetReleaseId: null,
-      now: clock.now() + 300_000,
-      ...test.proof,
-    });
-    expect((await statement.run()).meta.changes).toBe(0);
+    const statement = () =>
+      writeProjectionRelease(test.ctx, {
+        id: test.ctx.ids.id(),
+        candidate: stored,
+        approval: storedApproval,
+        authority,
+        expectedGeneration: 0,
+        expectedReleaseId: null,
+        action: 'release',
+        targetReleaseId: null,
+        now: clock.now() + 300_000,
+        audit: { action: 'template.release', detail: {} },
+        ...test.proof,
+      });
+    await expect(statement()).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
   });
   it('requires an explicitly bound trusted clock for the atomic issuance predicate', () => {
     expect(() =>

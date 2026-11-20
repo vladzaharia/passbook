@@ -9,6 +9,7 @@ import { handleError } from '../../platform/error-handler.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createLogger } from '../../platform/log.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getWalletProviderReadiness } from './account-service.ts';
 import {
@@ -295,7 +296,7 @@ describe('disabled providers', () => {
     });
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     f.kit.clock.advance(1);
-    await drainWalletProviderSync(f.kit.ctx);
+    await drainWalletProviderSync(jobCtxOf(f.kit));
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(
       await first(

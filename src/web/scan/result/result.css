@@ -302,3 +302,21 @@
 .scan-result-body:empty {
   display: none;
 }
+
+/* A saved check-in: the glyph carries an upload badge. */
+.scan-saved-glyph {
+  position: relative;
+  display: inline-flex;
+}
+.scan-saved-badge {
+  position: absolute;
+  right: -10px;
+  bottom: -8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--v-on);
+  color: var(--v);
+}

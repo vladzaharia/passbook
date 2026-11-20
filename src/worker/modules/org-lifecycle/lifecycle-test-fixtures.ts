@@ -12,6 +12,7 @@ import { run } from '../../platform/db.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { RetentionKit } from '../retention/retention-test-fixtures.ts';
 import { credential } from '../wallet-providers/repo-wallet-credentials-test-fixtures.ts';
+import { seedWaveTables } from './lifecycle-wave-test-fixtures.ts';
 
 /** A workflow step that runs its callback in place; `crashAfter` throws on the next step after that many. */
 /** `clock` moves to a `sleepUntil` time, as a waiting workflow would find it on waking. */
@@ -56,7 +57,7 @@ export async function populateOrg(rk: RetentionKit, label: string): Promise<Popu
   await persistTemplate(fx, template.resolved, { registry: template.registry });
   await env.BUCKET.put(`templates/${orgId}/tpl-${label}/v1/icon.png`, new Uint8Array([1, 2, 3]));
   const event = await makeScanEvent(fx, { orgId });
-  await makeScanner(fx, { orgId, eventId: event.id });
+  const scanner = await makeScanner(fx, { orgId, eventId: event.id });
   await makeScanStaff(fx, { orgId });
   await makeApiKey(fx, { orgId });
   await saveOrgSettings(env.DB, orgId, { 'retention.eventsDays': 120 }, clock.now());
@@ -120,6 +121,13 @@ export async function populateOrg(rk: RetentionKit, label: string): Promise<Popu
     "INSERT INTO bundles (id, org_id, name, token, created_at) VALUES (?, ?, 'Bundle', ?, 1)",
     [`bundle-${label}`, orgId, `h1:${label}`.padEnd(67, '0')],
   );
+  await seedWaveTables(kit, {
+    orgId,
+    label,
+    passId: live.id,
+    otherPassId: second.id,
+    scannerId: scanner.id,
+  });
   await recordAudit(ctx, {
     orgId,
     actorType: 'system',

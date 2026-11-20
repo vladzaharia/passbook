@@ -20,6 +20,7 @@ import {
   publishProjectionRelease,
   rollbackProjectionRelease,
 } from '../wallet-providers/projection-service.ts';
+import { queueSystemProjections } from '../wallet-providers/projection-system-queue.ts';
 import { authorizeTemplateWrite } from './access.ts';
 import { activeAppleRelease } from './releases-active.ts';
 import { approvalMatches, scopedCandidate } from './releases-candidate.ts';
@@ -197,7 +198,7 @@ export async function publishRelease(
   );
   const approval = await getApproval(ctx.env.DB, body.approvalId);
   if (!approval || !approvalMatches(approval, candidate)) throw changed();
-  return commitRelease(
+  const released = await commitRelease(
     ctx,
     authority,
     candidate,
@@ -209,6 +210,8 @@ export async function publishRelease(
     template.status === 'archived' ? 'archived' : 'active',
     null,
   );
+  await queueSystemProjections(ctx, released);
+  return released;
 }
 
 export async function rollbackRelease(
@@ -249,7 +252,7 @@ export async function rollbackRelease(
   const approval = await getApproval(ctx.env.DB, target.approvalId);
   if (!approval || !approvalMatches(approval, candidate) || target.version !== candidate.version)
     throw changed();
-  return commitRelease(
+  const released = await commitRelease(
     ctx,
     authority,
     candidate,
@@ -261,4 +264,6 @@ export async function rollbackRelease(
     template.status === 'archived' ? 'archived' : 'active',
     body.reason,
   );
+  await queueSystemProjections(ctx, released);
+  return released;
 }

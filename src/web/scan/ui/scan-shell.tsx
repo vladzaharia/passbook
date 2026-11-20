@@ -9,6 +9,7 @@ import './scan.css';
 import './scan-capsule.css';
 import './scan-dock.css';
 import './scan-duo.css';
+import './scan-phone.css';
 import { type Announcement, LiveAnnouncer } from './live-announcer.tsx';
 import { type Tint, VerdictRing, VerdictTint } from './verdict-tint.tsx';
 
@@ -64,6 +65,8 @@ export interface ScanShellProps {
   branding?: ScanBranding | null;
   sidebar?: ReactNode;
   tint?: Tint;
+  /** A tap on the tint outside the card (a handheld's verdict). */
+  onTint?: () => void;
   /** Boot cards and the result card, in the card layer. */
   card?: ReactNode;
   /** `boot` centres the card; `result` pins it above the dock. */
@@ -87,6 +90,7 @@ export function ScanShell({
   layout,
   sidebar,
   tint = 'none',
+  onTint,
   card,
   cardMode = 'result',
   dock,
@@ -110,7 +114,7 @@ export function ScanShell({
       <div className="scan-layer scan-cam" data-testid="scan-camera">
         {camera}
       </div>
-      <VerdictTint tint={tint} />
+      <VerdictTint tint={tint} onDismiss={onTint} />
       <div className="scan-layer scan-card-layer" data-mode={cardMode}>
         {card}
       </div>

@@ -1,53 +1,48 @@
 import type { z } from 'zod';
-import type {
-  ApiKeyListQuerySchema,
-  ApiKeySchema,
-  CreateApiKeySchema,
-} from '../../../shared/contracts/index.ts';
-import type { ApiKeyStore } from '../../platform/auth.ts';
-import { API_SCOPES, type ApiKeyAuth, type ApiScope } from '../../platform/auth.ts';
+import type { ApiKeyListQuerySchema } from '../../../shared/contracts/index.ts';
+import { apiKeyPrefixOf } from '../../platform/api-key-token.ts';
+import { rolesCapableOf } from '../../platform/api-scopes.ts';
+import type { ApiKeyAuth, ApiKeyStore } from '../../platform/auth.ts';
 import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
-import { parseJsonArray } from '../../platform/json-column.ts';
+import { ipPrefix } from '../../platform/ip.ts';
+import { ipAllowed } from '../../platform/ip-allow.ts';
+import { createLogger } from '../../platform/log.ts';
 import { enforceApiKeyRate, rememberApiTier } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { AuditEntry } from '../audit/types.ts';
-import { orgIsActive } from '../orgs/repo.ts';
 import { seesAccountEmails } from '../passes/account-email.ts';
-import { type ApiKeyAuthority, authorityOrgId, delegableScopes } from './access.ts';
+import { type ApiKeyAuthority, authorityOrgId } from './access.ts';
 import * as repo from './repo.ts';
+import { invalid } from './service-create.ts';
+import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
 
-export type ApiKeyDto = z.infer<typeof ApiKeySchema>;
-const KEY_SHAPE = /^wlt_([A-Za-z0-9_-]{8})_([A-Za-z0-9_-]{43})$/;
-const parseScopes = (raw: string): ApiScope[] =>
-  parseJsonArray(raw, 'scopes', (s): s is ApiScope => API_SCOPES.includes(s as ApiScope));
+export { createApiKey } from './service-create.ts';
+export type { ApiKeyDto } from './service-dto.ts';
+
 const TOUCH_EVERY_MS = 5 * 60 * 1000;
-
-function toDto(row: repo.ApiKeyRow & { created_by_name?: string | null }): ApiKeyDto {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    name: row.name,
-    prefix: row.prefix,
-    scopes: parseScopes(row.scopes),
-    mode: row.mode,
-    createdBy: row.created_by,
-    createdByName: row.created_by_name ?? null,
-    createdAt: row.created_at,
-    lastUsedAt: row.last_used_at,
-    expiresAt: row.expires_at,
-    revokedAt: row.revoked_at,
-  };
-}
 
 /** The key behind a bearer: its settings and use, never the secret or its hash. */
 export async function describeOwnKey(ctx: ServiceContext, auth: ApiKeyAuth) {
   const row = await repo.getKey(ctx.env.DB, auth.keyId, auth.orgId);
   if (!row) return null;
   const { id, orgId, name, prefix, scopes, mode, createdAt, lastUsedAt, expiresAt } = toDto(row);
-  return { id, orgId, name, prefix, scopes, mode, createdAt, lastUsedAt, expiresAt };
+  const { kind, roles, retireAt } = toDto(row);
+  return {
+    id,
+    orgId,
+    name,
+    prefix,
+    scopes,
+    mode,
+    createdAt,
+    lastUsedAt,
+    expiresAt,
+    kind,
+    roles,
+    retireAt,
+  };
 }
 
 /** One page, plus how many revoked keys the same org filter holds. */
@@ -57,91 +52,49 @@ export async function listApiKeys(
   authority: ApiKeyAuthority,
 ): Promise<{ items: ApiKeyDto[]; nextCursor: string | null; revokedCount: number }> {
   const orgId = authorityOrgId(authority);
+  // A member without `integrations:read` (authorized as `org:read`) sees only their own personal keys.
+  const mine =
+    authority.kind === 'session' && authority.capability === 'org:read'
+      ? authority.membershipId
+      : undefined;
   const [rows, revokedCount] = await Promise.all([
     repo.listKeys(
       ctx.env.DB,
-      { ...query, orgId, limit: query.limit + 1 },
+      { ...query, orgId, limit: query.limit + 1, mine },
       seesAccountEmails(authority),
     ),
-    repo.countRevoked(ctx.env.DB, orgId),
+    repo.countRevoked(ctx.env.DB, orgId, mine),
   ]);
   const page = rows.slice(0, query.limit);
+  const resources = await repo.keyResources(
+    ctx.env.DB,
+    page.filter((row) => row.restricted === 1).map((row) => row.id),
+  );
+  const of = (id: string): Resources => ({
+    templateIds: resources
+      .filter((r) => r.key_id === id && r.kind === 'template')
+      .map((r) => r.value),
+    passStyles: resources
+      .filter((r) => r.key_id === id && r.kind === 'pass_style')
+      .map((r) => r.value) as Resources['passStyles'],
+  });
   return {
-    items: page.map(toDto),
+    items: page.map((row) => toDto(row, of(row.id))),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
     revokedCount,
   };
 }
 
-export async function createApiKey(
+/** Whether `id` is a personal key of the member behind `authority`. */
+export async function isOwnPersonalKey(
   ctx: ServiceContext,
+  id: string,
+  orgId: string | null,
   authority: ApiKeyAuthority,
-  input: z.infer<typeof CreateApiKeySchema>,
-): Promise<ApiKeyDto & { secret: string }> {
-  const now = ctx.clock.now();
-  const orgId = input.orgId;
-  if (
-    orgId !== authorityOrgId(authority) ||
-    (authority.kind === 'session' && authority.capability !== 'integrations:manage')
-  ) {
-    throw new ForbiddenError();
-  }
-  const scans = input.scopes.includes('scans:write');
-  const terminalIds = [...new Set(input.terminalIds ?? [])];
-  if (scans && orgId === null)
-    throw new ValidationError('A platform key cannot scan.', [], 'API_KEY_SCAN_ORG_REQUIRED');
-  if (scans !== terminalIds.length > 0)
-    throw new ValidationError(
-      scans ? 'Pick at least one terminal.' : 'Terminals need the scan scope.',
-      [{ path: 'terminalIds', message: scans ? 'Pick at least one terminal.' : 'Not needed.' }],
-      scans ? 'API_KEY_TERMINALS_REQUIRED' : 'API_KEY_TERMINALS_UNUSED',
-    );
-  const delegable = delegableScopes(authority);
-  if (input.scopes.some((scope) => !delegable.includes(scope))) {
-    throw new ForbiddenError(
-      'A key cannot hold scopes beyond your own access.',
-      'API_KEY_SCOPE_EXCEEDS_CREATOR',
-    );
-  }
-  if (input.expiresAt != null && input.expiresAt <= now) {
-    throw new ValidationError('Expiry must be in the future.', [], 'EXPIRY_PAST');
-  }
-  if (orgId && !(await orgIsActive(ctx.env.DB, orgId))) {
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  }
-  const prefix = ctx.ids.token(6);
-  const secret = `wlt_${prefix}_${ctx.ids.token(32)}`;
-  const row: repo.ApiKeyRow = {
-    id: ctx.ids.id(),
-    org_id: orgId,
-    name: input.name,
-    prefix,
-    key_hash: await sha256Hex(secret),
-    scopes: JSON.stringify([...new Set(input.scopes)]),
-    mode: authority.kind === 'session' ? authority.mode : input.mode,
-    created_by: authority.userId,
-    created_at: now,
-    last_used_at: null,
-    expires_at: input.expiresAt ?? null,
-    revoked_at: null,
-  };
-  const audit: AuditEntry = {
-    orgId,
-    actorType: 'user',
-    actorId: authority.userId,
-    action: 'api_key.create',
-    targetType: 'api_key',
-    targetId: row.id,
-    detail: {
-      name: row.name,
-      scopes: parseScopes(row.scopes),
-      mode: row.mode,
-      expiresAt: row.expires_at,
-      ...(terminalIds.length ? { terminalIds } : {}),
-    },
-  };
-  await repo.createKey(ctx, row, authority, audit, terminalIds);
-  return { ...toDto(row), secret };
+): Promise<boolean> {
+  if (authority.kind !== 'session') return false;
+  const key = await repo.getKey(ctx.env.DB, id, orgId);
+  return key?.kind === 'personal' && key.membership_id === authority.membershipId;
 }
 
 /** Idempotent: revoking a revoked key succeeds. */
@@ -150,9 +103,6 @@ export async function revokeApiKey(
   authority: ApiKeyAuthority,
   id: string,
 ): Promise<void> {
-  if (authority.kind === 'session' && authority.capability !== 'integrations:manage') {
-    throw new ForbiddenError();
-  }
   const key = await repo.getKey(ctx.env.DB, id, authorityOrgId(authority));
   if (!key) throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
   await repo.revokeKey(ctx, id, authority, {
@@ -165,31 +115,83 @@ export async function revokeApiKey(
   });
 }
 
+/** Ends a key at an instant before it would otherwise end. Once only: a second call is a conflict. */
+export async function retireApiKey(
+  ctx: ServiceContext,
+  authority: ApiKeyAuthority,
+  id: string,
+  retireAt: number,
+): Promise<void> {
+  const key = await repo.getKey(ctx.env.DB, id, authorityOrgId(authority));
+  if (!key) throw new NotFoundError('API key not found.', 'API_KEY_NOT_FOUND');
+  if (retireAt <= ctx.clock.now())
+    throw invalid('Retirement must be in the future.', 'RETIRE_PAST', 'retireAt');
+  if (key.expires_at !== null && retireAt > key.expires_at)
+    throw invalid('Retirement cannot be after expiry.', 'RETIRE_AFTER_EXPIRY', 'retireAt');
+  if (key.revoked_at !== null || key.retire_at !== null)
+    throw new ConflictError('The key is already revoked or retiring.', 'API_KEY_RETIRE_SET');
+  await repo.retireKey(ctx, id, retireAt, authority, {
+    orgId: key.org_id,
+    actorType: 'user',
+    actorId: authority.userId,
+    action: 'api_key.retire',
+    targetType: 'api_key',
+    targetId: id,
+    detail: { retireAt },
+  });
+}
+
 /** Resolves a presented key. Null for anything invalid; throws 429 when the key is over its limit. */
 export function createApiKeyStore(env: AppEnv, clock: Clock = systemClock): ApiKeyStore {
   return {
-    async resolve(rawKey): Promise<ApiKeyAuth | null> {
-      const match = KEY_SHAPE.exec(rawKey);
-      if (!match?.[1]) return null;
-      const row = await repo.findByPrefix(env.DB, match[1]);
+    async resolve(rawKey, caller, options): Promise<ApiKeyAuth | null> {
+      const prefix = apiKeyPrefixOf(rawKey);
+      if (!prefix) return null;
+      const row = await repo.findByPrefix(env.DB, prefix);
       if (!row || !(await safeEqual(await sha256Hex(rawKey), row.key_hash))) return null;
       const now = clock.now();
-      if (row.revoked_at !== null || (row.expires_at !== null && row.expires_at <= now))
+      if (
+        row.revoked_at !== null ||
+        (row.expires_at !== null && row.expires_at <= now) ||
+        (row.retire_at !== null && row.retire_at <= now)
+      )
         return null;
       if (row.org_id !== null && row.org_status !== 'active') return null;
-      // WP4 adds api_keys.rate_tier; until then the column is absent and the env default applies.
+      // A personal key dies with its membership or user; its reach is capped by the member's roles now.
+      if (row.kind === 'personal' && row.member_roles === null) return null;
+      // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
+      const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
+      if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;
       const tier = await enforceApiKeyRate(
         env,
         { keyId: row.id, orgId: row.org_id },
-        (row as { rate_tier?: unknown }).rate_tier,
+        row.rate_tier,
       );
-      await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS);
+      // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
+      // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
+      if (row.restricted === 1 && options?.limited !== 'ok')
+        throw new ForbiddenError(
+          'This key is limited to templates and cannot call this route.',
+          'API_KEY_RESTRICTED_ROUTE',
+        );
+      await repo.touchKey(env.DB, row.id, now, TOUCH_EVERY_MS, ipPrefix(caller?.ip));
+      // A platform key made before 0142 has no expiry or IP list: it keeps working, and every use is logged.
+      if (row.kind === 'platform' && (row.expires_at === null || allow.length === 0))
+        createLogger().warn('api_key.platform_unbounded', {
+          code: 'API_KEY_PLATFORM_UNBOUNDED',
+          keyId: row.id,
+        });
+      const held = parseScopes(row.scopes);
+      const memberRoles = row.member_roles ? parseRoles(row.member_roles) : null;
       const auth: ApiKeyAuth = {
         kind: 'api_key',
         keyId: row.id,
         orgId: row.org_id,
-        scopes: parseScopes(row.scopes),
+        scopes: memberRoles
+          ? held.filter((s) => rolesCapableOf(s).some((role) => memberRoles.includes(role)))
+          : held,
         mode: row.mode,
+        ...(row.restricted === 1 ? { limited: true as const } : {}),
       };
       rememberApiTier(auth, tier);
       return auth;

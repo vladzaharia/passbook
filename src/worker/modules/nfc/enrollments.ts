@@ -10,7 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { scanHub } from '../scan/live.ts';
 import { assertBindable } from './pass-state.ts';
-import { tagsEnabled } from './policy.ts';
+import { tagsRefusal } from './policy.ts';
 import {
   bindingHint,
   type EnrollmentRow,
@@ -88,8 +88,8 @@ export async function requestEnrollment(
   req: { scannerId: string; binding: 'pass' | 'user' },
 ): Promise<TagEnrollment> {
   const { orgId, mode } = a;
-  if (!(await tagsEnabled(ctx, orgId)))
-    throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
+  const off = await tagsRefusal(ctx, orgId);
+  if (off) throw off;
   const pass = await passFacts(ctx.env.DB, passId);
   if (!pass || pass.orgId !== orgId || pass.mode !== mode || pass.deletedAt !== null)
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');

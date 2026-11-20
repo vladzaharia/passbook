@@ -1,5 +1,6 @@
 import {
   anyDigitalOn,
+  blockedByEntitlement,
   type ChannelInputs,
   DIGITAL_CHANNELS,
   defaultOf,
@@ -14,6 +15,7 @@ import {
 } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CHANNEL_COPY } from '../../../shared/copy/channels.ts';
+import { entitlementsOf } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { walletProviderDisabledReason } from '../wallet-providers/provider-policy.ts';
@@ -29,10 +31,11 @@ async function levels(
   ctx: ServiceContext,
   orgId: string,
   mode: Mode,
-): Promise<Pick<ChannelInputs, 'platform' | 'org'>> {
-  const [platformSettings, org] = await Promise.all([
+): Promise<Pick<ChannelInputs, 'platform' | 'entitlement' | 'org'>> {
+  const [platformSettings, org, entitlements] = await Promise.all([
     getPlatformSettings(ctx),
     getOrgSettings(ctx, orgId),
+    entitlementsOf(ctx, orgId),
   ]);
   const platform: Per<ChannelReason> = {};
   if (!platformSettings['print.enabled']) platform.paper = 'printing_off';
@@ -41,11 +44,11 @@ async function levels(
   for (const p of ['google', 'samsung'] as const) {
     const reason = await walletProviderDisabledReason(ctx.env.DB, p, orgId, mode);
     if (reason === 'not_released') platform[p] = reason;
-    else if (reason) blocked[p] = reason;
+    else if (reason === 'not_enrolled') blocked[p] = reason;
   }
   for (const c of org['channels.blocked']) blocked[c] = 'blocked';
   if (!org['nfc.tags'].enabled) blocked.nfc = 'tags_off';
-  return { platform, org: blocked };
+  return { platform, entitlement: blockedByEntitlement(entitlements), org: blocked };
 }
 
 export function capabilityReasons(cap: repo.Capability): Per<ChannelReason> {

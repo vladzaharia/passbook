@@ -1,0 +1,161 @@
+/* The record's band: the verdict as colour, glyph and word. */
+/* band */
+.op-band {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px 8px 18px;
+  background: var(--band);
+  color: var(--band-on);
+}
+.op-rec[data-tone="ok"] {
+  --band: var(--scan-ok);
+  --band-on: var(--scan-ok-on);
+}
+.op-rec[data-tone="hu"] {
+  --band: var(--scan-heads);
+  --band-on: var(--scan-heads-on);
+}
+.op-rec[data-tone="no"] {
+  --band: var(--scan-refused);
+  --band-on: var(--scan-refused-on);
+}
+.op-rec[data-tone="sys"] {
+  --band: var(--scan-system);
+  --band-on: var(--scan-system-on);
+}
+.op-band[data-tone="preview"] {
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.op-band-glyph {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--band-on);
+  color: var(--band);
+}
+.op-band[data-tone="no"] .op-band-glyph {
+  border-radius: 9px;
+}
+.op-band[data-tone="preview"] .op-band-glyph {
+  width: 20px;
+  height: 20px;
+  background: none;
+  color: inherit;
+}
+.op-band-glyph svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
+.op-band[data-tone="preview"] .op-band-glyph svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+.op-band-text {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  min-width: 0;
+}
+.op-band-text b {
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 24px;
+}
+.op-band[data-tone="preview"] .op-band-text b {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.op-band-sub {
+  font-size: 14px;
+  line-height: 20px;
+  opacity: 0.92;
+}
+.op-band-pill {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--band-on) 18%, transparent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.op-band-when {
+  flex: none;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.op-band-undo {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.op-band-undo svg {
+  width: 16px;
+  height: 16px;
+}
+.op-band-undo .op-kbd,
+.op-actions .op-kbd {
+  margin-inline-start: 2px;
+  background: transparent;
+  border-color: color-mix(in oklab, currentColor 40%, transparent);
+  box-shadow: none;
+  color: inherit;
+}
+
+/* Flood, then settle: the card takes the verdict's wash for a beat and clears to the band. */
+@media (prefers-reduced-motion: no-preference) {
+  .op-rec[data-source="scan"][data-tone]:not([data-tone="preview"])::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--band);
+    pointer-events: none;
+    animation: op-flood 1200ms var(--pk-ease-out, ease-out) both;
+  }
+  .op-band {
+    position: relative;
+    z-index: 2;
+  }
+  @keyframes op-flood {
+    0%,
+    40% {
+      opacity: 0.92;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .op-band {
+    animation: op-band-fade 150ms ease-out;
+  }
+  @keyframes op-band-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}

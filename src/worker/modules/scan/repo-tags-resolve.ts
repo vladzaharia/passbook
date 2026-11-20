@@ -66,13 +66,18 @@ export const otherModeTagStmt = (db: D1Database, orgId: string, mode: Mode, ref:
     [orgId, mode, ref],
   );
 
-/** The org switch `nfc.tags` and the platform switch `nfc.tagsEnabled`; an absent row means on. */
+/**
+ * The org switch `nfc.tags` and the platform switch `nfc.tagsEnabled` (an absent row means on), and the
+ * org's `nfc` entitlement (an absent row means off).
+ */
 export const tagsSwitchStmt = (db: D1Database, orgId: string) =>
   stmt(
     db,
     `SELECT key, value FROM settings
-     WHERE (scope = ? AND key = 'nfc.tags') OR (scope = 'platform' AND key = 'nfc.tagsEnabled')`,
-    [`org:${orgId}`],
+     WHERE (scope = ? AND key = 'nfc.tags') OR (scope = 'platform' AND key = 'nfc.tagsEnabled')
+     UNION ALL
+     SELECT 'entitlement.nfc' AS key, value FROM org_entitlement_values WHERE org_id = ? AND key = 'nfc'`,
+    [`org:${orgId}`, orgId],
   );
 
 /** Full candidate rows for the tag's passes: active before voided or removed, then oldest. */
@@ -148,17 +153,25 @@ export function tagStateOf(result: D1Result | undefined): TagState | null {
 }
 
 export function tagsOn(result: D1Result | undefined): boolean {
+  let entitled = false;
   for (const row of (result?.results ?? []) as { key: string; value: unknown }[]) {
     if (typeof row.value !== 'string') return false;
     try {
       const v = JSON.parse(row.value) as unknown;
-      const on = row.key === 'nfc.tags' ? (v as { enabled?: unknown } | null)?.enabled : v;
-      if (on !== true) return false;
+      if (row.key === 'entitlement.nfc') {
+        if (v !== 'basic' && v !== 'secure') return false;
+        entitled = true;
+        continue;
+      }
+      // The org row defaults to on (shared/contracts/settings.ts): only an explicit false turns tags off.
+      if (row.key === 'nfc.tags') {
+        if ((v as { enabled?: unknown } | null)?.enabled === false) return false;
+      } else if (v !== true) return false;
     } catch {
       return false;
     }
   }
-  return true;
+  return entitled;
 }
 
 export const passIdsOf = (result: D1Result | undefined): Set<string> =>

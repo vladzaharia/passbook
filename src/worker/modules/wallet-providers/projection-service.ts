@@ -1,4 +1,3 @@
-import { statusLabel } from '../../../passkit/wallets/fidelity.ts';
 import type {
   ApproveTemplateCandidate,
   CreateTemplateCandidate,
@@ -8,47 +7,23 @@ import type {
   TemplateReleaseScope,
 } from '../../../shared/contracts/template-releases.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { batch } from '../../platform/db.ts';
-import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { authorizeTemplateWrite } from '../templates/access.ts';
-import { canonicalJson } from '../templates/package/hash.ts';
-import { candidateHash } from '../templates/release-content.ts';
-import type { VersionRow } from '../templates/repo.ts';
-import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
-import {
-  getWalletProviderReadiness,
-  readConfiguredWalletProviderCredentials,
-} from './account-service.ts';
-import {
-  type NativeProjection,
-  type ProjectionV2,
-  type ProjectionV2Request,
-  parseProjectionInput,
-  projectionPolicy,
-  providerIdentityHash,
-} from './projection-contract.ts';
-import { computeProjectionPins, samePins, unreleasable } from './projection-pins.ts';
+import { buildProjectionCandidate } from './projection-candidate-build.ts';
 import {
   candidateDto,
-  changed,
   failedWrite,
   nativeScope,
   pinProjectionContext,
   scopedCandidate,
   scopedTemplate,
 } from './projection-service-support.ts';
-import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
-import {
-  insertProjectionApprovalStmt,
-  insertProjectionCandidateStmt,
-  type ProjectionCandidate,
-  projectionCandidateEnvelope,
-  selectProjectionApprovals,
-  selectProjectionCandidates,
-} from './repo-projection-store.ts';
+import { isSystemAuthored } from './projection-system-authority.ts';
+import { selectProjectionApprovals, selectProjectionCandidates } from './repo-projection-store.ts';
+import { writeProjectionApproval, writeProjectionCandidate } from './repo-projection-write.ts';
 
 export {
   activeProjectionRelease,
@@ -87,27 +62,6 @@ export async function listProjectionCandidates(
   return { items };
 }
 
-/**
- * Schema 2: the server compiles the version. The author names the omissions it has (and may send
- * the pins it saw); anything that no longer matches is a stale review.
- */
-async function pinnedProjection(
-  ctx: ServiceContext,
-  version: VersionRow,
-  named: ProjectionV2Request | ProjectionV2,
-): Promise<ProjectionV2> {
-  const { pins, report } = await computeProjectionPins(ctx, named.provider, version);
-  if (unreleasable(report))
-    throw new ConflictError(statusLabel(report.status), 'WALLET_PROJECTION_BLOCKED');
-  const omissions = [...new Set(named.approvedOmissions)].sort();
-  if (
-    canonicalJson(omissions) !== canonicalJson(pins.approvedOmissions) ||
-    ('report' in named && !samePins(named, pins))
-  )
-    throw changed();
-  return pins;
-}
-
 export async function createProjectionCandidate(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
@@ -120,79 +74,28 @@ export async function createProjectionCandidate(
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:author');
   const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   if (!body.sourceReleaseId || !body.version) throw new ValidationError();
-  const named = parseProjectionInput(body.projection);
-  if (named.provider !== scope.provider) throw new ValidationError();
-  const source = await verifiedAppleSource(ctx, {
-    ...scope,
-    sourceReleaseId: body.sourceReleaseId,
-    version: body.version,
-  });
-  if (!source) throw changed();
-  let projection: NativeProjection;
-  if (named.schema === 2) projection = await pinnedProjection(ctx, source.version, named);
-  else {
-    projection = named;
-    assertProjectionSource(projection, source.version);
-  }
-  const accountScope = { orgId: scope.orgId, mode: scope.mode, provider: scope.provider };
-  const readiness = await getWalletProviderReadiness(ctx, accountScope);
-  if (!readiness.accountId || readiness.state === 'revoked' || readiness.state === 'absent')
-    throw changed();
-  const account = await readConfiguredWalletProviderCredentials(ctx, accountScope, {
-    accountId: readiness.accountId,
-    accountRevision: readiness.revision,
-  });
-  if (!account || account.provider !== scope.provider) throw changed();
-  const policy = projectionPolicy(scope.provider);
-  const candidate: ProjectionCandidate = {
-    ...scope,
+  const candidate = await buildProjectionCandidate(
+    ctx,
+    scope,
+    {
+      sourceReleaseId: body.sourceReleaseId,
+      version: body.version,
+      projection: body.projection,
+      authorId: authority.userId,
+    },
     credentialKeysetCommitment,
-    id: ctx.ids.id(),
-    version: body.version,
-    contentHash: source.release.contentHash,
-    candidateHash: '',
-    adapterRevision: policy.adapterRevision,
-    adapterCapabilities: [...policy.adapterCapabilities],
-    audiencePolicyRevision: policy.audiencePolicyRevision,
-    authorId: authority.userId,
-    versionAuthorId: source.version.createdBy,
-    createdAt: ctx.clock.now(),
-    sourceReleaseId: source.release.id,
-    sourceReleaseGeneration: source.release.generation,
-    sourceReleaseHash: source.release.candidateHash,
-    accountId: account.accountId,
-    accountRevision: account.revision,
-    providerIdentityHash: await providerIdentityHash(
-      account,
-      projection.schema === 1 && projection.provider === 'samsung'
-        ? projection.cardType
-        : undefined,
-    ),
-    projection,
-  };
-  candidate.candidateHash = await candidateHash(projectionCandidateEnvelope(candidate));
-  const db = ctx.env.DB;
-  const results = await batch(db, [
-    insertProjectionCandidateStmt(db, candidate, authority, ctx.clock.now()),
-    releaseAuditStmt(
-      db,
-      ctx,
-      'candidate',
-      candidate.id,
-      scope.orgId,
-      authority.userId,
-      templateId,
-      'template.candidate',
-      {
-        candidateId: candidate.id,
-        version: candidate.version,
-        mode: scope.mode,
-        provider: scope.provider,
-        candidateHash: candidate.candidateHash,
-      },
-    ),
-  ]);
-  if (!results[0]?.meta.changes) return failedWrite(ctx, authority);
+  );
+  const written = await writeProjectionCandidate(ctx, candidate, authority, {
+    action: 'template.candidate',
+    detail: {
+      candidateId: candidate.id,
+      version: candidate.version,
+      mode: scope.mode,
+      provider: scope.provider,
+      candidateHash: candidate.candidateHash,
+    },
+  });
+  if (!written) return failedWrite(ctx, authority);
   return candidateDto(candidate, []);
 }
 
@@ -209,7 +112,10 @@ export async function approveProjectionCandidate(
   const authority = await authorizeTemplateWrite(ctx, auth, scope.orgId, 'templates:review');
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await scopedCandidate(ctx, scope, candidateId, body.candidateHash);
-  if (authority.userId === candidate.authorId || authority.userId === candidate.versionAuthorId)
+  if (
+    authority.userId === candidate.authorId ||
+    (authority.userId === candidate.versionAuthorId && !isSystemAuthored(candidate))
+  )
     throw new ForbiddenError('The author cannot approve this candidate.', 'TEMPLATE_SELF_APPROVAL');
   const approval: ApprovalRow = {
     id: ctx.ids.id(),
@@ -219,27 +125,16 @@ export async function approveProjectionCandidate(
     kind: 'peer',
     createdAt: ctx.clock.now(),
   };
-  const db = ctx.env.DB;
-  const results = await batch(db, [
-    insertProjectionApprovalStmt(db, approval, candidate, authority, ctx.clock.now()),
-    releaseAuditStmt(
-      db,
-      ctx,
-      'approval',
-      approval.id,
-      scope.orgId,
-      authority.userId,
-      templateId,
-      'template.approve',
-      {
-        candidateId,
-        approvalId: approval.id,
-        candidateHash: candidate.candidateHash,
-        mode: scope.mode,
-        provider: scope.provider,
-      },
-    ),
-  ]);
-  if (!results[0]?.meta.changes) return failedWrite(ctx, authority);
+  const written = await writeProjectionApproval(ctx, approval, candidate, authority, {
+    action: 'template.approve',
+    detail: {
+      candidateId,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      mode: scope.mode,
+      provider: scope.provider,
+    },
+  });
+  if (!written) return failedWrite(ctx, authority);
   return approval;
 }

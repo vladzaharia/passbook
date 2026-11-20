@@ -138,7 +138,7 @@ export function SyncChip({ state }: { state: SyncChipState }) {
     return (
       <span className="scan-chip" data-tone="slate">
         <CloudOff aria-hidden size={14} />
-        Offline
+        <span className="scan-chip-word">Offline</span>
         {state.queued > 0 ? <span>{state.queued}</span> : null}
       </span>
     );

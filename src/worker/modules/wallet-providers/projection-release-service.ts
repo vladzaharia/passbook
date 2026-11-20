@@ -4,11 +4,9 @@ import type {
   TemplateRelease,
 } from '../../../shared/contracts/template-releases.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { batch } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { authorizeTemplateWrite, type TemplateAuthority } from '../templates/access.ts';
-import { releaseAuditStmt } from '../templates/repo-release-audit.ts';
+import { authorizeTemplateWrite } from '../templates/access.ts';
 import {
   type ApprovalRow,
   getApproval,
@@ -27,16 +25,14 @@ import {
   scopedTemplate,
   storeReleaseArt,
 } from './projection-service-support.ts';
-import {
-  insertProjectionReleaseStmt,
-  type ProjectionCandidate,
-  type ProjectionScope,
-} from './repo-projection-store.ts';
+import { isSystemAuthored, type ProjectionAuthority } from './projection-system-authority.ts';
+import { writeProjectionRelease } from './repo-projection-release-write.ts';
+import type { ProjectionCandidate, ProjectionScope } from './repo-projection-store.ts';
 import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
 
-async function publish(
+export async function publish(
   ctx: ServiceContext,
-  authority: TemplateAuthority,
+  authority: ProjectionAuthority,
   scope: ProjectionScope,
   candidate: ProjectionCandidate,
   approval: ApprovalRow,
@@ -48,7 +44,7 @@ async function publish(
     approval.candidateId !== candidate.id ||
     approval.candidateHash !== candidate.candidateHash ||
     approval.reviewerId === candidate.authorId ||
-    approval.reviewerId === candidate.versionAuthorId
+    (approval.reviewerId === candidate.versionAuthorId && !isSystemAuthored(candidate))
   )
     throw changed();
   const db = ctx.env.DB;
@@ -58,33 +54,34 @@ async function publish(
     throw schemaRefused(candidate.provider);
   if (
     candidate.provider === 'samsung' &&
-    !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash))
+    !(await ensureSamsungProjectionEvidence(
+      ctx,
+      candidate.id,
+      candidate.candidateHash,
+      authority.kind === 'session' ? authority : null,
+    ))
   )
     throw changed();
   await storeReleaseArt(ctx, candidate, action === 'rollback' ? 'carry' : 'exact');
   const id = ctx.ids.id();
-  const results = await batch(db, [
-    insertProjectionReleaseStmt(db, {
-      id,
-      candidate,
-      approval,
-      authority,
-      expectedGeneration,
-      expectedReleaseId: head?.id ?? null,
-      action,
-      targetReleaseId,
-      now: ctx.clock.now(),
-    }),
-    releaseAuditStmt(
-      db,
-      ctx,
-      'release',
-      id,
-      scope.orgId,
-      authority.userId,
-      scope.templateId,
-      action === 'release' ? 'template.release' : 'template.rollback',
-      {
+  const written = await writeProjectionRelease(ctx, {
+    id,
+    candidate,
+    approval,
+    authority,
+    expectedGeneration,
+    expectedReleaseId: head?.id ?? null,
+    action,
+    targetReleaseId,
+    now: ctx.clock.now(),
+    audit: {
+      action:
+        action === 'rollback'
+          ? 'template.rollback'
+          : authority.kind === 'system'
+            ? 'template.system_release'
+            : 'template.release',
+      detail: {
         releaseId: id,
         candidateId: candidate.id,
         approvalId: approval.id,
@@ -94,9 +91,9 @@ async function publish(
         generation: expectedGeneration + 1,
         targetReleaseId,
       },
-    ),
-  ]);
-  if (!results[0]?.meta.changes) return failedWrite(ctx, authority);
+    },
+  });
+  if (!written) return failedWrite(ctx, authority);
   const row = await getRelease(db, id);
   if (!row) throw new Error('Committed wallet projection release was not found.');
   return releaseDto(row, candidate);

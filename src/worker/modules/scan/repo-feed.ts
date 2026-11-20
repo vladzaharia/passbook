@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ApiKeyAuth } from '../../platform/auth.ts';
 import { exactStmt, first } from '../../platform/db.ts';
+import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
 import { scanLedgerScopeSql, where } from './repo-feed-scope.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
@@ -75,22 +76,21 @@ export async function getApiKeyFeedStatus(
   filter: ScanLogFilter,
   now: number,
 ): Promise<'ok' | 'invalid' | 'forbidden'> {
+  const live = keyLive('k', now);
+  const holds = keyHoldsScope('k', 'scans:read');
   const row = await exactStmt(
     db,
     `SELECT EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND k.org_id IS ? AND k.mode = ?
-        AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ?)
+        AND ${live.sql}
         AND (k.org_id IS NULL OR EXISTS (
           SELECT 1 FROM orgs o WHERE o.id = k.org_id AND o.status = 'active'
         ))) AS live,
-      EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND CASE WHEN json_valid(k.scopes) THEN
-        json_type(k.scopes) = 'array' AND EXISTS (SELECT 1 FROM json_each(k.scopes) scope
-          WHERE scope.type = 'text' AND scope.value = 'scans:read')
-        ELSE 0 END) AS scopes`,
-    [auth.keyId, auth.orgId, auth.mode, now, auth.keyId],
+      EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND ${holds.sql}) AS scopes`,
+    [auth.keyId, auth.orgId, auth.mode, ...live.params, auth.keyId, ...holds.params],
   ).first<{ live: number; scopes: number }>();
-  const live = row?.live === 1;
+  const isLive = row?.live === 1;
   const scopes = row?.scopes === 1;
-  if (!live) return 'invalid';
+  if (!isLive) return 'invalid';
   if (
     !scopes ||
     filter.mode !== auth.mode ||

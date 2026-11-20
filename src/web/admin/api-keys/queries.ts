@@ -104,6 +104,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'connections:write': 'Create and update connections',
   'webhooks:manage': 'Manage webhooks',
   'brand:manage': 'Manage brand kit',
+  'scanning:write': 'Set up scanning',
 };
 
 const TerminalListSchema = pageOf(

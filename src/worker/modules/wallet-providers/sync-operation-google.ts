@@ -66,7 +66,10 @@ export async function runGoogleWalletProviderOperation(
         approved?.projection.provider !== 'google' ||
         approved.release.id !== op.projectionReleaseId ||
         approved.release.accountId !== op.accountId ||
-        approved.release.accountRevision !== op.accountRevision ||
+        // D2: a same-identity rotation moves the revision, not the epoch.
+        (op.accountEpoch === null
+          ? approved.release.accountRevision !== op.accountRevision
+          : approved.release.accountEpoch !== op.accountEpoch) ||
         approved.release.providerIdentityHash !== binding.original.providerIdentityHash
       ) {
         return complete(ctx, claim, op, {
@@ -121,7 +124,7 @@ export async function runGoogleWalletProviderOperation(
     const failure = classifyWalletSyncFailure('google', op.attempts, error);
     // A lost authority fence does not settle an ambiguous provider transport.
     if (failure.disposition === 'uncertain') {
-      await markWalletClaimUncertain(ctx.env.DB, { ...claim, now: ctx.clock.now() });
+      await markWalletClaimUncertain(ctx, { ...claim, now: ctx.clock.now() });
       return 'uncertain';
     }
     return complete(ctx, claim, op, {

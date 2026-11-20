@@ -1,7 +1,9 @@
-import { DoorOpen, Flashlight, Nfc, Search, Users } from 'lucide-react';
+import { DoorOpen, Flashlight, Hash, Nfc, Search, Users } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { SCAN_TRAY_COPY } from '../../../shared/copy/scan-tray.ts';
 import { VISITOR_COPY } from '../../../shared/copy/visitors.ts';
+import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { CountUp } from '../../ui/count-up.tsx';
 import { TAG_EXTRA_COPY } from '../assign/copy.ts';
 import { ACCESS_COPY } from './copy-access.ts';
@@ -19,7 +21,7 @@ export function Dock({ strip, children }: { strip: ReactNode; children?: ReactNo
 export interface DockButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   /** `gray` grows; `filled` is the accent. */
   variant?: 'gray' | 'filled';
-  /** `square` is 50 x 50 (torch, keyboard); `fixed` is 116 wide (Done). */
+  /** `square` is 56 x 56 on a handheld (torch, keyboard); `fixed` is 116 wide (Done). */
   shape?: 'square' | 'fixed';
   /** The primary action; the e2e hook. */
   primary?: boolean;
@@ -54,8 +56,11 @@ export function DoorThumbRow({
   inside,
   visitors,
   tapToRead,
+  direction,
 }: {
   onLookUp: () => void;
+  /** A Both scanner on a handheld: the direction button (one tap goes Auto, In, Out). */
+  direction?: ReactNode;
   /** iPhone and iPad: the system reader opens per tap. */
   tapToRead?: () => void;
   onTorch?: () => void;
@@ -66,6 +71,7 @@ export function DoorThumbRow({
   /** Desk scanners: today's visitors, with check-out. */
   visitors?: { onOpen: () => void };
 }) {
+  const phone = useMediaQuery(PHONE);
   return (
     <>
       {tapToRead ? (
@@ -75,8 +81,8 @@ export function DoorThumbRow({
         </DockButton>
       ) : null}
       <DockButton onClick={onLookUp}>
-        <Search aria-hidden size={20} />
-        {SCAN_COPY.actions.lookUp}
+        {phone ? <Hash aria-hidden size={20} /> : <Search aria-hidden size={20} />}
+        {phone ? SCAN_TRAY_COPY.enterCode : SCAN_COPY.actions.lookUp}
       </DockButton>
       {inside ? (
         <DockButton data-testid="scan-inside-open" onClick={inside.onOpen}>
@@ -91,6 +97,7 @@ export function DoorThumbRow({
           {VISITOR_COPY.title}
         </DockButton>
       ) : null}
+      {direction}
       {canTorch ? (
         <DockButton
           shape="square"

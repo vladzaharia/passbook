@@ -24,6 +24,8 @@ export interface WalletRuntimeScope {
   mode: Mode;
   accountId: string;
   accountRevision: number;
+  /** The account epoch the operation recorded: with it, a same-identity rotation does not stale the scope. */
+  accountEpoch?: number;
   providerIdentityHash: string;
   /** Current native projection, distinct from the original class identity release. */
   providerReleaseId: string;
@@ -93,8 +95,15 @@ export function runtimeAccountUnavailable(ambiguous = false): WalletRuntimeError
 
 export function copyRuntimeScope(scope: WalletRuntimeScope): WalletRuntimeScope {
   try {
-    const { orgId, mode, accountId, accountRevision, providerIdentityHash, providerReleaseId } =
-      scope;
+    const {
+      orgId,
+      mode,
+      accountId,
+      accountRevision,
+      accountEpoch,
+      providerIdentityHash,
+      providerReleaseId,
+    } = scope;
     if (
       typeof orgId !== 'string' ||
       !orgId.trim() ||
@@ -103,6 +112,7 @@ export function copyRuntimeScope(scope: WalletRuntimeScope): WalletRuntimeScope 
       !accountId.trim() ||
       !Number.isSafeInteger(accountRevision) ||
       accountRevision < 1 ||
+      (accountEpoch !== undefined && (!Number.isSafeInteger(accountEpoch) || accountEpoch < 1)) ||
       typeof providerIdentityHash !== 'string' ||
       !/^[0-9a-f]{64}$/.test(providerIdentityHash) ||
       typeof providerReleaseId !== 'string' ||
@@ -115,6 +125,7 @@ export function copyRuntimeScope(scope: WalletRuntimeScope): WalletRuntimeScope 
       mode,
       accountId,
       accountRevision,
+      ...(accountEpoch === undefined ? {} : { accountEpoch }),
       providerIdentityHash,
       providerReleaseId,
     };
@@ -155,6 +166,7 @@ async function snapshot(
         mode: scope.mode,
         accountId: scope.accountId,
         accountRevision: scope.accountRevision,
+        authorityEpoch: scope.accountEpoch,
         projectionReleaseId: scope.providerReleaseId,
         instanceId: purpose.instanceId,
         operationId: purpose.operationId,
@@ -171,6 +183,7 @@ async function snapshot(
           provider,
           accountId: scope.accountId,
           accountRevision: scope.accountRevision,
+          accountEpoch: scope.accountEpoch,
           providerIdentityHash: scope.providerIdentityHash,
           releaseId: scope.providerReleaseId,
         }))
@@ -181,6 +194,7 @@ async function snapshot(
         mode: scope.mode,
         accountId: scope.accountId,
         accountRevision: scope.accountRevision,
+        authorityEpoch: scope.accountEpoch,
         projectionReleaseId: scope.providerReleaseId,
         instanceId: purpose.instanceId,
         refHash: purpose.refHash,
@@ -196,7 +210,9 @@ async function snapshot(
       !account ||
       account.provider !== provider ||
       account.accountId !== scope.accountId ||
-      account.revision !== scope.accountRevision ||
+      (scope.accountEpoch === undefined
+        ? account.revision !== scope.accountRevision
+        : account.authorityEpoch !== scope.accountEpoch) ||
       (await providerIdentityHash(account, cardType ?? undefined)) !== scope.providerIdentityHash ||
       (account.provider === 'google' &&
         (!(account.objectIdHmacKey instanceof Uint8Array) ||

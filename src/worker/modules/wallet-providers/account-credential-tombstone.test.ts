@@ -6,6 +6,7 @@ import { withoutTrigger } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { readSamsungIssuedRefVerification } from './account-credential-historical.ts';
 import {
   addRealVersion,
@@ -28,6 +29,7 @@ import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { releaseCardType } from './repo-card-type.ts';
 import { setSource } from './repo-wallet-enrolments-test-fixtures.ts';
 import { samsungCardMap } from './samsung-cards.ts';
+import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
@@ -263,7 +265,7 @@ describe('Samsung tombstone and credential versions', () => {
         passCredentialGeneration: pass.credentialGeneration,
       }),
     ).toBe(true);
-    await onWalletPassRetired(t.kit.ctx, {
+    await onWalletPassRetired(jobCtxOf(t.kit), {
       orgId: scope.orgId,
       mode: scope.mode,
       passId: pass.passId,
@@ -289,9 +291,9 @@ describe('Samsung tombstone and credential versions', () => {
       claimHandle: newWalletClaimHandle(),
       now: t.kit.clock.now(),
     };
-    expect(await claimWalletOperation(db, claim)).toBe('claimed');
+    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
     expect(
-      await completeWalletOperation(t.kit.ctx, {
+      await completeWalletOperation(jobCtxOf(t.kit), {
         ...claim,
         result: { kind: 'success', httpStatus: 200 },
       }),

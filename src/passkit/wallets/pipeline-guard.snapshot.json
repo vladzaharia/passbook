@@ -1,135 +1,135 @@
 {
   "pipeline": {
-    "google": "9bbd6402ba10b7c03c89baa76f7509dbcb03ac5e1ca6933181e84a67bc42b882",
-    "samsung": "6583a230f62c47494c0eb362d5e7abe2d582212188cf18874cf4b8e0e2be7e61"
+    "google": "a91dae90f058d7a25d614db94cd3badab3d1ba031caea4a9f134b3726a4352a5",
+    "samsung": "4059b595eaae6f419de475d4d5f4e80ea5cc208767c5c6aa5032f64abd1fac6d"
   },
   "templates": {
-    "henrys-blue": "4327f8c0ef1294eb",
-    "henrys-copper": "d8dee65cf8110056",
+    "henrys-blue": "4dfe97e3b3012cdf",
+    "henrys-copper": "909d21c565517698",
     "starter-access-card": "31f6c9f86eac70f3",
     "starter-boarding-pass": "f7cc309f9e6f7a2b",
     "starter-booking": "f7b95145b32e15d3",
-    "starter-coupon": "eb8c2a5262daf602",
+    "starter-coupon": "0ca6f44cd9b318e9",
     "starter-credential": "305eed4dd7fb8dc5",
-    "starter-day-pass": "7fa8ab2fd37e460f",
-    "starter-event-ticket": "7f9a9b27a9dbc3f5",
+    "starter-day-pass": "80c740c332f2b0b2",
+    "starter-event-ticket": "f243aa998e6c0ca5",
     "starter-generic": "65ca43eda8be1e3c",
-    "starter-guest-pass": "5ddc029a1010de92",
+    "starter-guest-pass": "4f527c2110d728db",
     "starter-hotel-stay": "04ccdd7b6f853b74",
-    "starter-id-card": "a18dfbd5c9ae9d27",
-    "starter-monthly-pass": "13ec9a43e8b5b1ef",
+    "starter-id-card": "06cb31b6ea4d579c",
+    "starter-monthly-pass": "56ca1a0b0aa7b440",
     "starter-multi-day-pass": "ee0bfb1f2829d8a6",
     "starter-pack": "5f2efea1c32c6be0",
-    "starter-permit": "618ff86d4138d6d2",
-    "starter-pickup": "345f46202c2338b2",
+    "starter-permit": "7760e99676445707",
+    "starter-pickup": "f2608bb1fb370db9",
     "starter-poster-generic": "f735ef73e94c2f4a",
     "starter-staff-badge": "a54df5d5db2abb33",
     "starter-stamp-card": "eace2140151dbb6d",
-    "starter-store-card": "482872fb4377c70c",
-    "starter-timed-ticket": "15ed7ff6372a88ca",
+    "starter-store-card": "3e01c2017b5fd7bf",
+    "starter-timed-ticket": "bbc7d03e96c70abb",
     "starter-transit-ticket": "103a798e490159a6",
     "starter-visitor-pass": "dda69d7345b9334f"
   },
   "reports": {
     "henrys-blue": {
-      "google": "1c3d5d5a62f16cad2114e595f68246023c38f4f03cfc92e659cd56e2235ab50b",
-      "samsung": "37729135ed3e0fa74fcd13c96d066a02b2b6e375e20ce7911bbd24c38e87f984"
+      "google": "7f6c9e2643fa84d000f83ed0005b4baa3a84b860c778cea8c6804751d56e9d34",
+      "samsung": "fd285378837a0ca55c0269df77de77206af515907ae32547624d9b993d3285c1"
     },
     "henrys-copper": {
-      "google": "1c3d5d5a62f16cad2114e595f68246023c38f4f03cfc92e659cd56e2235ab50b",
-      "samsung": "37729135ed3e0fa74fcd13c96d066a02b2b6e375e20ce7911bbd24c38e87f984"
+      "google": "7f6c9e2643fa84d000f83ed0005b4baa3a84b860c778cea8c6804751d56e9d34",
+      "samsung": "fd285378837a0ca55c0269df77de77206af515907ae32547624d9b993d3285c1"
     },
     "starter-access-card": {
-      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "d4b5c9f9e2be744fd1d55a9c12deb984034dd961f04748debdfbced2548dfb3f",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-boarding-pass": {
-      "google": "b5393e259bc275f7f3c50563cd2cda7eb946929a96ecf112ae17eb9e6d25fd63",
-      "samsung": "096eacff93fb624a1fb7823d63771ad0c9249110cf18ccb4d8afe0640a848ed6"
+      "google": "9920fb8c93aa6f8e54e86c9e6224e4fb60ca2dec8884858ff31f1b54907801eb",
+      "samsung": "7735e0407f01e8d7d801eb41bc0b21fcc8967058911c84ce9c33a80b2854f353"
     },
     "starter-booking": {
-      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "d4b5c9f9e2be744fd1d55a9c12deb984034dd961f04748debdfbced2548dfb3f",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-coupon": {
-      "google": "378ee413227be767eac1e256966c630a48f9bc75209c22172b399a0361c1db69",
-      "samsung": "9938cbfa2ca4a740c3a921830f907e22e133bafb280dba166c3bed676fa229a6"
+      "google": "c5fac6066e8fe55d918806cf4c345ae455418c5b9f37a3800f022f10dc216da2",
+      "samsung": "63aa4ae777e5a350afb9a4d069939118129e64f6e378f4ee7823f3f94e96982b"
     },
     "starter-credential": {
-      "google": "04a2d56db19a29c9ce17e9c0f70f2d15a4e52b7d0db50c003f6580d44ead37b5",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "3c1380150935fd450a95743a96bc2e245a4179c68e39f2bf02f670b76ea22deb",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-day-pass": {
-      "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "0ccc1bf216ec23000947be286756c0854691048af917ef929a94a758da104499",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-event-ticket": {
-      "google": "bf4543a9b231dcba654d9b0bbea58e3e52034e224c9614522ef3c241bacd4455",
-      "samsung": "7922adcf804c6217054add23f00cce272b0be04ed3184a94b1fe079786637cd3"
+      "google": "f6d2b65889e14741781ad075ac5b3b8caaf2da638f6b372db416471d48583792",
+      "samsung": "41336f1889c381e939c2f5564f1a89b6f3124f5cffd3a6f4dc2081da68e4e017"
     },
     "starter-generic": {
-      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "d4b5c9f9e2be744fd1d55a9c12deb984034dd961f04748debdfbced2548dfb3f",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-guest-pass": {
-      "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "0ccc1bf216ec23000947be286756c0854691048af917ef929a94a758da104499",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-hotel-stay": {
-      "google": "b09cd04befafd7245d41fc21b673a4909d5a2df79a946f54a18df1d0d7732274",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "00ee47e7e2678824772ac9f61fcb6edd9b6e2fc0176d8a8a7f5908082f7b522c",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-id-card": {
-      "google": "54bde482e307246c3a17e40120317b1f6707b4d3caf88714ec1c582605485aad",
-      "samsung": "aeb39e4126d5dfda5d434a36e05e57928805da9bdca2478ed3335a5e03b88bf5"
+      "google": "3557cf170b8dce9890b22960c37c4c4ac272fb6864017696f591d3744f95f1ac",
+      "samsung": "abfaa0c19c5ceaffc0e698201536b92bbfdba254c169bb2d51d7e3e42abf6353"
     },
     "starter-monthly-pass": {
-      "google": "3df86b453a0348e54726521be4ad11526eeb3bc50d2f620199d54f94c39dac10",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "0ccc1bf216ec23000947be286756c0854691048af917ef929a94a758da104499",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-multi-day-pass": {
-      "google": "8ea4df3e78fedc7047ed7c97e8305f4adb959ecea78ecd9ad7cdd27dc94c1e31",
-      "samsung": "7922adcf804c6217054add23f00cce272b0be04ed3184a94b1fe079786637cd3"
+      "google": "8071f19a223e99ee933a194e9930e57af43616d9c6748a380447971370fc6e6c",
+      "samsung": "41336f1889c381e939c2f5564f1a89b6f3124f5cffd3a6f4dc2081da68e4e017"
     },
     "starter-pack": {
-      "google": "5ae19ce49b75dae2e27c87c06d59b4cfcac7e4d4f6101d6d6eca73bf3f705285",
-      "samsung": "3466a45409adeb5f78dd8c69cf8bec460d7e21082e60d28215f7e7f15420012d"
+      "google": "cb2443533be2926fef0a47d831fa83569a3db0bb5172d9e1c4e75d86842dd4a9",
+      "samsung": "8fe1066b3431be2014371ff44139b993acfaae67e311d47d3ff916d832ab2794"
     },
     "starter-permit": {
-      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "d4b5c9f9e2be744fd1d55a9c12deb984034dd961f04748debdfbced2548dfb3f",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-pickup": {
-      "google": "b28c66df3e8678d57c3b514ef5419a75b5a0a7259ab7468e7f00c59e1dd4344b",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "25c2fe253a63ab3336ccb340593b5eb36a90c47ed747d942a2de0249ed551018",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-poster-generic": {
-      "google": "94654aa800e7b53eaeadf1aecc44e6767449662f14af39c179001e98fe10c4d8",
-      "samsung": "096eacff93fb624a1fb7823d63771ad0c9249110cf18ccb4d8afe0640a848ed6"
+      "google": "37be4ed36d3c8af8f0bdd7ebd6917b0ccb9082363fc9f2eb0173118b4734bf26",
+      "samsung": "7735e0407f01e8d7d801eb41bc0b21fcc8967058911c84ce9c33a80b2854f353"
     },
     "starter-staff-badge": {
-      "google": "4cbcf376b407ebd33b13dbd4e361f71be42dce81b14d46ab460c8387367defe8",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "d4b5c9f9e2be744fd1d55a9c12deb984034dd961f04748debdfbced2548dfb3f",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     },
     "starter-stamp-card": {
-      "google": "00c03b70b3358d8ea0f40f9db7377d52474f7a589d3652d551eb409d4fe2e980",
-      "samsung": "b1a78a415b4d3395bf8b7c655263604c4863832c7d9a3743b785698a8a95d7e0"
+      "google": "748bd5b0927d2b6109403afaed2b6460bf51b431430d6ffe522acd72b3a1d7c3",
+      "samsung": "c41a53d7995df20c48e17841d8e6c026772c73863626cd9ff28a8615c4ff31b7"
     },
     "starter-store-card": {
-      "google": "979abe834b01eaf990ac6bdee4a5168a1eca1ff02cb28007edc19a7f10877d3f",
-      "samsung": "a3619ebc232d7965c7ac26057d36dbbf683c0cf4684b6e445b70a01a3a1ba2fb"
+      "google": "d896aabfcce979677b1cdd9a879266a1e3a162e18288598369167ee82ea3ff2d",
+      "samsung": "dc5d10dcfc78642b0043de1bc2e1f97b219850ff3e17dda83134ec82ae435053"
     },
     "starter-timed-ticket": {
-      "google": "72eebcf3015f77c68de43a85069112184c895e7c637a4fe666e9ac72ddd34552",
-      "samsung": "2641ce97f187d9d5c96512a4f565c4508359001595c9a28ee16cbd75f52a9cbb"
+      "google": "8cd67fc219c33ec20eb4abf5f6f818eeb5b14c218b9285707b24166ab6a09ad8",
+      "samsung": "d1e16b31841ccc1f26e3c8b1bec519653175213d666365726d0c52a151a0f4e8"
     },
     "starter-transit-ticket": {
-      "google": "843015009cd9432da8e52e9e2c9888d1caedf41f38de89efb248f495053814bd",
-      "samsung": "096eacff93fb624a1fb7823d63771ad0c9249110cf18ccb4d8afe0640a848ed6"
+      "google": "f80c0a37393c67432ae1d696eca7e6a0d7c2fed6eb80e11042ec7c968b8c5113",
+      "samsung": "7735e0407f01e8d7d801eb41bc0b21fcc8967058911c84ce9c33a80b2854f353"
     },
     "starter-visitor-pass": {
-      "google": "e1403355869cbe5850b73ca904d519a84b113251c65131ef1efc0c57084ff0e6",
-      "samsung": "7220ec7e5d41a32f4241b8cc91164e65ced06746e6fcbea23884bcb39e9dcb2f"
+      "google": "450198832d176c8901f4dfb9161fdefff1c0015f5eef5422939d69a8a33ff670",
+      "samsung": "c7cc5ef5295288fe8a142a2f3874fe3fd4f6122f960494646ca388200e785354"
     }
   }
 }

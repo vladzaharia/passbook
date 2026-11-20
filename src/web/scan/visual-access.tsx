@@ -68,6 +68,7 @@ export const ACCESS_SCENARIOS = [
   'roll-call',
   'roll-call-done',
   'roll-call-offline',
+  'roll-call-stalled',
   'roll-call-start',
 ] as const;
 export type AccessScenario = (typeof ACCESS_SCENARIOS)[number];
@@ -108,6 +109,11 @@ function RollScenario({ scenario }: { scenario: AccessScenario }) {
     online,
     notify: { undo: () => undefined, error: () => undefined, info: () => undefined },
   });
+  // Stalled: the server kept failing, so two taps wait and the desk is told, with Try again.
+  const shown =
+    scenario === 'roll-call-stalled'
+      ? { ...roll, stalled: true, pending: 2, retryStalled: () => undefined }
+      : roll;
   return (
     <InsideSheet
       open
@@ -117,7 +123,7 @@ function RollScenario({ scenario }: { scenario: AccessScenario }) {
       onOpenRow={() => undefined}
       body={
         <RollCallPanel
-          roll={roll}
+          roll={shown}
           online={online}
           now={ROLL_T0 + 12 * 60_000}
           onEnd={() => undefined}

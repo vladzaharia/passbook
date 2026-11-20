@@ -297,8 +297,7 @@ describe('access: round trips', () => {
     const base = await trips(() => kit.post(d.headers, '/actions', {}));
     const winner = (await trips(() => grantOf(d.headers, pass))) - base;
     const again = (await trips(() => grantOf(d.headers, pass))) - base;
-    // 5, plus the visitor host-notice lookup that runs in waitUntil after the response (visitors/arrival.ts).
-    expect(winner).toBeLessThanOrEqual(6);
-    expect(again).toBeLessThanOrEqual(6);
+    expect(winner).toBeLessThanOrEqual(5);
+    expect(again).toBeLessThanOrEqual(5);
   });
 });

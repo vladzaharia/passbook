@@ -19,6 +19,8 @@ export interface CodeFieldProps {
   group?: number;
   /** `digits` (default) or Crockford base32, as in scanner pairing codes. */
   alphabet?: 'digits' | 'crockford';
+  /** `one-time-code` (default) lets a message fill a sign-in code; a PIN is `off`. */
+  autoComplete?: 'one-time-code' | 'off';
 }
 
 /** Keeps digits only, at most six (pasting "123 456" works). */
@@ -56,6 +58,7 @@ export function CodeField({
   length = CODE_LENGTH,
   group = 3,
   alphabet = 'digits',
+  autoComplete = 'one-time-code',
 }: CodeFieldProps) {
   const crockford = alphabet === 'crockford';
   const normalise = (raw: string) =>
@@ -75,7 +78,7 @@ export function CodeField({
         }}
         onBlur={onBlur}
         inputMode={crockford ? 'text' : 'numeric'}
-        autoComplete="one-time-code"
+        autoComplete={autoComplete}
         pattern={crockford ? '[0-9A-Za-z]*' : '[0-9]*'}
         autoCapitalize={crockford ? 'characters' : undefined}
         autoCorrect="off"

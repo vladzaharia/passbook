@@ -178,6 +178,20 @@ describe('export', () => {
     ).toBe(true);
     const counts = JSON.parse(done?.entities ?? '{}') as Record<string, number>;
     expect(counts.passes).toBe(3);
+    // The wave's tables: visitors with their host, roll calls, tag metadata (a hint, never the tag or a key).
+    expect(rows('visitors').map((v) => v.host_email)).toEqual(['host-exp-a@example.test']);
+    expect(rows('roll_calls')).toHaveLength(1);
+    expect(rows('roll_call_marks')).toHaveLength(1);
+    expect(rows('scan_group_members')).toHaveLength(1);
+    expect(rows('nfc_tags').map((t) => t.hint)).toEqual(['AB12', 'CD34']);
+    expect(rows('nfc_tag_keysets')).toHaveLength(1);
+    expect(rows('org_entitlement_overrides')).toHaveLength(1);
+    expect(rows('scanning_sessions').map((s) => s.setup_template_id)).toEqual(['tpl-exp-a']);
+    expect(counts.nfc_tags).toBe(2);
+    expect(Object.keys(text).some((k) => /nfc_tag_(keys|sun)\.|idempotent|offline/.test(k))).toBe(
+      false,
+    );
+    expect(text['nfc_tags.ndjson']).not.toContain('tag_ref');
 
     const everything = Object.values(text).join('\n');
     for (const leaked of [

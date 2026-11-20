@@ -1,6 +1,6 @@
 import { jobGrant } from '../../platform/authority.ts';
 import { type Check, exactlyOne } from '../../platform/authority-checks.ts';
-import { all } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { PreparedReceipt } from '../retention/receipt-service.ts';
 import type { Scope } from '../retention/repo-sweep.ts';
@@ -36,6 +36,15 @@ const receiptExists = (receiptId: string): Check => ({
   reason: 'config',
   ok: (b) => `EXISTS (SELECT 1 FROM retention_receipts WHERE id = ${b.bind(receiptId)})`,
 });
+
+/** A hold that landed after the page was read: the pass must not be removed. */
+export async function visitHeld(db: D1Database, v: RetentionVisit): Promise<boolean> {
+  const row = await first<{ held: number }>(db, `SELECT ${heldSql('?', '?')} AS held`, [
+    v.org_id,
+    v.pass_id,
+  ]);
+  return row?.held === 1;
+}
 
 /** Visits whose window ended before `before`, in id order after the cursor, not held. */
 export function endedVisits(
@@ -83,4 +92,15 @@ export async function deleteVisit(
   });
   g.delete('visitors', { where: { id: v.id }, require: 'one' });
   await g.commitAfter(receipt.stmt);
+}
+
+/** The retention job already soft-deleted this pass (a crash after it, before the visit row went). */
+export async function passRemovedBySystem(db: D1Database, v: RetentionVisit): Promise<boolean> {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM audit_log
+     WHERE org_id = ? AND action = 'pass.delete' AND target_id = ? AND actor_type = 'system'`,
+    [v.org_id, v.pass_id],
+  );
+  return (row?.n ?? 0) > 0;
 }

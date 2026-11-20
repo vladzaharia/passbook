@@ -90,3 +90,10 @@ export const uploadIds = async (db: D1Database, orgId: string): Promise<string[]
       [orgId],
     )
   ).map((r) => r.upload_id);
+
+export const hasPurgeReceipt = async (db: D1Database, orgId: string): Promise<boolean> =>
+  (await first(
+    db,
+    "SELECT 1 AS x FROM retention_receipts WHERE org_id = ? AND class = 'org_purge'",
+    [orgId],
+  )) !== null;

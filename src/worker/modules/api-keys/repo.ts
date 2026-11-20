@@ -1,5 +1,3 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
-import { scopeCapability, type TenantScope } from '../../platform/api-scopes.ts';
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { exists } from '../../platform/authority-cond.ts';
@@ -9,119 +7,15 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { userLabelSql } from '../orgs/repo-user-label.ts';
-import {
-  capabilityChecks,
-  membershipCapability,
-  tenantPrincipal,
-} from '../passes/repo-authority.ts';
-import { type ApiKeyAuthority, delegableScopes } from './access.ts';
+import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import type { ApiKeyAuthority } from './access.ts';
+import type { ApiKeyRow } from './repo-row.ts';
 
 type Db = D1Database;
 
-export interface ApiKeyRow {
-  id: string;
-  org_id: string | null;
-  name: string;
-  prefix: string;
-  key_hash: string;
-  scopes: string;
-  mode: Mode;
-  created_by: string | null;
-  created_at: number;
-  last_used_at: number | null;
-  expires_at: number | null;
-  revoked_at: number | null;
-}
+export type { ApiKeyRow } from './repo-row.ts';
 
-const PLATFORM_KEY_TENANT = ['org_id', 'mode'];
 const NO_ORG = { org_id: null };
-
-/**
- * Mints a key under a grant: `org_mode.api_key.create` for an org-bound key (the creator's live membership
- * and session, `integrations:manage`, in the request's mode) or `platform.api_key.create` for a null-org key (a live admin
- * session). A key cannot hold scopes beyond its creator's roles: `delegableScopes` is derived from the
- * membership's roles, which are immutable, and re-checked here so the repo stands alone.
- */
-export async function createKey(
-  ctx: ServiceContext,
-  key: ApiKeyRow,
-  authority: ApiKeyAuthority,
-  audit: AuditEntry,
-  terminalIds: readonly string[] = [],
-): Promise<void> {
-  // The grant supplies org_id and mode of a tenant key: the creator's org and request mode.
-  const columns = [
-    'name',
-    'prefix',
-    'key_hash',
-    'scopes',
-    'created_by',
-    'created_at',
-    'expires_at',
-  ];
-  const values = [
-    key.name,
-    key.prefix,
-    key.key_hash,
-    key.scopes,
-    key.created_by,
-    key.created_at,
-    key.expires_at,
-  ];
-  if (authority.kind === 'platform') {
-    if (key.org_id !== null || terminalIds.length > 0) throw new ForbiddenError();
-    const g = grant(ctx, {
-      purpose: 'platform.api_key.create',
-      principal: { kind: 'platform', userId: authority.userId, sessionIdHash: authority.sessionId },
-      target: key.id,
-    });
-    // A platform grant injects no tenant: a platform key names its own (null) org and mode.
-    const platformColumns = ['id', ...PLATFORM_KEY_TENANT, ...columns];
-    const platformValues = [key.id, null, key.mode, ...values];
-    g.insertSelect('api_keys', platformColumns, platformValues);
-    g.add(grantedAudit(g, ctx, audit));
-    await g.commit();
-    return;
-  }
-  const delegable: string[] = delegableScopes(authority);
-  const wanted = JSON.parse(key.scopes) as string[];
-  if (
-    authority.capability !== 'integrations:manage' ||
-    key.org_id !== authority.orgId ||
-    wanted.some((scope) => !delegable.includes(scope))
-  )
-    throw new ForbiddenError(
-      'A key cannot hold scopes beyond your own access.',
-      'API_KEY_SCOPE_EXCEEDS_CREATOR',
-    );
-  if (key.mode !== authority.mode) throw new ForbiddenError();
-  const g = grant(ctx, {
-    purpose: 'org_mode.api_key.create',
-    principal: tenantPrincipal(authority),
-    target: key.id,
-    // Each scope must be granted by the creator's own stored roles, not by the snapshot's `roles`.
-    checks: [
-      ...capabilityChecks(authority),
-      ...wanted.map((scope) =>
-        membershipCapability(authority.membershipId, scopeCapability[scope as TenantScope]),
-      ),
-      // A terminal of the grant's org and mode, still in service; the binding is written with the key.
-      ...terminalIds.map((id) =>
-        exactlyOne('scanners', { id, kind: 'terminal', revoked_at: null }),
-      ),
-    ],
-    codes: { lineage: 'API_KEY_TERMINAL_UNKNOWN' },
-  });
-  g.insertSelect('api_keys', ['id', ...columns], [key.id, ...values]);
-  for (const scannerId of terminalIds)
-    g.insertJoined('api_key_terminals', {
-      parents: { key_id: key.id, scanner_id: scannerId },
-      columns: [],
-      values: [],
-    });
-  g.add(grantedAudit(g, ctx, audit));
-  await g.commit();
-}
 
 /**
  * Revokes a key under `org.api_key.revoke` / `platform.api_key.revoke`. Idempotent: the audit row is
@@ -134,9 +28,11 @@ export async function revokeKey(
   authority: ApiKeyAuthority,
   audit: AuditEntry,
 ): Promise<void> {
-  if (authority.kind !== 'platform' && authority.capability !== 'integrations:manage')
-    throw new ForbiddenError();
   const platform = authority.kind === 'platform';
+  // A member without `integrations:manage` may end only their own personal key.
+  const own = !platform && authority.capability === 'org:read';
+  if (!platform && !own && authority.capability !== 'integrations:manage')
+    throw new ForbiddenError();
   const g = grant(ctx, {
     purpose: platform ? 'platform.api_key.revoke' : 'org.api_key.revoke',
     principal: platform
@@ -145,7 +41,10 @@ export async function revokeKey(
     target: id,
     checks: [
       ...(platform ? [] : capabilityChecks(authority)),
-      exactlyOne('api_keys', platform ? { id, ...NO_ORG } : { id }),
+      exactlyOne(
+        'api_keys',
+        platform ? { id, ...NO_ORG } : own ? { id, membership_id: authority.membershipId } : { id },
+      ),
     ],
     codes: { lineage: 'API_KEY_NOT_FOUND' },
   });
@@ -155,20 +54,66 @@ export async function revokeKey(
   await g.commit();
 }
 
+/**
+ * Ends a key at `retireAt`, once, under `org.api_key.retire` / `platform.api_key.retire`. The audit row is
+ * written, in the same batch, only when this call sets it; a key already retired or revoked is not touched.
+ */
+export async function retireKey(
+  ctx: ServiceContext,
+  id: string,
+  retireAt: number,
+  authority: ApiKeyAuthority,
+  audit: AuditEntry,
+): Promise<void> {
+  const platform = authority.kind === 'platform';
+  // As revoke: a member without `integrations:manage` retires only their own personal key.
+  const own = !platform && authority.capability === 'org:read';
+  if (!platform && !own && authority.capability !== 'integrations:manage')
+    throw new ForbiddenError();
+  const g = grant(ctx, {
+    purpose: platform ? 'platform.api_key.retire' : 'org.api_key.retire',
+    principal: platform
+      ? { kind: 'platform', userId: authority.userId, sessionIdHash: authority.sessionId }
+      : tenantPrincipal(authority),
+    target: id,
+    checks: [
+      ...(platform ? [] : capabilityChecks(authority)),
+      exactlyOne(
+        'api_keys',
+        platform ? { id, ...NO_ORG } : own ? { id, membership_id: authority.membershipId } : { id },
+      ),
+    ],
+    codes: { lineage: 'API_KEY_NOT_FOUND' },
+  });
+  const open = { retire_at: null, revoked_at: null };
+  g.add(grantedAudit(g, ctx, audit, [exists('api_keys', { id, ...open })]));
+  g.update('api_keys', {
+    set: { retire_at: retireAt },
+    where: platform ? { id, ...NO_ORG, ...open } : { id, ...open },
+  });
+  await g.commit();
+}
+
 export interface KeyFilter {
   orgId: string | null;
   state?: 'live' | 'revoked' | undefined;
   /** The last id of the previous page. */
   cursor?: string | undefined;
   limit: number;
+  /** A membership id: only that member's personal keys, in SQL, whatever else the caller names. */
+  mine?: string | undefined;
 }
 
-function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state'>) {
+function keyWhere(f: Pick<KeyFilter, 'orgId' | 'state' | 'mine'>) {
   const where: string[] = [];
   const params: SqlValue[] = [f.orgId];
   where.push('k.org_id IS ?');
   if (f.state === 'live') where.push('k.revoked_at IS NULL');
   if (f.state === 'revoked') where.push('k.revoked_at IS NOT NULL');
+  if (f.mine !== undefined) {
+    where.push("k.kind = 'personal' AND k.membership_id = ?");
+    params.push(f.mine);
+  }
   return { where, params };
 }
 
@@ -192,8 +137,8 @@ export function listKeys(db: Db, f: KeyFilter, platform: boolean) {
   );
 }
 
-export async function countRevoked(db: Db, orgId: string | null): Promise<number> {
-  const { where, params } = keyWhere({ orgId, state: 'revoked' });
+export async function countRevoked(db: Db, orgId: string | null, mine?: string): Promise<number> {
+  const { where, params } = keyWhere({ orgId, state: 'revoked', mine });
   const row = await first<{ n: number }>(
     db,
     `SELECT count(*) AS n FROM api_keys k WHERE ${where.join(' AND ')}`,
@@ -205,20 +150,44 @@ export async function countRevoked(db: Db, orgId: string | null): Promise<number
 export const getKey = (db: Db, id: string, orgId: string | null) =>
   first<ApiKeyRow>(db, 'SELECT * FROM api_keys WHERE id = ? AND org_id IS ?', [id, orgId]);
 
-/** The key plus its org's status; null org status means a platform key. */
+/**
+ * The key plus its org's status (null: a platform key) and, for a personal key, the roles of its member
+ * while that membership is live and the user active (null otherwise).
+ */
 export const findByPrefix = (db: Db, prefix: string) =>
-  first<ApiKeyRow & { org_status: string | null }>(
+  first<ApiKeyRow & { org_status: string | null; member_roles: string | null }>(
     db,
-    `SELECT k.*, o.status AS org_status FROM api_keys k LEFT JOIN orgs o ON o.id = k.org_id
+    `SELECT k.*, o.status AS org_status,
+       (SELECT m.roles FROM org_memberships m JOIN users u ON u.id = m.user_id
+        WHERE m.id = k.membership_id AND m.org_id = k.org_id AND m.revoked_at IS NULL
+          AND u.status = 'active') AS member_roles
+     FROM api_keys k LEFT JOIN orgs o ON o.id = k.org_id
      WHERE k.prefix = ?`,
     [prefix],
   );
 
 /** Writes at most once per interval. */
-export async function touchKey(db: Db, id: string, now: number, everyMs: number): Promise<void> {
+export async function touchKey(
+  db: Db,
+  id: string,
+  now: number,
+  everyMs: number,
+  ipPrefix: string | null,
+): Promise<void> {
   await run(
     db,
-    'UPDATE api_keys SET last_used_at = ? WHERE id = ? AND (last_used_at IS NULL OR last_used_at < ?)',
-    [now, id, now - everyMs],
+    `UPDATE api_keys SET last_used_at = ?, last_ip_prefix = ?
+     WHERE id = ? AND (last_used_at IS NULL OR last_used_at < ?)`,
+    [now, ipPrefix, id, now - everyMs],
+  );
+}
+
+/** Template ids and pass styles a restricted key is limited to. */
+export async function keyResources(db: Db, keyIds: readonly string[]) {
+  if (keyIds.length === 0) return [];
+  return all<{ key_id: string; kind: 'template' | 'pass_style'; value: string }>(
+    db,
+    'SELECT key_id, kind, value FROM api_key_resources WHERE key_id IN (SELECT value FROM json_each(?))',
+    [JSON.stringify(keyIds)],
   );
 }

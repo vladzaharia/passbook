@@ -1,6 +1,9 @@
 import type { z } from 'zod';
+import { MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
-import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
+import type { OrgCapability, OrgRole } from '../../shared/contracts/org-membership.ts';
+import { OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
+import { rolesGranting } from './org-role-grants.ts';
 
 type ApiScope = z.infer<typeof ApiScopeSchema>;
 
@@ -52,7 +55,7 @@ const ALSO_READS: Partial<Record<TenantScope, OrgCapability>> = {
   'brand:manage': 'org:read',
 };
 
-/** `scans:write` is the terminal scope (its own guard); it never stands for `passes:operate`. */
+/** `scans:write` is the terminal scope (its own guard); it stands for `passes:operate` only where a call site opts in (`tenantAuthorityOf`'s `tillKey`, roll call). */
 const NOT_TENANT_AUTHORITY: readonly ApiScope[] = ['scans:write'];
 
 /** Whether a key holding `scope` may exercise `capability` in the org it belongs to. */
@@ -60,3 +63,36 @@ export function scopeExercises(scope: ApiScope, capability: OrgCapability): bool
   if (isPlatformScope(scope) || NOT_TENANT_AUTHORITY.includes(scope)) return false;
   return scopeCapability[scope] === capability || ALSO_READS[scope] === capability;
 }
+
+/**
+ * Org scopes a role stands for: those a route accepts (`MINTABLE_SCOPES`), so a role token never holds a scope
+ * nobody reviewed, and never `scans:write`, a terminal's scope (bound to its terminals).
+ */
+const presetScope = (scope: TenantScope) =>
+  !NOT_TENANT_AUTHORITY.includes(scope) && (MINTABLE_SCOPES as readonly string[]).includes(scope);
+
+/**
+ * The seven role presets as scope bundles: a role holds each org scope whose capability the role's
+ * membership grants, so a preset never exceeds the role and a scope added later reaches role tokens
+ * with no edit here. A token holding a role is evaluated against this at every request.
+ */
+export const ROLE_PRESETS: Record<OrgRole, TenantScope[]> = Object.fromEntries(
+  OrgRoleSchema.options.map((role) => [
+    role,
+    (Object.keys(scopeCapability) as TenantScope[]).filter(
+      (scope) => presetScope(scope) && rolesGranting(scopeCapability[scope]).includes(role),
+    ),
+  ]),
+) as Record<OrgRole, TenantScope[]>;
+
+/** Roles whose membership grants what `scope` exercises (the cap on a personal key). */
+export const rolesCapableOf = (scope: string): OrgRole[] =>
+  isPlatformScope(scope as ApiScope) || !(scope in scopeCapability)
+    ? []
+    : rolesGranting(scopeCapability[scope as TenantScope]);
+
+/** The scopes written onto a key at mint: its own plus those of its roles, once each. Read once, never again. */
+export const effectiveScopes = (
+  scopes: readonly ApiScope[],
+  roles: readonly OrgRole[],
+): ApiScope[] => [...new Set([...scopes, ...roles.flatMap((role) => ROLE_PRESETS[role])])];

@@ -20,6 +20,10 @@ import {
   MoreMenu,
   PageHeader,
   SkeletonDetail,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   TechnicalDetails,
   TwoPane,
   TypedConfirmDialog,
@@ -28,6 +32,7 @@ import {
 import { CreatedCallout, useCreated } from '../passes/created.tsx';
 import { HoldsCard } from '../retention/holds-card.tsx';
 import { ReceiptsCard } from '../retention/receipts-card.tsx';
+import { FeaturesTab } from './features/features-tab.tsx';
 import { BootstrapOrgAdmin, ProvisioningCounts, showBootstrap } from './org-provisioning.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { useDeleteOrg, useOrg, useSetOrgStatus } from './queries.ts';
@@ -55,12 +60,18 @@ function useStatusToggle(orgId: string) {
 }
 
 /** Platform provisioning is independent of tenant membership and never loads a workspace. */
+export type OrgDetailTab = 'overview' | 'features';
+
 export function OrgDetailPage({
   orgId,
   canOpenWorkspace,
+  tab = 'overview',
+  onTab,
 }: {
   orgId: string;
   canOpenWorkspace: boolean;
+  tab?: OrgDetailTab;
+  onTab?: (tab: OrgDetailTab) => void;
 }) {
   const query = useOrg(orgId);
   const remove = useDeleteOrg(orgId);
@@ -155,71 +166,82 @@ export function OrgDetailPage({
           The displayed provisioning details may be out of date.
         </Callout>
       ) : null}
-      <TwoPane
-        aside={
-          <>
-            <ProvisioningCounts org={org} />
+      <Tabs value={tab} onValueChange={(t) => onTab?.(t as OrgDetailTab)} className="min-w-0">
+        <TabsList aria-label="Organization sections">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="features">Features</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <TwoPane
+            aside={
+              <>
+                <ProvisioningCounts org={org} />
+                <Card>
+                  <CardHeader title="Overview" />
+                  <CardBody>
+                    <KeyValue
+                      items={[
+                        { label: 'Slug', value: org.slug, mono: true },
+                        { label: 'Created', value: formatDateTime(org.createdAt) },
+                      ]}
+                    />
+                    <TechnicalDetails
+                      className="mt-3"
+                      items={[{ label: 'ID', value: org.id, copy: true }]}
+                    />
+                  </CardBody>
+                </Card>
+              </>
+            }
+          >
+            {created.shown ? (
+              <CreatedCallout
+                title="Organization created"
+                onDismiss={created.dismiss}
+                actions={
+                  canOpenWorkspace ? (
+                    <Button asChild size="sm">
+                      <Link
+                        to="/admin/orgs/$orgId"
+                        params={{ orgId: org.id }}
+                        search={{ view: 'workspace', orgId: org.id }}
+                      >
+                        Open workspace
+                      </Link>
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : null}
+            {suspended ? (
+              <Callout tone="warning">
+                Suspended: passes do not update and its API keys do not work.
+              </Callout>
+            ) : null}
+            {showBootstrap(org) ? (
+              <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
+            ) : null}
             <Card>
-              <CardHeader title="Overview" />
-              <CardBody>
-                <KeyValue
-                  items={[
-                    { label: 'Slug', value: org.slug, mono: true },
-                    { label: 'Created', value: formatDateTime(org.createdAt) },
-                  ]}
-                />
-                <TechnicalDetails
-                  className="mt-3"
-                  items={[{ label: 'ID', value: org.id, copy: true }]}
-                />
+              <CardHeader
+                title="Signing identities"
+                actions={
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/admin/identities">Manage identities</Link>
+                  </Button>
+                }
+              />
+              <CardBody className="text-sm text-fg-muted">
+                Signing identities are managed under Identities.
               </CardBody>
             </Card>
-          </>
-        }
-      >
-        {created.shown ? (
-          <CreatedCallout
-            title="Organization created"
-            onDismiss={created.dismiss}
-            actions={
-              canOpenWorkspace ? (
-                <Button asChild size="sm">
-                  <Link
-                    to="/admin/orgs/$orgId"
-                    params={{ orgId: org.id }}
-                    search={{ view: 'workspace', orgId: org.id }}
-                  >
-                    Open workspace
-                  </Link>
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : null}
-        {suspended ? (
-          <Callout tone="warning">
-            Suspended: passes do not update and its API keys do not work.
-          </Callout>
-        ) : null}
-        {showBootstrap(org) ? (
-          <BootstrapOrgAdmin orgId={org.id} active={org.status === 'active'} />
-        ) : null}
-        <Card>
-          <CardHeader
-            title="Signing identities"
-            actions={
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/admin/identities">Manage identities</Link>
-              </Button>
-            }
-          />
-          <CardBody className="text-sm text-fg-muted">
-            Signing identities are managed under Identities.
-          </CardBody>
-        </Card>
-        <HoldsCard scope="platform" orgId={org.id} canManage />
-        <ReceiptsCard scope="platform" orgId={org.id} />
-      </TwoPane>
+            <HoldsCard scope="platform" orgId={org.id} canManage />
+            <ReceiptsCard scope="platform" orgId={org.id} />
+          </TwoPane>
+        </TabsContent>
+        <TabsContent value="features">
+          <FeaturesTab orgId={org.id} orgName={org.name} />
+        </TabsContent>
+      </Tabs>
       <TypedConfirmDialog
         open={deleting}
         onOpenChange={setDeleting}

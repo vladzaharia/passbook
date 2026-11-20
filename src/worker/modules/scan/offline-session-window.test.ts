@@ -14,6 +14,8 @@ const paused = {
   mode: 'list',
   prev_status: 'active',
   prev_mode: 'list',
+  timing: null,
+  prev_timing: null,
 };
 
 describe('a queued read against the session it syncs into', () => {
@@ -34,14 +36,64 @@ describe('a queued read against the session it syncs into', () => {
       mode: 'stop',
       prev_status: 'active',
       prev_mode: 'list',
+      timing: null,
+      prev_timing: null,
     };
     expect(sessionAcceptsAt(actor('active', 'stop'), 500, [stop])).toBe(true);
     expect(sessionAcceptsAt(actor('active', 'stop'), 1500, [stop])).toBe(false);
   });
 
   it('a read dated before the last clean online contact is backdated', () => {
-    expect(sessionAcceptsAt(actor('active'), 10_000, [], 100_000)).toBe(false);
-    expect(sessionAcceptsAt(actor('active'), 100_000, [], 100_000)).toBe(true);
+    expect(sessionAcceptsAt(actor('active'), 100_000, [], 1_000_000)).toBe(false);
+    expect(sessionAcceptsAt(actor('active'), 1_000_000, [], 1_000_000)).toBe(true);
+  });
+
+  it('forgives a door clock up to five minutes behind its last clean contact', () => {
+    expect(sessionAcceptsAt(actor('active'), 1_000_000 - 4 * 60_000, [], 1_000_000)).toBe(true);
+    expect(sessionAcceptsAt(actor('active'), 1_000_000 - 6 * 60_000, [], 1_000_000)).toBe(false);
+  });
+
+  it("a read after a row from before timing was kept uses the next row's earlier timing", () => {
+    const open = JSON.stringify({ hours: null, hold: null, timeZone: 'UTC' });
+    const closed = JSON.stringify({
+      hours: null,
+      hold: '{"state":"closed","until":99999}',
+      timeZone: 'UTC',
+    });
+    const old = {
+      at: 1000,
+      status: 'active',
+      mode: 'list',
+      prev_status: 'active',
+      prev_mode: 'list',
+      timing: null,
+      prev_timing: null,
+    };
+    const next = { ...old, at: 5000, timing: closed, prev_timing: open };
+    expect(sessionAcceptsAt(actor('active'), 3000, [old, next])).toBe(true);
+    expect(sessionAcceptsAt(actor('active'), 6000, [old, next])).toBe(false);
+  });
+
+  it("judges hours and holds by the timing in force then, not the session's current ones", () => {
+    const closed = JSON.stringify({
+      hours: null,
+      hold: '{"state":"closed","until":9000}',
+      timeZone: 'UTC',
+    });
+    const open = JSON.stringify({ hours: null, hold: null, timeZone: 'UTC' });
+    const closedAt1000 = {
+      at: 1000,
+      status: 'active',
+      mode: 'list',
+      prev_status: 'active',
+      prev_mode: 'list',
+      timing: closed,
+      prev_timing: open,
+    };
+    expect(sessionAcceptsAt(actor('active'), 500, [closedAt1000])).toBe(true);
+    expect(sessionAcceptsAt(actor('active'), 1500, [closedAt1000])).toBe(false);
+    // The hold ended on its own at 9000.
+    expect(sessionAcceptsAt(actor('active'), 9500, [closedAt1000])).toBe(true);
   });
 
   it('takes any read of a live session with no history', () => {

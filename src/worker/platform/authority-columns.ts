@@ -270,6 +270,8 @@ export const EPOCH_TABLES: EpochTable[] = [
       'holder_removed_at',
       // Set once, from NULL (0116); no epoch moves, because it only names the card a copy was made with.
       'card_type',
+      // Derived and write-once (0148): lifecycle already moved the epoch.
+      'retirement_settled_at',
     ],
     // `channel_epoch` is the successor counter of a channel cycle (0114), fixed for one instance.
     fixed: [

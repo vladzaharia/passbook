@@ -14,6 +14,7 @@ import { ConflictError } from '../../src/worker/platform/errors.ts';
 import { createIds, type Ids, sha256Hex } from '../../src/worker/platform/ids.ts';
 import { createServiceContext } from '../../src/worker/platform/service-context.ts';
 import { fixtureToken } from './tokens.ts';
+import { withoutTrigger } from './triggers.ts';
 
 /** The one fixed epoch test kits start at: 2026-06-01 12:00 UTC, mid-day in every time zone. */
 export const TEST_NOW = Date.UTC(2026, 5, 1, 12);
@@ -424,25 +425,66 @@ export interface ApiKeyFixture {
 /** Inserts an API key row. Format wlt_<prefix>_<secret>; only the SHA-256 is stored. */
 export async function makeApiKey(
   f: Fixtures,
-  options: { orgId?: string | null; scopes?: string[]; name?: string; mode?: 'live' | 'test' } = {},
+  options: {
+    orgId?: string | null;
+    scopes?: string[];
+    name?: string;
+    mode?: 'live' | 'test';
+    kind?: 'service' | 'personal' | 'platform';
+    roles?: string[];
+    membershipId?: string;
+    expiresAt?: number;
+    retireAt?: number;
+    ipAllow?: string[];
+    rateTier?: 'standard' | 'high' | 'bulk';
+    /** Limits the key to these templates and pass styles (`api_key_resources`); either list makes it limited. */
+    templateIds?: string[];
+    passStyles?: string[];
+  } = {},
 ): Promise<ApiKeyFixture> {
   const id = f.ids.id();
+  const limits = [
+    ...(options.templateIds ?? []).map((value) => ['template', value] as const),
+    ...(options.passStyles ?? []).map((value) => ['pass_style', value] as const),
+  ];
   const prefix = f.ids.token(6);
   const secret = `wlt_${prefix}_${f.ids.token()}`;
-  await run(
-    f.env.DB,
-    'INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [
+  // A key with no org is a platform key. One made here without an expiry or IP list stands for a key
+  // that existed before migration 0142 (backfilled, unbounded), so the insert rules do not apply to it.
+  const legacyPlatform = (options.orgId ?? null) === null;
+  const insert = async () =>
+    run(
+      f.env.DB,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at,
+       kind, roles, membership_id, expires_at, retire_at, ip_allow, rate_tier, restricted)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        options.orgId ?? null,
+        options.name ?? 'Test key',
+        prefix,
+        await sha256Hex(secret),
+        JSON.stringify(options.scopes ?? ['passes:read', 'passes:write']),
+        options.mode ?? 'live',
+        f.clock.now(),
+        options.kind ?? (legacyPlatform ? 'platform' : 'service'),
+        JSON.stringify(options.roles ?? []),
+        options.membershipId ?? null,
+        options.expiresAt ?? null,
+        options.retireAt ?? null,
+        options.ipAllow ? JSON.stringify(options.ipAllow) : null,
+        options.rateTier ?? null,
+        limits.length > 0 ? 1 : 0,
+      ],
+    );
+  if (legacyPlatform) await withoutTrigger(f.env.DB, 'api_keys_kind_rules', insert);
+  else await insert();
+  for (const [kind, value] of limits)
+    await run(f.env.DB, 'INSERT INTO api_key_resources (key_id, kind, value) VALUES (?, ?, ?)', [
       id,
-      options.orgId ?? null,
-      options.name ?? 'Test key',
-      prefix,
-      await sha256Hex(secret),
-      JSON.stringify(options.scopes ?? ['passes:read', 'passes:write']),
-      options.mode ?? 'live',
-      f.clock.now(),
-    ],
-  );
+      kind,
+      value,
+    ]);
   return { id, secret, headers: { authorization: `Bearer ${secret}` } };
 }
 

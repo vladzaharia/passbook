@@ -69,12 +69,22 @@ export async function claimRefresh(
  * owner and connection. The retention job removes it later. Trusted callers only; tenants use the grant.
  * The owner leaves only behind an attach block (0055 trigger), written under the same fence.
  */
-export async function softDeletePass(db: D1Database, pass: Pass, now: number): Promise<boolean> {
+export async function softDeletePass(
+  db: D1Database,
+  pass: Pass,
+  now: number,
+  /** Retention: a legal hold on the pass or its org refuses the delete, decided in the same statement. */
+  unlessHeld = false,
+): Promise<boolean> {
+  const held = unlessHeld
+    ? ` AND NOT EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL
+         AND h.org_id = passes.org_id AND (h.pass_id IS NULL OR h.pass_id = passes.id))`
+    : '';
   const fence = `id = ? AND org_id = ? AND mode = ?
        AND template_id = ? AND template_version = ? AND serial = ? AND auth_token = ?
        AND holder_email IS ? AND owner_user_id IS ? AND version = ? AND link_generation = ?
        AND object_key = ? AND download_token = ? AND status = ? AND removed_at IS ?
-       AND connection_id IS ? AND external_ref IS ? AND deleted_at IS NULL AND test_data_quarantined = 0`;
+       AND connection_id IS ? AND external_ref IS ? AND deleted_at IS NULL AND test_data_quarantined = 0${held}`;
   const params = [
     pass.id,
     pass.orgId,

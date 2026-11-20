@@ -146,8 +146,7 @@ describe('approval action D1 budget and original scalar authority', () => {
       );
       expect(JSON.stringify(result.display)).toContain('Check in');
       // Five for the scan: the photo capability is stateless and the PIN refund rides in the commit grant.
-      // Plus the visitor host-notice lookup that runs in waitUntil after the response (visitors/arrival.ts).
-      expect(counted.count() - guard).toBeLessThanOrEqual(6);
+      expect(counted.count() - guard).toBeLessThanOrEqual(5);
 
       for (const { values } of trace.batches.flat()) expect(values).not.toContain(manager.pin);
       expect(JSON.stringify(result)).not.toContain(hashRow.pin_hash);

@@ -1,5 +1,6 @@
 /** Answers, failures, late answers and unsure expiry (AC 3.4). */
 import { SCAN_TIMING } from '../timing.ts';
+import { bundleCmd, wantsPeek } from './bundle-peek.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { out, same } from './internal.ts';
 import { localOutcome } from './outcome.ts';
@@ -48,6 +49,16 @@ function enterMember(s: MachineState, ev: Answer, env: Env): Out {
   return out(next.state, [...cmds, ...next.cmds]);
 }
 
+/**
+ * Check in more answers as the first pass it made. The card should still be about the person scanned:
+ * their display and card come from the verdict the group was started from, the newest scan.
+ */
+function leadOf(s: MachineState, o: ScanOutcome): ScanOutcome {
+  const lead = s.recent[0]?.outcome;
+  if (!o.group || !lead?.bundle || !lead.display) return o;
+  return { ...o, display: lead.display, template: lead.template ?? o.template, card: lead.card };
+}
+
 const withoutApproval = ({ approval: _pin, ...draft }: Draft): Draft => draft;
 
 const asDraft = (d: Draft | 'auto'): Draft =>
@@ -70,15 +81,25 @@ export function answer(s: MachineState, ev: Answer, env: Env): Out {
     {
       input: l.input,
       card: l.s === 'applying' ? l.card : null,
-      outcome: ev.outcome,
+      outcome: l.s === 'applying' && l.draft.group ? leadOf(s, ev.outcome) : ev.outcome,
       resumeCamera: l.s === 'checking',
       next: l.next,
       // The Manager's PIN is spent: the draft a later approval re-sends never holds one.
       ...(l.s === 'applying' ? { draft: withoutApproval(l.draft) } : {}),
+      // A door's read that needs a Manager: the PIN re-sends the draft the read went with.
+      ...(l.s === 'checking' &&
+      ev.outcome.reason === 'needs_approval' &&
+      (s.posture === 'door' || s.armed !== null)
+        ? { draft: asDraft(doorDraft(s)) }
+        : {}),
     },
     env,
   );
-  return out(v.state, [...drop, ...v.cmds]);
+  const peek =
+    wantsPeek(v.state, ev.outcome) && ev.outcome.scanId
+      ? [bundleCmd({ c: 'bundle', key: env.id(), scanId: ev.outcome.scanId, input: l.input })]
+      : [];
+  return out(v.state, [...drop, ...v.cmds, ...peek]);
 }
 
 function block(s: MachineState, kind: NonNullable<MachineState['block']>, env: Env): Out {
@@ -109,6 +130,9 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
   const l = s.loop;
   if ((l.s !== 'checking' && l.s !== 'applying') || l.key !== ev.key) return same(s);
   if (ev.error === 'pin_invalid' || ev.error === 'pin_locked') return pinRefused(s, l, ev, env);
+  // A PIN that got no answer is never an offline read: the guest is not let in on a PIN nobody checked.
+  if (l.s === 'applying' && l.retry && (ev.error === 'network' || ev.error === 'timeout'))
+    return pinRefused(s, l, ev, env);
   const act = l.s === 'applying' || s.posture === 'door' || s.armed !== null;
   let outcome: ScanOutcome;
   let state = s;
@@ -182,7 +206,9 @@ function pinRefused(s: MachineState, l: MachineState['loop'], ev: Fail, env: Env
               locked: true,
               ...(ev.retryAfterMs !== undefined ? { retryAfterMs: ev.retryAfterMs } : {}),
             }
-          : { triesLeft: ev.triesLeft ?? 0 },
+          : ev.error === 'pin_invalid'
+            ? { triesLeft: ev.triesLeft ?? 0 }
+            : { unreachable: true },
     },
     env,
   );

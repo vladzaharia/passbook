@@ -1,17 +1,21 @@
 import { ChevronRight, Search, UserRound } from 'lucide-react';
 import type { z } from 'zod';
 import type { ScanLookupResultSchema } from '../../../shared/contracts/scan-session.ts';
+import { SCAN_TRAY_COPY } from '../../../shared/copy/scan-tray.ts';
 
 export function LookupResults({
   result,
   busy,
   query,
   onPick,
+  tray = false,
 }: {
   result: z.infer<typeof ScanLookupResultSchema> | null;
   busy: boolean;
   query: string;
   onPick: (id: string) => void;
+  /** In the Enter code tray: no hint under the field, one line when nothing matches. */
+  tray?: boolean;
 }) {
   return (
     <div className="scan-lookup-results" aria-busy={busy}>
@@ -54,14 +58,17 @@ export function LookupResults({
           </button>
         );
       })}
-      {result && !result.items.length && !busy ? (
+      {tray && result && !result.items.length && !busy ? (
+        <p className="scan-code-note">{SCAN_TRAY_COPY.noMatches}</p>
+      ) : null}
+      {!tray && result && !result.items.length && !busy ? (
         <div className="scan-lookup-empty">
           <Search size={32} aria-hidden />
           <p className="font-semibold">No matches</p>
           <p>Check the spelling, or use the full email.</p>
         </div>
       ) : null}
-      {!result && !busy ? (
+      {!tray && !result && !busy ? (
         <p className="text-sm text-fg-muted">
           {query.includes('@')
             ? 'Use the full email address.'

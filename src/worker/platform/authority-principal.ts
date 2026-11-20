@@ -1,4 +1,5 @@
 import type { SqlValue } from './db.ts';
+import { keyHoldsScope, keyLive, withParams } from './repo-api-key-sql.ts';
 
 export type Mode = 'live' | 'test';
 export type GrantScope = 'org' | 'org_mode' | 'platform';
@@ -83,6 +84,11 @@ export type HolderPrincipal = Extract<Principal, { kind: 'holder' }>;
 /** Positional parameters collected in the order their `?` appear in the SQL text. */
 export class Binds {
   readonly params: SqlValue[] = [];
+  /** The principal is an API key, so statements and checks add its template limits (`authority-restrict.ts`). */
+  readonly keyed?: boolean;
+  constructor(keyed = false) {
+    this.keyed = keyed;
+  }
   bind(value: SqlValue): string {
     this.params.push(value);
     return '?';
@@ -166,7 +172,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       const org = orgOk(b, p.orgAccessRevision);
       return `SELECT m.org_id AS org_id, ${mode} AS mode,
         ${flag(`m.revoked_at IS NULL AND u.status = 'active'${session}${userEpoch}`)} AS actor_ok,
-        ${flag(org)} AS org_ok
+        ${flag(org)} AS org_ok, NULL AS limit_key
         FROM org_memberships m JOIN users u ON u.id = m.user_id JOIN orgs o ON o.id = m.org_id
         WHERE m.id = ${b.bind(p.membershipId)}`;
     }
@@ -174,20 +180,20 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       // A key with no org (platform key) may name the org it acts on; an org-bound key may only name its own.
       const named = p.orgId ?? null;
       const orgCol = `COALESCE(k.org_id, ${b.bind(named)})`;
-      const live = `k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > ${b.bind(now)})
+      const live = `${withParams(b.params, keyLive('k', now, true))}
         AND (k.org_id IS NULL OR ${b.bind(named)} IS NULL OR k.org_id = ${b.bind(named)})
-        AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = ${b.bind(p.scope)})`;
+        AND ${withParams(b.params, keyHoldsScope('k', p.scope))}`;
       const orgNone = `COALESCE(k.org_id, ${b.bind(named)}) IS NULL`;
       const org = orgOk(b, p.orgAccessRevision);
       return `SELECT ${orgCol} AS org_id, k.mode AS mode, ${flag(live)} AS actor_ok,
-        ${flag(`${orgNone} OR (${org})`)} AS org_ok
+        ${flag(`${orgNone} OR (${org})`)} AS org_ok, IIF(k.restricted, k.id, NULL) AS limit_key
         FROM api_keys k LEFT JOIN orgs o ON o.id = COALESCE(k.org_id, ${b.bind(named)}) WHERE k.id = ${b.bind(p.keyId)}`;
     }
     case 'scanner': {
       const live = `sc.revoked_at IS NULL AND (sc.expires_at IS NULL OR sc.expires_at > ${b.bind(now)})
         AND sc.credential_epoch = ${b.bind(p.credentialEpoch)}`;
       return `SELECT sc.org_id AS org_id, sc.mode AS mode, ${flag(live)} AS actor_ok,
-        ${flag(`o.status = 'active'`)} AS org_ok
+        ${flag(`o.status = 'active'`)} AS org_ok, NULL AS limit_key
         FROM scanners sc JOIN orgs o ON o.id = sc.org_id WHERE sc.id = ${b.bind(p.scannerId)}`;
     }
     case 'holder': {
@@ -196,13 +202,13 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       // suspended org cannot refuse. Every other holder grant needs an active org.
       const org = p.proof.via === 'session' && p.proof.unlink ? '1' : flag(`o.status = 'active'`);
       return `SELECT p.org_id AS org_id, p.mode AS mode, ${flag(live)} AS actor_ok,
-        ${org} AS org_ok
+        ${org} AS org_ok, NULL AS limit_key
         FROM passes p JOIN orgs o ON o.id = p.org_id WHERE p.id = ${b.bind(p.passId)}`;
     }
     case 'join': {
       const live = `jl.enabled = 1 AND jl.generation = ${b.bind(p.generation)}`;
       return `SELECT jl.org_id AS org_id, jl.mode AS mode, ${flag(live)} AS actor_ok,
-        ${flag(`o.status = 'active'`)} AS org_ok
+        ${flag(`o.status = 'active'`)} AS org_ok, NULL AS limit_key
         FROM join_links jl JOIN orgs o ON o.id = jl.org_id WHERE jl.id = ${b.bind(p.linkId)}`;
     }
     case 'platform':
@@ -212,12 +218,21 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
         p.kind === 'platform' ? adminSession(b, now, p.sessionIdHash, p.userId) : '1 = 1';
       // A platform or system principal that names an org acts on it only while the org is active.
       if (p.orgId === undefined)
-        return `SELECT NULL AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, 1 AS org_ok`;
+        return `SELECT NULL AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, 1 AS org_ok, NULL AS limit_key`;
+      const closed = `(o.status = 'deleted' AND o.purge_started_at IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM retention_holds h WHERE h.org_id = o.id AND h.released_at IS NULL))`;
+      const inactive = () =>
+        `(o.status IN ('active', 'suspended')${p.kind === 'system' && p.orgAccessRevision !== undefined ? ` AND o.access_revision = ${b.bind(p.orgAccessRevision)}` : ''})`;
+      // closedOk adds a started purge to what inactiveOk allows; alone it allows only that.
       const org =
-        p.kind === 'system' && (p.inactiveOk || p.closedOk)
-          ? `o.status IN ('active', 'suspended'${p.closedOk ? ", 'deleted'" : ''})${p.orgAccessRevision === undefined ? '' : ` AND o.access_revision = ${b.bind(p.orgAccessRevision)}`}`
-          : orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
-      return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, ${flag(org)} AS org_ok
+        p.kind === 'system' && p.closedOk
+          ? p.inactiveOk
+            ? `${inactive()} OR ${closed}`
+            : closed
+          : p.kind === 'system' && p.inactiveOk
+            ? inactive()
+            : orgOk(b, p.kind === 'system' ? p.orgAccessRevision : undefined);
+      return `SELECT o.id AS org_id, ${mode} AS mode, ${flag(actor)} AS actor_ok, ${flag(org)} AS org_ok, NULL AS limit_key
         FROM orgs o WHERE o.id = ${b.bind(p.orgId)}`;
     }
   }

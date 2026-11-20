@@ -2,6 +2,7 @@
 
 import { CHANNEL_LABEL } from '../../../shared/copy/channels.ts';
 import {
+  SCAN_COPY,
   SCAN_COUNTER_COPY,
   SCAN_REASON_COPY,
   SCAN_REASON_VARIANTS,
@@ -18,6 +19,7 @@ import {
   formatWeekday,
 } from '../../lib/format.ts';
 import { accessValues, agoText } from './access-view.ts';
+import { groupHeadline, groupSub, groupView } from './group-view.ts';
 import type { ScanOutcome } from './types.ts';
 
 type Values = Record<string, string | number>;
@@ -124,8 +126,15 @@ function pick(o: ScanOutcome, desk: boolean): ScanLine | null {
 export function verdictLine(
   o: ScanOutcome,
   now: number,
-  opts: { desk?: boolean } = {},
+  opts: { desk?: boolean; group?: boolean } = {},
 ): ScanLine | null {
+  // A handheld names the group on an ok card: who is in, and after Check in more, how many it added.
+  const group = opts.group && o.kind === 'ok' ? groupView(o) : null;
+  if (group)
+    return {
+      headline: group.done ? groupHeadline(group) : SCAN_COPY.verdict.checkedIn,
+      sub: groupSub(group),
+    };
   const line = pick(o, opts.desk === true);
   if (!line) return null;
   const values = lineValues(o, now);

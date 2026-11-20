@@ -34,6 +34,11 @@ export interface OccupancyRow {
 }
 
 export const LIVE = `x.state = 'in' AND (x.due_at IS NULL OR x.due_at > ?)`;
+/** Who moved a row last: the scanner and the person signed in on it, from the scan that wrote it (`s`). */
+export const VIA_JOIN = `LEFT JOIN scanners sc ON sc.id = s.scanner_id AND sc.org_id = x.org_id
+     LEFT JOIN scan_staff st ON st.id = s.staff_id AND st.org_id = x.org_id`;
+export const VIA_SQL = `CASE WHEN sc.name IS NOT NULL AND st.name IS NOT NULL THEN sc.name || ' · ' || st.name
+       ELSE COALESCE(sc.name, st.name) END`;
 export const marks = (n: number) => Array.from({ length: n }, () => '?').join(', ');
 
 export const anyOf = (conds: readonly GrantCond[]): GrantCond => not(allOf(conds.map(not)));

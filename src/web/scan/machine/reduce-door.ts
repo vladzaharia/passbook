@@ -69,7 +69,9 @@ export function dismiss(s: MachineState, env: Env): Out {
 /** "Let in again" and the stop-flag confirm: the same scan under a new key. */
 export function override(s: MachineState, ev: Of<'override'>, env: Env): Out {
   const l = s.loop;
-  if (l.s !== 'verdict' || l.outcome.kind !== 'heads_up') return same(s);
+  // A Manager's PIN is the way past needs_approval, never a bare override.
+  if (l.s !== 'verdict' || l.outcome.kind !== 'heads_up' || l.outcome.reason === 'needs_approval')
+    return same(s);
   if (l.outcome.reason === 'offline_decide') {
     // Staff decide: save the read as unverified. The server checks it when the door is back online.
     const key = env.id();

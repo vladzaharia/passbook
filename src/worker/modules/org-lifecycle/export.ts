@@ -16,7 +16,12 @@ export const exportKey = (orgId: string, id: string) => `exports/${orgId}/${id}.
 const partKey = (orgId: string, id: string, entity: string, n: number) =>
   `exports/${orgId}/${id}/parts/${entity}-${String(n).padStart(6, '0')}.ndjson`;
 const partsPrefix = (orgId: string, id: string) => `exports/${orgId}/${id}/parts/`;
-const templateFilesPrefix = (orgId: string) => `templates/${orgId}/`;
+/** The org's files in the archive: where they live in storage, and the folder they go to. */
+const fileSets = (orgId: string) => [
+  { count: 'template_files', prefix: `templates/${orgId}/`, dir: 'template-files/' },
+  { count: 'brand_files', prefix: `orgs/${orgId}/branding/`, dir: 'brand-files/' },
+  { count: 'member_photo_files', prefix: `member-photos/${orgId}/`, dir: 'member-photo-files/' },
+];
 
 export const entities = (): readonly ExportEntity[] => EXPORT_ENTITIES;
 
@@ -122,19 +127,18 @@ export async function buildArchive(
       counts[entity.name] = lines;
     }
     let fileBytes = 0;
-    for (const object of await listAll(bucket, templateFilesPrefix(orgId))) {
-      fileBytes += object.size;
-      if (fileBytes > MAX_FILE_BYTES) throw new Error('ORG_EXPORT_TOO_LARGE');
-      const body = new Uint8Array(
-        (await (await bucket.get(object.key))?.arrayBuffer()) ?? new ArrayBuffer(0),
-      );
-      const entry = new ZipPassThrough(
-        `template-files/${object.key.slice(templateFilesPrefix(orgId).length)}`,
-      );
-      zip.add(entry);
-      entry.push(body, true);
-      await flush(false);
-    }
+    for (const set of fileSets(orgId))
+      for (const object of await listAll(bucket, set.prefix)) {
+        fileBytes += object.size;
+        if (fileBytes > MAX_FILE_BYTES) throw new Error('ORG_EXPORT_TOO_LARGE');
+        const body = new Uint8Array(
+          (await (await bucket.get(object.key))?.arrayBuffer()) ?? new ArrayBuffer(0),
+        );
+        const entry = new ZipPassThrough(`${set.dir}${object.key.slice(set.prefix.length)}`);
+        zip.add(entry);
+        entry.push(body, true);
+        await flush(false);
+      }
     zip.end();
     await flush(true);
     // A purge deletes the export row and sweeps the org's files: never complete an archive it did not see.
@@ -148,7 +152,7 @@ export async function buildArchive(
     await upload.abort().catch(() => undefined);
     throw error;
   }
-  counts.template_files = (await listAll(bucket, templateFilesPrefix(orgId))).length;
+  for (const set of fileSets(orgId)) counts[set.count] = (await listAll(bucket, set.prefix)).length;
   return { bytes: total, entities: counts };
 }
 

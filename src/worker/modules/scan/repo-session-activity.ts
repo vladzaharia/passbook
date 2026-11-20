@@ -7,6 +7,9 @@ import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 
 /** The page of a session's activity. */
 export const ACTIVITY_LIMIT = 20;
+/** Refusals and holds of the last window that someone can still act on: a page of their own. */
+export const PROBLEMS_LIMIT = 50;
+export const PROBLEMS_WINDOW_MS = 15 * 60_000;
 
 type Predicate = { sql: string; params: readonly SqlValue[] };
 
@@ -43,15 +46,27 @@ function activityScope(row: ScanningSessionRow): Predicate | null {
 }
 
 /** The ledger scans of the session's paired devices inside its scope, newest first. */
-export function activitySelector(row: ScanningSessionRow): HistorySelector | null {
+export function activitySelector(
+  row: ScanningSessionRow,
+  /** The problems page: refusals and holds since this time, not the newest scans. */
+  problemsSince?: number,
+): HistorySelector | null {
   const scope = activityScope(row);
   if (!scope) return null;
+  const only =
+    problemsSince === undefined ? '' : " AND s.outcome IN ('refused', 'heads_up') AND s.at >= ?";
   return {
     where: `s.scanner_id IN (SELECT a.scanner_id FROM scanning_devices a
         JOIN scanners d ON d.id=a.scanner_id AND d.org_id=a.org_id AND d.mode=a.mode
         WHERE a.org_id=? AND a.session_id=? AND a.mode=?)
-      AND (${scope.sql}) AND s.outcome IS NOT NULL AND ${scanLedgerScopeSql('s')}`,
-    params: [row.org_id, row.id, row.mode, ...scope.params],
-    limit: ACTIVITY_LIMIT,
+      AND (${scope.sql}) AND s.outcome IS NOT NULL AND ${scanLedgerScopeSql('s')}${only}`,
+    params: [
+      row.org_id,
+      row.id,
+      row.mode,
+      ...scope.params,
+      ...(problemsSince === undefined ? [] : [problemsSince]),
+    ],
+    limit: problemsSince === undefined ? ACTIVITY_LIMIT : PROBLEMS_LIMIT,
   };
 }

@@ -2,6 +2,7 @@ import { stagePendingCredentialTransfer } from '../../../../test/helpers/credent
 import { makeScanStaff, withoutTrigger } from '../../../../test/helpers/index.ts';
 import { credentialAad, type Envelope, encryptSecret, loadKekRing } from '../../platform/crypto.ts';
 import { first, run } from '../../platform/db.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { seedTagKeys } from '../nfc/keyset-rotation-test-fixtures.ts';
 import { sealBody } from '../sandbox/captured-body.ts';
 import type { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
@@ -165,7 +166,6 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     kind: 'connection.webhook.legacy-inbox',
     text: '{"rows":[]}',
   });
-
   const claim = {
     orgId: t.operation.orgId,
     mode: t.operation.mode,
@@ -176,10 +176,10 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     claimHandle: newWalletClaimHandle(),
     now,
   };
-  if ((await claimWalletOperation(db, claim)) !== 'claimed')
+  if ((await claimWalletOperation(jobCtxOf(kit), claim)) !== 'claimed')
     throw new Error('operation not claimed');
   const outcomeText = 'outcome-body';
-  const receipt = await recordWalletOperationOutcome(kit.ctx, {
+  const receipt = await recordWalletOperationOutcome(jobCtxOf(kit), {
     ...claim,
     sequence: 1,
     eventKey: 'response',

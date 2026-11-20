@@ -10,7 +10,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { assertBindable } from './pass-state.ts';
-import { tagsEnabled } from './policy.ts';
+import { tagsRefusal } from './policy.ts';
 import { ownerIsActive } from './repo-enrollments.ts';
 import { activeBinding, bindingTarget, type PassFacts, passFacts } from './repo-tag-bindings.ts';
 import { lastEndedBinding } from './repo-tag-history.ts';
@@ -51,8 +51,8 @@ async function place(
   scope: 'pass' | 'user',
   rebind: { from: 'pass' | 'user' } | null,
 ): Promise<Tag> {
-  if (!(await tagsEnabled(ctx, a.orgId)))
-    throw new ConflictError('Turn on tags in settings first.', 'TAGS_OFF');
+  const off = await tagsRefusal(ctx, a.orgId);
+  if (off) throw off;
   if (scope === 'user' && !(await ownerIsActive(ctx.env.DB, pass.ownerUserId)))
     throw new ValidationError(
       'This person has no account yet. Assign the tag to the pass instead.',
