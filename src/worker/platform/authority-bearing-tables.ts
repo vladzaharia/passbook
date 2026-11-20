@@ -41,6 +41,10 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'org_reply_to',
   // Org lifecycle (0136): a closed org's admins request exports, so no member grant exists to write it.
   'org_exports',
+  'scan_group_members',
+  'scan_offline_reads',
+  'scan_offline_state',
+  'scan_session_changes',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
@@ -64,6 +68,8 @@ export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'scan_retention_delete_intents',
   'scan_retained_gates',
   'pass_holder_reissue_required',
+  'scan_offline_reads',
+  'scan_session_changes',
 ]);
 
 export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
@@ -84,4 +90,5 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'pass_transfer_asset_uploads',
   'pass_token_seals',
   'pass_auth_seals',
+  'scan_offline_reads',
 ]);
