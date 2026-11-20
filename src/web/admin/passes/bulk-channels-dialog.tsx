@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isDigital } from '@/shared/channels.ts';
 import { CHANNELS, type Channel } from '@/shared/contracts/channels.ts';
 import { CHANNEL_COPY, CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { bulkChannelsOffConfirm } from '../../lib/confirms.ts';
@@ -11,7 +12,8 @@ import {
   SegmentedControl,
   toast,
 } from '../../ui/index.ts';
-import { useBulkPassChannels } from './channels-api.ts';
+import { BulkPreview } from './bulk-channels-preview.tsx';
+import { useBulkChannelsPreview, useBulkPassChannels } from './channels-api.ts';
 
 type Action = 'on' | 'off' | 'reset';
 const ACTIONS = [
@@ -43,6 +45,7 @@ export function BulkChannelsDialog({
   const [action, setAction] = useState<Action>('off');
   const [picked, setPicked] = useState<Channel[]>([]);
   const [notify, setNotify] = useState(false);
+  const [replace, setReplace] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   const close = () => {
@@ -50,6 +53,28 @@ export function BulkChannelsDialog({
     setAction('off');
     setPicked([]);
     setNotify(false);
+    setReplace(false);
+  };
+  /** New codes only follow turning a digital channel off. */
+  const canReplace = action === 'off' && picked.some(isDigital);
+  const preview = useBulkChannelsPreview(
+    {
+      action,
+      channels: picked,
+      ids,
+      notify: false,
+      ...(canReplace && replace ? { replaceCodes: true } : {}),
+      orgId,
+    },
+    open && action === 'off' && picked.length > 0,
+  );
+  const offConfirm = {
+    ...bulkChannelsOffConfirm(
+      picked.map((c) => CHANNEL_LABEL[c]),
+      ids.length,
+    ),
+    // "Copies keep working" is wrong once new codes are issued.
+    ...(canReplace && replace ? { description: undefined } : {}),
   };
   async function apply() {
     try {
@@ -58,10 +83,13 @@ export function BulkChannelsDialog({
         channels: picked,
         ids,
         notify: action === 'off' && notify,
+        ...(canReplace && replace ? { replaceCodes: true } : {}),
         orgId,
       });
       const skipped = result.skipped.length ? `, ${result.skipped.length} skipped` : '';
-      toast.success(`${plural(result.done)} updated${skipped}`);
+      toast.success(
+        `${plural(result.done)} updated${skipped}${canReplace && replace ? `. ${CHANNEL_COPY.bulkReplaced}` : ''}`,
+      );
       close();
       onDone();
     } catch (error) {
@@ -123,15 +151,27 @@ export function BulkChannelsDialog({
               onCheckedChange={(v) => setNotify(v === true)}
             />
           ) : null}
+          {action === 'off' && picked.length > 0 && preview.data?.preview ? (
+            <BulkPreview preview={preview.data.preview} replace={canReplace && replace} />
+          ) : null}
+          {canReplace ? (
+            <div className="flex flex-col gap-1">
+              <CheckboxField
+                label={CHANNEL_COPY.replaceBox}
+                checked={replace}
+                onCheckedChange={(v) => setReplace(v === true)}
+              />
+              {replace ? (
+                <p className="text-xs text-fg-muted">{CHANNEL_COPY.bulkReplaced}</p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </DialogContent>
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
-        {...bulkChannelsOffConfirm(
-          picked.map((c) => CHANNEL_LABEL[c]),
-          ids.length,
-        )}
+        {...offConfirm}
         onConfirm={apply}
       />
     </Dialog>

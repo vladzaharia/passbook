@@ -1,10 +1,5 @@
 import type { z } from 'zod';
-import {
-  anyDigitalOn,
-  channelTransition,
-  DIGITAL_CHANNELS,
-  effectiveChannels,
-} from '../../../shared/channels.ts';
+import { anyDigitalOn, DIGITAL_CHANNELS } from '../../../shared/channels.ts';
 import {
   type BulkPassChannelsResponseSchema,
   type BulkPassChannelsSchema,
@@ -24,17 +19,17 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import type { Actor } from '../passes/service.ts';
 import { activePrint } from '../prints/repo.ts';
 import { adminWriter, writeVoid } from '../prints/repo-write.ts';
+import { planPass, previewBulk } from './plan.ts';
 import {
   assertNoOpenWindow,
   noticeHolder,
   refuseAllOff,
   refuseUnsupported,
   rotateCode,
-  rotationOwed,
 } from './replace.ts';
 import { passReplaceable } from './replaceable.ts';
 import { writePassChannels } from './repo-write.ts';
-import { loadPass, passChannels } from './service.ts';
+import { passChannels } from './service.ts';
 import { openWindows } from './windows.ts';
 
 type PutPass = z.infer<typeof PutPassChannelsSchema>;
@@ -59,34 +54,11 @@ export async function putPassChannels(
   if ((await read(ctx.env.DB, key, window)) >= OVERRIDE_CHANGES_PER_HOUR)
     throw new RateLimitedError(Math.ceil((window + HOUR - now) / 1000));
 
-  const { inputs, rows } = await loadPass(ctx, pass);
-  const before = effectiveChannels(inputs);
-  const overrides = { ...inputs.pass };
-  for (const [c, v] of Object.entries(body.channels) as [Channel, PassChannelState | null][]) {
-    if (v === null) delete overrides[c];
-    else overrides[c] = v;
-  }
-  const after = effectiveChannels({ ...inputs, pass: overrides });
-  const actions = channelTransition(before, after, {
-    copies: new Set(rows.copies),
-    retired: new Set(Object.keys(rows.retired) as Channel[]),
-    replaceCodes: body.replaceCodes,
-  });
-  const rotation = actions.find((a) => a.kind === 'rotate_codes');
-  const rotates = rotation !== undefined;
-  // A channel retired before the pass's last new code was already covered by it: no second code.
-  const retiredNow = Object.fromEntries(
-    actions.flatMap((a) => (a.kind === 'retire' ? [[a.channel, now]] : [])),
+  const { inputs, rows, before, after, overrides, actions, rotates, owed } = await planPass(
+    ctx,
+    pass,
+    body,
   );
-  const owed =
-    rotation?.kind === 'rotate_codes' &&
-    (await rotationOwed(
-      ctx.env.DB,
-      pass.orgId,
-      pass.id,
-      { ...rows.retired, ...retiredNow },
-      rotation.channels,
-    ));
   if (body.replaceCodes) {
     const touchesDigital = (Object.keys(body.channels) as Channel[]).some((c) =>
       DIGITAL_CHANNELS.includes(c),
@@ -223,6 +195,7 @@ export async function bulkPassChannels(
 ): Promise<BulkResponse> {
   const value: PassChannelState | null = body.action === 'reset' ? null : body.action;
   const channels = Object.fromEntries(body.channels.map((c) => [c, value]));
+  if (body.dryRun) return previewBulk(ctx, passes, body, channels);
   const out: BulkResponse = { done: 0, skipped: [] };
   const bulkKey = ctx.requestId ?? ctx.ids.id();
   for (const pass of passes) {

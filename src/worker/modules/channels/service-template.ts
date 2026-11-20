@@ -1,5 +1,10 @@
 import type { z } from 'zod';
-import { anyDigitalOn, effectiveChannels, templateDefault } from '../../../shared/channels.ts';
+import {
+  anyDigitalOn,
+  DIGITAL_CHANNELS,
+  effectiveChannels,
+  templateDefault,
+} from '../../../shared/channels.ts';
 import type {
   Channel,
   PassChannelState,
@@ -20,7 +25,7 @@ import { rotatedCount } from './repo-replace.ts';
 import { latestRun, pendingRun } from './repo-runs.ts';
 import { writeTemplatePolicy } from './repo-write.ts';
 import { loadTemplate } from './service.ts';
-import { openWindows, WINDOW_HORIZON_MS } from './windows.ts';
+import { openWindows, splitWindows, WINDOW_HORIZON_MS } from './windows.ts';
 
 type PutTemplateResponse = z.infer<typeof PutTemplateChannelsResponseSchema>;
 
@@ -164,6 +169,7 @@ export async function putTemplateChannels(
     impact,
     workflowInstanceId,
     replaceSupported: supported,
-    windows,
+    ...splitWindows(windows),
+    allOff: !digitalOn && changed.some((c) => DIGITAL_CHANNELS.includes(c)),
   };
 }
