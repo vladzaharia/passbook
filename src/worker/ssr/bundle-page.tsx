@@ -1,10 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
+import type { WalletProvider } from '../../shared/contracts/wallet-providers.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, type DeviceInfo, isAndroid } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
+import { NATIVE_WALLET_BADGES } from '../../shared/wallet-choice.ts';
 import { statusOf } from '../../web/lib/status.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import { AddBlock } from '../../web/portal/add/add-block.tsx';
@@ -44,6 +46,8 @@ export interface BundlePageItem {
   downloadHref: string | null;
   /** `/b/:token/:passId/barcode`: the browser barcode, shown on Android; absent while mobile is off. */
   barcodeHref?: string | undefined;
+  /** `/b/:token/:passId/wallet/:provider` for each native wallet the pass may be saved to. */
+  walletOffers?: readonly { provider: WalletProvider; href: string }[];
 }
 
 export interface BundlePageProps {
@@ -187,6 +191,18 @@ function BundleBody(props: BundlePageProps) {
                     className="p-0"
                   />
                 ) : null}
+                {item.state === 'active'
+                  ? (item.walletOffers ?? []).map(({ provider, href }) => (
+                      <div key={provider} className="wl-native-wallets">
+                        <a href={href} aria-describedby={`bd-n-${item.id}`}>
+                          <img
+                            src={NATIVE_WALLET_BADGES[provider].path}
+                            alt={NATIVE_WALLET_BADGES[provider].label}
+                          />
+                        </a>
+                      </div>
+                    ))
+                  : null}
               </div>
             </li>
           ))}

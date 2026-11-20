@@ -120,6 +120,13 @@ describe('POST /passes/{id}/remove and /restore', () => {
       )
     ).map((r) => r.kind);
     expect(kinds).toContain('pass.removed');
+    // Providers are not released: the removal reaches Apple alone.
+    const removed = await first<{ data: string }>(
+      kit.env.DB,
+      "SELECT data FROM pass_events WHERE pass_id = ? AND kind = 'pass.removed'",
+      [pass.id],
+    );
+    expect(JSON.parse(removed?.data ?? '{}').wallets).toEqual(['apple']);
 
     // Removing again changes nothing.
     expect(PassSummarySchema.parse(await (await post(`/${pass.id}/remove`)).json()).version).toBe(

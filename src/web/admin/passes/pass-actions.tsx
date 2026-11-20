@@ -41,6 +41,7 @@ export type PassActionId =
 type ActionPass = Pick<
   PassSummaryDto,
   | 'id'
+  | 'orgId'
   | 'title'
   | 'serial'
   | 'status'
@@ -81,7 +82,6 @@ const ICON: Record<PassActionId, LucideIcon> = {
   delete: ACTION_ICON.delete,
 };
 const DANGER = new Set<PassActionId>(['remove', 'clear', 'delete']);
-
 export interface PassActionDef {
   id: PassActionId;
   label: string;
@@ -251,6 +251,7 @@ export function usePassActionRunner(
       <RemoveDialog
         open={ask === 'remove'}
         onOpenChange={close}
+        pass={pass}
         onConfirm={async (message) => {
           await removal.remove.mutateAsync(message);
           bump('remove');

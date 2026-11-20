@@ -13,6 +13,9 @@ export interface WalletProviderStatusRow {
   operationState: string | null;
   operationReason: string | null;
   priorRetirementPending: number;
+  /** The provider's own save and removal reports (callbacks), never proof of installation. */
+  savedAt: number | null;
+  removedAt: number | null;
 }
 
 /** An empty array means the pass or authority snapshot no longer matches. */
@@ -42,6 +45,7 @@ export async function readWalletProviderStatus(
     SELECT provider.provider AS provider,
       i.lifecycle, op.version AS operationVersion, op.kind AS operationKind,
       op.state AS operationState, op.reason_code AS operationReason,
+      i.saved_at AS savedAt, i.holder_removed_at AS removedAt,
       EXISTS (SELECT 1 FROM wallet_provider_instances previous
         WHERE previous.pass_id = p.id AND previous.org_id = p.org_id AND previous.mode = p.mode
           AND previous.provider = provider.provider AND previous.credential_generation < p.credential_generation

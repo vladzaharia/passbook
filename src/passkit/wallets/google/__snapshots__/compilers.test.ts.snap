@@ -2470,6 +2470,236 @@ exports[`Google compilers over every starter and baked template > starter-coupon
 }
 `;
 
+exports[`Google compilers over every starter and baked template > starter-day-pass: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.hours",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "DAY-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Sam Reed",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#03528e",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "Day pass",
+        "header": "Pass",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "DAY-0001",
+        "header": "Pass ID",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "Until midnight on the day of the first visit.",
+        "header": "Hours",
+        "id": "backFields.hours",
+      },
+      {
+        "body": "Good for one day, any number of entries. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-day-pass: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.hours",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "DAY-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Sam Reed",
+      },
+    },
+    "hexBackgroundColor": "#03528e",
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "Day pass",
+        "header": "Pass",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "DAY-0001",
+        "header": "Pass ID",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "Until midnight on the day of the first visit.",
+        "header": "Hours",
+        "id": "backFields.hours",
+      },
+      {
+        "body": "Good for one day, any number of entries. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
 exports[`Google compilers over every starter and baked template > starter-event-ticket: the default type and Generic, with Google art > event 1`] = `
 {
   "classBody": {
@@ -3396,6 +3626,236 @@ exports[`Google compilers over every starter and baked template > starter-generi
 }
 `;
 
+exports[`Google compilers over every starter and baked template > starter-guest-pass: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.guestOf",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "GUEST-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Jordan Lee",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#b54000",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "Guest",
+        "header": "Pass",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "GUEST-0001",
+        "header": "Pass ID",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Guest of",
+        "id": "backFields.guestOf",
+      },
+      {
+        "body": "Good for one visit. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-guest-pass: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.guestOf",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "GUEST-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Jordan Lee",
+      },
+    },
+    "hexBackgroundColor": "#b54000",
+    "state": "ACTIVE",
+    "textModulesData": [
+      {
+        "body": "Guest",
+        "header": "Pass",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "GUEST-0001",
+        "header": "Pass ID",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "Alex Morgan",
+        "header": "Guest of",
+        "id": "backFields.guestOf",
+      },
+      {
+        "body": "Good for one visit. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+  },
+  "type": "generic",
+}
+`;
+
 exports[`Google compilers over every starter and baked template > starter-id-card: the default type and Generic, with Google art > generic 1`] = `
 {
   "classBody": {
@@ -3653,6 +4113,280 @@ exports[`Google compilers over every starter and baked template > starter-id-car
     "validTimeInterval": {
       "end": {
         "date": "2030-08-31T00:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-monthly-pass: the default type and Generic, with Google art > generic 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.guests",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.hours",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "MEMBER-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "heroImage": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-hero-png",
+      },
+    },
+    "hexBackgroundColor": "#1d3aba",
+    "logo": {
+      "contentDescription": {
+        "defaultValue": {
+          "language": "en",
+          "value": "PassBook",
+        },
+      },
+      "sourceUri": {
+        "uri": "https://img.example/w/i/wallets-google-logo-png",
+      },
+    },
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2030-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Monthly",
+        "header": "Pass",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "MEMBER-0001",
+        "header": "Member",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "2",
+        "header": "Guests left",
+        "id": "auxiliaryFields.guests",
+      },
+      {
+        "body": "Any time, every day.",
+        "header": "Hours",
+        "id": "backFields.hours",
+      },
+      {
+        "body": "Show this pass at the door. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-01-01T00:00:00Z",
+      },
+    },
+  },
+  "type": "generic",
+}
+`;
+
+exports[`Google compilers over every starter and baked template > starter-monthly-pass: with no Google art 1`] = `
+{
+  "classBody": {
+    "multipleDevicesAndHoldersAllowedStatus": "ONE_USER_ALL_DEVICES",
+  },
+  "items": [
+    {
+      "capability": "image.icon",
+      "message": "icon@3x.png is 114 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.icon",
+      "support": "difference",
+    },
+    {
+      "capability": "image.logo",
+      "message": "logo@3x.png is 150 px wide; Google needs 660. Google shows the first letter of the title.",
+      "path": "images.logo",
+      "support": "difference",
+    },
+    {
+      "capability": "image.thumbnail",
+      "message": "thumbnail@3x.png is 270 px wide; Google needs 1860.",
+      "path": "images.thumbnail",
+      "support": "omitted",
+    },
+    {
+      "capability": "field.header",
+      "message": "Carried as a text module.",
+      "path": "headerFields.plan",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.member",
+      "support": "text",
+    },
+    {
+      "capability": "field.auxiliary",
+      "message": "Carried as a text module.",
+      "path": "auxiliaryFields.guests",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.hours",
+      "support": "text",
+    },
+    {
+      "capability": "field.back",
+      "message": "Carried as a text module.",
+      "path": "backFields.terms",
+      "support": "text",
+    },
+    {
+      "capability": "colors.foreground",
+      "message": "Google Wallet has no text colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+    {
+      "capability": "colors.label",
+      "message": "Google Wallet has no label colour field: it picks one.",
+      "path": "",
+      "support": "difference",
+    },
+  ],
+  "objectBody": {
+    "barcode": {
+      "alternateText": "MEMBER-0001",
+      "renderEncoding": "UTF_8",
+      "type": "QR_CODE",
+      "value": "SNAPSHOT-SCAN-CODE",
+    },
+    "cardTitle": {
+      "defaultValue": {
+        "language": "en",
+        "value": "PassBook",
+      },
+    },
+    "genericType": "GENERIC_OTHER",
+    "header": {
+      "defaultValue": {
+        "language": "en",
+        "value": "Alex Morgan",
+      },
+    },
+    "hexBackgroundColor": "#1d3aba",
+    "state": "ACTIVE",
+    "subheader": {
+      "defaultValue": {
+        "language": "en",
+        "value": "2030-01-01T00:00:00Z",
+      },
+    },
+    "textModulesData": [
+      {
+        "body": "Monthly",
+        "header": "Pass",
+        "id": "headerFields.plan",
+      },
+      {
+        "body": "MEMBER-0001",
+        "header": "Member",
+        "id": "auxiliaryFields.member",
+      },
+      {
+        "body": "2",
+        "header": "Guests left",
+        "id": "auxiliaryFields.guests",
+      },
+      {
+        "body": "Any time, every day.",
+        "header": "Hours",
+        "id": "backFields.hours",
+      },
+      {
+        "body": "Show this pass at the door. It's for you only.",
+        "header": "Terms",
+        "id": "backFields.terms",
+      },
+    ],
+    "validTimeInterval": {
+      "end": {
+        "date": "2030-01-01T00:00:00Z",
       },
     },
   },

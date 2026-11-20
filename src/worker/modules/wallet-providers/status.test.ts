@@ -280,6 +280,25 @@ describe('provider pass status read', () => {
       issuance: { state: 'enabled' },
       desiredOperation: { version: ref.version, kind: 'upsert', state: 'succeeded', reason: 'ok' },
     });
+    expect(accepted.providers[1]).not.toHaveProperty('reported');
+    // A provider callback's report shows as a report; installation stays unknown.
+    await run(
+      f.kit.env.DB,
+      "UPDATE wallet_provider_instances SET saved_at = 100 WHERE pass_id = ? AND provider = 'samsung'",
+      [f.pass.id],
+    );
+    const saved = await read(await call(f.kit, f.pass.id, member.session.headers));
+    expect(saved.providers[1]).toMatchObject({
+      installation: 'unknown',
+      reported: { event: 'saved', at: 100 },
+    });
+    await run(
+      f.kit.env.DB,
+      "UPDATE wallet_provider_instances SET holder_removed_at = 200 WHERE pass_id = ? AND provider = 'samsung'",
+      [f.pass.id],
+    );
+    const removed = await read(await call(f.kit, f.pass.id, member.session.headers));
+    expect(removed.providers[1]).toMatchObject({ reported: { event: 'removed', at: 200 } });
   });
 
   it('reports the current staged incarnation and unresolved older retirement during transfer', async () => {

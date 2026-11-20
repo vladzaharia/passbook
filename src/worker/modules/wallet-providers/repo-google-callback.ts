@@ -1,8 +1,8 @@
-import { deleteInBatches } from '../../platform/batched.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
 import { REVISION_EXPR } from './repo-accounts.ts';
+import { walletHolderEventStmt } from './repo-holder-events.ts';
 import { walletInstanceOperationCurrentSql } from './repo-instance-proof.ts';
 import type { WalletRuntimeScope } from './runtime-core.ts';
 
@@ -224,6 +224,7 @@ export async function putGoogleCallbackReceipt(
 ): Promise<boolean> {
   const { envelope } = input;
   const { join, guard, params } = googleReceiptProof(binding, input);
+  const column = input.eventType === 'save' ? 'saved_at' : 'holder_removed_at';
   const results = await batch(db, [
     stmt(
       db,
@@ -257,41 +258,25 @@ export async function putGoogleCallbackReceipt(
         input.id,
       ],
     ),
+    walletHolderEventStmt(db, {
+      orgId: binding.orgId,
+      passId: binding.passId,
+      mode: binding.mode,
+      receiptTable: 'wallet_google_callback_receipts',
+      receiptId: input.id,
+      provider: 'google',
+      event: input.eventType === 'save' ? 'saved' : 'removed',
+      at: input.now,
+    }),
+    // The provider's report, applied only with the receipt it came from. Nothing here revokes.
+    stmt(
+      db,
+      `UPDATE wallet_provider_instances SET ${column} = MAX(COALESCE(${column}, 0), ?)
+      WHERE id = ? AND EXISTS (SELECT 1 FROM wallet_google_callback_receipts WHERE id = ?)`,
+      [input.now, binding.instanceId, input.id],
+    ),
   ]);
   return results[0]?.results.length === 1 && results[1]?.results.length === 1;
-}
-
-/** Replay reservations only matter until the signed message itself expires. */
-export function purgeExpiredGoogleCallbackReplays(db: D1Database, now: number): Promise<number> {
-  return deleteInBatches(db, 'wallet_google_callback_replays', 'expires_at <= ?', [now], 5);
-}
-
-/** True when this exact signed message (account, nonce, instance, event) already has a receipt. */
-export async function isGoogleCallbackRedelivery(
-  db: D1Database,
-  binding: GoogleCallbackBinding,
-  input: { nonceHash: string; eventType: 'save' | 'del'; expiresAt: number },
-): Promise<boolean> {
-  return (
-    (await first(
-      db,
-      `SELECT 1 AS ok FROM wallet_google_callback_receipts receipt
-      JOIN wallet_google_callback_replays replay ON replay.account_id = receipt.account_id
-        AND replay.nonce_hash = receipt.nonce_hash AND replay.claim_id = receipt.id
-      WHERE receipt.account_id = ? AND receipt.nonce_hash = ? AND receipt.instance_id = ?
-        AND receipt.org_id = ? AND receipt.mode = ? AND receipt.event_type = ?
-        AND receipt.expires_at = ?`,
-      [
-        binding.accountId,
-        input.nonceHash,
-        binding.instanceId,
-        binding.orgId,
-        binding.mode,
-        input.eventType,
-        input.expiresAt,
-      ],
-    )) !== null
-  );
 }
 
 /** Bind the acknowledgement to the committed receipt, replay reservation and current proof. */

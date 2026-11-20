@@ -5,6 +5,7 @@ import {
   samsungSnapshotParams,
   samsungSnapshotPredicate,
 } from './repo-callbacks.ts';
+import { instancePass } from './repo-callbacks-identity.ts';
 import {
   receiptStatements,
   type SamsungReceipt,
@@ -88,6 +89,7 @@ export async function claimSamsungReceipt(
     receipt,
     liveGate(snapshot, claim.now, rawPassJson),
     false,
+    await instancePass(db, snapshot.instanceId),
   );
   const results = await batch(db, [
     stmt(db, `DELETE FROM wallet_samsung_auth_replays WHERE expires_at <= ?`, [claim.now]),

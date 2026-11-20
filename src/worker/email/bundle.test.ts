@@ -80,4 +80,37 @@ describe('renderBundleEmail', () => {
     expect(email.text).toContain('Maya (Tier: Plus): https://w.test/b/t/p1/pass.pkpass');
     expect(email.text).toContain('add the passes to your wallet');
   });
+
+  it('adds a Google link under a pass only when one is passed, and drops an unsafe one', () => {
+    const on = render({
+      passes: [
+        {
+          title: 'Mia',
+          addUrl: 'https://w.test/b/t/p1/pass.pkpass',
+          wallets: [
+            {
+              label: 'Add to Google Wallet',
+              url: 'https://w.test/b/t/p1/wallet/google',
+              badge: { url: 'https://w.test/g.png', width: 170, height: 30 },
+            },
+            {
+              label: 'Add to Samsung Wallet',
+              url: 'javascript:alert(1)',
+              badge: { url: 'https://w.test/s.png', width: 145, height: 30 },
+            },
+          ],
+        },
+        { title: 'Noor', addUrl: 'https://w.test/b/t/p2/pass.pkpass' },
+      ],
+    });
+    expect(on.html).toContain('href="https://w.test/b/t/p1/wallet/google"');
+    expect(on.html).toContain(
+      'src="https://w.test/g.png" alt="Add to Google Wallet" width="170" height="30"',
+    );
+    expect(on.html).not.toContain('Samsung');
+    expect(on.html).not.toContain('p2/wallet');
+    expect(on.html).not.toMatch(/\.svg/);
+    expect(on.text).toContain('  Add to Google Wallet: https://w.test/b/t/p1/wallet/google');
+    expect(render().html).not.toContain('Google');
+  });
 });
