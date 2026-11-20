@@ -194,6 +194,9 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
                     scoped
                   />
                 ) : null}
+                {eligible.isSuccess && usable.length > 0 ? (
+                  <p className="text-xs text-fg-muted">{NO_RELEASE_COPY.onlyReleased}</p>
+                ) : null}
                 {templateId &&
                 !scope.isLoading &&
                 !selectedTemplate &&

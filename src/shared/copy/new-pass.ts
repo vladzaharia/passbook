@@ -1,7 +1,9 @@
 /** The first-pass dead end: nothing is approved, so nothing can be issued. Names who and where. */
 export const NO_RELEASE_COPY = {
-  org: 'No template is approved yet. A reviewer has to approve one before you can issue a pass. Open Templates and request a review.',
+  org: 'No template is released yet. Approve and publish one in Templates before you issue a pass.',
   template:
-    'This template is not approved yet. A reviewer has to approve it before you can issue a pass.',
+    'This template has no released version. Approve and publish one before you issue a pass.',
   action: 'Open Templates',
+  /** Under the template list: unreleased templates are left out. */
+  onlyReleased: 'Only released templates are listed. Publish a version in Templates to add one.',
 } as const;
