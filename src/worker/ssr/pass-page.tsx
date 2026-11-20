@@ -94,6 +94,8 @@ export interface PassPageProps {
   support?: HolderSupport;
   /** When a voided or expired pass stopped working, formatted for the visitor. */
   endedOn?: string | null;
+  /** The code changed and the holder has no email to hear it: a line above the add block. */
+  notice?: string;
   /** Send it again: set when the pass has a holder email. */
   resend?: { action: string; again: 'sent' | 'wait' | null };
 }
@@ -152,6 +154,7 @@ function PassBody(props: PassPageProps) {
           support={props.support}
           endedOn={props.endedOn ?? null}
           {...(props.resend ? { resend: props.resend } : {})}
+          {...(props.notice ? { notice: props.notice } : {})}
           details={
             <PassDetails
               passJson={props.passJson}

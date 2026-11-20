@@ -90,6 +90,8 @@ beforeEach(async () => {
     mode: item.mode,
     provider: item.provider,
     credentialGeneration: 1,
+    channelEpoch: 1,
+    retirementCause: null,
     credentialKeysetCommitment,
     lifecycle: 'blocked',
     accountId: null,

@@ -1,4 +1,4 @@
-import { Ban } from 'lucide-react';
+import { Ban, RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { EffectiveChannels } from '../../shared/contracts/channels.ts';
 import type { WalletOffer } from '../../shared/contracts/me.ts';
@@ -6,6 +6,7 @@ import type {
   WalletProvider,
   WalletProviderIssuance,
 } from '../../shared/contracts/wallet-providers.ts';
+import { CHANNEL_COPY } from '../../shared/copy/channels.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { addLine, type DeviceInfo } from '../../shared/device.ts';
 import { walletChoices } from '../../shared/wallet-choice.ts';
@@ -58,6 +59,8 @@ export interface HolderPassViewProps {
   rise?: boolean;
   /** When a voided or expired pass stopped working, formatted. */
   endedOn?: string | null;
+  /** Something the holder must know before they go: the code changed. */
+  notice?: string;
   /** /p: Send it again posts here; the portal has it in its menu instead. */
   resend?: { action: string; again: 'sent' | 'wait' | null };
   /** The app's Buddy (its scene in view, click replay); /p's plays once on load. */
@@ -116,6 +119,13 @@ export function HolderPassView(props: HolderPassViewProps) {
         {props.toggle}
       </div>
       <div className="wl-holder-add">
+        {state === 'active' && props.notice ? (
+          <div role="status">
+            <Callout tone="info" icon={RefreshCw}>
+              <strong>{CHANNEL_COPY.codesReplacedTitle}.</strong> {props.notice}
+            </Callout>
+          </div>
+        ) : null}
         {state === 'active' ? null : (
           // A pass that cannot be added: the buddy sits on the notice, sad.
           <div className="wl-add-seat">

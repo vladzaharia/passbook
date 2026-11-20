@@ -13,12 +13,15 @@ import {
   walletInstanceProofSql,
 } from './repo-instance-proof.ts';
 import { walletNoProviderArtifactsSql } from './repo-instance-retirement.ts';
+import { slotFreeSql, successorGuardSql } from './repo-instance-slot-sql.ts';
 
 type Insert = WalletInstanceProof & {
   instanceId: string;
   operationId: string;
   requestHash: string;
   now: number;
+  /** A successor of a channel-off predecessor is its epoch + 1; absent means a first instance. */
+  channelEpoch?: number;
 };
 const proofValues = (p: Insert) =>
   [
@@ -108,6 +111,8 @@ export async function insertInstance(
   offer?: { hash: string; expiresAt: number; authority: WalletOfferAuthority },
 ): Promise<void> {
   if (!validCommitment(p.credentialKeysetCommitment)) return;
+  const channelEpoch = p.channelEpoch ?? 1;
+  if (!Number.isSafeInteger(channelEpoch) || channelEpoch < 1 || channelEpoch > 16) return;
   const statements = [
     stmt(
       db,
@@ -116,17 +121,15 @@ export async function insertInstance(
         projection_release_id AS identity_projection_release_id, pass_credential_generation AS credential_generation,
         credential_keyset_commitment,
         'active' AS lifecycle, NULL AS retirement_requested_at,
-        1 AS desired_version, operation_id AS desired_operation_id FROM proof), ${NEW_OP_CTE}
+        1 AS desired_version, operation_id AS desired_operation_id, ${channelEpoch} AS channel_epoch FROM proof), ${NEW_OP_CTE}
       INSERT OR IGNORE INTO wallet_provider_instances
         (id, pass_id, org_id, mode, provider, account_id, identity_projection_release_id,
-         credential_generation, credential_keyset_commitment, desired_version, desired_operation_id, created_at, updated_at)
+         credential_generation, channel_epoch, credential_keyset_commitment, desired_version, desired_operation_id, created_at, updated_at, card_type)
       SELECT i.id, i.pass_id, i.org_id, i.mode, i.provider, i.account_id, i.identity_projection_release_id,
-        i.credential_generation, i.credential_keyset_commitment, 1, i.desired_operation_id, ?, ? FROM i, op
+        i.credential_generation, i.channel_epoch, i.credential_keyset_commitment, 1, i.desired_operation_id, ?, ?, (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = i.identity_projection_release_id) FROM i, op
       WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')} AND ${credentialRefKeysetSql}
-        AND NOT EXISTS (SELECT 1 FROM wallet_provider_instances old WHERE old.pass_id = i.pass_id
-          AND old.provider = i.provider AND (old.credential_generation >= i.credential_generation
-            OR old.lifecycle != 'retired' OR EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
-              WHERE busy.instance_id = old.id AND busy.state IN ('claimed', 'uncertain'))))
+        AND ${slotFreeSql}
+        ${channelEpoch === 1 ? '' : successorGuardSql}
         ${offer ? `AND ${offerAuthoritySql}` : ''}`,
       [
         ...proofValues(p),
@@ -173,7 +176,8 @@ export async function insertInstance(
     stmt(
       db,
       `UPDATE wallet_provider_instances AS target SET lifecycle = 'active', account_id = ?,
-        identity_projection_release_id = ?, desired_version = 1, desired_operation_id = ?, updated_at = ?
+        identity_projection_release_id = ?, desired_version = 1, desired_operation_id = ?, updated_at = ?,
+        card_type = (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = ?)
       WHERE target.id = ? AND target.lifecycle = 'ready' AND target.credential_keyset_commitment = ?
         AND ${credentialRefKeysetSql} AND EXISTS (
         SELECT 1 FROM wallet_provider_instance_operations op WHERE op.id = ? AND op.instance_id = target.id
@@ -184,6 +188,7 @@ export async function insertInstance(
         p.projectionReleaseId,
         p.operationId,
         p.now,
+        p.projectionReleaseId,
         p.instanceId,
         p.credentialKeysetCommitment,
         p.credentialKeysetCommitment,

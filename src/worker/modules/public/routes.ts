@@ -18,6 +18,7 @@ import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
 import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
 import { channelGate, recordCopy } from '../channels/gate.ts';
+import { codesReplacedNotice } from '../channels/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { servePassFile } from '../passes/file.ts';
@@ -127,6 +128,7 @@ register(
       const snapshot = await capturePassSnapshot(svcCtx, pass);
       const model = await pageModel(svcCtx, pass);
       const page = `/p/${token}`;
+      const notice = model.removal ? undefined : await codesReplacedNotice(svcCtx, pass);
       // Resolve only links to this bearer under the same snapshot as the page and its assets.
       const walletOffers = canPresent(pass, model.passJson, svcCtx.clock.now())
         ? (await listWalletOffers(svcCtx, pass.id, model.channels.effective))
@@ -173,6 +175,7 @@ register(
           zoneOf(c),
           lang,
         ),
+        ...(notice ? { notice } : {}),
         ...(pass.holderEmail && !model.removal
           ? { resend: { action: `${page}/resend`, again: againOf(c.req.query('again')) } }
           : {}),

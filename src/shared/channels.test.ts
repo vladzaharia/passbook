@@ -114,6 +114,40 @@ describe('channelTransition', () => {
     ).toBe(false);
   });
 
+  it('replace codes also covers channels retired earlier, e.g. re-enabling after all were off', () => {
+    const allOff = { mobile: 'off', apple: 'off', google: 'off', samsung: 'off' } as const;
+    const retired = { mobile: 1, apple: 1, google: 1, samsung: 1 };
+    const before = on({ pass: allOff, retired });
+    const after = on({ pass: { apple: 'off', google: 'off', samsung: 'off' }, retired });
+    const actions = channelTransition(before, after, {
+      replaceCodes: true,
+      copies: new Set(['apple', 'samsung']),
+      retired: new Set(['mobile', 'apple', 'google', 'samsung']),
+    });
+    expect(actions).toContainEqual({ kind: 'restore', channel: 'mobile', warn: false });
+    expect(actions).toContainEqual({ kind: 'rotate_codes', channels: ['apple', 'samsung'] });
+  });
+
+  it('a set of channels limits what replace codes covers', () => {
+    const after = on({ pass: { apple: 'off', google: 'off' } });
+    const actions = channelTransition(on(), after, {
+      replaceCodes: new Set(['apple']),
+      copies: new Set(['apple', 'google']),
+    });
+    expect(actions.filter((a) => a.kind === 'rotate_codes')).toEqual([
+      { kind: 'rotate_codes', channels: ['apple'] },
+    ]);
+  });
+
+  it('never rotates a channel that is on, or one without a copy', () => {
+    const after = on({ pass: { apple: 'off' } });
+    const none = channelTransition(on(), after, {
+      replaceCodes: true,
+      copies: new Set(['google']),
+    });
+    expect(none.some((a) => a.kind === 'rotate_codes')).toBe(false);
+  });
+
   it('a kill switch never retires or rotates', () => {
     const blocked = on({ org: { apple: 'blocked' } });
     expect(
@@ -177,5 +211,17 @@ describe('channelTransition', () => {
     expect(channelTransition(blocked, after, { retired: new Set(['apple']) })).toEqual([
       { kind: 'restore', channel: 'apple', warn: false },
     ]);
+  });
+});
+
+describe('offer holds', () => {
+  it('has contract values and copy for each hold', async () => {
+    const { OFFER_HOLDS } = await import('./contracts/channels.ts');
+    const { offerHold, OFFER_HOLD_COPY } = await import('./copy/channels.ts');
+    expect(Object.keys(OFFER_HOLD_COPY).sort()).toEqual([...OFFER_HOLDS].sort());
+    expect(offerHold('google', 'provider_retiring')).toBe(
+      'Google Wallet: the old copy is being removed. Try again shortly.',
+    );
+    expect(offerHold('samsung', 'provider_epoch_limit')).toContain('Samsung Wallet');
   });
 });
