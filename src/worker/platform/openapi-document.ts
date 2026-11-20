@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppBindings } from './context.ts';
+import { withNamedBodies, withReference } from './openapi-reference.ts';
 import { withSdkNames } from './openapi-sdk.ts';
 import { withSecurity } from './openapi-security.ts';
 import { registerWebhookEvents } from './openapi-webhooks.ts';
@@ -52,6 +53,6 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
   }) as unknown as Doc;
   return withSecurity(
     app,
-    withSdkNames(withOperationIds(withKebabTags(doc))) as never,
+    withNamedBodies(withReference(withSdkNames(withOperationIds(withKebabTags(doc))))) as never,
   ) as unknown as Doc;
 }
