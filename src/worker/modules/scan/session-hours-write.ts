@@ -4,7 +4,7 @@ import type { Grant } from '../../platform/authority.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { audited } from './repo-admin-grant.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
-import { nextEdgeAt } from './session-hours.ts';
+import { nextEdgeAt, pruneDates } from './session-hours.ts';
 
 type Edit = Pick<z.infer<typeof UpdateScanningSessionSchema>, 'hours' | 'status' | 'timeZone'>;
 
@@ -18,7 +18,7 @@ export function timingPatch(row: ScanningSessionRow, input: Edit, now: number) {
       ? row.hours
       : input.hours === null
         ? null
-        : JSON.stringify(input.hours);
+        : JSON.stringify(pruneDates(input.hours, input.timeZone ?? row.time_zone, now));
   const hold = input.status === 'active' ? null : row.hold;
   const status = input.status ?? row.status;
   const time_zone = input.timeZone ?? row.time_zone;
@@ -35,7 +35,7 @@ export function newTiming(
   schedule: (Edit['hours'] & object) | null,
   now: number,
 ) {
-  const hours = schedule === null ? null : JSON.stringify(schedule);
+  const hours = schedule === null ? null : JSON.stringify(pruneDates(schedule, timeZone, now));
   return { hours, hours_next_at: nextEdgeAt({ time_zone: timeZone, hours }, now) };
 }
 

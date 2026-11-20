@@ -44,6 +44,20 @@ export function formatDay(ms: number | null | undefined, empty = 'None'): string
   return ms == null ? empty : DAY.format(ms);
 }
 
+const CALENDAR_DATE = new Intl.DateTimeFormat(LOCALE, {
+  timeZone: 'UTC',
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+
+/** "Fri, Dec 25, 2026" from a `YYYY-MM-DD` key, read as a plain calendar date in any zone. */
+export function formatCalendarDate(key: string): string {
+  const [y = 0, m = 1, d = 1] = key.split('-').map(Number);
+  return CALENDAR_DATE.format(Date.UTC(y, m - 1, d));
+}
+
 /** Oct 31: axes, ranges, "Updated Oct 31". */
 export function formatShortDate(ms: number): string {
   return SHORT.format(ms);

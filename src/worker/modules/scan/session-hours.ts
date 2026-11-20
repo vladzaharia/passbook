@@ -1,4 +1,11 @@
-import { closesAt, isOpen, nextFlip, nextOpen } from '../../../passkit/template/access/hours.ts';
+import {
+  closesAt,
+  dateKey,
+  isOpen,
+  nextFlip,
+  nextOpen,
+  wall,
+} from '../../../passkit/template/access/hours.ts';
 import {
   type SessionHold,
   SessionHoldSchema,
@@ -38,6 +45,16 @@ function parse<T>(
 /** Null: always open. A stored schedule that no longer parses is `invalid` and closes the session. */
 export const storedHours = (raw: string | null | undefined): SessionHours | null | 'invalid' =>
   parse(raw, SessionHoursSchema);
+
+/** Drops exceptions dated before today in the session's zone; they can no longer matter. */
+export function pruneDates(hours: SessionHours, timeZone: string, now: number): SessionHours {
+  if (!hours.dates) return hours;
+  const w = wall(now, timeZone);
+  const today = dateKey(w.y, w.m, w.d);
+  const kept = Object.entries(hours.dates).filter(([key]) => key >= today);
+  const { dates: _old, ...rest } = hours;
+  return kept.length > 0 ? { ...rest, dates: Object.fromEntries(kept) } : rest;
+}
 
 /** The hold in force at `now`; one past its end is as good as none. */
 export function activeHold(raw: string | null | undefined, now: number): SessionHold | null {

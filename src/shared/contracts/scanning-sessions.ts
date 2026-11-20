@@ -9,7 +9,7 @@ import {
 } from './common.ts';
 import { ScannerTagsSettingsSchema, TagLevelSchema } from './nfc-tags.ts';
 import { ScanApprovalSchema, ScannerSettingsSchema, TimeZoneSchema } from './scan.ts';
-import { WeeklyHoursSchema, ZoneIdsSchema } from './scan-access.ts';
+import { HoursSpanSchema, ZoneIdsSchema } from './scan-access.ts';
 import { AdmitsSchema } from './scanners.ts';
 
 /** Layout and sign-in method are independent: an admin is another device in the session. */
@@ -108,11 +108,34 @@ export const ScanningSessionSettingsSchema = ScannerSettingsSchema.extend({
   tags: ScannerTagsSettingsSchema.extend({ level: TagLevelSchema.optional() }).optional(),
 });
 export const ScanningSessionStatusSchema = z.enum(['active', 'paused', 'ended']);
+const DateKeySchema = z.string().refine((v) => {
+  const [y = 0, m = 0, d = 0] = v.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}, 'Use a date like 2026-12-25.');
+/** Dated exceptions, in the session's zone: no spans is closed all day, else that date's own hours. */
+export const SessionDatesSchema = z
+  .record(DateKeySchema, z.array(HoursSpanSchema).max(4))
+  .refine((dates) => Object.keys(dates).length <= 60, 'At most 60 closed dates.');
+const DaySpans = z.array(HoursSpanSchema).min(1).max(4).optional();
 /** When an active session scans, by the session's own clock. At least one span, none empty. */
-export const SessionHoursSchema = WeeklyHoursSchema.refine((hours) => {
-  const spans = Object.values(hours).flat();
-  return spans.length > 0 && spans.every((s) => s.slice(0, 5) !== s.slice(6));
-}, 'Add at least one span; start and end differ.');
+export const SessionHoursSchema = z
+  .strictObject({
+    mon: DaySpans,
+    tue: DaySpans,
+    wed: DaySpans,
+    thu: DaySpans,
+    fri: DaySpans,
+    sat: DaySpans,
+    sun: DaySpans,
+    dates: SessionDatesSchema.optional(),
+  })
+  .refine((hours) => {
+    const { dates, ...week } = hours;
+    const weekly = Object.values(week).flat();
+    const spans = [...weekly, ...Object.values(dates ?? {}).flat()];
+    return weekly.length > 0 && spans.every((s) => s !== undefined && s.slice(0, 5) !== s.slice(6));
+  }, 'Add at least one span; start and end differ.');
 export type SessionHours = z.infer<typeof SessionHoursSchema>;
 /** A manual override of the hours until `until` (an instant). */
 export const SessionHoldSchema = z.strictObject({

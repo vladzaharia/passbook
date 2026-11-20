@@ -27,3 +27,24 @@ describe('session hours fields', () => {
     expect(screen.queryByRole('table')).toBeNull();
   });
 });
+
+describe('closed dates', () => {
+  it('adds a closed date and special hours, and removes one', async () => {
+    render(<Harness />);
+    await userEvent.click(screen.getByRole('switch', { name: 'Open at set hours' }));
+    const add = screen.getByRole('button', { name: 'Add' });
+    expect((add as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.type(screen.getByLabelText('Date'), '2026-12-25');
+    await userEvent.click(add);
+    expect(screen.getByText(/Fri, Dec 25, 2026/)).toBeTruthy();
+    expect(screen.getByText(/· Closed/)).toBeTruthy();
+    await userEvent.type(screen.getByLabelText('Date'), '2026-12-31');
+    await userEvent.type(screen.getByLabelText('Open from'), '1000');
+    expect(screen.getByText('Set both times, or neither.')).toBeTruthy();
+    await userEvent.type(screen.getByLabelText('To'), '1400');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    expect(screen.getByText(/10 AM – 2 PM/)).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Fri, Dec 25, 2026' }));
+    expect(screen.queryByText(/Fri, Dec 25, 2026/)).toBeNull();
+  });
+});

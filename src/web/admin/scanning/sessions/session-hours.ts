@@ -25,8 +25,17 @@ export function hoursProblem(on: boolean, hours: WeeklyHours | undefined): strin
 }
 
 /** What the server takes: only a valid, switched-on week; null clears the hours. */
-export const hoursBody = (on: boolean, hours: WeeklyHours | undefined): SessionHours | null =>
-  on && hours && !hoursProblem(on, hours) ? hours : null;
+export const hoursBody = (
+  on: boolean,
+  hours: WeeklyHours | undefined,
+  dates?: Record<string, string[]>,
+): SessionHours | null =>
+  on && hours && !hoursProblem(on, hours)
+    ? { ...hours, ...(dates && Object.keys(dates).length > 0 ? { dates } : {}) }
+    : null;
+
+/** The weekly part of stored hours, for the week grid. */
+export const weekOf = ({ dates: _dates, ...week }: SessionHours): WeeklyHours => week;
 
 /** Days with the same spans read as one line: "Mon–Fri 9 AM–5 PM", as the access summaries do. */
 export const hoursSummary = (hours: SessionHours | null | undefined): string[] =>

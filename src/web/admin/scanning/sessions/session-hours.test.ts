@@ -73,3 +73,16 @@ describe('session state', () => {
     expect(line).toMatch(/^Opens 4:00 PM/);
   });
 });
+
+describe('closed dates in the body', () => {
+  it('sends dates with the week, leaves them out when none, and round-trips from a session', () => {
+    const dates = { '2026-12-25': [], '2026-12-31': ['10:00-14:00'] };
+    expect(hoursBody(true, DEFAULT_HOURS, dates)).toEqual({ ...DEFAULT_HOURS, dates });
+    expect(hoursBody(true, DEFAULT_HOURS, {})).toEqual(DEFAULT_HOURS);
+    expect(hoursBody(false, DEFAULT_HOURS, dates)).toBeNull();
+    const draft = sessionDraft({ ...managedSession, hours: { ...DEFAULT_HOURS, dates } });
+    expect(draft.dates).toEqual(dates);
+    expect(draft.hours).toEqual(DEFAULT_HOURS);
+    expect(sessionBody(draft).hours).toEqual({ ...DEFAULT_HOURS, dates });
+  });
+});
