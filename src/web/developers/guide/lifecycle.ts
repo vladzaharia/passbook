@@ -36,9 +36,9 @@ export const lifecycleMermaid = (): string =>
     '\n',
   );
 
-const W = 130;
+const W = 140;
 const H = 64;
-const X = { voided: 10, active: 215, removed: 420 } as const;
+const X = { voided: 10, active: 210, removed: 410 } as const;
 const TOP = 30;
 const NOTE: Record<State, string> = {
   voided: 'scans refused',

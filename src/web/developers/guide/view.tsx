@@ -170,7 +170,12 @@ function BlockView({
     }
     case 'diagram':
       return (
-        <figure className="gfig">
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable figure
+        <figure
+          className="gfig"
+          tabIndex={0}
+          aria-label="Pass lifecycle diagram, scrolls sideways on a phone"
+        >
           {/* biome-ignore lint/security/noDangerouslySetInnerHtml: drawn at build from the lifecycle table in lifecycle.ts */}
           <div className="gfig-svg" dangerouslySetInnerHTML={{ __html: lifecycleSvg() }} />
         </figure>
