@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ipAllowed, parseCidr } from './ip-allow.ts';
+import { ipAllowed, ipListTooBroad, parseCidr } from './ip-allow.ts';
 
 describe('ip allowlist', () => {
   it('matches an address, a v4 range and a v6 range', () => {
@@ -43,5 +43,25 @@ describe('ip allowlist', () => {
       '256.0.0.0',
     ])
       expect(parseCidr(bad), bad).toBeNull();
+  });
+});
+
+describe('too broad a list', () => {
+  it('refuses wide ranges, and ranges that together cover a family', () => {
+    for (const wide of [
+      ['0.0.0.0/0'],
+      ['::/0'],
+      ['10.0.0.0/7'],
+      ['2001::/16'],
+      ['0.0.0.0/1', '128.0.0.0/1'],
+    ])
+      expect(ipListTooBroad(wide), wide.join()).toBe(true);
+    expect(ipListTooBroad(Array.from({ length: 256 }, (_, i) => `${i}.0.0.0/8`))).toBe(true);
+    expect(ipListTooBroad([...Array.from({ length: 255 }, (_, i) => `${i}.0.0.0/8`)])).toBe(false);
+  });
+
+  it('accepts narrow ranges, singles and a mixed list', () => {
+    expect(ipListTooBroad(['10.0.0.0/8', '2001:db8::/32', '203.0.113.7'])).toBe(false);
+    expect(ipListTooBroad([])).toBe(false);
   });
 });

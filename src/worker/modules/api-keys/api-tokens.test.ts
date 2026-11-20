@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
+import { makeApiKey } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from './service.ts';
 import {
   type CreatedKey,
   create,
+  f,
   h,
   keyBody,
   member,
@@ -74,7 +76,8 @@ describe('roles', () => {
   it('mints a role key with no scopes, and the audit row records the role', async () => {
     const { res, key } = await mint('org_admin', { scopes: [], roles: ['pass_operator'] });
     expect(res.status).toBe(201);
-    expect(key).toMatchObject({ scopes: [], roles: ['pass_operator'], kind: 'service' });
+    expect(key).toMatchObject({ roles: ['pass_operator'], kind: 'service' });
+    expect(key.scopes).toContain('passes:write');
     expect(
       await first(
         h.env.DB,
@@ -114,9 +117,44 @@ describe('roles', () => {
     const auth = await createApiKeyStore(h.env, h.clock).resolve(key.secret);
     // A role holds the scopes a route accepts; a scope gained later reaches the role then.
     expect(auth?.scopes).toEqual(['templates:read']);
+    // The bundle is written onto the key at mint; the role is only a label.
+    expect(JSON.parse(String((await row(key.id))?.scopes))).toEqual(['templates:read']);
+    expect((key as CreatedKey & { roles: string[] }).roles).toEqual(['template_author']);
     const headers = { authorization: `Bearer ${key.secret}` };
     expect((await h.call('/api/v1/templates', { headers })).status).toBe(200);
     await expectProblem(await h.call('/api/v1/passes', { headers }), 403, 'MISSING_SCOPE');
+  });
+});
+
+describe('a role is a label on the scopes written at mint', () => {
+  it('a key keeps exactly the scopes it has, whatever its role bundle holds now', async () => {
+    // A key made when the pass_operator bundle held one scope: the bundle has grown since.
+    const old = await makeApiKey(f(), {
+      orgId: org.id,
+      scopes: ['passes:read'],
+      roles: ['pass_operator'],
+    });
+    const auth = await createApiKeyStore(h.env, h.clock).resolve(old.secret);
+    expect(auth?.scopes).toEqual(['passes:read']);
+    const headers = old.headers;
+    expect((await h.call('/api/v1/passes', { headers })).status).toBe(200);
+    await expectProblem(
+      await h.call('/api/v1/passes', { method: 'POST', headers, json: {} }),
+      403,
+      'MISSING_SCOPE',
+    );
+  });
+
+  it('copies the bundle at mint, so a new key holds all of it', async () => {
+    const { key } = await mint('org_admin', { scopes: [], roles: ['pass_operator'] });
+    expect([...key.scopes].sort()).toEqual([
+      'holders:write',
+      'messages:write',
+      'passes:read',
+      'passes:write',
+      'scans:read',
+      'templates:read',
+    ]);
   });
 });
 

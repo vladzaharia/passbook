@@ -75,7 +75,13 @@ describe('existing keys under migration 0142', () => {
 
   it('the backfill makes an org-less key a platform key and leaves org keys as service keys', async () => {
     const orgKey = await insert();
-    const bare = await insert({ org_id: null });
+    // Before 0142 an org-less row had no kind: it is written as one, past the insert rules that came with it.
+    const bare = await withoutTrigger(h.env.DB, 'api_keys_kind_rules', () =>
+      insert({ org_id: null }),
+    );
+    await withoutTrigger(h.env.DB, 'api_keys_v2_immutable', () =>
+      run(h.env.DB, "UPDATE api_keys SET kind = 'service' WHERE id = ?", [bare]),
+    );
     expect((await kindOf(orgKey))?.kind).toBe('service');
     expect((await kindOf(bare))?.kind).toBe('service');
     const backfill = /UPDATE api_keys SET kind = 'platform'[^;]*;/.exec(migration)?.[0] ?? '';
@@ -200,6 +206,8 @@ describe('what each kind must be when written', () => {
       { ip_allow: '[]' },
       { roles: '["org_admin"]' },
     ];
+    // A service or personal key has an org.
+    await expect(insert({ org_id: null })).rejects.toThrow('does not fit its kind');
     for (const over of bad) await expect(platform(over)).rejects.toThrow('does not fit its kind');
   });
 });

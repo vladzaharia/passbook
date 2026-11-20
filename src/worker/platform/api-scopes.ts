@@ -85,17 +85,13 @@ export const ROLE_PRESETS: Record<OrgRole, TenantScope[]> = Object.fromEntries(
   ]),
 ) as Record<OrgRole, TenantScope[]>;
 
-/** Roles whose preset holds `scope`; none for a platform or terminal scope. */
-export const rolesWithScope = (scope: string): OrgRole[] =>
-  OrgRoleSchema.options.filter((role) => (ROLE_PRESETS[role] as string[]).includes(scope));
-
 /** Roles whose membership grants what `scope` exercises (the cap on a personal key). */
 export const rolesCapableOf = (scope: string): OrgRole[] =>
   isPlatformScope(scope as ApiScope) || !(scope in scopeCapability)
     ? []
     : rolesGranting(scopeCapability[scope as TenantScope]);
 
-/** What a key holds: its own scopes plus those of its roles, once each. */
+/** The scopes written onto a key at mint: its own plus those of its roles, once each. Read once, never again. */
 export const effectiveScopes = (
   scopes: readonly ApiScope[],
   roles: readonly OrgRole[],

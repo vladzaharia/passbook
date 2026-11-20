@@ -51,7 +51,7 @@ export const ApiKeySchema = z.object({
   expiresAt: TimestampSchema.nullable(),
   revokedAt: TimestampSchema.nullable(),
   kind: ApiKeyKindSchema.default('service'),
-  /** Role presets; the key also holds each role's scopes, read at every request. */
+  /** Role labels. A role's scopes were written into `scopes` at mint and never change. */
   roles: z.array(OrgRoleSchema).default([]),
   /** The key stops working at this instant (set once, never after `expiresAt`). */
   retireAt: TimestampSchema.nullable().default(null),

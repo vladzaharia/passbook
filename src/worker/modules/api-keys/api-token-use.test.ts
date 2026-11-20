@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeRateLimiter, makeApiKey, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
 import { first, run } from '../../platform/db.ts';
@@ -100,12 +100,64 @@ describe('IP allowlist', () => {
     expect(((await res.json()) as CreatedKey & { ipAllow: string[] }).ipAllow).toEqual([
       '198.51.100.0/24',
     ]);
-    for (const bad of ['198.51.100.7/24', 'nope', '1.2.3.4/33', '*', '0.0.0.0/0', '::/0'])
+    for (const bad of ['198.51.100.7/24', 'nope', '1.2.3.4/33', '*'])
       await expectProblem(
         await create(session.headers, { ...keyBody(org.id), ipAllow: [bad] }),
         422,
         'API_KEY_IP_INVALID',
       );
+    // Too broad: one wide range, or ranges that together cover every address.
+    for (const wide of [
+      ['0.0.0.0/0'],
+      ['::/0'],
+      ['10.0.0.0/7'],
+      ['2001::/16'],
+      ['0.0.0.0/1', '128.0.0.0/1'],
+    ])
+      await expectProblem(
+        await create(session.headers, { ...keyBody(org.id), ipAllow: wide }),
+        422,
+        'API_KEY_IP_TOO_BROAD',
+      );
+    expect(
+      (
+        await create(session.headers, {
+          ...keyBody(org.id),
+          ipAllow: ['10.0.0.0/8', '2001:db8::/32'],
+        })
+      ).status,
+    ).toBe(201);
+  });
+});
+
+describe('a platform key made before 0142', () => {
+  it('keeps working without expiry or IP list, and each use is logged', async () => {
+    const k = await makeApiKey(f(), { orgId: null });
+    const seen: string[] = [];
+    const spy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation((line) => void seen.push(String(line)));
+    try {
+      const store = createApiKeyStore(h.env, h.clock);
+      expect(await store.resolve(k.secret)).toMatchObject({ orgId: null });
+      expect(await store.resolve(k.secret)).not.toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+    expect(seen.filter((l) => l.includes('API_KEY_PLATFORM_UNBOUNDED'))).toHaveLength(2);
+    // A bounded platform key is not logged.
+    const bounded = await makeApiKey(f(), {
+      orgId: null,
+      expiresAt: h.clock.now() + 86_400_000,
+      ipAllow: ['198.51.100.0/24'],
+    });
+    const quiet = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await createApiKeyStore(h.env, h.clock).resolve(bounded.secret, { ip: IN });
+      expect(quiet.mock.calls.flat().join()).not.toContain('API_KEY_PLATFORM_UNBOUNDED');
+    } finally {
+      quiet.mockRestore();
+    }
   });
 });
 

@@ -58,6 +58,13 @@ export function keyColumns({
                 )}
               </span>
               <code className="block truncate font-mono text-xs text-fg-muted">{keyPrefix(k)}</code>
+              {k.kind === 'platform' &&
+              k.revokedAt === null &&
+              (k.expiresAt === null || k.ipAllow.length === 0) ? (
+                <span className="block text-xs text-warning">
+                  Set allowed IPs and expiry: make a new key
+                </span>
+              ) : null}
             </div>
           </div>
         );
