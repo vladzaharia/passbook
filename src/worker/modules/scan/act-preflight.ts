@@ -1,6 +1,7 @@
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type HeldGateSnapshot, heldGateReads } from './act-gate-preflight.ts';
+import { passRulesOf } from './admission.ts';
 import type { PendingDisplayHistorySource } from './display-history-pending.ts';
 import type { PreloadedDisplayHistory } from './display-history-plan.ts';
 import { gateScope } from './gate.ts';
@@ -65,7 +66,7 @@ export function prepareCheckInReads(
   const admissionScope = eventId ? `event:${eventId}` : '';
   const configured =
     checkIn &&
-    (Object.keys(found.checkInRules ?? {}).length > 0 ||
+    (Object.keys(passRulesOf(found)).length > 0 ||
       Object.keys(actor.settings.checkIn ?? {}).length > 0 ||
       actor.settings.direction === 'out' ||
       actor.settings.direction === 'both');

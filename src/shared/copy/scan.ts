@@ -123,7 +123,9 @@ export const SCAN_REASON_VARIANTS = {
   wrong_event: { noEvent: 'This scanner is for a different event.' },
   not_yet_valid: { noWhen: 'Not open yet. Try again later.' },
   capacity_full: { noPlace: 'Full', noCapacity: '{in} in.', noCount: 'At capacity.' },
-  ended: { noPlace: 'Ended' },
+  ended: { noPlace: 'Ended', named: '{type} ended' },
+  guest_expired: { named: '{type} ended' },
+  guest_visits_used: { named: '{type}: no visits left' },
   check_required: { typedNumber: 'Check ID.' },
 } as const;
 
@@ -159,6 +161,15 @@ export const SCAN_COPY = {
     access: {
       headline: 'Access granted',
       sub: '{zone} · until {time}',
+    },
+    /** The pass type and the rule that admitted it: "Day pass · until 11:59 PM". */
+    admit: {
+      line: '{type} · {rule}',
+      until: 'until {time}',
+      visit: 'visit {n} of {of}',
+      left: '{n} left',
+      once: 'once',
+      daily: 'daily',
     },
     letInAgain: 'Let in again.',
     tappedOut: 'Tapped out',

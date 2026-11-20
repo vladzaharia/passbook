@@ -5,6 +5,7 @@ import { IdSchema, JsonSchema, ModeSchema, TimestampSchema } from './common.ts';
 import { ScannerTagsSettingsSchema, ScanTagSchema, TagReadSchema } from './nfc-tags.ts';
 import { ScanAccessSchema } from './scan-access.ts';
 import { ScanActionInputSchema } from './scan-action-input.ts';
+import { ScanAdmitSchema } from './scan-admit.ts';
 import {
   ScanAdminScopeSchema,
   ScanApprovalSchema,
@@ -310,6 +311,7 @@ export const ScanOutcomeSchema = z.object({
   milestone: ScanMilestoneSchema.nullable(),
   undoUntil: TimestampSchema.nullable(),
   access: ScanAccessSchema.nullable().default(null),
+  admit: ScanAdmitSchema.nullable().optional(),
   tag: ScanTagSchema.nullable().optional(),
   occupancy: ScanOccupancySchema.nullable().optional(),
   /** The outcome's screen. Null for system screens and unknown passes, so refusals stay byte-equal across orgs. */

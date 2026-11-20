@@ -228,6 +228,36 @@ describe('samsung check', () => {
     ]);
   });
 
+  it('probes every card of the map and refuses a typed card of another type', async () => {
+    stubProviders();
+    const creds = { ...longSamsung('card321'), cardIds: { ticket: 'cardT1' } };
+    mock.setSamsungTemplate('cardT1', {
+      cardType: 'ticket',
+      subType: 'others',
+      countryCode: 'US',
+      state: 'ACTIVE',
+      testingModeOff: 'Y',
+    });
+    const ok = await platformCred('samsung', 'test', creds);
+    expect(await check(ok.id)).toMatchObject({ ok: 1, code: null });
+    expect(mock.requests.map((r) => r.path).sort()).toEqual([
+      '/partner/v1/card/template/card321',
+      '/partner/v1/card/template/cardT1',
+    ]);
+    mock.setSamsungTemplate('cardT2', {
+      cardType: 'coupon',
+      subType: 'others',
+      countryCode: 'US',
+      state: 'ACTIVE',
+      testingModeOff: 'Y',
+    });
+    const wrong = await platformCred('samsung', 'live', {
+      ...longSamsung('card322'),
+      cardIds: { ticket: 'cardT2' },
+    });
+    expect(await check(wrong.id)).toMatchObject({ ok: 0, code: 'card_not_found' });
+  });
+
   it('refuses a card that is not active on Live and one Samsung does not know', async () => {
     stubProviders();
     mock.setSamsungTemplate('card123', {

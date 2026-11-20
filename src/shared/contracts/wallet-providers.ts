@@ -24,10 +24,24 @@ export const GoogleWalletCredentialsSchema = z.strictObject({
 });
 export type GoogleWalletCredentials = z.infer<typeof GoogleWalletCredentialsSchema>;
 
+/** Card types a Samsung projection supports; the form offers a card row for each. */
+export const SAMSUNG_CARD_TYPES = ['loyalty'] as const;
+
+/** Samsung card type (`loyalty`, `ticket`, ...) as the provider names it. */
+export const SamsungCardTypeSchema = z.string().regex(/^[a-z]{1,16}$/);
+
 export const SamsungWalletCredentialsSchema = z.strictObject({
   partnerId: providerId,
   certificateId: providerId,
+  /** The default card, used by every type without its own entry in `cardIds`. */
   cardId: providerId,
+  /** Samsung cards per pass type; a type's pass never uses another type's card. */
+  cardIds: z
+    .record(SamsungCardTypeSchema, providerId)
+    .refine((map) => Object.keys(map).length <= 8)
+    // `generic` names the default card (`cardId`) in the card map.
+    .refine((map) => !Object.hasOwn(map, 'generic'))
+    .optional(),
   partnerPrivateKeyPem: pem,
   partnerCertificatePem: pem,
   samsungCertificatePem: pem,

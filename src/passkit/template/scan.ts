@@ -17,7 +17,17 @@ import { nfcIssues } from './scan-nfc.ts';
 
 export { nfcIssues };
 
-const SCAN_KEYS = new Set(['actions', 'lookup', 'window', 'flags', 'display', 'access', 'tags']);
+const SCAN_KEYS = new Set([
+  'actions',
+  'lookup',
+  'window',
+  'flags',
+  'display',
+  'access',
+  'tags',
+  'checkIn',
+]);
+const CHECK_IN_KEYS = new Set(['mode', 'days', 'durationMinutes', 'durationFrom']);
 const WINDOW_KEYS = new Set(['from', 'until', 'earlyMinutes', 'lateMinutes']);
 const MAX_FLAGS = 4;
 const MAX_WINDOW_MINUTES = 1440;
@@ -97,7 +107,35 @@ export function scanIssues(manifest: TemplateManifest): ValidationIssue[] {
     else if (tags.min !== undefined && tags.min !== 'basic' && tags.min !== 'secure')
       error('SCAN_TAGS', 'tags.min must be basic or secure.', 'scan.tags.min');
   }
+  if (scan.checkIn !== undefined) checkInIssues(scan.checkIn, error);
   return issues;
+}
+
+function checkInIssues(rules: unknown, error: Report): void {
+  if (!isRecord(rules)) {
+    error('SCAN_CHECK_IN', 'checkIn must be an object.', 'scan.checkIn');
+    return;
+  }
+  for (const key of Object.keys(rules))
+    if (!CHECK_IN_KEYS.has(key))
+      error('SCAN_CHECK_IN', `checkIn.${key} is not a check-in rule.`, `scan.checkIn.${key}`);
+  const whole = (v: unknown, max: number) =>
+    v === undefined || (Number.isInteger(v) && (v as number) >= 1 && (v as number) <= max);
+  if (rules.mode !== undefined && !['single', 'daily', 'unlimited'].includes(String(rules.mode)))
+    error('SCAN_CHECK_IN', 'mode is single, daily or unlimited.', 'scan.checkIn.mode');
+  if (!whole(rules.days, 366)) error('SCAN_CHECK_IN', 'days is 1 to 366.', 'scan.checkIn.days');
+  if (!whole(rules.durationMinutes, 5_256_000))
+    error(
+      'SCAN_CHECK_IN',
+      'durationMinutes is a whole number of minutes.',
+      'scan.checkIn.durationMinutes',
+    );
+  if (
+    rules.durationFrom !== undefined &&
+    rules.durationFrom !== 'first_scan' &&
+    rules.durationFrom !== 'issued'
+  )
+    error('SCAN_CHECK_IN', 'durationFrom is first_scan or issued.', 'scan.checkIn.durationFrom');
 }
 
 function flagIssues(flags: unknown, input: (n: unknown) => unknown, error: Report): void {

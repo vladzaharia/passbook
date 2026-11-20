@@ -208,6 +208,17 @@ describe('scanIssues', () => {
     );
   });
 
+  it('SCAN_CHECK_IN', () => {
+    for (const checkIn of [{ days: 0 }, { days: 367 }, { mode: 'in_out' }, { x: 1 }, 'x'])
+      expect(only({ actions: [CHECK_IN], checkIn })).toContain('error:SCAN_CHECK_IN');
+    expect(
+      only({
+        actions: [CHECK_IN],
+        checkIn: { mode: 'unlimited', days: 1, durationFrom: 'first_scan' },
+      }),
+    ).toEqual([]);
+  });
+
   it('SCAN_WINDOW_INPUT', () => {
     for (const w of [{ from: 'name' }, { until: 'nope' }, { from: 5 }])
       expect(only({ actions: [CHECK_IN], window: w })).toContain('error:SCAN_WINDOW_INPUT');
