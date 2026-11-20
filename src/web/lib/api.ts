@@ -12,6 +12,8 @@ type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export interface RequestOptions {
   query?: Record<string, QueryValue>;
   signal?: AbortSignal;
+  /** Gives up after this long with a `timeout` ApiError (the kit error state with Retry). */
+  timeoutMs?: number;
   headers?: Record<string, string>;
   /** Sent as If-Match for optimistic concurrency. */
   ifMatch?: string;
@@ -26,6 +28,9 @@ export interface ApiClientDeps {
   /** Called on a current-principal 401, or any 401 when no principal getter is supplied. */
   onUnauthorized?: (error: ApiError) => void;
 }
+
+/** A first fetch that stalls ends in the error state instead of a spinner. */
+export const PAGE_FETCH_TIMEOUT_MS = 20_000;
 
 const WRITE = new Set<Method>(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -90,6 +95,9 @@ export function createApiClient(deps: ApiClientDeps) {
     // A write may discover its first known session while looking up CSRF.
     const requestPrincipal =
       isWrite && principal === undefined ? getSessionPrincipal?.() : principal;
+    const timeout = opts.timeoutMs === undefined ? undefined : AbortSignal.timeout(opts.timeoutMs);
+    const signal =
+      timeout && opts.signal ? AbortSignal.any([opts.signal, timeout]) : (timeout ?? opts.signal);
     let res: Response;
     try {
       res = await doFetch(buildUrl(path, opts.query), {
@@ -97,10 +105,12 @@ export function createApiClient(deps: ApiClientDeps) {
         headers,
         body: payload,
         credentials: 'same-origin',
-        signal: opts.signal,
+        signal,
       });
     } catch (cause) {
       if (opts.signal?.aborted) throw cause;
+      if (timeout?.aborted)
+        throw new ApiError({ status: 0, code: 'timeout', detail: STATE_COPY.timeout });
       throw new ApiError({
         status: 0,
         code: 'network',

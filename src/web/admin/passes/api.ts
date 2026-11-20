@@ -24,7 +24,7 @@ import {
   RotateLinkResponseSchema,
 } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
-import { api } from '../../lib/api.ts';
+import { api, PAGE_FETCH_TIMEOUT_MS } from '../../lib/api.ts';
 import { getMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
@@ -155,7 +155,11 @@ export function useBulkPassAction() {
 export const passDetailQuery = (id: string) =>
   queryOptions({
     queryKey: passKeys.detail(id),
-    queryFn: ({ signal }) => api.get(`/api/v1/passes/${id}`, PassDetailSchema, { signal }),
+    queryFn: ({ signal }) =>
+      api.get(`/api/v1/passes/${id}`, PassDetailSchema, {
+        signal,
+        timeoutMs: PAGE_FETCH_TIMEOUT_MS,
+      }),
   });
 
 export function usePass(id: string, freshOnMount = false) {

@@ -1,4 +1,5 @@
 import { CalendarClock, Combine, Hand, Layers, type LucideIcon, Radio } from 'lucide-react';
+import type { VoidRule } from '@/shared/contracts/connections.ts';
 import {
   CheckboxField,
   FormField,
@@ -9,6 +10,7 @@ import {
   SwitchRow,
 } from '../../ui/index.ts';
 import { MODE_LABEL } from './labels.ts';
+import { VoidWhenFields, voidWhenError } from './void-when-fields.tsx';
 
 export interface Lifecycle {
   mode: 'poll' | 'webhook' | 'hybrid' | 'manual' | 'snapshot';
@@ -20,6 +22,7 @@ export interface Lifecycle {
   autoCreate: boolean;
   autoEmail: boolean;
   onMissing: 'keep' | 'flag' | 'void';
+  voidWhen: VoidRule[];
 }
 
 export interface ModeCapabilities {
@@ -63,6 +66,7 @@ export function lifecycleToPatch(l: Lifecycle) {
     autoCreate: l.autoCreate,
     autoEmail: l.autoEmail,
     onMissing: l.onMissing,
+    voidWhen: l.voidWhen,
   };
 }
 
@@ -72,6 +76,7 @@ export function lifecycleError(l: Lifecycle): string | undefined {
     if (!Number.isInteger(n) || n < 1) return 'Interval must be a whole number of minutes.';
   }
   if (l.autoCreate && !l.defaultTemplateId) return 'Choose a template on Mapping to create passes.';
+  if (voidWhenError(l.voidWhen)) return voidWhenError(l.voidWhen);
   return undefined;
 }
 
@@ -195,6 +200,11 @@ export function LifecycleFields({
           )}
         </FormField>
       </div>
+      <VoidWhenFields
+        value={value.voidWhen}
+        disabled={disabled}
+        onChange={(next) => set('voidWhen', next)}
+      />
       <div className="flex flex-col gap-2">
         {bool('Create passes for new records', 'autoCreate')}
         {bool('Email new passes', 'autoEmail', 'Off by default so a first sync cannot mass-email.')}

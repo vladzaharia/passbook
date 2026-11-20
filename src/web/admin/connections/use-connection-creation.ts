@@ -41,7 +41,8 @@ export function useConnectionCreation({
   return useMutation({
     mutationFn: async ({ orgId, scope }: { orgId: string; scope: WizardScope }) => {
       const wantsWebhook = life.mode === 'webhook' || life.mode === 'hybrid';
-      const webhookSecret = wantsWebhook ? generateSecret() : undefined;
+      const pasted = draft.signingSecret?.trim();
+      const webhookSecret = wantsWebhook ? pasted || generateSecret() : undefined;
       const body: CreateBody = {
         orgId,
         connectorType: type as string,
@@ -53,7 +54,7 @@ export function useConnectionCreation({
         ...(webhookSecret ? { webhookSecret } : {}),
       };
       const connection = await api.post('/api/v1/connections', ConnectionSchema, body);
-      return { connection, webhookSecret, scope };
+      return { connection, webhookSecret: pasted ? undefined : webhookSecret, scope };
     },
     onSuccess: async ({ connection, webhookSecret, scope }) => {
       await qc.invalidateQueries({ queryKey: connectionKeys.all });
