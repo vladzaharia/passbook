@@ -49,7 +49,8 @@ describe('manual lookup confirmation', () => {
     const { store, api } = boot(state);
     store.dispatch({ type: 'read', input: fixtureInput({ method: 'manual', code: '0001234' }) });
     await flush();
-    expect(api.resolve).not.toHaveBeenCalled();
+    // The code acts at once; resolve runs only after the verdict, to learn the bundle.
+    expect(api.resolve).toHaveBeenCalledTimes(1);
     expect(api.act).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ actionId: 'admit', input: { code: '0001234', method: 'manual' } }),
       expect.anything(),

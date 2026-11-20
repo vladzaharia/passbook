@@ -16,4 +16,10 @@ describe('which way a scanner reads', () => {
     expect(nextDirection('in')).toBe('out');
     expect(nextDirection('out')).toBeNull();
   });
+  it('a session scoped Out goes Out, In and back: Out is not a dead stop', () => {
+    expect(shownDirection('both', null, 'out')).toBe('out');
+    expect(nextDirection('out', 'out')).toBe('in');
+    expect(shownDirection('both', 'in', 'out')).toBe('in');
+    expect(nextDirection('in', 'out')).toBeNull();
+  });
 });

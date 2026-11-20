@@ -65,11 +65,19 @@ export function groupView(o: ScanOutcome): GroupView | null {
   }
   const b = o.bundle;
   if (!b || b.size < 2) return null;
-  const inCount = Math.min(b.size, Math.max(1, b.checkedIn ?? 1));
+  const members = b.members?.slice(0, MAX_PEOPLE);
+  // With the server's member list who is in is each person's own (the one just checked in is in),
+  // and the counts follow the discs; without it the first `checkedIn` are.
+  const isIn = (i: number): boolean =>
+    members
+      ? Boolean(members[i]?.checkedIn) || (i === 0 && o.kind === 'ok')
+      : i < (b.checkedIn ?? 1);
+  const inCount = members
+    ? members.reduce((n, _, i) => n + (isIn(i) ? 1 : 0), 0)
+    : Math.min(b.size, Math.max(1, b.checkedIn ?? 1));
   const people = Array.from({ length: Math.min(b.size, MAX_PEOPLE) }, (_, i): GroupPerson => {
-    const m = b.members?.[i];
-    // With the server's member list, who is in is each person's own; else the first `inCount`.
-    const state: PersonState = (m ? m.checkedIn : i < inCount) ? 'in' : 'pending';
+    const m = members?.[i];
+    const state: PersonState = isIn(i) ? 'in' : 'pending';
     return { name: i === 0 ? name : '', state, ...(m?.initials ? { initials: m.initials } : {}) };
   });
   return {

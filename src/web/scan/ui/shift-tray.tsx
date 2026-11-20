@@ -83,15 +83,27 @@ export function ShiftTray({
       footer={
         ending ? (
           <>
-            <Button variant="secondary" onClick={onClose}>
+            <Button
+              variant="secondary"
+              className="min-h-14 pointer-coarse:min-h-14"
+              onClick={onClose}
+            >
               {C.keep}
             </Button>
-            <Button disabled={pending > 0} onClick={onEnd}>
+            <Button
+              className="min-h-14 pointer-coarse:min-h-14"
+              disabled={pending > 0}
+              onClick={onEnd}
+            >
               {C.end}
             </Button>
           </>
         ) : (
-          <Button variant="secondary" onClick={onEnding ?? onEnd}>
+          <Button
+            variant="secondary"
+            className="min-h-14 pointer-coarse:min-h-14"
+            onClick={onEnding ?? onEnd}
+          >
             {C.end}
           </Button>
         )

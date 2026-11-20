@@ -38,6 +38,21 @@ describe('the group on a handheld', () => {
     expect(v?.remaining).toBe(2);
   });
 
+  it('counts from the members when there are some, so counts and discs agree', () => {
+    const members = [
+      { initials: 'AP', checkedIn: true },
+      { initials: 'BP', checkedIn: true },
+      { initials: 'CP', checkedIn: false },
+      { initials: 'DP', checkedIn: false },
+    ];
+    // The server's own count says 3; the members say 2: the discs win.
+    const o = fixtureOutcome('ok', null, { ...lead, bundle: { ...bundle, checkedIn: 3, members } });
+    const v = groupView(o);
+    expect(v && groupSub(v)).toBe("2 of 4 in Anna's group");
+    expect(v?.remaining).toBe(2);
+    expect(groupAction(o)?.label).toBe('Check in 2 more');
+  });
+
   it('offers the people left, and nothing when all are in or it is not an entry', () => {
     const ok = fixtureOutcome('ok', null, { ...lead, bundle });
     expect(groupAction(ok)).toEqual({ n: 3, label: 'Check in 3 more' });

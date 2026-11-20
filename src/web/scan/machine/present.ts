@@ -29,7 +29,7 @@ export type ScanView = Presentation & { buddy: ScanBuddyView };
 
 const HOLD_REASONS = new Set(['ambiguous']);
 /** A bundle with people left: the dock offers Check in more for this long (handheld design 5). */
-const GROUP_HOLD = 6000;
+export const GROUP_HOLD = 6000;
 
 /** An available `take` with a reward label that the card's values now cover (SA 7.5). */
 export function promotedAction(card: Card | null | undefined) {

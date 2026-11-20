@@ -86,7 +86,12 @@ export function OfflineStatus({
       {queue.pending > 0 ? (
         <div className="flex items-center justify-between gap-3">
           <p role="status">{formatCount(queue.pending)} waiting to sync</p>
-          <Button variant="secondary" onClick={onSync} disabled={offline.syncing}>
+          <Button
+            variant="secondary"
+            className="min-h-14 pointer-coarse:min-h-14"
+            onClick={onSync}
+            disabled={offline.syncing}
+          >
             <CloudUpload aria-hidden size={16} />
             {offline.syncing ? 'Syncing' : 'Sync now'}
           </Button>

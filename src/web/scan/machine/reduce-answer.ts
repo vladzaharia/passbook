@@ -1,5 +1,6 @@
 /** Answers, failures, late answers and unsure expiry (AC 3.4). */
 import { SCAN_TIMING } from '../timing.ts';
+import { bundleCmd, wantsPeek } from './bundle-peek.ts';
 import type { Env, MachineState, Out } from './internal.ts';
 import { out, same } from './internal.ts';
 import { localOutcome } from './outcome.ts';
@@ -88,7 +89,11 @@ export function answer(s: MachineState, ev: Answer, env: Env): Out {
     },
     env,
   );
-  return out(v.state, [...drop, ...v.cmds]);
+  const peek =
+    wantsPeek(v.state, ev.outcome) && ev.outcome.scanId
+      ? [bundleCmd({ c: 'bundle', key: env.id(), scanId: ev.outcome.scanId, input: l.input })]
+      : [];
+  return out(v.state, [...drop, ...v.cmds, ...peek]);
 }
 
 function block(s: MachineState, kind: NonNullable<MachineState['block']>, env: Env): Out {

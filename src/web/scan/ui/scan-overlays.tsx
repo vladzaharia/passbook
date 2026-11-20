@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Dialog, DialogContent } from '../../ui/dialog.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { useScanMachine } from '../machine/use-scan-machine.ts';
@@ -53,6 +53,10 @@ export function ScanOverlays({
   sessionTotals: boolean;
 }) {
   const { state } = useScanMachine();
+  // The queue line's View must open with no connection: the sheet's chunk is fetched while there is one.
+  useEffect(() => {
+    import('./shift-sheet.tsx').catch((error: unknown) => void error);
+  }, []);
   return (
     <>
       <Suspense fallback={null}>

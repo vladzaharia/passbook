@@ -79,6 +79,22 @@ describe('bundle check-in', () => {
     expect(JSON.stringify(o.bundle)).not.toMatch(/Ana Park|Cara Quinn/);
   });
 
+  it('gives no initials when the title is the pass type, not a person', async () => {
+    const door = await kit.scanner({ templateIds: [tpl] });
+    const a = await kit.scanPass(tpl, { memberName: 'Ana Park' });
+    const b = await kit.scanPass(tpl, { memberName: 'Pass' });
+    await bundleOf([a, b]);
+    await act(door.headers, codeOf(a));
+    const o = await out(
+      await kit.post(door.headers, '/resolve', {
+        input: codeOf(a),
+        clientTs: kit.clock.now(),
+        idempotencyKey: key(),
+      }),
+    );
+    expect(o.bundle?.members?.map((m) => m.initials)).toEqual(['AP', '']);
+  });
+
   it('leaves the initials empty for a pass whose name this scanner may not read', async () => {
     const other = await kit.scanTemplate('VIP', { actions: [CHECK_IN] });
     const door = await kit.scanner({ templateIds: [tpl] });

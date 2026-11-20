@@ -48,7 +48,7 @@
   font: 600 17px / 22px var(--pk-font-sans);
 }
 .scan-tray-more > summary {
-  min-height: 44px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   color: var(--sd-accent);

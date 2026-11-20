@@ -6,6 +6,27 @@ import { pinKeysetOrNull } from './keyset-pin.ts';
 import { scanIdentify } from './occupancy/inside-identity.ts';
 import { livePassIds } from './repo-group.ts';
 
+const GENERIC = new Set(['pass', 'card', 'ticket', 'member']);
+
+/**
+ * The person's name when the read gave one: not a title that stands for the pass (its template or plan
+ * name, or a generic word), which a template with a fixed display title would otherwise hand us.
+ */
+export function personName(
+  who: { holder: string | null; type: string | null; plan: string | null } | undefined,
+) {
+  const holder = who?.holder?.trim() ?? '';
+  if (!holder) return null;
+  const lower = holder.toLowerCase();
+  if (
+    GENERIC.has(lower) ||
+    lower === who?.type?.toLowerCase() ||
+    lower === who?.plan?.toLowerCase()
+  )
+    return null;
+  return holder;
+}
+
 /** A holder's initials: the first letter of up to two words. */
 const initialsOf = (holder: string | null): string =>
   (holder ?? '')
@@ -36,7 +57,7 @@ export async function memberInitials(
       livePassIds(ctx.env.DB, actor, order, ctx.clock.now()),
     ]);
     return order.map((id) => ({
-      initials: initialsOf(who.get(id)?.holder ?? null),
+      initials: initialsOf(personName(who.get(id))),
       checkedIn: live.has(id),
     }));
   } catch (error) {

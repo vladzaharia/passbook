@@ -72,6 +72,7 @@ export function GroupRow({
       {more && onGroup ? (
         <Button
           variant="outline"
+          className="min-h-14 pointer-coarse:min-h-14"
           iconStart={<Users aria-hidden />}
           data-testid="scan-group-more"
           onClick={onGroup}

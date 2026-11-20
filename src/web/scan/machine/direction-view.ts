@@ -14,6 +14,11 @@ export function shownDirection(
   return pin ?? (scope === 'out' ? 'out' : 'auto');
 }
 
-/** The thumb button's next stop: Auto, In, Out, and round again. Auto is no pin. */
-export const nextDirection = (shown: ShownDirection): Direction | null =>
-  shown === 'auto' ? 'in' : shown === 'in' ? 'out' : null;
+/**
+ * The thumb button's next pin: Auto, In, Out, and round again (Auto is no pin). A session whose scope
+ * is Out reads Out with no pin, so Out is already where it stands: it goes to In, and back to that.
+ */
+export const nextDirection = (shown: ShownDirection, scope: Direction = 'in'): Direction | null => {
+  if (scope === 'out') return shown === 'out' ? 'in' : null;
+  return shown === 'auto' ? 'in' : shown === 'in' ? 'out' : null;
+};

@@ -80,7 +80,9 @@ export function useAccessUi({
     place !== null || setting !== 'in'
       ? {
           value: shown,
-          ...(setting === 'both' ? { onCycle: () => runtime.pin.set(nextDirection(shown)) } : {}),
+          ...(setting === 'both'
+            ? { onCycle: () => runtime.pin.set(nextDirection(shown, scopeDirection)) }
+            : {}),
         }
       : undefined;
   const chips = place ? (

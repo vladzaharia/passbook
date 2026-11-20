@@ -76,6 +76,7 @@ export function ShiftSheet({
           key={value}
           variant={scope === value ? 'primary' : 'secondary'}
           aria-pressed={scope === value}
+          className={phone ? 'min-h-14 pointer-coarse:min-h-14' : ''}
           onClick={() => setScope(value)}
         >
           {value === 'device' ? 'This device' : 'This session'}

@@ -32,7 +32,15 @@ describe('answer', () => {
       openFrom: at(100 + SCAN_TIMING.NEXT_SCAN_AFTER_VERDICT),
     });
     expect(r.state.card).toMatchObject({ phase: 'rising', kind: 'result' });
-    expect(r.cmds.map((c) => c.c)).toEqual(['camera', 'sound', 'card.rise', 'beat', 'announce']);
+    // The last asks which bundle the pass belongs to (bundle-peek.ts).
+    expect(r.cmds.map((c) => c.c)).toEqual([
+      'camera',
+      'sound',
+      'card.rise',
+      'beat',
+      'announce',
+      'bundle',
+    ]);
     expect(cmdsOf(r.cmds, 'sound')[0]).toEqual({ c: 'sound', tone: 'ok' });
     expect(r.state.counts?.today).toBe(42);
     expect(r.state.recent).toHaveLength(1);
