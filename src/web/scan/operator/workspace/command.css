@@ -121,8 +121,8 @@
 .op-tabs {
   display: flex;
   justify-content: flex-start;
-  gap: 12px;
-  padding: 0 14px;
+  gap: 10px;
+  padding: 0 12px;
   overflow-x: auto;
   scrollbar-width: none;
   border-bottom: 1px solid var(--op-line);

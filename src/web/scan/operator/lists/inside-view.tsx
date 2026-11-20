@@ -20,6 +20,7 @@ const FLAG = { long_stay: ACCESS_COPY.inside.longStay, pass_ended: ACCESS_COPY.i
 /** `Gym floor · In since 6:41 PM · 1 h 12 min`, then who let them in. */
 const metaOf = (row: InsideRow, now: number, timeZone?: string) =>
   [
+    row.type,
     [row.zone.name, row.zone.parent].filter(Boolean).join(', '),
     `In since ${sessionTime(row.since, timeZone)}`,
     stayText(Math.max(0, now - row.since)),
@@ -72,14 +73,14 @@ function Row({
         <span className="op-row-text">
           <span className="op-row-title" title={name}>
             {name}
-            {row.type ? <small className="op-row-tag">{row.type}</small> : null}
-            {row.flags.map((flag) => (
-              <small key={flag} className="op-row-tag" data-tone="hu">
-                {FLAG[flag]}
-              </small>
-            ))}
           </span>
           <span className="op-row-meta" title={metaOf(row, now, timeZone)}>
+            {row.flags.map((flag) => (
+              <em key={flag} data-tone="hu">
+                {FLAG[flag]}
+                {' · '}
+              </em>
+            ))}
             {row.host ? `${fill(ACCESS_COPY.inside.host, { name: row.host })} · ` : ''}
             {metaOf(row, now, timeZone)}
           </span>
