@@ -38,6 +38,18 @@ export interface ReferenceEntry {
   description?: string;
   request?: Json;
   response?: Json;
+  /** What the code samples send where the contract's example does not run as written. */
+  snippet?: { request?: Json; query?: Record<string, Json>; headers?: Record<string, string> };
+}
+
+/** A hand-written snippet from docs/developers/snippets/guides, shown under the operations it uses. */
+export interface Example {
+  id: string;
+  title: string;
+  guide: string;
+  ops: string[];
+  ts: string;
+  curl: string | undefined;
 }
 
 export interface Field {
@@ -78,6 +90,16 @@ export interface OpView {
   /** The sub-resource heading this op sits under (`versions` for `passes.versions`). */
   sub: string | null;
   changedIn: ChangedIn | null;
+  /** The SDK walks pages for it: a GET whose response holds `items` and `nextCursor`. */
+  paged: boolean;
+  /** The body is an upload, not JSON (`passes.assets.upload`). */
+  binary: boolean;
+  /** The SDK hands back the `Response`: a GET with no JSON body. */
+  download: boolean;
+  /** Guide snippets that call this operation. */
+  examples: Example[];
+  /** What the code samples send: the body, the query the call needs and any extra headers. */
+  sample: { body: Json | undefined; query: Record<string, Json>; headers: Record<string, string> };
 }
 
 export interface ConsoleOp {

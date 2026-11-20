@@ -74,7 +74,8 @@ describe('portal model', () => {
     for (const s of samples) {
       expect(s.code, s.lang).toContain('PASSBOOK_KEY');
       expect(s.code, s.lang).not.toMatch(/pb_(live|test)_/);
-      expect(s.code, s.lang).toContain('/api/v1/passes');
+      // TypeScript goes through the SDK, which owns the path.
+      expect(s.code, s.lang).toContain(s.lang === 'ts' ? 'pb.passes.create(' : '/api/v1/passes');
     }
   });
 

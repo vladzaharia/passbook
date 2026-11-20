@@ -1,0 +1,176 @@
+{
+  "passes.postPasses": {
+    "snippet": {
+      "request": {
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "input": {
+          "eventName": "Harbor Night",
+          "venueName": "Harbor Hall",
+          "venueRegion": "Cupertino, CA",
+          "startsAt": "2030-06-01T19:00:00-07:00",
+          "endsAt": "2030-06-01T22:00:00-07:00",
+          "attendee": "Ada Example",
+          "ticketId": "TICKET-0001"
+        },
+        "holderEmail": "ada@example.com",
+        "externalId": "booking_8841"
+      }
+    }
+  },
+  "api-keys.postApiKeys": {
+    "snippet": {
+      "request": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "CI",
+        "scopes": ["passes:read"],
+        "mode": "test"
+      }
+    }
+  },
+  "broadcasts.postBroadcasts": {
+    "snippet": {
+      "request": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "message",
+        "name": "Doors open",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+        },
+        "patch": {
+          "message": "Doors open at 6 PM."
+        },
+        "send": "draft"
+      }
+    }
+  },
+  "broadcasts.patchBroadcastsById": {
+    "snippet": {
+      "request": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "message",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+        },
+        "patch": {
+          "message": "Doors open at 6:30 PM."
+        }
+      }
+    }
+  },
+  "message-rules.postMessageRules": {
+    "snippet": {
+      "request": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Day-before reminder",
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "anchor": {
+          "kind": "input",
+          "input": "startsAt"
+        },
+        "offset": {
+          "amount": 1,
+          "unit": "day",
+          "when": "before"
+        },
+        "timeZone": "Europe/Berlin",
+        "message": "Tomorrow at 7 PM."
+      }
+    }
+  },
+  "visitors.postVisitors": {
+    "snippet": {
+      "request": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Ada Example",
+        "hostName": "Grace Host",
+        "hostEmail": "grace@example.com",
+        "windowFrom": 1764000000000,
+        "windowUntil": 1764086400000
+      }
+    }
+  },
+  "passes.putPassesByIdChannels": {
+    "snippet": {
+      "request": {
+        "channels": {
+          "apple": "on",
+          "google": "off"
+        },
+        "notify": false
+      }
+    }
+  },
+  "passes.postPassesBulkReissue": {
+    "snippet": {
+      "request": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "cause": "template_upgrade"
+      }
+    }
+  },
+  "passes.getPassesByIdDiff": {
+    "snippet": {
+      "query": {
+        "from": 1,
+        "to": 1
+      }
+    }
+  },
+  "visitors.getVisitors": {
+    "snippet": {
+      "query": {
+        "dayStart": 1764000000000,
+        "dayEnd": 1764086400000
+      }
+    }
+  },
+  "brand.putBrandWebLogo": {
+    "snippet": {
+      "request": {
+        "png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR42mOQz3/9nxLMMGrAqAGjBgwXAwCBLngfV/beKAAAAABJRU5ErkJggg=="
+      }
+    }
+  },
+  "scan.postScanResolve": {
+    "snippet": {
+      "headers": {
+        "x-passbook-device": "door-1"
+      },
+      "request": {
+        "idempotencyKey": "0193a1b2-7c00-7000-8000-000000000f01",
+        "input": {
+          "code": "PB-4F7K-92QX",
+          "method": "camera"
+        },
+        "clientTs": 1764000000000
+      }
+    }
+  },
+  "scan.postScanActions": {
+    "snippet": {
+      "headers": {
+        "x-passbook-device": "door-1"
+      },
+      "request": {
+        "idempotencyKey": "0193a1b2-7c00-7000-8000-000000000f02",
+        "input": {
+          "code": "PB-4F7K-92QX",
+          "method": "camera"
+        },
+        "clientTs": 1764000000000,
+        "actionId": "auto"
+      }
+    }
+  },
+  "scan.postScanScansByScanIdUndo": {
+    "snippet": {
+      "headers": {
+        "x-passbook-device": "door-1"
+      },
+      "request": {
+        "idempotencyKey": "0193a1b2-7c00-7000-8000-000000000f03"
+      }
+    }
+  }
+}

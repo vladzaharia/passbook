@@ -235,3 +235,45 @@ pre.src .ln.hl {
 .errs td.mono a {
   color: var(--pk-accent-fg);
 }
+
+.code-f {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--pk-border-subtle);
+  background: var(--dp-glass);
+}
+.linkbtn {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--pk-text-muted);
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.linkbtn:hover {
+  color: var(--pk-text-strong);
+}
+.linkbtn:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.linkbtn[data-state="copied"]::after {
+  content: " · copied";
+}
+.linkbtn[data-state="failed"]::after {
+  content: " · blocked";
+}
+.examples {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.example > summary {
+  cursor: pointer;
+  padding: 6px 0;
+  color: var(--pk-text-default);
+}

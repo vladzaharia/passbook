@@ -16,23 +16,44 @@ function textFor(button: HTMLElement): string {
   return lines.length > 0 ? lines.map((l) => l.textContent).join('\n') : (region.textContent ?? '');
 }
 
+/** One sample's lines, from a panel that may be hidden. */
+const panelText = (panel: Element): string =>
+  [...panel.querySelectorAll('.ln')].map((l) => l.textContent).join('\n');
+
+/** The sample for a "Copy as" button: its language's, or the open one fenced as Markdown. */
+function sampleFor(button: HTMLElement): string {
+  const owner = button.closest<HTMLElement>('[data-samples]');
+  const lang = button.dataset.copyAs;
+  if (!owner || !lang) return '';
+  if (lang !== 'md') {
+    const panel = owner.querySelector(`[data-panel="${lang}"]`);
+    return panel ? panelText(panel) : '';
+  }
+  const shown = owner.querySelector<HTMLInputElement>('input[data-lang]:checked');
+  const panel = owner.querySelector(`[data-panel="${shown?.dataset.lang ?? ''}"]`);
+  return panel ? `\`\`\`${shown?.dataset.lang}\n${panelText(panel)}\n\`\`\`` : '';
+}
+
 // Not the kit's copyText: that toasts through sonner and React, which the portal's first load cannot afford.
 export function initCopy(): void {
   document.addEventListener('click', async (event) => {
-    const button = (event.target as Element).closest<HTMLElement>('[data-copy]');
+    const button = (event.target as Element).closest<HTMLElement>('[data-copy], [data-copy-as]');
     if (!button) return;
-    const label = button.getAttribute('aria-label') ?? 'Copy';
+    // An icon button is named by its label; a "Copy as" button by its text, which the state suffix extends.
+    const label = button.getAttribute('aria-label');
+    const text = button.dataset.copyAs ? sampleFor(button) : textFor(button);
     try {
-      await navigator.clipboard.writeText(textFor(button));
+      await navigator.clipboard.writeText(text);
       button.dataset.state = 'copied';
-      button.setAttribute('aria-label', 'Copied');
+      if (label) button.setAttribute('aria-label', 'Copied');
     } catch {
       button.dataset.state = 'failed';
-      button.setAttribute('aria-label', 'Could not copy. Allow clipboard access and try again.');
+      if (label)
+        button.setAttribute('aria-label', 'Could not copy. Allow clipboard access and try again.');
     }
     setTimeout(() => {
       delete button.dataset.state;
-      button.setAttribute('aria-label', label);
+      if (label) button.setAttribute('aria-label', label);
     }, RESET_MS);
   });
 }

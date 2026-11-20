@@ -4,6 +4,7 @@ import type { Inputs } from './site.ts';
 import {
   type ApiVersion,
   type Dict,
+  type Example,
   METHODS,
   type RawChangeFile,
   type RawDoc,
@@ -21,6 +22,26 @@ const changeFiles = (dir: string): RawChangeFile[] =>
         .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
         .map((f) => read<RawChangeFile>(join(dir, f)))
     : [];
+interface GuideRow {
+  id: string;
+  title: string;
+  guide: string;
+  ops: string[];
+  files: { ts: string; curl?: string };
+}
+
+/** The hand-written snippets listed in `<dir>/index.json`, with their files read. */
+function guideExamples(dir: string): Example[] {
+  const index = optional<GuideRow[]>(join(dir, 'index.json')) ?? [];
+  return index.map((row) => ({
+    id: row.id,
+    title: row.title,
+    guide: row.guide,
+    ops: row.ops,
+    ts: readFileSync(join(dir, row.files.ts), 'utf8'),
+    curl: row.files.curl ? readFileSync(join(dir, row.files.curl), 'utf8') : undefined,
+  }));
+}
 
 /**
  * The portal's inputs: the OpenAPI snapshot (the keys' view of the API), the frozen SDK names
@@ -50,5 +71,6 @@ export function loadInputs(root: string, apiDir = 'docs/api'): Inputs {
     versions: optional<{ versions: ApiVersion[] }>(join(api, 'versions.json'))?.versions ?? [],
     errors: optional(join(api, 'errors.json')),
     guide: optional<Record<string, Dict>>(join(api, 'error-guide.json')),
+    examples: guideExamples(join(root, docsDir, 'snippets/guides')),
   };
 }

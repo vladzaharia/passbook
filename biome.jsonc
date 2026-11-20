@@ -21,6 +21,7 @@
       "!src/web/routeTree.gen.ts",
       "!worker-configuration.d.ts",
       "!docs/research",
+      "!docs/developers/snippets",
       "!docs/audits",
       "!docs/design/scanner/buddy-draft",
       "!templates",
