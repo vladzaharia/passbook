@@ -64,7 +64,7 @@ describe('API key tenant authorization', () => {
         scopes,
         mode: 'live',
       });
-      expect(created.secret).toMatch(/^wlt_[\w-]{8}_[\w-]{43}$/);
+      expect(created.secret).toMatch(/^pb_live_[\w-]{8}_[\w-]{43}$/);
       const row = await first<{ key_hash: string }>(
         h.env.DB,
         'SELECT key_hash FROM api_keys WHERE id = ?',
@@ -211,8 +211,16 @@ describe('API key tenant authorization', () => {
       created_by: session.userId,
       created_at: 1,
       last_used_at: null,
-      expires_at: null,
+      expires_at: 86_400_000,
       revoked_at: null,
+      kind: 'platform' as const,
+      roles: '[]',
+      membership_id: null,
+      retire_at: null,
+      restricted: 0,
+      ip_allow: '["203.0.113.0/24"]',
+      rate_tier: null,
+      secret_label: 'wlt',
     };
     await expect(
       createKey(
@@ -347,7 +355,9 @@ describe('API key tenant authorization', () => {
     expect(response.status).toBe(201);
     const key = (await response.json()) as CreatedKey;
     expect(key.orgId).toBeNull();
-    expect(await createApiKeyStore(h.env, h.clock).resolve(key.secret)).toMatchObject({
+    expect(
+      await createApiKeyStore(h.env, h.clock).resolve(key.secret, { ip: '198.51.100.9' }),
+    ).toMatchObject({
       orgId: null,
       scopes,
     });

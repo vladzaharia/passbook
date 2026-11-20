@@ -23,8 +23,17 @@ const row = (orgId: string | null, scopes: string[], id = f().ids.id()): ApiKeyR
   created_by: null,
   created_at: h.clock.now(),
   last_used_at: null,
-  expires_at: null,
+  // A platform key has an expiry and an IP allowlist (migration 0142).
+  expires_at: orgId === null ? h.clock.now() + 86_400_000 : null,
   revoked_at: null,
+  kind: orgId === null ? 'platform' : 'service',
+  roles: '[]',
+  membership_id: null,
+  retire_at: null,
+  restricted: 0,
+  ip_allow: orgId === null ? '["203.0.113.0/24"]' : null,
+  rate_tier: null,
+  secret_label: 'wlt',
 });
 const entry = (action: string, targetId: string) => ({
   orgId: org.id,

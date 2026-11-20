@@ -56,6 +56,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'message_rule.test': a('Message rule tested', I.test, 'info'),
   'api_key.create': a('API key created', ENTITY.apiKey.icon, 'success'),
   'api_key.revoke': a('API key revoked', ENTITY.apiKey.icon, 'warning'),
+  'api_key.retire': a('API key retiring', ENTITY.apiKey.icon, 'warning'),
   'auth.sign_in': a('Signed in', LogIn, 'success'),
   'auth.sign_out': a('Signed out', I.signOut, 'neutral'),
   'connection.breaker_open': a('Connection paused after failures', Pause, 'warning'),

@@ -15,7 +15,7 @@ export async function authorizeApiKeys(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   orgId: string | null,
-  capability: 'integrations:read' | 'integrations:manage',
+  capability: 'org:read' | 'integrations:read' | 'integrations:manage',
 ): Promise<ApiKeyAuthority> {
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
   if (orgId === null) {

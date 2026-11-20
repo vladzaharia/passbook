@@ -74,8 +74,16 @@ interface Created {
   createdBy: string;
 }
 
-async function create(body: object, orgId?: string) {
+/** A platform key needs an expiry and an IP allowlist; its callers present this address. */
+const PLATFORM_IP = '198.51.100.7';
+const caller = { ip: PLATFORM_IP };
+
+async function create(raw: object, orgId?: string) {
   const { headers: base, userId } = await adminHeaders(orgId);
+  const body =
+    (raw as { orgId?: unknown }).orgId === null
+      ? { expiresAt: h.clock.now() + 30 * 86_400_000, ipAllow: ['198.51.100.0/24'], ...raw }
+      : raw;
   // A tenant key takes the session's mode, so a test-mode key needs a test-mode session.
   const headers =
     orgId && (body as { mode?: string }).mode === 'test'
@@ -209,8 +217,8 @@ describe('create', () => {
   it('returns the secret once and stores only a hash', async () => {
     const { res, key, userId } = await create({ name: 'CI', scopes: ['passes:read'], orgId: null });
     expect(res.status).toBe(201);
-    expect(key.secret).toMatch(/^wlt_[\w-]{8}_[\w-]{43}$/);
-    expect(key.secret.startsWith(`wlt_${key.prefix}_`)).toBe(true);
+    expect(key.secret).toMatch(/^pbo_live_[\w-]{8}_[\w-]{43}$/);
+    expect(key.secret.startsWith(`pbo_live_${key.prefix}_`)).toBe(true);
     expect(key.createdBy).toBe(userId);
     expect(key.orgId).toBeNull();
     const row = await first<{ key_hash: string; org_id: string | null }>(
@@ -651,11 +659,13 @@ describe('list', () => {
 
 describe('use', () => {
   const probe = (headers: Record<string, string>, method = 'GET') =>
-    h.call('/api/v1/passes', { method, headers }).then((r) => r.status);
+    h
+      .call('/api/v1/passes', { method, headers: { ...headers, 'cf-connecting-ip': PLATFORM_IP } })
+      .then((r) => r.status);
 
   it('authenticates a created key and enforces scopes', async () => {
     const { key } = await create({ name: 'reader', scopes: ['passes:read'], orgId: null });
-    const headers = { authorization: `Bearer ${key.secret}` };
+    const headers = { authorization: `Bearer ${key.secret}`, 'cf-connecting-ip': PLATFORM_IP };
     expect([401, 403, 429]).not.toContain(await probe(headers));
     const write = await h.call('/api/v1/passes', {
       method: 'POST',
@@ -702,9 +712,9 @@ describe('use', () => {
       orgId: null,
     });
     const store = createApiKeyStore(h.env, h.clock);
-    expect(await store.resolve(key.secret)).not.toBeNull();
+    expect(await store.resolve(key.secret, caller)).not.toBeNull();
     h.clock.advance(61_000);
-    expect(await store.resolve(key.secret)).toBeNull();
+    expect(await store.resolve(key.secret, caller)).toBeNull();
   });
 
   it('rejects keys of suspended or missing orgs', async () => {
@@ -727,8 +737,8 @@ describe('use', () => {
     });
     expect(live.key).toMatchObject({ mode: 'live' });
     expect(test.key).toMatchObject({ mode: 'test' });
-    expect(await store.resolve(live.key.secret)).toMatchObject({ mode: 'live' });
-    expect(await store.resolve(test.key.secret)).toMatchObject({ mode: 'test' });
+    expect(await store.resolve(live.key.secret, caller)).toMatchObject({ mode: 'live' });
+    expect(await store.resolve(test.key.secret, caller)).toMatchObject({ mode: 'test' });
     const response = await h.call('/api/v1/api-keys?orgId=null', { headers: test.headers });
     expect(response.status).toBe(200);
     const list = ApiKeyListSchema.parse(await response.json());
@@ -762,14 +772,14 @@ describe('use', () => {
           [key.id],
         )
       )?.last_used_at;
-    await store.resolve(key.secret);
+    await store.resolve(key.secret, caller);
     const first1 = await used();
     expect(first1).toBe(h.clock.now());
     h.clock.advance(60_000);
-    await store.resolve(key.secret);
+    await store.resolve(key.secret, caller);
     expect(await used()).toBe(first1);
     h.clock.advance(5 * 60_000);
-    await store.resolve(key.secret);
+    await store.resolve(key.secret, caller);
     expect(await used()).toBe(h.clock.now());
   });
 
@@ -777,7 +787,7 @@ describe('use', () => {
     h.restore();
     h = await harness({ RL_API_KEY: fakeLimiter(2) as unknown as RateLimit });
     const { key } = await create({ name: 'k', scopes: ['passes:read'], orgId: null });
-    const headers = { authorization: `Bearer ${key.secret}` };
+    const headers = { authorization: `Bearer ${key.secret}`, 'cf-connecting-ip': PLATFORM_IP };
     const other = await makeApiKey(f(), { scopes: ['passes:read'] });
     const statuses = [];
     for (let i = 0; i < 4; i++) {
