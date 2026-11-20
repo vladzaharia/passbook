@@ -198,6 +198,7 @@ describe('what each kind must be when written', () => {
       { expires_at: h.clock.now() + 120 * DAY },
       { ip_allow: null },
       { ip_allow: '[]' },
+      { roles: '["org_admin"]' },
     ];
     for (const over of bad) await expect(platform(over)).rejects.toThrow('does not fit its kind');
   });

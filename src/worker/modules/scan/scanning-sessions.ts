@@ -127,6 +127,8 @@ export async function updateScanningSession(
   countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
+  if (countAuthority.orgId !== authority.orgId || countAuthority.mode !== authority.mode)
+    throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   const row = await applyScanningSessionUpdate(ctx, userId, id, input, authority);
   return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }

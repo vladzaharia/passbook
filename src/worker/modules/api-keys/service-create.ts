@@ -40,9 +40,10 @@ function checkKindRules(
   now: number,
 ): string[] {
   const ipAllow = [...new Set((input.ipAllow ?? []).map((c) => c.trim()))];
-  if (ipAllow.some((c) => parseCidr(c) === null))
+  // A range of every address is no allowlist.
+  if (ipAllow.some((c) => (parseCidr(c)?.bits ?? 0) === 0))
     throw invalid(
-      'Use addresses or CIDR ranges, such as 203.0.113.0/24.',
+      'Use addresses or CIDR ranges, such as 203.0.113.0/24, not 0.0.0.0/0.',
       'API_KEY_IP_INVALID',
       'ipAllow',
     );

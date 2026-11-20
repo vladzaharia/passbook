@@ -31,6 +31,11 @@ describe('redaction', () => {
         `key ${label}_[redacted]`,
       );
     expect(redactString('sub_total and pbx_1')).toBe('sub_total and pbx_1');
+    // Embedded in a field name or a URL-encoded value, where no word boundary stands before the label.
+    const tail = `${'x'.repeat(8)}_${'y'.repeat(43)}`;
+    expect(redactString(`token_pb_live_${tail}`)).not.toContain('yyyy');
+    expect(redactString(`k%3Dpb_test_${tail}`)).not.toContain('yyyy');
+    expect(redactString(`k%3Dwlt_${tail}`)).not.toContain('yyyy');
     expect(redactString('mail me@example.com')).toBe('mail [redacted email]');
     expect(redactString('-----BEGIN PRIVATE KEY-----\nAAA\n-----END PRIVATE KEY-----')).toBe(
       '[redacted pem]',

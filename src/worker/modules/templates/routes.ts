@@ -50,7 +50,7 @@ export const templatesRoutes = createRouter({ bodyLimit: false });
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
 // Template reads allow scoped API keys; mutations require a session and are authorized per org.
 // The scan setup route declares its own `auth` (a session or a `scanning:write` key).
-const SCAN_SETUP = /\/templates\/[^/]+\/scan-setup\/?$/;
+const SCAN_SETUP = /^\/api\/v1\/templates\/[^/]+\/scan-setup$/;
 templatesRoutes.use(
   '*',
   declareKeyAccess(

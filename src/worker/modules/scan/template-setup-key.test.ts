@@ -6,6 +6,7 @@ import { createApp } from '../../app.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createScannerStore } from './auth-store.ts';
+import { grantAuthorityOf } from './repo-admin-grant.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { eventTemplate } from './template-setup-test-fixtures.ts';
 
@@ -131,5 +132,49 @@ describe('template scan setup by API key', () => {
         [fixture.kit.org.id, id],
       ),
     ).toEqual({ mode: 'test' });
+  });
+});
+
+describe('which scan admin grants a key may hold', () => {
+  const key = (scope: string) => ({
+    kind: 'api_key' as const,
+    orgId: 'o1',
+    orgAccessRevision: 1,
+    keyId: 'k1',
+    keyOrgId: 'o1',
+    scopes: [scope as never],
+    scope: scope as never,
+    mode: 'live' as const,
+  });
+
+  it('allows only the writes of a template scan setup', () => {
+    for (const purpose of [
+      'org_mode.scan.event.create',
+      'org_mode.scan.event.archive',
+      'org_mode.scan.session.create',
+      'org_mode.scan.session.update',
+    ])
+      expect(grantAuthorityOf(key('scanning:write'), 'k1', 'o1', purpose)).toMatchObject({
+        keyId: 'k1',
+      });
+  });
+
+  it('refuses a key every other scan admin grant: pairing, PINs, admin sessions, zones, scanners', () => {
+    for (const purpose of [
+      'org_mode.scan.pair',
+      'org_mode.scan.setup.admin_session',
+      'org.scan.staff.pin',
+      'org_mode.scan.scanner.revoke',
+      'org_mode.scan.zone.create',
+      'org_mode.scan.event.update',
+    ])
+      expect(() => grantAuthorityOf(key('scanning:write'), 'k1', 'o1', purpose), purpose).toThrow();
+  });
+
+  it('refuses another scope, another key id or another org, whatever the purpose', () => {
+    const purpose = 'org_mode.scan.session.create';
+    expect(() => grantAuthorityOf(key('scans:write'), 'k1', 'o1', purpose)).toThrow();
+    expect(() => grantAuthorityOf(key('scanning:write'), 'k2', 'o1', purpose)).toThrow();
+    expect(() => grantAuthorityOf(key('scanning:write'), 'k1', 'o2', purpose)).toThrow();
   });
 });

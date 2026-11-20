@@ -17,7 +17,8 @@ const VALUE_PATTERNS: [RegExp, string][] = [
   [/(\/[pb]\/)[A-Za-z0-9_-]{16,}/g, '$1[redacted]'],
   [/([?&](?:t|token|code|key|state)=)[^&\s]+/gi, '$1[redacted]'],
   [/(ApplePass|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, '$1 [redacted]'],
-  [/\b(wlt|pb|pbp|pbo)_[A-Za-z0-9_-]+/g, '$1_[redacted]'],
+  [/(wlt|pbp|pbo)_[A-Za-z0-9_-]+/g, '$1_[redacted]'],
+  [/pb_(?:live|test)_[A-Za-z0-9_-]+/g, 'pb_[redacted]'],
   [/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, '[redacted pem]'],
   [/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[redacted email]'],
 ];

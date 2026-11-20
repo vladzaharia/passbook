@@ -100,7 +100,7 @@ describe('IP allowlist', () => {
     expect(((await res.json()) as CreatedKey & { ipAllow: string[] }).ipAllow).toEqual([
       '198.51.100.0/24',
     ]);
-    for (const bad of ['198.51.100.7/24', 'nope', '1.2.3.4/33', '*'])
+    for (const bad of ['198.51.100.7/24', 'nope', '1.2.3.4/33', '*', '0.0.0.0/0', '::/0'])
       await expectProblem(
         await create(session.headers, { ...keyBody(org.id), ipAllow: [bad] }),
         422,

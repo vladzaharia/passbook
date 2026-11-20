@@ -92,11 +92,7 @@ describe('roles', () => {
 
   it('a creator cannot give a role above their own', async () => {
     const { session } = await member('integration_admin');
-    for (const roles of [
-      ['org_admin'],
-      ['pass_operator'],
-      ['integration_admin', 'template_publisher'],
-    ])
+    for (const roles of [['org_admin'], ['pass_operator'], ['integration_admin', 'read_only']])
       await expectProblem(
         await create(session.headers, orgBody({ scopes: [], roles })),
         403,
@@ -116,11 +112,8 @@ describe('roles', () => {
   it('a role key holds the role at request time and nothing more', async () => {
     const { key } = await mint('org_admin', { scopes: [], roles: ['template_author'] });
     const auth = await createApiKeyStore(h.env, h.clock).resolve(key.secret);
-    expect([...(auth?.scopes ?? [])].sort()).toEqual([
-      'org:read',
-      'templates:read',
-      'templates:write',
-    ]);
+    // A role holds the scopes a route accepts; a scope gained later reaches the role then.
+    expect(auth?.scopes).toEqual(['templates:read']);
     const headers = { authorization: `Bearer ${key.secret}` };
     expect((await h.call('/api/v1/templates', { headers })).status).toBe(200);
     await expectProblem(await h.call('/api/v1/passes', { headers }), 403, 'MISSING_SCOPE');

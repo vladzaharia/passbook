@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
 import type { OrgCapability, OrgRole } from '../../shared/contracts/org-membership.ts';
 import { OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
@@ -63,8 +64,12 @@ export function scopeExercises(scope: ApiScope, capability: OrgCapability): bool
   return scopeCapability[scope] === capability || ALSO_READS[scope] === capability;
 }
 
-/** Org scopes a role stands for. `scans:write` is a terminal's scope (bound to its terminals), so no role holds it. */
-const presetScope = (scope: TenantScope) => !NOT_TENANT_AUTHORITY.includes(scope);
+/**
+ * Org scopes a role stands for: those a route accepts (`MINTABLE_SCOPES`), so a role token never holds a scope
+ * nobody reviewed, and never `scans:write`, a terminal's scope (bound to its terminals).
+ */
+const presetScope = (scope: TenantScope) =>
+  !NOT_TENANT_AUTHORITY.includes(scope) && (MINTABLE_SCOPES as readonly string[]).includes(scope);
 
 /**
  * The seven role presets as scope bundles: a role holds each org scope whose capability the role's

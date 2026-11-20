@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
 import { effectiveScopes, ROLE_PRESETS, rolesWithScope, scopeCapability } from './api-scopes.ts';
 import { rolesGranting } from './org-role-grants.ts';
@@ -15,6 +16,12 @@ describe('role presets', () => {
         expect(rolesGranting(scopeCapability[scope]), `${role} ${scope}`).toContain(role);
   });
 
+  it('holds only scopes a route accepts, so a role never gains a scope nobody reviewed', () => {
+    for (const role of OrgRoleSchema.options)
+      for (const scope of ROLE_PRESETS[role])
+        expect(MINTABLE_SCOPES as readonly string[], `${role} ${scope}`).toContain(scope);
+  });
+
   it('holds no terminal or platform scope in any role', () => {
     for (const role of OrgRoleSchema.options) {
       expect(ROLE_PRESETS[role]).not.toContain('scans:write');
@@ -28,11 +35,7 @@ describe('role presets', () => {
     expect(ROLE_PRESETS.read_only.filter((s) => /:(write|manage|publish|review)$/.test(s))).toEqual(
       [],
     );
-    expect([...ROLE_PRESETS.template_author].sort()).toEqual([
-      'org:read',
-      'templates:read',
-      'templates:write',
-    ]);
+    expect(ROLE_PRESETS.template_author).toEqual(['templates:read']);
     expect(ROLE_PRESETS.pass_operator).toEqual(
       expect.arrayContaining(['passes:write', 'holders:write']),
     );
@@ -42,12 +45,9 @@ describe('role presets', () => {
   });
 
   it('adds a role to the listed scopes, once each', () => {
-    const held = effectiveScopes(['passes:read', 'org:read'], ['template_author']);
-    expect([...held].sort()).toEqual([
-      'org:read',
+    expect(effectiveScopes(['passes:read', 'templates:read'], ['template_author'])).toEqual([
       'passes:read',
       'templates:read',
-      'templates:write',
     ]);
     expect(effectiveScopes(['passes:read'], [])).toEqual(['passes:read']);
   });

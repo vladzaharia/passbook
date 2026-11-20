@@ -35,13 +35,14 @@ BEGIN
 END;
 
 -- What each kind must be when it is minted: a personal key names a live membership of its org and lives at most
--- 90 days (a day of client clock slack); a platform key has no org, an expiry of the same length and an IP allowlist.
+-- 90 days (a day of client clock slack); a platform key has no org, no roles, an expiry of the same length and an IP allowlist.
 CREATE TRIGGER api_keys_kind_rules BEFORE INSERT ON api_keys
 WHEN (NEW.kind = 'personal' AND (NEW.membership_id IS NULL OR NEW.org_id IS NULL OR NEW.expires_at IS NULL
       OR NEW.expires_at > NEW.created_at + 7862400000
       OR NOT EXISTS (SELECT 1 FROM org_memberships m
         WHERE m.id = NEW.membership_id AND m.org_id = NEW.org_id AND m.revoked_at IS NULL)))
   OR (NEW.kind <> 'personal' AND NEW.membership_id IS NOT NULL)
+  OR (NEW.kind = 'platform' AND NEW.roles <> '[]')
   OR (NEW.kind = 'platform' AND (NEW.org_id IS NOT NULL OR NEW.expires_at IS NULL
       OR NEW.expires_at > NEW.created_at + 7862400000
       OR NEW.ip_allow IS NULL OR json_array_length(NEW.ip_allow) = 0))
