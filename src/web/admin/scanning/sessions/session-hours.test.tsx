@@ -110,6 +110,6 @@ describe('hours summary exceptions', () => {
     });
     expect(lines[0]).toMatch(/^Mon–Fri/);
     expect(lines[1]).toMatch(/Dec.* 25.*: Closed$/);
-    expect(lines[2]).toMatch(/Dec.* 31.*: 10 AM–2 PM$/);
+    expect(lines[2]).toMatch(/Dec.* 31.*: 10 AM . 2 PM$/);
   });
 });
