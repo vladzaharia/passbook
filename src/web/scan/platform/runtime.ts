@@ -286,7 +286,9 @@ export async function createRuntime(
       native?.tagCancel();
     },
     announce: notice,
-    hold: (on: boolean) => void (held = on),
+    hold(on: boolean) {
+      held = on;
+    },
     webNfc,
     onTagEnded(listener: (why: 'cancelled' | 'timeout') => void) {
       tagEnded.add(listener);
