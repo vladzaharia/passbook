@@ -19,15 +19,18 @@ export function CheckTiles({
   filter,
   onFilter,
   sameLabel = C.check.tileSame,
+  compact = false,
 }: {
   counts: NonNullable<PassImportDto['counts']>;
   filter: CheckFilter;
   onFilter: (f: CheckFilter) => void;
   /** Connections read the third tile as "Not issued". */
   sameLabel?: string;
+  /** Two to a row at any width: a narrow aside. */
+  compact?: boolean;
 }) {
   return (
-    <ul className="wl-deal grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <ul className={cn('wl-deal grid grid-cols-2 gap-3', !compact && 'lg:grid-cols-4')}>
       {TILES.map((t, i) => {
         const on = filter === t.id;
         const n = counts[t.id];

@@ -127,6 +127,7 @@ export function FirstSync({
               emailable: 0,
             }}
             sameLabel="Not issued"
+            compact
             filter={filter}
             onFilter={setFilter}
           />
