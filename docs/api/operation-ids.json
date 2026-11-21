@@ -262,6 +262,7 @@
   "passes.putPassesByIdConnection",
   "passes.putPassesByIdMemberPhoto",
   "public.getBByToken",
+  "public.getBByTokenByPassId",
   "public.getBByTokenByPassIdAssetsByName",
   "public.getBByTokenByPassIdBarcode",
   "public.getBByTokenByPassIdPassPkpass",

@@ -224,6 +224,7 @@ export type ErrorCode =
   | 'KEY_IN_BROWSER'
   | 'KEY_OWNER_NEEDS_IDP'
   | 'KEY_TEST_ONLY'
+  | 'LAST_EMAIL'
   | 'LAST_ORG_ADMIN'
   | 'LINEAGE_CHANGED'
   | 'LINK_INVALID'

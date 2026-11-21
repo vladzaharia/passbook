@@ -7,6 +7,7 @@ import { ArrowLeft, RefreshCw, WalletCards } from 'lucide-react';
 import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import { AUTH_PAGE_COPY } from '../../shared/copy/sign-in.ts';
 import { STATE_COPY, waitLine } from '../../shared/copy/states.ts';
+import { PASS_SAVE_PATH } from '../../shared/pass-offline.ts';
 import type { PageTheme } from './head.ts';
 import { actionHtml, type HostedArt, hostedPage, type PageAction, postButton } from './hosted.ts';
 import { escapeHtml } from './theme.ts';
@@ -86,6 +87,10 @@ export function renderErrorPage(input: ErrorPageInput): string {
     title: input.title ?? d.title,
     art: d.art,
     ...(line ? { lede: escapeHtml(line) } : {}),
+    // Switch account is a plain form: save.js clears this phone's saved passes before it posts.
+    ...(input.status === 403 && !input.action
+      ? { after: `<script src="${PASS_SAVE_PATH}" defer></script>` }
+      : {}),
     body:
       input.status === 403 && !input.action
         ? `<div class="stack">${actionHtml(d.action)}${SWITCH_ACCOUNT}</div>`

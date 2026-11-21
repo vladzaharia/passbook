@@ -146,7 +146,8 @@ function holderProof(proof: HolderProof, now: number, b: Binds): string {
         WHERE s.id_hash = ${b.bind(proof.sessionIdHash)} AND s.user_id = p.owner_user_id AND u.status = 'active'
           AND s.revoked_at IS NULL AND s.expires_at > ${b.bind(now)} AND s.idle_expires_at > ${b.bind(now)})`;
     case 'verified_email':
-      return `p.owner_user_id IS NULL AND p.status = 'active' AND p.removed_at IS NULL
+      // The attach contract: a live pass only. Ended ones are listed read-only (me/repo-ended.ts).
+      return `p.owner_user_id IS NULL AND p.status = 'active' AND p.removed_at IS NULL AND p.deleted_at IS NULL
         AND EXISTS (SELECT 1 FROM users u JOIN user_emails e ON e.user_id = u.id
           WHERE u.id = ${b.bind(proof.userId)} AND u.status = 'active' AND e.email = p.holder_email)
         AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks blk WHERE blk.pass_id = p.id AND blk.user_id = ${b.bind(proof.userId)})`;

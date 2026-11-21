@@ -28,6 +28,8 @@ export interface EmailListProps {
   busyEmail?: string;
   /** Add-field error from the server (one sentence). */
   addError?: string;
+  /** The only verified address cannot go: its Remove shows disabled with this line under it. */
+  onlyOneHint?: string;
   className?: string;
 }
 
@@ -49,6 +51,7 @@ export function EmailList({
   onCancelPending,
   busyEmail,
   addError,
+  onlyOneHint,
   className,
 }: EmailListProps) {
   const [draft, setDraft] = useState('');
@@ -65,9 +68,14 @@ export function EmailList({
     if ((await onAdd(email)) === false) return;
     setDraft((now) => (now.trim() === email ? '' : now));
   };
+  const soleVerified = items.filter((i) => i.verified).length === 1;
   const actionsFor = (item: EmailItem): RowAction[] => {
     const busy = busyEmail === item.email;
-    if (item.primary && item.verified) return [];
+    if (item.primary && item.verified) {
+      return onlyOneHint && items.filter((i) => i.verified).length === 1
+        ? [{ label: 'Remove', icon: Trash2, onSelect: () => {}, disabled: true, destructive: true }]
+        : [];
+    }
     // An unproven primary can be verified or re-sent, never removed.
     if (item.primary) {
       return [
@@ -135,6 +143,9 @@ export function EmailList({
                 {item.email.split('@')[0]}@<wbr />
                 {item.email.split('@').slice(1).join('@')}
               </span>
+            }
+            meta={
+              onlyOneHint && item.primary && item.verified && soleVerified ? onlyOneHint : undefined
             }
             pills={
               <>

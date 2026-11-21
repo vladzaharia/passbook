@@ -18,6 +18,7 @@ import { type AddAreaProps, addMode } from './add/area.ts';
 import type { RenderBuddy } from './add/scan.tsx';
 import { EndedCard, type EndedSignIn } from './ended-card.tsx';
 import { Help, type HolderSupport, SendAgain } from './holder-parts.tsx';
+import { doorPathOf, SaveMount, SaveSheet } from './save-phone.tsx';
 import { OtherWays, WalletLead } from './wallet-choice.tsx';
 import './holder-pass.css';
 
@@ -128,10 +129,16 @@ export function HolderPassView(props: HolderPassViewProps) {
   const [first, ...rest] = choices;
   // Beside the stack, the front's row already carries Apple's badge (or Show QR).
   const leadChoice = props.panel && first?.id === 'apple' ? undefined : first;
+  // Saving to the phone needs the door view's own path; an ended pass drops any copy it holds.
+  const doorPath = doorPathOf(publicUrl);
+  const door = state === 'active' && choices.some((c) => c.id === 'phone') ? doorPath : null;
+  const ended = state !== 'active' && doorPath ? doorPath : null;
   return (
     <div
       className="wl-holder"
       data-panel={props.panel || undefined}
+      {...(door ? { 'data-save-phone': door } : {})}
+      {...(ended ? { 'data-save-ended': ended } : {})}
       data-lead={lead ? 'add' : state === 'active' ? undefined : 'notice'}
       data-rise={props.rise || undefined}
     >
@@ -173,7 +180,13 @@ export function HolderPassView(props: HolderPassViewProps) {
           </div>
         )}
         {state === 'active' && (leadChoice || !props.panel) ? (
-          <WalletLead choice={leadChoice} apple={apple} buddy={buddy} printHref={printable} />
+          <WalletLead
+            choice={leadChoice}
+            apple={apple}
+            buddy={buddy}
+            printHref={printable}
+            door={door}
+          />
         ) : null}
         {nothing ? (
           <div role="status">
@@ -190,6 +203,8 @@ export function HolderPassView(props: HolderPassViewProps) {
             apple={apple}
             printHref={first && (first.id !== 'apple' || apple) ? printable : undefined}
             portalHref={props.portalHref}
+            door={door}
+            phoneLead={first?.id === 'phone'}
             extra={
               props.resend ? (
                 <SendAgain action={props.resend.action} again={props.resend.again} />
@@ -218,6 +233,8 @@ export function HolderPassView(props: HolderPassViewProps) {
           <Help support={help} />
         </div>
       ) : null}
+      {door ? <SaveSheet /> : null}
+      <SaveMount door={door ?? ended} />
     </div>
   );
 }

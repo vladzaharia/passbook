@@ -32300,6 +32300,10 @@
                           "inWallet": {
                             "type": "boolean"
                           },
+                          "readOnly": {
+                            "type": "boolean",
+                            "default": false
+                          },
                           "support": {
                             "type": "object",
                             "properties": {
@@ -32491,6 +32495,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -32573,6 +32578,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -33185,6 +33191,10 @@
                     "inWallet": {
                       "type": "boolean"
                     },
+                    "readOnly": {
+                      "type": "boolean",
+                      "default": false
+                    },
                     "support": {
                       "type": "object",
                       "properties": {
@@ -33268,6 +33278,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -33398,6 +33409,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -33471,6 +33483,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -33571,6 +33584,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -33662,6 +33676,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -33763,6 +33778,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -33864,6 +33880,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -33955,6 +33972,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -34085,6 +34103,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -34180,6 +34199,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -34308,6 +34328,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -34438,6 +34459,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -34566,6 +34588,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -34644,6 +34667,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -34733,6 +34757,7 @@
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
           "IDP_SIGN_IN_REQUIRED",
+          "LAST_EMAIL",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -149305,6 +149330,69 @@
         "x-sdk": {
           "resource": "public.bundles",
           "method": "downloadPassAsset",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "ASSET_NOT_FOUND",
+          "LINK_NOT_FOUND",
+          "NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/b/{token}/{passId}": {
+      "get": {
+        "summary": "One pass of the bundle (server-rendered HTML)",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "passId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "public.getBByTokenByPassId",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "retrievePass",
           "sdk": false,
           "reason": "Public page or capability link; the token in the URL is the credential."
         },

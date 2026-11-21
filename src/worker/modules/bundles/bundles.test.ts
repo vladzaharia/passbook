@@ -378,8 +378,12 @@ describe('voided passes', () => {
     await voidPass(jobCtxOf(kit), { type: 'system', id: null }, a.id, null);
     const token = bundle.url?.split('/b/')[1];
     const html = await (await app.request(`${ORIGIN}/b/${token}`, {}, kit.env)).text();
-    expect(html).toContain(`/b/${token}/${b.id}/pass.pkpass`);
+    // The voided pass stays listed, as a peek to its own member page; no file is offered for it.
+    expect(html).toContain(`href="/b/${token}/${a.id}"`);
     expect(html).not.toContain(`/b/${token}/${a.id}/pass.pkpass`);
+    expect(
+      (await app.request(`${ORIGIN}/b/${token}/${b.id}/pass.pkpass`, {}, kit.env)).status,
+    ).toBe(200);
     const zip = await app.request(`${ORIGIN}/b/${token}/passes.pkpasses`, {}, kit.env);
     expect(zip.status).toBe(200);
     const bytes = new Uint8Array(await zip.arrayBuffer());

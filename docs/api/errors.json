@@ -2072,6 +2072,15 @@
       ]
     },
     {
+      "code": "LAST_EMAIL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
       "code": "LAST_ORG_ADMIN",
       "statuses": [
         409

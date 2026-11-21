@@ -1454,5 +1454,29 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "GET /api/v1/me/passes 200.items[].readOnly: field added",
+    "class": "additive",
+    "operationId": "me.getMePasses",
+    "op": "GET /api/v1/me/passes",
+    "change": "200.items[].readOnly: field added",
+    "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
+  },
+  {
+    "key": "GET /api/v1/me/passes/{id} 200.readOnly: field added",
+    "class": "additive",
+    "operationId": "me.getMePassesById",
+    "op": "GET /api/v1/me/passes/{id}",
+    "change": "200.readOnly: field added",
+    "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
+  },
+  {
+    "key": "GET /b/{token}/{passId} new operation",
+    "class": "additive",
+    "operationId": "public.getBByTokenByPassId",
+    "op": "GET /b/{token}/{passId}",
+    "change": "new operation",
+    "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
   }
 ]

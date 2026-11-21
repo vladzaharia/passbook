@@ -15,8 +15,10 @@ import { AddBlock } from '../../web/portal/add/add-block.tsx';
 import { OUTLINE_ACTION_CLASS } from '../../web/portal/add/added.tsx';
 import { type AddAreaProps, addMode } from '../../web/portal/add/area.ts';
 import { HolderHeading } from '../../web/portal/holder-heading.tsx';
-import { Help, type HolderSupport, Notice, PortalLink } from '../../web/portal/holder-parts.tsx';
+import { Help, type HolderSupport, Notice } from '../../web/portal/holder-parts.tsx';
 import { PassDetails } from '../../web/portal/pass-details.tsx';
+import stackCss from '../../web/portal/pass-stack.css?raw';
+import { PassStack } from '../../web/portal/pass-stack.tsx';
 import { AppleWalletBadge } from '../../web/ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../../web/ui/art/buddy-art.tsx';
 import { Badge } from '../../web/ui/badge.tsx';
@@ -31,9 +33,15 @@ import { TestRibbon } from './test-ribbon.tsx';
 export const BUNDLE_COPY = {
   addAll: 'Add all to Apple Wallet',
   count: HOLDER_COPY.count,
+  /** The count line when a badge already says "All passes (3)": only what is not live. */
+  extras: (voided: number, removed = 0) =>
+    [voided ? `${voided} voided` : '', removed ? `${removed} removed` : '']
+      .filter(Boolean)
+      .join(' · '),
   /** "3 passes · 1 voided · 1 removed" under the title. */
   summary: (n: number, voided: number, removed = 0) =>
     `${n} ${n === 1 ? 'pass' : 'passes'}${voided ? ` · ${voided} voided` : ''}${removed ? ` · ${removed} removed` : ''}`,
+  allPasses: HOLDER_COPY.allPasses,
   qrAlt: (name: string) => `QR code for ${name}`,
   preview: 'Open these passes.',
   details: 'Details',
@@ -47,6 +55,8 @@ export interface BundlePageItem {
   detail?: string | null;
   /** Voided passes and removed ones cannot be added. */
   state: 'active' | 'voided' | 'removed';
+  /** `/b/:token/:passId/open`: the member's own page, a plain link from its peek. */
+  href: string;
   /** `/b/:token/:passId/pass.pkpass`; null while Apple is off for the pass. */
   downloadHref: string | null;
   /** `/b/:token/:passId/barcode`: the browser barcode, shown on Android; absent while mobile is off. */
@@ -110,6 +120,56 @@ function OffNote({
   );
 }
 
+/** The front pass's way in: its door view, or the reason it has none. The others are one tap away. */
+function FrontWay({
+  item,
+  android,
+  orgName,
+  support,
+}: {
+  item: BundlePageItem;
+  android: boolean;
+  orgName: string;
+  support?: HolderSupport | undefined;
+}) {
+  const wallets = item.state === 'active' ? (item.walletOffers ?? []) : [];
+  const door = item.state === 'active' && (android || !item.downloadHref) && item.barcodeHref;
+  if (item.state !== 'active') {
+    return (
+      <div className="bd-way">
+        <OffBadge state={item.state} />
+        <OffNote state={item.state} orgName={orgName} support={support} />
+      </div>
+    );
+  }
+  if (!door && wallets.length === 0) return null;
+  return (
+    <div className="bd-way">
+      {door ? (
+        <a className={OUTLINE_ACTION_CLASS} href={door} aria-describedby={`bd-n-${item.id}`}>
+          {android ? HOLDER_COPY.showAtDoor : HOLDER_COPY.showBarcode}
+        </a>
+      ) : null}
+      {wallets.map(({ provider, href }) => (
+        <div key={provider} className="wl-native-wallets">
+          <a href={href} aria-describedby={`bd-n-${item.id}`}>
+            <img
+              src={NATIVE_WALLET_BADGES[provider].path}
+              alt={NATIVE_WALLET_BADGES[provider].label}
+            />
+          </a>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A peek is read by what it is, and by why it is dim. */
+function peekName(item: BundlePageItem): string {
+  const off = item.state === 'active' ? null : statusOf(item.state)?.label;
+  return [item.title, item.detail, off].filter(Boolean).join(', ');
+}
+
 function BundleBody(props: BundlePageProps) {
   const { items, device, support } = props;
   const addable = items.filter((i) => i.state === 'active');
@@ -117,7 +177,15 @@ function BundleBody(props: BundlePageProps) {
   const removed = items.filter((i) => i.state === 'removed').length;
   const android = isAndroid(device.device);
   const apple = addable.filter((i) => i.downloadHref);
+  const front = addable[0] ?? items[0];
+  // Live passes first; the ended ones sit at the bottom of the stack.
+  const rest = items
+    .filter((i) => i !== front)
+    .sort((a, b) => Number(a.state !== 'active') - Number(b.state !== 'active'));
   const mode = apple.length > 0 ? addMode('active', device, false, props.publicUrl) : 'off';
+  // One count: the badge's "All passes (3)", else the line under the title.
+  const labelled = apple.length > 1;
+  const labelShown = labelled && !android && device.device !== 'other' && mode !== 'off';
   const area: AddAreaProps | null =
     mode === 'off'
       ? null
@@ -131,7 +199,7 @@ function BundleBody(props: BundlePageProps) {
             device.device === 'other' ? null : (
               <AppleWalletBadge
                 href={props.addAllHref}
-                label={BUNDLE_COPY.count(apple.length)}
+                {...(labelled ? { label: BUNDLE_COPY.allPasses(apple.length) } : {})}
                 className="p-0"
               />
             ),
@@ -145,8 +213,13 @@ function BundleBody(props: BundlePageProps) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <HolderHeading
           heading={{ title: props.name, org: '', kind: null }}
-          meta={<span>{BUNDLE_COPY.summary(items.length, voided, removed)}</span>}
-          actions={<PortalLink href="/" />}
+          meta={
+            <span>
+              {labelShown
+                ? BUNDLE_COPY.extras(voided, removed)
+                : BUNDLE_COPY.summary(items.length, voided, removed)}
+            </span>
+          }
         />
         <div className="bd-top">
           {area && android ? (
@@ -166,69 +239,55 @@ function BundleBody(props: BundlePageProps) {
             />
           ) : null}
         </div>
-        <ul className="bd-list" aria-label={BUNDLE_COPY.count(items.length)}>
-          {items.map((item, i) => (
-            <li key={item.id} className="bd-item" style={{ '--i': i } as React.CSSProperties}>
-              <PassCardStage
-                view={item.view}
-                tilt={false}
-                glow={false}
-                enter
-                dim={item.state !== 'active'}
-                removed={item.state === 'removed'}
-              />
-              <p className="bd-name" id={`bd-n-${item.id}`}>
-                {item.title}
-                {item.detail ? <span className="bd-detail">{item.detail}</span> : null}
-              </p>
-              <div className="bd-way">
-                {item.state !== 'active' ? (
-                  <>
-                    <OffBadge state={item.state} />
-                    <OffNote state={item.state} orgName={props.orgName} support={support} />
-                  </>
-                ) : (android || !item.downloadHref) && item.barcodeHref ? (
-                  <a
-                    className={OUTLINE_ACTION_CLASS}
-                    href={item.barcodeHref}
-                    aria-describedby={`bd-n-${item.id}`}
-                  >
-                    {HOLDER_COPY.showBarcode}
-                  </a>
-                ) : item.downloadHref && !android ? (
-                  <AppleWalletBadge
-                    href={item.downloadHref}
-                    describedBy={`bd-n-${item.id}`}
-                    className="p-0"
+        {front ? (
+          <div className="bd-stack">
+            <PassStack
+              label={BUNDLE_COPY.count(items.length)}
+              className="wl-buddy-room"
+              front={
+                <>
+                  <PassCardStage
+                    view={front.view}
+                    tilt={false}
+                    glow={false}
+                    enter
+                    dim={front.state !== 'active'}
+                    removed={front.state === 'removed'}
                   />
-                ) : null}
-                {item.state === 'active'
-                  ? (item.walletOffers ?? []).map(({ provider, href }) => (
-                      <div key={provider} className="wl-native-wallets">
-                        <a href={href} aria-describedby={`bd-n-${item.id}`}>
-                          <img
-                            src={NATIVE_WALLET_BADGES[provider].path}
-                            alt={NATIVE_WALLET_BADGES[provider].label}
-                          />
-                        </a>
-                      </div>
-                    ))
-                  : null}
-              </div>
-              {hasBack(item.view, item.view.layouts[item.view.target]) ? (
-                // The pass page's details, folded: a native disclosure, no script.
-                <details className="bd-more">
-                  <summary>{BUNDLE_COPY.details}</summary>
-                  <PassDetails
-                    view={item.view}
-                    locale={item.view.locale}
-                    now={props.now ?? new Date()}
+                  <p className="bd-name" id={`bd-n-${front.id}`}>
+                    {front.title}
+                    {front.detail ? <span className="bd-detail">{front.detail}</span> : null}
+                  </p>
+                  <FrontWay
+                    item={front}
+                    android={android}
+                    orgName={props.orgName}
+                    support={support}
                   />
-                </details>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+                </>
+              }
+              peeks={rest.map((item) => ({
+                id: item.id,
+                view: item.view,
+                name: peekName(item),
+                href: item.href,
+                dim: item.state !== 'active',
+                removed: item.state === 'removed',
+              }))}
+            />
+            {hasBack(front.view, front.view.layouts[front.view.target]) ? (
+              // The front pass's details, folded: a native disclosure, no script.
+              <details className="bd-more">
+                <summary>{BUNDLE_COPY.details}</summary>
+                <PassDetails
+                  view={front.view}
+                  locale={front.view.locale}
+                  now={props.now ?? new Date()}
+                />
+              </details>
+            ) : null}
+          </div>
+        ) : null}
         {support && !support.platform && (support.email || support.url) ? (
           <div className="bd-help border-t border-border pt-4">
             <Help support={support} />
@@ -248,5 +307,5 @@ function previewHead(org: string): string {
 }
 
 export function renderBundlePage(props: BundlePageProps): string {
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel)}<title>${escapeHtml(props.orgLabel ? `${props.orgLabel} passes` : 'Passes')}</title>${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}\n${bundleCss}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<BundleBody {...props} />)}${props.device.device === 'mac' ? `<script nonce="${props.nonce}">${MAC_REVEAL_SCRIPT}</script>` : ''}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel)}<title>${escapeHtml(props.orgLabel ? `${props.orgLabel} passes` : 'Passes')}</title>${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}\n${stackCss}\n${bundleCss}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<BundleBody {...props} />)}${props.device.device === 'mac' ? `<script nonce="${props.nonce}">${MAC_REVEAL_SCRIPT}</script>` : ''}</body></html>`;
 }

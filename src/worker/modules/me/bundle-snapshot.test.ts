@@ -10,7 +10,7 @@ import { run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { harness, type TestHarness } from '../auth/test-support.ts';
 import { bundleSnapshot } from './bundle.ts';
-import { listBundlePasses } from './repo.ts';
+import { listBundlePasses } from './repo-bundle.ts';
 import { listMyPasses } from './service.ts';
 
 let h: TestHarness;
@@ -41,6 +41,7 @@ const part = async (userId: string, token: string, n: number) => {
   const rows = await listBundlePasses(
     h.env.DB,
     userId,
+    h.clock.now(),
     { first: starts[n - 1] as string, after: starts[n] ?? null },
     10,
   );
