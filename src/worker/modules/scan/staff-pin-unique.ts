@@ -1,14 +1,15 @@
 import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { activeRosterStatement } from './repo-staff.ts';
-import { pinMatches } from './staff-pin-hash.ts';
-import { PIN_ONLY_MAX_STAFF } from './staff-pin-only.ts';
+import { fullRosterStatement } from './repo-staff.ts';
+import { pinMatcher } from './staff-pin-hash.ts';
 import { pinStaffListFromResult } from './staff-pin-snapshot.ts';
 
 /**
- * A fresh 6-digit PIN that no active staff member of the org has (and not `ownHash`'s, so a reset
- * always changes it), so signing in with a PIN alone finds one person. Two requests racing can
- * still make the same PIN; sign-in then asks for a name. Existing shared PINs stay until reset.
+ * A fresh 6-digit PIN that no member of the org has, disabled members included (re-enabling one
+ * must not bring back a duplicate), and not `ownHash`'s, so a reset always changes it. Signing in
+ * with a PIN alone then finds one person. Two requests racing can still make the same PIN; the
+ * sign-in then answers as a wrong PIN and the person picks their name. Existing shared PINs stay
+ * until reset; sign-in audits them when someone types one.
  */
 export async function newUniquePin(
   ctx: ServiceContext,
@@ -16,15 +17,14 @@ export async function newUniquePin(
   id: string,
   ownHash?: string,
 ): Promise<string> {
-  const roster = pinStaffListFromResult(
-    await activeRosterStatement(ctx.env.DB, orgId, PIN_ONLY_MAX_STAFF).run(),
-  );
+  const roster = pinStaffListFromResult(await fullRosterStatement(ctx.env.DB, orgId).run());
+  const matches = await pinMatcher(ctx.env);
   for (let attempt = 0; attempt < 10; attempt++) {
     const pin = ctx.ids.code(6);
-    let taken = ownHash !== undefined && (await pinMatches(ctx.env, id, pin, ownHash));
+    let taken = ownHash !== undefined && (await matches(ctx.env, id, pin, ownHash));
     for (const person of roster) {
       if (taken) break;
-      taken = await pinMatches(ctx.env, person.id, pin, person.pinHash);
+      taken = await matches(ctx.env, person.id, pin, person.pinHash);
     }
     if (!taken) return pin;
   }

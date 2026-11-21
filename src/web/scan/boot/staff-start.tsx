@@ -77,7 +77,7 @@ export function StaffStart({
       setError(pinMessage(errorMessage(cause)));
       setRefusals((n) => n + 1);
       setPin('');
-      if (!named && cause instanceof ApiError && cause.code === 'STAFF_PIN_AMBIGUOUS')
+      if (!named && cause instanceof ApiError && cause.code === 'STAFF_NAME_REQUIRED')
         setByName(true);
     } finally {
       setBusy(false);

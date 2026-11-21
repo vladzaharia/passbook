@@ -21,6 +21,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
+import { pinOnlyOff } from './repo-pin-only.ts';
 import {
   addStaffInsert,
   addStaffPinRotate,
@@ -143,12 +144,15 @@ export async function listStaff(
     limit: Math.min(query.limit ?? STAFF_PAGE_LIMIT, STAFF_PAGE_MAX),
     cursor: decodeStaffCursor(query.cursor),
   };
+  // Read before the roster: the roster read is pinned to be followed by only a few statements.
+  const off = await pinOnlyOff(ctx.env.DB, orgId);
   const result = await staffViews(ctx, session, authority, page);
   // `hasMore` and `nextCursor` are present only when there is more.
   const last = result.items.at(-1);
   return result.authorized
     ? {
         items: result.items,
+        ...(off ? { pinOnlyOff: true } : {}),
         ...(result.hasMore && last ? { hasMore: true, nextCursor: encodeStaffCursor(last) } : {}),
       }
     : { items: [] };

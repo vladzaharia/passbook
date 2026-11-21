@@ -202,14 +202,14 @@ describe('scanner entry flows', () => {
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
     expect(signIn).toHaveBeenLastCalledWith({ pin: '123456' });
   });
-  it('falls back to a name when the PIN is shared, and can go back to the keypad', async () => {
+  it('falls back to a name when PIN-only is paused, and can go back to the keypad', async () => {
     const signIn = vi
       .fn<ScanApi['staffSignIn']>()
       .mockRejectedValueOnce(
         new ApiError({
           status: 409,
-          code: 'STAFF_PIN_AMBIGUOUS',
-          detail: 'Several people have this PIN. Pick your name.',
+          code: 'STAFF_NAME_REQUIRED',
+          detail: 'Pick your name, then enter your PIN.',
         }),
       )
       .mockResolvedValue(sessionFixture());
@@ -228,7 +228,7 @@ describe('scanner entry flows', () => {
     );
     const user = userEvent.setup();
     for (const digit of '112358') await user.click(screen.getByRole('button', { name: digit }));
-    expect(await screen.findByText(/Several people have this PIN/)).toBeInTheDocument();
+    expect(await screen.findByText(/Pick your name, then enter your PIN/)).toBeInTheDocument();
     await user.click(screen.getByRole('combobox', { name: 'Staff member' }));
     await user.click(screen.getByRole('option', { name: 'Door staff' }));
     await user.type(screen.getByLabelText('PIN'), '112358');

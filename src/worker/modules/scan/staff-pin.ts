@@ -1,11 +1,11 @@
 import type { GrantPart } from '../../platform/authority-include.ts';
-import { AppError, ConflictError } from '../../platform/errors.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
 import { preparePinCounters } from './repo-staff-pin-counters.ts';
 import type { ScanPredicate } from './scan-predicate.ts';
-import { anyManagerDecision, personDecision, pinOnlyDecision } from './staff-pin-decide.ts';
+import { anyManagerDecision, personDecision } from './staff-pin-decide.ts';
 import { pinMatches } from './staff-pin-hash.ts';
 import {
   ANY_MANAGER,
@@ -187,20 +187,19 @@ export function preparePinReservation(
         targetId,
       });
     const audits: D1PreparedStatement[] = [];
-    if (person === personCap) audits.push(audit('scan_staff.pin_locked', 'scan_staff', staffId));
+    if (person === personCap)
+      audits.push(
+        staffId === ANY_STAFF
+          ? audit('scanner.pin_only_locked', 'scanner', scannerId)
+          : audit('scan_staff.pin_locked', 'scan_staff', staffId),
+      );
     if (scanner === scannerCap) audits.push(audit('scanner.pin_flood', 'scanner', scannerId));
+    if (audits.length) ctx.log.warn('scan.pin_limit', { orgId, scannerId, code: 'PIN_LIMIT' });
     await finishFailure(audits);
     // Two managers with one PIN answer exactly as a wrong one (a different answer would say so);
     // the owner is told in the log, with no PIN in it.
-    if (verdict === 'ambiguous') {
+    if (verdict === 'ambiguous')
       ctx.log.warn('scan.pin_ambiguous', { orgId, scannerId, code: 'PIN_AMBIGUOUS' });
-      // Sign-in with no name asks for one; the attempt stays counted.
-      if (staffId === ANY_STAFF)
-        throw new ConflictError(
-          'Several people have this PIN. Pick your name.',
-          'STAFF_PIN_AMBIGUOUS',
-        );
-    }
     // The tighter counter: the lockout the next miss would hit, never a promise the hour cannot keep.
     const triesLeft = Math.max(0, Math.min(personCap - person, scannerCap - scanner));
     throw new AppError(
@@ -263,11 +262,10 @@ export function preparePinReservation(
       );
       return (await verifyCandidate(results, () => any.decide(), failure)) ? any.found() : null;
     },
-    async verifyOnly(results, roster, pin) {
-      const only = pinOnlyDecision({ pinEnv, orgId, staffId }, roster, pin, pinMatches);
-      if (!(await verifyCandidate(results, () => only.decide())))
+    async verifyOnly(results, decision) {
+      if (!(await verifyCandidate(results, () => decision.decide())))
         throw new Error('PIN reservation was not authorized');
-      return only.found();
+      return decision.found();
     },
     async verifyLogin(results, staff, pin) {
       if (

@@ -1,13 +1,23 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg, makeScanStaff } from '../../../../test/helpers/index.ts';
-import { PIN_ONLY_MISSES_PER_ORG, PIN_ONLY_ORG_WINDOW_MS } from './staff-pin-only.ts';
+import { all, run } from '../../platform/db.ts';
+import { pinOnlyDailyCap, pinOnlyHourlyCap } from './staff-pin-only.ts';
 import { staffSessionFixture } from './staff-session-test-fixtures.ts';
 
 const fixture = staffSessionFixture();
 beforeAll(fixture.setup);
-// A fresh window each time, so one test's misses are not the next one's.
-beforeEach(() => {
-  fixture.kit.clock.advance(PIN_ONLY_ORG_WINDOW_MS);
+const DAY = 86_400_000;
+
+// A clean org each time: no earlier staff (they change the budget) and no counters.
+beforeEach(async () => {
+  const { kit } = fixture;
+  kit.clock.advance(DAY);
+  await run(kit.env.DB, 'UPDATE scan_staff SET disabled_at = ? WHERE org_id = ?', [
+    kit.clock.now(),
+    kit.org.id,
+  ]);
+  await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'scan:pinonly:%'");
+  await run(kit.env.DB, "DELETE FROM settings WHERE key = 'scan.pinOnly'");
 });
 
 const pinOnly = (headers: Record<string, string>, pin: string) =>
@@ -23,6 +33,25 @@ async function device(mode: 'live' | 'test' = 'live') {
     settings: { staffSignIn: true },
   });
 }
+const audits = (action: string) =>
+  all<{ target_id: string; actor_id: string }>(
+    fixture.kit.env.DB,
+    'SELECT target_id, actor_id FROM audit_log WHERE org_id = ? AND action = ?',
+    [fixture.kit.org.id, action],
+  );
+
+describe('the PIN-only budget scales with the staff count', () => {
+  it.each([
+    [1, 15, 40],
+    [10, 15, 40],
+    [50, 3, 8],
+    [100, 1, 4],
+    [101, 1, 4],
+  ])('%i staff: %i an hour, %i a day', (staff, hour, day) => {
+    expect(pinOnlyHourlyCap(staff)).toBe(hour);
+    expect(pinOnlyDailyCap(staff)).toBe(day);
+  });
+});
 
 describe('staff sign-in with a PIN alone', () => {
   it('signs in the one active member who has the PIN', async () => {
@@ -41,40 +70,57 @@ describe('staff sign-in with a PIN alone', () => {
     expect(miss).toMatchObject({ issues: [{ path: 'triesLeft', message: '4' }] });
   });
 
-  it('never matches a disabled member', async () => {
+  it('never matches a disabled member or another org', async () => {
     const { kit, problem } = fixture;
-    const off = await makeScanStaff(kit.fx, {
-      orgId: kit.org.id,
-      pin: '314159',
-      disabled: true,
-    });
-    const scanner = await device();
-    await problem(await pinOnly(scanner.headers, off.pin), 400, 'PIN_INVALID', off.pin);
-  });
-
-  it('never matches another org', async () => {
-    const { kit, problem } = fixture;
+    const off = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '314159', disabled: true });
     const other = await makeOrg(kit.fx);
     const foreign = await makeScanStaff(kit.fx, { orgId: other.id, pin: '271828' });
     const scanner = await device();
+    await problem(await pinOnly(scanner.headers, off.pin), 400, 'PIN_INVALID', off.pin);
     await problem(await pinOnly(scanner.headers, foreign.pin), 400, 'PIN_INVALID', foreign.pin);
   });
 
-  it('asks for a name when two members share the PIN, and a name still signs in', async () => {
+  it('answers a shared PIN exactly as a wrong one, audits both people, and a name still signs in', async () => {
     const { kit, problem, binding, session, signIn } = fixture;
-    const a = await makeScanStaff(kit.fx, { orgId: kit.org.id, role: 'manager', pin: '112358' });
+    const a = await makeScanStaff(kit.fx, { orgId: kit.org.id, role: 'desk', pin: '112358' });
     const b = await makeScanStaff(kit.fx, { orgId: kit.org.id, role: 'door', pin: '112358' });
-    const scanner = await device();
-    const before = await binding(scanner.id);
-    const refusal = await problem(
-      await pinOnly(scanner.headers, a.pin),
-      409,
-      'STAFF_PIN_AMBIGUOUS',
-      a.pin,
+    const first = await device();
+    const second = await device();
+    const before = await binding(first.id);
+    const shared = await problem(await pinOnly(first.headers, a.pin), 400, 'PIN_INVALID', a.pin);
+    const wrong = await problem(await pinOnly(second.headers, '000000'), 400, 'PIN_INVALID');
+    expect(shared).toEqual(wrong);
+    expect(await binding(first.id)).toEqual(before);
+    expect((await audits('scan_staff.pin_shared')).map((r) => r.target_id).sort()).toEqual(
+      [a.id, b.id].sort(),
     );
-    expect(JSON.stringify(refusal)).not.toContain(b.id);
-    expect(await binding(scanner.id)).toEqual(before);
-    expect((await session(await signIn(scanner.headers, b), b.pin)).staff?.id).toBe(b.id);
+    expect((await session(await signIn(first.headers, b), b.pin)).staff?.id).toBe(b.id);
+  });
+
+  it('never signs a Manager in by PIN alone: a miss, audited; the name still works', async () => {
+    const { kit, problem, session, signIn } = fixture;
+    const manager = await makeScanStaff(kit.fx, {
+      orgId: kit.org.id,
+      role: 'manager',
+      pin: '557799',
+    });
+    const first = await device();
+    const second = await device();
+    const refused = await problem(
+      await pinOnly(first.headers, manager.pin),
+      400,
+      'PIN_INVALID',
+      manager.pin,
+    );
+    expect(refused).toEqual(
+      await problem(await pinOnly(second.headers, '000000'), 400, 'PIN_INVALID'),
+    );
+    expect((await audits('scan_staff.pin_only_manager')).map((r) => r.target_id)).toEqual([
+      manager.id,
+    ]);
+    expect((await session(await signIn(first.headers, manager), manager.pin)).staff?.id).toBe(
+      manager.id,
+    );
   });
 
   it('locks the device after five misses; another device is unaffected', async () => {
@@ -85,26 +131,32 @@ describe('staff sign-in with a PIN alone', () => {
     for (let i = 0; i < 5; i++)
       await problem(await pinOnly(scanner.headers, '000001'), 400, 'PIN_INVALID');
     await problem(await pinOnly(scanner.headers, staff.pin), 429, 'RATE_LIMITED', staff.pin);
+    expect((await audits('scanner.pin_only_locked')).map((r) => r.target_id)).toEqual([scanner.id]);
     expect((await session(await pinOnly(neighbor.headers, staff.pin))).staff?.id).toBe(staff.id);
   });
 
-  it('pauses PIN-only for the org after its misses, then asks for a name until the window ends', async () => {
+  it('refunds the org budget on a match, and pauses at the hourly cap with an audit row', async () => {
     const { kit, problem, session, signIn } = fixture;
     const staff = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '173205' });
-    // Keep every miss inside one window.
-    kit.clock.set(kit.clock.now() - (kit.clock.now() % PIN_ONLY_ORG_WINDOW_MS) + 1000);
-    // Three devices of five misses each reach the org's budget without locking any one device.
-    for (let d = 0; d < PIN_ONLY_MISSES_PER_ORG / 5; d++) {
+    const cap = pinOnlyHourlyCap(1);
+    // Matches cost nothing against the hour.
+    for (let i = 0; i < cap + 1; i++)
+      expect((await session(await pinOnly((await device()).headers, staff.pin))).staff?.id).toBe(
+        staff.id,
+      );
+    for (let d = 0; d < cap / 5; d++) {
       const scanner = await device();
       for (let i = 0; i < 5; i++)
         await problem(await pinOnly(scanner.headers, '000002'), 400, 'PIN_INVALID');
     }
     const fresh = await device();
-    await problem(await pinOnly(fresh.headers, staff.pin), 409, 'STAFF_PIN_AMBIGUOUS', staff.pin);
+    await problem(await pinOnly(fresh.headers, staff.pin), 409, 'STAFF_NAME_REQUIRED', staff.pin);
+    expect((await audits('scanner.pin_only_paused')).length).toBeGreaterThan(0);
     expect((await session(await signIn(fresh.headers, staff), staff.pin)).staff?.id).toBe(staff.id);
-    kit.clock.set(kit.clock.now() + PIN_ONLY_ORG_WINDOW_MS);
-    const later = await device();
-    expect((await session(await pinOnly(later.headers, staff.pin))).staff?.id).toBe(staff.id);
+    kit.clock.advance(3_600_000);
+    expect((await session(await pinOnly((await device()).headers, staff.pin))).staff?.id).toBe(
+      staff.id,
+    );
   });
 
   it('serves live and test devices from the same staff', async () => {

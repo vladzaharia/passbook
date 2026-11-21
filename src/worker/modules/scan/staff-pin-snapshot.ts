@@ -101,11 +101,10 @@ export interface PinReservation {
     anyRole?: boolean,
     deskOk?: boolean,
   ): Promise<VerifiedPinSnapshot | null>;
-  /** Sign-in with no name: the one active staff member who has the PIN. Several answer `STAFF_PIN_AMBIGUOUS`. */
+  /** Sign-in with no name: the decision is made by the caller, who keeps what it matched. */
   verifyOnly(
     results: readonly D1Result[],
-    roster: readonly PinStaffSnapshot[],
-    pin: string,
+    decision: { decide(): Promise<'match' | 'miss'>; found(): VerifiedPinSnapshot | null },
   ): Promise<VerifiedPinSnapshot | null>;
   verifyLogin(results: readonly D1Result[], staff: PinCheck['staff'], pin: string): Promise<void>;
   refundStatements(): D1PreparedStatement[];

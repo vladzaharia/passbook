@@ -80,8 +80,9 @@ export function anyManagerDecision(
 
 /**
  * No one is named at sign-in: the PIN is matched against every active staff member (all are
- * hashed, so the time does not say which matched). Exactly one match verifies; two or more are
- * `ambiguous`, whatever their roles, so a Desk member is never signed in as a Manager.
+ * hashed, so the time does not say which matched). It verifies only if exactly one person has it
+ * and that person is not a Manager; a shared PIN and a Manager's PIN are plain misses to the
+ * caller, and `matched()` tells the server which people they were, for the audit.
  */
 export function pinOnlyDecision(
   { pinEnv, orgId, staffId }: Subject,
@@ -89,18 +90,20 @@ export function pinOnlyDecision(
   pin: string,
   matches: PinMatches,
 ) {
+  const matched: PinStaffSnapshot[] = [];
   let found: PinStaffSnapshot | null = null;
   return {
-    async decide(): Promise<'match' | 'miss' | 'ambiguous'> {
-      const matched: PinStaffSnapshot[] = [];
+    async decide(): Promise<'match' | 'miss'> {
       for (const person of roster) {
         const usable = person.orgId === orgId && person.disabledAt === null;
         if (usable && (await matches(pinEnv, person.id, pin, person.pinHash))) matched.push(person);
       }
       await matches(pinEnv, staffId, pin, DUMMY_PIN_HASH);
-      found = matched.length === 1 ? (matched[0] ?? null) : null;
-      return matched.length === 1 ? 'match' : matched.length > 1 ? 'ambiguous' : 'miss';
+      const [only] = matched;
+      found = matched.length === 1 && only && only.role !== 'manager' ? only : null;
+      return found ? 'match' : 'miss';
     },
     found: () => found,
+    matched: (): readonly PinStaffSnapshot[] => matched,
   };
 }

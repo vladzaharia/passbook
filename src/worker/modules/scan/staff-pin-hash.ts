@@ -26,3 +26,23 @@ export const pinMatches: PinMatches = async (env, staffId, pin, stored) => {
   const old = await safeEqual(await hashPin(env, staffId, pin, previous), stored);
   return current || old;
 };
+
+/** `pinMatches` with the keys derived once, for a pass over a whole roster. */
+export async function pinMatcher(env: object): Promise<PinMatches> {
+  const previousVersion = macPreviousVersion(env);
+  const current = await derivedHmacKey(env, 'scan-pin');
+  const previous =
+    previousVersion === null ? null : await derivedHmacKey(env, 'scan-pin', previousVersion);
+  const digest = async (key: CryptoKey, staffId: string, pin: string) =>
+    toHex(
+      new Uint8Array(
+        await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${staffId}:${pin}`)),
+      ),
+    );
+  return async (_env, staffId, pin, stored) => {
+    const now = await safeEqual(await digest(current, staffId, pin), stored);
+    if (!previous) return now;
+    const before = await safeEqual(await digest(previous, staffId, pin), stored);
+    return now || before;
+  };
+}

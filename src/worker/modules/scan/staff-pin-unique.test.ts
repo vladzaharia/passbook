@@ -24,17 +24,17 @@ function ctxDrawing(draws: string[], fallback = '777777') {
 }
 
 describe('PINs are unique among active staff', () => {
-  it('create skips a PIN an active member has, and one a disabled member has is fine', async () => {
+  it('create skips a PIN any member has, a disabled one included', async () => {
     await makeScanStaff(f, { orgId, pin: '505050' });
     await makeScanStaff(f, { orgId, pin: '606060', disabled: true });
-    const ctx = ctxDrawing(['505050', '606060']);
+    const ctx = ctxDrawing(['505050', '606060', '616161']);
     const { auth, authority } = await kit.serviceAuthority(ctx);
     const made = await createStaff(ctx, auth, authority, 'live', {
       orgId,
       name: 'Unique A',
       role: 'door',
     });
-    expect(made.pin).toBe('606060');
+    expect(made.pin).toBe('616161');
   });
 
   it('reset skips a PIN an active member has, and never repeats the old one', async () => {

@@ -112618,6 +112618,12 @@
                         "$ref": "#/components/schemas/ScanStaff"
                       }
                     },
+                    "pinOnlyOff": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
                     "hasMore": {
                       "type": "boolean"
                     },
