@@ -95,11 +95,48 @@ export function assertStepUp(
   );
 }
 
-/** Router-level step-up for a session; a key passes untouched. */
-export const requireStepUp =
-  (maxAgeSec: number): MiddlewareHandler<AppBindings> =>
-  async (c, next) => {
-    const auth = c.var.auth;
-    if (auth?.kind === 'session') assertStepUp(c, auth, maxAgeSec);
-    await next();
-  };
+/** A route's step-up, as the OpenAPI document and the route inventory read it. */
+export interface StepUpDecl {
+  maxAgeSec: number;
+  /** Asked only for some requests (a body that touches a secret, a sensitive role). */
+  conditional: boolean;
+}
+const stepUps = new WeakMap<object, StepUpDecl>();
+
+/** Declares the step-up a guard enforces, so no sensitive route is invisible to the inventory. */
+export function declareStepUp<T extends object>(guard: T, decl: StepUpDecl): T {
+  stepUps.set(guard, decl);
+  return guard;
+}
+
+/** The step-up a guard enforces, or undefined. */
+export const stepUpOf = (guard: object): StepUpDecl | undefined => stepUps.get(guard);
+
+/**
+ * Step-up for a session, registered per route (`router.post(path, requireStepUp(...))`) ahead of its
+ * handler; a key passes untouched. With `when`, only requests it accepts are asked (it may read the body).
+ */
+export const requireStepUp = (
+  maxAgeSec: number,
+  when?: (c: Context<AppBindings>) => boolean | Promise<boolean>,
+): MiddlewareHandler<AppBindings> =>
+  declareStepUp(
+    async (c, next) => {
+      const auth = c.var.auth;
+      if (auth?.kind === 'session' && (!when || (await when(c)))) assertStepUp(c, auth, maxAgeSec);
+      await next();
+    },
+    { maxAgeSec, conditional: when !== undefined },
+  );
+
+/** The JSON body of a request, or undefined when it has none or is malformed (validation reports that). */
+export async function peekBody(c: Context<AppBindings>): Promise<Record<string, unknown>> {
+  try {
+    const body: unknown = await c.req.json();
+    return body !== null && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}

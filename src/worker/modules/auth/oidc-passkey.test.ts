@@ -77,6 +77,57 @@ describe('Polaris ID needs a passkey', () => {
     expect(latest?.auth_time).not.toBe(before?.auth_time);
   });
 
+  describe('a step-up round trip', () => {
+    const STEP_UP = '/auth/oidc/start?prompt=login&max_age=0&next=%2Fadmin%2Fapi-keys';
+
+    async function startStepUp(jar: Jar, user: ReturnType<typeof person>) {
+      h.oidc.addUser(user);
+      const start = await h.call(STEP_UP, { cookies: jar });
+      expect(new URL(start.headers.get('location') ?? '').searchParams.get('max_age')).toBe('0');
+      absorb(jar, start);
+      return start;
+    }
+
+    it('signs in when the provider authenticated again', async () => {
+      await setup();
+      const jar: Jar = new Map();
+      const user = person(['phr']);
+      const start = await startStepUp(jar, user);
+      const { out } = await followToProvider(start, jar, user);
+      expect(out.status).toBe(302);
+      expect(out.headers.get('location')).toBe('/admin/api-keys');
+    });
+
+    it('refuses with STEP_UP_NOT_FRESH when auth_time is from before the flow, and signs nobody in', async () => {
+      await setup();
+      const jar: Jar = new Map();
+      const user = person(['phr']);
+      const start = await startStepUp(jar, user);
+      const before = await first<{ n: number }>(h.env.DB, 'SELECT count(*) AS n FROM sessions');
+      // The provider answers from its old sign-in: an auth_time well before the flow started.
+      h.clock.advance(-10 * 60_000);
+      const { out } = await followToProvider(start, jar, user);
+      expect(out.status).toBe(403);
+      expect(await out.text()).toContain('didn&#39;t ask you to sign in again');
+      expect(jar.get('__Host-wallet_sid')).toBeUndefined();
+      expect((await first<{ n: number }>(h.env.DB, 'SELECT count(*) AS n FROM sessions'))?.n).toBe(
+        before?.n,
+      );
+    });
+
+    it('does not hold an ordinary sign-in to it', async () => {
+      await setup();
+      const jar: Jar = new Map();
+      const user = person(['phr']);
+      h.oidc.addUser(user);
+      const start = await h.call('/auth/oidc/start', { cookies: jar });
+      absorb(jar, start);
+      h.clock.advance(-10 * 60_000);
+      const { out } = await followToProvider(start, jar, user);
+      expect(out.status).toBe(302);
+    });
+  });
+
   it('restarts once with prompt=login when the sign-in used a login code', async () => {
     await setup();
     const jar: Jar = new Map();

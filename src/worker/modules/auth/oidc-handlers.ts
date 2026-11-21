@@ -33,10 +33,12 @@ import {
   redeemAuthorizationCode,
 } from './oidc-client.ts';
 import { signInOidc } from './oidc-sign-in.ts';
-import { noAccessPage, oidcFailurePage, signInErrorPage } from './pages.ts';
+import { noAccessPage, oidcFailurePage, signInErrorPage, stepUpNotFreshPage } from './pages.ts';
 import { saveOidcFlow, takeOidcFlow } from './service.ts';
 
 const FLOW_TTL_MS = 10 * 60 * 1000;
+/** How far behind the flow's start the provider's clock may run and still count as fresh. */
+const STEP_UP_FRESH_SKEW_MS = 2 * 60 * 1000;
 
 /**
  * Null when the Pocket ID client is not configured. The secret is optional: a CIMD client is
@@ -78,7 +80,13 @@ async function beginFlow(
   c: Context<AppBindings>,
   rp: RelyingParty,
   discovered: Discovered,
-  input: { next: string | null; prompt?: 'login'; maxAge?: 0; retried?: boolean },
+  input: {
+    next: string | null;
+    prompt?: 'login';
+    maxAge?: 0;
+    retried?: boolean;
+    stepUpStartedAt?: number;
+  },
 ) {
   const ctx = serviceContext(c);
   const secrets = await newFlowSecrets();
@@ -91,6 +99,7 @@ async function beginFlow(
     bindingHash: await sha256Hex(binding),
     expiresAt: ctx.clock.now() + FLOW_TTL_MS,
     ...(input.retried ? { retried: true } : {}),
+    ...(input.stepUpStartedAt === undefined ? {} : { stepUpStartedAt: input.stepUpStartedAt }),
   });
   setBindingCookie(c, OIDC_COOKIE, binding, FLOW_TTL_MS / 1000);
   return c.redirect(
@@ -124,7 +133,9 @@ export async function startOidc(c: Context<AppBindings>) {
   return beginFlow(c, rp, discovered, {
     next: safeNext(c.req.query('next')),
     ...(c.req.query('prompt') === 'login' ? { prompt: 'login' as const } : {}),
-    ...(c.req.query('max_age') === '0' ? { maxAge: 0 as const } : {}),
+    ...(c.req.query('max_age') === '0'
+      ? { maxAge: 0 as const, stepUpStartedAt: ctx.clock.now() }
+      : {}),
   });
 }
 
@@ -182,9 +193,28 @@ export async function callbackOidc(c: Context<AppBindings>) {
       retried: flow.retried === 1,
     });
     if (flow.retried !== 1)
-      return beginFlow(c, rp, discovered, { next, prompt: 'login', retried: true });
+      return beginFlow(c, rp, discovered, {
+        next,
+        prompt: 'login',
+        retried: true,
+        ...(flow.step_up_started_at === null
+          ? {}
+          : { maxAge: 0 as const, stepUpStartedAt: ctx.clock.now() }),
+      });
     const page = signInErrorPage(c.var.nonce, 'PASSKEY_REQUIRED', { next }, requestTheme(c));
     return c.html(page.html, page.status);
+  }
+  // A step-up must come back from a fresh authentication: a provider that ignored max_age (or an SSO
+  // cookie answering without asking) returns an old auth_time, and that is not a step-up.
+  if (
+    flow.step_up_started_at !== null &&
+    !(
+      typeof claims.auth_time === 'number' &&
+      claims.auth_time * 1000 >= flow.step_up_started_at - STEP_UP_FRESH_SKEW_MS
+    )
+  ) {
+    ctx.log.warn('auth.step_up_not_fresh', { code: 'STEP_UP_NOT_FRESH' });
+    return c.html(stepUpNotFreshPage(c.var.nonce, next, requestTheme(c)), 403);
   }
   const groups = Array.isArray(claims.groups)
     ? claims.groups.filter((g): g is string => typeof g === 'string')

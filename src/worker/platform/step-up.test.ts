@@ -7,6 +7,8 @@ import { requireCaller } from './auth.ts';
 import { type AppBindings, requestContext } from './context.ts';
 import type { AppEnv } from './env.ts';
 import { handleError } from './error-handler.ts';
+import { buildOpenApiDocument } from './openapi-document.ts';
+import { stepUpOf } from './sign-in-guard.ts';
 
 const ORIGIN = 'https://wallet.test';
 const MIN = 60_000;
@@ -121,64 +123,171 @@ const SENSITIVE: [string, string, unknown?][] = [
   ['POST', '/api/v1/orgs/o1/exports'],
   ['POST', '/api/v1/orgs/o1/exports/e1/link'],
   ['POST', '/api/v1/orgs/o1/invitations', INVITE],
+  [
+    'POST',
+    '/api/v1/orgs/o1/invitations',
+    { email: 'new@example.test', roles: ['integration_admin'] },
+  ],
   ['POST', '/api/v1/orgs/o1/identities/apple', {}],
+  ['POST', '/api/v1/identities', {}],
+  ['POST', '/api/v1/identities/i1/rotate', {}],
+  ['PUT', '/api/v1/identities/i1/push-key', {}],
   ['POST', '/api/v1/identities/i1/revoke-certificate', {}],
+  [
+    'POST',
+    '/api/v1/webhook-endpoints',
+    { url: 'https://example.test/h', eventTypes: ['pass.created'] },
+  ],
+  ['PATCH', '/api/v1/webhook-endpoints/w1', { url: 'https://example.test/h' }],
+  ['PATCH', '/api/v1/webhook-endpoints/w1', { eventTypes: ['pass.created'] }],
   ['POST', '/api/v1/webhook-endpoints/w1/secret', {}],
   ['POST', '/api/v1/webhook-endpoints/w1/captures/secret'],
+  ['POST', '/api/v1/connections', { orgId: 'o1', secrets: { token: 'x' } }],
+  ['PATCH', '/api/v1/connections/c1', { webhookSecret: 'a'.repeat(20) }],
+  ['PATCH', '/api/v1/connections/c1', { secrets: { token: 'x' } }],
+  ['PATCH', '/api/v1/connections/c1', { config: { host: 'https://example.test' } }],
+  ['PATCH', '/api/v1/connections/c1', { mode: 'webhook' }],
   ['POST', '/api/v1/connections/c1/webhook-secret'],
+  ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'auth.consoleEmailUntil': null } }],
+  ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'oidc.trustEmail': true } }],
+  ['POST', '/api/v1/platform/wallet-credentials/w1/rotate-key'],
+  ['POST', '/api/v1/nfc/keysets/k1/rotate', {}],
+  ['POST', '/api/v1/users/u1/emails', { email: 'x@example.test' }],
 ];
+
+// Calls that must not be asked: the same routes without the sensitive part.
+const NOT_ASKED: [string, string, unknown][] = [
+  ['PATCH', '/api/v1/connections/c1', { name: 'Renamed' }],
+  ['PATCH', '/api/v1/webhook-endpoints/w1', { description: 'x' }],
+  ['POST', '/api/v1/orgs/o1/invitations', { email: 'new@example.test', roles: ['read_only'] }],
+  ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'email.senderName': 'X' } }],
+];
+
+async function codeOf(
+  fake: ReturnType<typeof fakeAuth>,
+  headers: Record<string, string>,
+  [method, path, body]: [string, string, unknown?],
+) {
+  const app = createApp({ stores: fake.stores });
+  const res = await app.request(
+    `${ORIGIN}${path}`,
+    {
+      method,
+      headers: {
+        ...headers,
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    },
+    env as AppEnv,
+  );
+  return { status: res.status, code: ((await res.json()) as { code?: string }).code };
+}
 
 describe('step-up route inventory', () => {
   it.each(SENSITIVE)('%s %s asks for a fresh sign-in', async (method, path, body) => {
     const fake = fakeAuth(ORIGIN);
-    const app = createApp({ stores: fake.stores });
-    const headers = {
-      ...fake.session({ roles: ['admin', 'user'], authTime: STALE }),
-      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+    const got = await codeOf(fake, fake.session({ roles: ['admin', 'user'], authTime: STALE }), [
+      method,
+      path,
+      body,
+    ]);
+    expect(got).toEqual({ status: 403, code: 'STEP_UP_REQUIRED' });
+  });
+
+  it.each(NOT_ASKED)('%s %s with no sensitive field is not asked', async (method, path, body) => {
+    const fake = fakeAuth(ORIGIN);
+    const got = await codeOf(fake, fake.session({ roles: ['admin', 'user'], authTime: STALE }), [
+      method,
+      path,
+      body,
+    ]);
+    expect(got.code).not.toBe('STEP_UP_REQUIRED');
+  });
+
+  it.each(SENSITIVE)('%s %s never asks an API key', async (method, path, body) => {
+    const fake = fakeAuth(ORIGIN);
+    const got = await codeOf(
+      fake,
+      fake.apiKey({
+        orgId: 'o1',
+        scopes: ['api-keys:write', 'connections:write', 'webhooks:manage'],
+      }),
+      [method, path, body],
+    );
+    expect(got.code).not.toBe('STEP_UP_REQUIRED');
+  });
+
+  // The one list of routes that ask, read from the guards themselves. A new one shows here in review.
+  const app = createApp({ stores: fakeAuth(ORIGIN).stores });
+  const declared = app.routes
+    .filter((r) => stepUpOf(r.handler))
+    .map((r) => `${r.method} ${r.path}`)
+    .sort();
+
+  it('lists every route that asks', () => {
+    expect(declared).toMatchInlineSnapshot(`
+      [
+        "PATCH /api/v1/connections/:id",
+        "PATCH /api/v1/webhook-endpoints/:id",
+        "POST /api/v1/api-keys",
+        "POST /api/v1/api-keys/:id/rotate",
+        "POST /api/v1/connections",
+        "POST /api/v1/connections/:id/webhook-secret",
+        "POST /api/v1/identities",
+        "POST /api/v1/identities/:id/revoke-certificate",
+        "POST /api/v1/identities/:id/rotate",
+        "POST /api/v1/nfc/keysets/:id/rotate",
+        "POST /api/v1/orgs/:id/invitations",
+        "POST /api/v1/orgs/:orgId/close",
+        "POST /api/v1/orgs/:orgId/exports",
+        "POST /api/v1/orgs/:orgId/exports/:exportId/link",
+        "POST /api/v1/orgs/:orgId/identities/apple",
+        "POST /api/v1/orgs/:orgId/reopen",
+        "POST /api/v1/platform/wallet-credentials/:id/rotate-key",
+        "POST /api/v1/users/:id/emails",
+        "POST /api/v1/webhook-endpoints",
+        "POST /api/v1/webhook-endpoints/:id/captures/secret",
+        "POST /api/v1/webhook-endpoints/:id/secret",
+        "PUT /api/v1/identities/:id/push-key",
+        "PUT /api/v1/settings",
+      ]
+    `);
+  });
+
+  it('marks them in the OpenAPI document', () => {
+    const doc = buildOpenApiDocument(app) as unknown as {
+      paths: Record<string, Record<string, { 'x-step-up'?: unknown }>>;
     };
-    const res = await app.request(
-      `${ORIGIN}${path}`,
-      { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) },
-      env as AppEnv,
-    );
-    const problem = (await res.json()) as { code?: string };
-    expect(problem.code).toBe('STEP_UP_REQUIRED');
-    expect(res.status).toBe(403);
+    expect(doc.paths['/api/v1/api-keys']?.post?.['x-step-up']).toEqual({
+      maxAgeSec: 600,
+      conditional: false,
+    });
+    expect(doc.paths['/api/v1/connections/{id}']?.patch?.['x-step-up']).toEqual({
+      maxAgeSec: 600,
+      conditional: true,
+    });
   });
 
-  it('does not ask for an invitation without the admin role', async () => {
-    const fake = fakeAuth(ORIGIN);
-    const app = createApp({ stores: fake.stores });
-    const res = await app.request(
-      `${ORIGIN}/api/v1/orgs/o1/invitations`,
-      {
-        method: 'POST',
-        headers: {
-          ...fake.session({ roles: ['admin', 'user'], authTime: STALE }),
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ ...INVITE, roles: ['read_only'] }),
-      },
-      env as AppEnv,
-    );
-    expect(((await res.json()) as { code?: string }).code).not.toBe('STEP_UP_REQUIRED');
-  });
-
-  it('never asks an API key to mint', async () => {
-    const fake = fakeAuth(ORIGIN);
-    const app = createApp({ stores: fake.stores });
-    const res = await app.request(
-      `${ORIGIN}/api/v1/api-keys`,
-      {
-        method: 'POST',
-        headers: {
-          ...fake.apiKey({ orgId: 'o1', scopes: ['api-keys:write'] }),
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ orgId: 'o1', name: 'k', kind: 'service', scopes: ['passes:read'] }),
-      },
-      env as AppEnv,
-    );
-    expect(((await res.json()) as { code?: string }).code).not.toBe('STEP_UP_REQUIRED');
+  // A route that mints, reveals or rotates a secret must ask, or be named here with the reason.
+  const SECRET_PATH = /secret|rotate|reveal|revoke-certificate|push-key|\/api-keys$/;
+  const EXEMPT: Record<string, string> = {
+    // Capability links for holders and joiners, not credentials of the org.
+    'POST /api/v1/passes/{id}/rotate-link': 'holder link',
+    'POST /api/v1/bundles/{id}/rotate-link': 'holder link',
+    'POST /api/v1/join-links/{templateId}/rotate': 'join link',
+  };
+  it('leaves no secret-minting route without it', () => {
+    const doc = buildOpenApiDocument(app) as unknown as {
+      paths: Record<string, Record<string, { 'x-step-up'?: unknown }>>;
+    };
+    const missing: string[] = [];
+    for (const [path, item] of Object.entries(doc.paths))
+      for (const [method, op] of Object.entries(item)) {
+        if (method === 'get' || method === 'delete' || !SECRET_PATH.test(path)) continue;
+        const key = `${method.toUpperCase()} ${path}`;
+        if (!op['x-step-up'] && !(key in EXEMPT)) missing.push(key);
+      }
+    expect(missing).toEqual([]);
   });
 });

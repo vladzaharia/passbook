@@ -20,7 +20,7 @@ import {
 import { actorOf } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeStoredEndpoint, authorizeWebhooks, webhookOrg } from './access.ts';
 import { registerCaptureRoutes } from './routes-captures.ts';
@@ -41,6 +41,15 @@ guard(webhookEndpointsRoutes, requireTenantSessionOrApiKey(['webhooks:manage']))
 // Rotating or reading a signing secret hands over a credential: a recent sign-in, for a person (not a key).
 webhookEndpointsRoutes.post('/:id/secret', requireStepUp(STEP_UP_SECONDS));
 webhookEndpointsRoutes.post('/:id/captures/secret', requireStepUp(STEP_UP_SECONDS));
+// A new endpoint, or an existing one pointed elsewhere or at other events, sends the event stream out.
+webhookEndpointsRoutes.post('/', requireStepUp(STEP_UP_SECONDS));
+webhookEndpointsRoutes.patch(
+  '/:id',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const body = await peekBody(c);
+    return 'url' in body || 'eventTypes' in body;
+  }),
+);
 
 register(
   webhookEndpointsRoutes,

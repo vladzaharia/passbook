@@ -26,7 +26,7 @@ import { enforceRateLimit } from './rate-limit.ts';
 import type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
 import type { ScannerAuth } from './scanner-auth.ts';
 import { serviceContext } from './service-context.ts';
-import { assertSignIn, assertStepUp, declareSignIn } from './sign-in-guard.ts';
+import { assertSignIn, assertStepUp, declareSignIn, declareStepUp } from './sign-in-guard.ts';
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
@@ -276,8 +276,9 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       return next();
     }
     const session = await sessionOrThrow(c, level);
-    if (stepUp) assertStepUp(c, session, stepUp.maxAgeSec);
     if (sessionKind === 'admin') requireAdminRole(c, session);
+    // After the role check: a person who could not do this anyway is not sent through a passkey prompt.
+    if (stepUp) assertStepUp(c, session, stepUp.maxAgeSec);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };
       if (capability) capabilityState.set(principal, { capability, proven: false });
@@ -288,6 +289,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     return next();
   });
   knownGuards.add(guard);
+  if (stepUp) declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: false });
   return declareSignIn(guard, level);
 }
 

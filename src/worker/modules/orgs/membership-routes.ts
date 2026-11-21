@@ -23,8 +23,9 @@ import {
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { assertStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { listMyOrgMemberships } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
@@ -55,6 +56,17 @@ membershipRoutes.use('/memberships/me', requireHolderSession);
 membershipRoutes.use('/:id/memberships', requireSession);
 membershipRoutes.use('/:id/memberships/:membershipId', requireSession);
 membershipRoutes.use('/:id/invitations', requireSession);
+// Inviting someone into a role that administers the org (or mints keys) hands over its credentials.
+membershipRoutes.post(
+  '/:id/invitations',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const { roles } = await peekBody(c);
+    return (
+      Array.isArray(roles) &&
+      roles.some((role) => (ADMINISTERING_ROLES as readonly unknown[]).includes(role))
+    );
+  }),
+);
 membershipRoutes.use('/:id/invitations/:invitationId', requireSession);
 
 register(
@@ -154,15 +166,16 @@ register(
     status: 201,
     response: OrgInvitationSchema,
   },
-  async (c) => {
-    const input = c.req.valid('json');
-    // Inviting an org admin hands over the org: a recent sign-in. Other roles do not ask.
-    if (input.roles.includes('org_admin')) assertStepUp(c, session(c), STEP_UP_SECONDS);
-    return c.json(
-      await inviteOrgMember(serviceContext(c), session(c), c.req.valid('param').id, input),
+  async (c) =>
+    c.json(
+      await inviteOrgMember(
+        serviceContext(c),
+        session(c),
+        c.req.valid('param').id,
+        c.req.valid('json'),
+      ),
       201,
-    );
-  },
+    ),
 );
 register(
   membershipRoutes,

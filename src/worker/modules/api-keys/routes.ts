@@ -15,7 +15,11 @@ import { BadRequestError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { assertStepUp, assertStrictSignIn, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import {
+  assertStrictSignIn,
+  requireStepUp,
+  STEP_UP_SECONDS,
+} from '../../platform/sign-in-guard.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import { authOf, orgIdOf } from '../passes/http.ts';
 import { type ApiKeyAuthority, authorizeApiKeys } from './access.ts';
@@ -36,12 +40,13 @@ guard(
 // Making or rotating a key is a strong, recent sign-in with no email-link grace: a key outlives the grace.
 apiKeysRoutes.use('*', async (c, next) => {
   const auth = c.var.auth;
-  if (auth?.kind === 'session' && c.req.method === 'POST' && !c.req.path.endsWith('/retire')) {
+  if (auth?.kind === 'session' && c.req.method === 'POST' && !c.req.path.endsWith('/retire'))
     assertStrictSignIn(c, auth);
-    assertStepUp(c, auth, STEP_UP_SECONDS);
-  }
   await next();
 });
+// Minting and rotating (a key, of any kind or scope, scanning:admin included) need a recent sign-in.
+apiKeysRoutes.post('/', requireStepUp(STEP_UP_SECONDS));
+apiKeysRoutes.post('/:id/rotate', requireStepUp(STEP_UP_SECONDS));
 apiKeysRoutes.use('*', limitBody(64 * 1024));
 // Missing scope is a bad request rather than an implicit platform selection.
 apiKeysRoutes.use('*', async (c, next) => {

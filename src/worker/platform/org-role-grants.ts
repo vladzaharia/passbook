@@ -39,3 +39,11 @@ export function rolesGranting(capability: OrgCapability): OrgRole[] {
     ROLE_GRANTS[role].includes(capability),
   );
 }
+
+/** Capabilities that administer the org, its members or its credentials: granting one needs a recent sign-in. */
+const ADMIN_CAPABILITIES: OrgCapability[] = ['org:manage', 'members:manage', 'integrations:manage'];
+
+/** Roles that hold an administering capability, read from the grants above so a new role is covered. */
+export const ADMINISTERING_ROLES: readonly OrgRole[] = (
+  Object.keys(ROLE_GRANTS) as OrgRole[]
+).filter((role) => ROLE_GRANTS[role].some((capability) => ADMIN_CAPABILITIES.includes(capability)));
