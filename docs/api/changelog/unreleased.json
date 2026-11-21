@@ -88,6 +88,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/scan-staff 200.pinOnlyOff: field added",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "200.pinOnlyOff: field added",
+    "note": "The staff list says pinOnlyOff: true while PIN-only sign-in is off after repeated wrong PINs."
+  },
+  {
     "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",

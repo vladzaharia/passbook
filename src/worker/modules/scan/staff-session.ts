@@ -1,11 +1,6 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import {
-  AppError,
-  ConflictError,
-  ForbiddenError,
-  UnauthenticatedError,
-} from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { safeEqualBytes } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
@@ -20,6 +15,7 @@ import { bindScanningSession } from './scanning-workspace.ts';
 import { buildSession } from './session.ts';
 import { boundStaff } from './staff-binding.ts';
 import { checkPin } from './staff-pin.ts';
+import { checkPinOnly } from './staff-pin-only.ts';
 
 /** Staff sign-in belongs to a paired scanner device; a terminal, a screen or an admin has none. */
 function staffScanner(actor: ScanActor) {
@@ -106,11 +102,12 @@ export async function signInStaff(
 ): Promise<ScanSession> {
   const scanner = requireSignIn(actor);
   const { staffId, pin } = input;
-  // Sign-in with a PIN alone arrives with S7's feature PR; until then a name is required.
-  if (!staffId)
-    throw new AppError('STAFF_NAME_REQUIRED', 409, 'Pick your name, then enter your PIN.');
-  const staff = await getStaff(ctx.env.DB, actor.orgId, staffId);
-  await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin });
+  // With no name, the PIN picks the person among the org's active staff.
+  const staff = staffId
+    ? await getStaff(ctx.env.DB, actor.orgId, staffId)
+    : await checkPinOnly(ctx, { scannerId: scanner.id, orgId: actor.orgId }, pin);
+  if (staffId)
+    await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin });
   const bound = actor.scanningSession;
   const sessionEpoch = scanEpochsOf(actor)?.session;
   if (!staff || staff.authEpoch === undefined || (bound && sessionEpoch?.id !== bound.id))

@@ -24,6 +24,8 @@ export function hideHash<T extends object>(
 
 /** The person a PIN is counted against when it names no one. */
 export const ANY_MANAGER = '*';
+/** The person a sign-in PIN is counted against when it names no one; the counters are per device. */
+export const ANY_STAFF = '*staff';
 
 export function pinStaffListFromResult(result: D1Result | undefined): PinStaffSnapshot[] {
   return (result?.results ?? []).flatMap((raw) => {
@@ -98,6 +100,11 @@ export interface PinReservation {
     failure?: PinFailure,
     anyRole?: boolean,
     deskOk?: boolean,
+  ): Promise<VerifiedPinSnapshot | null>;
+  /** Sign-in with no name: the decision is made by the caller, who keeps what it matched. */
+  verifyOnly(
+    results: readonly D1Result[],
+    decision: { decide(): Promise<'match' | 'miss'>; found(): VerifiedPinSnapshot | null },
   ): Promise<VerifiedPinSnapshot | null>;
   verifyLogin(results: readonly D1Result[], staff: PinCheck['staff'], pin: string): Promise<void>;
   refundStatements(): D1PreparedStatement[];
