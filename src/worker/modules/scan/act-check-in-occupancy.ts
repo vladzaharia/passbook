@@ -5,13 +5,13 @@ import { type GrantCond, not } from '../../platform/authority-cond.ts';
 import { waiveOf } from './access.ts';
 import type { FoundAccess } from './access-types.ts';
 import { type FoundOccupancy, occupancyView, occupancyWaivers } from './occupancy/admission.ts';
+import { eventEntryPlan, eventExitPlan, hardLimited } from './occupancy/place.ts';
 import { insideOf, roomIn } from './occupancy/repo.ts';
 import {
   type EntryPlan,
   type ExitPlan,
   entryPlan,
   exitPlan,
-  hardLimited,
   type Waivers,
 } from './occupancy/rules.ts';
 import {
@@ -24,8 +24,10 @@ import {
   placeCounts,
 } from './occupancy/service.ts';
 import { accessQuiet, accessVisitOpen } from './repo-access.ts';
+import { capacityFullPredicate } from './repo-gates.ts';
 import type { ScanPresenceSnapshot } from './repo-scan-effect.ts';
 import { presenceSnapshot } from './repo-scan-effect-snapshots.ts';
+import { capacityOpen } from './scan-write-grant.ts';
 import { allOf } from './scan-write-statements.ts';
 
 /** One reason a scan that did not move its place is held, and the condition that held it back. */
@@ -67,12 +69,16 @@ export function planOccupancyCommit(
     open: GrantCond[];
     /** An exit's gate as the scan read it: the row moves only if the gate write will. */
     gateAsRead: GrantCond | null;
+    /** At an event: a single or daily limit's snapshot and since checks, repeated in the entry. */
+    limit?: GrantCond[];
   },
 ): OccupancyCommit | null {
   const { passId, scanId, now } = i;
   const base = { found: o, passId, scanId, now };
+  const spec = o.spec;
   if (o.direction === 'out') {
-    const exit = exitPlan(o.zones, o.zone.id);
+    const exit =
+      spec.kind === 'zone' ? exitPlan(spec.zones, spec.zone.id) : eventExitPlan(spec.event);
     if (!exit) return null;
     const holds = [{ reason: 'not_inside' as const, holds: insideOf(passId, exit.place, now) }];
     return {
@@ -84,13 +90,29 @@ export function planOccupancyCommit(
       holds,
     };
   }
-  const access = i.access;
-  if (!access) return null;
   const waived = occupancyWaivers(i.override);
   // A Hard limit is never waived, whatever the override and its approver said.
-  const waivers =
-    waived.cap && hardLimited(o.zones, o.zone.id) ? { ...waived, cap: false } : waived;
-  const entry = entryPlan(o.zones, o.zone.id, now, null, waivers);
+  const waivers = waived.cap && hardLimited(spec) ? { ...waived, cap: false } : waived;
+  if (spec.kind === 'event') {
+    // An event's room is its own count (arrivals, or inside with re-entry), so it rides in `when`.
+    const e = spec.event;
+    const full =
+      e.capacity !== null && !waivers.cap
+        ? capacityOpen(capacityFullPredicate(e.orgId, e.mode, e.id, e.capacity, e.reentry, passId))
+        : null;
+    const entry = eventEntryPlan(e);
+    const holds: OccupancyHold[] = [
+      ...(waivers.inside
+        ? []
+        : [{ reason: 'still_inside' as const, holds: not(insideOf(passId, entry.place, now)) }]),
+      ...(full ? [{ reason: 'capacity_full' as const, holds: full }] : []),
+    ];
+    const when = [...(i.limit ?? []), ...(full ? [full] : []), ...i.open];
+    return { ...base, entry, exit: null, waivers, when, holds };
+  }
+  const access = i.access;
+  if (!access) return null;
+  const entry = entryPlan(spec.zones, spec.zone.id, now, null, waivers);
   if (!entry) return null;
   const waive = waiveOf(i.override);
   const wait = waive.wait ? null : access.waitMs;
@@ -212,6 +234,6 @@ export function occupancyAfter(
       via: won ? scannerName : (o.row?.via ?? null),
     }),
     lost: why?.reason ?? null,
-    hard: hardLimited(o.zones, o.zone.id),
+    hard: hardLimited(o.spec),
   };
 }

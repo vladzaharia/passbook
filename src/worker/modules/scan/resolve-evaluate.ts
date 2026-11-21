@@ -223,7 +223,13 @@ async function evaluateObserved(
   }
   const planned =
     configured || eventAdmission
-      ? await planAdmission(ctx, actor, found, configured ? waive.direction : 'in', extraReads)
+      ? await planAdmission(
+          ctx,
+          actor,
+          found,
+          waive.override ? 'in' : configured ? waive.direction : 'in',
+          extraReads,
+        )
       : null;
   const now = ctx.clock.now();
   // An Access card at a door with a tracked zone counts there (SA §20.3): that replaces admission.
@@ -238,27 +244,30 @@ async function evaluateObserved(
         now,
       })
     : null;
+  // A re-entry event is a place too: its admission rules still apply, the builder decides in and out.
+  const eventPlaced = !placed ? (planned?.place ?? null) : null;
   const admission = configured && !placed ? planned : null;
   // The pass's own event filter rejects it: a bare refusal, with no card, identity or grant.
   const selected = admission?.plan.event;
   if (selected && !eventAcceptsPass(actor, selected, found.pass))
     return stop('refused', 'wrong_event');
   found.admission = admission?.plan;
-  if (placed) found.occupancy = placed.found;
+  const place = placed ?? eventPlaced;
+  if (place) found.occupancy = place.found;
   if (eventAdmission && planned) {
     found.eventAdmission = planned.plan;
     found.eventAdmissionReason = planned.reason;
   }
   // Step 9a: an Auto flip under two minutes old is held, with the flip offered (not overridable).
-  if (placed?.turnaround)
-    return stop('heads_up', placed.found.inside ? 'still_inside' : 'not_inside', {
+  if (place?.turnaround)
+    return stop('heads_up', place.found.inside ? 'still_inside' : 'not_inside', {
       ...known,
-      at: placed.found.row?.changed_at ?? null,
+      at: place.found.row?.changed_at ?? null,
       hard: true,
-      occupancy: occupancyAsRead(placed.found, placed.turnaround),
+      occupancy: occupancyAsRead(place.found, place.turnaround),
     });
   // A tap-out skips steps 10-14 (OC4): leaving is never refused for who you are.
-  const zoneExit = placed?.found.direction === 'out';
+  const zoneExit = place?.found.direction === 'out';
   const exiting = admission?.plan.state.direction === 'out' || zoneExit;
   // Access refusals are authority: they come before the gate, the window and every heads-up.
   const denied = exiting

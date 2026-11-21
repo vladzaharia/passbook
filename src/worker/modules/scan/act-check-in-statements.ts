@@ -16,8 +16,8 @@ import {
   holdsPresence,
   ledgerEvent,
   overrideOpen,
+  writeAdmissionRecord,
   writeGate,
-  writePresence,
 } from './scan-write-statements.ts';
 
 /** One pre-signed ledger row and its retention proof, for one way the scan can close. */
@@ -91,7 +91,7 @@ export function addCheckInStatements(g: Grant, i: CheckInStatementsInput) {
       guards,
     );
   const presence = !occ && presencePlan && effect.presenceAfter;
-  if (presence) writePresence(g, gate, scanId, effect.presenceBefore, presence);
+  if (presence) writeAdmissionRecord(g, gate, scanId, effect.presenceBefore, presence);
   const won = [
     ...(moved ? [moved.won] : []),
     wonGate(gate, scanId),

@@ -1262,6 +1262,41 @@ describe('0074_scan_occupancy migration', () => {
     expect((await rows()).find((r) => r.scope === 'zone:d')?.mode).toBe('test');
   });
 
+  it('refuses a due time on an event place and leaves a zone alone', async () => {
+    const f = fixtures(await makeEnv());
+    const org = await makeOrg(f);
+    const template = makeTemplate({ id: f.ids.id(), orgId: org.id });
+    const pass = await makePass(f, { orgId: org.id, template: template.resolved });
+    const put = (scope: string, due: number | null) =>
+      run(
+        env.DB,
+        `INSERT INTO scan_presence (pass_id, org_id, scope, state, first_at, last_entry_at, last_scan_id, due_at)
+         VALUES (?, ?, ?, 'in', 1, 1, 's1', ?)`,
+        [pass.id, org.id, scope, due],
+      );
+    await expect(put('event:e1', 5)).rejects.toThrow(/event place has no due time/);
+    await put('event:e2', null);
+    await expect(
+      run(env.DB, "UPDATE scan_presence SET due_at = 9 WHERE scope = 'event:e2' AND pass_id = ?", [
+        pass.id,
+      ]),
+    ).rejects.toThrow(/event place has no due time/);
+    await put('zone:z1', 5);
+    await run(
+      env.DB,
+      "UPDATE scan_presence SET due_at = 9 WHERE scope = 'zone:z1' AND pass_id = ?",
+      [pass.id],
+    );
+    expect(
+      (
+        await first<{ due_at: number }>(
+          env.DB,
+          "SELECT due_at FROM scan_presence WHERE scope = 'zone:z1'",
+        )
+      )?.due_at,
+    ).toBe(9);
+  });
+
   it('adds due_at with a partial index and per-place revisions that cascade with the org', async () => {
     const index = await first<{ sql: string }>(
       env.DB,
