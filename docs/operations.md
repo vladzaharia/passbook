@@ -578,6 +578,45 @@ The `ORG_EXPORT` (`wallet-org-export`) and `ORG_PURGE` (`wallet-org-purge`) work
 
 PDFs are drawn in the Worker with pdf-lib from the same content and layout boxes as the print page. Text is Rubik and JetBrains Mono, embedded as subsets from the static assets (`public/fonts/pdf/`, rebuilt by `tools/build-pdf-fonts.sh`), so names in Latin, Latin extended and Cyrillic stay real text. A character those fonts lack (CJK, emoji, Vietnamese tone marks, Hebrew, Arabic) becomes its base letter or "?", logged once per PDF as `PRINT_PDF_TEXT_LOSSY`. Logo and art PNGs go through the bounded decoder (`pdf-png.ts`) and are shrunk to 300 dpi at their size on paper; an animated, interlaced, oversized (over 2 M pixels) or inflate-bomb file is left out and the PDF is drawn without it (`PRINT_PDF_IMAGE_INVALID`), as is a missing file (`PRINT_PDF_IMAGE_MISSING`) or any distinct image past 12 in one PDF (`PRINT_PDF_IMAGE_LIMIT`). The cache fingerprint includes each image's etag, so a replaced logo or art redraws. PDFs are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, valid while the pass version and the drawing fingerprint (design, content, code, test mode, print number, image names, `PDF_RENDER_VERSION`) match; bump `PDF_RENDER_VERSION` in `pdf-render.ts` when the drawing changes. Bulk files are under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 24 h.
 
+## App distribution
+
+Install page: https://vladzaharia.github.io/passbook/ (GitHub Pages, workflow-built). Workflows:
+
+- `Android Reader`: tag `android-vX.Y.Z` from main. Signed APK, AAB and checksums go to the GitHub release; AAB goes to Play internal testing when `PLAY_SERVICE_ACCOUNT_JSON` is set.
+- `iOS AltStore`: tag `ios-vX.Y.Z` from main, or dispatch with a version. Unsigned IPA and checksums go to the release.
+- `iOS TestFlight`: dispatch from main. Signed build to App Store Connect.
+- `Apps feeds`: after a release, after the two workflows above, or by hand. Downloads every `android-v*` and `ios-v*` release, builds the F-Droid repo and the AltStore source, and deploys Pages. Releases made by `GITHUB_TOKEN` don't fire `release`, so it follows the workflow runs.
+
+Feeds:
+
+- AltStore and SideStore: `https://vladzaharia.github.io/passbook/altstore/source.json`, id `mobile.passbook.source`.
+- F-Droid and Droid-ify: `https://vladzaharia.github.io/passbook/fdroid/repo`, SHA-256 fingerprint `B1487911B4DCC4D9B797DE9E7A1500245FD27171A90C807A1AB0FF352ABD2425`. The job fails if the index key doesn't match `FDROID_REPO_FINGERPRINT`.
+- Obtainium: `obtainium://add/https://github.com/vladzaharia/passbook`.
+
+Install by channel:
+
+- AltStore, SideStore: add the source, install PassBook Scanner. Free Apple ID: 7-day refresh, 3 apps, and NFC Tag Reading may be missing after re-signing.
+- F-Droid, Droid-ify: add the repo with the link or QR on the install page; confirm the fingerprint.
+- Obtainium: add the GitHub URL.
+- TestFlight internal: add the tester to the internal group; the build appears after processing. External: add a group, submit for Beta App Review, share the public link (`TESTFLIGHT_PUBLIC_URL`).
+- Play internal: add testers' emails to the internal list, send them the opt-in link (`PLAY_INTERNAL_URL`).
+
+Secrets and variables: `ANDROID_READER_KEYSTORE_B64`, `ANDROID_READER_SIGNING_PASSWORD` (app key); `FDROID_KEYSTORE_B64`, `FDROID_KEYSTORE_PASS`, variables `FDROID_KEY_ALIAS`, `FDROID_REPO_FINGERPRINT` (repo index key, different from the app key); `PLAY_SERVICE_ACCOUNT_JSON`, optional variables `PLAY_INTERNAL_URL`, `PLAY_RELEASE_STATUS`, `TESTFLIGHT_PUBLIC_URL`; `APPLE_TEAM_ID`. Losing the F-Droid index key means everyone re-adds the repo.
+
+Owner steps, Play:
+
+1. Create the Play Console developer account and the app `im.plrs.passbook.reader`.
+2. Fill the content forms (privacy policy, data safety, app access, ads, content rating, target audience).
+3. Enrol in Play App Signing with the existing app key so every channel shares one signature: Play Console, Test and release, App signing, upload an existing key with `pepk.jar` (`java -jar pepk.jar --keystore=<p12> --alias=passbook-reader --output=pepk.zip --include-cert --encryptionkey=<Google key>`). Keep using the same key as the upload key.
+4. Create a service account in Google Cloud, enable the Android Publisher API, invite it in Play Console, Users and permissions, with release permission for the app, and save its JSON key as the `PLAY_SERVICE_ACCOUNT_JSON` secret.
+5. Upload the first release once by hand, create the internal testing list, then set `PLAY_INTERNAL_URL`. Until the first release completes, set `PLAY_RELEASE_STATUS` to `draft`.
+
+Owner steps, App Store Connect:
+
+1. Add the `ASC_ISSUER_ID` secret (Users and Access, Integrations) to the `iOS TestFlight` environment, with `ASC_KEY_ID` and `ASC_KEY_P8_BASE64`.
+2. Create the app record for `mobile.passbook.scanner` and accept the agreements.
+3. Create the internal group and set `PASSBOOK_TESTFLIGHT_GROUP`. For an external group, enable a public link and set `TESTFLIGHT_PUBLIC_URL`.
+
 ## Runtime decisions
 
 - **workerd versions**: `npm run test:worker` runs on the pool's miniflare (workerd 1.20260815), dev and prod on the root wrangler (1.20261012). The pool pins its own copy until a release catches up. The Dependabot `cloudflare` group tracks it; when one ships, align versions and drop the `overrides` entries in `package.json`. Stay on vitest 4 until the pool supports 5.

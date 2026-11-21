@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build, sign, verify and checksum an APK with the existing update identity."""
+"""Build, sign, verify and checksum an APK and an AAB with the existing update identity."""
 import argparse
 import hashlib
 import json
@@ -42,7 +42,7 @@ def main():
     tag = environment.get("ANDROID_RELEASE_TAG")
     if tag and tag != f"android-v{version}":
         raise RuntimeError("The release tag must match versionName in android/app/build.gradle.")
-    run([ROOT / "gradlew", "--no-daemon", ":app:testDebugUnitTest", ":app:lint", ":app:assembleRelease"], cwd=ROOT, env=environment)
+    run([ROOT / "gradlew", "--no-daemon", ":app:testDebugUnitTest", ":app:lint", ":app:assembleRelease", ":app:bundleRelease"], cwd=ROOT, env=environment)
     run(["node", "--test", ROOT / "web/reader-client.test.mjs"], cwd=ROOT, env=environment)
     DIST.mkdir(exist_ok=True)
     apk = DIST / f"passbook-reader-{version}.apk"
@@ -50,20 +50,28 @@ def main():
     run([tools / "zipalign", "-c", "-P", "16", "4", unsigned], env=environment)
     run([tools / "apksigner", "sign", "--ks", key, "--ks-key-alias", "passbook-reader",
          "--ks-pass", "env:PASSBOOK_SIGNING_PASSWORD", "--out", apk, unsigned], env=environment)
+    bundle = DIST / f"passbook-reader-{version}.aab"
+    jarsigner = Path(environment["JAVA_HOME"]) / "bin/jarsigner" if environment.get("JAVA_HOME") else "jarsigner"
+    run([jarsigner, "-keystore", key, "-storetype", "PKCS12", "-storepass:env", "PASSBOOK_SIGNING_PASSWORD",
+         "-signedjar", bundle, ROOT / "app/build/outputs/bundle/release/app-release.aab", "passbook-reader"],
+        env=environment, stdout=subprocess.DEVNULL)
+    run([jarsigner, "-verify", bundle], env=environment, stdout=subprocess.DEVNULL)
     verified = run([tools / "apksigner", "verify", "--verbose", "--print-certs", apk], capture_output=True, text=True, env=environment)
     (DIST / "signature.txt").write_text(verified.stdout)
     digest = hashlib.sha256(apk.read_bytes()).hexdigest()
-    (DIST / "SHA256SUMS").write_text(f"{digest}  {apk.name}\n")
+    bundle_digest = hashlib.sha256(bundle.read_bytes()).hexdigest()
+    (DIST / "SHA256SUMS").write_text(f"{digest}  {apk.name}\n{bundle_digest}  {bundle.name}\n")
     for filename in ["README.md", "BRIDGE.md", "ACCEPTANCE.md", "RELEASE-NOTES.md", "REVIEW.md", "NOTICE"]:
         shutil.copyfile(ROOT / filename, DIST / filename)
     shutil.copyfile(ROOT / "third-party/kormax-LICENSE", DIST / "kormax-LICENSE")
     (DIST / "release.json").write_text(json.dumps({
         "version": version, "applicationId": "im.plrs.passbook.reader", "channel": "pilot",
-        "apk": apk.name, "sha256": digest, "minimumAndroid": 26, "targetAndroid": 35,
+        "apk": apk.name, "sha256": digest, "bundle": bundle.name, "bundleSha256": bundle_digest,
+        "versionCode": int(re.search(r"versionCode (\d+)", gradle).group(1)), "minimumAndroid": 26, "targetAndroid": 35,
         "physicalP400Tested": False, "verifierIntegrated": True,
         "scannerPath": "/scan", "barcodeVerification": True, "appleVasVerification": False,
     }, indent=2) + "\n")
-    print(f"Signed APK: {apk}\nSHA-256: {digest}")
+    print(f"Signed APK: {apk}\nSHA-256: {digest}\nSigned AAB: {bundle}")
 
 
 if __name__ == "__main__":

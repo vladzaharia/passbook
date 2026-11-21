@@ -78,7 +78,7 @@ jobs:
           test -n "$KEYSTORE_B64"
           umask 077
           printf '%s' "$KEYSTORE_B64" | base64 --decode > "$KEYSTORE_PATH"
-      - name: Build signed APK
+      - name: Build signed APK and AAB
         env:
           PASSBOOK_ANDROID_KEYSTORE: ${{ runner.temp }}/passbook-reader-release.p12
           PASSBOOK_SIGNING_PASSWORD: ${{ secrets.ANDROID_READER_SIGNING_PASSWORD }}
@@ -89,7 +89,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" android/dist/*.apk android/dist/SHA256SUMS android/dist/signature.txt android/dist/release.json android/dist/NOTICE android/dist/kormax-LICENSE --verify-tag --prerelease --title "PassBook Reader $RELEASE_TAG" --notes-file android/RELEASE-NOTES.md
+          gh release create "$RELEASE_TAG" android/dist/*.apk android/dist/*.aab android/dist/SHA256SUMS android/dist/signature.txt android/dist/release.json android/dist/NOTICE android/dist/kormax-LICENSE --verify-tag --prerelease --title "PassBook Reader $RELEASE_TAG" --notes-file android/RELEASE-NOTES.md
+      - name: Check for Play credentials
+        id: play
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Play upload skipped::Set the PLAY_SERVICE_ACCOUNT_JSON secret to upload the AAB to the internal track."
+          fi
+      - name: Upload AAB to Play internal testing
+        if: steps.play.outputs.configured == 'true'
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: im.plrs.passbook.reader
+          releaseFiles: android/dist/*.aab
+          track: internal
+          # A Play app that has never been released accepts only draft releases; set the variable to draft until then.
+          status: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
       - name: Remove runner signing key
         if: always()
         run: rm -f "${{ runner.temp }}/passbook-reader-release.p12"

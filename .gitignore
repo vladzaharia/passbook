@@ -31,6 +31,11 @@ e2e/.auth/
 
 # iOS build output
 ios/build/
+ios/dist/
+
+# Pages feeds build
+_site/
+.feeds/
 
 # Python SDK
 __pycache__/
