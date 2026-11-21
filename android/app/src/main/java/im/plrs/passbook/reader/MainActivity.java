@@ -61,6 +61,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private static final int DATAWEDGE_PROFILE_VERSION = 2;
     private ReaderConfig config;
     private WebSurface web;
+    private LinearLayout root;
+    private int rendererLosses;
+    private long firstRendererLoss;
     private NfcController nfc;
     private CameraManager cameraManager;
     private InputManager inputManager;
@@ -172,7 +175,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     private void buildUi() {
-        LinearLayout root = new LinearLayout(this);
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xfff5f4ef);
         int padding = dp(12);
@@ -216,7 +219,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         scan.setOnClickListener(view -> { armed = !armed; resumeReader(); reportCapabilities(); });
         actions.addView(scan, new LinearLayout.LayoutParams(0, dp(48), 1));
         Button reload = new Button(this);
-        reload.setText(R.string.reload); reload.setOnClickListener(view -> web.load(config));
+        reload.setText(R.string.reload); reload.setOnClickListener(view -> { rendererLosses = 0; web.load(config); });
         actions.addView(reload, new LinearLayout.LayoutParams(0, dp(48), 1));
         root.addView(actions);
         EditText barcode = new EditText(this);
@@ -267,6 +270,11 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     @Override protected void onDestroy() {
         cameraPermissions.cancel(); handler.removeCallbacksAndMessages(null); nfc.destroy(); web.destroy(); super.onDestroy();
     }
+    @Override public void onConfigurationChanged(android.content.res.Configuration next) {
+        super.onConfigurationChanged(next);
+        // Rotation or a keyboard being attached no longer recreates the activity; only the hardware list can change.
+        hardwareChanged();
+    }
     @Override public void onBackPressed() {
         if (web.view.canGoBack()) web.view.goBack();
         else super.onBackPressed();
@@ -274,6 +282,23 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     @Override public void reset() {
         cameraPermissions.cancel(); gate.reset(); handler.removeCallbacks(expiry); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
     }
+    /** A killed renderer would otherwise take the whole app with it. Rebuild the surface; after three in a minute, wait for Reload. */
+    @Override public void rendererGone(boolean crashed) {
+        Log.w("PassBook", "scan.webview_renderer_gone crashed=" + crashed);
+        long now = SystemClock.elapsedRealtime();
+        if (rendererLosses == 0 || now - firstRendererLoss > 60000) { rendererLosses = 0; firstRendererLoss = now; }
+        rendererLosses++;
+        int index = root.indexOfChild(web.view);
+        root.removeView(web.view);
+        web.destroy();
+        web = new WebSurface(this, this);
+        root.addView(web.view, Math.max(index, 0), new LinearLayout.LayoutParams(-1, 0, 1));
+        if (foreground) web.view.onResume();
+        if (rendererLosses >= 3) { notice("Verifier keeps stopping. Press Reload."); return; }
+        web.load(config);
+        notice("Verifier restarted");
+    }
+
     @Override public void external(android.net.Uri url) {
         try { startActivity(new Intent(Intent.ACTION_VIEW, url).addCategory(Intent.CATEGORY_BROWSABLE)); }
         catch (android.content.ActivityNotFoundException none) { notice("No browser to open that link."); }

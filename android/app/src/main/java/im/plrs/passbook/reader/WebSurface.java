@@ -28,6 +28,8 @@ public final class WebSurface {
         void camera(PermissionRequest request);
         /** A link tap to somewhere other than PassBook: hand it to the browser. */
         default void external(Uri url) {}
+        /** The WebView's renderer process died. The surface is unusable: build a new one. */
+        default void rendererGone(boolean crashed) {}
         default void cameraCancelled(PermissionRequest request) {}
     }
     public final WebView view;
@@ -71,6 +73,10 @@ public final class WebSurface {
                     if ("https".equalsIgnoreCase(scheme)) listener.external(request.getUrl());
                     else listener.notice("Only HTTPS navigation is supported.");
                 }
+                return true;
+            }
+            @Override public boolean onRenderProcessGone(WebView web, android.webkit.RenderProcessGoneDetail detail) {
+                listener.rendererGone(detail.didCrash());
                 return true;
             }
             @Override public void onReceivedError(WebView web, WebResourceRequest request,
