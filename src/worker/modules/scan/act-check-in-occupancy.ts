@@ -149,7 +149,7 @@ export function planOccupancyCommit(
   }
   const access = i.access;
   if (!access) return null;
-  const entry = entryPlan(spec.zones, spec.zone.id, now, null, waivers);
+  const entry = entryPlan(spec.zones, spec.zone.id, now, o.orgTimeZone, waivers);
   if (!entry) return null;
   const waive = waiveOf(i.override);
   const wait = waive.wait ? null : access.waitMs;

@@ -239,6 +239,7 @@ async function evaluateObserved(
     ? planOccupancy({
         ...loaded.occupancy,
         zoneIds: loaded.zoneIds,
+        orgTimeZone: loaded.orgTimeZone,
         setting: actor.settings.direction,
         requested: waive.override ? 'in' : waive.direction,
         now,

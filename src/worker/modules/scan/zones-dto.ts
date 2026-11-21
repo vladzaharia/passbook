@@ -4,6 +4,7 @@ import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { accessTemplates } from './repo-access.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { checkedAtByZone, orgZoneRows, type ZoneRow } from './repo-zones.ts';
 import { plansByZone } from './zones-plans.ts';
 import { depthOf, effectiveTimeZone, indexZones } from './zones-tree.ts';
@@ -29,6 +30,7 @@ export function toDto(
   rows: readonly ZoneRow[],
   plans: ScanZone['plans'],
   checkedAt: ScanZone['checkedAt'],
+  orgTimeZone: string | null,
 ): ScanZone {
   const index = indexZones(rows);
   return {
@@ -38,7 +40,7 @@ export function toDto(
     name: row.name,
     parentId: row.parentId,
     timeZone: row.timeZone,
-    effectiveTimeZone: effectiveTimeZone(index, row.id),
+    effectiveTimeZone: effectiveTimeZone(index, row.id, orgTimeZone),
     sort: row.sort,
     depth: depthOf(index, row.id),
     occupancy: row.occupancy,
@@ -60,12 +62,13 @@ export async function committed(
   id: string,
   mode: Mode,
 ): Promise<ScanZone> {
-  const [rows, templates, checked] = await Promise.all([
+  const [rows, templates, checked, clock] = await Promise.all([
     orgZoneRows(ctx.env.DB, orgId),
     accessTemplates(ctx.env.DB, orgId),
     checkedAtByZone(ctx.env.DB, orgId, mode),
+    readOrgTimeZone(ctx.env.DB, orgId),
   ]);
   const row = rows.find((r) => r.id === id);
   if (!row) throw notFound();
-  return toDto(row, rows, plansByZone(rows, templates).get(id) ?? [], checked.get(id) ?? []);
+  return toDto(row, rows, plansByZone(rows, templates).get(id) ?? [], checked.get(id) ?? [], clock);
 }

@@ -15,6 +15,8 @@ export interface FoundOccupancy {
   auto: boolean;
   row: PlaceRow | null;
   inside: boolean;
+  /** The org's clock, for a Clear at whose root zone has none. */
+  orgTimeZone: string | null;
 }
 
 const tracks = (z: OccZone) => z.occupancy !== 'off' && z.archivedAt === null;
@@ -40,6 +42,7 @@ export function planOccupancy(i: {
   setting: 'in' | 'out' | 'both' | undefined;
   requested: 'in' | 'out' | undefined;
   now: number;
+  orgTimeZone: string | null;
 }): { found: FoundOccupancy; turnaround: 'in' | 'out' | null } | null {
   const zone = scanPlace(i.zones, i.zoneIds);
   if (!zone) return null;
@@ -62,6 +65,7 @@ export function planOccupancy(i: {
       auto: d.auto,
       row,
       inside,
+      orgTimeZone: i.orgTimeZone,
     },
     turnaround: d.turnaround,
   };
@@ -94,6 +98,7 @@ export function planEventOccupancy(i: {
       auto: d.auto,
       row: i.row,
       inside,
+      orgTimeZone: null,
     },
     turnaround: d.turnaround,
   };
