@@ -13,8 +13,8 @@ export async function eventPlaceKit() {
     actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'always' }],
   });
   const baseline = kit.clock.now();
-  const event = async (o: { capacity?: number; hardLimit?: boolean } = {}) => {
-    const e = await kit.event({ templateIds: [templateId] });
+  const event = async (o: { capacity?: number; hardLimit?: boolean; templateId?: string } = {}) => {
+    const e = await kit.event({ templateIds: [o.templateId ?? templateId] });
     await run(kit.env.DB, 'UPDATE scan_events SET capacity=?, reentry=1, hard_limit=? WHERE id=?', [
       o.capacity ?? null,
       o.hardLimit ? 1 : 0,
@@ -59,6 +59,6 @@ export async function eventPlaceKit() {
     act,
     row,
     inside,
-    pass: () => kit.scanPass(templateId),
+    pass: (template: string = templateId) => kit.scanPass(template),
   };
 }

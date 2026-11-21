@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { all } from '../../../platform/db.ts';
+import { all, run } from '../../../platform/db.ts';
 import { beforeBatch } from '../batch-interceptor-test-support.ts';
+import { codeOf, key } from '../test-kit.ts';
 import { eventPlaceKit } from './event-place-test-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof eventPlaceKit>>;
@@ -80,6 +81,80 @@ describe('event place races', () => {
     );
     expect(rival?.kind).toBe('ok');
     expect(result).toMatchObject({ kind: 'heads_up', reason: 'not_inside' });
+    expect(await t.inside(e.id)).toBe(0);
+  });
+
+  it('a rival that enters and leaves after the loser read cannot be overwritten (no ABA)', async () => {
+    const e = await t.event();
+    const [a, out, b] = [await t.door(e.id), await t.door(e.id, 'out'), await t.door(e.id)];
+    const p = await t.pass();
+    let exit: Awaited<ReturnType<typeof t.act>> | undefined;
+    const { result } = await beforeBatch(
+      t.kit.env,
+      /INSERT INTO scan_presence/i,
+      async () => {
+        await t.act(a, p);
+        exit = await t.act(out, p);
+      },
+      () => t.act(b, p),
+    );
+    expect(exit?.kind).toBe('ok');
+    expect(result.kind).toBe('heads_up');
+    expect(await t.row(p, e.id)).toMatchObject({ state: 'out', last_scan_id: exit?.scanId });
+  });
+
+  it('an undo frees the last place a door was about to find full', async () => {
+    const e = await t.event({ capacity: 1 });
+    const [a, b] = [await t.door(e.id), await t.door(e.id)];
+    const [first, second] = [await t.pass(), await t.pass()];
+    const entered = await t.act(a, first);
+    const { result } = await beforeBatch(
+      t.kit.env,
+      /INSERT INTO scan_presence/i,
+      async () => {
+        const res = await t.kit.post(a.headers, `/scans/${entered.scanId}/undo`, {
+          idempotencyKey: key(),
+        });
+        expect(res.status).toBe(200);
+      },
+      () => t.act(b, second),
+    );
+    expect(result.kind).toBe('ok');
+    expect(await t.inside(e.id)).toBe(1);
+  });
+
+  it('a config change between the read and the commit refuses the admission', async () => {
+    const e = await t.event({ capacity: 1 });
+    const door = await t.door(e.id);
+    const p = await t.pass();
+    const { result } = await beforeBatch(
+      t.kit.env,
+      /INSERT INTO scan_presence/i,
+      async (db) => {
+        await run(db, 'UPDATE scan_events SET capacity=9 WHERE id=?', [e.id]);
+      },
+      () =>
+        t.kit.post(door.headers, '/actions', {
+          input: codeOf(p),
+          idempotencyKey: key(),
+          clientTs: t.kit.clock.now(),
+          actionId: 'check_in',
+        }),
+    );
+    expect(result.status).not.toBe(200);
+    expect(await t.row(p, e.id)).toBeNull();
+  });
+
+  it('an undo after a config change still restores the place', async () => {
+    const e = await t.event({ capacity: 5 });
+    const door = await t.door(e.id);
+    const p = await t.pass();
+    const entered = await t.act(door, p);
+    await run(t.kit.env.DB, 'UPDATE scan_events SET capacity=9, hard_limit=1 WHERE id=?', [e.id]);
+    const res = await t.kit.post(door.headers, `/scans/${entered.scanId}/undo`, {
+      idempotencyKey: key(),
+    });
+    expect(res.status).toBe(200);
     expect(await t.inside(e.id)).toBe(0);
   });
 });

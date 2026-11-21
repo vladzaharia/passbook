@@ -123,4 +123,48 @@ describe('a re-entry event is a place', () => {
       await first(t.kit.env.DB, 'SELECT rev FROM scan_place_revs WHERE place=?', [`event:${e.id}`]),
     ).toMatchObject({ rev: 3 });
   });
+
+  it('a daily ticket is let in on day 2 even if it never left, and once a day otherwise', async () => {
+    const daily = await t.kit.scanTemplate('Daily place', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in', repeat: 'daily' }],
+    });
+    const e = await t.event({ templateId: daily });
+    await run(t.kit.env.DB, 'UPDATE scan_events SET closes_at=closes_at+864000000 WHERE id=?', [
+      e.id,
+    ]);
+    const inDoor = await t.door(e.id, 'in');
+    const outDoor = await t.door(e.id, 'out');
+    const [stay, back] = [await t.pass(daily), await t.pass(daily)];
+    expect((await t.act(inDoor, stay)).kind).toBe('ok');
+    expect(await t.act(inDoor, stay)).toMatchObject({ reason: 'still_inside' });
+    expect((await t.act(inDoor, back)).kind).toBe('ok');
+    expect((await t.act(outDoor, back)).kind).toBe('ok');
+    expect(await t.act(inDoor, back)).toMatchObject({ kind: 'heads_up', reason: 'already_done' });
+    t.kit.clock.advance(26 * 3_600_000);
+    expect((await t.act(inDoor, stay)).kind).toBe('ok');
+    expect((await t.act(inDoor, back)).kind).toBe('ok');
+  });
+
+  it('a cooldown ticket waits after leaving before it enters again', async () => {
+    const slow = await t.kit.scanTemplate('Cooldown place', {
+      actions: [
+        {
+          id: 'check_in',
+          label: 'Check in',
+          kind: 'check_in',
+          repeat: 'cooldown',
+          cooldownMinutes: 5,
+        },
+      ],
+    });
+    const e = await t.event({ templateId: slow });
+    const inDoor = await t.door(e.id, 'in');
+    const outDoor = await t.door(e.id, 'out');
+    const p = await t.pass(slow);
+    expect((await t.act(inDoor, p)).kind).toBe('ok');
+    expect((await t.act(outDoor, p)).kind).toBe('ok');
+    expect(await t.act(inDoor, p)).toMatchObject({ kind: 'heads_up', reason: 'cooldown' });
+    t.kit.clock.advance(5 * 60_000 + 1);
+    expect((await t.act(inDoor, p)).kind).toBe('ok');
+  });
 });

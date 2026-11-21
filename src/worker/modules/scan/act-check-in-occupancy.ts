@@ -6,7 +6,7 @@ import { waiveOf } from './access.ts';
 import type { FoundAccess } from './access-types.ts';
 import { type FoundOccupancy, occupancyView, occupancyWaivers } from './occupancy/admission.ts';
 import { eventEntryPlan, eventExitPlan, hardLimited } from './occupancy/place.ts';
-import { insideOf, roomIn } from './occupancy/repo.ts';
+import { insideOf, roomIn, waitedSince } from './occupancy/repo.ts';
 import {
   type EntryPlan,
   type ExitPlan,
@@ -69,8 +69,12 @@ export function planOccupancyCommit(
     open: GrantCond[];
     /** An exit's gate as the scan read it: the row moves only if the gate write will. */
     gateAsRead: GrantCond | null;
-    /** At an event: a single or daily limit's snapshot and since checks, repeated in the entry. */
+    /** At an event: a single or daily limit's since checks, repeated in the entry. */
     limit?: GrantCond[];
+    /** At an event: the presence row is still the one the scan read and signed (no ABA). */
+    cas?: GrantCond;
+    /** At an event: the action's own repeat rule, which the place does not carry. */
+    repeat?: { kind: 'daily'; dayStart: number } | { kind: 'cooldown'; ms: number } | null;
   },
 ): OccupancyCommit | null {
   const { passId, scanId, now } = i;
@@ -86,13 +90,24 @@ export function planOccupancyCommit(
       entry: null,
       exit,
       waivers: {},
-      when: [...i.open, ...(i.gateAsRead ? [i.gateAsRead] : [])],
+      when: [
+        ...(spec.kind === 'event' && i.cas ? [i.cas] : []),
+        ...i.open,
+        ...(i.gateAsRead ? [i.gateAsRead] : []),
+      ],
       holds,
     };
   }
   const waived = occupancyWaivers(i.override);
   // A Hard limit is never waived, whatever the override and its approver said.
-  const waivers = waived.cap && hardLimited(spec) ? { ...waived, cap: false } : waived;
+  const capWaivers = waived.cap && hardLimited(spec) ? { ...waived, cap: false } : waived;
+  // A daily ticket's in row from an earlier day does not hold today's entry.
+  const stale =
+    spec.kind === 'event' &&
+    i.repeat?.kind === 'daily' &&
+    o.inside &&
+    (o.row?.entered_at ?? now) < i.repeat.dayStart;
+  const waivers = stale ? { ...capWaivers, inside: true } : capWaivers;
   if (spec.kind === 'event') {
     // An event's room is its own count (arrivals, or inside with re-entry), so it rides in `when`.
     const e = spec.event;
@@ -101,13 +116,30 @@ export function planOccupancyCommit(
         ? capacityOpen(capacityFullPredicate(e.orgId, e.mode, e.id, e.capacity, e.reentry, passId))
         : null;
     const entry = eventEntryPlan(e);
+    const r = i.repeat;
+    const rule =
+      r?.kind === 'daily' && i.override !== 'already_done'
+        ? {
+            reason: 'already_done' as const,
+            holds: waitedSince(passId, entry.place, r.dayStart - 1),
+          }
+        : r?.kind === 'cooldown' && i.override !== 'cooldown'
+          ? { reason: 'cooldown' as const, holds: waitedSince(passId, entry.place, now - r.ms) }
+          : null;
     const holds: OccupancyHold[] = [
       ...(waivers.inside
         ? []
         : [{ reason: 'still_inside' as const, holds: not(insideOf(passId, entry.place, now)) }]),
+      ...(rule ? [{ reason: rule.reason, holds: rule.holds }] : []),
       ...(full ? [{ reason: 'capacity_full' as const, holds: full }] : []),
     ];
-    const when = [...(i.limit ?? []), ...(full ? [full] : []), ...i.open];
+    const when = [
+      ...(i.cas ? [i.cas] : []),
+      ...(i.limit ?? []),
+      ...(rule ? [rule.holds] : []),
+      ...(full ? [full] : []),
+      ...i.open,
+    ];
     return { ...base, entry, exit: null, waivers, when, holds };
   }
   const access = i.access;

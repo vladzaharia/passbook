@@ -1,6 +1,6 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
-import { not, notExists } from '../../platform/authority-cond.ts';
+import { exists, not, notExists } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanAccessOf, waiveOf } from './access.ts';
 import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
@@ -16,7 +16,7 @@ import { StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight } from './act-preflight.ts';
 import { deferTermStart } from './act-term-stamp.ts';
 import type { ScanActor } from './actor.ts';
-import { planCommitCounts } from './counts.ts';
+import { localDayStart, planCommitCounts } from './counts.ts';
 import type { LedgerFacts } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import { viaName } from './occupancy/admission.ts';
@@ -68,20 +68,36 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const access = found.access && gate.actionId === ACCESS_GATE ? found.access : null;
   const overrideOf = req.overrideOf ?? null;
   const occupancy = found.occupancy ?? null;
+  const isEvent = occupancy?.spec.kind === 'event';
+  const entering = occupancy?.direction === 'in';
   const eventLimit =
-    occupancy?.spec.kind === 'event' && presencePlan?.limited
+    isEvent && entering && presencePlan?.limited
       ? admissionConds(gate.passId, presencePlan, effect.presenceBefore)
       : [];
+  const presence = { pass_id: gate.passId, scope: occupancy?.place ?? '' };
+  const cas = effect.presenceBefore
+    ? exists('scan_presence', { ...presence, last_scan_id: effect.presenceBefore.lastScanId })
+    : notExists('scan_presence', presence);
+  const zoneOfEvent = occupancy?.spec.kind === 'event' ? occupancy.spec.event.timeZone : null;
+  const repeat =
+    !isEvent || !entering
+      ? null
+      : action.repeat === 'daily' && zoneOfEvent
+        ? { kind: 'daily' as const, dayStart: localDayStart(now, zoneOfEvent) }
+        : action.repeat === 'cooldown'
+          ? { kind: 'cooldown' as const, ms: (action.cooldownMinutes ?? 5) * 60_000 }
+          : null;
   const occ = occupancy
     ? planOccupancyCommit(occupancy, {
         passId: found.pass.id,
         scanId,
-        now: authorityNow,
+        now: claim.now,
         access,
         override: claim.authority.override?.reason ?? null,
         open: overrideOf ? [overrideOpen(overrideOf)] : [],
         // A re-entry event keeps the admission's single or daily limit as a condition of the entry.
         limit: eventLimit,
+        ...(isEvent ? { cas, repeat } : {}),
         // A first exit inserts its gate (insert or nothing): no other gate row may appear first.
         gateAsRead: effect.gateBefore
           ? null
