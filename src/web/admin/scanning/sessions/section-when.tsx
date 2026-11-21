@@ -4,7 +4,7 @@ import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { formatCalendarDate, todayKey } from '@/web/lib/format.ts';
 import { Button, toast } from '@/web/ui/index.ts';
 import { useHoldSession } from './api.ts';
-import { hoursSummary } from './session-hours.ts';
+import { hoursSentence } from './session-hours.ts';
 import type { HoursDialog } from './session-hours-actions.tsx';
 import { SessionHoursFields } from './session-hours-fields.tsx';
 import { RowEditor, SetupRow } from './setup-row.tsx';
@@ -30,7 +30,7 @@ export function WhenRow({
   const [editing, setEditing] = useState(false);
   const edit = useSectionEdit(s, () => setEditing(false));
   const hold = useHoldSession(s.id);
-  const lines = hoursSummary(s.hours);
+  const sentence = hoursSentence(s.hours);
   const closed = closedDates(s);
   const holdable = s.status === 'active' && Boolean(s.hours) && Boolean(s.window);
   const open = s.window?.open ?? true;
@@ -98,7 +98,7 @@ export function WhenRow({
       ) : (
         <div className="grid gap-0.5 text-sm">
           <span className="font-medium text-fg-strong">
-            {lines.length ? lines.join(', ') : s.hoursInvalid ? 'Closed' : 'Always open'}
+            {sentence || (s.hoursInvalid ? 'Closed' : 'Always open')}
           </span>
           {closed.length ? (
             <span className="text-fg-muted">

@@ -10,6 +10,7 @@ import { Badge, Button, Callout, Input, RadioGroup, Select, toast } from '@/web/
 import { PinList, type PinRow, roleLabel } from '../setup/pin-list.tsx';
 import type { SessionStaff } from './session-live.ts';
 import { RowEditor, SetupRow } from './setup-row.tsx';
+import { useNewKeys } from './use-new-keys.ts';
 import { useSectionEdit } from './use-section-edit.ts';
 
 const CreatedSchema = StaffPinSchema.extend({ staff: ScanStaffSchema });
@@ -122,6 +123,10 @@ export function ScannersRow({
   const edit = useSectionEdit(s, () => setEditing(false));
   const { role } = useStaffWrites(s.orgId);
   const active = staff.filter((p) => p.disabledAt === null);
+  const _fresh = useNewKeys(
+    active.map((p) => p.id),
+    staff.length > 0,
+  );
   const byPin = s.settings.staffSignIn;
   const actions =
     canManage && !editing ? (

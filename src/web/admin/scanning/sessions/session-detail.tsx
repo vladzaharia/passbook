@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type { ScanRole } from '@/shared/contracts/scan.ts';
@@ -13,8 +14,8 @@ import { AddDeviceDialog } from './add-device-dialog.tsx';
 import { useUpdateSession } from './api.ts';
 import { DeviceCard } from './device-card.tsx';
 import { DeviceSheet } from './device-sheet.tsx';
-import { PairSheet } from './pair-sheet.tsx';
 import { EndSessionDialog } from './end-session-dialog.tsx';
+import { PairSheet } from './pair-sheet.tsx';
 import { SessionActions } from './session-actions.tsx';
 import { SessionActivity } from './session-activity.tsx';
 import { SessionChecks } from './session-checks.tsx';
@@ -135,6 +136,17 @@ export function SessionDetail({
             >
               Devices <Badge>{s.deviceCount}</Badge>
             </h2>
+            {canManage && devices.length ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                iconStart={<Plus aria-hidden />}
+                disabled={!active}
+                onClick={() => setDialog('add')}
+              >
+                Add device
+              </Button>
+            ) : null}
             {s.devices.some((d) => d.revoked) ? (
               <CheckboxField
                 label="Show revoked devices"

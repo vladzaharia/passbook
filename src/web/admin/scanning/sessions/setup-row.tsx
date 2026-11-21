@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Button, Callout } from '@/web/ui/index.ts';
+import '../setup/setup.css';
 
 /** One question of the session's setup: its label, its answer, and the actions beside it. */
 export function SetupRow({

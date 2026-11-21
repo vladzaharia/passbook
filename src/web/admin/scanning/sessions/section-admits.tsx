@@ -9,6 +9,7 @@ import {
 } from '@/shared/contracts/scanners.ts';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { api } from '@/web/lib/api.ts';
+import { cn } from '@/web/lib/cn.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { formatEventTime, formatTime } from '@/web/lib/format.ts';
 import { Badge, Button, Callout } from '@/web/ui/index.ts';
@@ -20,6 +21,7 @@ import { useUpdateSession } from './api.ts';
 import { sessionAccepts } from './draft.ts';
 import type { useSessionLive } from './session-live.ts';
 import { RowEditor, SetupRow } from './setup-row.tsx';
+import { useNewKeys } from './use-new-keys.ts';
 import { useSectionEdit } from './use-section-edit.ts';
 
 type Live = ReturnType<typeof useSessionLive>;
@@ -58,9 +60,14 @@ function useAddEvent(s: ScanningSession, live: Live, onDone: () => void) {
   });
 }
 
-function EventLine({ e, zone }: { e: ScanEventDto; zone: string }) {
+function EventLine({ e, zone, fresh }: { e: ScanEventDto; zone: string; fresh: boolean }) {
   return (
-    <li className="flex flex-wrap items-baseline gap-x-3 text-sm">
+    <li
+      className={cn(
+        'flex flex-wrap items-baseline gap-x-3 rounded-sm text-sm',
+        fresh && 'wl-sum-flash',
+      )}
+    >
       <span className="font-medium text-fg-strong">{e.name}</span>
       <span className="text-fg-muted">
         {[
@@ -91,6 +98,10 @@ export function AdmitsRow({
   const add = useAddEvent(s, live, done);
   const admits = s.accepts ? admitsOf(s.accepts) : { templateIds: [], eventIds: [] };
   const events = (live.events.data?.items ?? []).filter((e) => admits.eventIds.includes(e.id));
+  const fresh = useNewKeys(
+    events.map((e) => e.id),
+    live.events.isSuccess,
+  );
   const types = live.templates.filter((t) => admits.templateIds.includes(t.id));
   const actions =
     canManage && !mode ? (
@@ -146,7 +157,7 @@ export function AdmitsRow({
           {events.length ? (
             <ul className="grid gap-1">
               {events.map((e) => (
-                <EventLine key={e.id} e={e} zone={e.timeZone} />
+                <EventLine key={e.id} e={e} zone={e.timeZone} fresh={fresh.has(e.id)} />
               ))}
             </ul>
           ) : null}
