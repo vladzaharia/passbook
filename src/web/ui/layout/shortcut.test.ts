@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shortcutHint } from './admin-layout.tsx';
+import { shortcutHint } from './menubar.tsx';
 
 describe('shortcutHint', () => {
   it('reads ⌘K on Apple platforms and Ctrl K elsewhere', () => {

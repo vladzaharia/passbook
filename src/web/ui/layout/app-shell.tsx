@@ -2,13 +2,11 @@ import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { OfflineBanner } from '../offline-banner.tsx';
-
-/** Content width: holder pages read as one column, the console takes the room it has. */
-const WIDTH = { holder: 'max-w-5xl', console: '', full: '' } as const;
+import { Menubar, type MenubarProps, WIDTH } from './menubar.tsx';
 
 export interface AppShellProps {
-  /** Top bar contents. Omitted on /login, whose page draws its own band. */
-  bar?: ReactNode;
+  /** The top bar's slots (menubar.tsx). Omitted on /login, whose page draws its own band. */
+  bar?: Omit<MenubarProps, 'width' | 'below'>;
   /** A column left of the page from lg (the admin sidebar). */
   sidebar?: ReactNode;
   /** In flow under the bar and the offline bar, in the same sticky block (the Test mode band). */
@@ -20,31 +18,30 @@ export interface AppShellProps {
 }
 
 /**
- * Every page's frame. A sticky top bar, 56 px with its border, on the page surface; the offline
- * bar under it, sticking with it and pushing the page down; then main. One gutter (1rem, 1.5rem
- * from 640) for the bar and main, and every safe-area edge padded.
+ * Every page's frame. The one Menubar (sticky, 56 px with its border, on the page surface); the
+ * offline bar under it, sticking with it and pushing the page down; then main. One gutter (1rem,
+ * 1.5rem from 640) for the bar and main, and every safe-area edge padded.
  */
 export function AppShell({ bar, sidebar, band, width, holder, children }: AppShellProps) {
   const column = (
     <div className="flex min-w-0 flex-1 flex-col">
-      <div className="sticky top-0 z-20">
-        {bar ? (
-          <header className="relative z-10 border-b border-border bg-surface-page pt-[env(safe-area-inset-top)]">
-            <div
-              className={cn(
-                'mx-auto flex h-[calc(3.5rem-1px)] w-full items-center gap-2 px-safe',
-                WIDTH[width],
-              )}
-            >
-              {bar}
-            </div>
-          </header>
-        ) : null}
-        <OfflineBanner
-          className={bar ? undefined : 'h-auto min-h-8 pt-[env(safe-area-inset-top)]'}
+      {bar ? (
+        <Menubar
+          width={width}
+          {...bar}
+          below={
+            <>
+              <OfflineBanner />
+              {band}
+            </>
+          }
         />
-        {band}
-      </div>
+      ) : (
+        <div className="sticky top-0 z-20">
+          <OfflineBanner className="h-auto min-h-8 pt-[env(safe-area-inset-top)]" />
+          {band}
+        </div>
+      )}
       <main
         id={MAIN_ID}
         tabIndex={-1}

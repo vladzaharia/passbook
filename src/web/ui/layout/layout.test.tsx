@@ -422,7 +422,7 @@ describe('route guards in the app', () => {
     expect(router.state.location.search).not.toHaveProperty('orgId');
   });
 
-  it('lets a plain user into the portal and hides the Admin link', async () => {
+  it('lets a plain user into the portal and keeps Admin out of the bar', async () => {
     const { queryClient } = await renderApp('/account', { session: 'user' });
     expect(await screen.findByRole('heading', { name: 'Account', level: 1 })).toBeInTheDocument();
     await waitFor(() =>
@@ -434,11 +434,11 @@ describe('route guards in the app', () => {
     expect(screen.queryByRole('link', { name: 'Admin' })).toBeNull();
   });
 
-  it('shows an Admin link to admins in the portal', async () => {
+  it('offers Admin to admins in the account menu only', async () => {
     await renderApp('/', { session: 'admin' });
-    const nav = await screen.findByRole('navigation', { name: 'Main' });
-    // Hidden on phones, where the header has no room; the account menu carries it there.
-    expect(within(nav).getByRole('link', { name: 'Admin' })).toHaveClass('max-sm:hidden');
+    await screen.findByRole('button', { name: 'Account menu' });
+    expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Admin' })).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
     expect(await screen.findByRole('menuitem', { name: 'Admin' })).toHaveAttribute(
       'href',
@@ -458,12 +458,7 @@ describe('route guards in the app', () => {
       ],
       handlers: { '/api/v1/metrics/activity': () => json(orgActivity()) },
     });
-    const nav = await screen.findByRole('navigation', { name: 'Main' });
-    expect(await within(nav).findByRole('link', { name: 'Admin' })).toHaveAttribute(
-      'href',
-      '/admin',
-    );
-    await user.click(screen.getByRole('button', { name: 'Account menu' }));
+    await user.click(await screen.findByRole('button', { name: 'Account menu' }));
     const admin = await screen.findByRole('menuitem', { name: 'Admin' });
     expect(admin).toHaveAttribute('href', '/admin');
     await user.click(admin);
@@ -485,8 +480,8 @@ describe('route guards in the app', () => {
       ],
       handlers: { '/api/v1/metrics/activity': () => json(orgActivity()) },
     });
-    const nav = await screen.findByRole('navigation', { name: 'Main' });
-    const admin = await within(nav).findByRole('link', { name: 'Admin' });
+    await user.click(await screen.findByRole('button', { name: 'Account menu' }));
+    const admin = await screen.findByRole('menuitem', { name: 'Admin' });
     expect(admin).toHaveAttribute('href', '/admin');
     await user.click(admin);
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));

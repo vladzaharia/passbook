@@ -48,10 +48,16 @@ export function Wordmark({
   to = '/',
   hello = true,
   size = 'md',
+  reload = false,
+  sub,
 }: {
   to?: string;
   hello?: boolean;
   size?: keyof typeof SIZES;
+  /** A plain link: the space is another document (the developer site, rendered at build time). */
+  reload?: boolean;
+  /** Names a space that is not the console, after a hairline. Hidden on phones. */
+  sub?: string;
 }) {
   // Latched per instance, so a re-render mid-hello does not cut it short.
   const [play] = useState(() => hello && helloThisLoad && !shown);
@@ -60,16 +66,28 @@ export function Wordmark({
     shown = true;
     markSeen();
   }, [play]);
-  return (
-    <Link
-      to={to}
-      className={cn(
-        'inline-flex min-h-8 min-w-8 items-center justify-center rounded-md font-semibold text-fg-strong pointer-coarse:min-h-11 pointer-coarse:min-w-11',
-        SIZES[size].link,
-      )}
-    >
+  const className = cn(
+    'inline-flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-md font-semibold text-fg-strong pointer-coarse:min-h-11 pointer-coarse:min-w-11',
+    SIZES[size].link,
+  );
+  const body = (
+    <>
       <BrandMark hello={play} className={cn('text-accent-fg', SIZES[size].icon)} />
       PassBook
+      {sub ? (
+        <span className="border-l border-border pl-2 font-medium text-fg-muted max-sm:hidden">
+          {sub}
+        </span>
+      ) : null}
+    </>
+  );
+  return reload ? (
+    <a href={to} className={className}>
+      {body}
+    </a>
+  ) : (
+    <Link to={to} className={className}>
+      {body}
     </Link>
   );
 }
