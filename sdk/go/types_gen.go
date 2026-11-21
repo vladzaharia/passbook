@@ -4150,7 +4150,8 @@ type PassVersion struct {
 }
 
 type PassViews struct {
-	Items []PassViewsItemsItem `json:"items"`
+	Items    []PassViewsItemsItem `json:"items"`
+	Revision int64                `json:"revision"`
 }
 
 type PassViewsItemsItem struct {
@@ -4164,8 +4165,9 @@ type PassViewsListResult = PassViews
 type PassViewsReplaceBody = PassViewsReplaceParams
 
 type PassViewsReplaceParams struct {
-	Items []PassViewsReplaceParamsItemsItem `json:"items"`
-	OrgID *string                           `json:"orgId,omitempty"`
+	Items    []PassViewsReplaceParamsItemsItem `json:"items"`
+	Revision int64                             `json:"revision"`
+	OrgID    *string                           `json:"orgId,omitempty"`
 }
 
 type PassViewsReplaceParamsItemsItem struct {

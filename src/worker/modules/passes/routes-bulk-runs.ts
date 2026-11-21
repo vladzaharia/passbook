@@ -6,6 +6,7 @@ import {
 } from '../../../shared/contracts/pass-bulk-runs.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { currentBulkRun, getBulkRun, startBulkRun, stopBulkRun } from './bulk-run.ts';
 import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
 import { requireTenantPassRead } from './pass-access.ts';
@@ -40,15 +41,39 @@ export function registerBulkRunRoutes(passesRoutes: ReturnType<typeof createRout
       const ctx = svc(c);
       const orgId = orgOf(c, body.orgId);
       const authority = await tenantAuthorityOf(ctx, authOf(c), orgId, 'passes:operate');
-      const run = await startBulkRun(ctx, actorFor(c), {
-        authority,
-        mode: passScopeOf(c).mode,
-        action: body.action,
-        message: body.message,
-        filter: body.selection.filter,
-        expectCount: body.selection.expectCount,
-      });
-      return c.json(run, 202);
+      let started = false;
+      const start = async () => {
+        const run = await startBulkRun(ctx, actorFor(c), {
+          authority,
+          mode: passScopeOf(c).mode,
+          action: body.action,
+          message: body.message,
+          filter: body.selection.filter,
+          expectCount: body.selection.expectCount,
+        });
+        started = true;
+        return run;
+      };
+      // With an Idempotency-Key a repeat of the same request answers the first run, never a second one.
+      const key = idempotencyKeyOf(c.req.header('idempotency-key'));
+      if (key === undefined) return c.json(await start(), 202);
+      const { value } = await sendOnce(
+        ctx,
+        {
+          orgId,
+          scope: 'bulk-run',
+          key,
+          request: {
+            action: body.action,
+            message: body.message ?? null,
+            selection: body.selection,
+          },
+          authority,
+          progress: () => started,
+        },
+        start,
+      );
+      return c.json(value, 202);
     },
   );
 

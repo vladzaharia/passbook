@@ -436,16 +436,19 @@
   "passes.getPassesViews": {
     "description": "The saved views of the passes list.",
     "response": {
-      "items": []
+      "items": [],
+      "revision": 0
     }
   },
   "passes.putPassesViews": {
-    "description": "Replaces the saved views (at most 20).",
+    "description": "Replaces the saved views (at most 20) of an organization and mode. Send the `revision` you read; a stale one answers 409 `VIEWS_CHANGED`. A view cannot hold a holder email.",
     "request": {
-      "items": []
+      "items": [],
+      "revision": 0
     },
     "response": {
-      "items": []
+      "items": [],
+      "revision": 1
     }
   },
   "passes.postPassesBulkRuns": {

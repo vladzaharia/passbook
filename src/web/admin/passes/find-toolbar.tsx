@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { PassView } from '@/shared/contracts/pass-views.ts';
+import { UserMessageError } from '../../lib/errors.ts';
 import { toast } from '../../ui/index.ts';
 import { useSavedViews, useSaveViews, useViewCounts } from './find-api.ts';
 import { FindBar } from './find-bar.tsx';
@@ -34,7 +35,8 @@ export function PassFindToolbar({
   const chips = useMemo(() => allChips(search), [search]);
   const fields = useFindFields(templates, search.templateId, orgId);
   const views = useSavedViews(orgId, true);
-  const saved = useMemo(() => views.data ?? [], [views.data]);
+  const saved = useMemo(() => views.data?.items ?? [], [views.data]);
+  const revision = views.data?.revision ?? 0;
   const counts = useViewCounts(orgId, saved, views.isSuccess);
   const save = useSaveViews(orgId);
   const filter = useMemo(() => toPassFilter({ ...search, chips }), [search, chips]);
@@ -87,11 +89,13 @@ export function PassFindToolbar({
         filter={filter}
         onPick={pick}
         onSave={async (name) => {
+          if (filter.holderEmail)
+            throw new UserMessageError('A view cannot hold an email address.');
           const id = `v${Date.now().toString(36)}`;
-          await save.mutateAsync([...saved, { id, name, filter }]);
+          await save.mutateAsync({ items: [...saved, { id, name, filter }], revision });
           toast.success('View saved');
         }}
-        onDelete={(id) => save.mutate(saved.filter((v) => v.id !== id))}
+        onDelete={(id) => save.mutate({ items: saved.filter((v) => v.id !== id), revision })}
       />
       <FindBar
         chips={chips}

@@ -3184,5 +3184,11 @@
     "when": "The background run could not be created.",
     "fix": "Try again.",
     "retryable": true
+  },
+  "VIEWS_CHANGED": {
+    "title": "Views changed",
+    "when": "The saved views changed since the revision you sent.",
+    "fix": "Read the views again and save with the new revision.",
+    "retryable": false
   }
 }

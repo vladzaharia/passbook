@@ -18,7 +18,8 @@ func main() {
 
 	var body passbook.PassViewsReplaceBody
 	if err := json.Unmarshal([]byte(`{
-  "items": []
+  "items": [],
+  "revision": 0
 }`), &body); err != nil {
 		panic(err)
 	}

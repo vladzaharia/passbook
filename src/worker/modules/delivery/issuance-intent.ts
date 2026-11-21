@@ -234,7 +234,7 @@ export async function enqueuePassEmail(
     /** The live request's authority: its session or key must hold now. */
     authority?: TenantPassWrite;
     additionalAuthority?: TenantPassWrite;
-    /** Durable actors captured earlier (the issuance scheduler only): no session is consulted. */
+    /** Durable actors captured earlier: no session is consulted. Reviewed sites: the issuance scheduler and the bulk run's workflow (a job context, never a request). */
     queuedFor?: DeliveryActor[];
     connection?: ConnectionEmailAuthority;
     /** Accepted for callers; a release is checked at create and publish, never at mail time. */

@@ -62,6 +62,8 @@ export async function removePass(
   closedOk?: true,
   /** Proofs that commit with the publish; a refusal rolls the claim back. */
   extraChecks?: readonly Check[],
+  /** A bulk run: its id goes in the audit, and pushes are dispatched by the run, once per chunk. */
+  runId?: string,
 ) {
   const db = ctx.env.DB;
   const pass = await getPassForWrite(db, passId, scope);
@@ -132,6 +134,7 @@ export async function removePass(
       authority,
       ...(closedOk ? { closedOk } : {}),
       ...(extraChecks ? { extraChecks } : {}),
+      ...(runId ? { dispatch: false } : {}),
       expectedPass: pass,
       expectedRemoval: {
         at: staged.at,
@@ -168,6 +171,7 @@ export async function removePass(
     action: 'pass.remove',
     targetType: 'pass',
     targetId: passId,
+    ...(runId ? { detail: { runId } } : {}),
   });
   return currentSummary(ctx, (await getPass(db, passId, scope)) ?? published.pass, authority);
 }

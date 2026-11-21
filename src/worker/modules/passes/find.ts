@@ -46,6 +46,10 @@ export function listFilterOf(
 
 const kindOf = (type: string): string => (type === 'integer' ? 'number' : type);
 
+/** Input types by template, kept a minute per isolate: the ambiguity check runs on every matched list. */
+const TYPES_FOR_MS = 60_000;
+const typesCache = new Map<string, { at: number; fields: { key: string; kind: string }[] }>();
+
 /**
  * A match without a template reads the key in every template of the org: refused when the templates
  * give it different types, since the clause would mean different things on different passes.
@@ -59,11 +63,20 @@ export async function assertMatchUnambiguous(
   const templateIds = await orgTemplateIds(ctx.env.DB, orgId, mode);
   const kinds = new Map<string, Set<string>>();
   for (const template_id of templateIds) {
-    const name = await latestVersionName(ctx.env.DB, template_id);
-    const version = name ? await getVersion(ctx.env.DB, template_id, name) : null;
-    for (const field of inputFields(version?.manifest.inputs))
+    const hit = typesCache.get(template_id);
+    let fields = hit && ctx.clock.now() - hit.at < TYPES_FOR_MS ? hit.fields : undefined;
+    if (!fields) {
+      const name = await latestVersionName(ctx.env.DB, template_id);
+      const version = name ? await getVersion(ctx.env.DB, template_id, name) : null;
+      fields = inputFields(version?.manifest.inputs).map((f) => ({
+        key: f.key,
+        kind: kindOf(f.type),
+      }));
+      typesCache.set(template_id, { at: ctx.clock.now(), fields });
+    }
+    for (const field of fields)
       if (match.some((c) => c.input === field.key))
-        kinds.set(field.key, (kinds.get(field.key) ?? new Set()).add(kindOf(field.type)));
+        kinds.set(field.key, (kinds.get(field.key) ?? new Set()).add(field.kind));
   }
   for (const [key, set] of kinds)
     if (set.size > 1)

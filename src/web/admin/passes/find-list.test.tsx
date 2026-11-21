@@ -24,7 +24,7 @@ function handlers(extra: Record<string, (url: URL, init?: RequestInit) => Respon
     '/api/v1/templates/tpl1': () => json(templateDetail()),
     '/api/v1/templates/previews': previewsHandler,
     '/api/v1/connections': empty,
-    '/api/v1/passes/views': () => json({ items: [] }),
+    '/api/v1/passes/views': () => json({ items: [], revision: 0 }),
     '/api/v1/passes/bulk-runs/current': () => json({}),
     ...extra,
   };

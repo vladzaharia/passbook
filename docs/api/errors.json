@@ -2614,6 +2614,15 @@
       ]
     },
     {
+      "code": "PASS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "PASS_CHANGING",
       "statuses": [
         409
@@ -5327,6 +5336,15 @@
       "code": "VERSION_PURGED",
       "statuses": [
         410
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "VIEWS_CHANGED",
+      "statuses": [
+        409
       ],
       "modules": [
         "passes"

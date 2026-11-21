@@ -817,14 +817,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"passViews.list", "GET", "/api/v1/passes/views", false,
-		"", `{"items":[{"id":"x","name":"x","filter":{}}]}`,
+		"", `{"items":[{"id":"x","name":"x","filter":{}}],"revision":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.PassViews.List(ctx)
 		},
 	},
 	{
 		"passViews.replace", "PUT", "/api/v1/passes/views", false,
-		`{"items":[{"id":"x","name":"x","filter":{}}]}`, `{"items":[{"id":"x","name":"x","filter":{}}]}`,
+		`{"items":[{"id":"x","name":"x","filter":{}}],"revision":0}`, `{"items":[{"id":"x","name":"x","filter":{}}],"revision":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassViewsReplaceBody
 			if err := json.Unmarshal(body, &b); err != nil {

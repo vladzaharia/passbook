@@ -3,9 +3,9 @@ import {
   PassViewsQuerySchema,
   PutPassViewsSchema,
 } from '../../../shared/contracts/pass-views.ts';
-import { ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
-import { assertOrg, authOf, svc, tenantAuthorityOf } from './http.ts';
+import { assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
 import { requireTenantPassRead } from './pass-access.ts';
 import { readPassViews, writePassViews } from './repo-views.ts';
 
@@ -34,7 +34,7 @@ export function registerViewRoutes(passesRoutes: ReturnType<typeof createRouter>
       const ctx = svc(c);
       const orgId = orgOf(c, c.req.valid('query').orgId);
       await requireTenantPassRead(ctx, authOf(c), orgId);
-      return c.json({ items: await readPassViews(ctx.env.DB, orgId) });
+      return c.json(await readPassViews(ctx.env.DB, orgId, passScopeOf(c).mode));
     },
   );
 
@@ -53,8 +53,12 @@ export function registerViewRoutes(passesRoutes: ReturnType<typeof createRouter>
       const ctx = svc(c);
       const orgId = orgOf(c, body.orgId);
       await tenantAuthorityOf(ctx, authOf(c), orgId, 'passes:operate');
-      await writePassViews(ctx.env.DB, orgId, body.items, ctx.clock.now());
-      return c.json({ items: body.items });
+      const mode = passScopeOf(c).mode;
+      if (
+        !(await writePassViews(ctx.env.DB, orgId, mode, body.items, body.revision, ctx.clock.now()))
+      )
+        throw new ConflictError('The views changed. Reload and try again.', 'VIEWS_CHANGED');
+      return c.json(await readPassViews(ctx.env.DB, orgId, mode));
     },
   );
 }

@@ -4,7 +4,9 @@ import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { actorOfStarter } from '../delivery/delivery-actor.ts';
+import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { bulkRunDto } from './bulk-run-dto.ts';
+import type { RunWrite } from './bulk-write.ts';
 import { resolveFilterPasses } from './find.ts';
 import type { TenantPassWrite } from './http.ts';
 import { resendEmail } from './pass-service-delivery.ts';
@@ -20,18 +22,22 @@ import {
   ACTIVE_STATES,
   type BulkRunRecord,
   type BulkRunState,
-  deleteRun,
+  deleteEndedBefore,
+  holdsLock,
   insertRun,
   latestRun,
+  lockHeld,
   readRun,
   releaseLock,
   requestStop,
-  runsUpdatedBefore,
   saveRun,
+  stalledRuns,
+  stopFlag,
   takeLock,
   touchLock,
 } from './repo-bulk-runs.ts';
 import { getPass } from './repo-read-pass.ts';
+import { getRemoval } from './repo-remove.ts';
 import { type Actor, voidPass } from './service.ts';
 
 /** Ids per R2 page, and passes per workflow step. */
@@ -74,6 +80,13 @@ export async function startBulkRun(
   const orgId = authority.orgId;
   const starter = await reissuePrincipalOf(ctx.env.DB, authority, undefined);
   if (!starter || starter.kind === 'platform') throw new NotFoundError('Organization not found.');
+  const busy = () =>
+    new ConflictError(
+      'A bulk run is already going for this organization. Wait for it to finish.',
+      'BULK_RUN_ACTIVE',
+    );
+  // A cheap read first: a locked org does not pay for the scan.
+  if (await lockHeld(ctx.env.DB, orgId, mode, ctx.clock.now() - LOCK_STALE)) throw busy();
   const passes = await resolveFilterPasses(
     ctx,
     { orgId, mode },
@@ -83,11 +96,7 @@ export async function startBulkRun(
   );
   const id = ctx.ids.id();
   const now = ctx.clock.now();
-  if (!(await takeLock(ctx.env.DB, orgId, mode, id, now, now - LOCK_STALE)))
-    throw new ConflictError(
-      'A bulk run is already going for this organization. Wait for it to finish.',
-      'BULK_RUN_ACTIVE',
-    );
+  if (!(await takeLock(ctx.env.DB, orgId, mode, id, now, now - LOCK_STALE))) throw busy();
   const rec: BulkRunRecord = {
     id,
     orgId,
@@ -106,6 +115,7 @@ export async function startBulkRun(
     finishedAt: null,
     code: null,
   };
+  let inserted = false;
   try {
     for (let n = 0; n * PAGE < passes.length; n++)
       await ctx.env.BUCKET.put(
@@ -113,12 +123,22 @@ export async function startBulkRun(
         JSON.stringify(passes.slice(n * PAGE, (n + 1) * PAGE).map((p) => [p.id, p.version])),
       );
     await insertRun(ctx.env.DB, rec);
+    inserted = true;
     await ctx.env.BULK_REISSUE.create({
       id: bulkInstanceId(id),
       params: { kind: 'bulk_action', runId: id },
     });
   } catch (error) {
     ctx.log.error('passes.bulk_run_start_failed', { orgId, code: 'BULK_RUN_START', error });
+    // A row that was written must not linger as a queued run nobody will start.
+    if (inserted)
+      await saveRun(ctx.env.DB, {
+        ...rec,
+        state: 'failed',
+        code: 'BULK_RUN_START',
+        finishedAt: ctx.clock.now(),
+        updatedAt: ctx.clock.now(),
+      });
     await releaseLock(ctx.env.DB, orgId, mode, id);
     await dropPages(ctx, rec);
     throw new UnavailableError('The run did not start. Try again.', 'BULK_RUN_START');
@@ -130,7 +150,13 @@ export async function startBulkRun(
     action: 'pass.bulk_run',
     targetType: 'org',
     targetId: orgId,
-    detail: { runId: id, action: input.action, total: rec.total },
+    // The filter says which passes the run covered; a holder address in it is not recorded.
+    detail: {
+      runId: id,
+      action: input.action,
+      total: rec.total,
+      filter: { ...input.filter, ...(input.filter.holderEmail ? { holderEmail: '[hidden]' } : {}) },
+    },
   });
   return bulkRunDto(rec, false);
 }
@@ -199,8 +225,9 @@ async function finish(
 }
 
 /**
- * One pass of the run. Each write proves the starter inside its own grant (extraChecks), after a read
- * proof just before it. Void and remove also need the pass at the version the run saw.
+ * One pass of the run. Each write proves the starter inside its own grant, after a read proof just
+ * before it. Void and remove are also pinned to the version the snapshot saw, in the write itself;
+ * email skips a pass that moved. `proof` is the starter's in-grant check.
  */
 async function applyOne(
   ctx: ServiceContext,
@@ -212,25 +239,44 @@ async function applyOne(
   const pass = await getPass(ctx.env.DB, passId, scope);
   if (!pass || pass.orgId !== rec.orgId || pass.mode !== rec.mode) return 'PASS_NOT_FOUND';
   const actor = actorOf(rec.starter);
-  const proof = [reissuePrincipalCheck(rec.orgId, rec.starter, ctx.clock.now())];
+  const now = ctx.clock.now();
+  const write: RunWrite = {
+    checks: [reissuePrincipalCheck(rec.orgId, rec.starter, now)],
+    version: seen,
+    runId: rec.id,
+  };
   try {
     if (rec.action === 'send_email') {
       if (pass.removedAt !== null) return 'PASS_REMOVED';
+      if (pass.status !== 'active') return 'NOT_ACTIVE';
+      if (pass.version !== seen) return 'PASS_CHANGED';
       if (!pass.holderEmail) return 'NO_RECIPIENT';
-      await resendEmail(ctx, actor, passId, {}, scope, undefined, [
-        actorOfStarter(rec.starter, rec.orgId, rec.mode),
-      ]);
+      // The queueing grant proves the starter; the starter is a reviewed site for a deferred actor (a workflow, no request).
+      await resendEmail(
+        ctx,
+        actor,
+        passId,
+        {},
+        scope,
+        undefined,
+        [actorOfStarter(rec.starter, rec.orgId, rec.mode)],
+        rec.id,
+      );
       return 'done';
     }
     if (rec.action === 'void') {
       if (pass.removedAt !== null) return 'PASS_REMOVED';
-      if (pass.status !== 'active') return 'done';
-      if (pass.version !== seen) return 'PASS_CHANGED';
-      await voidPass(ctx, actor, passId, scope, undefined, proof);
+      if (pass.status === 'voided') return 'done';
+      if (pass.status !== 'active') return 'NOT_ACTIVE';
+      await voidPass(ctx, actor, passId, scope, undefined, write);
       return 'done';
     }
-    if (pass.removedAt !== null) return 'done';
-    if (pass.version !== seen) return 'PASS_CHANGED';
+    if (pass.removedAt !== null) {
+      // A claim without its publish (a crash between the two) resumes; only a published removal is done.
+      const removal = await getRemoval(ctx.env.DB, passId);
+      if (removal && removal.publishedGeneration === removal.generation && pass.status === 'voided')
+        return 'done';
+    } else if (pass.version !== seen) return 'PASS_CHANGED';
     await removePass(
       ctx,
       actor,
@@ -241,10 +287,11 @@ async function applyOne(
       {
         version: seen,
         noScans: false,
-        proof: reissuePrincipalSql(rec.orgId, rec.starter, ctx.clock.now()),
+        proof: reissuePrincipalSql(rec.orgId, rec.starter, now),
       },
       undefined,
-      proof,
+      write.checks,
+      rec.id,
     );
     return 'done';
   } catch (error) {
@@ -258,20 +305,29 @@ async function applyOne(
 export async function runBulkChunk(ctx: ServiceContext, runId: string): Promise<{ more: boolean }> {
   let rec = await readRun(ctx.env.DB, runId);
   if (!rec || !ACTIVE_STATES.includes(rec.state)) return { more: false };
-  if (rec.stopRequested) {
-    await finish(ctx, rec, 'stopped', 'BULK_RUN_STOPPED');
+  // A run whose lock went to another run (a takeover of a stale one) must not go on beside it.
+  if (!(await holdsLock(ctx.env.DB, rec.orgId, rec.mode, rec.id))) {
+    await finish(ctx, rec, 'failed', 'BULK_RUN_SUPERSEDED');
     return { more: false };
   }
   rec = { ...rec, state: 'running' };
   const pages = new Map<number, [string, number][]>();
   const end = Math.min(rec.total, rec.cursor + BULK_RUN_CHUNK);
+  let pushes = false;
   while (rec.cursor < end) {
+    // Stop and the starter's rights are read before every pass.
+    if (await stopFlag(ctx.env.DB, rec.id)) {
+      await finish(ctx, rec, 'stopped', 'BULK_RUN_STOPPED');
+      if (pushes) await dispatchSafely(ctx);
+      return { more: false };
+    }
     if (!(await reissuePrincipalValid(ctx.env.DB, rec.orgId, rec.starter, ctx.clock.now()))) {
       ctx.log.warn('passes.bulk_run_principal_revoked', {
         orgId: rec.orgId,
         code: 'BULK_RUN_PRINCIPAL_REVOKED',
       });
       await finish(ctx, rec, 'failed', 'BULK_RUN_PRINCIPAL_REVOKED');
+      if (pushes) await dispatchSafely(ctx);
       return { more: false };
     }
     const n = Math.floor(rec.cursor / PAGE);
@@ -286,18 +342,32 @@ export async function runBulkChunk(ctx: ServiceContext, runId: string): Promise<
       pages.set(n, page);
     }
     const item = page[rec.cursor % PAGE];
-    if (!item) break;
+    if (!item) {
+      // The page is shorter than the run says: it cannot finish.
+      await finish(ctx, rec, 'failed', 'BULK_RUN_LOST');
+      if (pushes) await dispatchSafely(ctx);
+      return { more: false };
+    }
     const result = await applyOne(ctx, rec, item[0], item[1]);
-    if (result === 'done') rec.done += 1;
-    else {
+    if (result === 'done') {
+      rec.done += 1;
+      if (rec.action !== 'send_email') pushes = true;
+    } else {
       rec.skipped += 1;
       rec.skippedBy = { ...rec.skippedBy, [result]: (rec.skippedBy[result] ?? 0) + 1 };
     }
     rec.cursor += 1;
+    // Mail cannot be recalled: the cursor moves with each queued mail, so a retried step never sends it twice.
+    if (rec.action === 'send_email') {
+      rec.updatedAt = ctx.clock.now();
+      if (!(await saveRun(ctx.env.DB, rec))) return { more: false };
+    }
   }
   rec.updatedAt = ctx.clock.now();
   if (!(await saveRun(ctx.env.DB, rec))) return { more: false };
   await touchLock(ctx.env.DB, rec.orgId, rec.mode, rec.id, rec.updatedAt);
+  // One dispatch per chunk, as bulk reissue does.
+  if (pushes) await dispatchSafely(ctx);
   if (rec.cursor >= rec.total) {
     await finish(ctx, rec, 'done', null);
     return { more: false };
@@ -314,14 +384,13 @@ export async function failBulkRun(ctx: ServiceContext, runId: string, code: stri
 /** Frees runs that stopped moving (a dead workflow) and deletes ended ones after a week. */
 export async function sweepBulkRuns(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
-  for (const rec of await runsUpdatedBefore(ctx.env.DB, now - STALLED_AFTER, 50)) {
-    if (ACTIVE_STATES.includes(rec.state)) {
-      await finish(ctx, rec, 'failed', 'BULK_RUN_STALLED');
-      ctx.log.warn('passes.bulk_run_swept', {
-        orgId: rec.orgId,
-        runId: rec.id,
-        code: 'BULK_RUN_STALLED',
-      });
-    } else if (rec.updatedAt < now - KEEP_ENDED) await deleteRun(ctx.env.DB, rec.id);
+  for (const rec of await stalledRuns(ctx.env.DB, now - STALLED_AFTER, 50)) {
+    await finish(ctx, rec, 'failed', 'BULK_RUN_STALLED');
+    ctx.log.warn('passes.bulk_run_swept', {
+      orgId: rec.orgId,
+      runId: rec.id,
+      code: 'BULK_RUN_STALLED',
+    });
   }
+  await deleteEndedBefore(ctx.env.DB, now - KEEP_ENDED);
 }

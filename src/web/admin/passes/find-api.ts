@@ -4,11 +4,12 @@ import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
 import { type PassView, PassViewListSchema } from '@/shared/contracts/pass-views.ts';
 import { PassListSchema } from '@/shared/contracts/passes.ts';
 import { api } from '../../lib/api.ts';
-import { useMode } from '../../lib/mode.ts';
+import { getMode, useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { FIND_VIEW_CHIPS } from './find-query.ts';
 
-const viewsKey = (orgId: string | undefined) => ['admin', 'passes', 'views', orgId] as const;
+const viewsKey = (orgId: string | undefined) =>
+  ['admin', 'passes', 'views', orgId, getMode()] as const;
 
 /** The org's saved views of the passes list. */
 export function useSavedViews(orgId: string | undefined, enabled: boolean) {
@@ -17,16 +18,17 @@ export function useSavedViews(orgId: string | undefined, enabled: boolean) {
     queryFn: ({ signal }) =>
       api.get('/api/v1/passes/views', PassViewListSchema, { query: { orgId }, signal }),
     enabled: enabled && Boolean(orgId),
-    select: (r) => r.items,
   });
 }
 
 export function useSaveViews(orgId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (items: PassView[]) =>
-      api.put('/api/v1/passes/views', PassViewListSchema, { orgId, items }),
+    mutationFn: (body: { items: PassView[]; revision: number }) =>
+      api.put('/api/v1/passes/views', PassViewListSchema, { orgId, ...body }),
     onSuccess: (saved) => qc.setQueryData(viewsKey(orgId), saved),
+    // A stale save (another admin changed the list): read the list again.
+    onError: () => qc.invalidateQueries({ queryKey: viewsKey(orgId) }),
   });
 }
 

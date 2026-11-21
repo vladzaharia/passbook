@@ -19,12 +19,12 @@ beforeAll(async () => {
   await kit.pass({ memberName: 'Ana Test', mode: 'test' });
 });
 
-const call = (method: string, path: string, body?: unknown) =>
+const call = (method: string, path: string, body?: unknown, headers = auth.admin()) =>
   app.request(
     `${ORIGIN}/api/v1${path}`,
     {
       method,
-      headers: { ...auth.admin(), 'content-type': 'application/json' },
+      headers: { ...headers, 'content-type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     },
     kit.env,
@@ -103,17 +103,49 @@ describe('saved views', () => {
   const views = [
     { id: 'monthly', name: 'Monthly', filter: { match: [{ input: 'plan', values: ['Monthly'] }] } },
   ];
-  it('keeps the list per organization and refuses duplicates', async () => {
-    expect((await call('PUT', '/passes/views', { orgId: kit.org.id, items: views })).status).toBe(
-      200,
-    );
-    const got = await call('GET', `/passes/views?orgId=${kit.org.id}`);
-    expect(((await got.json()) as { items: unknown[] }).items).toEqual(views);
-    const dup = await call('PUT', '/passes/views', {
+  const read = async (mode?: 'test') =>
+    (await (
+      await call(
+        'GET',
+        `/passes/views?orgId=${kit.org.id}`,
+        undefined,
+        auth.admin(mode ? { mode } : {}),
+      )
+    ).json()) as { items: unknown[]; revision: number };
+
+  it('keeps the list per organization and mode, with a revision', async () => {
+    const put = (items: unknown[], revision: number, mode?: 'test') =>
+      call(
+        'PUT',
+        '/passes/views',
+        { orgId: kit.org.id, items, revision },
+        auth.admin(mode ? { mode } : {}),
+      );
+    expect((await put(views, 0)).status).toBe(200);
+    expect(await read()).toEqual({ items: views, revision: 1 });
+    expect(await read('test')).toEqual({ items: [], revision: 0 });
+    // A save made on a stale revision is refused.
+    await expectProblem(await put([], 0), 409, 'VIEWS_CHANGED');
+    expect((await put([], 1)).status).toBe(200);
+    expect((await read()).revision).toBe(2);
+    expect(
+      (
+        await call('PUT', '/passes/views', {
+          orgId: kit.org.id,
+          items: [...views, ...views],
+          revision: 2,
+        })
+      ).status,
+    ).toBe(422);
+  });
+
+  it('stores no holder address', async () => {
+    const res = await call('PUT', '/passes/views', {
       orgId: kit.org.id,
-      items: [...views, ...views],
+      items: [{ id: 'x', name: 'Ana', filter: { holderEmail: 'ana@example.com' } }],
+      revision: 0,
     });
-    expect(dup.status).toBe(422);
+    expect(res.status).toBe(422);
   });
 
   it('does not read or write another organization', async () => {
@@ -121,7 +153,7 @@ describe('saved views', () => {
     expect((await call('GET', `/passes/views?orgId=${other.id}`)).status).toBeGreaterThanOrEqual(
       403,
     );
-    const res = await call('PUT', '/passes/views', { orgId: other.id, items: [] });
+    const res = await call('PUT', '/passes/views', { orgId: other.id, items: [], revision: 0 });
     expect(res.status).toBeGreaterThanOrEqual(403);
     const user = await app.request(
       `${ORIGIN}/api/v1/passes/views?orgId=${kit.org.id}`,

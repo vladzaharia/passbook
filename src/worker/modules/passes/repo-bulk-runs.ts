@@ -174,23 +174,70 @@ export async function requestStop(db: D1Database, id: string): Promise<boolean> 
   return result.changes === 1;
 }
 
-export async function runsUpdatedBefore(
+/** Active runs that have not moved since `before`: the sweeper fails them. */
+export async function stalledRuns(
   db: D1Database,
   before: number,
   limit: number,
 ): Promise<BulkRunRecord[]> {
   const rows = await all<Row>(
     db,
-    `SELECT ${COLUMNS} FROM pass_bulk_runs WHERE moved_at < ? ORDER BY moved_at LIMIT ?`,
+    `SELECT ${COLUMNS} FROM pass_bulk_runs WHERE state IN ('queued', 'running') AND moved_at < ?
+     ORDER BY moved_at LIMIT ?`,
     [before, limit],
   );
   return rows.map(toRecord);
 }
 
-export async function deleteRun(db: D1Database, id: string): Promise<void> {
-  await run(db, "DELETE FROM pass_bulk_runs WHERE id = ? AND state NOT IN ('queued', 'running')", [
-    id,
-  ]);
+/** Retention: ended runs older than `before` are deleted. */
+export async function deleteEndedBefore(db: D1Database, before: number): Promise<void> {
+  await run(
+    db,
+    "DELETE FROM pass_bulk_runs WHERE state NOT IN ('queued', 'running') AND moved_at < ?",
+    [before],
+  );
+}
+
+/** Whether a live lock (touched since `staleBefore`) is held for the org and mode. */
+export async function lockHeld(
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  staleBefore: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      'SELECT 1 AS x FROM pass_bulk_locks WHERE org_id = ? AND mode = ? AND moved_at >= ?',
+      [orgId, mode, staleBefore],
+    )) !== null
+  );
+}
+
+/** Whether the run still holds the org-and-mode lock (a takeover of a stale one moves it to another run). */
+export async function holdsLock(
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  runId: string,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      'SELECT 1 AS x FROM pass_bulk_locks WHERE org_id = ? AND mode = ? AND run_id = ?',
+      [orgId, mode, runId],
+    )) !== null
+  );
+}
+
+/** The stop flag, read before every pass. */
+export async function stopFlag(db: D1Database, id: string): Promise<boolean> {
+  const row = await first<{ s: number }>(
+    db,
+    'SELECT stop_requested AS s FROM pass_bulk_runs WHERE id = ?',
+    [id],
+  );
+  return row?.s === 1;
 }
 
 /** The newest run of an organization and mode. */

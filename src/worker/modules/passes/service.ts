@@ -1,11 +1,11 @@
 import type { Personalization } from '../../../passkit/types.ts';
-import type { Check } from '../../platform/authority-checks.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { dropPrintPdfs } from '../prints/pdf-drop.ts';
+import { pinnedStatus, type RunWrite } from './bulk-write.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
 import { assertExternalIdFree, externalIdUpdateGuard } from './external-id.ts';
@@ -228,7 +228,7 @@ async function setStatus(
   status: 'active' | 'voided',
   scope: ScopeArg,
   authority?: TenantPassWrite,
-  extraChecks?: readonly Check[],
+  runWrite?: RunWrite,
 ) {
   const current = await getPassForWrite(ctx.env.DB, passId, scope);
   if (current.removedAt !== null)
@@ -239,8 +239,8 @@ async function setStatus(
     cause: causeOf(actor),
     actor,
     ...(authority ? { authority } : {}),
-    ...(extraChecks ? { extraChecks } : {}),
-    mutate: () => ({ status }),
+    ...(runWrite ? { extraChecks: runWrite.checks, dispatch: false as const } : {}),
+    mutate: pinnedStatus(runWrite, status),
   });
   // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.
   if (status === 'voided') await dropPrintPdfs(ctx, result.pass);
@@ -251,6 +251,7 @@ async function setStatus(
     action: status === 'voided' ? 'pass.void' : 'pass.unvoid',
     targetType: 'pass',
     targetId: passId,
+    ...(runWrite ? { detail: { runId: runWrite.runId } } : {}),
   });
   await recordPassEvent(ctx, {
     orgId: result.pass.orgId,
@@ -268,8 +269,8 @@ export const voidPass = (
   id: string,
   scope: ScopeArg,
   authority?: TenantPassWrite,
-  extraChecks?: readonly Check[],
-) => setStatus(ctx, actor, id, 'voided', scope, authority, extraChecks);
+  runWrite?: RunWrite,
+) => setStatus(ctx, actor, id, 'voided', scope, authority, runWrite);
 export const unvoidPass = (
   ctx: ServiceContext,
   actor: Actor,

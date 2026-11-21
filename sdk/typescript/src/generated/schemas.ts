@@ -1515,6 +1515,7 @@ export type PassViews = {
     name: string;
     filter: PassFilter;
   }>;
+  revision: number;
 };
 
 export type PassViewsReplaceParams = {
@@ -1523,6 +1524,7 @@ export type PassViewsReplaceParams = {
     name: string;
     filter: PassFilter;
   }>;
+  revision: number;
   orgId?: string;
 };
 

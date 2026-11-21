@@ -80,6 +80,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "DELETE /api/v1/pass-imports/mappings operation removed",
+    "class": "breaking",
+    "operationId": "pass-imports.deletePassImportsMappings",
+    "op": "DELETE /api/v1/pass-imports/mappings",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
@@ -280,12 +288,28 @@
     "note": "Reads one provisioning run and its steps."
   },
   {
+    "key": "GET /api/v1/metrics/overview 200.setup.releasedTemplates: field removed",
+    "class": "breaking",
+    "operationId": "metrics.getMetricsOverview",
+    "op": "GET /api/v1/metrics/overview",
+    "change": "200.setup.releasedTemplates: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/metrics/platform/developer new operation",
     "class": "additive",
     "operationId": "metrics.getMetricsPlatformDeveloper",
     "op": "GET /api/v1/metrics/platform/developer",
     "change": "new operation",
     "note": "Platform admins: sandboxes by quickstart step, completion and time to first pass, last 30 days."
+  },
+  {
+    "key": "GET /api/v1/metrics/platform/overview 200.setup.releasedTemplates: field removed",
+    "class": "breaking",
+    "operationId": "metrics.getMetricsPlatformOverview",
+    "op": "GET /api/v1/metrics/platform/overview",
+    "change": "200.setup.releasedTemplates: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -382,6 +406,14 @@
     "op": "GET /api/v1/pass-imports/{id}/rows",
     "change": "200.items[].wouldBe: field added",
     "note": "Each import row shows the fields it changes and what the pass would look like (changes, wouldBe)."
+  },
+  {
+    "key": "GET /api/v1/pass-imports/mappings operation removed",
+    "class": "breaking",
+    "operationId": "pass-imports.getPassImportsMappings",
+    "op": "GET /api/v1/pass-imports/mappings",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/passes 200.count: field added",
@@ -528,12 +560,28 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
+    "key": "GET /api/v1/template-reviews operation removed",
+    "class": "breaking",
+    "operationId": "templates.getTemplateReviews",
+    "op": "GET /api/v1/template-reviews",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/templates/{id} 200.release: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesById",
     "op": "GET /api/v1/templates/{id}",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/sample.csv operation removed",
+    "class": "breaking",
+    "operationId": "templates.getTemplatesByIdSampleCsv",
+    "op": "GET /api/v1/templates/{id}/sample.csv",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
@@ -888,6 +936,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "POST /api/v1/orgs body.addMe: input field removed",
+    "class": "breaking",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "body.addMe: input field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
@@ -950,6 +1006,22 @@
     "op": "POST /api/v1/orgs/invitations/accept",
     "change": "200.testOnly: field added",
     "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/email-rest 200.alreadyQueued: field removed",
+    "class": "breaking",
+    "operationId": "pass-imports.postPassImportsByIdEmailRest",
+    "op": "POST /api/v1/pass-imports/{id}/email-rest",
+    "change": "200.alreadyQueued: field removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/undo operation removed",
+    "class": "breaking",
+    "operationId": "pass-imports.postPassImportsByIdUndo",
+    "op": "POST /api/v1/pass-imports/{id}/undo",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",
@@ -1144,6 +1216,14 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "POST /api/v1/templates/{id}/review operation removed",
+    "class": "breaking",
+    "operationId": "templates.postTemplatesByIdReview",
+    "op": "POST /api/v1/templates/{id}/review",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/templates/{id}/review-requests new operation",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdReviewRequests",
@@ -1334,6 +1414,14 @@
     "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/pass-imports/mappings operation removed",
+    "class": "breaking",
+    "operationId": "pass-imports.putPassImportsMappings",
+    "op": "PUT /api/v1/pass-imports/mappings",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "PUT /api/v1/passes/views new operation",

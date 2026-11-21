@@ -10,12 +10,18 @@ export const PassViewSchema = z.strictObject({
   /** Chosen by the client; unique within the list. */
   id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/),
   name: z.string().trim().min(1).max(40),
-  filter: PassFilterSchema,
+  // No holder address is stored: it would outlive an erasure of the holder.
+  filter: PassFilterSchema.refine((f) => f.holderEmail === undefined, {
+    message: 'A view cannot hold an email address.',
+    path: ['holderEmail'],
+  }),
 });
 export type PassView = z.infer<typeof PassViewSchema>;
 
 export const PassViewListSchema = z.object({
   items: z.array(PassViewSchema).max(PASS_VIEWS_MAX),
+  /** Send it back with a save: a stale one answers 409 `VIEWS_CHANGED`. 0 when nothing is stored. */
+  revision: z.number().int().min(0),
 });
 
 export const PassViewsQuerySchema = z.object({ orgId: IdSchema.optional() });

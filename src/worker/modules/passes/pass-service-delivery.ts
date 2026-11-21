@@ -65,6 +65,8 @@ export async function resendEmail(
   authority?: TenantPassWrite,
   /** A deferred run's starter: the queueing batch proves its revisions. */
   queuedFor?: DeliveryActor[],
+  /** A bulk run: its id goes in the audit. */
+  runId?: string,
 ): Promise<void> {
   const pass = await getPassForWrite(ctx.env.DB, passId, scope);
   if (pass.removedAt !== null)
@@ -87,6 +89,7 @@ export async function resendEmail(
       action: 'pass.resend_email',
       targetType: 'pass',
       targetId: passId,
+      ...(runId ? { detail: { runId } } : {}),
     },
     ...(authority ? { authority } : {}),
     ...(queuedFor ? { queuedFor } : {}),

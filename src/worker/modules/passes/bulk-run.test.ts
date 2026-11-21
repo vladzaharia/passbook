@@ -1,13 +1,43 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { bulkInstanceId, runBulkChunk, sweepBulkRuns } from './bulk-run.ts';
+import { pinnedStatus } from './bulk-write.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
-import { readRun } from './repo-bulk-runs.ts';
+import { insertRun, readRun, saveRun } from './repo-bulk-runs.ts';
+import { getPass } from './repo-read-pass.ts';
+import { getPassLifecycle } from './repo-remove.ts';
+import { claimRemovalTrusted } from './repo-remove-compensate.ts';
+import { voidPass } from './service.ts';
 import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
+
+// Faults for the replay and revocation tests: a flag makes the Nth mail throw, another makes the read proof lie.
+const fault = vi.hoisted(() => ({ mailAt: 0, mails: [] as string[], proofLies: false }));
+vi.mock('./pass-service-delivery.ts', async (original) => {
+  const real = await original<typeof import('./pass-service-delivery.ts')>();
+  return {
+    ...real,
+    resendEmail: async (...args: Parameters<typeof real.resendEmail>) => {
+      if (fault.mailAt > 0 && fault.mails.length + 1 === fault.mailAt) {
+        fault.mailAt = 0;
+        throw new Error('flaky');
+      }
+      await real.resendEmail(...args);
+      fault.mails.push(args[2]);
+    },
+  };
+});
+vi.mock('./repo-bulk-principal.ts', async (original) => {
+  const real = await original<typeof import('./repo-bulk-principal.ts')>();
+  return {
+    ...real,
+    reissuePrincipalValid: (...args: Parameters<typeof real.reissuePrincipalValid>) =>
+      fault.proofLies ? Promise.resolve(true) : real.reissuePrincipalValid(...args),
+  };
+});
 
 const ORIGIN = 'https://wallet.test';
 let kit: Kit;
@@ -15,6 +45,9 @@ let auth: TenantTestAuth;
 let app: ReturnType<typeof createApp>;
 
 beforeEach(async () => {
+  fault.mailAt = 0;
+  fault.mails = [];
+  fault.proofLies = false;
   kit = await setupKit();
   auth = await setupTenantTestAuth(kit);
   app = createApp({ stores: auth.stores, clock: kit.clock });
@@ -196,5 +229,127 @@ describe('bulk runs', () => {
     expect((await cur())?.state).toBe('done');
     kit.clock.advance(61 * 60_000);
     expect(await cur()).toBeUndefined();
+  });
+
+  it('pins a void to the snapshot version inside the write (PASS_CHANGED, pass stays active)', async () => {
+    const pass = await kit.pass({ memberName: 'Pin Me' });
+    const scope = { orgId: kit.org.id, mode: 'live' as const, principal: 'session' as const };
+    const stale = { checks: [], version: pass.version - 1, runId: 'r' };
+    await expect(
+      voidPass(jobCtxOf(kit), { type: 'system', id: null }, pass.id, scope, undefined, stale),
+    ).rejects.toMatchObject({ code: 'PASS_CHANGED' });
+    const after = await call('GET', `/passes/${pass.id}`);
+    expect(((await after.json()) as { status: string }).status).toBe('active');
+    expect(pinnedStatus(undefined, 'voided')({ version: 9 })).toEqual({ status: 'voided' });
+  });
+
+  it('never mails a pass twice when a step is retried after a fault', async () => {
+    const started = (await (await start(3, 'send_email')).json()) as Run;
+    fault.mailAt = 3;
+    await expect(runBulkChunk(jobCtxOf(kit), started.id)).rejects.toThrow('flaky');
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    expect(fault.mails).toHaveLength(3);
+    expect(new Set(fault.mails).size).toBe(3);
+    expect(await get(started.id)).toMatchObject({ state: 'done', done: 3 });
+  });
+
+  it('skips email for a voided pass or one that moved since the snapshot', async () => {
+    const started = (await (await start(3, 'send_email')).json()) as Run;
+    const list = (await (await call('GET', `/passes?orgId=${kit.org.id}&limit=5`)).json()) as {
+      items: { id: string; title: string }[];
+    };
+    const [a, b] = list.items.filter((p) => p.title.startsWith('Ana'));
+    await call('POST', `/passes/${a?.id}/void`);
+    await call('PATCH', `/passes/${b?.id}`, { input: { memberName: 'Ana Moved' } });
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    expect(await get(started.id)).toMatchObject({
+      done: 1,
+      skippedBy: { NOT_ACTIVE: 1, PASS_CHANGED: 1 },
+    });
+  });
+
+  it('finishes a removal that was claimed but never published', async () => {
+    const [victim] = (
+      (await (await call('GET', `/passes?orgId=${kit.org.id}&limit=5`)).json()) as {
+        items: { id: string; title: string }[];
+      }
+    ).items.filter((p) => p.title.startsWith('Ana'));
+    // A crash after the claim: removed_at is set, nothing was published.
+    const pass = await getPass(kit.env.DB, victim?.id ?? '');
+    if (!pass) throw new Error('missing');
+    const lifecycle = await getPassLifecycle(kit.env.DB, pass);
+    await claimRemovalTrusted(
+      kit.env.DB,
+      pass.id,
+      { at: kit.clock.now(), message: null, priorStatus: 'active' },
+      { pass, generation: lifecycle?.generation ?? 0, now: kit.clock.now() },
+    );
+    const started = (await (await start(3, 'remove')).json()) as Run;
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    expect(await get(started.id)).toMatchObject({ state: 'done', done: 3 });
+    const detail = (await (await call('GET', `/passes/${pass.id}`)).json()) as { status: string };
+    expect(detail.status).toBe('voided');
+  });
+
+  for (const action of ['void', 'remove', 'send_email'] as const)
+    it(`refuses a ${action} write when the starter is revoked between the read proof and the write`, async () => {
+      const started = (await (await start(3, action)).json()) as Run;
+      await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE org_id = ?', [
+        kit.clock.now(),
+        kit.org.id,
+      ]);
+      fault.proofLies = true;
+      await runBulkChunk(jobCtxOf(kit), started.id);
+      expect((await readRun(kit.env.DB, started.id))?.done).toBe(0);
+      expect(fault.mails).toHaveLength(0);
+      const count = await first<{ n: number }>(
+        kit.env.DB,
+        "SELECT COUNT(*) AS n FROM passes WHERE org_id = ? AND (status = 'voided' OR removed_at IS NOT NULL)",
+        [kit.org.id],
+      );
+      expect(count?.n).toBe(0);
+    });
+
+  it('is not starved by ended runs, and a run that lost its lock stops', async () => {
+    const stalled = (await (await start(3)).json()) as Run;
+    const rec = await readRun(kit.env.DB, stalled.id);
+    if (!rec) throw new Error('missing');
+    for (let i = 0; i < 55; i++) {
+      const ended = { ...rec, id: `ended${i}`, createdAt: 1, updatedAt: 1 };
+      await insertRun(kit.env.DB, ended);
+      await saveRun(kit.env.DB, { ...ended, state: 'done', finishedAt: 2, updatedAt: 2 });
+    }
+    kit.clock.advance(11 * 60_000);
+    await sweepBulkRuns(jobCtxOf(kit));
+    expect(await get(stalled.id)).toMatchObject({ state: 'failed' });
+    // Another run holds the lock now: the old one does not go on beside it.
+    const next = (await (await start(3)).json()) as Run;
+    await run(kit.env.DB, "UPDATE pass_bulk_locks SET run_id = 'other' WHERE org_id = ?", [
+      kit.org.id,
+    ]);
+    await runBulkChunk(jobCtxOf(kit), next.id);
+    expect(await readRun(kit.env.DB, next.id)).toMatchObject({
+      state: 'failed',
+      code: 'BULK_RUN_SUPERSEDED',
+    });
+  });
+
+  it('answers the first run to a repeated Idempotency-Key', async () => {
+    const body = { action: 'send_email', orgId: kit.org.id, selection: { filter, expectCount: 3 } };
+    const send = () =>
+      call('POST', '/passes/bulk-runs', body, { ...auth.admin(), 'idempotency-key': 'k1' });
+    const first = (await (await send()).json()) as Run;
+    const again = (await (await send()).json()) as Run;
+    expect(again.id).toBe(first.id);
+  });
+
+  it('ends a run whose page is short as lost', async () => {
+    const started = (await (await start(3)).json()) as Run;
+    await kit.env.BUCKET.put(`bulk-runs/${kit.org.id}/${started.id}/0.json`, '[]');
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    expect(await readRun(kit.env.DB, started.id)).toMatchObject({
+      state: 'failed',
+      code: 'BULK_RUN_LOST',
+    });
   });
 });

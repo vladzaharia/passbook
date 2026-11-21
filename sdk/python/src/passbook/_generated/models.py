@@ -5207,6 +5207,7 @@ class PassVersion(_Model):
 
 class PassViews(_Model):
     items: _List[PassViewsItemsItem]
+    revision: int
 
 class PassViewsItemsItem(_Model):
     id: str
@@ -5215,6 +5216,7 @@ class PassViewsItemsItem(_Model):
 
 class PassViewsReplaceParams(_Model):
     items: _List[PassViewsReplaceParamsItemsItem]
+    revision: int
     orgId: str | None = None
 
 class PassViewsReplaceParamsItemsItem(_Model):
