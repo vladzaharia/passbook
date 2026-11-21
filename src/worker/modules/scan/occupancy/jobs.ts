@@ -3,6 +3,7 @@
 import { type Grant, grantedBatch } from '../../../platform/authority.ts';
 import { AppError } from '../../../platform/errors.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
+import { readOrgTimeZone } from '../repo-org-clock.ts';
 import { InvalidScanRetentionProof } from '../scan-retention-proof.ts';
 import { effectiveTimeZone, indexZones } from '../zones-tree.ts';
 import { exitGrant, type OutCause, rearmGrant } from './auto-exit.ts';
@@ -29,11 +30,16 @@ type Verdict = { exit: OutCause } | { rearm: number | null };
  * (`zone`). A due time from old settings is re-armed, not acted on, unless a zone save above the row
  * set it (a tap-out stamps its own save time as the due time).
  */
-export function verdict(zones: readonly OccZone[], row: DueRow, now: number): Verdict | null {
+export function verdict(
+  zones: readonly OccZone[],
+  row: DueRow,
+  now: number,
+  orgTimeZone: string | null = null,
+): Verdict | null {
   if (!row.scope.startsWith('zone:')) return null;
   const zone = zones.find((z) => zonePlace(z.id) === row.scope);
   if (!zone || !tracked(zone)) return { exit: 'zone' };
-  const clock = effectiveTimeZone(indexZones(zones), zone.id);
+  const clock = effectiveTimeZone(indexZones(zones), zone.id, orgTimeZone);
   const due = dueAt(zone, row.entered_at, clock);
   if (due !== null && due <= now) {
     const stay = zone.maxStayMinutes == null ? null : row.entered_at + zone.maxStayMinutes * 60_000;
@@ -61,6 +67,7 @@ export async function autoTapOut(ctx: ServiceContext, makeExit = exitGrant): Pro
   const memory = await readUnsigned(db);
   const skip = new Set(waiting(memory, now));
   const zones = new Map<string, OccZone[]>();
+  const clocks = new Map<string, string | null>();
   const seen = new Set<string>();
   const tally = { due: 0, exits: 0, rearms: 0, refused: 0, unsigned: 0 };
   let dirty = false;
@@ -73,7 +80,8 @@ export async function autoTapOut(ctx: ServiceContext, makeExit = exitGrant): Pro
       seen.add(stayKey(row));
       const org = zones.get(row.org_id) ?? (await occupancyZones(db, row.org_id));
       zones.set(row.org_id, org);
-      const v = verdict(org, row, now);
+      if (!clocks.has(row.org_id)) clocks.set(row.org_id, await readOrgTimeZone(db, row.org_id));
+      const v = verdict(org, row, now, clocks.get(row.org_id) ?? null);
       if (!v) continue;
       const list = org;
       if ('exit' in v) {
