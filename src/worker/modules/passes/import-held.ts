@@ -94,7 +94,7 @@ export async function releaseHeldPage(
     // An undo (or a suspended org) won the race for the claim: nothing more to send, and not a failure.
     if (
       error instanceof AppError &&
-      (error.code === 'IMPORT_STATE' || error.code === 'IMPORT_NOT_FOUND')
+      ['IMPORT_STATE', 'IMPORT_NOT_FOUND', 'ORG_ACCESS_CHANGED'].includes(error.code)
     ) {
       ctx.log.info('pass_import.held_stopped', { importId: imp.id, code: error.code });
       return { next: null };

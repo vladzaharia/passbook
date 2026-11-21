@@ -87,14 +87,22 @@ export async function failUndo(
   ctx: ServiceContext,
   authority: TenantPassWrite,
   id: string,
+  /** The run that was seen dead: a newer run is not failed by a request that saw the old one. */
+  instance: string | null,
 ): Promise<void> {
-  const g = importGrant(ctx, authority, id, { reverted: UNDO_RUNNING });
+  const g = importGrant(ctx, authority, id, { reverted: UNDO_RUNNING, undo_instance: instance });
   g.update('pass_imports', { where: { id }, require: 'one', set: { reverted: UNDO_FAILED } });
   await g.commit();
 }
 
 /** A write of the undo's own rows, by the workflow, only while the undo is running. */
-function undoGrant(ctx: ServiceContext, s: Scope, purpose: string, inactiveOk = false) {
+function undoGrant(
+  ctx: ServiceContext,
+  s: Scope,
+  purpose: string,
+  inactiveOk = false,
+  instance?: string | null,
+) {
   return jobGrant(ctx, {
     purpose,
     job: 'pass-import',
@@ -107,7 +115,12 @@ function undoGrant(ctx: ServiceContext, s: Scope, purpose: string, inactiveOk = 
     checks: [
       exactlyOne(
         'pass_imports',
-        { id: s.importId, reverted: UNDO_RUNNING, state: inList(UNDOABLE) },
+        {
+          id: s.importId,
+          reverted: UNDO_RUNNING,
+          state: inList(UNDOABLE),
+          ...(instance === undefined ? {} : { undo_instance: instance }),
+        },
         undefined,
         'stale',
       ),
@@ -136,8 +149,14 @@ export async function markUndone(
 }
 
 /** Ends the run: done, or failed with a stable code (the audit row keeps it) so a new ask can start it again. */
-export async function finishUndo(ctx: ServiceContext, s: Scope, failed?: string): Promise<void> {
-  const g = undoGrant(ctx, s, 'org_mode.job.pass_import.undo_finish', true);
+export async function finishUndo(
+  ctx: ServiceContext,
+  s: Scope,
+  failed?: string,
+  /** The sweeper names the run it saw dead. */
+  instance?: string | null,
+): Promise<void> {
+  const g = undoGrant(ctx, s, 'org_mode.job.pass_import.undo_finish', true, instance);
   g.update('pass_imports', {
     where: { id: s.importId },
     require: 'one',

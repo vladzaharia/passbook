@@ -30,7 +30,6 @@ export function problem(
     field: p.field?.slice(0, 64) ?? null,
     // The label the form shows and the cell as written: org data for the operator, never for a holder.
     label: (p.label ?? (p.field ? KEY_LABELS[p.field] : undefined) ?? null)?.slice(0, 200) ?? null,
-    value: p.value?.slice(0, 200) ?? null,
     message: p.message.slice(0, 200),
   };
 }

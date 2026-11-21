@@ -78,8 +78,14 @@ export async function undoImport(
       : 'missing';
     const young = status === 'missing' && now - (imp.undo_at ?? 0) < START_GRACE_MS;
     if (!DEAD.includes(status) || young) return undoResultOf(ctx.env.DB, imp);
-    await failUndo(ctx, a, id);
+    try {
+      await failUndo(ctx, a, id, imp.undo_instance);
+    } catch (error) {
+      // Another request failed it, or started a newer run, first: answer with what is there now.
+      if (!(error instanceof AppError)) throw error;
+    }
     imp = await requireImport(ctx, a, id);
+    if (imp.reverted === UNDO_RUNNING) return undoResultOf(ctx.env.DB, imp);
   }
   if (imp.reverted === UNDO_DONE) return undoResultOf(ctx.env.DB, imp);
   if (imp.state === 'committing') throw new ConflictError('This import is running.', 'IMPORT_BUSY');

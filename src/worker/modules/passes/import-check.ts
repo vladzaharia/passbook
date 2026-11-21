@@ -23,6 +23,8 @@ export interface CheckedRow {
   externalId: string | null;
   holderEmail: string | null;
   input: Personalization | null;
+  /** Cells the plan's enum or date step could not read, as written (200 characters): kept with the row's input, not in it. */
+  raw?: Record<string, string>;
   problems: ImportProblem[];
 }
 
@@ -67,7 +69,6 @@ export function rowChecker(rc: RowCheckContext) {
           column: columnOf(name),
           field: name || null,
           label: label || null,
-          value: shown(input[name]),
           code: issue.code,
           message: inputMessage(issue, label || 'The pass', props[name]),
         }),
@@ -81,7 +82,6 @@ export function rowChecker(rc: RowCheckContext) {
             column: columnOf(issue.path),
             field: issue.path || null,
             label: issue.path ? labelOf(props[issue.path], issue.path) : null,
-            value: shown(input[issue.path]),
             code: issue.code ?? 'ACCESS_INPUT',
             message: issue.message,
           }),
@@ -101,6 +101,7 @@ function unreadValues(
   rc: RowCheckContext,
   record: Record<string, Json>,
   input: Personalization,
+  raw: Record<string, string>,
 ): ImportProblem[] {
   const props = (rc.manifest.inputs.properties ?? {}) as Record<string, Record<string, unknown>>;
   const out: ImportProblem[] = [];
@@ -110,12 +111,13 @@ function unreadValues(
     const column = headerOf(entry.from, rc.header);
     const cell = column === null ? undefined : record[column];
     if (cell === undefined || input[field] !== undefined) continue;
+    const text = shown(cell);
+    if (text !== null) raw[field] = text.slice(0, 200);
     out.push(
       problem(row, {
         column,
         field,
         label: labelOf(props[field], field),
-        value: shown(cell),
         code: kind === 'enum' ? 'IMPORT_OPTION_UNKNOWN' : 'IMPORT_DATE_UNREADABLE',
         message: inputMessage(
           { keyword: READ_KEYWORD[kind], message: '' },
@@ -138,6 +140,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
 
   return rows.map(({ row, cells: raw }): CheckedRow => {
     const problems: ImportProblem[] = [];
+    const rawCells: Record<string, string> = {};
     const add = (p: Parameters<typeof problem>[1]) => problems.push(problem(row, p));
     const out = (
       input: Personalization | null,
@@ -148,6 +151,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
       externalId,
       holderEmail,
       input,
+      raw: rawCells,
       problems,
     });
 
@@ -173,7 +177,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
     // 2-4. Map, read the text as the input types, check each value on its own. A blank cell is unset.
     const record = recordOf(header, cells);
     const input = coerceInput(rc.manifest.inputs, applyMapping(plan.mapping, record));
-    problems.push(...unreadValues(row, rc, record, input));
+    problems.push(...unreadValues(row, rc, record, input, rawCells));
     problems.push(...checkInputs(row, input, 'keys'));
 
     // 6. Holder email.
@@ -188,7 +192,6 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
         add({
           column: emailColumn,
           field: 'holderEmail',
-          value: shown(mappedEmail),
           code: 'EMAIL_INVALID',
           message: IMPORT_TEXT.emailInvalid,
         });

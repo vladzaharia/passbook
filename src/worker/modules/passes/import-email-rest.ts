@@ -7,6 +7,7 @@ import { requireImport } from './import-service.ts';
 import { resendEmail } from './pass-service-delivery.ts';
 import { progressOf } from './repo-import-commit.ts';
 import { claimRows, emailCandidates, recordEmailRest, releaseRows } from './repo-import-email.ts';
+import { mailQueuedSince } from './repo-import-held.ts';
 import { UNDO_RUNNING } from './repo-import-undo.ts';
 import type { Actor } from './service.ts';
 
@@ -14,6 +15,8 @@ type Result = z.infer<typeof PassImportEmailRestResultSchema>;
 
 /** Rows per call; the client loops on `nextCursor`. */
 export const EMAIL_PAGE = 50;
+/** A held-mail claim this old was left by a step that died. */
+const STALE_CLAIM_MS = 10 * 60_000;
 const ENDED = ['done', 'failed', 'stale', 'expired'];
 
 /**
@@ -37,12 +40,14 @@ export async function emailRest(
   if (imp.committed_at === null || !ENDED.includes(imp.state))
     throw new ConflictError('This import created no passes.', 'IMPORT_STATE');
   const after = Number(cursor ?? 0);
+  const staleBefore = ctx.clock.now() - STALE_CLAIM_MS;
   const rows = await emailCandidates(
     ctx.env.DB,
     imp.id,
     imp.org_id,
     Number.isSafeInteger(after) ? after : 0,
     EMAIL_PAGE + 1,
+    staleBefore,
   );
   const page = rows.slice(0, EMAIL_PAGE);
   const won = new Set(
@@ -51,6 +56,7 @@ export async function emailRest(
       authority,
       imp.id,
       page.map((r) => r.row_no),
+      staleBefore,
     ),
   );
   const scope = {
@@ -63,7 +69,11 @@ export async function emailRest(
   for (const row of page) {
     if (!won.has(row.row_no)) continue;
     try {
-      await resendEmail(ctx, actor, row.pass_id, {}, scope, authority);
+      // A held claim a step left behind: its mail may already be queued, and is never queued twice.
+      const queued =
+        row.mail_pending_at !== null &&
+        (await mailQueuedSince(ctx.env.DB, row.pass_id, row.mail_pending_at));
+      if (!queued) await resendEmail(ctx, actor, row.pass_id, {}, scope, authority);
       sentRows.push(row.row_no);
     } catch (error) {
       if (!(error instanceof AppError)) {

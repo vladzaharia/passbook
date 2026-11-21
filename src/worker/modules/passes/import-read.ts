@@ -9,8 +9,8 @@ import { BOM, toCsv } from '../../../shared/csv/write.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { rowChanges } from './import-changes.ts';
-import type { ImportProblem } from './import-messages.ts';
-import { columnsOf, parsePlan } from './import-plan.ts';
+import { type ImportProblem, shown } from './import-messages.ts';
+import { columnsOf, parsePlan, splitInput } from './import-plan.ts';
 import { parseImport } from './import-source.ts';
 import {
   emailableCount,
@@ -26,6 +26,29 @@ import { undoResultOf, unrevertableCount } from './repo-import-undo.ts';
 import type { ImportRow } from './repo-imports.ts';
 
 const EDITING = ['mapping', 'checking', 'ready', 'stale'];
+
+/**
+ * The cell a problem is about, read from the row's own stored input (or key columns) when asked, so the
+ * 30-day clear of those columns clears it too: nothing about it is kept in the problem itself.
+ */
+function withValues(
+  problems: ImportProblem[],
+  row: { input: string | null; external_id: string | null; holder_email: string | null },
+): ImportProblem[] {
+  const { input, raw: unread } = splitInput(row.input);
+  return problems.map((p) => {
+    const raw =
+      p.field === 'externalId'
+        ? row.external_id
+        : p.field === 'holderEmail'
+          ? row.holder_email
+          : p.field
+            ? (input[p.field] ?? unread[p.field])
+            : undefined;
+    const value = shown(raw);
+    return value === null ? p : { ...p, value: value.slice(0, 200) };
+  });
+}
 
 export function problemsOf(
   ctx: ServiceContext,
@@ -84,7 +107,7 @@ export async function importDto(
     light || !checked ? [] : await problemRows(db, imp.id, PASS_IMPORT_PROBLEMS + 1);
   // Errors first, then warnings, each in file order.
   const flat = withProblems
-    .flatMap((r) => problemsOf(ctx, imp.id, r.problems))
+    .flatMap((r) => withValues(problemsOf(ctx, imp.id, r.problems), r))
     .sort(
       (a, b) => Number(b.severity === 'error') - Number(a.severity === 'error') || a.row - b.row,
     );
@@ -113,7 +136,7 @@ export async function importDto(
     previews: previews.map((p) => ({
       row: p.row_no,
       action: p.action as 'create' | 'update',
-      input: p.input ? (JSON.parse(p.input) as Record<string, never>) : {},
+      input: splitInput(p.input).input as Record<string, never>,
     })),
     problems: flat.slice(0, PASS_IMPORT_PROBLEMS),
     problemTotals: totals,

@@ -22,6 +22,7 @@ async function sweepStuckUndos(ctx: ServiceContext): Promise<void> {
         ctx,
         { orgId: u.org_id, mode: u.mode, importId: u.id },
         'IMPORT_UNDO_FAILED',
+        u.undo_instance,
       );
       ctx.log.warn('pass_import.undo_swept', {
         orgId: u.org_id,

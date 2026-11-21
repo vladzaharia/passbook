@@ -5,7 +5,7 @@ import { StarterSchema } from '../delivery/issuance-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { requireApprovedRelease } from '../templates/releases.ts';
 import { createPassRow } from './create.ts';
-import { parsePlan } from './import-plan.ts';
+import { parsePlan, splitInput } from './import-plan.ts';
 import { publishPass } from './publish.ts';
 import type { Pass } from './repo.ts';
 import {
@@ -117,7 +117,7 @@ async function createRow(
     templateVersion: imp.template_version ?? '',
     releaseId: imp.release_id ?? '',
     releaseGeneration: imp.release_generation ?? 0,
-    input: parseJson<Personalization>(row.input, {}),
+    input: splitInput(row.input).input as Personalization,
     holderEmail: row.holder_email,
     externalId: row.external_id,
     sendEmail: row.emailed === 1 && row.holder_email !== null,
@@ -142,7 +142,7 @@ async function updateRow(
   row: ImportRowRecord,
   keepManual: boolean,
 ): Promise<{ result: RowResult['result']; undo?: RowResult['undo'] }> {
-  const input = parseJson<Personalization>(row.input, {});
+  const input = splitInput(row.input).input as Personalization;
   let replayed = false;
   let earlier: { personalization: Personalization; fieldSources: Pass['fieldSources'] } | null =
     null;
