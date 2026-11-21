@@ -21,6 +21,7 @@ import {
 import { ipPrefix } from '../../platform/ip.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { assertSignIn } from '../../platform/sign-in-guard.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
@@ -95,6 +96,8 @@ async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   const sid = getCookie(c, SESSION_COOKIE);
   const session = sid ? await sessions.resolve(sid) : null;
   if (!session) throw unauthenticated();
+  // The console opens the scanner's admin views: an email link does not.
+  assertSignIn(c, session, 'idp');
   return { admin: session };
 }
 

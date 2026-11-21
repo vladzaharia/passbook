@@ -14,7 +14,7 @@ import {
   OrgMembershipParamSchema,
   OrgMembershipSchema,
 } from '../../../shared/contracts/index.ts';
-import { requireSession, type SessionAuth } from '../../platform/auth.ts';
+import { requireHolderSession, requireSession, type SessionAuth } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -44,7 +44,8 @@ export const membershipRoutes = createRouter({ bodyLimit: false });
 membershipRoutes.use('/invitations/accept', (c, next) =>
   c.req.method === 'GET' ? next() : requireSession(c, next),
 );
-membershipRoutes.use('/memberships/me', requireSession);
+// The caller's own list is read by the account menu and the setup banner; an email link may read it.
+membershipRoutes.use('/memberships/me', requireHolderSession);
 membershipRoutes.use('/:id/memberships', requireSession);
 membershipRoutes.use('/:id/memberships/:membershipId', requireSession);
 membershipRoutes.use('/:id/invitations', requireSession);

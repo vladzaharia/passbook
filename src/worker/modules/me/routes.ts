@@ -17,7 +17,7 @@ import {
   RefreshResponseSchema,
   RemovePassResponseSchema,
 } from '../../../shared/contracts/index.ts';
-import { currentUserId, requireSession } from '../../platform/auth.ts';
+import { currentUserId, requireHolderSession } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
@@ -45,7 +45,7 @@ type C = Context<AppBindings>;
 const sessionId = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
 
 export const meRoutes = createRouter();
-guard(meRoutes, requireSession);
+guard(meRoutes, requireHolderSession);
 meRoutes.use('*', limitBody(64 * 1024));
 
 register(

@@ -7,6 +7,7 @@ import { createApp } from '../app.ts';
 import { isKnownGuard } from './auth.ts';
 import { isPublicHandler } from './openapi.ts';
 import { declareKeyAccess, enforcesKeyAccess } from './openapi-security.ts';
+import { signInLevelOf } from './sign-in-guard.ts';
 
 // Every route needs a decision: a guard the inventory recognises (requireCaller from `auth`,
 // requireSession, requireAdmin, or a guard declaring key access), `public: true`, or a line below.
@@ -153,36 +154,78 @@ const toRegex = (path: string) =>
       .replace(/:[A-Za-z0-9_]+/g, '[^/]+')}/?$`,
   );
 
-/** Routes (method and path) that no recognised guard covers and that are not declared public. */
-function undecidedRoutes(
+/** Each route (method and path) with the handlers that cover it: its own middleware, then anything mounted over its path. */
+function coverage(
   routes: readonly RouterRoute[] = createApp({ stores: fakeAuth().stores }).routes,
-): string[] {
+): { key: string; route: RouterRoute; covering: RouterRoute[] }[] {
   const groups = new Map<string, number[]>();
   routes.forEach((r, i) => {
     if (r.method === 'ALL') return;
     const key = `${r.method} ${r.path}`;
     groups.set(key, [...(groups.get(key) ?? []), i]);
   });
-  const found: string[] = [];
+  const found: { key: string; route: RouterRoute; covering: RouterRoute[] }[] = [];
   for (const [key, own] of groups) {
     const last = Math.max(...own);
     const route = routes[last];
     if (!route) continue;
     const sample = route.path.replace(/:[A-Za-z0-9_]+/g, 'x');
-    // The route's own middleware (from `auth`), then anything mounted over its path before it.
     const covering = routes.filter(
       (r, i) =>
         i < last &&
         (own.includes(i) ||
           ((r.method === 'ALL' || r.method === route.method) && toRegex(r.path).test(sample))),
     );
-    const decided =
-      isPublicHandler(route.handler) ||
-      covering.some((g) => isKnownGuard(g.handler) || enforcesKeyAccess(g.handler));
-    if (!decided) found.push(key);
+    found.push({ key, route, covering });
   }
-  return found.sort();
+  return found;
 }
+
+/** Routes (method and path) that no recognised guard covers and that are not declared public. */
+function undecidedRoutes(routes?: readonly RouterRoute[]): string[] {
+  return coverage(routes)
+    .filter(
+      ({ route, covering }) =>
+        !(
+          isPublicHandler(route.handler) ||
+          covering.some((g) => isKnownGuard(g.handler) || enforcesKeyAccess(g.handler))
+        ),
+    )
+    .map(({ key }) => key)
+    .sort();
+}
+
+/** The sign-in level of every route a session guard covers: `idp` unless every such guard says `any`. */
+function signInLevels(): Record<string, 'idp' | 'any'> {
+  const levels: Record<string, 'idp' | 'any'> = {};
+  for (const { key, covering } of coverage()) {
+    const own = covering.map((g) => signInLevelOf(g.handler)).filter((l) => l !== undefined);
+    if (own.length > 0) levels[key] = own.includes('idp') ? 'idp' : 'any';
+  }
+  return levels;
+}
+
+/** Routes an email-link session may call (holder features). Every other session route needs a strong sign-in. */
+const SIGN_IN_ANY = [
+  'DELETE /api/v1/me/emails/:email',
+  'DELETE /api/v1/me/passes/:id',
+  'DELETE /api/v1/me/sessions/:id',
+  'GET /api/v1/me/emails',
+  'GET /api/v1/me/pass-removals/:id',
+  'GET /api/v1/me/passes',
+  'GET /api/v1/me/passes.pkpasses',
+  'GET /api/v1/me/passes/:id',
+  'GET /api/v1/me/passes/:id/barcode',
+  'GET /api/v1/me/sessions',
+  'GET /api/v1/orgs/memberships/me',
+  'POST /api/v1/me/emails',
+  'POST /api/v1/me/emails/:email/primary',
+  'POST /api/v1/me/passes/:id/lost-phone',
+  'POST /api/v1/me/passes/:id/refresh',
+  'POST /api/v1/me/passes/:id/resend',
+  'POST /api/v1/me/sessions/revoke-all',
+  'POST /api/v1/me/tags/:id/lost',
+];
 
 it("has a decision for every route, and only today's undecided ones are listed", () => {
   const listed = new Set([...PUBLIC, ...SCANNER, ...OWN_GUARD]);
@@ -217,4 +260,22 @@ it('counts a guard that enforces key access as a decision', () => {
   app.use('/api/v1/x', declareKeyAccess(noop, { read: ['passes:read'] }));
   app.get('/api/v1/x', (c) => c.text('x'));
   expect(undecidedRoutes(app.routes)).toEqual([]);
+});
+
+it('lets an email-link session reach only the holder routes, and deny every other session route by default', () => {
+  const levels = signInLevels();
+  expect(
+    Object.entries(levels)
+      .filter(([, level]) => level === 'any')
+      .map(([key]) => key)
+      .sort(),
+  ).toEqual(SIGN_IN_ANY);
+  // The console and the developer tools are on that list's complement.
+  for (const route of [
+    'GET /api/v1/orgs',
+    'POST /api/v1/developer/sandbox',
+    'POST /api/v1/developer/try-token',
+    'GET /api/v1/api-keys',
+  ])
+    expect(levels[route], route).toBe('idp');
 });
