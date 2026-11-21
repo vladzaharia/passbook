@@ -50,6 +50,8 @@ export async function place(
   pass: PassFacts,
   scope: 'pass' | 'user',
   rebind: { from: 'pass' | 'user' } | null,
+  /** A first assignment of a spare: its own grant purpose, and any active binding refuses. */
+  spare = false,
 ): Promise<Tag> {
   const off = await tagsRefusal(ctx, a.orgId);
   if (off) throw off;
@@ -63,6 +65,8 @@ export async function place(
     const tag = await tagTarget(ctx.env.DB, tagId);
     if (!tag || tag.orgId !== a.orgId || tag.mode !== a.mode) throw tagGone();
     const active = await activeBinding(ctx.env.DB, tagId);
+    if (spare && active)
+      throw new ConflictError('This tag is already assigned.', 'TAG_ALREADY_ASSIGNED');
     const decision = decideBind(tag, active, pass, { scope, move: false }, ctx.clock.now());
     if (decision.status === 'already_bound') return shown(ctx, a, tagId);
     const policy = await bindPolicy(ctx, {
@@ -93,7 +97,12 @@ export async function place(
       orgId: a.orgId,
       mode: a.mode,
     };
-    const g = tagGrant(ctx, 'org_mode.nfc.tag.rebind', a, bindChecks(plan));
+    const g = tagGrant(
+      ctx,
+      spare ? 'org_mode.nfc.tag.bind' : 'org_mode.nfc.tag.rebind',
+      a,
+      bindChecks(plan),
+    );
     const insert = addBind(g, ctx, plan);
     if (rebind)
       grantedAudit(
