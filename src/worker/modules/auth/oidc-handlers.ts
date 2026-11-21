@@ -170,6 +170,9 @@ export async function callbackOidc(c: Context<AppBindings>) {
   // first time, ask again with prompt=login so the person can use their passkey; the second, refuse.
   const needed = envString(c.env, 'OIDC_REQUIRE_AMR');
   const methods = Array.isArray(claims.amr) ? claims.amr : [];
+  // No amr at all means the provider does not send it (Pocket ID before 2.19.3), not that the person used a code.
+  if (needed && claims.amr === undefined)
+    ctx.log.warn('oidc.amr_absent', { code: 'OIDC_AMR_ABSENT' });
   if (needed && !methods.includes(needed)) {
     ctx.log.info('auth.oidc_passkey_missing', {
       code: 'PASSKEY_REQUIRED',
