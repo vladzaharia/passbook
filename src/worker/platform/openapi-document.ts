@@ -5,7 +5,7 @@ import { withErrorCodes } from './openapi-codes.ts';
 import { withDecisions, withIdempotencyKey } from './openapi-decisions.ts';
 import { withNamedBodies, withReference } from './openapi-reference.ts';
 import { withSdkNames } from './openapi-sdk.ts';
-import { withSecurity } from './openapi-security.ts';
+import { withSecurity, withSignIn } from './openapi-security.ts';
 import { registerWebhookEvents } from './openapi-webhooks.ts';
 
 type Param = { name: string; in: string; deprecated?: boolean; 'x-platform-only'?: boolean };
@@ -100,6 +100,9 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
     ) as never,
   );
   return withErrorCodes(
-    withIdempotencyKey(withDecisions(app, secured as never) as never) as never,
+    withSignIn(
+      app,
+      withIdempotencyKey(withDecisions(app, secured as never) as never) as never,
+    ) as never,
   ) as unknown as Doc;
 }

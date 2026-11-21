@@ -4,6 +4,7 @@ import type { ApiScope, RouteAuth, ScopeRule } from './auth.ts';
 import { SESSION_COOKIE } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
+import { signInLevelOf } from './sign-in-guard.ts';
 
 /** What an API key needs on the routes a guard covers; read for GET and HEAD, write for the rest. */
 export interface KeyAccess {
@@ -139,6 +140,41 @@ export function withSecurity(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
       },
     },
   };
+  return doc;
+}
+
+/**
+ * `x-sign-in` on every operation a session reaches: `idp` (a strong sign-in, Polaris ID) or `any` (an email
+ * link too: holder features). Read from the guards covering the route, strictest wins; none found reads `idp`.
+ */
+export function withSignIn(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
+  for (const [path, item] of Object.entries(doc.paths ?? {})) {
+    const sample = path.replace(/\{([^}]+)\}/g, '$1');
+    const exact = path.replace(/\{([^}]+)\}/g, ':$1');
+    for (const [method, op] of Object.entries(item)) {
+      const security = (op as { security?: unknown } | undefined)?.security;
+      if (
+        !Array.isArray(security) ||
+        !security.some((s) => s && typeof s === 'object' && 'session' in s)
+      )
+        continue;
+      // Only what runs before the route's own handler guards it (Hono runs middleware in registration order).
+      const last = app.routes.findLastIndex(
+        (r) => r.method.toLowerCase() === method && r.path === exact,
+      );
+      const levels = app.routes
+        .filter(
+          (r, i) =>
+            (last < 0 || i < last) &&
+            (r.method === 'ALL' || r.method.toLowerCase() === method) &&
+            patternOf(r.path).test(sample),
+        )
+        .map((r) => signInLevelOf(r.handler));
+      Object.assign(op as object, {
+        'x-sign-in': levels.includes('idp') || !levels.includes('any') ? 'idp' : 'any',
+      });
+    }
+  }
   return doc;
 }
 
