@@ -7,8 +7,8 @@ import { HARDWARE_COPY as C } from './copy.ts';
 
 export interface TestRead {
   code: string;
-  /** Mean milliseconds between keys: a person types far slower. */
-  gap: number;
+  /** Mean milliseconds between keys (a person types far slower); null for a serial read. */
+  gap: number | null;
 }
 
 /** Feeds one key to the detector; a finished burst comes back as a read. */
@@ -46,10 +46,20 @@ export function flushTest(detector: WedgeDetector, t: number): TestRead | null {
  * The scanner test: an editable box the wedge source leaves alone (it skips editable regions it
  * does not own), so a test scan shows its code here and checks nothing in.
  */
-export function TestPad({ onDone }: { onDone: () => void }) {
+export function TestPad({
+  onDone,
+  external = null,
+}: {
+  onDone: () => void;
+  /** A read from a serial scanner while the test is open. */
+  external?: TestRead | null;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const detector = useRef(new WedgeDetector(WEDGE_STANDARD));
   const [read, setRead] = useState<TestRead | null>(null);
+  useEffect(() => {
+    if (external) setRead(external);
+  }, [external]);
   const idle = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
     box.current?.focus();
@@ -86,7 +96,11 @@ export function TestPad({ onDone }: { onDone: () => void }) {
         {read ? <code>{read.code}</code> : <span aria-hidden>{C.test.prompt}</span>}
       </div>
       <p id="hw-test-out" className="hw-test-out" role="status">
-        {read ? fill(C.test.read, { n: read.code.length, ms: read.gap }) : ''}
+        {read
+          ? read.gap === null
+            ? fill(C.test.readSerial, { n: read.code.length })
+            : fill(C.test.read, { n: read.code.length, ms: read.gap })
+          : ''}
       </p>
       <Button variant="secondary" size="sm" onClick={onDone}>
         {C.test.done}

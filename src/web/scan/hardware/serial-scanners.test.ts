@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSerialScanners, linesOf, type SerialPortLike } from './serial-scanners.ts';
+import {
+  createSerialScanners,
+  linesOf,
+  SERIAL_LINE_MAX,
+  type SerialPortLike,
+} from './serial-scanners.ts';
 
 function port(chunks: string[]): SerialPortLike & { opened: boolean } {
   const bytes = chunks.map((c) => new TextEncoder().encode(c));
@@ -60,5 +65,40 @@ describe('serial scanners', () => {
     );
     expect(await cancelled.connect()).toBe(false);
     expect(createSerialScanners(undefined, emit, () => undefined).supported).toBe(false);
+  });
+
+  it('reads a re-plugged scanner again on connect', async () => {
+    const serial = new EventTarget() as EventTarget & {
+      getPorts: () => Promise<SerialPortLike[]>;
+      requestPort: () => Promise<SerialPortLike>;
+    };
+    let current = port(['ONE\n']);
+    serial.getPorts = async () => [current];
+    serial.requestPort = vi.fn();
+    const emit = vi.fn();
+    const s = createSerialScanners(serial as never, emit, () => undefined);
+    await s.resume();
+    await vi.waitFor(() => expect(emit).toHaveBeenCalledWith('ONE'));
+    await vi.waitFor(() => expect(current.close).toHaveBeenCalled());
+    current = port(['TWO\n']);
+    serial.dispatchEvent(new Event('connect'));
+    await vi.waitFor(() => expect(emit).toHaveBeenCalledWith('TWO'));
+    s.stop();
+    current = port(['THREE\n']);
+    serial.dispatchEvent(new Event('connect'));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(emit).not.toHaveBeenCalledWith('THREE');
+  });
+
+  it('drops a line that never ends past the cap', async () => {
+    const p = port(['x'.repeat(SERIAL_LINE_MAX + 10), 'OK\n']);
+    const emit = vi.fn();
+    await createSerialScanners(
+      { getPorts: async () => [p], requestPort: vi.fn() },
+      emit,
+      () => undefined,
+    ).resume();
+    await vi.waitFor(() => expect(emit).toHaveBeenCalledWith('OK'));
+    expect(emit).toHaveBeenCalledTimes(1);
   });
 });

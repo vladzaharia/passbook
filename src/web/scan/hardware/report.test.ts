@@ -31,14 +31,19 @@ describe('hardware summary for the server', () => {
   it('carries kinds, counts, builtIn, connected and state only', () => {
     const summary = summarize(android());
     expect(summary).toEqual([
-      { kind: 'camera', count: 1, builtIn: true, connected: true, state: 'active' },
-      { kind: 'camera', count: 1, builtIn: true, connected: true, state: 'ready' },
-      { kind: 'barcode', count: 1, builtIn: true, connected: true, state: 'active' },
+      { kind: 'camera', count: 2, builtIn: true, connected: true, state: 'ready' },
+      { kind: 'barcode', count: 1, builtIn: true, connected: true, state: 'ready' },
       { kind: 'nfc', count: 1, builtIn: true, connected: true, state: 'ready' },
     ]);
     const text = JSON.stringify(summary);
     for (const secret of ['Rear camera', 'Scan engine', 'c0', 'b0'])
       expect(text).not.toContain(secret);
+  });
+
+  it('reports on and ready alike, so reads do not send reports', () => {
+    const { probe, live } = hardwareCase('wedge');
+    const later = { ...live, now: live.now + 120_000 };
+    expect(summarize(hardwareItems(probe, live))).toEqual(summarize(hardwareItems(probe, later)));
   });
 
   it('reports a seen wedge and a serial scanner, not missing kinds', () => {
@@ -53,10 +58,10 @@ describe('hardware summary for the server', () => {
     expect(caps.native && 'hardware' in caps.native).toBe(false);
     expect(caps.hardware?.[0]).toEqual({
       kind: 'camera',
-      count: 1,
+      count: 2,
       builtIn: true,
       connected: true,
-      state: 'active',
+      state: 'ready',
     });
     expect(ScanDeviceCapabilitiesSchema.safeParse(caps).success).toBe(true);
   });

@@ -38,6 +38,7 @@ describe('where the hardware pill shows', () => {
       webNfc: { status: () => 'idle', arm: vi.fn(), supported: false },
       camera: { hasWide: () => false, start: vi.fn(), choose: vi.fn(), stop: vi.fn() },
       emit: vi.fn(),
+      hold: vi.fn(),
     } as unknown as ScanRuntime;
     render(
       <LoopMenu

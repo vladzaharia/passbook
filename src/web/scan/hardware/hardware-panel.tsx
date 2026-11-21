@@ -4,7 +4,7 @@ import { HARDWARE_COPY as C } from './copy.ts';
 import type { GuideStep } from './guide.ts';
 import { HardwareIcon, StepIcon } from './icons.tsx';
 import { isFound } from './items.ts';
-import { TestPad } from './test-pad.tsx';
+import { TestPad, type TestRead } from './test-pad.tsx';
 import type { HardwareAction, HardwareItem } from './types.ts';
 import './hardware.css';
 import './hardware-panel.css';
@@ -31,11 +31,13 @@ function Guide({ steps }: { steps: readonly GuideStep[] }) {
 function Row({
   item,
   testing,
+  testRead,
   onAction,
   onTestDone,
 }: {
   item: HardwareItem;
   testing: boolean;
+  testRead: TestRead | null;
   onAction: (item: HardwareItem, action: HardwareAction) => void;
   onTestDone: () => void;
 }) {
@@ -69,7 +71,7 @@ function Row({
           {C.actions[action.kind]}
         </Button>
       ) : null}
-      {testing ? <TestPad onDone={onTestDone} /> : null}
+      {testing ? <TestPad onDone={onTestDone} external={testRead} /> : null}
     </li>
   );
 }
@@ -79,6 +81,7 @@ export function HardwarePanel({
   items,
   steps,
   testing,
+  testRead = null,
   onAction,
   onTestDone,
   onClose,
@@ -87,6 +90,7 @@ export function HardwarePanel({
   steps: readonly GuideStep[];
   /** The row whose test pad is open. */
   testing: string | null;
+  testRead?: TestRead | null;
   onAction: (item: HardwareItem, action: HardwareAction) => void;
   onTestDone: () => void;
   onClose: () => void;
@@ -100,6 +104,7 @@ export function HardwarePanel({
             key={item.id}
             item={item}
             testing={testing === item.id}
+            testRead={testRead}
             onAction={onAction}
             onTestDone={onTestDone}
           />

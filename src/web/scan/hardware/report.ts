@@ -20,8 +20,9 @@ const KIND: Partial<Record<HardwareKind, ReportedHardware['kind']>> = {
   bluetooth: 'bluetooth',
   display: 'display',
 };
+/** On and ready report alike: a read or a live camera must not send a report each time. */
 const STATE: Record<HardwareState, ReportedHardware['state'] | null> = {
-  active: 'active',
+  active: 'ready',
   ready: 'ready',
   attention: 'needs-permission',
   error: 'error',

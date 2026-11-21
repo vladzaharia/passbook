@@ -76,6 +76,7 @@ export const HARDWARE_COPY = {
     field: 'Test scan',
     prompt: 'Scan any code',
     read: '{n} characters · {ms} ms per key',
+    readSerial: '{n} characters',
     done: 'Done',
   },
   guide: {

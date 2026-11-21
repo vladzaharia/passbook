@@ -166,8 +166,15 @@ export function browserProbeEnv(canBuzz: boolean): ProbeEnv {
   };
 }
 
-/** Events that mean the list may have changed. Returns stop. */
-export function watchHardware(env: ProbeEnv, onChange: () => void): () => void {
+export const WATCH_DEBOUNCE_MS = 250;
+
+/** Events that mean the list may have changed, debounced. Returns stop. */
+export function watchHardware(env: ProbeEnv, changed: () => void): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const onChange = () => {
+    clearTimeout(timer);
+    timer = setTimeout(changed, WATCH_DEBOUNCE_MS);
+  };
   const targets: [EventTarget | undefined, string[]][] = [
     [env.mediaDevices as EventTarget | undefined, ['devicechange']],
     [env.usb as EventTarget | undefined, ['connect', 'disconnect']],
@@ -202,6 +209,7 @@ export function watchHardware(env: ProbeEnv, onChange: () => void): () => void {
   );
   return () => {
     stopped = true;
+    clearTimeout(timer);
     for (const stop of stops.splice(0)) stop();
   };
 }

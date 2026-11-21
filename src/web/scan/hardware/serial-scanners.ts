@@ -10,7 +10,12 @@ export interface SerialPortLike {
 export interface SerialLike {
   getPorts(): Promise<SerialPortLike[]>;
   requestPort(): Promise<SerialPortLike>;
+  addEventListener?(type: 'connect', listener: () => void): void;
+  removeEventListener?(type: 'connect', listener: () => void): void;
 }
+
+/** The bus's own cap: a port that never ends a line (a wrong baud) cannot grow without bound. */
+export const SERIAL_LINE_MAX = 2048;
 
 /** The common default for serial barcode scanners. */
 export const SERIAL_BAUD = 9600;
@@ -38,7 +43,13 @@ export function createSerialScanners(
       return;
     }
     if (!port.readable || stopped) return;
-    const reader = port.readable.getReader();
+    let reader: ReadableStreamDefaultReader<Uint8Array>;
+    try {
+      reader = port.readable.getReader();
+    } catch {
+      // Locked by another reader (a second tab): it stays listed, not read.
+      return;
+    }
     const text = new TextDecoder();
     readers.set(port, reader);
     changed();
@@ -48,7 +59,7 @@ export function createSerialScanners(
         const { value, done } = await reader.read();
         if (done) break;
         const next = linesOf(buffer + text.decode(value, { stream: true }));
-        buffer = next.rest;
+        buffer = next.rest.length > SERIAL_LINE_MAX ? '' : next.rest;
         for (const code of next.codes) emit(code);
       }
     } catch {
@@ -60,13 +71,17 @@ export function createSerialScanners(
       if (!stopped) changed();
     }
   };
+  const resume = async () => {
+    if (!serial || stopped) return;
+    for (const port of await serial.getPorts().catch(() => [])) void read(port);
+  };
+  // A scanner plugged back in: read it again without a reload.
+  const onConnect = () => void resume();
+  serial?.addEventListener?.('connect', onConnect);
   return {
     supported: serial !== undefined,
     /** Reopens ports granted before. Never prompts. */
-    async resume() {
-      if (!serial) return;
-      for (const port of await serial.getPorts().catch(() => [])) void read(port);
-    },
+    resume,
     /** From a tap only: the browser's port picker. False when the person cancels. */
     async connect(): Promise<boolean> {
       if (!serial) return false;
@@ -79,6 +94,7 @@ export function createSerialScanners(
     },
     stop() {
       stopped = true;
+      serial?.removeEventListener?.('connect', onConnect);
       for (const reader of readers.values()) void reader.cancel().catch(() => undefined);
     },
   };

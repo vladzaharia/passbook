@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { savedCount } from '../machine/derive.ts';
 import type { ScanState } from '../machine/types.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
@@ -8,6 +8,7 @@ import { guideOf } from './guide.ts';
 import { HardwarePanel } from './hardware-panel.tsx';
 import { HardwarePill } from './hardware-pill.tsx';
 import { createSerialScanners, type SerialLike } from './serial-scanners.ts';
+import type { TestRead } from './test-pad.tsx';
 import type { HardwareAction, HardwareItem } from './types.ts';
 import { type HardwareInputs, type HardwareView, useHardware } from './use-hardware.ts';
 
@@ -32,13 +33,22 @@ function HardwareSurface({
   view,
   inputs,
   onAction,
+  onTesting,
+  testRead = null,
 }: {
   view: HardwareView;
   inputs: Pick<HardwareInputs, 'reads' | 'camera'>;
   onAction?: (item: HardwareItem, action: HardwareAction) => void;
+  /** The scanner test opened or closed: the scanner holds check-in while it is open. */
+  onTesting?: (on: boolean) => void;
+  /** A read the test took from a source other than the keyboard (a serial scanner). */
+  testRead?: TestRead | null;
 }) {
   const [open, setOpen] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
+  const tell = useRef(onTesting);
+  tell.current = onTesting;
+  useEffect(() => tell.current?.(testing !== null), [testing]);
   const { refresh, change } = view;
   useEffect(() => {
     if (open) refresh();
@@ -53,6 +63,7 @@ function HardwareSurface({
           items={view.items}
           steps={guideOf(view.items, { reads: inputs.reads, camera: inputs.camera !== null })}
           testing={testing}
+          testRead={testRead}
           onAction={(item, action) => {
             if (action.kind === 'test') setTesting(item.id);
             else onAction?.(item, action);
@@ -101,19 +112,35 @@ export function ScanHardware({
   };
   const view = useHardware(inputs);
   const { refresh } = view;
-  const serial = useMemo(
-    () =>
-      createSerialScanners(
-        (navigator as Navigator & { serial?: SerialLike }).serial,
-        (code) => runtime.emit({ method: 'wedge', code }),
-        refresh,
-      ),
-    [runtime, refresh],
+  const testingNow = useRef(false);
+  const [testRead, setTestRead] = useState<TestRead | null>(null);
+  const onTesting = useCallback(
+    (on: boolean) => {
+      testingNow.current = on;
+      runtime.hold(on);
+      if (!on) setTestRead(null);
+    },
+    [runtime],
   );
+  useEffect(() => () => runtime.hold(false), [runtime]);
+  const serial = useRef<ReturnType<typeof createSerialScanners> | null>(null);
+  // Made inside the effect: StrictMode's second mount needs a live instance, not a stopped one.
   useEffect(() => {
-    void serial.resume();
-    return serial.stop;
-  }, [serial]);
+    const next = createSerialScanners(
+      (navigator as Navigator & { serial?: SerialLike }).serial,
+      (code) => {
+        if (testingNow.current) setTestRead({ code, gap: null });
+        else runtime.emit({ method: 'wedge', code });
+      },
+      refresh,
+    );
+    serial.current = next;
+    void next.resume();
+    return () => {
+      next.stop();
+      serial.current = null;
+    };
+  }, [runtime, refresh]);
   const act = (_item: HardwareItem, action: HardwareAction) => {
     switch (action.kind) {
       case 'allow':
@@ -132,11 +159,19 @@ export function ScanHardware({
         void runtime.webNfc.arm().then(setWeb);
         return;
       case 'connect':
-        void serial.connect().then(refresh);
+        void serial.current?.connect().then(refresh);
         return;
     }
   };
-  return <HardwareSurface view={view} inputs={inputs} onAction={act} />;
+  return (
+    <HardwareSurface
+      view={view}
+      inputs={inputs}
+      onAction={act}
+      onTesting={onTesting}
+      testRead={testRead}
+    />
+  );
 }
 
 /** A monitor's hardware: it reads nothing, so the panel lists what the device has. */

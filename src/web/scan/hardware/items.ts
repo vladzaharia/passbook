@@ -174,6 +174,8 @@ export function peripheralItems(
   return listed.units.map((unit, i) =>
     item(kind, unit.open ? 'active' : 'ready', {
       id: `${kind}:${i}`,
+      // Another scanner can join from the last row.
+      ...(i === listed.units.length - 1 ? add : {}),
       builtIn: false,
       connected: true,
       name: unit.name || fill(C.device, { kind: C.names[kind], n: i + 1 }),

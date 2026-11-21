@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { facingOf, type ProbeEnv, probeHardware, watchHardware } from './probe.ts';
+import {
+  facingOf,
+  type ProbeEnv,
+  probeHardware,
+  WATCH_DEBOUNCE_MS,
+  watchHardware,
+} from './probe.ts';
 
 const cam = (label: string, facingMode?: string[], deviceId = label || 'x') =>
   ({
@@ -144,7 +150,8 @@ describe('hardware enumeration', () => {
     expect(facingOf(d)).toBe('back');
   });
 
-  it('re-enumerates on device, connect and permission events, and stops', async () => {
+  it('re-enumerates once per burst of device, connect and permission events, and stops', async () => {
+    vi.useFakeTimers();
     const media = new EventTarget();
     const hid = new EventTarget();
     const status = new EventTarget();
@@ -157,14 +164,17 @@ describe('hardware enumeration', () => {
       }),
       onChange,
     );
-    await Promise.resolve();
-    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(0);
     media.dispatchEvent(new Event('devicechange'));
     hid.dispatchEvent(new Event('connect'));
     status.dispatchEvent(new Event('change'));
-    expect(onChange).toHaveBeenCalledTimes(3);
+    expect(onChange).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(WATCH_DEBOUNCE_MS);
+    expect(onChange).toHaveBeenCalledTimes(1);
     stop();
     hid.dispatchEvent(new Event('disconnect'));
-    expect(onChange).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(WATCH_DEBOUNCE_MS);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });

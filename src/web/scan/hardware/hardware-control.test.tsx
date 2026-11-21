@@ -26,14 +26,18 @@ function stubBrowser({
   vi.stubGlobal('NDEFReader', class {});
 }
 
-function runtimeStub(): ScanRuntime & { arm: ReturnType<typeof vi.fn> } {
+function runtimeStub(): ScanRuntime & {
+  arm: ReturnType<typeof vi.fn>;
+  hold: ReturnType<typeof vi.fn>;
+} {
   const arm = vi.fn(async () => 'on' as const);
   return {
     arm,
     webNfc: { status: () => 'idle', arm, supported: true },
     camera: { hasWide: () => false, start: vi.fn(), choose: vi.fn() },
     emit: vi.fn(),
-  } as unknown as ScanRuntime & { arm: ReturnType<typeof vi.fn> };
+    hold: vi.fn(),
+  } as unknown as ScanRuntime & { arm: ReturnType<typeof vi.fn>; hold: ReturnType<typeof vi.fn> };
 }
 
 const state = (over: Partial<ScanState> = {}): ScanState => ({
@@ -142,6 +146,42 @@ describe('scanner hardware pill and panel', () => {
     const box = screen.getByRole('textbox', { name: 'Test scan' });
     expect(box).toHaveFocus();
     fireEvent.keyDown(box, { key: 'A', code: 'KeyA' });
+    expect(runtime.emit).not.toHaveBeenCalled();
+    expect(runtime.hold).toHaveBeenLastCalledWith(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(runtime.hold).toHaveBeenLastCalledWith(false);
+  });
+
+  it('shows a serial read in the test, not at check-in', async () => {
+    const serial = Object.assign(new EventTarget(), {
+      getPorts: async () => [] as unknown[],
+      requestPort: vi.fn(),
+    });
+    stubBrowser({ serial: serial as never });
+    const runtime = runtimeStub();
+    render(<ScanHardware runtime={runtime} s={state()} lens={['back', vi.fn()]} camera />);
+    fireEvent.click(pill());
+    fireEvent.click(await screen.findByRole('button', { name: 'Test Scanner' }));
+    const bytes = new TextEncoder().encode('SER-9\n');
+    const port = {
+      readable: null as ReadableStream<Uint8Array> | null,
+      async open() {
+        port.readable = new ReadableStream({
+          start(c) {
+            c.enqueue(bytes);
+            c.close();
+          },
+        });
+      },
+      close: async () => undefined,
+    };
+    serial.getPorts = async () => [port];
+    act(() => {
+      serial.dispatchEvent(new Event('connect'));
+    });
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Test scan' })).toHaveTextContent('SER-9'),
+    );
     expect(runtime.emit).not.toHaveBeenCalled();
   });
 });
