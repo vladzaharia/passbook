@@ -1,3 +1,4 @@
+import { SOLE_COOLDOWN_MS } from '../../../shared/template-release-state.ts';
 import { all, first } from '../../platform/db.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import { APPLE_ADAPTER_REVISION, AUDIENCE_POLICY_REVISION } from './release-content.ts';
@@ -16,8 +17,7 @@ export const REVIEW_ROLES = `(${rolesGranting('templates:review')
 export const reviews = (m: string) =>
   `EXISTS (SELECT 1 FROM json_each(${m}.roles) r WHERE r.value IN ${REVIEW_ROLES})`;
 
-/** A reviewer was removed within this window: sole approval stays refused. */
-export const SOLE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+export { SOLE_COOLDOWN_MS } from '../../../shared/template-release-state.ts';
 
 /**
  * The commit-time condition of a sole approval, evaluated inside the grant's batch: the reviewer is

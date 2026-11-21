@@ -2321,6 +2321,12 @@
     "fix": "Approve a release with POST /api/v1/templates/{id}/candidates/{candidateId}/approve.",
     "retryable": false
   },
+  "TEMPLATE_REVIEW_REQUIRED": {
+    "title": "Review required",
+    "when": "Another reviewer must approve this version before it is released in Live.",
+    "fix": "Request review with request: true, or have another reviewer approve it.",
+    "retryable": false
+  },
   "TEMPLATE_SELF_APPROVAL": {
     "title": "Authors cannot approve",
     "when": "The candidate's author tried to approve it.",
