@@ -82,7 +82,7 @@ export function EndpointFields({
         aria-invalid={errors.eventTypes ? true : undefined}
         aria-describedby={errors.eventTypes ? 'events-error' : undefined}
       >
-        <legend className="text-sm font-medium text-fg-strong">Events</legend>
+        <legend className="mb-2 text-sm font-medium text-fg-strong">Events</legend>
         <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           {EVENT_GROUPS.map((group) => (
             <fieldset key={group} className="flex min-w-0 flex-col">

@@ -131,6 +131,7 @@ export function LifecycleFields({
               name="connection-mode"
               value={m}
               label={MODE_LABEL[m]}
+              className="items-center"
               icon={MODE[m].icon}
               checked={value.mode === m}
               disabled={disabled}
