@@ -45,7 +45,7 @@ oidc.addUser({
   sub: 'e2e-builder',
   email: 'builder@example.test',
   name: 'E2E Builder',
-  groups: ['wallet_users'],
+  groups: ['wallet_users', 'passbook_developers'],
 });
 // In the developer group but no organization: gets Developers and no Admin.
 oidc.addUser({
