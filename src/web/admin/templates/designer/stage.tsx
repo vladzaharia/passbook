@@ -8,7 +8,9 @@ import { lockedAction } from '../../../channel-previews/channel-stage.tsx';
 import type { PreviewChannel, PreviewSource } from '../../../channel-previews/types.ts';
 import { useTemplateChannels } from '../channels/api.ts';
 import type { DraftAsset } from './model.ts';
+import { ownParts } from './ops-brand.ts';
 import type { PaperPatch } from './ops-paper.ts';
+import { useOrgBrand } from './org-brand.ts';
 import { PaperPreview } from './paper-preview.tsx';
 import { DesignerPreview } from './preview.tsx';
 
@@ -37,6 +39,18 @@ export function DesignerStage({
   stripUrl?: string | null;
 }) {
   const { passJson, assets, assetBase } = card;
+  const org = useOrgBrand(orgId);
+  // Where the manifest follows the organization, its logo and icon draw as a build would use them.
+  const assetOverrides = useMemo(() => {
+    const own = ownParts({ manifest } as never);
+    const out: Record<string, string> = {};
+    for (const slot of ['logo', 'icon'] as const) {
+      const image = org[slot];
+      if (!image || own.includes(slot)) continue;
+      for (const suffix of ['', '@2x', '@3x']) out[`${slot}${suffix}.png`] = image.url;
+    }
+    return out;
+  }, [org, manifest]);
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   // The designer edits every channel's design, so what only the template turned off stays open, with
   // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
@@ -80,7 +94,7 @@ export function DesignerStage({
       channels={effective}
       notes={notes}
       lockedAction={lockedAction({ orgId })}
-      apple={<DesignerPreview {...card} />}
+      apple={<DesignerPreview {...card} assetOverrides={assetOverrides} />}
       paper={
         <PaperPreview
           passJson={passJson}

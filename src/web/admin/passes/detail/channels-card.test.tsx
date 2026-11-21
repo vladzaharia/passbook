@@ -81,7 +81,7 @@ describe('Channels card', () => {
     expect(screen.queryByRole('switch', { name: 'Google Wallet' })).toBeNull();
     expect(
       screen.getByLabelText(
-        'Not available. Waiting for Google account. Copies stay as they are. Change it in Wallet accounts.',
+        'Not available. Waiting for Google account. Copies stay as they are. Change it in Set up.',
       ),
     ).toHaveTextContent('Not available');
     expect(screen.getByRole('switch', { name: 'Paper' })).toBeEnabled();

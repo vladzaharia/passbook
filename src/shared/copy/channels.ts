@@ -1,5 +1,6 @@
 import type { Channel, ChannelReason, ChannelSource, OfferHold } from '../contracts/channels.ts';
 import { FEATURE_ASK, NOT_INCLUDED } from './entitlements.ts';
+import { WALLET_SETUP_LABEL } from './wallet-setup.ts';
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
   mobile: 'Mobile',
@@ -111,7 +112,7 @@ export const CHANNEL_FIX_LABEL: Record<ChannelFix, string> = {
   platform: 'Platform settings',
   org: 'Organization settings',
   template: 'Channels and brand',
-  wallet: 'Wallet accounts',
+  wallet: WALLET_SETUP_LABEL,
 };
 
 export const CHANNEL_COPY = {
