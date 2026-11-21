@@ -56,11 +56,14 @@ const details = (html: string) => html.slice(html.indexOf('class="wl-holder-deta
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
 describe('/p tells the holder what the org wrote', () => {
-  it('shows the latest message and the note in the details, not the terms', () => {
+  it('shows the latest message and the note first, then the terms', () => {
     const body = text(details(page(passJson('Pool closed Monday for cleaning.'))));
     expect(body).toContain('Message Pool closed Monday for cleaning.');
     expect(body).toContain('Note Upgraded to Pro.');
-    expect(body).not.toContain('Present the barcode.');
+    expect(body).toContain('Terms Present the barcode.');
+    expect(body.indexOf('Upgraded to Pro.')).toBeLessThan(body.indexOf('Present the barcode.'));
+    // The face's fields stay on the card.
+    expect(body).not.toContain('Maya Chen');
   });
 
   it('shows no empty message', () => {
@@ -69,20 +72,20 @@ describe('/p tells the holder what the org wrote', () => {
 });
 
 describe('/p never says Active beside a void', () => {
-  it('states Voided in the details and on the card, with the void date and next step', () => {
+  it('states Voided on the card and in the notice, never Active', () => {
     const html = page(passJson(), {
       voided: true,
       endedOn: 'Nov 18, 2026',
       support: { email: 'desk@northwind.test', url: null },
     });
-    // The pill alone: the list says what it is.
-    expect(text(details(html))).toMatch(/^[^>]*> Voided /);
+    // The card stamps it; the details say no state at all.
+    expect(text(details(html))).not.toMatch(/Voided|Active/);
     expect(text(html)).not.toMatch(/Status\s+Active/i);
     expect(text(html)).toContain('This pass was voided on Nov 18, 2026. It no longer works.');
     expect(text(html)).toContain('Contact Northwind');
   });
 
-  it('keeps Active for a live pass', () => {
-    expect(text(details(page(passJson())))).toMatch(/^[^>]*> Active /);
+  it('says nothing about a live pass’s state under the card', () => {
+    expect(text(details(page(passJson())))).not.toContain('Active');
   });
 });

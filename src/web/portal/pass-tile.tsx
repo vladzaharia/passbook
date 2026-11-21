@@ -21,8 +21,8 @@ export function InWalletPill() {
 /**
  * Two rows of the list's grid (subgrid): the card, then one action row, so a row of tiles lines
  * them up. The card is the link into the pass and names it; the tile repeats none of it (name,
- * org, fields, Active), keeping only states the card does not say: test, voided, removed, In
- * Wallet. The row leads with this device's way (shared/device.ts, as the pass page): the badge
+ * org, fields, Active, the Voided its stamp says), keeping only what the card does not say: Test,
+ * In Wallet. The row leads with this device's way (shared/device.ts, as the pass page): the badge
  * where it adds, Show QR on a computer, else View pass; then Refresh and More as icons.
  */
 export function PassTile({
@@ -48,11 +48,8 @@ export function PassTile({
   const badge =
     live && canAddToWallet(device) && pass.downloadUrl && pass.channels?.apple.on !== false;
   const qr = live && !badge && showsAddQr(device) && publicUrl !== null;
-  const status = voided ? (
-    <StatusPill status={removed ? 'removed' : 'voided'} />
-  ) : pass.inWallet ? (
-    <InWalletPill />
-  ) : null;
+  // The card stamps Voided and Removed itself: only In Wallet needs a pill.
+  const status = !voided && pass.inWallet ? <InWalletPill /> : null;
   return (
     // The tile's corner is the 18 px card radius: the pass inside draws ~14 px, never more.
     <Card className="row-span-2 grid grid-rows-subgrid gap-y-3 rounded-xl p-4">

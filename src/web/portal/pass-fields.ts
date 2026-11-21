@@ -37,20 +37,15 @@ function humanizeKey(key: string): string {
     .join(' ');
 }
 
-/**
- * The front fields as label/value rows, values formatted by each field's date or number style.
- * Two fields sharing a label ("Member" for the ID and the name) read by their keys instead.
- */
-export function fieldRows(
-  passJson: Record<string, unknown>,
-  { locale, now, timeZone }: { locale: string; now: Date; timeZone?: string },
-): { id: string; label: string; value: string }[] {
-  const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
-  if (!style) return [];
-  const block = passJson[style] as Record<string, unknown>;
-  const ctx = { locale, now, ...(timeZone ? { timeZone } : {}) };
-  const rows: { id: string; label: string; value: string }[] = [];
-  for (const group of GROUPS) {
+type Row = { id: string; label: string; value: string };
+
+function groupRows(
+  block: Record<string, unknown>,
+  groups: readonly string[],
+  ctx: { locale: string; now: Date; timeZone?: string },
+): Row[] {
+  const rows: Row[] = [];
+  for (const group of groups) {
     const list = block[group];
     if (!Array.isArray(list)) continue;
     for (const f of list) {
@@ -59,13 +54,34 @@ export function fieldRows(
       const { label, key, value } = spec;
       if (value === undefined || value === null || typeof value === 'object') continue;
       const text = formatValue(value as Json, spec, ctx).text;
+      if (!text.trim()) continue;
       const id = String(key ?? label ?? rows.length);
-      rows.push({ id, label: sentenceCase(String(label ?? key ?? '')), value: text });
+      rows.push({ id, label: sentenceCase(String(label ?? humanizeKey(id))), value: text });
     }
   }
+  return rows;
+}
+
+/**
+ * Label/value rows, values formatted by each field's date or number style: the front fields, or
+ * the back's (the org's notes left out, noteRows has them). Expires follows unless a field on
+ * either side already says it. Two fields sharing a label read by their keys instead.
+ */
+export function fieldRows(
+  passJson: Record<string, unknown>,
+  { locale, now, timeZone }: { locale: string; now: Date; timeZone?: string },
+  side: 'front' | 'back' = 'front',
+): Row[] {
+  const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
+  if (!style) return [];
+  const block = passJson[style] as Record<string, unknown>;
+  const ctx = { locale, now, ...(timeZone ? { timeZone } : {}) };
+  const front = groupRows(block, GROUPS, ctx);
+  const back = groupRows(block, ['backFields'], ctx).filter((r) => !NOTE_KEYS.test(r.id));
+  const rows = side === 'front' ? front : back;
   const expires = passJson.expirationDate;
   // A pass that already lists its own Expires field says it once.
-  const listed = rows.some((r) => /expir/i.test(`${r.id} ${r.label}`));
+  const listed = [...front, ...back].some((r) => /expir/i.test(`${r.id} ${r.label}`));
   if (typeof expires === 'string' && expires && !listed) {
     const text = formatExpiry(expires, timeZone);
     if (text) rows.push({ id: 'expirationDate', label: 'Expires', value: text });

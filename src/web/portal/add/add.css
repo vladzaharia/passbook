@@ -199,14 +199,31 @@
   color: var(--pk-text-muted);
   font-size: 0.875rem;
 }
-/* The phone's lead: the badge or the action, centred. */
+/* The phone's lead (the badge, a native badge, Show barcode, Print): no card around one control.
+   The action, then the buddy standing beside it on the same line, looking at it; Apple's line
+   under both. */
 .wl-hero-phone {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding-block: 1.5rem;
-  text-align: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 1rem;
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.wl-hero-phone::before {
+  content: none;
+}
+.wl-hero-phone > .wl-buddy[data-at] {
+  position: static;
+  order: 1;
+  translate: none;
+}
+.wl-hero-phone > .wl-hero-note {
+  order: 2;
+  flex-basis: 100%;
 }
 /* The kit's primary button (lg) as plain CSS: /p renders it without the kit. */
 .wl-hero-action {

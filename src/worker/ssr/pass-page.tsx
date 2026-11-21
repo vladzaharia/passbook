@@ -163,7 +163,6 @@ function PassBody(props: PassPageProps) {
             <PassDetails
               passJson={props.passJson}
               view={view}
-              state={state}
               locale={view.locale}
               now={props.now}
               {...(props.timeZone ? { timeZone: props.timeZone } : {})}

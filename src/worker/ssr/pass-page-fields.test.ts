@@ -7,7 +7,7 @@ import { assets } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
 import { renderPassPage } from './pass-page.tsx';
 
-const GROUPS = ['headerFields', 'primaryFields', 'secondaryFields', 'auxiliaryFields'] as const;
+const GROUPS = ['backFields'] as const;
 const STYLES = ['boardingPass', 'eventTicket', 'storeCard', 'coupon', 'generic'];
 
 const RAW: Record<string, string> = {
@@ -51,15 +51,16 @@ const fieldsOf = (passJson: Record<string, unknown>, group: (typeof GROUPS)[numb
   return (Array.isArray(list) ? list : []) as { label?: string; value?: unknown }[];
 };
 
-describe('/p lists every front field of the pass', () => {
+describe("/p's details are the back of the pass, never its face", () => {
   for (const name of ['starter-boarding-pass', 'starter-event-ticket', 'starter-timed-ticket']) {
     const passJson = starter(name);
-    for (const group of GROUPS) {
-      const fields = fieldsOf(passJson, group).filter((f) => typeof f.value === 'string');
-      if (!fields.length) continue;
-      it(`${name}: ${group}`, () => {
+    const back = fieldsOf(passJson, 'backFields').filter(
+      (f) => typeof f.value === 'string' && f.value.trim() && !/status/i.test(String(f.label)),
+    );
+    if (back.length) {
+      it(`${name}: every back field`, () => {
         const text = detailsOf(passJson).toLowerCase();
-        for (const f of fields) expect(text).toContain(String(f.label).toLowerCase());
+        for (const f of back) expect(text).toContain(String(f.label).toLowerCase());
       });
     }
     it(`${name}: expiry`, () => {
@@ -67,28 +68,29 @@ describe('/p lists every front field of the pass', () => {
     });
   }
 
-  it('boarding pass: passenger and boarding time, not only the card face', () => {
+  it('boarding pass: the passenger is on the card, not repeated under it', () => {
     const text = detailsOf(starter('starter-boarding-pass'));
-    expect(text).toContain('Passenger');
-    expect(text).toContain('Alex Morgan');
-    expect(text).toContain('Boards');
+    expect(text).not.toContain('Passenger');
   });
 
-  it('shows the state once, as the pill: no Status label, no pass field of that label', () => {
+  it('shows no state: no Status label, no back field of that label', () => {
     const passJson = starter('starter-boarding-pass');
-    const block = passJson.boardingPass as { auxiliaryFields: unknown[] };
-    block.auxiliaryFields.push({ key: 'status', label: 'Status', value: 'On time' });
+    const block = passJson.boardingPass as { backFields?: unknown[] };
+    block.backFields = [
+      ...(block.backFields ?? []),
+      { key: 'status', label: 'Status', value: 'On time' },
+    ];
     const text = detailsOf(passJson);
     expect(text).not.toMatch(/Status/);
-    expect(text).toContain('Active');
     expect(text).not.toContain('On time');
+    expect(text).not.toContain('Active');
   });
 
-  it('does not repeat expiry when the pass lists its own Expires field', () => {
+  it('does not repeat expiry when the card lists its own Expires field', () => {
     const passJson = starter('starter-boarding-pass');
     const block = passJson.boardingPass as { auxiliaryFields: unknown[] };
     block.auxiliaryFields.push({ key: 'expires', label: 'Expires', value: 'Never' });
-    expect(detailsOf(passJson).match(/Expires/g)).toHaveLength(1);
+    expect(detailsOf(passJson)).not.toContain('Expires');
   });
 
   it('names the zone of Expires when the visitor zone is unknown, in the pass own offset', () => {

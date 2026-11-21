@@ -2,47 +2,42 @@ import type { PassView } from '../../shared/pass-view/index.ts';
 import { Upcoming } from '../pass-card/back.tsx';
 import { Card, CardBody } from '../ui/card-base.tsx';
 import { KeyValue } from '../ui/key-value.tsx';
-import { StatusPill } from '../ui/status-pill-base.tsx';
 import { fieldRows, noteRows } from './pass-fields.ts';
 
 /**
- * The pass's state, the org's notes, its front fields in the Apple pass's order, its expiry, then
- * its upcoming events: the page's one details, for the portal and /p. The card face is a designed
- * layout, this list is every field. No title and no Status label: the pill and the rows say what
- * they are.
+ * What the card's face does not show: the org's notes, then the back of the pass (terms, contact,
+ * links) in its order, Expires, the upcoming events. One card for the portal and /p, the page's
+ * only details; nothing at all when the back is empty. No title and no status: the card stamps a
+ * voided or expired pass, the page's notice says it.
  */
 export function PassDetails({
   passJson,
   view,
-  state,
-  title,
   locale,
   now,
   timeZone,
 }: {
   passJson: Record<string, unknown>;
   view: PassView;
-  /** The holder's state: a voided, expired or removed pass says so, never the pass's own "Active". */
-  state: 'active' | 'voided' | 'expired' | 'removed';
-  /** What the card already calls the pass: a field with that value is not repeated. */
-  title?: string;
   locale: string;
   /** The caller's clock: the server's request clock, the portal's own. */
   now: Date;
   /** The visitor's zone; unknown on the server without one, then Expires names its zone. */
   timeZone?: string;
 }) {
-  // The badge says the state; a pass field also labelled Status would say it twice.
-  const rows = fieldRows(passJson, { locale, now, ...(timeZone ? { timeZone } : {}) }).filter(
-    (r) => r.label.toLowerCase() !== 'status' && r.value !== title,
-  );
+  // The page says the state; a back field about it (Membership status) could contradict it.
+  const rows = fieldRows(
+    passJson,
+    { locale, now, ...(timeZone ? { timeZone } : {}) },
+    'back',
+  ).filter((r) => !/status/i.test(r.label));
   const notes = noteRows(passJson);
+  if (!rows.length && !notes.length && !view.upcoming.length) return null;
   return (
     <Card>
-      <CardBody className="flex flex-col items-start gap-4">
-        <StatusPill status={state} />
+      <CardBody className="flex flex-col gap-4">
         {notes.length ? (
-          <div className="flex w-full flex-col gap-3 border-y border-border py-4">
+          <div className="flex flex-col gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0">
             {notes.map((n) => (
               <div key={n.id} className="flex flex-col gap-0.5 text-sm">
                 <span className="text-fg-muted">{n.label}</span>
@@ -53,9 +48,9 @@ export function PassDetails({
             ))}
           </div>
         ) : null}
-        {rows.length ? <KeyValue items={rows} className="w-full" /> : null}
+        {rows.length ? <KeyValue items={rows} /> : null}
         {view.upcoming.length ? (
-          <div className="pc-flat w-full">
+          <div className="pc-flat">
             <Upcoming events={view.upcoming} />
           </div>
         ) : null}

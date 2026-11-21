@@ -529,8 +529,8 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   your wallet.` where it cannot add; an in-app web view on a device that can, `Open in Safari…`.
 - **Portal tiles**: two rows of the list grid (subgrid): the pass (stage, the link into it, named
   by it), then one action row, so a row of tiles lines them up. The tile repeats nothing the card
-  says (name, org, fields, Active); it keeps the states the card does not: `Test`, `Voided`,
-  `Removed`, `In Wallet` (in place of the badge). The row leads with this device's way, as the pass
+  says (name, org, fields, Active, its Voided stamp); it keeps what the card does not: `Test`,
+  `In Wallet` (in place of the badge). The row leads with this device's way, as the pass
   page: the badge where it adds (iPhone, Mac), `Show QR` on a computer, else `View pass`; then
   `Refresh` and `More` (Show QR on a Mac, Remove) as badge-sized outline icon buttons. No page
   action (the nav has Account). `Add N passes` sits above the grid with no card or title, only on a
@@ -557,8 +557,9 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
     ledge, clear of any code, looking at the badge or button when it is pointed at. Off the phone
     (Mac, Windows, iPad) the QR on a white tile, one hairline, no frame, and one line beside it:
     `Scan with your iPhone camera.`; a Mac adds `Or on this Mac` and the badge under a hairline,
-    elsewhere no badge (it would download a file nothing opens). iPhone: the badge alone. Android:
-    Google or Samsung's badge, else `Show barcode` (primary). Paper only: `Print`. In Apple Wallet
+    elsewhere no badge (it would download a file nothing opens). A phone's lead is one control with
+    no card: the iPhone's badge, on Android Google or Samsung's badge, else `Show barcode`
+    (primary), paper only `Print`; the buddy stands beside it. In Apple Wallet
     already: `In Apple Wallet` beside the happy buddy and `Show QR` (`Add to this iPhone`).
     Voided or expired: no lead; the buddy sits on the notice, sad.
   - Other ways: one unlabelled list under the lead (`aria-label` Other ways), hairlines between
@@ -566,8 +567,9 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
     by side, Apple's line on Android (`For Apple Wallet, open this page on an iPhone.`), `Print`,
     and on `/p` `Email me this pass again` (the portal has it in More). Rows rise one after
     another after the card.
-  - Details: one card, no title; the state pill alone, the org's notes above a hairline, every
-    front field, Expires, upcoming events.
+  - Details: one card, no title, only what the face does not show: the org's notes above a
+    hairline, the back fields (terms, contact, links), Expires, upcoming events; none when the back
+    is empty. No status pill: the card stamps Voided and Expired, the notice says it.
   - The badge has no padding of its own: the gaps are its clear space. No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.

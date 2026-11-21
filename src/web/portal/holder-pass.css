@@ -40,7 +40,10 @@
 }
 .wl-holder-details {
   grid-area: details;
+  display: flex;
   min-width: 0;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 .wl-holder-help {
   grid-area: help;

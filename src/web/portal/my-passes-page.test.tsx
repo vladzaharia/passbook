@@ -161,7 +161,10 @@ describe('my passes', () => {
     await renderApp('/', {
       handlers: { '/api/v1/me/passes': () => list(passFixture({ status: 'voided' })) },
     });
-    expect(await screen.findByText('Voided')).toBeInTheDocument();
+    // The card stamps Voided; the tile adds no pill of its own.
+    expect(await screen.findByRole('link', { name: 'View pass' })).toBeInTheDocument();
+    const pills = screen.queryAllByText('Voided').filter((el) => !el.closest('.pc-stage'));
+    expect(pills).toHaveLength(0);
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Refresh/ })).toBeNull();
   });

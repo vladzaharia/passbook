@@ -148,8 +148,15 @@ describe('pass detail', () => {
 
   it('shows the card, the badge and a details card without buttons', async () => {
     onMac();
+    const back = {
+      ...passFixture().passJson,
+      generic: {
+        primaryFields: [{ key: 'name', label: 'Member', value: 'Sam Smith' }],
+        backFields: [{ key: 'terms', label: 'Terms', value: 'Bring a towel.' }],
+      },
+    };
     const { container } = await renderApp('/passes/p1', {
-      handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
+      handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ passJson: back })) },
     });
     // What the pass is, under its org; the holder's name stays a field.
     expect(
@@ -175,10 +182,12 @@ describe('pass detail', () => {
     expect(screen.queryByRole('heading', { name: 'Details' })).toBeNull();
     const details = container.querySelector('.wl-holder-details') as HTMLElement;
     expect(within(details).queryAllByRole('button')).toHaveLength(0);
-    expect(within(details).getByText('Active')).toBeInTheDocument();
-    expect(within(details).getAllByText('Sam Smith').length).toBeGreaterThan(0);
+    // Only what the face does not show: the back, no state, no front field.
+    expect(within(details).getByText('Bring a towel.')).toBeInTheDocument();
+    expect(within(details).queryByText('Active')).toBeNull();
+    expect(within(details).queryByText('Sam Smith')).toBeNull();
 
-    // The Details card below is the one place for the fields: no Front / Details control.
+    // The details card is the one place for the back: no Front / Details control.
     expect(screen.queryByRole('radio', { name: 'Details' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
