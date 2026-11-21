@@ -1,7 +1,7 @@
 import { Check, Copy, RotateCcw, Unlock } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { DeveloperHomeSandbox } from '../../../shared/contracts/developer-home.ts';
-import { resetSandboxConfirm } from '../../lib/confirms.ts';
+import { resetSandboxConfirm } from '../../lib/confirms-developer.ts';
 import {
   ActionError,
   reopenSandbox,

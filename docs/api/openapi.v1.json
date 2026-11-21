@@ -32995,6 +32995,12 @@
             }
           }
         },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "reset",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+        },
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -33160,6 +33166,12 @@
               }
             }
           }
+        },
+        "x-sdk": {
+          "resource": "developer.sandbox",
+          "method": "reopen",
+          "sdk": false,
+          "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-sign-in": "idp",
         "x-codes": [

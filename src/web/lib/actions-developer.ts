@@ -1,10 +1,14 @@
-import { type LucideIcon, RotateCcw, Unlock } from 'lucide-react';
+import { type LucideIcon, Pause, RotateCcw, Unlock } from 'lucide-react';
+import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
 const a = (label: string, icon: LucideIcon, tone: Tone) => ({ label, icon, tone });
 
-/** Developer sandbox events beside the create and close labels in actions.ts. */
+/** Developer sandbox events. */
 export const DEVELOPER_ACTIONS = {
+  'developer_sandbox.close': a('Developer sandbox closed', Pause, 'warning'),
+  'developer_sandbox.create': a('Developer sandbox made', ENTITY.org.icon, 'success'),
   'developer_sandbox.reopen': a('Developer sandbox reopened', Unlock, 'success'),
   'developer_sandbox.reset': a('Developer sandbox reset', RotateCcw, 'warning'),
+  'developer_sandbox.try_revoke': a('Try it sessions ended', ENTITY.apiKey.icon, 'warning'),
 };
