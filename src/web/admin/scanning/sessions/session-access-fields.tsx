@@ -8,8 +8,8 @@ import { eventsOnly, type SessionDraft } from './draft.ts';
 
 const DIRECTIONS = [
   { value: 'pass', label: 'Pass rules', description: 'The pass decides.', icon: ScanLine },
-  { value: 'in', label: 'In', description: 'Every scan taps in.', icon: LogIn },
-  { value: 'out', label: 'Out', description: 'Every scan taps out.', icon: LogOut },
+  { value: 'in', label: 'In', description: undefined, icon: LogIn },
+  { value: 'out', label: 'Out', description: undefined, icon: LogOut },
   {
     value: 'both',
     label: 'Both',

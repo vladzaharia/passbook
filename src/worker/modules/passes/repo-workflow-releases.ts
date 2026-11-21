@@ -20,12 +20,18 @@ export interface WorkflowReleaseReservation {
   /** An explicitly requested version must match every affected scope's effective head. */
   version: string | null;
   now: number;
+  /** Set for a key-started run: at most one active run holds a guard. */
+  runGuard?: string;
   expectedRelease?: { id: string; generation: number; version: string };
   authority?: TenantPassWrite;
   platformSession?: Pick<SessionAuth, 'userId' | 'sessionId'>;
 }
 
-export type WorkflowReleaseReservationResult = 'inserted' | 'forbidden' | 'release_changed';
+export type WorkflowReleaseReservationResult =
+  | 'inserted'
+  | 'forbidden'
+  | 'release_changed'
+  | 'run_active';
 
 /**
  * Reserve the run and capture all affected scopes in the same transaction. A failed authority,
@@ -132,9 +138,9 @@ export async function reserveWorkflowReleases(
         : []),
       stmt(
         db,
-        `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
-         VALUES (?, 'bulk_reissue', ?, ?, 'queued', ?)`,
-        [q.instanceId, q.orgId, q.targetId, q.now],
+        `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at, run_guard)
+         VALUES (?, 'bulk_reissue', ?, ?, 'queued', ?, ?)`,
+        [q.instanceId, q.orgId, q.targetId, q.now, q.runGuard ?? null],
       ),
       // The marker distinguishes a valid empty snapshot set from a legacy or missing set.
       stmt(db, 'INSERT INTO workflow_release_snapshot_sets (instance_id) VALUES (?)', [
@@ -166,6 +172,8 @@ export async function reserveWorkflowReleases(
     ]);
     return 'inserted';
   } catch (error) {
+    if (error instanceof Error && error.message.includes('workflow_runs.run_guard'))
+      return 'run_active';
     if (error instanceof Error && error.message.includes(forbiddenPath)) return 'forbidden';
     if (error instanceof Error && error.message.includes(releaseChangedPath))
       return 'release_changed';

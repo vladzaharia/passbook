@@ -134,7 +134,6 @@ export function ScanDetail({
         open={canUndo && confirm}
         onOpenChange={setConfirm}
         title="Undo check-in?"
-        description="The pass can be checked in again."
         confirmLabel="Undo check-in"
         onConfirm={() => undo.mutateAsync().then(() => undefined)}
       />

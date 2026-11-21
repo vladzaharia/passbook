@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first, run } from '../../platform/db.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import {
@@ -235,14 +236,18 @@ describe('scan display preview tenant authorization', () => {
     if (!identity) throw new Error('Missing pass signing identity');
     const response = await atPreviewAudit(
       async (db) => {
-        await run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
-          `${identity.team_identifier}-changed`,
-          identity.id,
-        ]);
-        await run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
-          identity.team_identifier,
-          identity.id,
-        ]);
+        await withoutTrigger(db, 'signing_identities_pti_immutable', () =>
+          run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
+            `${identity.team_identifier}-changed`,
+            identity.id,
+          ]),
+        );
+        await withoutTrigger(db, 'signing_identities_pti_immutable', () =>
+          run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
+            identity.team_identifier,
+            identity.id,
+          ]),
+        );
       },
       () => preview(own, session.headers),
     );

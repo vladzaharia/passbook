@@ -57,14 +57,7 @@ export function EventsTab() {
         columns={columns}
         loading={query.isPending}
         getRowId={(row) => row.id}
-        empty={
-          <EmptyState
-            art="passes"
-            title="No events yet"
-            description={orgId ? undefined : 'Choose an organization to create an event.'}
-            action={action}
-          />
-        }
+        empty={<EmptyState art="passes" title="No events yet" action={action} />}
       />
       {canManage && creating && orgId ? (
         <EventDialog orgId={orgId} onClose={() => setCreating(false)} />

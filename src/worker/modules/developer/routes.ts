@@ -53,7 +53,7 @@ register(
       ctx.log.warn('developer.turnstile_failed', { code: 'TURNSTILE_FAILED' });
       throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
     }
-    return c.json(await createSandbox(ctx, auth), 201);
+    return c.json(await createSandbox(ctx, auth, {}, { viewedAt: input.viewedAt }), 201);
   },
 );
 

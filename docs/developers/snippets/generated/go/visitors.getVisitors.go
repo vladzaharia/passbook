@@ -1,23 +1,34 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
+
+	passbook "github.com/vladzaharia/passbook/sdk/go"
 )
 
 func main() {
-	req, err := http.NewRequest("GET", "https://passbook.mobile/api/v1/visitors?dayStart=1764000000000&dayEnd=1764086400000", nil)
+	ctx := context.Background()
+	pb, err := passbook.NewClient(os.Getenv("PASSBOOK_KEY"))
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("PASSBOOK_KEY"))
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
+
+	var query passbook.VisitorsListQuery
+	if err := json.Unmarshal([]byte(`{
+  "dayStart": 1764000000000,
+  "dayEnd": 1764086400000
+}`), &query); err != nil {
 		panic(err)
 	}
-	defer res.Body.Close()
-	out, _ := io.ReadAll(res.Body)
-	fmt.Println(res.Status, string(out))
+
+	pager := pb.Visitors.List(ctx, &query)
+	for pager.Next(ctx) {
+		fmt.Printf("%+v\n", pager.Item())
+	}
+	if err := pager.Err(); err != nil {
+		panic(err)
+	}
 }

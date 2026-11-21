@@ -320,10 +320,10 @@ describe('Tabs', () => {
       };
       expect(screen.queryByRole('tab')).toBeNull();
       assertPanel('Configuration');
-      await user.click(screen.getByRole('combobox', { name: 'Section: Configuration' }));
+      await user.click(screen.getByRole('combobox', { name: 'Sections: Configuration' }));
       await user.click(screen.getByRole('option', { name: 'Mapping' }));
       assertPanel('Mapping');
-      expect(screen.getByRole('combobox', { name: 'Section: Mapping' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Sections: Mapping' })).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();
     }

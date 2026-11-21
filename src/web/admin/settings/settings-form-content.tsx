@@ -76,12 +76,10 @@ export function SettingsFormContent({
         const magicHelp =
           field.key === 'auth.magicLinkEnabled'
             ? draft[field.key] === true
-              ? changedField
-                ? 'After saving, holders can sign in with an email link.'
-                : 'Holders can sign in with an email link.'
+              ? undefined
               : changedField
                 ? 'After saving, holders without Polaris ID will not be able to sign in.'
-                : 'Email-link sign-in is off. Holders need Polaris ID.'
+                : 'Holders need Polaris ID.'
             : undefined;
         const differs = entry?.default !== undefined && entry.value !== entry.default;
         const parts =

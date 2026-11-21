@@ -9,7 +9,7 @@ import {
   KeyValue,
   TechnicalDetails,
 } from '../../../ui/index.ts';
-import { ACTION_LABEL, providerModeLabel, SOURCE_LABEL } from './labels.ts';
+import { ACTION_LABEL, SOURCE_LABEL } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
 
 const who = (r: TemplateRelease) =>
@@ -60,10 +60,6 @@ export function ReleaseHistory({
                 { label: 'Version', value: versionLabel(versions, active.version) },
                 { label: 'Published by', value: who(active) },
                 { label: 'Published', value: formatDateTime(active.createdAt) },
-                {
-                  label: 'Provider and mode',
-                  value: providerModeLabel(active.provider, active.mode),
-                },
                 { label: 'Source', value: SOURCE_LABEL[active.source] },
                 ...(active.approvalId && selfApprovals.has(active.approvalId)
                   ? [{ label: 'Approval', value: <Badge tone="warning">Self-approved</Badge> }]

@@ -365,6 +365,28 @@ describe('settings api', () => {
     });
   });
 
+  it('validates the org time zone, defaults to unset, audits it and resets with null', async () => {
+    const org = await makeOrg(fx);
+    await addMembership(org.id);
+    const put = (values: object) =>
+      call('PUT', '', { scope: `org:${org.id}`, values }, tenantUser.headers);
+    const ctx = createServiceContext(appEnv);
+    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBeUndefined();
+    for (const bad of ['Mars/Olympus', 'EST5EDT5', '', 5, 'x'.repeat(65)])
+      expect((await put({ 'org.timeZone': bad })).status).toBe(422);
+    expect((await put({ 'org.timeZone': 'Europe/Berlin' })).status).toBe(200);
+    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBe('Europe/Berlin');
+    const audit = await all<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE action = 'settings.update'",
+    );
+    expect(JSON.parse(audit[0]?.detail ?? '{}')).toEqual({
+      changes: { 'org.timeZone': { from: null, to: 'Europe/Berlin' } },
+    });
+    expect((await put({ 'org.timeZone': null })).status).toBe(200);
+    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBeUndefined();
+  });
+
   it('requires a platform admin for platform settings', async () => {
     await expectProblem(await call('GET', '', undefined, tenantUser.headers), 403, 'FORBIDDEN');
     await expectProblem(

@@ -1,0 +1,87 @@
+/* The pass before there is one: a card of its shape with the Test band. In the prerendered page too. */
+/* ---------- The pass before there is one ---------- */
+.qs-stage-card {
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-height: 24rem;
+  justify-content: center;
+}
+.qs-empty {
+  text-align: center;
+  text-wrap: balance;
+}
+.qs-ghost {
+  width: min(100%, 17rem);
+  border-radius: 18px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--pk-accent) 14%, var(--pk-surface-sunken));
+  border: 1px solid color-mix(in oklab, var(--pk-accent) 30%, var(--pk-border-subtle));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 16px;
+}
+.qs-ghost-band {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--pk-warning),
+    var(--pk-warning) 10px,
+    color-mix(in oklab, var(--pk-warning) 82%, #000) 10px,
+    color-mix(in oklab, var(--pk-warning) 82%, #000) 20px
+  );
+  color: #1b1300;
+  font: 700 10px / 1 var(--pk-font-mono);
+  letter-spacing: 0.1em;
+  text-align: center;
+  padding: 6px 4px;
+}
+.qs-ghost-top,
+.qs-ghost-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 16px;
+}
+.qs-ghost-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--pk-text-muted) 28%, transparent);
+}
+.qs-ghost-line {
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in oklab, var(--pk-text-muted) 24%, transparent);
+}
+.qs-ghost-line.w1 {
+  width: 34%;
+}
+.qs-ghost-line.w2 {
+  width: 42%;
+}
+.qs-ghost-art {
+  height: 5.5rem;
+  background: repeating-radial-gradient(
+    circle at 70% 120%,
+    transparent 0 10px,
+    color-mix(in oklab, var(--pk-accent) 12%, transparent) 10px 11px
+  );
+}
+.qs-ghost-code {
+  align-self: center;
+  width: 7rem;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--pk-text-strong) 90%, transparent);
+  opacity: 0.18;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .qs-ghost-line,
+  .qs-ghost-logo {
+    animation: qs-pulse 1.4s ease-in-out infinite;
+  }
+}

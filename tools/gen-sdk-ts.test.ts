@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { drift, generate, OUT } from './gen-sdk-ts.ts';
+import { drift, errorCodes, generate, OUT } from './gen-sdk-ts.ts';
 import { type OpenApiDoc, type SdkNames, sdkOperations } from './lib/sdk-ts-ops.ts';
 import { tsType } from './lib/sdk-ts-schema.ts';
 
@@ -12,7 +12,9 @@ const names = read<SdkNames>('docs/api/sdk-names.json');
 
 describe('the committed TypeScript SDK', () => {
   it('matches the generator (run `node tools/gen-sdk-ts.ts` after changing the API)', () => {
-    expect(drift(generate(doc, names), resolve(root, OUT))).toEqual([]);
+    expect(
+      drift(generate(doc, names, errorCodes(read('docs/api/errors.json'))), resolve(root, OUT)),
+    ).toEqual([]);
   });
 
   it('exposes exactly the key-reachable operations that are not sdk: false', () => {

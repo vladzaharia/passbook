@@ -8,10 +8,8 @@ export const SCAN_TAG_COPY = {
   step: { tag: 'Tag', pass: 'Pass' },
   tag: {
     hold: 'Hold the tag near the phone',
-    holdSub: 'Cards, fobs and stickers work.',
     ios: 'Tap Read tag, then hold the tag near the top of the iPhone',
     usb: 'Tap the tag on the reader',
-    usbSub: 'The reader types its ID here.',
     readButton: 'Read tag',
     allowNfc: 'Turn on tag reading',
     read: 'Tag read',

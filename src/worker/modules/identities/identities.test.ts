@@ -8,6 +8,7 @@ import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { checkIdentityById, runDailyIdentityChecks } from './check.ts';
 import { clearIdentityKeyCache } from './db-resolver.ts';
@@ -251,8 +252,6 @@ describe('identity authority revision', () => {
     const org = await makeOrg(fixtures(base));
     const row = await first<{
       org_id: string | null;
-      pass_type_identifier: string;
-      team_identifier: string;
       credential_id: string;
       cert_pem: string;
       cert_sha256: string;
@@ -261,7 +260,7 @@ describe('identity authority revision', () => {
       env_material_sha256: string | null;
     }>(
       env.DB,
-      `SELECT org_id, pass_type_identifier, team_identifier, credential_id, cert_pem,
+      `SELECT org_id, credential_id, cert_pem,
               cert_sha256, not_before, not_after, env_material_sha256
        FROM signing_identities WHERE id = ?`,
       [dto.id],
@@ -273,11 +272,15 @@ describe('identity authority revision', () => {
     );
     if (!row || !otherRow) throw new Error('Missing identity fixture');
 
+    // The pass type and team are immutable: installed passes key on them.
+    for (const column of ['pass_type_identifier', 'team_identifier'])
+      await expect(
+        run(env.DB, `UPDATE signing_identities SET ${column} = 'changed' WHERE id = ?`, [dto.id]),
+      ).rejects.toThrow(/IDENTITY_PTI_IMMUTABLE/);
+
     let previous = await identityRevision(dto.id);
     const changes: Array<[string, string | number | null, string | number | null]> = [
       ['org_id', org.id, row.org_id],
-      ['pass_type_identifier', `${row.pass_type_identifier}.changed`, row.pass_type_identifier],
-      ['team_identifier', `${row.team_identifier}X`, row.team_identifier],
       ['credential_id', otherRow.credential_id, row.credential_id],
       ['cert_pem', `${row.cert_pem}\n`, row.cert_pem],
       ['cert_sha256', `${row.cert_sha256}00`, row.cert_sha256],
@@ -632,18 +635,20 @@ describe('db identity resolver', () => {
     const b = await makeOrg(fx);
     const dto = (await (await upload(f, { orgId: a.id })).json()) as Dto;
     const resolver = createIdentityResolver(appEnv);
-    expect((await resolver.forOrg(a.id, dto.id)).id).toBe(dto.id);
-    await expect(resolver.forOrg(b.id, dto.id)).rejects.toMatchObject({
+    expect((await resolver.forOrg(a.id, dto.id, Date.now())).id).toBe(dto.id);
+    await expect(resolver.forOrg(b.id, dto.id, Date.now())).rejects.toMatchObject({
       code: 'IDENTITY_NOT_FOUND',
     });
     // Storage lasts for the whole file; an earlier case may have left a global default.
     await run(env.DB, 'UPDATE signing_identities SET is_default = 0 WHERE is_default = 1');
-    expect((await resolver.forOrg(b.id)).id).toBe('platform');
+    expect((await resolver.forOrg(b.id, undefined, Date.now())).id).toBe('platform');
 
     await run(env.DB, 'UPDATE orgs SET default_identity_id = ? WHERE id = ?', [dto.id, a.id]);
-    expect((await resolver.forOrg(a.id)).id).toBe(dto.id);
+    expect((await resolver.forOrg(a.id, undefined, Date.now())).id).toBe(dto.id);
     await run(env.DB, 'UPDATE orgs SET default_identity_id = ? WHERE id = ?', [dto.id, b.id]);
-    await expect(resolver.forOrg(b.id)).rejects.toMatchObject({ code: 'IDENTITY_NOT_FOUND' });
+    await expect(resolver.forOrg(b.id, undefined, Date.now())).rejects.toMatchObject({
+      code: 'IDENTITY_NOT_FOUND',
+    });
   });
 
   it('reports the apns binding only when the deployment has it', async () => {
@@ -683,9 +688,9 @@ describe('identity update and delete', () => {
     });
 
     const resolver = createIdentityResolver(appEnv);
-    expect((await resolver.forOrg('any-org')).id).toBe(b.id);
+    expect((await resolver.forOrg('any-org', undefined, Date.now())).id).toBe(b.id);
 
-    await ensurePlatformIdentity(base, 1);
+    await ensurePlatformIdentity(base, 1, nullLogger);
     await expectProblem(await call('DELETE', '/platform'), 409, 'IDENTITY_PROTECTED');
     expect((await call('PATCH', '/platform', { apnsBinding: 'APNS' })).status).toBe(422);
     await expectProblem(await call('PATCH', '/missing', { label: 'x' }), 404, 'IDENTITY_NOT_FOUND');

@@ -15,6 +15,7 @@ export {
   ValidationError,
   WebhookSignatureError,
 } from './errors.ts';
+export type { ErrorCode } from './generated/error-codes.ts';
 export type * from './generated/operation-types.ts';
 export type * from './generated/schemas.ts';
 export type { PageLike } from './pagination.ts';

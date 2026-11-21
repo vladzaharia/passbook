@@ -7,6 +7,15 @@ const O = OrgSettingsSchema.shape;
 
 export const ORG_FIELDS: readonly SettingField[] = [
   {
+    key: 'org.timeZone',
+    group: 'General',
+    label: 'Time zone',
+    kind: 'zone',
+    optional: true,
+    help: 'The clock for sites without their own time zone.',
+    schema: O['org.timeZone'],
+  },
+  {
     key: 'branding.accent',
     label: 'Accent color',
     kind: 'color',
@@ -27,7 +36,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     group: 'Pass email',
     label: 'Buddy in pass emails',
     kind: 'boolean',
-    help: "The PassBook buddy sits beside the organization's name.",
     schema: O['email.buddy'],
   },
   {
@@ -46,7 +54,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Emails per day',
     kind: 'int',
     optional: true,
-    help: 'Pass emails for this organization. 10 to 5000.',
+    help: '10 to 5000.',
     range: [10, 5000],
     schema: O['email.orgCapPerDay'],
   },
@@ -73,7 +81,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Legal name',
     kind: 'text',
     optional: true,
-    help: 'Shown on the privacy page.',
     schema: O['privacy.legalName'],
   },
   {

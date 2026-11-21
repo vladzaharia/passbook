@@ -78,6 +78,8 @@ execFileSync(
 );
 if (mode === 'preview') {
   execFileSync('npx', ['vite', 'build'], { cwd: root, stdio: 'inherit', env });
+  // The developer portal's prerendered pages (the specs that open /developers need them in the manifest).
+  execFileSync('node', ['tools/build-developers.ts'], { cwd: root, stdio: 'inherit', env });
   // Vite's emitted vars omit non-secret overrides such as the local OIDC issuer.
   copyFileSync(varsFile, resolve(root, 'dist/wallet/.dev.vars'));
   // The build flattens the config without vite.config.ts's `env.e2e`, so its raised RL_SCAN_PAIR

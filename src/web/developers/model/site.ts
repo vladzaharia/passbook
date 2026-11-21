@@ -117,6 +117,19 @@ const isPaged = (example: Json | undefined): boolean =>
   'items' in example &&
   'nextCursor' in example;
 
+/** The SDKs return a page iterator: a GET whose pages hold `items` and `nextCursor`, taking a `cursor` or `after`. */
+function isCursorList(doc: RawDoc, method: Method, op: RawOp, okSchema: unknown): boolean {
+  if (method !== 'get' || !okSchema) return false;
+  const root = resolve(doc, okSchema);
+  const pages = Array.isArray(root.anyOf) ? root.anyOf : [root];
+  const shaped = pages.every((p) => {
+    const props = asDict(resolve(doc, p).properties);
+    return 'items' in props && 'nextCursor' in props;
+  });
+  const names = (op.parameters ?? []).map((p) => resolve(doc, p).name);
+  return shaped && (names.includes('cursor') || names.includes('after'));
+}
+
 function view(
   doc: RawDoc,
   path: string,
@@ -182,6 +195,8 @@ function view(
     paged: method === 'get' && isPaged(returnsExample),
     binary: !body && sdk.method === 'upload' && method !== 'get',
     download: method === 'get' && !okSchema,
+    noContent: method !== 'get' && !okSchema,
+    cursorList: isCursorList(doc, method, op, okSchema),
   };
   return { ...base, run: runOp(doc, base, op, method) };
 }

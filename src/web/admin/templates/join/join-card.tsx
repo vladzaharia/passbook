@@ -17,7 +17,6 @@ import {
   SwitchRow,
   toast,
 } from '../../../ui/index.ts';
-import { TestStrip } from '../../../ui/layout/test-strip.tsx';
 import { type JoinScope, useJoinLink, useJoinLinkActions } from './api.ts';
 import { JoinNeedsCode, JoinReadiness } from './join-readiness.tsx';
 import { JoinShare } from './join-share.tsx';
@@ -81,11 +80,9 @@ export function JoinCard(props: JoinCardProps) {
           link?.limitReached ? <Badge tone="warning">{JOIN_COPY.card.limitReached}</Badge> : null
         }
       />
-      {test ? <TestStrip className="rounded-none">{JOIN_COPY.card.testNote}</TestStrip> : null}
       <CardBody className="flex flex-col gap-4">
         <SwitchRow
           label={JOIN_COPY.card.open}
-          help={JOIN_COPY.card.openHelp}
           checked={enabled}
           disabled={switchOff}
           onCheckedChange={toggle}

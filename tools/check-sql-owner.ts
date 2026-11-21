@@ -16,6 +16,15 @@ function* sources(dir: string): Generator<string> {
   }
 }
 
+// REPLACE deletes and reinserts, which skips the pass type trigger and cascades registrations away.
+const IDENTITY_REPLACE =
+  /\b(?:INSERT\s+OR\s+REPLACE\s+INTO|REPLACE\s+INTO|UPDATE\s+OR\s+REPLACE)\s+signing_identities\b/i;
+
+export function replaceOnIdentities(rel: string, text: string): string | null {
+  if (/\.test\.tsx?$/.test(rel) || !rel.startsWith('src/worker/')) return null;
+  return IDENTITY_REPLACE.test(text) ? `${rel} replaces rows of signing_identities` : null;
+}
+
 export function sqlOutsideRepo(rel: string, text: string): string | null {
   if (ALLOWED.test(rel) || !rel.startsWith('src/worker/')) return null;
   return SQL.test(text) ? `${rel} contains SQL outside a repo file` : null;
@@ -25,8 +34,9 @@ if (import.meta.main) {
   const problems: string[] = [];
   for (const file of sources(join(root, 'src/worker'))) {
     const rel = relative(root, file);
-    const found = sqlOutsideRepo(rel, readFileSync(file, 'utf8'));
-    if (found) problems.push(found);
+    const text = readFileSync(file, 'utf8');
+    for (const found of [sqlOutsideRepo(rel, text), replaceOnIdentities(rel, text)])
+      if (found) problems.push(found);
   }
   if (problems.length > 0) {
     process.stderr.write(`${problems.join('\n')}\n`);

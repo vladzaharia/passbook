@@ -42,10 +42,13 @@ export function CodeLines({
   code,
   lang,
   changed,
+  marked,
 }: {
   code: string;
   lang: Lang;
   changed: ReadonlySet<number>;
+  /** Lines to keep lit (the quickstart's "this is the line that matters"). */
+  marked?: ReadonlySet<number>;
 }) {
   // One block per line: `ln` spans arrive top level, each holding its tokens.
   const lines = highlight(code, lang).split(/(?=<span class="ln)/);
@@ -54,8 +57,11 @@ export function CodeLines({
       {lines.map((html, i) => {
         const inner = html.replace(/^<span class="ln[^"]*">/, '').replace(/<\/span>$/, '');
         return (
-          // biome-ignore lint/suspicious/noArrayIndexKey: lines have no identity; the text is the content
-          <span key={i} className={changed.has(i + 1) ? 'ln add' : 'ln'}>
+          <span
+            // biome-ignore lint/suspicious/noArrayIndexKey: lines have no identity; the text is the content
+            key={i}
+            className={changed.has(i + 1) ? 'ln add' : marked?.has(i + 1) ? 'ln hl' : 'ln'}
+          >
             {nodesOf(inner)}
           </span>
         );

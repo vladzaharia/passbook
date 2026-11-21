@@ -7,10 +7,15 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
+import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
 import { DEVELOPERS_INDEXABLE, PATHS, twin } from '../../shared/developers.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { HEAD_HTML } from '../../worker/ssr/head.ts';
 import { runFile, runFileUrl, runIndex } from './console/run-spec.ts';
+import type { GuideInputs } from './guide/load.ts';
+import { guideMarkdown } from './guide/markdown.ts';
+import { resolveGuide } from './guide/model.ts';
+import { GuidesIndex, GuideView } from './guide/view.tsx';
 import { atomFeed } from './model/changelog.ts';
 import { operations } from './model/dates.ts';
 import { homeMarkdown, llmsTxt, pageMarkdown, pagePath } from './model/markdown.ts';
@@ -25,12 +30,12 @@ import {
   ErrorsIndex,
   ProtocolsView,
   ReferenceIndex,
-  SlotView,
   WebhooksView,
 } from './pages/more.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
 import { PlaygroundPage } from './playground/page.tsx';
+import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
 
 interface Doc {
   url: string;
@@ -73,7 +78,12 @@ const opIndex = (site: Site): Record<string, string> =>
 /** `/developers/reference/passes` is `developers/reference/passes.html`; a directory page is `index.html`. */
 const fileOf = (url: string, dir: boolean) => (dir ? `${url}/index.html` : `${url}.html`);
 
-export function renderSite(site: Site, origin: string, assets: string): OutFile[] {
+export function renderSite(
+  site: Site,
+  origin: string,
+  assets: string,
+  guideInputs: GuideInputs = { docs: [], examples: [] },
+): OutFile[] {
   const out: OutFile[] = [];
   const base = `${DEV_COPY.brand} · PassBook`;
   const add = (doc: Doc, dir = false) =>
@@ -233,14 +243,39 @@ export function renderSite(site: Site, origin: string, assets: string): OutFile[
   page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'logs', <LogsView />);
   page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />);
   out.push({ file: PATHS.logsOps, body: JSON.stringify(opIndex(site)) });
-  for (const which of ['quickstart', 'guides'] as const)
-    page(
-      PATHS[which],
-      DEV_COPY.slots[which].title,
-      DEV_COPY.slots[which].line,
-      which,
-      <SlotView which={which} />,
-    );
+  page(
+    PATHS.quickstart,
+    QS_COPY.title,
+    QS_COPY.lede,
+    'quickstart',
+    <QuickstartView />,
+    <QuickstartSide />,
+  );
+  const guides = guideInputs.docs.map(({ doc }) => resolveGuide(doc, site, guideInputs.examples));
+  page(
+    PATHS.guides,
+    DEV_COPY.slots.guides.title,
+    DEV_COPY.slots.guides.line,
+    'guides',
+    <GuidesIndex guides={guides} />,
+    undefined,
+    true,
+  );
+  for (const g of guides) {
+    const markdown = guideMarkdown(g, guideInputs.examples, site.baseUrl || origin);
+    add({
+      url: g.url,
+      title: `${g.meta.title} · Guides · ${base}`,
+      description: g.meta.line,
+      body: html(
+        <Shell site={site} active="guides">
+          <GuideView guide={g} examples={guideInputs.examples} markdown={markdown} />
+        </Shell>,
+      ),
+      md: true,
+    });
+    out.push({ file: twin(g.url), body: markdown });
+  }
 
   out.push({ file: PATHS.llms, body: llmsTxt(site) });
   return out;

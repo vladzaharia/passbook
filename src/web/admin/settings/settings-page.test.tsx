@@ -207,7 +207,7 @@ describe('settings page', () => {
       handlers: { '/api/v1/settings': () => json(entries()) },
     });
     await screen.findByLabelText('Email sender name');
-    const help = screen.getByText('Holders can sign in with an email link.');
+    const help = screen.getByText(/^Off requires additional email proof/);
     expect(help).toHaveClass('text-xs', 'text-fg-muted');
     for (const p of container.querySelectorAll('form p[id$="-help"]'))
       expect(p).toHaveClass('text-xs', 'text-fg-muted');

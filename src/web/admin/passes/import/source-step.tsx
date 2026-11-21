@@ -9,7 +9,6 @@ import {
   Callout,
   Card,
   CardBody,
-  CardHeader,
   FileDrop,
   FormField,
   Input,
@@ -97,7 +96,6 @@ export function SourceStep({ orgId }: { orgId: string }) {
 
   return (
     <Card>
-      <CardHeader title={C.sourceTitle} />
       <CardBody className="flex flex-col gap-4">
         {mode === 'test' ? <Callout tone="info">{C.testNote}</Callout> : null}
         {templates.isPending ? (

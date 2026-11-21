@@ -15,7 +15,7 @@ import {
 } from '../../ui/index.ts';
 import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { commonFields } from './common-fields.ts';
-import { atMs, type ComposerState } from './composer-state.ts';
+import type { ComposerState } from './composer-state.ts';
 import { CLEAR_CHOICES } from './labels.ts';
 
 type TemplateDetailDto = z.infer<typeof TemplateDetailSchema>;
@@ -62,7 +62,6 @@ export function MessageSection({
       <DependentSettings open={!state.clearing}>
         <SwitchRow
           label="Notify holders"
-          help="Wallet can show it on the lock screen."
           checked={state.notify}
           onCheckedChange={(notify) => onChange({ notify })}
         />
@@ -138,7 +137,6 @@ export function ChangeSection({
       ) : null}
       <SwitchRow
         label="Notify holders"
-        help="Wallet can show it on the lock screen."
         checked={state.notify}
         onCheckedChange={(notify) => onChange({ notify })}
       />
@@ -156,7 +154,6 @@ export function WhenSection({
   error?: string | undefined;
 }) {
   const zone = state.at?.zone ?? localZone();
-  const at = atMs(state);
   return (
     <div className="flex flex-col gap-3">
       <SegmentedControl
@@ -184,9 +181,6 @@ export function WhenSection({
             />
           )}
         </FormField>
-      ) : null}
-      {state.when === 'later' && at === undefined && !error ? (
-        <p className="text-xs text-fg-muted">Pick a date and time.</p>
       ) : null}
     </div>
   );

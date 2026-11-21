@@ -5,7 +5,6 @@ export const JOIN_COPY = {
   card: {
     title: 'Join link',
     open: 'Open to everyone',
-    openHelp: 'People can get a card without staff.',
     askFor: 'Ask visitors for',
     name: 'Name',
     fills: 'Saved in {label}',
@@ -19,7 +18,6 @@ export const JOIN_COPY = {
     copy: 'Copy link',
     print: 'Print sign',
     rotate: 'Make a new link',
-    testNote: 'Test link. Its cards are not real.',
     askAdmin: 'Ask an org admin.',
     needsCode: 'Join links need a generated barcode.',
   },
@@ -54,7 +52,6 @@ export const JOIN_COPY = {
     title: 'Get your {org} card',
     firstName: 'First name',
     email: 'Email',
-    emailHelp: 'To find your card again.',
     submit: 'Get my card',
     keeps: '{org} keeps your name for this card.',
     keepsWithEmail: '{org} keeps your name and email for this card.',
