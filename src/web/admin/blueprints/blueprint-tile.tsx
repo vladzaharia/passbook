@@ -93,9 +93,6 @@ export function BlueprintTile({
           >
             {b.name}
           </Link>
-          {b.description ? (
-            <p className="line-clamp-2 text-xs text-fg-muted">{b.description}</p>
-          ) : null}
           {choices ? (
             <SegmentedControl
               label={`${entry.variants[0]?.blueprint.name} for`}

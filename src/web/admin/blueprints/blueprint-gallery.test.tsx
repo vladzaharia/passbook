@@ -189,7 +189,6 @@ describe('quick setup', () => {
     await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
     const dialog = await screen.findByRole('dialog', { name: 'Use blueprint' });
     expect(within(dialog).queryByRole('button', { name: 'Open designer' })).toBeNull();
-    expect(within(dialog).getByText('Change anything later in the designer.')).toBeInTheDocument();
     await user.upload(
       within(dialog).getByLabelText('Choose a PNG logo', { selector: 'input' }),
       logoFile(200, 60),
