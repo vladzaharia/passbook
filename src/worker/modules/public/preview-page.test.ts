@@ -85,7 +85,7 @@ describe('/preview/<link>', () => {
     // A later hour (a longer life) or another pass id fails the MAC.
     for (const bad of [
       `${id}.${gen}.${later}.${mac}`,
-      `${id.replace(/.$/, '0')}.${gen}.${hour}.${mac}`,
+      `${id.replace(/.$/, (c) => (c === '0' ? '1' : '0'))}.${gen}.${hour}.${mac}`,
     ])
       expect((await get(`${TEST_PREVIEW_PATH}${bad}`)).status).toBe(404);
     expect((await get(`${TEST_PREVIEW_PATH}${await plainOf(pass)}`)).status).toBe(404);

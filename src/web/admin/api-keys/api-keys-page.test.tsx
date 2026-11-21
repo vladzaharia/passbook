@@ -119,7 +119,8 @@ describe('api keys page', () => {
       },
     });
     const user = userEvent.setup();
-    await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+    await screen.findByText('No API keys');
+    await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
     expect(dialog.className).toContain('sm:max-w-lg');
     await user.click(within(dialog).getByRole('button', { name: 'Create' }));
@@ -185,7 +186,8 @@ describe('api keys page', () => {
     expect(await screen.findByText('All modes')).toBeInTheDocument();
     expect(seen.every((orgId) => orgId === 'o1')).toBe(true);
     expect(screen.queryByRole('combobox', { name: 'Key context' })).toBeNull();
-    await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+    await screen.findByText(/^No (active )?API keys$/);
+    await user.click(screen.getByRole('button', { name: 'New API key' }));
     expect(
       within(await screen.findByRole('dialog', { name: 'New API key' })).getByText('North'),
     ).toBeInTheDocument();
@@ -253,7 +255,7 @@ describe('api keys page', () => {
     expect(within(dialog).getByText('Platform')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New API key' })).toBeNull());
-    await user.click(screen.getAllByRole('button', { name: 'New API key' })[0]!);
+    await user.click(screen.getByRole('button', { name: 'New API key' }));
     expect(await screen.findByRole('dialog', { name: 'New API key' })).toBeInTheDocument();
   });
 
@@ -310,7 +312,8 @@ describe('api keys page', () => {
         },
       });
       const user = userEvent.setup();
-      await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+      await screen.findByText(/^No (active )?API keys$/);
+      await user.click(screen.getByRole('button', { name: 'New API key' }));
       const dialog = await screen.findByRole('dialog');
       // The mode is shown, not offered: the server gives a key the console's mode.
       expect(
@@ -352,7 +355,7 @@ describe('api keys page', () => {
     // Existing Test keys stay listed, and no mode switch sits on the page.
     expect(await screen.findByText('Old test')).toBeInTheDocument();
     expect(screen.queryByRole('switch', { name: /Test mode/ })).toBeNull();
-    await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+    await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'P');
     await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
@@ -382,7 +385,8 @@ describe('api keys page', () => {
         },
       });
       const user = userEvent.setup();
-      await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+      await screen.findByText(/^No (active )?API keys$/);
+      await user.click(screen.getByRole('button', { name: 'New API key' }));
       const dialog = await screen.findByRole('dialog');
       await user.type(within(dialog).getByLabelText(/Name/), 'P');
       await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
@@ -410,7 +414,8 @@ describe('api keys page', () => {
       },
     });
     const user = userEvent.setup();
-    await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+    await screen.findByText('No API keys');
+    await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'x');
     await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');

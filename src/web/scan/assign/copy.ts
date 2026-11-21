@@ -32,7 +32,6 @@ export const TAG_EXTRA_COPY = {
   basicLow: 'This tag is below what this pass needs.',
   lostWarn: 'Reported lost {date}.',
   askManager: 'Ask a manager',
-  cardHint: 'Cards, fobs and stickers work.',
   requestLeft: '{time} left',
   secondsLeft: '30 seconds left',
   requestOpen: 'Tag request',

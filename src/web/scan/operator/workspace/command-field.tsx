@@ -29,11 +29,7 @@ export function CommandField({
   activeId: string | undefined;
 }) {
   const offline = readiness === 'offline';
-  const line = offline
-    ? C.ready.offline
-    : readiness === 'paused'
-      ? C.ready.paused
-      : C.ready.anywhere;
+  const line = offline ? C.ready.offline : readiness === 'paused' ? C.ready.paused : null;
   return (
     <search className="op-command" aria-label={C.landmark.search}>
       <div className="op-field" data-filled={value ? '' : undefined}>

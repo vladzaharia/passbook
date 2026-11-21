@@ -122,7 +122,7 @@ describe('Scanners tab', () => {
       handlers: { '/api/v1/scan-setups': none, '/api/v1/scan-events': none },
     });
     expect(await screen.findByText('No devices yet')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(1);
   });
 });
 

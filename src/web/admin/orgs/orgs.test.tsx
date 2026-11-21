@@ -340,7 +340,8 @@ describe('orgs list', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click((await screen.findAllByRole('button', { name: 'New organization' }))[0]!);
+    await screen.findByText('No organizations');
+    await ui.click(screen.getByRole('button', { name: 'New organization' }));
     const dialog = await screen.findByRole('dialog');
     await ui.type(within(dialog).getByLabelText(/Name/), 'Acme');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
@@ -1384,9 +1385,6 @@ describe('org detail', () => {
     expect(await screen.findByRole('heading', { name: 'Pass email' })).toBeInTheDocument();
     const toggle = await screen.findByRole('switch', { name: 'Buddy in pass emails' });
     expect(toggle).not.toBeChecked();
-    expect(
-      screen.getByText("The PassBook buddy sits beside the organization's name."),
-    ).toBeInTheDocument();
     // The real email, rendered by the Worker, follows the switch before Save.
     const frame = () => screen.getByTitle('Sample pass email') as HTMLIFrameElement;
     expect(screen.getByText('Sample email')).toBeInTheDocument();

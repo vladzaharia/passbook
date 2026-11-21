@@ -276,7 +276,6 @@ export function AddTagDialog({
     <Dialog open={open} onOpenChange={close}>
       <DialogContent
         title={D.title}
-        description={fill(D.desc, { name: target.holderName })}
         footer={footer}
         onOpenAutoFocus={(e) => {
           if (waiting) e.preventDefault();

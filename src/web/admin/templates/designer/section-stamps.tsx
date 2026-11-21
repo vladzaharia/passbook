@@ -95,7 +95,7 @@ function GoalStepper({ goal }: { goal: number }) {
         />
       </div>
       <p className="text-xs text-fg-muted">
-        Stamps for one reward, {GOAL_MIN} to {GOAL_MAX}.
+        {GOAL_MIN} to {GOAL_MAX} stamps.
       </p>
     </fieldset>
   );
@@ -191,7 +191,6 @@ export function StampsSection() {
       </div>
       <SwitchRow
         label="Tilt stamps"
-        help="Each position keeps its own angle."
         checked={view.tilt}
         onCheckedChange={(tilt) => edit({ op: 'stamps-set', patch: { tilt } })}
       />

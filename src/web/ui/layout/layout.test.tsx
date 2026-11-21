@@ -225,7 +225,7 @@ describe('route guards in the app', () => {
           }),
       },
     });
-    expect(await screen.findByText('1 pass in Henrys')).toBeInTheDocument();
+    expect(await screen.findByText('1 pass')).toBeInTheDocument();
   });
 
   it('denies API key pages and actions to a tenant member who cannot read integrations', async () => {
@@ -858,5 +858,65 @@ describe('admin layout', () => {
     await user.click(screen.getByRole('combobox', { name: 'Scope: Harbor' }));
     await user.click(await screen.findByRole('option', { name: 'Platform' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform'));
+  });
+});
+
+describe('scope switcher with a personal organization', () => {
+  const personal = () => membershipFixture('p1', { orgName: 'Personal', personal: true });
+
+  it('lists Platform, Personal, a separator, then Organizations', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/platform/users', {
+      session: 'admin',
+      memberships: [membershipFixture('o1', { orgName: 'Henrys' }), personal()],
+      handlers: { '/api/v1/users': () => json({ items: [], nextCursor: null }) },
+    });
+    await user.click(await screen.findByRole('combobox', { name: 'Scope: Platform' }));
+    const list = await screen.findByRole('listbox');
+    const parts = [
+      ...list.querySelectorAll('[role=option], [role=separator], [cmdk-group-heading]'),
+    ];
+    expect(parts.map((el) => el.getAttribute('role') ?? el.textContent)).toEqual([
+      'option',
+      'option',
+      'separator',
+      'Organizations',
+      'option',
+    ]);
+    const options = within(list).getAllByRole('option');
+    expect(options.map((o) => o.textContent)).toEqual(['Platform', 'Personal', 'Henrys']);
+    expect(options[1]?.querySelector('.lucide-user')).not.toBeNull();
+    expect(options[2]?.querySelector('.lucide-user')).toBeNull();
+  });
+
+  it('uses the user icon on the trigger when Personal is current', async () => {
+    await renderApp('/admin/o/p1', {
+      session: 'admin',
+      memberships: [membershipFixture('o1', { orgName: 'Henrys' }), personal()],
+    });
+    const trigger = await screen.findByRole('combobox', { name: 'Scope: Personal' });
+    expect(trigger.querySelector('.lucide-user')).not.toBeNull();
+  });
+
+  it('offers a non-admin Personal alone in the top group', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/o/o1', {
+      session: 'user',
+      memberships: [membershipFixture('o1', { orgName: 'Henrys' }), personal()],
+    });
+    await user.click(await screen.findByRole('combobox', { name: /^Scope:/ }));
+    const list = await screen.findByRole('listbox');
+    expect(within(list).queryByRole('option', { name: 'Platform' })).toBeNull();
+    expect(
+      within(list)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['Personal', 'Henrys']);
+  });
+
+  it('shows a lone Personal as a label with the user icon', async () => {
+    await renderApp('/admin/o/p1', { session: 'user', memberships: [personal()] });
+    const label = await screen.findAllByText('Personal');
+    expect(label.some((el) => el.parentElement?.querySelector('.lucide-user'))).toBe(true);
   });
 });

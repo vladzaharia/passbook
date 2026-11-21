@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Inspector } from '../../ui/inspector.tsx';
 import { Ticket } from '../../ui/ticket.tsx';
 import { remaining, subscribe } from '../budget.ts';
+import { applyPrefill, type Prefill } from '../prefill.ts';
 import { buildSent, type Draft, initialDraft } from '../request.ts';
 import { type Outcome, RunError, send } from '../send.ts';
 import type { RunOp } from '../types.ts';
@@ -16,14 +17,19 @@ export interface ConsoleProps {
   codes: ReadonlySet<string>;
   /** On the console page the stub grows with its content; on an operation page it is a fixed size. */
   mode: 'op' | 'console' | 'sheet';
+  /** A guide's link: the request to start from. */
+  prefill?: Prefill | undefined;
 }
 
 const firstTab = (op: RunOp): Tab =>
   op.params.some((p) => p.where !== 'header') || !op.body ? 'form' : 'json';
 
 /** One operation: the request as the ticket stub, the response as its body. Remounted per operation. */
-export function OpConsole({ op, origin, csrf, templateId, codes }: ConsoleProps) {
-  const [draft, setDraft] = useState<Draft>(() => initialDraft(op, templateId));
+export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: ConsoleProps) {
+  const [draft, setDraft] = useState<Draft>(() => {
+    const start = initialDraft(op, templateId);
+    return prefill ? applyPrefill(start, op, prefill, templateId) : start;
+  });
   const [tab, setTab] = useState<Tab>(() => firstTab(op));
   const [pending, setPending] = useState(false);
   const [outcome, setOutcome] = useState<{ result: Outcome; draft: Draft } | null>(null);

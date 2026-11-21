@@ -24,6 +24,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/developer/resolve new operation",
+    "class": "additive",
+    "operationId": "developer.getResolve",
+    "op": "GET /api/v1/developer/resolve",
+    "change": "new operation",
+    "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
+  },
+  {
+    "key": "GET /api/v1/metrics/platform/developer new operation",
+    "class": "additive",
+    "operationId": "metrics.getMetricsPlatformDeveloper",
+    "op": "GET /api/v1/metrics/platform/developer",
+    "change": "new operation",
+    "note": "Platform admins: sandboxes by quickstart step, completion and time to first pass, last 30 days."
+  },
+  {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgs",

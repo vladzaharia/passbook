@@ -1,0 +1,7803 @@
+[
+ {
+  "id": "api-keys.getApiKeys",
+  "call": "api_keys.list",
+  "http": "GET",
+  "path": "/api/v1/api-keys",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "name": "x",
+     "prefix": "x",
+     "scopes": [
+      "passes:read"
+     ],
+     "createdBy": "x",
+     "createdAt": 0,
+     "lastUsedAt": 0,
+     "expiresAt": 0,
+     "revokedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "api-keys.postApiKeys",
+  "call": "api_keys.create",
+  "http": "POST",
+  "path": "/api/v1/api-keys",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "name": "x",
+   "prefix": "x",
+   "scopes": [
+    "passes:read"
+   ],
+   "createdBy": "x",
+   "createdAt": 0,
+   "lastUsedAt": 0,
+   "expiresAt": 0,
+   "revokedAt": 0
+  }
+ },
+ {
+  "id": "api-keys.getApiKeysMe",
+  "call": "api_keys.retrieve_current",
+  "http": "GET",
+  "path": "/api/v1/api-keys/me",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "name": "x",
+   "prefix": "x",
+   "scopes": [
+    "passes:read"
+   ],
+   "createdAt": 0,
+   "lastUsedAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "api-keys.postApiKeysMeRotate",
+  "call": "api_keys.rotate_current",
+  "http": "POST",
+  "path": "/api/v1/api-keys/me/rotate",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "key": {
+    "id": "x",
+    "orgId": "x",
+    "name": "x",
+    "prefix": "x",
+    "scopes": [
+     "passes:read"
+    ],
+    "createdBy": "x",
+    "createdAt": 0,
+    "lastUsedAt": 0,
+    "expiresAt": 0,
+    "revokedAt": 0,
+    "secret": "x"
+   },
+   "previous": {
+    "id": "x",
+    "orgId": "x",
+    "name": "x",
+    "prefix": "x",
+    "scopes": [
+     "passes:read"
+    ],
+    "createdBy": "x",
+    "createdAt": 0,
+    "lastUsedAt": 0,
+    "expiresAt": 0,
+    "revokedAt": 0
+   }
+  }
+ },
+ {
+  "id": "api-keys.getApiKeysById",
+  "call": "api_keys.retrieve",
+  "http": "GET",
+  "path": "/api/v1/api-keys/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "name": "x",
+   "prefix": "x",
+   "scopes": [
+    "passes:read"
+   ],
+   "createdBy": "x",
+   "createdAt": 0,
+   "lastUsedAt": 0,
+   "expiresAt": 0,
+   "revokedAt": 0,
+   "lastIpPrefix": "x",
+   "parent": {
+    "id": "x",
+    "name": "x"
+   },
+   "replacedBy": {
+    "id": "x",
+    "name": "x"
+   },
+   "childCount": 0
+  }
+ },
+ {
+  "id": "api-keys.deleteApiKeysById",
+  "call": "api_keys.revoke",
+  "http": "DELETE",
+  "path": "/api/v1/api-keys/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "api-keys.getApiKeysByIdActivity",
+  "call": "api_keys.activity.list",
+  "http": "GET",
+  "path": "/api/v1/api-keys/{id}/activity",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "lastUsedAt": 0,
+   "lastIpPrefix": "x",
+   "summary": {
+    "since": 0,
+    "calls": 0,
+    "denied": 0,
+    "actions": [
+     {
+      "action": "x",
+      "count": 0,
+      "lastAt": 0
+     }
+    ]
+   },
+   "recent": [
+    {
+     "id": 0,
+     "at": 0,
+     "action": "x",
+     "outcome": "allowed",
+     "targetType": "x",
+     "targetId": "x",
+     "ipPrefix": "x",
+     "code": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "api-keys.postApiKeysByIdRetire",
+  "call": "api_keys.retire",
+  "http": "POST",
+  "path": "/api/v1/api-keys/{id}/retire",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "retireAt": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "api-keys.postApiKeysByIdRotate",
+  "call": "api_keys.rotate",
+  "http": "POST",
+  "path": "/api/v1/api-keys/{id}/rotate",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "key": {
+    "id": "x",
+    "orgId": "x",
+    "name": "x",
+    "prefix": "x",
+    "scopes": [
+     "passes:read"
+    ],
+    "createdBy": "x",
+    "createdAt": 0,
+    "lastUsedAt": 0,
+    "expiresAt": 0,
+    "revokedAt": 0,
+    "secret": "x"
+   },
+   "previous": {
+    "id": "x",
+    "orgId": "x",
+    "name": "x",
+    "prefix": "x",
+    "scopes": [
+     "passes:read"
+    ],
+    "createdBy": "x",
+    "createdAt": 0,
+    "lastUsedAt": 0,
+    "expiresAt": 0,
+    "revokedAt": 0
+   }
+  }
+ },
+ {
+  "id": "brand.getBrand",
+  "call": "brand.retrieve",
+  "http": "GET",
+  "path": "/api/v1/brand",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "orgId": "x",
+   "name": "x",
+   "accent": "x",
+   "webLogo": {
+    "url": "x",
+    "w": 0,
+    "h": 0
+   },
+   "supportEmail": "x",
+   "supportUrl": "x",
+   "mark": "full",
+   "markChosen": "full",
+   "markAllowed": [
+    "full"
+   ],
+   "configRevision": 0
+  }
+ },
+ {
+  "id": "brand.patchBrand",
+  "call": "brand.update",
+  "http": "PATCH",
+  "path": "/api/v1/brand",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "slug": "x",
+   "name": "x",
+   "status": "active",
+   "defaultIdentityId": "x",
+   "branding": {},
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "brand.putBrandWebLogo",
+  "call": "brand.web_logo.upload",
+  "http": "PUT",
+  "path": "/api/v1/brand/web-logo",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "png": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "slug": "x",
+   "name": "x",
+   "status": "active",
+   "defaultIdentityId": "x",
+   "branding": {},
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "brand.deleteBrandWebLogo",
+  "call": "brand.web_logo.delete",
+  "http": "DELETE",
+  "path": "/api/v1/brand/web-logo",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "slug": "x",
+   "name": "x",
+   "status": "active",
+   "defaultIdentityId": "x",
+   "branding": {},
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.getBroadcasts",
+  "call": "broadcasts.list",
+  "http": "GET",
+  "path": "/api/v1/broadcasts",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "kind": "message",
+     "name": "x",
+     "state": "draft",
+     "target": {
+      "templateIds": [
+       "x"
+      ]
+     },
+     "patch": {},
+     "notify": false,
+     "at": 0,
+     "clearAfter": 0,
+     "parentId": "x",
+     "ruleId": "x",
+     "followUp": {
+      "id": "x",
+      "at": 0
+     },
+     "counts": {
+      "targeted": 0,
+      "updated": 0,
+      "unchanged": 0,
+      "overBudget": 0,
+      "failed": 0
+     },
+     "errorCode": "x",
+     "createdAt": 0,
+     "startedAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcasts",
+  "call": "broadcasts.create",
+  "http": "POST",
+  "path": "/api/v1/broadcasts",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "kind": "message",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsPreview",
+  "call": "broadcasts.count_recipients",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/preview",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   }
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "targeted": 0,
+   "onDevice": 0,
+   "overBudget": 0,
+   "limit": 0
+  }
+ },
+ {
+  "id": "broadcasts.getBroadcastsById",
+  "call": "broadcasts.retrieve",
+  "http": "GET",
+  "path": "/api/v1/broadcasts/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.patchBroadcastsById",
+  "call": "broadcasts.update",
+  "http": "PATCH",
+  "path": "/api/v1/broadcasts/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "kind": "message",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsByIdCancel",
+  "call": "broadcasts.cancel",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/{id}/cancel",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.getBroadcastsByIdItems",
+  "call": "broadcasts.recipients.list",
+  "http": "GET",
+  "path": "/api/v1/broadcasts/{id}/items",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "passId": "x",
+     "title": "x",
+     "holderEmail": "x",
+     "outcome": "updated",
+     "silent": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsByIdRetry",
+  "call": "broadcasts.retry",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/{id}/retry",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsByIdSend",
+  "call": "broadcasts.send",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/{id}/send",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "bundles.getBundles",
+  "call": "bundles.list",
+  "http": "GET",
+  "path": "/api/v1/bundles",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "name": "x",
+     "url": "x",
+     "holderEmail": "x",
+     "passes": [
+      {
+       "id": "x",
+       "title": "x",
+       "status": "active"
+      }
+     ],
+     "createdAt": 0,
+     "linkRotatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "bundles.postBundles",
+  "call": "bundles.create",
+  "http": "POST",
+  "path": "/api/v1/bundles",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "passIds": [
+    "x"
+   ],
+   "name": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "url": "x",
+   "holderEmail": "x",
+   "passes": [
+    {
+     "id": "x",
+     "title": "x",
+     "status": "active"
+    }
+   ],
+   "createdAt": 0,
+   "linkRotatedAt": 0
+  }
+ },
+ {
+  "id": "bundles.getBundlesById",
+  "call": "bundles.retrieve",
+  "http": "GET",
+  "path": "/api/v1/bundles/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "url": "x",
+   "holderEmail": "x",
+   "passes": [
+    {
+     "id": "x",
+     "title": "x",
+     "status": "active"
+    }
+   ],
+   "createdAt": 0,
+   "linkRotatedAt": 0
+  }
+ },
+ {
+  "id": "bundles.deleteBundlesById",
+  "call": "bundles.delete",
+  "http": "DELETE",
+  "path": "/api/v1/bundles/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "bundles.postBundlesByIdRotateLink",
+  "call": "bundles.rotate_link",
+  "http": "POST",
+  "path": "/api/v1/bundles/{id}/rotate-link",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "url": "x",
+   "holderEmail": "x",
+   "passes": [
+    {
+     "id": "x",
+     "title": "x",
+     "status": "active"
+    }
+   ],
+   "createdAt": 0,
+   "linkRotatedAt": 0
+  }
+ },
+ {
+  "id": "bundles.postBundlesByIdSendEmail",
+  "call": "bundles.send_email",
+  "http": "POST",
+  "path": "/api/v1/bundles/{id}/send-email",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "connections.getConnections",
+  "call": "connections.list",
+  "http": "GET",
+  "path": "/api/v1/connections",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "connectorType": "x",
+     "connectorVersion": 0,
+     "name": "x",
+     "config": {},
+     "hasCredential": false,
+     "hasWebhookSecret": false,
+     "mapping": {},
+     "defaultTemplateId": "x",
+     "holderEmailField": "x",
+     "autoCreate": false,
+     "autoEmail": false,
+     "onMissing": "keep",
+     "voidWhen": [
+      {
+       "from": "x",
+       "op": "in"
+      }
+     ],
+     "webhookPrevUntil": 0,
+     "mode": "poll",
+     "intervalSeconds": 0,
+     "maxConcurrency": 0,
+     "requestsPerMinute": 0,
+     "enabled": false,
+     "health": "unknown",
+     "consecutiveFailures": 0,
+     "breakerOpenUntil": 0,
+     "nextRunAt": 0,
+     "lastRunAt": 0,
+     "lastSuccessAt": 0,
+     "lastErrorCode": "x",
+     "lastErrorAt": 0,
+     "webhookUrl": "x",
+     "createdAt": 0,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "connections.postConnections",
+  "call": "connections.create",
+  "http": "POST",
+  "path": "/api/v1/connections",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "connectorType": "x",
+   "name": "x",
+   "config": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "connectorType": "x",
+   "connectorVersion": 0,
+   "name": "x",
+   "config": {},
+   "hasCredential": false,
+   "hasWebhookSecret": false,
+   "mapping": {},
+   "defaultTemplateId": "x",
+   "holderEmailField": "x",
+   "autoCreate": false,
+   "autoEmail": false,
+   "onMissing": "keep",
+   "voidWhen": [
+    {
+     "from": "x",
+     "op": "in"
+    }
+   ],
+   "webhookPrevUntil": 0,
+   "mode": "poll",
+   "intervalSeconds": 0,
+   "maxConcurrency": 0,
+   "requestsPerMinute": 0,
+   "enabled": false,
+   "health": "unknown",
+   "consecutiveFailures": 0,
+   "breakerOpenUntil": 0,
+   "nextRunAt": 0,
+   "lastRunAt": 0,
+   "lastSuccessAt": 0,
+   "lastErrorCode": "x",
+   "lastErrorAt": 0,
+   "webhookUrl": "x",
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "connections.getConnectionsSummary",
+  "call": "connections.retrieve_summary",
+  "http": "GET",
+  "path": "/api/v1/connections/summary",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "total": 0,
+   "byHealth": {},
+   "attention": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "name": "x",
+     "health": "unknown",
+     "lastErrorCode": "x",
+     "lastErrorAt": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "connections.postConnectionsTestConfig",
+  "call": "connections.test_config",
+  "http": "POST",
+  "path": "/api/v1/connections/test-config",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "connectorType": "x",
+   "config": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": false,
+   "durationMs": 0
+  }
+ },
+ {
+  "id": "connections.getConnectionsById",
+  "call": "connections.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "connectorType": "x",
+   "connectorVersion": 0,
+   "name": "x",
+   "config": {},
+   "hasCredential": false,
+   "hasWebhookSecret": false,
+   "mapping": {},
+   "defaultTemplateId": "x",
+   "holderEmailField": "x",
+   "autoCreate": false,
+   "autoEmail": false,
+   "onMissing": "keep",
+   "voidWhen": [
+    {
+     "from": "x",
+     "op": "in"
+    }
+   ],
+   "webhookPrevUntil": 0,
+   "mode": "poll",
+   "intervalSeconds": 0,
+   "maxConcurrency": 0,
+   "requestsPerMinute": 0,
+   "enabled": false,
+   "health": "unknown",
+   "consecutiveFailures": 0,
+   "breakerOpenUntil": 0,
+   "nextRunAt": 0,
+   "lastRunAt": 0,
+   "lastSuccessAt": 0,
+   "lastErrorCode": "x",
+   "lastErrorAt": 0,
+   "webhookUrl": "x",
+   "createdAt": 0,
+   "updatedAt": 0,
+   "runs": [
+    {
+     "id": "x",
+     "trigger": "schedule",
+     "startedAt": 0,
+     "finishedAt": 0,
+     "outcome": "running",
+     "recordsSeen": 0,
+     "passesChanged": 0,
+     "errorCode": "x",
+     "httpStatus": 0,
+     "durationMs": 0
+    }
+   ],
+   "metrics": {
+    "p50Ms": 0,
+    "p95Ms": 0,
+    "errorRate": 0,
+    "passCount": 0
+   }
+  }
+ },
+ {
+  "id": "connections.patchConnectionsById",
+  "call": "connections.update",
+  "http": "PATCH",
+  "path": "/api/v1/connections/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "connectorType": "x",
+   "connectorVersion": 0,
+   "name": "x",
+   "config": {},
+   "hasCredential": false,
+   "hasWebhookSecret": false,
+   "mapping": {},
+   "defaultTemplateId": "x",
+   "holderEmailField": "x",
+   "autoCreate": false,
+   "autoEmail": false,
+   "onMissing": "keep",
+   "voidWhen": [
+    {
+     "from": "x",
+     "op": "in"
+    }
+   ],
+   "webhookPrevUntil": 0,
+   "mode": "poll",
+   "intervalSeconds": 0,
+   "maxConcurrency": 0,
+   "requestsPerMinute": 0,
+   "enabled": false,
+   "health": "unknown",
+   "consecutiveFailures": 0,
+   "breakerOpenUntil": 0,
+   "nextRunAt": 0,
+   "lastRunAt": 0,
+   "lastSuccessAt": 0,
+   "lastErrorCode": "x",
+   "lastErrorAt": 0,
+   "webhookUrl": "x",
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "connections.deleteConnectionsById",
+  "call": "connections.delete",
+  "http": "DELETE",
+  "path": "/api/v1/connections/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "connections.getConnectionsByIdRuns",
+  "call": "connections.runs.list",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/runs",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "trigger": "schedule",
+     "startedAt": 0,
+     "finishedAt": 0,
+     "outcome": "running",
+     "recordsSeen": 0,
+     "passesChanged": 0,
+     "errorCode": "x",
+     "httpStatus": 0,
+     "durationMs": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdSync",
+  "call": "connections.sync",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/sync",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "runId": "x",
+   "workflowInstanceId": "x"
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdTest",
+  "call": "connections.test",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/test",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": false,
+   "durationMs": 0
+  }
+ },
+ {
+  "id": "connections.getConnectionsByIdWebhookFailures",
+  "call": "connections.webhook_failures.list",
+  "http": "GET",
+  "path": "/api/v1/connections/{id}/webhook-failures",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "eventRef": "x",
+     "generation": 0,
+     "connectionMode": "webhook",
+     "state": "pending",
+     "errorCode": "x",
+     "uncertainItems": 0,
+     "receivedAt": 0,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay",
+  "call": "connections.webhook_failures.replay",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/webhook-failures/{retentionId}/replay",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "retentionId",
+    "py": "retention_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve",
+  "call": "connections.webhook_failures.resolve",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/webhook-failures/{retentionId}/resolve",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "retentionId",
+    "py": "retention_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true,
+   "resolved": 0,
+   "state": "failed"
+  }
+ },
+ {
+  "id": "connections.postConnectionsByIdWebhookSecret",
+  "call": "connections.rotate_webhook_secret",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/webhook-secret",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "connectorType": "x",
+   "connectorVersion": 0,
+   "name": "x",
+   "config": {},
+   "hasCredential": false,
+   "hasWebhookSecret": false,
+   "mapping": {},
+   "defaultTemplateId": "x",
+   "holderEmailField": "x",
+   "autoCreate": false,
+   "autoEmail": false,
+   "onMissing": "keep",
+   "voidWhen": [
+    {
+     "from": "x",
+     "op": "in"
+    }
+   ],
+   "webhookPrevUntil": 0,
+   "mode": "poll",
+   "intervalSeconds": 0,
+   "maxConcurrency": 0,
+   "requestsPerMinute": 0,
+   "enabled": false,
+   "health": "unknown",
+   "consecutiveFailures": 0,
+   "breakerOpenUntil": 0,
+   "nextRunAt": 0,
+   "lastRunAt": 0,
+   "lastSuccessAt": 0,
+   "lastErrorCode": "x",
+   "lastErrorAt": 0,
+   "webhookUrl": "x",
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "connections.deleteConnectionsByIdWebhookSecretPrevious",
+  "call": "connections.revoke_previous_webhook_secret",
+  "http": "DELETE",
+  "path": "/api/v1/connections/{id}/webhook-secret/previous",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "connectorType": "x",
+   "connectorVersion": 0,
+   "name": "x",
+   "config": {},
+   "hasCredential": false,
+   "hasWebhookSecret": false,
+   "mapping": {},
+   "defaultTemplateId": "x",
+   "holderEmailField": "x",
+   "autoCreate": false,
+   "autoEmail": false,
+   "onMissing": "keep",
+   "voidWhen": [
+    {
+     "from": "x",
+     "op": "in"
+    }
+   ],
+   "webhookPrevUntil": 0,
+   "mode": "poll",
+   "intervalSeconds": 0,
+   "maxConcurrency": 0,
+   "requestsPerMinute": 0,
+   "enabled": false,
+   "health": "unknown",
+   "consecutiveFailures": 0,
+   "breakerOpenUntil": 0,
+   "nextRunAt": 0,
+   "lastRunAt": 0,
+   "lastSuccessAt": 0,
+   "lastErrorCode": "x",
+   "lastErrorAt": 0,
+   "webhookUrl": "x",
+   "createdAt": 0,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "connectors.getConnectors",
+  "call": "connectors.list",
+  "http": "GET",
+  "path": "/api/v1/connectors",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "type": "x",
+     "version": 0,
+     "displayName": "x",
+     "capabilities": {
+      "poll": false,
+      "delta": false,
+      "webhook": false,
+      "import": false,
+      "snapshot": false
+     },
+     "outputFields": {},
+     "defaults": {
+      "intervalSeconds": 0,
+      "maxConcurrency": 0,
+      "requestsPerMinute": 0,
+      "timeoutMs": 0
+     }
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "connectors.getConnectorsByType",
+  "call": "connectors.retrieve",
+  "http": "GET",
+  "path": "/api/v1/connectors/{type}",
+  "pathParams": [
+   {
+    "name": "type",
+    "py": "type",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "type": "x",
+   "version": 0,
+   "displayName": "x",
+   "capabilities": {
+    "poll": false,
+    "delta": false,
+    "webhook": false,
+    "import": false,
+    "snapshot": false
+   },
+   "outputFields": {},
+   "defaults": {
+    "intervalSeconds": 0,
+    "maxConcurrency": 0,
+    "requestsPerMinute": 0,
+    "timeoutMs": 0
+   }
+  }
+ },
+ {
+  "id": "delivery.getDelivery",
+  "call": "deliveries.list",
+  "http": "GET",
+  "path": "/api/v1/delivery",
+  "pathParams": [],
+  "query": [
+   {
+    "name": "passId",
+    "py": "pass_id",
+    "value": "x"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "events.getEvents",
+  "call": "events.list",
+  "http": "GET",
+  "path": "/api/v1/events",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "after",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "type": "pass.issued",
+     "apiVersion": "2026-12-01",
+     "createdAt": 0,
+     "orgId": "x",
+     "mode": "live",
+     "pass": {
+      "id": "x",
+      "externalId": "x",
+      "templateId": "x"
+     },
+     "data": {}
+    }
+   ],
+   "nextCursor": "x",
+   "hasMore": false
+  }
+ },
+ {
+  "id": "events.getEventsById",
+  "call": "events.retrieve",
+  "http": "GET",
+  "path": "/api/v1/events/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "type": "pass.issued",
+   "apiVersion": "2026-12-01",
+   "createdAt": 0,
+   "orgId": "x",
+   "mode": "live",
+   "pass": {
+    "id": "x",
+    "externalId": "x",
+    "templateId": "x"
+   },
+   "data": {}
+  }
+ },
+ {
+  "id": "holders.getHolders",
+  "call": "holders.list",
+  "http": "GET",
+  "path": "/api/v1/holders",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "passId": "x",
+     "state": "unassigned",
+     "email": "x",
+     "ownerUserId": "x",
+     "ownerName": "x",
+     "blockedUserIds": [
+      "x"
+     ],
+     "transfer": {
+      "transferId": "x",
+      "state": "pending"
+     },
+     "reissueRequired": false,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "holders.postHoldersAssign",
+  "call": "holders.assign",
+  "http": "POST",
+  "path": "/api/v1/holders/assign",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "passId": "x",
+   "email": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "state": "unassigned",
+   "email": "x",
+   "ownerUserId": "x",
+   "ownerName": "x",
+   "blockedUserIds": [
+    "x"
+   ],
+   "transfer": {
+    "transferId": "x",
+    "state": "pending"
+   },
+   "reissueRequired": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "holders.postHoldersAssignBulk",
+  "call": "holders.bulk_assign",
+  "http": "POST",
+  "path": "/api/v1/holders/assign-bulk",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "items": [
+    {
+     "passId": "x",
+     "email": "x"
+    }
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "passId": "x",
+     "state": "unassigned",
+     "email": "x",
+     "ownerUserId": "x",
+     "ownerName": "x",
+     "blockedUserIds": [
+      "x"
+     ],
+     "transfer": {
+      "transferId": "x",
+      "state": "pending"
+     },
+     "reissueRequired": false,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": "x"
+  }
+ },
+ {
+  "id": "holders.postHoldersClearBlock",
+  "call": "holders.clear_block",
+  "http": "POST",
+  "path": "/api/v1/holders/clear-block",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "passId": "x",
+   "userId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "holders.postHoldersReassign",
+  "call": "holders.reassign",
+  "http": "POST",
+  "path": "/api/v1/holders/reassign",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "passId": "x",
+   "email": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "state": "unassigned",
+   "email": "x",
+   "ownerUserId": "x",
+   "ownerName": "x",
+   "blockedUserIds": [
+    "x"
+   ],
+   "transfer": {
+    "transferId": "x",
+    "state": "pending"
+   },
+   "reissueRequired": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "holders.postHoldersUnassign",
+  "call": "holders.unassign",
+  "http": "POST",
+  "path": "/api/v1/holders/unassign",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "passId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "state": "unassigned",
+   "email": "x",
+   "ownerUserId": "x",
+   "ownerName": "x",
+   "blockedUserIds": [
+    "x"
+   ],
+   "transfer": {
+    "transferId": "x",
+    "state": "pending"
+   },
+   "reissueRequired": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "holders.getHoldersById",
+  "call": "holders.retrieve",
+  "http": "GET",
+  "path": "/api/v1/holders/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "state": "unassigned",
+   "email": "x",
+   "ownerUserId": "x",
+   "ownerName": "x",
+   "blockedUserIds": [
+    "x"
+   ],
+   "transfer": {
+    "transferId": "x",
+    "state": "pending"
+   },
+   "reissueRequired": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "message-rules.getMessageRules",
+  "call": "message_rules.list",
+  "http": "GET",
+  "path": "/api/v1/message-rules",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "name": "x",
+     "templateIds": [
+      "x"
+     ],
+     "anchor": {
+      "kind": "input",
+      "input": "x"
+     },
+     "offset": {
+      "amount": 0,
+      "unit": "day",
+      "when": "before"
+     },
+     "yearly": false,
+     "sendAt": "x",
+     "timeZone": "x",
+     "message": "x",
+     "clearAfter": 0,
+     "state": "on",
+     "pausedCode": "RULE_CREATOR_REVOKED",
+     "nextCheckAt": 0,
+     "sent": 0,
+     "skipped": 0,
+     "createdAt": 0,
+     "updatedAt": 0,
+     "version": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "message-rules.postMessageRules",
+  "call": "message_rules.create",
+  "http": "POST",
+  "path": "/api/v1/message-rules",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "anchor": {
+    "kind": "input",
+    "input": "x"
+   },
+   "offset": {
+    "amount": 0,
+    "unit": "day",
+    "when": "before"
+   },
+   "timeZone": "x",
+   "message": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "anchor": {
+    "kind": "input",
+    "input": "x"
+   },
+   "offset": {
+    "amount": 0,
+    "unit": "day",
+    "when": "before"
+   },
+   "yearly": false,
+   "sendAt": "x",
+   "timeZone": "x",
+   "message": "x",
+   "clearAfter": 0,
+   "state": "on",
+   "pausedCode": "RULE_CREATOR_REVOKED",
+   "nextCheckAt": 0,
+   "sent": 0,
+   "skipped": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "version": 0
+  }
+ },
+ {
+  "id": "message-rules.postMessageRulesPreview",
+  "call": "message_rules.count_due",
+  "http": "POST",
+  "path": "/api/v1/message-rules/preview",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "anchor": {
+    "kind": "input",
+    "input": "x"
+   },
+   "offset": {
+    "amount": 0,
+    "unit": "day",
+    "when": "before"
+   },
+   "timeZone": "x",
+   "message": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "days": [
+    {
+     "date": "x",
+     "count": 0
+    }
+   ],
+   "total": 0,
+   "atLimit": 0
+  }
+ },
+ {
+  "id": "message-rules.getMessageRulesById",
+  "call": "message_rules.retrieve",
+  "http": "GET",
+  "path": "/api/v1/message-rules/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "anchor": {
+    "kind": "input",
+    "input": "x"
+   },
+   "offset": {
+    "amount": 0,
+    "unit": "day",
+    "when": "before"
+   },
+   "yearly": false,
+   "sendAt": "x",
+   "timeZone": "x",
+   "message": "x",
+   "clearAfter": 0,
+   "state": "on",
+   "pausedCode": "RULE_CREATOR_REVOKED",
+   "nextCheckAt": 0,
+   "sent": 0,
+   "skipped": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "version": 0
+  }
+ },
+ {
+  "id": "message-rules.putMessageRulesById",
+  "call": "message_rules.update",
+  "http": "PUT",
+  "path": "/api/v1/message-rules/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "anchor": {
+    "kind": "input",
+    "input": "x"
+   },
+   "offset": {
+    "amount": 0,
+    "unit": "day",
+    "when": "before"
+   },
+   "timeZone": "x",
+   "message": "x",
+   "version": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "anchor": {
+    "kind": "input",
+    "input": "x"
+   },
+   "offset": {
+    "amount": 0,
+    "unit": "day",
+    "when": "before"
+   },
+   "yearly": false,
+   "sendAt": "x",
+   "timeZone": "x",
+   "message": "x",
+   "clearAfter": 0,
+   "state": "on",
+   "pausedCode": "RULE_CREATOR_REVOKED",
+   "nextCheckAt": 0,
+   "sent": 0,
+   "skipped": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "version": 0
+  }
+ },
+ {
+  "id": "message-rules.deleteMessageRulesById",
+  "call": "message_rules.delete",
+  "http": "DELETE",
+  "path": "/api/v1/message-rules/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "message-rules.postMessageRulesByIdPause",
+  "call": "message_rules.pause",
+  "http": "POST",
+  "path": "/api/v1/message-rules/{id}/pause",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "anchor": {
+    "kind": "input",
+    "input": "x"
+   },
+   "offset": {
+    "amount": 0,
+    "unit": "day",
+    "when": "before"
+   },
+   "yearly": false,
+   "sendAt": "x",
+   "timeZone": "x",
+   "message": "x",
+   "clearAfter": 0,
+   "state": "on",
+   "pausedCode": "RULE_CREATOR_REVOKED",
+   "nextCheckAt": 0,
+   "sent": 0,
+   "skipped": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "version": 0
+  }
+ },
+ {
+  "id": "message-rules.getMessageRulesByIdRuns",
+  "call": "message_rules.runs.list",
+  "http": "GET",
+  "path": "/api/v1/message-rules/{id}/runs",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "kind": "message",
+     "name": "x",
+     "state": "draft",
+     "target": {
+      "templateIds": [
+       "x"
+      ]
+     },
+     "patch": {},
+     "notify": false,
+     "at": 0,
+     "clearAfter": 0,
+     "parentId": "x",
+     "ruleId": "x",
+     "followUp": {
+      "id": "x",
+      "at": 0
+     },
+     "counts": {
+      "targeted": 0,
+      "updated": 0,
+      "unchanged": 0,
+      "overBudget": 0,
+      "failed": 0
+     },
+     "errorCode": "x",
+     "createdAt": 0,
+     "startedAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "message-rules.postMessageRulesByIdTest",
+  "call": "message_rules.send_test",
+  "http": "POST",
+  "path": "/api/v1/message-rules/{id}/test",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "passId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "nfc-tags.getNfcTagTypes",
+  "call": "nfc.tag_types.list",
+  "http": "GET",
+  "path": "/api/v1/nfc/tag-types",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "system": "uid",
+     "name": "x",
+     "use": "member",
+     "version": 0,
+     "createdAt": 0,
+     "updatedAt": 0,
+     "archivedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "nfc-tags.postNfcTagTypes",
+  "call": "nfc.tag_types.create",
+  "http": "POST",
+  "path": "/api/v1/nfc/tag-types",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "name": "x",
+   "use": "member"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "system": "uid",
+   "name": "x",
+   "use": "member",
+   "version": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "nfc-tags.patchNfcTagTypesById",
+  "call": "nfc.tag_types.update",
+  "http": "PATCH",
+  "path": "/api/v1/nfc/tag-types/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "version": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "system": "uid",
+   "name": "x",
+   "use": "member",
+   "version": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "nfc-tags.postNfcTagTypesByIdArchive",
+  "call": "nfc.tag_types.archive",
+  "http": "POST",
+  "path": "/api/v1/nfc/tag-types/{id}/archive",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "version": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "system": "uid",
+   "name": "x",
+   "use": "member",
+   "version": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "offboard.postOffboard",
+  "call": "holders.offboard",
+  "http": "POST",
+  "path": "/api/v1/offboard",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "dryRun": false,
+   "holders": 0,
+   "passes": 0,
+   "tags": 0
+  }
+ },
+ {
+  "id": "entitlements.getOrgsByIdEntitlements",
+  "call": "orgs.entitlements.retrieve",
+  "http": "GET",
+  "path": "/api/v1/orgs/{id}/entitlements",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "orgId": "x",
+   "preset": "x",
+   "label": "x",
+   "items": [
+    {
+     "key": "api",
+     "value": 0,
+     "source": "preset"
+    }
+   ]
+  }
+ },
+ {
+  "id": "pass-imports.getPassImports",
+  "call": "pass_imports.list",
+  "http": "GET",
+  "path": "/api/v1/pass-imports",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "templateId": "x",
+     "templateVersion": "x",
+     "mode": "live",
+     "state": "mapping",
+     "source": {
+      "kind": "file",
+      "name": "x"
+     },
+     "columns": [
+      {
+       "pointer": "x",
+       "label": "x",
+       "samples": [
+        "x"
+       ]
+      }
+     ],
+     "plan": {
+      "mapping": {},
+      "holderEmail": {
+       "from": "x"
+      },
+      "externalId": {
+       "from": "x"
+      },
+      "match": "externalId"
+     },
+     "counts": {
+      "rows": 0,
+      "create": 0,
+      "update": 0,
+      "unchanged": 0,
+      "errors": 0,
+      "warnings": 0,
+      "emailable": 0
+     },
+     "previews": [
+      {
+       "row": 0,
+       "action": "create",
+       "input": {}
+      }
+     ],
+     "problems": [
+      {
+       "row": 0,
+       "column": "x",
+       "field": "x",
+       "code": "x",
+       "message": "x",
+       "severity": "error"
+      }
+     ],
+     "problemTotals": {
+      "errors": 0,
+      "warnings": 0
+     },
+     "problemsTruncated": false,
+     "emailBudget": 0,
+     "email": false,
+     "progress": {
+      "done": 0,
+      "created": 0,
+      "updated": 0,
+      "unchanged": 0,
+      "failed": 0,
+      "notEmailed": 0,
+      "removed": 0
+     },
+     "errorCode": "x",
+     "errorFile": false,
+     "createdAt": 0,
+     "checkedAt": 0,
+     "committedAt": 0,
+     "finishedAt": 0,
+     "expiresAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "pass-imports.postPassImports",
+  "call": "pass_imports.create",
+  "http": "POST",
+  "path": "/api/v1/pass-imports",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "templateId": "x",
+   "source": {
+    "kind": "file",
+    "name": "x",
+    "csv": "x"
+   }
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "mode": "live",
+   "state": "mapping",
+   "source": {
+    "kind": "file",
+    "name": "x"
+   },
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "samples": [
+      "x"
+     ]
+    }
+   ],
+   "plan": {
+    "mapping": {},
+    "holderEmail": {
+     "from": "x"
+    },
+    "externalId": {
+     "from": "x"
+    },
+    "match": "externalId"
+   },
+   "counts": {
+    "rows": 0,
+    "create": 0,
+    "update": 0,
+    "unchanged": 0,
+    "errors": 0,
+    "warnings": 0,
+    "emailable": 0
+   },
+   "previews": [
+    {
+     "row": 0,
+     "action": "create",
+     "input": {}
+    }
+   ],
+   "problems": [
+    {
+     "row": 0,
+     "column": "x",
+     "field": "x",
+     "code": "x",
+     "message": "x",
+     "severity": "error"
+    }
+   ],
+   "problemTotals": {
+    "errors": 0,
+    "warnings": 0
+   },
+   "problemsTruncated": false,
+   "emailBudget": 0,
+   "email": false,
+   "progress": {
+    "done": 0,
+    "created": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "failed": 0,
+    "notEmailed": 0,
+    "removed": 0
+   },
+   "errorCode": "x",
+   "errorFile": false,
+   "createdAt": 0,
+   "checkedAt": 0,
+   "committedAt": 0,
+   "finishedAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "pass-imports.getPassImportsById",
+  "call": "pass_imports.retrieve",
+  "http": "GET",
+  "path": "/api/v1/pass-imports/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "mode": "live",
+   "state": "mapping",
+   "source": {
+    "kind": "file",
+    "name": "x"
+   },
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "samples": [
+      "x"
+     ]
+    }
+   ],
+   "plan": {
+    "mapping": {},
+    "holderEmail": {
+     "from": "x"
+    },
+    "externalId": {
+     "from": "x"
+    },
+    "match": "externalId"
+   },
+   "counts": {
+    "rows": 0,
+    "create": 0,
+    "update": 0,
+    "unchanged": 0,
+    "errors": 0,
+    "warnings": 0,
+    "emailable": 0
+   },
+   "previews": [
+    {
+     "row": 0,
+     "action": "create",
+     "input": {}
+    }
+   ],
+   "problems": [
+    {
+     "row": 0,
+     "column": "x",
+     "field": "x",
+     "code": "x",
+     "message": "x",
+     "severity": "error"
+    }
+   ],
+   "problemTotals": {
+    "errors": 0,
+    "warnings": 0
+   },
+   "problemsTruncated": false,
+   "emailBudget": 0,
+   "email": false,
+   "progress": {
+    "done": 0,
+    "created": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "failed": 0,
+    "notEmailed": 0,
+    "removed": 0
+   },
+   "errorCode": "x",
+   "errorFile": false,
+   "createdAt": 0,
+   "checkedAt": 0,
+   "committedAt": 0,
+   "finishedAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "pass-imports.deletePassImportsById",
+  "call": "pass_imports.delete",
+  "http": "DELETE",
+  "path": "/api/v1/pass-imports/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "pass-imports.postPassImportsByIdCheck",
+  "call": "pass_imports.check",
+  "http": "POST",
+  "path": "/api/v1/pass-imports/{id}/check",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "plan": {
+    "mapping": {},
+    "holderEmail": {
+     "from": "x"
+    },
+    "externalId": {
+     "from": "x"
+    },
+    "match": "externalId"
+   }
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "mode": "live",
+   "state": "mapping",
+   "source": {
+    "kind": "file",
+    "name": "x"
+   },
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "samples": [
+      "x"
+     ]
+    }
+   ],
+   "plan": {
+    "mapping": {},
+    "holderEmail": {
+     "from": "x"
+    },
+    "externalId": {
+     "from": "x"
+    },
+    "match": "externalId"
+   },
+   "counts": {
+    "rows": 0,
+    "create": 0,
+    "update": 0,
+    "unchanged": 0,
+    "errors": 0,
+    "warnings": 0,
+    "emailable": 0
+   },
+   "previews": [
+    {
+     "row": 0,
+     "action": "create",
+     "input": {}
+    }
+   ],
+   "problems": [
+    {
+     "row": 0,
+     "column": "x",
+     "field": "x",
+     "code": "x",
+     "message": "x",
+     "severity": "error"
+    }
+   ],
+   "problemTotals": {
+    "errors": 0,
+    "warnings": 0
+   },
+   "problemsTruncated": false,
+   "emailBudget": 0,
+   "email": false,
+   "progress": {
+    "done": 0,
+    "created": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "failed": 0,
+    "notEmailed": 0,
+    "removed": 0
+   },
+   "errorCode": "x",
+   "errorFile": false,
+   "createdAt": 0,
+   "checkedAt": 0,
+   "committedAt": 0,
+   "finishedAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "pass-imports.postPassImportsByIdCommit",
+  "call": "pass_imports.commit",
+  "http": "POST",
+  "path": "/api/v1/pass-imports/{id}/commit",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "mode": "live",
+   "state": "mapping",
+   "source": {
+    "kind": "file",
+    "name": "x"
+   },
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "samples": [
+      "x"
+     ]
+    }
+   ],
+   "plan": {
+    "mapping": {},
+    "holderEmail": {
+     "from": "x"
+    },
+    "externalId": {
+     "from": "x"
+    },
+    "match": "externalId"
+   },
+   "counts": {
+    "rows": 0,
+    "create": 0,
+    "update": 0,
+    "unchanged": 0,
+    "errors": 0,
+    "warnings": 0,
+    "emailable": 0
+   },
+   "previews": [
+    {
+     "row": 0,
+     "action": "create",
+     "input": {}
+    }
+   ],
+   "problems": [
+    {
+     "row": 0,
+     "column": "x",
+     "field": "x",
+     "code": "x",
+     "message": "x",
+     "severity": "error"
+    }
+   ],
+   "problemTotals": {
+    "errors": 0,
+    "warnings": 0
+   },
+   "problemsTruncated": false,
+   "emailBudget": 0,
+   "email": false,
+   "progress": {
+    "done": 0,
+    "created": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "failed": 0,
+    "notEmailed": 0,
+    "removed": 0
+   },
+   "errorCode": "x",
+   "errorFile": false,
+   "createdAt": 0,
+   "checkedAt": 0,
+   "committedAt": 0,
+   "finishedAt": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "pass-imports.postPassImportsByIdEmailRest",
+  "call": "pass_imports.send_emails",
+  "http": "POST",
+  "path": "/api/v1/pass-imports/{id}/email-rest",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "cursor": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "sent": 0,
+   "skipped": 0,
+   "nextCursor": "x"
+  }
+ },
+ {
+  "id": "pass-imports.getPassImportsByIdErrorsCsv",
+  "call": "pass_imports.download_errors",
+  "http": "GET",
+  "path": "/api/v1/pass-imports/{id}/errors.csv",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "pass-imports.getPassImportsByIdResultsCsv",
+  "call": "pass_imports.download_results",
+  "http": "GET",
+  "path": "/api/v1/pass-imports/{id}/results.csv",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "pass-imports.getPassImportsByIdRows",
+  "call": "pass_imports.rows.list",
+  "http": "GET",
+  "path": "/api/v1/pass-imports/{id}/rows",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "row": 0,
+     "action": "create",
+     "state": "planned",
+     "result": "created",
+     "passId": "x",
+     "externalId": "x",
+     "code": "x",
+     "message": "x",
+     "emailed": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "passes.getPasses",
+  "call": "passes.list",
+  "http": "GET",
+  "path": "/api/v1/passes",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "templateId": "x",
+     "templateVersion": "x",
+     "identityId": "x",
+     "serial": "x",
+     "title": "x",
+     "subtitle": "x",
+     "externalId": "x",
+     "status": "active",
+     "version": 0,
+     "connectionId": "x",
+     "syncErrorCode": "x",
+     "holderEmail": "x",
+     "holderState": "unassigned",
+     "ownerUserId": "x",
+     "modifiedAt": 0,
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "passes.postPasses",
+  "call": "passes.create",
+  "http": "POST",
+  "path": "/api/v1/passes",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "templateId": "x",
+   "input": {}
+  },
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0,
+   "reissueRequired": false,
+   "ownerName": "x",
+   "ownerEmail": "x",
+   "personalization": {},
+   "fieldSources": {},
+   "passJson": {},
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ],
+   "blockedUsers": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "downloadUrl": "x",
+   "publicUrl": "x",
+   "registrations": 0,
+   "lastRefreshedAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "templateVersion": "x",
+     "cause": "create",
+     "actorType": "x",
+     "actorId": "x",
+     "createdAt": 0,
+     "purged": false
+    }
+   ],
+   "deliveries": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.postPassesBulk",
+  "call": "passes.bulk_apply",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "action": "void",
+   "ids": [
+    "x"
+   ]
+  },
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "done": 0,
+   "skipped": [
+    {
+     "id": "x",
+     "code": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.postPassesBulkPrint",
+  "call": "print_jobs.create",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-print",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "ids": [
+    "x"
+   ],
+   "orgId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "jobId": "x",
+   "count": 0,
+   "skipped": [
+    {
+     "id": "x",
+     "code": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.getPassesBulkPrintByJobId",
+  "call": "print_jobs.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-print/{jobId}",
+  "pathParams": [
+   {
+    "name": "jobId",
+    "py": "job_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "state": "pending",
+   "count": 0,
+   "skipped": 0,
+   "lossy": false
+  }
+ },
+ {
+  "id": "passes.getPassesBulkPrintByJobIdPdf",
+  "call": "print_jobs.download_pdf",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-print/{jobId}/pdf",
+  "pathParams": [
+   {
+    "name": "jobId",
+    "py": "job_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "passes.postPassesBulkReissue",
+  "call": "passes.bulk_reissue",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-reissue",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "workflowInstanceId": "x"
+  }
+ },
+ {
+  "id": "passes.postPassesBulkChannels",
+  "call": "passes.bulk_update_channels",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk/channels",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "action": "on",
+   "channels": [
+    "mobile"
+   ],
+   "ids": [
+    "x"
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "done": 0,
+   "skipped": [
+    {
+     "id": "x",
+     "code": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.postPassesPhotosMatch",
+  "call": "passes.match_photos",
+  "http": "POST",
+  "path": "/api/v1/passes/photos/match",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "keys": [
+    "x"
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "matches": [
+    {
+     "key": "x",
+     "passId": "x",
+     "state": "matched"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.getPassesById",
+  "call": "passes.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0,
+   "reissueRequired": false,
+   "ownerName": "x",
+   "ownerEmail": "x",
+   "personalization": {},
+   "fieldSources": {},
+   "passJson": {},
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ],
+   "blockedUsers": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "downloadUrl": "x",
+   "publicUrl": "x",
+   "registrations": 0,
+   "lastRefreshedAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "templateVersion": "x",
+     "cause": "create",
+     "actorType": "x",
+     "actorId": "x",
+     "createdAt": 0,
+     "purged": false
+    }
+   ],
+   "deliveries": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.patchPassesById",
+  "call": "passes.update",
+  "http": "PATCH",
+  "path": "/api/v1/passes/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0,
+   "reissueRequired": false,
+   "ownerName": "x",
+   "ownerEmail": "x",
+   "personalization": {},
+   "fieldSources": {},
+   "passJson": {},
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ],
+   "blockedUsers": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "downloadUrl": "x",
+   "publicUrl": "x",
+   "registrations": 0,
+   "lastRefreshedAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "templateVersion": "x",
+     "cause": "create",
+     "actorType": "x",
+     "actorId": "x",
+     "createdAt": 0,
+     "purged": false
+    }
+   ],
+   "deliveries": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.deletePassesById",
+  "call": "passes.delete",
+  "http": "DELETE",
+  "path": "/api/v1/passes/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "passes.getPassesByIdAssets",
+  "call": "passes.assets.list",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/assets",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "name": "x",
+     "sha1": "x",
+     "size": 0,
+     "width": 0,
+     "height": 0,
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "passes.putPassesByIdAssetsByName",
+  "call": "passes.assets.upload",
+  "http": "PUT",
+  "path": "/api/v1/passes/{id}/assets/{name}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "name",
+    "py": "name",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": true,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "name": "x",
+   "sha1": "x",
+   "size": 0,
+   "width": 0,
+   "height": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "passes.deletePassesByIdAssetsByName",
+  "call": "passes.assets.delete",
+  "http": "DELETE",
+  "path": "/api/v1/passes/{id}/assets/{name}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "name",
+    "py": "name",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "passes.getPassesByIdChannels",
+  "call": "passes.channels.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/channels",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "effective": {},
+   "overrides": {},
+   "replace": {
+    "supported": false,
+    "windows": [
+     {
+      "kind": "event",
+      "id": "x",
+      "name": "x",
+      "opensAt": 0,
+      "closesAt": 0,
+      "open": false,
+      "scheduled": false
+     }
+    ],
+    "owed": false,
+    "blocked": {
+     "name": "x",
+     "closesAt": 0
+    },
+    "lastDigital": [
+     "mobile"
+    ]
+   }
+  }
+ },
+ {
+  "id": "passes.putPassesByIdChannels",
+  "call": "passes.channels.update",
+  "http": "PUT",
+  "path": "/api/v1/passes/{id}/channels",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "channels": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "effective": {},
+   "overrides": {},
+   "replace": {
+    "supported": false,
+    "windows": [
+     {
+      "kind": "event",
+      "id": "x",
+      "name": "x",
+      "opensAt": 0,
+      "closesAt": 0,
+      "open": false,
+      "scheduled": false
+     }
+    ],
+    "owed": false,
+    "blocked": {
+     "name": "x",
+     "closesAt": 0
+    },
+    "lastDigital": [
+     "mobile"
+    ]
+   }
+  }
+ },
+ {
+  "id": "passes.getPassesByIdCheckIn",
+  "call": "passes.check_in_rules.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/check-in",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "orgId": "x",
+   "rules": {},
+   "defaults": {},
+   "effective": {},
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "passes.putPassesByIdCheckIn",
+  "call": "passes.check_in_rules.update",
+  "http": "PUT",
+  "path": "/api/v1/passes/{id}/check-in",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "rules": {}
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "orgId": "x",
+   "rules": {},
+   "defaults": {},
+   "effective": {},
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "passes.putPassesByIdConnection",
+  "call": "passes.connection.update",
+  "http": "PUT",
+  "path": "/api/v1/passes/{id}/connection",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "connectionId": "x",
+   "externalRef": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0,
+   "reissueRequired": false,
+   "ownerName": "x",
+   "ownerEmail": "x",
+   "personalization": {},
+   "fieldSources": {},
+   "passJson": {},
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ],
+   "blockedUsers": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "downloadUrl": "x",
+   "publicUrl": "x",
+   "registrations": 0,
+   "lastRefreshedAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "templateVersion": "x",
+     "cause": "create",
+     "actorType": "x",
+     "actorId": "x",
+     "createdAt": 0,
+     "purged": false
+    }
+   ],
+   "deliveries": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.getPassesByIdDevices",
+  "call": "passes.devices.list",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/devices",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "version": 0,
+   "devices": [
+    {
+     "device": "x",
+     "status": "current",
+     "registeredAt": 0,
+     "unregisteredAt": 0,
+     "lastFetch": {
+      "at": 0,
+      "version": 0,
+      "httpStatus": 0
+     },
+     "lastPush": {
+      "at": 0,
+      "ok": false,
+      "version": 0,
+      "httpStatus": 0,
+      "reason": "x"
+     },
+     "removal": "pending"
+    }
+   ],
+   "removal": {
+    "removedAt": 0,
+    "version": 0,
+    "total": 0,
+    "done": 0
+   }
+  }
+ },
+ {
+  "id": "passes.getPassesByIdDiff",
+  "call": "passes.versions.diff",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/diff",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "changes": [
+    {
+     "path": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.getPassesByIdEvents",
+  "call": "passes.activity.list",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/events",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "passId": "x",
+     "mode": "live",
+     "kind": "pass.issued",
+     "device": "x",
+     "actorType": "user",
+     "actorId": "x",
+     "data": {},
+     "at": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "passes.getPassesByIdMemberPhoto",
+  "call": "passes.member_photo.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/member-photo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "orgId": "x",
+   "url": "x",
+   "includeInPass": false,
+   "walletSupported": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "passes.putPassesByIdMemberPhoto",
+  "call": "passes.member_photo.upload",
+  "http": "PUT",
+  "path": "/api/v1/passes/{id}/member-photo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "png": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "orgId": "x",
+   "url": "x",
+   "includeInPass": false,
+   "walletSupported": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "passes.patchPassesByIdMemberPhoto",
+  "call": "passes.member_photo.update",
+  "http": "PATCH",
+  "path": "/api/v1/passes/{id}/member-photo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "includeInPass": false
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "orgId": "x",
+   "url": "x",
+   "includeInPass": false,
+   "walletSupported": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "passes.deletePassesByIdMemberPhoto",
+  "call": "passes.member_photo.delete",
+  "http": "DELETE",
+  "path": "/api/v1/passes/{id}/member-photo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "orgId": "x",
+   "url": "x",
+   "includeInPass": false,
+   "walletSupported": false,
+   "updatedAt": 0
+  }
+ },
+ {
+  "id": "passes.getPassesByIdMemberPhotoImage",
+  "call": "passes.member_photo.download",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/member-photo/image",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "passes.postPassesByIdNewCode",
+  "call": "passes.rotate_code",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/new-code",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "passes.getPassesByIdPrint",
+  "call": "passes.prints.retrieve_page",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/print",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "passes.getPassesByIdPrintAssetsByName",
+  "call": "passes.prints.download_asset",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/print/assets/{name}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "name",
+    "py": "name",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "passes.getPassesByIdPrintPdf",
+  "call": "passes.prints.download_pdf",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/print/pdf",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "passes.getPassesByIdPrints",
+  "call": "passes.prints.list",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/prints",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "prints": [
+    {
+     "id": "x",
+     "passId": "x",
+     "generation": 0,
+     "status": "active",
+     "createdAt": 0,
+     "voidedAt": 0,
+     "voidCause": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.postPassesByIdPrints",
+  "call": "passes.prints.create",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/prints",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "passId": "x",
+   "generation": 0,
+   "status": "active",
+   "createdAt": 0,
+   "voidedAt": 0,
+   "voidCause": "x",
+   "code": "x"
+  }
+ },
+ {
+  "id": "passes.postPassesByIdPrintsByPrintIdVoid",
+  "call": "passes.prints.void",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/prints/{printId}/void",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "printId",
+    "py": "print_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "passId": "x",
+   "generation": 0,
+   "status": "active",
+   "createdAt": 0,
+   "voidedAt": 0,
+   "voidCause": "x"
+  }
+ },
+ {
+  "id": "passes.postPassesByIdRefresh",
+  "call": "passes.refresh",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/refresh",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "accepted": true,
+   "requestedAt": 0
+  }
+ },
+ {
+  "id": "passes.postPassesByIdRemove",
+  "call": "passes.remove",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/remove",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "passes.postPassesByIdRenew",
+  "call": "passes.renew",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/renew",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0,
+   "reissueRequired": false,
+   "ownerName": "x",
+   "ownerEmail": "x",
+   "personalization": {},
+   "fieldSources": {},
+   "passJson": {},
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ],
+   "blockedUsers": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "downloadUrl": "x",
+   "publicUrl": "x",
+   "registrations": 0,
+   "lastRefreshedAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "templateVersion": "x",
+     "cause": "create",
+     "actorType": "x",
+     "actorId": "x",
+     "createdAt": 0,
+     "purged": false
+    }
+   ],
+   "deliveries": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.postPassesByIdResendEmail",
+  "call": "passes.send_email",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/resend-email",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "passes.postPassesByIdRestore",
+  "call": "passes.restore",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/restore",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "passes.postPassesByIdRotateLink",
+  "call": "passes.rotate_link",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/rotate-link",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "downloadUrl": "x",
+   "publicUrl": "x"
+  }
+ },
+ {
+  "id": "passes.postPassesByIdStamps",
+  "call": "passes.stamps.apply",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/stamps",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "action": "add"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0,
+   "reissueRequired": false,
+   "ownerName": "x",
+   "ownerEmail": "x",
+   "personalization": {},
+   "fieldSources": {},
+   "passJson": {},
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ],
+   "blockedUsers": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "downloadUrl": "x",
+   "publicUrl": "x",
+   "registrations": 0,
+   "lastRefreshedAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "templateVersion": "x",
+     "cause": "create",
+     "actorType": "x",
+     "actorId": "x",
+     "createdAt": 0,
+     "purged": false
+    }
+   ],
+   "deliveries": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.postPassesByIdUnvoid",
+  "call": "passes.unvoid",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/unvoid",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "passes.getPassesByIdVersionsByVersion",
+  "call": "passes.versions.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/{id}/versions/{version}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0,
+   "reissueRequired": false,
+   "ownerName": "x",
+   "ownerEmail": "x",
+   "personalization": {},
+   "fieldSources": {},
+   "passJson": {},
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ],
+   "blockedUsers": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "downloadUrl": "x",
+   "publicUrl": "x",
+   "registrations": 0,
+   "lastRefreshedAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "templateVersion": "x",
+     "cause": "create",
+     "actorType": "x",
+     "actorId": "x",
+     "createdAt": 0,
+     "purged": false
+    }
+   ],
+   "deliveries": [
+    {
+     "id": "x",
+     "kind": "push",
+     "state": "pending",
+     "attempts": 0,
+     "errorCode": "x",
+     "createdAt": 0,
+     "finishedAt": 0
+    }
+   ],
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.postPassesByIdVoid",
+  "call": "passes.void",
+  "http": "POST",
+  "path": "/api/v1/passes/{id}/void",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "templateId": "x",
+   "templateVersion": "x",
+   "identityId": "x",
+   "serial": "x",
+   "title": "x",
+   "subtitle": "x",
+   "externalId": "x",
+   "status": "active",
+   "version": 0,
+   "connectionId": "x",
+   "syncErrorCode": "x",
+   "holderEmail": "x",
+   "holderState": "unassigned",
+   "ownerUserId": "x",
+   "modifiedAt": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "roll-calls.getRollCalls",
+  "call": "roll_calls.retrieve_open",
+  "http": "GET",
+  "path": "/api/v1/roll-calls",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "rollCall": {
+    "id": "x",
+    "placeNames": [
+     "x"
+    ],
+    "startedAt": 0,
+    "startedBy": "x",
+    "endedAt": 0,
+    "endedBy": "x",
+    "rev": 0,
+    "serverNow": 0,
+    "counts": {
+     "total": 0,
+     "present": 0,
+     "out": 0,
+     "unconfirmed": 0,
+     "notConfirmedOut": 0,
+     "late": 0,
+     "inNow": 0,
+     "tappedIn": 0
+    },
+    "people": [
+     {
+      "passId": "x",
+      "holder": "x",
+      "plan": "x",
+      "host": "x",
+      "place": "x",
+      "placeName": "x",
+      "since": 0,
+      "basis": "in_now",
+      "presence": "in",
+      "late": false,
+      "mark": {
+       "status": "present",
+       "by": "x",
+       "at": 0
+      },
+      "notConfirmedOut": false
+     }
+    ]
+   }
+  }
+ },
+ {
+  "id": "roll-calls.postRollCalls",
+  "call": "roll_calls.create",
+  "http": "POST",
+  "path": "/api/v1/roll-calls",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "placeNames": [
+    "x"
+   ],
+   "startedAt": 0,
+   "startedBy": "x",
+   "endedAt": 0,
+   "endedBy": "x",
+   "rev": 0,
+   "serverNow": 0,
+   "counts": {
+    "total": 0,
+    "present": 0,
+    "out": 0,
+    "unconfirmed": 0,
+    "notConfirmedOut": 0,
+    "late": 0,
+    "inNow": 0,
+    "tappedIn": 0
+   },
+   "people": [
+    {
+     "passId": "x",
+     "holder": "x",
+     "plan": "x",
+     "host": "x",
+     "place": "x",
+     "placeName": "x",
+     "since": 0,
+     "basis": "in_now",
+     "presence": "in",
+     "late": false,
+     "mark": {
+      "status": "present",
+      "by": "x",
+      "at": 0
+     },
+     "notConfirmedOut": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "roll-calls.getRollCallsById",
+  "call": "roll_calls.retrieve",
+  "http": "GET",
+  "path": "/api/v1/roll-calls/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "placeNames": [
+    "x"
+   ],
+   "startedAt": 0,
+   "startedBy": "x",
+   "endedAt": 0,
+   "endedBy": "x",
+   "rev": 0,
+   "serverNow": 0,
+   "counts": {
+    "total": 0,
+    "present": 0,
+    "out": 0,
+    "unconfirmed": 0,
+    "notConfirmedOut": 0,
+    "late": 0,
+    "inNow": 0,
+    "tappedIn": 0
+   },
+   "people": [
+    {
+     "passId": "x",
+     "holder": "x",
+     "plan": "x",
+     "host": "x",
+     "place": "x",
+     "placeName": "x",
+     "since": 0,
+     "basis": "in_now",
+     "presence": "in",
+     "late": false,
+     "mark": {
+      "status": "present",
+      "by": "x",
+      "at": 0
+     },
+     "notConfirmedOut": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "roll-calls.postRollCallsByIdEnd",
+  "call": "roll_calls.end",
+  "http": "POST",
+  "path": "/api/v1/roll-calls/{id}/end",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "placeNames": [
+    "x"
+   ],
+   "startedAt": 0,
+   "startedBy": "x",
+   "endedAt": 0,
+   "endedBy": "x",
+   "rev": 0,
+   "serverNow": 0,
+   "counts": {
+    "total": 0,
+    "present": 0,
+    "out": 0,
+    "unconfirmed": 0,
+    "notConfirmedOut": 0,
+    "late": 0,
+    "inNow": 0,
+    "tappedIn": 0
+   },
+   "people": [
+    {
+     "passId": "x",
+     "holder": "x",
+     "plan": "x",
+     "host": "x",
+     "place": "x",
+     "placeName": "x",
+     "since": 0,
+     "basis": "in_now",
+     "presence": "in",
+     "late": false,
+     "mark": {
+      "status": "present",
+      "by": "x",
+      "at": 0
+     },
+     "notConfirmedOut": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "roll-calls.postRollCallsByIdMarks",
+  "call": "roll_calls.mark",
+  "http": "POST",
+  "path": "/api/v1/roll-calls/{id}/marks",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "marks": [
+    {
+     "rollCallId": "x",
+     "passId": "x",
+     "status": "present"
+    }
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "placeNames": [
+    "x"
+   ],
+   "startedAt": 0,
+   "startedBy": "x",
+   "endedAt": 0,
+   "endedBy": "x",
+   "rev": 0,
+   "serverNow": 0,
+   "counts": {
+    "total": 0,
+    "present": 0,
+    "out": 0,
+    "unconfirmed": 0,
+    "notConfirmedOut": 0,
+    "late": 0,
+    "inNow": 0,
+    "tappedIn": 0
+   },
+   "people": [
+    {
+     "passId": "x",
+     "holder": "x",
+     "plan": "x",
+     "host": "x",
+     "place": "x",
+     "placeName": "x",
+     "since": 0,
+     "basis": "in_now",
+     "presence": "in",
+     "late": false,
+     "mark": {
+      "status": "present",
+      "by": "x",
+      "at": 0
+     },
+     "notConfirmedOut": false
+    }
+   ],
+   "results": [
+    {
+     "rollCallId": "x",
+     "passId": "x",
+     "status": "applied"
+    }
+   ]
+  }
+ },
+ {
+  "id": "scan.postScanActions",
+  "call": "terminal.act",
+  "http": "POST",
+  "path": "/api/v1/scan/actions",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "idempotencyKey": "x",
+   "input": {
+    "code": "x",
+    "method": "camera"
+   },
+   "clientTs": 0,
+   "actionId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "scanId": "x",
+   "kind": "ok",
+   "reason": "not_found",
+   "replay": false,
+   "action": {
+    "id": "x",
+    "label": "x",
+    "kind": "check_in"
+   },
+   "card": {
+    "passId": "x",
+    "version": 0,
+    "mode": "live",
+    "title": "x",
+    "subtitle": "x",
+    "template": {
+     "id": "x",
+     "name": "x",
+     "style": "x"
+    },
+    "status": "active",
+    "validFrom": 0,
+    "validUntil": 0,
+    "flags": [
+     {
+      "label": "x",
+      "tone": "warning",
+      "stop": false
+     }
+    ],
+    "values": [
+     {
+      "input": "x",
+      "label": "x",
+      "goal": 0,
+      "format": "number"
+     }
+    ],
+    "actions": [
+     {
+      "id": "x",
+      "label": "x",
+      "kind": "check_in",
+      "available": false,
+      "lock": "role",
+      "reason": "not_found",
+      "amount": {
+       "fixed": 0
+      },
+      "confirm": false,
+      "confirmAbove": 0,
+      "cooldownRemainingMs": 0,
+      "armable": "sticky",
+      "rewardLabel": "x"
+     }
+    ],
+    "display": {
+     "v": 1,
+     "screen": "ready",
+     "templateVersion": "x",
+     "variant": "x",
+     "identity": {
+      "holder": "x",
+      "initials": "x",
+      "photo": {
+       "url": "x",
+       "alt": "x"
+      }
+     },
+     "header": {
+      "title": "x",
+      "titleLines": 1,
+      "meta": "x",
+      "chips": [
+       {
+        "id": "x",
+        "text": "x",
+        "tone": "neutral"
+       }
+      ]
+     },
+     "panels": [
+      {
+       "id": "x",
+       "kind": "membership",
+       "title": "x",
+       "tone": "neutral",
+       "rows": [
+        {
+         "type": "heading",
+         "id": "x",
+         "text": "x",
+         "detail": "x"
+        }
+       ]
+      }
+     ],
+     "notes": {
+      "staff": "x",
+      "refused": "x"
+     }
+    },
+    "lastScans": [
+     {
+      "scanId": "x",
+      "at": 0,
+      "actionLabel": "x",
+      "outcome": "ok",
+      "scannerName": "x",
+      "undoable": false
+     }
+    ],
+    "bundle": {
+     "id": "x",
+     "name": "x",
+     "size": 0,
+     "checkedIn": 0
+    },
+    "door": {
+     "state": "in"
+    },
+    "passView": {
+     "assetBaseUrl": "x",
+     "assetGrant": "x",
+     "assetNames": [
+      "x"
+     ]
+    }
+   },
+   "previous": {
+    "scanId": "x",
+    "at": 0,
+    "scannerName": "x",
+    "staffName": "x",
+    "actionLabel": "x",
+    "override": false
+   },
+   "template": {
+    "name": "x",
+    "style": "x"
+   },
+   "at": 0,
+   "cooldownRemainingMs": 0,
+   "value": {
+    "input": "x",
+    "label": "x",
+    "goal": 0,
+    "format": "number"
+   },
+   "flags": [
+    "x"
+   ],
+   "overridable": false,
+   "approvals": false,
+   "group": {
+    "total": 0,
+    "done": 0,
+    "already": 0,
+    "refused": 0
+   },
+   "counts": {
+    "today": 0,
+    "event": {
+     "arrived": 0,
+     "inside": 0,
+     "expected": 0,
+     "capacity": 0
+    },
+    "asOf": 0,
+    "configRev": 0
+   },
+   "milestone": "count",
+   "undoUntil": 0,
+   "display": {
+    "v": 1,
+    "screen": "ready",
+    "templateVersion": "x",
+    "variant": "x",
+    "identity": {
+     "holder": "x",
+     "initials": "x",
+     "photo": {
+      "url": "x",
+      "alt": "x"
+     }
+    },
+    "header": {
+     "title": "x",
+     "titleLines": 1,
+     "meta": "x",
+     "chips": [
+      {
+       "id": "x",
+       "text": "x",
+       "tone": "neutral"
+      }
+     ]
+    },
+    "panels": [
+     {
+      "id": "x",
+      "kind": "membership",
+      "title": "x",
+      "tone": "neutral",
+      "rows": [
+       {
+        "type": "heading",
+        "id": "x",
+        "text": "x",
+        "detail": "x"
+       }
+      ]
+     }
+    ],
+    "notes": {
+     "staff": "x",
+     "refused": "x"
+    }
+   }
+  }
+ },
+ {
+  "id": "scan.postScanResolve",
+  "call": "terminal.resolve",
+  "http": "POST",
+  "path": "/api/v1/scan/resolve",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "idempotencyKey": "x",
+   "input": {
+    "code": "x",
+    "method": "camera"
+   },
+   "clientTs": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "scanId": "x",
+   "kind": "ok",
+   "reason": "not_found",
+   "replay": false,
+   "action": {
+    "id": "x",
+    "label": "x",
+    "kind": "check_in"
+   },
+   "card": {
+    "passId": "x",
+    "version": 0,
+    "mode": "live",
+    "title": "x",
+    "subtitle": "x",
+    "template": {
+     "id": "x",
+     "name": "x",
+     "style": "x"
+    },
+    "status": "active",
+    "validFrom": 0,
+    "validUntil": 0,
+    "flags": [
+     {
+      "label": "x",
+      "tone": "warning",
+      "stop": false
+     }
+    ],
+    "values": [
+     {
+      "input": "x",
+      "label": "x",
+      "goal": 0,
+      "format": "number"
+     }
+    ],
+    "actions": [
+     {
+      "id": "x",
+      "label": "x",
+      "kind": "check_in",
+      "available": false,
+      "lock": "role",
+      "reason": "not_found",
+      "amount": {
+       "fixed": 0
+      },
+      "confirm": false,
+      "confirmAbove": 0,
+      "cooldownRemainingMs": 0,
+      "armable": "sticky",
+      "rewardLabel": "x"
+     }
+    ],
+    "display": {
+     "v": 1,
+     "screen": "ready",
+     "templateVersion": "x",
+     "variant": "x",
+     "identity": {
+      "holder": "x",
+      "initials": "x",
+      "photo": {
+       "url": "x",
+       "alt": "x"
+      }
+     },
+     "header": {
+      "title": "x",
+      "titleLines": 1,
+      "meta": "x",
+      "chips": [
+       {
+        "id": "x",
+        "text": "x",
+        "tone": "neutral"
+       }
+      ]
+     },
+     "panels": [
+      {
+       "id": "x",
+       "kind": "membership",
+       "title": "x",
+       "tone": "neutral",
+       "rows": [
+        {
+         "type": "heading",
+         "id": "x",
+         "text": "x",
+         "detail": "x"
+        }
+       ]
+      }
+     ],
+     "notes": {
+      "staff": "x",
+      "refused": "x"
+     }
+    },
+    "lastScans": [
+     {
+      "scanId": "x",
+      "at": 0,
+      "actionLabel": "x",
+      "outcome": "ok",
+      "scannerName": "x",
+      "undoable": false
+     }
+    ],
+    "bundle": {
+     "id": "x",
+     "name": "x",
+     "size": 0,
+     "checkedIn": 0
+    },
+    "door": {
+     "state": "in"
+    },
+    "passView": {
+     "assetBaseUrl": "x",
+     "assetGrant": "x",
+     "assetNames": [
+      "x"
+     ]
+    }
+   },
+   "previous": {
+    "scanId": "x",
+    "at": 0,
+    "scannerName": "x",
+    "staffName": "x",
+    "actionLabel": "x",
+    "override": false
+   },
+   "template": {
+    "name": "x",
+    "style": "x"
+   },
+   "at": 0,
+   "cooldownRemainingMs": 0,
+   "value": {
+    "input": "x",
+    "label": "x",
+    "goal": 0,
+    "format": "number"
+   },
+   "flags": [
+    "x"
+   ],
+   "overridable": false,
+   "approvals": false,
+   "group": {
+    "total": 0,
+    "done": 0,
+    "already": 0,
+    "refused": 0
+   },
+   "counts": {
+    "today": 0,
+    "event": {
+     "arrived": 0,
+     "inside": 0,
+     "expected": 0,
+     "capacity": 0
+    },
+    "asOf": 0,
+    "configRev": 0
+   },
+   "milestone": "count",
+   "undoUntil": 0,
+   "display": {
+    "v": 1,
+    "screen": "ready",
+    "templateVersion": "x",
+    "variant": "x",
+    "identity": {
+     "holder": "x",
+     "initials": "x",
+     "photo": {
+      "url": "x",
+      "alt": "x"
+     }
+    },
+    "header": {
+     "title": "x",
+     "titleLines": 1,
+     "meta": "x",
+     "chips": [
+      {
+       "id": "x",
+       "text": "x",
+       "tone": "neutral"
+      }
+     ]
+    },
+    "panels": [
+     {
+      "id": "x",
+      "kind": "membership",
+      "title": "x",
+      "tone": "neutral",
+      "rows": [
+       {
+        "type": "heading",
+        "id": "x",
+        "text": "x",
+        "detail": "x"
+       }
+      ]
+     }
+    ],
+    "notes": {
+     "staff": "x",
+     "refused": "x"
+    }
+   }
+  }
+ },
+ {
+  "id": "scan.postScanScansByScanIdUndo",
+  "call": "terminal.scans.undo",
+  "http": "POST",
+  "path": "/api/v1/scan/scans/{scanId}/undo",
+  "pathParams": [
+   {
+    "name": "scanId",
+    "py": "scan_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "idempotencyKey": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "scanId": "x",
+   "kind": "ok",
+   "reason": "not_found",
+   "replay": false,
+   "action": {
+    "id": "x",
+    "label": "x",
+    "kind": "check_in"
+   },
+   "card": {
+    "passId": "x",
+    "version": 0,
+    "mode": "live",
+    "title": "x",
+    "subtitle": "x",
+    "template": {
+     "id": "x",
+     "name": "x",
+     "style": "x"
+    },
+    "status": "active",
+    "validFrom": 0,
+    "validUntil": 0,
+    "flags": [
+     {
+      "label": "x",
+      "tone": "warning",
+      "stop": false
+     }
+    ],
+    "values": [
+     {
+      "input": "x",
+      "label": "x",
+      "goal": 0,
+      "format": "number"
+     }
+    ],
+    "actions": [
+     {
+      "id": "x",
+      "label": "x",
+      "kind": "check_in",
+      "available": false,
+      "lock": "role",
+      "reason": "not_found",
+      "amount": {
+       "fixed": 0
+      },
+      "confirm": false,
+      "confirmAbove": 0,
+      "cooldownRemainingMs": 0,
+      "armable": "sticky",
+      "rewardLabel": "x"
+     }
+    ],
+    "display": {
+     "v": 1,
+     "screen": "ready",
+     "templateVersion": "x",
+     "variant": "x",
+     "identity": {
+      "holder": "x",
+      "initials": "x",
+      "photo": {
+       "url": "x",
+       "alt": "x"
+      }
+     },
+     "header": {
+      "title": "x",
+      "titleLines": 1,
+      "meta": "x",
+      "chips": [
+       {
+        "id": "x",
+        "text": "x",
+        "tone": "neutral"
+       }
+      ]
+     },
+     "panels": [
+      {
+       "id": "x",
+       "kind": "membership",
+       "title": "x",
+       "tone": "neutral",
+       "rows": [
+        {
+         "type": "heading",
+         "id": "x",
+         "text": "x",
+         "detail": "x"
+        }
+       ]
+      }
+     ],
+     "notes": {
+      "staff": "x",
+      "refused": "x"
+     }
+    },
+    "lastScans": [
+     {
+      "scanId": "x",
+      "at": 0,
+      "actionLabel": "x",
+      "outcome": "ok",
+      "scannerName": "x",
+      "undoable": false
+     }
+    ],
+    "bundle": {
+     "id": "x",
+     "name": "x",
+     "size": 0,
+     "checkedIn": 0
+    },
+    "door": {
+     "state": "in"
+    },
+    "passView": {
+     "assetBaseUrl": "x",
+     "assetGrant": "x",
+     "assetNames": [
+      "x"
+     ]
+    }
+   },
+   "previous": {
+    "scanId": "x",
+    "at": 0,
+    "scannerName": "x",
+    "staffName": "x",
+    "actionLabel": "x",
+    "override": false
+   },
+   "template": {
+    "name": "x",
+    "style": "x"
+   },
+   "at": 0,
+   "cooldownRemainingMs": 0,
+   "value": {
+    "input": "x",
+    "label": "x",
+    "goal": 0,
+    "format": "number"
+   },
+   "flags": [
+    "x"
+   ],
+   "overridable": false,
+   "approvals": false,
+   "group": {
+    "total": 0,
+    "done": 0,
+    "already": 0,
+    "refused": 0
+   },
+   "counts": {
+    "today": 0,
+    "event": {
+     "arrived": 0,
+     "inside": 0,
+     "expected": 0,
+     "capacity": 0
+    },
+    "asOf": 0,
+    "configRev": 0
+   },
+   "milestone": "count",
+   "undoUntil": 0,
+   "display": {
+    "v": 1,
+    "screen": "ready",
+    "templateVersion": "x",
+    "variant": "x",
+    "identity": {
+     "holder": "x",
+     "initials": "x",
+     "photo": {
+      "url": "x",
+      "alt": "x"
+     }
+    },
+    "header": {
+     "title": "x",
+     "titleLines": 1,
+     "meta": "x",
+     "chips": [
+      {
+       "id": "x",
+       "text": "x",
+       "tone": "neutral"
+      }
+     ]
+    },
+    "panels": [
+     {
+      "id": "x",
+      "kind": "membership",
+      "title": "x",
+      "tone": "neutral",
+      "rows": [
+       {
+        "type": "heading",
+        "id": "x",
+        "text": "x",
+        "detail": "x"
+       }
+      ]
+     }
+    ],
+    "notes": {
+     "staff": "x",
+     "refused": "x"
+    }
+   }
+  }
+ },
+ {
+  "id": "scans.getScans",
+  "call": "scans.list",
+  "http": "GET",
+  "path": "/api/v1/scans",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "at": 0,
+     "outcome": "ok",
+     "reason": "not_found",
+     "kind": "check_in",
+     "actionId": "x",
+     "actionLabel": "x",
+     "direction": "in",
+     "passId": "x",
+     "passTitle": "x",
+     "templateId": "x",
+     "templateName": "x",
+     "eventId": "x",
+     "eventName": "x",
+     "scannerId": "x",
+     "scannerName": "x",
+     "staffId": "x",
+     "staffName": "x",
+     "approvedBy": "x",
+     "method": "camera",
+     "amount": 0,
+     "passVersion": 0,
+     "override": false,
+     "offline": false,
+     "actor": {
+      "type": "scanner",
+      "id": "x"
+     },
+     "undoneAt": 0,
+     "undoneBy": "x",
+     "undoes": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "templates.getTemplates",
+  "call": "templates.list",
+  "http": "GET",
+  "path": "/api/v1/templates",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "orgName": "x",
+     "slug": "x",
+     "name": "x",
+     "description": "x",
+     "origin": "baked",
+     "status": "active",
+     "activeVersion": "x",
+     "styles": [
+      "generic"
+     ],
+     "passCount": 0,
+     "createdAt": 0,
+     "updatedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "templates.getTemplatesEligible",
+  "call": "templates.list_eligible",
+  "http": "GET",
+  "path": "/api/v1/templates/eligible",
+  "pathParams": [],
+  "query": [
+   {
+    "name": "mode",
+    "py": "mode",
+    "value": "live"
+   },
+   {
+    "name": "provider",
+    "py": "provider",
+    "value": "apple"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "templateId": "x",
+     "name": "x",
+     "templateOrgId": "x",
+     "origin": "uploaded",
+     "releaseId": "x",
+     "releaseGeneration": 0,
+     "version": "x",
+     "candidateHash": "x",
+     "supportsCheckIn": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "templates.getTemplatesPreviews",
+  "call": "templates.list_previews",
+  "http": "GET",
+  "path": "/api/v1/templates/previews",
+  "pathParams": [],
+  "query": [
+   {
+    "name": "ids",
+    "py": "ids",
+    "value": "x"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "passJson": {},
+     "warnings": [
+      {
+       "severity": "error",
+       "code": "x",
+       "message": "x"
+      }
+     ],
+     "assetBaseUrl": "x",
+     "assetNames": [
+      "x"
+     ],
+     "id": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "templates.getTemplatesUploads",
+  "call": "template_imports.list",
+  "http": "GET",
+  "path": "/api/v1/templates/uploads",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "uploadId": "x",
+     "name": "x",
+     "status": "queued",
+     "templateId": "x",
+     "version": "x",
+     "error": "x",
+     "issues": 0,
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "templates.getTemplatesUploadsById",
+  "call": "template_imports.retrieve",
+  "http": "GET",
+  "path": "/api/v1/templates/uploads/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "uploadId": "x",
+   "status": "queued",
+   "step": "x",
+   "templateId": "x",
+   "version": "x",
+   "report": {
+    "ok": false,
+    "issues": [
+     {
+      "severity": "error",
+      "code": "x",
+      "message": "x"
+     }
+    ]
+   },
+   "error": "x"
+  }
+ },
+ {
+  "id": "templates.getTemplatesById",
+  "call": "templates.retrieve",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgName": "x",
+   "slug": "x",
+   "name": "x",
+   "description": "x",
+   "origin": "baked",
+   "status": "active",
+   "activeVersion": "x",
+   "styles": [
+    "generic"
+   ],
+   "passCount": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "sample": {},
+   "versions": [
+    {
+     "version": "x",
+     "createdAt": 0,
+     "createdBy": "x",
+     "assets": [
+      {
+       "name": "x",
+       "slot": "x",
+       "scale": 1,
+       "size": 0,
+       "sha1": "x",
+       "crc32": 0
+      }
+     ],
+     "report": {
+      "ok": false,
+      "issues": [
+       {
+        "severity": "error",
+        "code": "x",
+        "message": "x"
+       }
+      ]
+     },
+     "active": false,
+     "displayOnly": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdCandidates",
+  "call": "templates.candidates.list",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/candidates",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [
+   {
+    "name": "mode",
+    "py": "mode",
+    "value": "live"
+   },
+   {
+    "name": "provider",
+    "py": "provider",
+    "value": "apple"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "templateId": "x",
+     "orgId": "x",
+     "mode": "live",
+     "provider": "apple",
+     "version": "x",
+     "contentHash": "x",
+     "candidateHash": "x",
+     "adapterRevision": 0,
+     "adapterCapabilities": [
+      "x"
+     ],
+     "audiencePolicyRevision": 0,
+     "authorId": "x",
+     "versionAuthorId": "x",
+     "createdAt": 0,
+     "approvals": [
+      {
+       "id": "x",
+       "candidateId": "x",
+       "candidateHash": "x",
+       "reviewerId": "x",
+       "createdAt": 0
+      }
+     ]
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "templates.postTemplatesByIdCandidates",
+  "call": "templates.candidates.create",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/candidates",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "mode": "live",
+   "provider": "apple",
+   "version": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "templateId": "x",
+   "orgId": "x",
+   "mode": "live",
+   "provider": "apple",
+   "version": "x",
+   "contentHash": "x",
+   "candidateHash": "x",
+   "adapterRevision": 0,
+   "adapterCapabilities": [
+    "x"
+   ],
+   "audiencePolicyRevision": 0,
+   "authorId": "x",
+   "versionAuthorId": "x",
+   "createdAt": 0,
+   "approvals": [
+    {
+     "id": "x",
+     "candidateId": "x",
+     "candidateHash": "x",
+     "reviewerId": "x",
+     "createdAt": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "templates.postTemplatesByIdCandidatesByCandidateIdApprove",
+  "call": "templates.candidates.approve",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/candidates/{candidateId}/approve",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "candidateId",
+    "py": "candidate_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "mode": "live",
+   "provider": "apple",
+   "candidateHash": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "candidateId": "x",
+   "candidateHash": "x",
+   "reviewerId": "x",
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdChannels",
+  "call": "templates.channels.retrieve",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/channels",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "channels": {},
+   "revision": 0,
+   "effective": {},
+   "defaults": {}
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdChannelsRuns",
+  "call": "templates.channels.list_runs",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/channels/runs",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": [
+   {
+    "id": "x",
+    "state": "pending",
+    "dueAt": 0,
+    "startedAt": 0,
+    "finishedAt": 0,
+    "counts": {},
+    "errorCode": "x",
+    "waiting": {
+     "name": "x",
+     "until": 0
+    }
+   }
+  ]
+ },
+ {
+  "id": "templates.getTemplatesByIdInputSchema",
+  "call": "templates.retrieve_input_schema",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/input-schema",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {}
+ },
+ {
+  "id": "templates.getTemplatesByIdPackage",
+  "call": "templates.download_package",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/package",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "templates.postTemplatesByIdPreview",
+  "call": "templates.preview",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/preview",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passJson": {},
+   "warnings": [
+    {
+     "severity": "error",
+     "code": "x",
+     "message": "x"
+    }
+   ],
+   "assetBaseUrl": "x",
+   "assetNames": [
+    "x"
+   ]
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdReleases",
+  "call": "templates.releases.list",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/releases",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [
+   {
+    "name": "mode",
+    "py": "mode",
+    "value": "live"
+   },
+   {
+    "name": "provider",
+    "py": "provider",
+    "value": "apple"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "active": {
+    "id": "x",
+    "templateId": "x",
+    "orgId": "x",
+    "mode": "live",
+    "provider": "apple",
+    "version": "x",
+    "generation": 0,
+    "candidateHash": "x",
+    "source": "approved",
+    "action": "release",
+    "previousReleaseId": "x",
+    "createdBy": "x",
+    "createdAt": 0,
+    "candidateId": "x",
+    "approvalId": "x"
+   },
+   "items": [
+    {
+     "id": "x",
+     "templateId": "x",
+     "orgId": "x",
+     "mode": "live",
+     "provider": "apple",
+     "version": "x",
+     "generation": 0,
+     "candidateHash": "x",
+     "source": "approved",
+     "action": "release",
+     "previousReleaseId": "x",
+     "createdBy": "x",
+     "createdAt": 0,
+     "candidateId": "x",
+     "approvalId": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "templates.postTemplatesByIdReleases",
+  "call": "templates.releases.create",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/releases",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "mode": "live",
+   "provider": "apple",
+   "candidateId": "x",
+   "approvalId": "x",
+   "candidateHash": "x",
+   "expectedGeneration": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "templateId": "x",
+   "orgId": "x",
+   "mode": "live",
+   "provider": "apple",
+   "version": "x",
+   "generation": 0,
+   "candidateHash": "x",
+   "source": "approved",
+   "action": "release",
+   "previousReleaseId": "x",
+   "createdBy": "x",
+   "createdAt": 0,
+   "candidateId": "x",
+   "approvalId": "x"
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdReleasesImpact",
+  "call": "templates.releases.retrieve_impact",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/releases/impact",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [
+   {
+    "name": "mode",
+    "py": "mode",
+    "value": "live"
+   },
+   {
+    "name": "provider",
+    "py": "provider",
+    "value": "apple"
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "value": "x"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "fromVersion": "x",
+   "toVersion": "x",
+   "passes": {
+    "count": 0,
+    "capped": false
+   },
+   "diff": {
+    "fields": [
+     {
+      "label": "x",
+      "kind": "added",
+      "from": "x",
+      "to": "x"
+     }
+    ],
+    "images": [
+     {
+      "label": "x",
+      "kind": "added",
+      "from": "x",
+      "to": "x"
+     }
+    ],
+    "barcode": [
+     {
+      "label": "x",
+      "kind": "added",
+      "from": "x",
+      "to": "x"
+     }
+    ],
+    "colors": [
+     {
+      "label": "x",
+      "kind": "added",
+      "from": "x",
+      "to": "x"
+     }
+    ]
+   },
+   "more": {
+    "fields": 0,
+    "images": 0,
+    "barcode": 0,
+    "colors": 0
+   }
+  }
+ },
+ {
+  "id": "templates.postTemplatesByIdScanSetup",
+  "call": "templates.set_up_scanning",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/scan-setup",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "session": {
+    "id": "x",
+    "name": "x"
+   },
+   "created": false,
+   "events": [
+    {
+     "id": "x",
+     "name": "x",
+     "created": false
+    }
+   ],
+   "noEvents": false,
+   "truncated": false
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdStampsImpact",
+  "call": "templates.retrieve_stamps_impact",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/stamps-impact",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [
+   {
+    "name": "goal",
+    "py": "goal",
+    "value": 0
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passes": 0,
+   "readyNow": 0,
+   "readyLost": 0,
+   "newlyReady": 0,
+   "highest": 0,
+   "highestKept": 0
+  }
+ },
+ {
+  "id": "templates.postTemplatesByIdUse",
+  "call": "blueprints.use",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/use",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgName": "x",
+   "slug": "x",
+   "name": "x",
+   "description": "x",
+   "origin": "baked",
+   "status": "active",
+   "activeVersion": "x",
+   "styles": [
+    "generic"
+   ],
+   "passCount": 0,
+   "createdAt": 0,
+   "updatedAt": 0,
+   "sample": {},
+   "versions": [
+    {
+     "version": "x",
+     "createdAt": 0,
+     "createdBy": "x",
+     "assets": [
+      {
+       "name": "x",
+       "slot": "x",
+       "scale": 1,
+       "size": 0,
+       "sha1": "x",
+       "crc32": 0
+      }
+     ],
+     "report": {
+      "ok": false,
+      "issues": [
+       {
+        "severity": "error",
+        "code": "x",
+        "message": "x"
+       }
+      ]
+     },
+     "active": false,
+     "displayOnly": false
+    }
+   ]
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdVersionsByVersion",
+  "call": "templates.versions.retrieve",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/versions/{version}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "version": "x",
+   "createdAt": 0,
+   "createdBy": "x",
+   "assets": [
+    {
+     "name": "x",
+     "slot": "x",
+     "scale": 1,
+     "size": 0,
+     "sha1": "x",
+     "crc32": 0
+    }
+   ],
+   "report": {
+    "ok": false,
+    "issues": [
+     {
+      "severity": "error",
+      "code": "x",
+      "message": "x"
+     }
+    ]
+   },
+   "active": false,
+   "displayOnly": false,
+   "passJson": {}
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdVersionsByVersionAssetsByName",
+  "call": "templates.versions.download_asset",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/versions/{version}/assets/{name}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": false
+   },
+   {
+    "name": "name",
+    "py": "name",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
+  "id": "sandbox.getTestInbox",
+  "call": "test_emails.list",
+  "http": "GET",
+  "path": "/api/v1/test-inbox",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "kind": "pass",
+     "passId": "x",
+     "bundleId": "x",
+     "to": "x",
+     "subject": "x",
+     "attached": false,
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "sandbox.getTestInboxById",
+  "call": "test_emails.retrieve",
+  "http": "GET",
+  "path": "/api/v1/test-inbox/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "kind": "pass",
+   "passId": "x",
+   "bundleId": "x",
+   "to": "x",
+   "subject": "x",
+   "attached": false,
+   "createdAt": 0,
+   "html": "x",
+   "text": "x",
+   "forwarding": "none"
+  }
+ },
+ {
+  "id": "visitors.getVisitors",
+  "call": "visitors.list",
+  "http": "GET",
+  "path": "/api/v1/visitors",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "passId": "x",
+     "name": "x",
+     "hostName": "x",
+     "windowFrom": 0,
+     "windowUntil": 0,
+     "note": "x",
+     "status": "expected",
+     "statusAt": 0,
+     "autoOut": false,
+     "hasEmail": false
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "visitors.postVisitors",
+  "call": "visitors.create",
+  "http": "POST",
+  "path": "/api/v1/visitors",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "windowFrom": 0,
+   "windowUntil": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "passId": "x",
+   "name": "x",
+   "hostName": "x",
+   "windowFrom": 0,
+   "windowUntil": 0,
+   "note": "x",
+   "status": "expected",
+   "statusAt": 0,
+   "autoOut": false,
+   "hasEmail": false
+  }
+ },
+ {
+  "id": "visitors.getVisitorsHosts",
+  "call": "visitors.list_hosts",
+  "http": "GET",
+  "path": "/api/v1/visitors/hosts",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "email": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "visitors.postVisitorsByIdCancel",
+  "call": "visitors.cancel",
+  "http": "POST",
+  "path": "/api/v1/visitors/{id}/cancel",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "passId": "x",
+   "name": "x",
+   "hostName": "x",
+   "windowFrom": 0,
+   "windowUntil": 0,
+   "note": "x",
+   "status": "expected",
+   "statusAt": 0,
+   "autoOut": false,
+   "hasEmail": false
+  }
+ },
+ {
+  "id": "visitors.postVisitorsByIdCheckOut",
+  "call": "visitors.check_out",
+  "http": "POST",
+  "path": "/api/v1/visitors/{id}/check-out",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "passId": "x",
+   "name": "x",
+   "hostName": "x",
+   "windowFrom": 0,
+   "windowUntil": 0,
+   "note": "x",
+   "status": "expected",
+   "statusAt": 0,
+   "autoOut": false,
+   "hasEmail": false
+  }
+ },
+ {
+  "id": "visitors.postVisitorsByIdHostEmail",
+  "call": "visitors.send_host_email",
+  "http": "POST",
+  "path": "/api/v1/visitors/{id}/host-email",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "wallet-providers.getWalletProvidersPassesById",
+  "call": "passes.retrieve_provider_status",
+  "http": "GET",
+  "path": "/api/v1/wallet-providers/passes/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "credentialGeneration": 0,
+   "providers": [
+    {
+     "provider": "google",
+     "lifecycle": "absent",
+     "desiredOperation": {
+      "version": 0,
+      "kind": "upsert",
+      "state": "pending",
+      "reason": "ok"
+     },
+     "priorGenerationRetirementPending": false,
+     "installation": "unknown",
+     "issuance": {
+      "state": "disabled",
+      "reason": "not_released"
+     }
+    },
+    {
+     "provider": "samsung",
+     "lifecycle": "absent",
+     "desiredOperation": {
+      "version": 0,
+      "kind": "upsert",
+      "state": "pending",
+      "reason": "ok"
+     },
+     "priorGenerationRetirementPending": false,
+     "installation": "unknown",
+     "issuance": {
+      "state": "disabled",
+      "reason": "not_released"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpoints",
+  "call": "webhook_endpoints.list",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "url": "x",
+     "urlMasked": "x",
+     "description": "x",
+     "eventTypes": [
+      "pass.issued"
+     ],
+     "templateIds": [
+      "x"
+     ],
+     "apiVersion": "2026-12-01",
+     "status": "active",
+     "target": "url",
+     "failingSince": 0,
+     "disabledAt": 0,
+     "lastSuccessAt": 0,
+     "lastFailureAt": 0,
+     "lastStatus": 0,
+     "secretCreatedAt": 0,
+     "previousSecretExpiresAt": 0,
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpoints",
+  "call": "webhook_endpoints.create",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "url": "x",
+   "eventTypes": [
+    "pass.issued"
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "endpoint": {
+    "id": "x",
+    "orgId": "x",
+    "mode": "live",
+    "url": "x",
+    "urlMasked": "x",
+    "description": "x",
+    "eventTypes": [
+     "pass.issued"
+    ],
+    "templateIds": [
+     "x"
+    ],
+    "apiVersion": "2026-12-01",
+    "status": "active",
+    "target": "url",
+    "failingSince": 0,
+    "disabledAt": 0,
+    "lastSuccessAt": 0,
+    "lastFailureAt": 0,
+    "lastStatus": 0,
+    "secretCreatedAt": 0,
+    "previousSecretExpiresAt": 0,
+    "createdAt": 0
+   },
+   "secret": "x"
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpointsCapture",
+  "call": "webhook_endpoints.ensure_capture",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints/capture",
+  "pathParams": [],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "endpoint": {
+    "id": "x",
+    "orgId": "x",
+    "mode": "live",
+    "url": "x",
+    "urlMasked": "x",
+    "description": "x",
+    "eventTypes": [
+     "pass.issued"
+    ],
+    "templateIds": [
+     "x"
+    ],
+    "apiVersion": "2026-12-01",
+    "status": "active",
+    "target": "url",
+    "failingSince": 0,
+    "disabledAt": 0,
+    "lastSuccessAt": 0,
+    "lastFailureAt": 0,
+    "lastStatus": 0,
+    "secretCreatedAt": 0,
+    "previousSecretExpiresAt": 0,
+    "createdAt": 0
+   },
+   "secret": "x"
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsById",
+  "call": "webhook_endpoints.retrieve",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "url": "x",
+   "urlMasked": "x",
+   "description": "x",
+   "eventTypes": [
+    "pass.issued"
+   ],
+   "templateIds": [
+    "x"
+   ],
+   "apiVersion": "2026-12-01",
+   "status": "active",
+   "target": "url",
+   "failingSince": 0,
+   "disabledAt": 0,
+   "lastSuccessAt": 0,
+   "lastFailureAt": 0,
+   "lastStatus": 0,
+   "secretCreatedAt": 0,
+   "previousSecretExpiresAt": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "webhooks.patchWebhookEndpointsById",
+  "call": "webhook_endpoints.update",
+  "http": "PATCH",
+  "path": "/api/v1/webhook-endpoints/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "url": "x",
+   "urlMasked": "x",
+   "description": "x",
+   "eventTypes": [
+    "pass.issued"
+   ],
+   "templateIds": [
+    "x"
+   ],
+   "apiVersion": "2026-12-01",
+   "status": "active",
+   "target": "url",
+   "failingSince": 0,
+   "disabledAt": 0,
+   "lastSuccessAt": 0,
+   "lastFailureAt": 0,
+   "lastStatus": 0,
+   "secretCreatedAt": 0,
+   "previousSecretExpiresAt": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "webhooks.deleteWebhookEndpointsById",
+  "call": "webhook_endpoints.delete",
+  "http": "DELETE",
+  "path": "/api/v1/webhook-endpoints/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": true
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsByIdCaptures",
+  "call": "webhook_endpoints.captures.list",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/{id}/captures",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "endpointId": "x",
+     "eventId": "x",
+     "type": "pass.issued",
+     "trigger": "event",
+     "status": 0,
+     "durationMs": 0,
+     "headers": {},
+     "body": "x",
+     "createdAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpointsByIdCapturesSecret",
+  "call": "webhook_endpoints.captures.reveal_secret",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints/{id}/captures/secret",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "secret": "x"
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
+  "call": "webhook_endpoints.captures.retrieve",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/{id}/captures/{captureId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "captureId",
+    "py": "capture_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "endpointId": "x",
+   "eventId": "x",
+   "type": "pass.issued",
+   "trigger": "event",
+   "status": 0,
+   "durationMs": 0,
+   "headers": {},
+   "body": "x",
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",
+  "call": "webhook_endpoints.captures.replay",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints/{id}/captures/{captureId}/replay",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "captureId",
+    "py": "capture_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "endpointId": "x",
+   "eventId": "x",
+   "type": "pass.issued",
+   "trigger": "event",
+   "status": 0,
+   "durationMs": 0,
+   "headers": {},
+   "body": "x",
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsByIdDeliveries",
+  "call": "webhook_endpoints.deliveries.list",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/{id}/deliveries",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "eventId": "x",
+     "type": "pass.issued",
+     "passId": "x",
+     "externalId": "x",
+     "state": "pending",
+     "attempts": 0,
+     "nextAt": 0,
+     "lastStatus": 0,
+     "lastError": "x",
+     "lastAttemptAt": 0,
+     "finishedAt": 0,
+     "replays": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+  "call": "webhook_endpoints.deliveries.retrieve",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/{id}/deliveries/{eventId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "eventId",
+    "py": "event_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "eventId": "x",
+   "type": "pass.issued",
+   "passId": "x",
+   "externalId": "x",
+   "state": "pending",
+   "attempts": 0,
+   "nextAt": 0,
+   "lastStatus": 0,
+   "lastError": "x",
+   "lastAttemptAt": 0,
+   "finishedAt": 0,
+   "replays": 0,
+   "attemptLog": [
+    {
+     "attempt": 0,
+     "trigger": "event",
+     "status": 0,
+     "errorCode": "x",
+     "durationMs": 0,
+     "at": 0
+    }
+   ],
+   "payload": {
+    "id": "x",
+    "type": "pass.issued",
+    "apiVersion": "2026-12-01",
+    "createdAt": 0,
+    "orgId": "x",
+    "mode": "live",
+    "pass": {
+     "id": "x",
+     "externalId": "x",
+     "templateId": "x"
+    },
+    "data": {}
+   }
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay",
+  "call": "webhook_endpoints.deliveries.replay",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints/{id}/deliveries/{eventId}/replay",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "eventId",
+    "py": "event_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "queued": 0
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpointsByIdReplay",
+  "call": "webhook_endpoints.deliveries.bulk_replay",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints/{id}/replay",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "from": 0,
+   "to": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "queued": 0
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpointsByIdSecret",
+  "call": "webhook_endpoints.rotate_secret",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints/{id}/secret",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "secret": "x"
+  }
+ },
+ {
+  "id": "webhooks.postWebhookEndpointsByIdTest",
+  "call": "webhook_endpoints.send_test",
+  "http": "POST",
+  "path": "/api/v1/webhook-endpoints/{id}/test",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": false,
+   "status": 0,
+   "durationMs": 0,
+   "errorCode": "x",
+   "captureId": "x"
+  }
+ }
+]

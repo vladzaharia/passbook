@@ -11,6 +11,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   'webhook-tester': () => import('../webhooks/index.tsx'),
   snippets: () => import('./personal.ts'),
   playground: () => import('../playground/index.tsx'),
+  quickstart: () => import('../quickstart/index.tsx'),
   run: () => import('../console/run-entry.ts'),
   'org-chip': async () => {
     const { mountOrgChip } = await import('../console/org-chip.ts');

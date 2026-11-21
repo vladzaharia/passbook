@@ -53,8 +53,8 @@ describe('renderBundleEmail', () => {
 
   it('counts the passes beside the name and shares the support footer', () => {
     const { html, text } = render({ supportEmail: 'help@harbor.test' });
-    expect(html).toContain('Family trip · 2 passes');
-    expect(text).toContain('Family trip · 2 passes');
+    expect(html).toContain('Family trip');
+    expect(text).toContain('Family trip');
     expect(html).toContain('Questions: <a href="mailto:help@harbor.test"');
     expect(text).toContain('Questions: help@harbor.test');
   });

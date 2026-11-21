@@ -228,6 +228,60 @@
       ]
     },
     {
+      "code": "ASC_AUTH",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_REFUSED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_UPSTREAM",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "ASSETS_INVALID",
       "statuses": [
         422
@@ -565,6 +619,33 @@
       ],
       "modules": [
         "webhooks"
+      ]
+    },
+    {
+      "code": "CERT_NOT_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "CERT_PENDING_KEY_MISSING",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "CERT_PENDING_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
       ]
     },
     {
@@ -1038,117 +1119,6 @@
       ]
     },
     {
-      "code": "GRANT_ALREADY_COMMITTED",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_BAD_IDENTIFIER",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_BAD_PRINCIPAL",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_BAD_PURPOSE",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform",
-        "webhooks"
-      ]
-    },
-    {
-      "code": "GRANT_BATCH_MIXED",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_FOREIGN_STATEMENT",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform",
-        "scan"
-      ]
-    },
-    {
-      "code": "GRANT_NOT_JOB",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_NO_EDGE",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_SCOPE_OVERRIDE",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform",
-        "scan"
-      ]
-    },
-    {
-      "code": "GRANT_STATEMENT_OUTSIDE_BATCH",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_TABLE_NOT_ALLOWED",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
-      "code": "GRANT_UNGUARDED_TABLE",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform"
-      ]
-    },
-    {
       "code": "GROUP_ENTRY_ONLY",
       "statuses": [
         422
@@ -1257,7 +1227,25 @@
       ]
     },
     {
+      "code": "IDENTITY_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "IDENTITY_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_EXPIRED",
       "statuses": [
         409
       ],
@@ -1304,7 +1292,25 @@
       ]
     },
     {
+      "code": "IDENTITY_PLATFORM_ENV_MISMATCH",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "IDENTITY_PROTECTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_RETIRED",
       "statuses": [
         409
       ],
@@ -1925,6 +1931,15 @@
       ]
     },
     {
+      "code": "NOTE_HELD",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "NOTE_NOT_FOUND",
       "statuses": [
         404
@@ -2191,7 +2206,6 @@
         "audit",
         "bundles",
         "delivery",
-        "holders",
         "passes",
         "scan",
         "templates"
@@ -2701,6 +2715,15 @@
     },
     {
       "code": "REQUEST_LOG_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "RESOLVE_NOT_FOUND",
       "statuses": [
         404
       ],
@@ -3357,15 +3380,6 @@
       ]
     },
     {
-      "code": "SCAN_EPOCHS_MISSING",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "scan"
-      ]
-    },
-    {
       "code": "SCAN_EVENT_CHANGED",
       "statuses": [
         409
@@ -3768,16 +3782,6 @@
       ]
     },
     {
-      "code": "SQL_SIZE_BUDGET",
-      "statuses": [
-        500
-      ],
-      "modules": [
-        "platform",
-        "scan"
-      ]
-    },
-    {
       "code": "STAFF_NAME_TAKEN",
       "statuses": [
         409
@@ -3820,15 +3824,6 @@
       ],
       "modules": [
         "platform"
-      ]
-    },
-    {
-      "code": "STALE_CONTEXT",
-      "statuses": [
-        503
-      ],
-      "modules": [
-        "connections"
       ]
     },
     {
@@ -5021,60 +5016,6 @@
       "code": "WALLET_OFFER_NOT_FOUND",
       "statuses": [
         404
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_OP_ACTOR",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_OP_CONFIG",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_OP_LINEAGE",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_OP_ORG",
-      "statuses": [
-        403
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_OP_RELEASE",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_OP_STALE",
-      "statuses": [
-        409
       ],
       "modules": [
         "wallet-providers"

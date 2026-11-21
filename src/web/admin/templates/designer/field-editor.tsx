@@ -59,9 +59,7 @@ export function FieldEditor({ field, group }: { field: Dict; group: GroupId }) {
           help="Use {{input}} for an input."
           op={(v) => ({ op: 'field-source', key, source: { kind: 'expr', expr: v }, optional })}
         />
-      ) : (
-        <p className="text-xs text-fg-muted">The sample value of the input shows in the preview.</p>
-      )}
+      ) : null}
       <TextEdit
         label="Change message"
         value={str(field.changeMessage)}
@@ -106,7 +104,6 @@ export function FieldEditor({ field, group }: { field: Dict; group: GroupId }) {
       {back ? (
         <SwitchRow
           label="Link"
-          help="Shows the value as a tappable link."
           checked={field.attributedValue !== undefined}
           onCheckedChange={(on) => edit({ op: 'field-link', key, on, optional })}
         />
@@ -114,7 +111,6 @@ export function FieldEditor({ field, group }: { field: Dict; group: GroupId }) {
       <NameEdit
         label="Key"
         value={key}
-        help="Identifies the field in the pass. Unique."
         problem={(text) =>
           text === ''
             ? 'A key is required.'

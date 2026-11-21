@@ -263,7 +263,6 @@ export function PassBrandingCard({
             </div>
             <SwitchRow
               label="Logo shows the name"
-              help="Passes leave the name out next to the logo."
               checked={draft.logoHasName}
               onCheckedChange={(logoHasName) => onChange({ logoHasName })}
             />

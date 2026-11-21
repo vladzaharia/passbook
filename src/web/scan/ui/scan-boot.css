@@ -73,18 +73,6 @@
   font-size: 15px;
   line-height: 22px;
 }
-.scan-boot-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--pk-text-muted);
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-}
-.scan-boot-eyebrow span {
-  color: var(--pk-accent);
-}
 .scan-boot-mascot {
   position: relative;
   width: 128px;

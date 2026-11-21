@@ -50,7 +50,6 @@ export const TAG_COPY = {
   restored: '{tag} restored',
   dialog: {
     title: 'Assign tag',
-    desc: 'To {name}',
     scanner: 'Scanner',
     rowMeta: '{state} · {role} · {session}',
     rowDisabled: {
@@ -132,7 +131,7 @@ export const TAG_COPY = {
   },
   inventory: {
     search: 'Name, code or holder',
-    empty: { headline: 'No tags yet', sub: 'Tags are assigned from a pass or a scanner.' },
+    empty: { headline: 'No tags yet' },
     import: 'Import tags',
     check: '{n} secure tags · {dupes} already here · {bad} unreadable row',
   },

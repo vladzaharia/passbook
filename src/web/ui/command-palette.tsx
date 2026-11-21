@@ -2,7 +2,14 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Command } from 'cmdk';
 import type { LucideIcon } from 'lucide-react';
 import { Search } from 'lucide-react';
-import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type InputHTMLAttributes,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { ActiveIndicator } from './active-indicator.tsx';
 import { Buddy } from './art/buddy.tsx';
 import { DialogOverlay, restoreOpener, useOpener } from './overlay.tsx';
@@ -13,8 +20,12 @@ export interface CommandItem {
   icon?: LucideIcon;
   /** A 12 px colour chip (a pass's background colour). */
   swatch?: string;
-  hint?: string;
+  hint?: ReactNode;
+  /** Replaces the label's text where it needs marks or a method pill; `label` stays the plain name. */
+  content?: ReactNode;
   onSelect: () => void;
+  /** ⌘↵ or Ctrl+↵; the footer shows the key only while some item has one. */
+  newTab?: () => void;
 }
 
 export interface CommandGroup {
@@ -34,6 +45,19 @@ export interface CommandPaletteProps {
   placeholder?: string;
   /** Rendered when no group has items and the query is not empty. */
   empty?: ReactNode;
+  /** The wide layout: a pane beside the list for the selected item (hidden on phones, which get a full-height sheet). */
+  preview?: (selectedId: string) => ReactNode;
+  /** Above the list, below the input: a warning or a lookup's state. */
+  banner?: ReactNode;
+  /** Right end of the footer. */
+  hint?: ReactNode;
+  /** Replaces "No results" in the empty block; null drops the block (the caller says why nothing is listed). */
+  emptyLabel?: string | null;
+  /** For the input: `spellCheck={false}` where the text may be a secret (browsers can send spellcheck text out). */
+  inputAttributes?: Pick<
+    InputHTMLAttributes<HTMLInputElement>,
+    'spellCheck' | 'autoComplete' | 'autoCorrect' | 'autoCapitalize'
+  >;
 }
 
 /** Every word must appear in the label or keywords (no fuzzy matching: 'maya' must not find 'API keys'). */
@@ -68,7 +92,7 @@ export function PaletteItem({ item, close }: { item: CommandItem; close: () => v
           className="size-3 shrink-0 rounded-[3px] border border-border"
         />
       ) : null}
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      {item.content ?? <span className="min-w-0 flex-1 truncate">{item.label}</span>}
       {item.hint ? (
         <span className="max-w-[45%] truncate text-xs text-fg-muted">{item.hint}</span>
       ) : null}
@@ -84,6 +108,11 @@ export function CommandPalette({
   onQueryChange,
   placeholder = 'Search',
   empty,
+  preview,
+  banner,
+  hint,
+  emptyLabel = 'No results',
+  inputAttributes,
 }: CommandPaletteProps) {
   const close = () => onOpenChange(false);
   const opener = useOpener(open);
@@ -94,6 +123,8 @@ export function CommandPalette({
   const first = ids[0] ?? '';
   const resultKey = ids.join('|');
   const [selected, setSelected] = useState(first);
+  const items = groups.flatMap((g) => g.items);
+  const canNewTab = items.some((i) => i.newTab);
   const moved = useRef(false);
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new query resets the person's pick
   useEffect(() => {
@@ -103,6 +134,36 @@ export function CommandPalette({
   useEffect(() => {
     if (!moved.current) setSelected(first);
   }, [resultKey]);
+  const pane = preview && selected ? preview(selected) : null;
+  const list = (
+    <Command.List className="min-h-0 min-w-0 flex-1 overflow-auto p-1 [&_[cmdk-list-sizer]]:relative">
+      <ActiveIndicator variant="list" />
+      {nothing && query.trim() && emptyLabel !== null ? (
+        <div
+          data-art-host=""
+          className="relative mx-2 mt-13 mb-1 rounded-md border border-dashed border-border-strong px-3 pt-4 pb-3 text-center"
+        >
+          {/* The buddy sits on the empty block and peeks through its lens. */}
+          <Buddy size="sm" state="lost" mood="curious" scene="peek" />
+          <p className="text-sm text-fg-muted">{emptyLabel}</p>
+        </div>
+      ) : null}
+      {nothing && query.trim() ? empty : null}
+      {groups.map((group) =>
+        group.items.length === 0 ? null : (
+          <Command.Group
+            key={group.heading}
+            heading={group.heading}
+            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-fg-muted"
+          >
+            {group.items.map((item) => (
+              <PaletteItem key={item.id} item={item} close={close} />
+            ))}
+          </Command.Group>
+        ),
+      )}
+    </Command.List>
+  );
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -110,7 +171,11 @@ export function CommandPalette({
         <DialogPrimitive.Content
           aria-describedby={undefined}
           onCloseAutoFocus={restoreOpener(opener)}
-          className="wl-dialog fixed top-[12vh] left-1/2 z-50 flex max-h-[76vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-lg border border-border bg-surface-overlay shadow-[var(--wl-edge),var(--pk-elevation-3)] max-sm:top-[calc(env(safe-area-inset-top)+0.75rem)]"
+          className={`wl-dialog fixed top-[12vh] left-1/2 z-50 flex max-h-[76vh] w-[calc(100%-2rem)] -translate-x-1/2 flex-col overflow-hidden rounded-lg border border-border bg-surface-overlay shadow-[var(--wl-edge),var(--pk-elevation-3)] max-sm:top-[calc(env(safe-area-inset-top)+0.75rem)] ${
+            preview
+              ? 'max-w-[880px] max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:w-full max-sm:translate-x-0 max-sm:rounded-none max-sm:border-0'
+              : 'max-w-xl'
+          }`}
         >
           <DialogPrimitive.Title className="sr-only">Command palette</DialogPrimitive.Title>
           <Command
@@ -122,6 +187,13 @@ export function CommandPalette({
             onKeyDown={(e) => {
               if (/^(ArrowUp|ArrowDown|Home|End|PageUp|PageDown)$/.test(e.key))
                 moved.current = true;
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                const open = items.find((i) => i.id === selected)?.newTab;
+                if (open) {
+                  e.preventDefault();
+                  open();
+                }
+              }
             }}
             onPointerMove={() => {
               moved.current = true;
@@ -135,36 +207,34 @@ export function CommandPalette({
                 onValueChange={onQueryChange}
                 placeholder={placeholder}
                 aria-label={placeholder}
+                {...inputAttributes}
                 className="h-11 w-full bg-transparent text-sm text-fg outline-hidden placeholder:text-fg-subtle pointer-coarse:text-[max(16px,1rem)]"
               />
-            </div>
-            <Command.List className="min-h-0 flex-1 overflow-auto p-1 [&_[cmdk-list-sizer]]:relative">
-              <ActiveIndicator variant="list" />
-              {nothing && query.trim() ? (
-                <div
-                  data-art-host=""
-                  className="relative mx-2 mt-13 mb-1 rounded-md border border-dashed border-border-strong px-3 pt-4 pb-3 text-center"
+              {preview ? (
+                <DialogPrimitive.Close
+                  aria-label="Close"
+                  className="shrink-0 rounded-sm border border-border px-1.5 py-0.5 text-xs text-fg-muted pointer-coarse:min-h-8 pointer-coarse:px-2.5"
                 >
-                  {/* The buddy sits on the empty block and peeks through its lens. */}
-                  <Buddy size="sm" state="lost" mood="curious" scene="peek" />
-                  <p className="text-sm text-fg-muted">No results</p>
-                </div>
+                  esc
+                </DialogPrimitive.Close>
               ) : null}
-              {nothing && query.trim() ? empty : null}
-              {groups.map((group) =>
-                group.items.length === 0 ? null : (
-                  <Command.Group
-                    key={group.heading}
-                    heading={group.heading}
-                    className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-fg-muted"
+            </div>
+            {banner}
+            {preview ? (
+              <div className="flex min-h-[260px] min-w-0 flex-1 overflow-hidden">
+                {list}
+                {pane ? (
+                  <aside
+                    aria-label="Preview"
+                    className="w-[320px] shrink-0 overflow-auto border-l border-border p-4 max-md:hidden"
                   >
-                    {group.items.map((item) => (
-                      <PaletteItem key={item.id} item={item} close={close} />
-                    ))}
-                  </Command.Group>
-                ),
-              )}
-            </Command.List>
+                    {pane}
+                  </aside>
+                ) : null}
+              </div>
+            ) : (
+              list
+            )}
             <div
               aria-hidden
               className="flex items-center gap-4 border-t border-border px-3 py-2 text-xs text-fg-muted max-sm:hidden"
@@ -178,10 +248,19 @@ export function CommandPalette({
                 <kbd className="rounded-sm border border-border px-1">↵</kbd>
                 open
               </span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded-sm border border-border px-1">esc</kbd>
-                close
-              </span>
+              {canNewTab ? (
+                <span className="flex items-center gap-1">
+                  <kbd className="rounded-sm border border-border px-1">⌘</kbd>
+                  <kbd className="rounded-sm border border-border px-1">↵</kbd>
+                  new tab
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <kbd className="rounded-sm border border-border px-1">esc</kbd>
+                  close
+                </span>
+              )}
+              {hint ? <span className="ml-auto">{hint}</span> : null}
             </div>
           </Command>
         </DialogPrimitive.Content>

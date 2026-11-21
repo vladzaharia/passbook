@@ -68,7 +68,7 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
 
   // 5. Results of the first run: download, then remove what it created.
   await page.goto(first);
-  await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Download results' })).toBeVisible();
   const [results] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download results' }).click(),

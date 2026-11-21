@@ -29,11 +29,10 @@ const type = (value: string) =>
   fireEvent.change(screen.getByLabelText('Note'), { target: { value } });
 
 describe('staff notes on the record', () => {
-  it('lists notes with author and day, as staff only', async () => {
+  it('lists notes with author and day', async () => {
     render(view(apiOf()));
     await screen.findByText('Waiver unsigned');
     expect(screen.getByText('Jonas W. · Nov 17')).toBeTruthy();
-    expect(screen.getByText('Staff only')).toBeTruthy();
   });
 
   it('opens on the signal, saves one line and shows it first', async () => {

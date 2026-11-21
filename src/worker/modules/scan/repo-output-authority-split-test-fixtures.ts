@@ -1,5 +1,6 @@
 import { beforeAll, expect } from 'vitest';
 import type { ScannerFixture } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -231,14 +232,18 @@ export async function changeAfterProjection(f: OutputFixture, db: D1Database, ch
   } else if (change === 'identity-aba') {
     const team = candidate.identityTeamIdentifier;
     if (!team) throw new Error('Missing identity snapshot.');
-    await run(db, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
-      `${team}-changed`,
-      pass.identityId,
-    ]);
-    await run(db, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
-      team,
-      pass.identityId,
-    ]);
+    await withoutTrigger(db, 'signing_identities_pti_immutable', () =>
+      run(db, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
+        `${team}-changed`,
+        pass.identityId,
+      ]),
+    );
+    await withoutTrigger(db, 'signing_identities_pti_immutable', () =>
+      run(db, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
+        team,
+        pass.identityId,
+      ]),
+    );
   } else if (change === 'release' || change === 'release-adapter') {
     if (!candidate.activeTemplateVersion) throw new Error('Missing active template version.');
     await approveAppleRelease(kit, {

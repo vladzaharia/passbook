@@ -1,12 +1,16 @@
 import os
-import httpx
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/scan/scans/0193a1b2-7c00-7000-8000-0000000000e1/undo",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}", "x-passbook-device": "door-1"},
-    json={
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.terminal.scans.undo(
+    "0193a1b2-7c00-7000-8000-0000000000e1",
+    {
         "idempotencyKey": "0193a1b2-7c00-7000-8000-000000000f03",
     },
+    headers={
+        "x-passbook-device": "door-1",
+    },
 )
-res.raise_for_status()
-print(res.json())
+print(result)

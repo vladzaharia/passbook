@@ -32,9 +32,6 @@ export function BootCard({
       aria-labelledby="scan-card-title"
     >
       <header className="scan-boot-heading">
-        <span className="scan-boot-eyebrow">
-          PassBook <span aria-hidden>·</span> Scanning
-        </span>
         <div className="scan-boot-mascot" aria-hidden>
           <Suspense fallback={null}>
             <Buddy scene="peek" size="lg" mood={mood} still={still} />

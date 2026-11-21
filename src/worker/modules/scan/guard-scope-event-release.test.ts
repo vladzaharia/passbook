@@ -12,6 +12,7 @@ import {
 import { createApp } from '../../app.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { run } from '../../platform/db.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { overrideDeps } from '../passes/deps.ts';
@@ -58,7 +59,7 @@ describe('requireScanActor: scope: event release validation', () => {
         await persistTemplate(f, bad.resolved, { registry: bad.registry });
         if (reason === 'unapproved') {
           overrideDeps(env, { registry: bad.registry });
-          await ensurePlatformIdentity(env, clock.now());
+          await ensurePlatformIdentity(env, clock.now(), nullLogger);
           const api = createApp({
             stores: { ...fake.stores, scanners: createScannerStore(env, clock) },
             clock,

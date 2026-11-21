@@ -5,6 +5,7 @@ import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity
 import type { SigningMaterial } from '../../../passkit/types.ts';
 import { first } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { createLogger, nullLogger } from '../../platform/log.ts';
 import { ensurePlatformIdentity } from './repo.ts';
 import { createEnvIdentityResolver, PLATFORM_IDENTITY_ID, readEnvIdentity } from './resolver.ts';
 
@@ -70,7 +71,7 @@ describe('env identity resolver', () => {
   });
 
   it('upserts the platform signing identity row idempotently', async () => {
-    await ensurePlatformIdentity(appEnv, 1);
+    await ensurePlatformIdentity(appEnv, 1, nullLogger);
     const original = await platformRow();
     expect(original).toMatchObject({
       pass_type_identifier: 'pass.im.plrs.wallet',
@@ -80,36 +81,32 @@ describe('env identity resolver', () => {
     });
     expect(original.revision).toBeGreaterThan(0);
 
-    await ensurePlatformIdentity(appEnv, 2);
+    await ensurePlatformIdentity(appEnv, 2, nullLogger);
     expect(await platformRow()).toEqual(original);
   });
 
   it.each(['pass type', 'team'] as const)(
-    'revises the platform identity when its %s changes and changes back',
+    'never rewrites the platform %s from the env and logs a mismatch',
     async (identifier) => {
       const changedEnv =
         identifier === 'pass type'
           ? { ...appEnv, PLATFORM_PASS_TYPE_ID: 'pass.com.example.rotated' }
           : { ...appEnv, PLATFORM_TEAM_ID: 'TEAM123456' };
-      await ensurePlatformIdentity(appEnv, 1);
+      await ensurePlatformIdentity(appEnv, 1, nullLogger);
       const original = await platformRow();
+      const lines: { level: string; event: string; code?: string }[] = [];
+      const log = createLogger({}, { sink: (line) => lines.push(JSON.parse(line)) });
 
-      await ensurePlatformIdentity(changedEnv, 2);
-      const changed = await platformRow();
-      expect(changed).toMatchObject(
-        identifier === 'pass type'
-          ? { pass_type_identifier: 'pass.com.example.rotated' }
-          : { team_identifier: 'TEAM123456' },
-      );
-      expect(changed.cert_sha256).toBe(original.cert_sha256);
-      expect(changed.revision).toBeGreaterThan(original.revision);
+      await ensurePlatformIdentity(changedEnv, 2, log);
 
-      await ensurePlatformIdentity(changedEnv, 3);
-      expect(await platformRow()).toEqual(changed);
-      await ensurePlatformIdentity(appEnv, 4);
-      const restored = await platformRow();
-      expect(restored.revision).toBeGreaterThan(changed.revision);
-      expect({ ...restored, revision: original.revision }).toEqual(original);
+      expect(await platformRow()).toEqual(original);
+      expect(lines).toMatchObject([
+        {
+          level: 'error',
+          event: 'identity.platform_env_mismatch',
+          code: 'IDENTITY_PLATFORM_ENV_MISMATCH',
+        },
+      ]);
     },
   );
 
@@ -130,10 +127,10 @@ describe('env identity resolver', () => {
                   SIGNER_PLATFORM_PRIVATE_KEY: rotatedIdentity.privateKey,
                   SIGNER_PLATFORM_INTERMEDIATE: rotatedIdentity.intermediate,
                 };
-      await ensurePlatformIdentity(appEnv, 1);
+      await ensurePlatformIdentity(appEnv, 1, nullLogger);
       const original = await platformRow();
 
-      await ensurePlatformIdentity(changedEnv, 2);
+      await ensurePlatformIdentity(changedEnv, 2, nullLogger);
       const changed = await platformRow();
       expect(changed.revision).toBeGreaterThan(original.revision);
       if (material === 'certificate' || material === 'full material') {
@@ -147,9 +144,9 @@ describe('env identity resolver', () => {
         expect(changed.env_material_sha256).not.toBe(original.env_material_sha256);
       }
 
-      await ensurePlatformIdentity(changedEnv, 3);
+      await ensurePlatformIdentity(changedEnv, 3, nullLogger);
       expect(await platformRow()).toEqual(changed);
-      await ensurePlatformIdentity(appEnv, 4);
+      await ensurePlatformIdentity(appEnv, 4, nullLogger);
       const restored = await platformRow();
       expect(restored.revision).toBeGreaterThan(changed.revision);
       expect({ ...restored, revision: original.revision }).toEqual(original);
@@ -158,18 +155,18 @@ describe('env identity resolver', () => {
 
   it('revises the platform identity when the APNs binding changes and changes back', async () => {
     const changedEnv = { ...appEnv, APNS: {} as Fetcher };
-    await ensurePlatformIdentity(appEnv, 1);
+    await ensurePlatformIdentity(appEnv, 1, nullLogger);
     const original = await platformRow();
 
-    await ensurePlatformIdentity(changedEnv, 2);
+    await ensurePlatformIdentity(changedEnv, 2, nullLogger);
     const changed = await platformRow();
     expect(changed.apns_binding).toBe('APNS');
     expect(changed.cert_sha256).toBe(original.cert_sha256);
     expect(changed.revision).toBeGreaterThan(original.revision);
 
-    await ensurePlatformIdentity(changedEnv, 3);
+    await ensurePlatformIdentity(changedEnv, 3, nullLogger);
     expect(await platformRow()).toEqual(changed);
-    await ensurePlatformIdentity(appEnv, 4);
+    await ensurePlatformIdentity(appEnv, 4, nullLogger);
     const restored = await platformRow();
     expect(restored.revision).toBeGreaterThan(changed.revision);
     expect({ ...restored, revision: original.revision }).toEqual(original);

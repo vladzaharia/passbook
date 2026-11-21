@@ -11,6 +11,7 @@ import { SettingsForm } from './settings-form.tsx';
 /** The card is the section: rows render without their own heading. */
 const inGroup = (group: string) =>
   ORG_FIELDS.filter((f) => f.group === group).map(({ group: _group, ...field }) => field);
+const GENERAL = inGroup('General');
 const PASS_EMAIL = inGroup('Pass email');
 const EMAIL_LIMITS = inGroup('Email limits');
 const SUPPORT = inGroup('Support');
@@ -44,6 +45,7 @@ function ReadOnlySettings({ orgId }: { orgId: string }) {
         ) : (
           <KeyValue
             items={[
+              { label: 'Time zone', value: value('org.timeZone') },
               { label: 'Buddy in pass emails', value: value('email.buddy') },
               { label: 'Support email', value: value('support.email') },
               { label: 'Support URL', value: value('support.url') },
@@ -72,6 +74,9 @@ export function OrgSettingsSections({
   return (
     <>
       <BrandSection orgId={orgId} />
+      <FormCard title="General">
+        <SettingsForm scope={scope} fields={GENERAL} />
+      </FormCard>
       <FormCard title="Pass email">
         <SettingsForm
           scope={scope}
