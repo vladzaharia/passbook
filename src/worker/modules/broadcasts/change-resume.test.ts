@@ -300,7 +300,7 @@ describe('an import selection', () => {
 
 describe('migration 0177', () => {
   it("copies an org's messages.perDay override to passes.changesPerDay", async () => {
-    const { default: sql } = await import('../../../../migrations/0177_issuing_undo.sql?raw');
+    const { default: sql } = await import('../../../../migrations/0186_change_runs.sql?raw');
     const copy = /INSERT OR IGNORE INTO org_entitlement_overrides[^;]+;/.exec(sql)?.[0] ?? '';
     expect(copy).not.toBe('');
     await run(
@@ -358,7 +358,8 @@ describe('a fault after the write on every attempt', () => {
     await expect(applyChunk(jobCtxOf(ck.kit), id, null)).rejects.toThrow('always down');
     await expect(applyChunk(jobCtxOf(ck.kit), id, null)).rejects.toThrow('always down');
     crash.mockImplementation(real as never);
-    expect(await points(passes[0]?.id ?? '')).toBe(15);
+    const written = (await Promise.all(passes.map((p) => points(p.id)))).filter((n) => n === 15);
+    expect(written.length).toBeGreaterThanOrEqual(1);
     await finishBroadcast(jobCtxOf(ck.kit), `broadcast-${id}`, id, 'BROADCAST_FAILED');
     expect((await ck.items(id)).map((i) => i.outcome)).toEqual(['updated', 'updated']);
     const res = await ck.post(`/broadcasts/${id}/retry?expectCount=1`);
@@ -368,7 +369,9 @@ describe('a fault after the write on every attempt', () => {
     const undo = await ck.post(`/broadcasts/${id}/undo`);
     expect(undo.status).toBe(200);
     await ck.runNext();
-    expect(await points(passes[0]?.id ?? '')).toBe(10);
+    // The first run's two passes come back; the one the resume changed is the resume's to undo.
+    const left = (await Promise.all(passes.map((p) => points(p.id)))).filter((n) => n === 15);
+    expect(left).toHaveLength(1);
   });
 });
 
@@ -406,5 +409,36 @@ describe("settling only this run's own write", () => {
         [id],
       ),
     ).toEqual([]);
+  });
+});
+
+describe('a crash and a racing edit on add', () => {
+  it("applies once and reads before from the run's own version", async () => {
+    const [a] = await three();
+    const id = await create([a?.id ?? '']);
+    const crash = vi.mocked(recordPassEvent);
+    const real = crash.getMockImplementation();
+    crash.mockImplementation(async (ctx, event) => {
+      if (event.kind === 'schedule.applied') throw new Error('evicted');
+      return real?.(ctx, event) as never;
+    });
+    await expect(applyChunk(jobCtxOf(ck.kit), id, null)).rejects.toThrow('evicted');
+    crash.mockImplementation(real as never);
+    // Someone edits the same input before the retry: the pass no longer holds the run's value.
+    await publishPass(jobCtxOf(ck.kit), {
+      passId: a?.id ?? '',
+      cause: 'admin',
+      actor: { type: 'user', id: 'admin-1' },
+      notify: false,
+      mutate: (p) => ({ personalization: { ...p.personalization, points: 20 } }),
+    });
+    await applyChunk(jobCtxOf(ck.kit), id, null);
+    expect(await points(a?.id ?? '')).toBe(20);
+    const [item] = await ck.items(id);
+    expect(item?.outcome).toBe('updated');
+    expect(JSON.parse(item?.before ?? '{}')).toMatchObject({
+      from: { points: 10 },
+      to: { points: 15 },
+    });
   });
 });

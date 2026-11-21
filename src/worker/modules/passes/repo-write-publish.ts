@@ -36,7 +36,7 @@ export interface PublishWrite {
   contentHash: string;
   cause: PassCause;
   /** Why beside the cause (scan, broadcast, ...); copied to pass_versions.source by the trigger. */
-  source: PassSource | null;
+  source: string | null;
   actorType: string | null;
   actorId: string | null;
   passJson: string;

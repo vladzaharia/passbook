@@ -100,6 +100,7 @@ export async function applyAction(
           orgScope: row.org_id,
           cause: row.created_by_type === 'api_key' ? 'api' : 'admin',
           source: 'schedule',
+          sourceRef: row.id,
           actor: actorOf(row),
           dispatch: false,
           // A design move tells holders only when the run says so.
@@ -122,6 +123,7 @@ export async function applyAction(
           {
             extraChecks: [creatorLive(row, ctx.clock.now())],
             source: 'schedule',
+            sourceRef: row.id,
             notify: false,
             guard: stillOurs,
           },

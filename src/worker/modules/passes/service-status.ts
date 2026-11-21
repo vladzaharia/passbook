@@ -18,6 +18,7 @@ const causeOf = (actor: Actor) => (actor.type === 'api_key' ? 'api' : 'admin');
 export interface StatusExtras {
   extraChecks?: readonly Check[];
   source?: PassSource;
+  sourceRef?: string;
   notify?: boolean;
   expectedVersion?: number;
   /** Throws when the pass is no longer the one the run read; re-run on every retry. */
@@ -45,6 +46,7 @@ export async function setPassStatus(
     ...(authority ? { authority } : {}),
     ...(extras.extraChecks ? { extraChecks: extras.extraChecks } : {}),
     ...(extras.source ? { source: extras.source } : {}),
+    ...(extras.sourceRef ? { sourceRef: extras.sourceRef } : {}),
     ...(extras.notify === undefined ? {} : { notify: extras.notify }),
     ...(extras.expectedVersion === undefined ? {} : { expectedVersion: extras.expectedVersion }),
     ...(extras.extraChecks ? { dispatch: false } : {}),

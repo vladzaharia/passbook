@@ -43,6 +43,8 @@ export interface PublishOptions {
   cause: PassCause;
   /** Why beside the cause: scan, broadcast, schedule, remove, restore or designer. */
   source?: PassSource;
+  /** Stamped after `source` in the version row, so a change run can find its own write. */
+  sourceRef?: string;
   actor: Actor;
   /** If-Match: a stale version fails with 412 instead of re-reading. */
   expectedVersion?: number;

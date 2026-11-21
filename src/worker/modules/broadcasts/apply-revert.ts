@@ -8,16 +8,9 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { setPassStatus } from '../passes/service-status.ts';
 import { actorOf } from './actor.ts';
 import { atValues } from './change-ops.ts';
-import {
-  type BroadcastRow,
-  casState,
-  getBroadcast,
-  handledPassIds,
-  type ItemRow,
-  insertItems,
-} from './repo.ts';
+import { type BroadcastRow, casState, handledPassIds, type ItemRow, insertItems } from './repo.ts';
 import { creatorIsActive, creatorLive } from './repo-creator.ts';
-import { hasVersionFrom, revertItems } from './repo-items.ts';
+import { revertItems, wroteBy } from './repo-items.ts';
 
 /** Passes per undo step: each is a read and a publish. */
 const REVERT_CHUNK = 10;
@@ -55,14 +48,13 @@ async function revertVoid(
   undo: BroadcastRow,
   passId: string,
   version: number | null,
-  since: number,
 ): Promise<ItemRow> {
   const base = { passId, silent: false };
   const pass = await getPass(ctx.env.DB, passId, undo.org_id);
   if (!pass || pass.mode !== undo.mode || pass.removedAt !== null || version === null)
     return { ...base, outcome: 'unchanged' };
   if (pass.status === 'active') {
-    const done = await hasVersionFrom(ctx.env.DB, passId, 'schedule', since);
+    const done = await wroteBy(ctx.env.DB, passId, undo.id, 0);
     return { ...base, outcome: done ? 'updated' : 'unchanged' };
   }
   if (pass.version !== version) return { ...base, outcome: 'unchanged' };
@@ -77,6 +69,7 @@ async function revertVoid(
       {
         extraChecks: [creatorLive(undo, ctx.clock.now())],
         source: 'schedule',
+        sourceRef: undo.id,
         notify: false,
         expectedVersion: version,
         guard: (current) => {
@@ -113,11 +106,10 @@ async function revertOne(
   passId: string,
   before: string | null,
   version: number | null,
-  since: number,
 ): Promise<ItemRow> {
   const base = { passId, silent: false };
   const touched = touchedOf(before);
-  if (touched?.action === 'void') return revertVoid(ctx, undo, passId, version, since);
+  if (touched?.action === 'void') return revertVoid(ctx, undo, passId, version);
   const pass = await getPass(ctx.env.DB, passId, undo.org_id);
   if (
     !touched ||
@@ -133,7 +125,7 @@ async function revertOne(
   }
   if (atValues(pass.personalization, touched.from)) {
     // An earlier try of this restore published and died before its item: count it once.
-    const done = await hasVersionFrom(ctx.env.DB, passId, 'schedule', since);
+    const done = await wroteBy(ctx.env.DB, passId, undo.id, 0);
     return { ...base, outcome: done ? 'updated' : 'unchanged' };
   }
   if (!atValues(pass.personalization, touched.to)) return { ...base, outcome: 'unchanged' };
@@ -143,6 +135,7 @@ async function revertOne(
       orgScope: undo.org_id,
       cause: undo.created_by_type === 'api_key' ? 'api' : 'admin',
       source: 'schedule',
+      sourceRef: undo.id,
       actor: actorOf(undo),
       dispatch: false,
       notify: false,
@@ -201,8 +194,6 @@ export async function revertChunk(
   parentId: string,
   cursor: string | null,
 ): Promise<{ nextCursor: string | null }> {
-  // A restart resets the undo's own start: look for its earlier attempt's writes from when the run ended.
-  const since = (await getBroadcast(ctx.env.DB, parentId, null))?.finished_at ?? 0;
   const items = await revertItems(
     ctx.env.DB,
     parentId,
@@ -219,7 +210,7 @@ export async function revertChunk(
   let restored = 0;
   for (const item of items) {
     if (done.has(item.pass_id)) continue;
-    const result = await revertOne(ctx, undo, item.pass_id, item.before, item.version, since);
+    const result = await revertOne(ctx, undo, item.pass_id, item.before, item.version);
     if (result.outcome === 'failed' && (await endIfRevoked(ctx, undo))) return { nextCursor: null };
     await insertItems(ctx.env.DB, undo.id, [result]);
     if (result.outcome === 'updated') restored++;

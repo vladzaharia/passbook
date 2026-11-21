@@ -112,19 +112,17 @@ export function revertItems(
   );
 }
 
-/** Whether pass version `version` is a `schedule` write by this actor: a run's own write, not someone else's. */
-export async function versionBy(
-  db: D1Database,
-  passId: string,
-  version: number,
-  actorType: string | null,
-  actorId: string | null,
-): Promise<boolean> {
-  const row = await first<{ one: number }>(
+/** The run's own write to a pass after version `after`: its version and the inputs just before and after it. */
+export const stampedWrite = (db: D1Database, passId: string, runId: string, after: number) =>
+  first<{ version: number; personalization: string; prev: string | null }>(
     db,
-    `SELECT 1 AS one FROM pass_versions WHERE pass_id = ? AND version = ? AND source = 'schedule'
-       AND actor_type IS ? AND actor_id IS ?`,
-    [passId, version, actorType, actorId],
+    `SELECT v.version, v.personalization,
+       (SELECT p.personalization FROM pass_versions p WHERE p.pass_id = v.pass_id AND p.version < v.version
+        ORDER BY p.version DESC LIMIT 1) AS prev
+     FROM pass_versions v WHERE v.pass_id = ? AND v.version > ? AND v.source = ? ORDER BY v.version LIMIT 1`,
+    [passId, after, `schedule:${runId}`],
   );
-  return row !== null;
-}
+
+/** Whether the run wrote this pass after version `after`. */
+export const wroteBy = async (db: D1Database, passId: string, runId: string, after: number) =>
+  (await stampedWrite(db, passId, runId, after)) !== null;

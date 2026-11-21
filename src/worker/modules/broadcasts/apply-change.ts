@@ -128,6 +128,7 @@ export async function applyChange(
       orgScope: row.org_id,
       cause: row.created_by_type === 'api_key' ? 'api' : 'admin',
       source: 'schedule',
+      sourceRef: row.id,
       actor: actorOf(row),
       dispatch: false,
       notify: plan.notify,

@@ -119,7 +119,7 @@ function versionSummary(v: {
     version: v.version,
     templateVersion: v.templateVersion,
     cause: v.cause,
-    source: v.source,
+    source: (v.source?.split(':')[0] ?? null) as PassSource | null,
     actorType: v.actorType,
     actorId: v.actorId,
     createdAt: v.createdAt,
