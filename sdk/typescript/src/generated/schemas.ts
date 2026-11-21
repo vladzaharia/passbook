@@ -1151,7 +1151,7 @@ export type PassImportMappings = {
 };
 
 export type PassImportUndo = {
-  state: "running" | "done";
+  state: "running" | "done" | "failed";
   removed: number;
   restored: number;
   keptTotal: number;
@@ -1160,6 +1160,7 @@ export type PassImportUndo = {
     code: string;
   }>;
   emailsCancelled: number;
+  unrevertable?: number;
 };
 
 export type PassImportsCheckParams = {

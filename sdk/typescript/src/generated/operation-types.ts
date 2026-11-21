@@ -2010,6 +2010,7 @@ export type PassImportsListResult = {
     };
     emailHoldUntil?: number | null;
     undo?: PassImportUndo;
+    unrevertable?: number;
   }>;
   nextCursor: string | null;
 };
@@ -2146,6 +2147,7 @@ export type PassImportsCreateResult = {
   };
   emailHoldUntil?: number | null;
   undo?: PassImportUndo;
+  unrevertable?: number;
 };
 
 /** Query of `passImports.mappings.list`. */
@@ -2300,6 +2302,7 @@ export type PassImportsRetrieveResult = {
   };
   emailHoldUntil?: number | null;
   undo?: PassImportUndo;
+  unrevertable?: number;
 };
 
 /** Response of `passImports.delete`. */
@@ -2439,6 +2442,7 @@ export type PassImportsCheckResult = {
   };
   emailHoldUntil?: number | null;
   undo?: PassImportUndo;
+  unrevertable?: number;
 };
 
 /** Request body of `passImports.commit`. */
@@ -2573,6 +2577,7 @@ export type PassImportsCommitResult = {
   };
   emailHoldUntil?: number | null;
   undo?: PassImportUndo;
+  unrevertable?: number;
 };
 
 /** Request body of `passImports.sendEmails`. */

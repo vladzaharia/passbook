@@ -133,7 +133,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"scan-setup:read\" added",
-    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
+    "note": "A key can hold scan-setup:read to read the org\u2019s managed scanner and screen setups."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
@@ -376,6 +376,22 @@
     "note": "Lists the org's shared Google issuers."
   },
   {
+    "key": "GET /api/v1/pass-imports/mappings new operation",
+    "class": "additive",
+    "operationId": "pass-imports.getPassImportsMappings",
+    "op": "GET /api/v1/pass-imports/mappings",
+    "change": "new operation",
+    "note": "Lists a template's saved column mappings."
+  },
+  {
+    "key": "GET /api/v1/pass-imports/{id} 200.unrevertable: field added",
+    "class": "additive",
+    "operationId": "pass-imports.getPassImportsById",
+    "op": "GET /api/v1/pass-imports/{id}",
+    "change": "200.unrevertable: field added",
+    "note": "Updated rows an undo cannot restore, because the import kept no earlier values. Also in undo."
+  },
+  {
     "key": "GET /api/v1/pass-imports/{id}/rows 200.items[].changes: field added",
     "class": "additive",
     "operationId": "pass-imports.getPassImportsByIdRows",
@@ -390,14 +406,6 @@
     "op": "GET /api/v1/pass-imports/{id}/rows",
     "change": "200.items[].wouldBe: field added",
     "note": "Each import row shows the fields it changes and what the pass would look like (changes, wouldBe)."
-  },
-  {
-    "key": "GET /api/v1/pass-imports/mappings new operation",
-    "class": "additive",
-    "operationId": "pass-imports.getPassImportsMappings",
-    "op": "GET /api/v1/pass-imports/mappings",
-    "change": "new operation",
-    "note": "Lists a template's saved column mappings."
   },
   {
     "key": "GET /api/v1/platform/apple-calls new operation",
@@ -864,6 +872,22 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.testOnly: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.testOnly: field added",
+    "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
+  },
+  {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
@@ -910,22 +934,6 @@
     "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
-  },
-  {
-    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.postOrgsInvitationsAccept",
-    "op": "POST /api/v1/orgs/invitations/accept",
-    "change": "200.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
-    "key": "POST /api/v1/orgs/invitations/accept 200.testOnly: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.postOrgsInvitationsAccept",
-    "op": "POST /api/v1/orgs/invitations/accept",
-    "change": "200.testOnly: field added",
-    "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
   },
   {
     "key": "POST /api/v1/pass-imports request.mapping: field added",
@@ -1048,6 +1056,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/setup new operation",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "new operation",
+    "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
@@ -1062,14 +1078,6 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/setup new operation",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsSetup",
-    "op": "POST /api/v1/scanning-sessions/setup",
-    "change": "new operation",
-    "note": "Set up scanning in one call: places, events, staff, sessions and devices."
   },
   {
     "key": "POST /api/v1/templates/{id}/archive 200.release: field added",

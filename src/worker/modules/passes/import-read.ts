@@ -22,7 +22,7 @@ import {
   problemRows,
   problemTotals,
 } from './repo-import-rows.ts';
-import { undoResultOf } from './repo-import-undo.ts';
+import { undoResultOf, unrevertableCount } from './repo-import-undo.ts';
 import type { ImportRow } from './repo-imports.ts';
 
 const EDITING = ['mapping', 'checking', 'ready', 'stale'];
@@ -142,6 +142,9 @@ export async function importDto(
     expiresAt: imp.expires_at,
     emailHoldUntil: imp.email_hold_until,
     ...(imp.reverted > 0 && !light ? { undo: await undoResultOf(db, imp) } : {}),
+    ...(imp.committed_at !== null && !light
+      ? { unrevertable: await unrevertableCount(db, imp.id) }
+      : {}),
     ...(options.mapping ? { mapping: options.mapping } : {}),
   };
 }

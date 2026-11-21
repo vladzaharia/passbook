@@ -10,6 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
 import type { DeferredStarter } from './repo-bulk-principal.ts';
 import type { Scope } from './repo-import-commit.ts';
+import { removedCount } from './repo-import-results.ts';
 import { type ImportRow, importGrant } from './repo-imports.ts';
 
 /** Imports an undo may start from: a run that applied rows and has ended. */
@@ -17,6 +18,8 @@ export const UNDOABLE = ['done', 'failed', 'stale'];
 /** `reverted`: 0 untouched, 1 undo running (held mail is cancelled), 2 undo finished. */
 export const UNDO_RUNNING = 1;
 export const UNDO_DONE = 2;
+/** The run ended without finishing (a suspended org, a revoked starter): asking again starts it anew. */
+export const UNDO_FAILED = 3;
 
 const TABLES = ['pass_imports', 'pass_import_rows'] as const;
 const CODES = { stale: 'IMPORT_STATE', lineage: 'IMPORT_NOT_FOUND' };
@@ -28,7 +31,10 @@ export async function beginUndo(
   id: string,
   s: { starter: DeferredStarter; cancelled: number },
 ): Promise<void> {
-  const g = importGrant(ctx, authority, id, { state: inList(UNDOABLE), reverted: 0 });
+  const g = importGrant(ctx, authority, id, {
+    state: inList(UNDOABLE),
+    reverted: inList([0, UNDO_FAILED]),
+  });
   g.update('pass_imports', {
     where: { id },
     require: 'one',
@@ -69,12 +75,13 @@ export async function revertUndo(
 }
 
 /** A write of the undo's own rows, by the workflow, only while the undo is running. */
-function undoGrant(ctx: ServiceContext, s: Scope, purpose: string) {
+function undoGrant(ctx: ServiceContext, s: Scope, purpose: string, inactiveOk = false) {
   return jobGrant(ctx, {
     purpose,
     job: 'pass-import',
     orgId: s.orgId,
     mode: s.mode,
+    ...(inactiveOk ? { inactiveOk: true as const } : {}),
     target: s.importId,
     tables: TABLES,
     codes: CODES,
@@ -91,6 +98,8 @@ export async function markUndone(
   rows: readonly { row: number; code: string | null }[],
 ): Promise<void> {
   if (rows.length === 0) return;
+  // Passes removed so far, as `progress.removed` counts them (rows of this chunk are marked below).
+  const removed = await removedCount(ctx.env.DB, s.importId);
   const g = undoGrant(ctx, s, 'org_mode.job.pass_import.undo');
   const at = ctx.clock.now();
   for (const r of rows)
@@ -98,16 +107,34 @@ export async function markUndone(
       where: { import_id: s.importId, row_no: r.row, undone_at: null },
       set: { undone_at: at, undo_code: r.code },
     });
+  g.update('pass_imports', { where: { id: s.importId }, require: 'one', set: { removed } });
   await g.commit();
 }
 
-export async function finishUndo(ctx: ServiceContext, s: Scope): Promise<void> {
-  const g = undoGrant(ctx, s, 'org_mode.job.pass_import.undo_finish');
+/** Ends the run: done, or failed with a stable code (the audit row keeps it) so a new ask can start it again. */
+export async function finishUndo(ctx: ServiceContext, s: Scope, failed?: string): Promise<void> {
+  const g = undoGrant(ctx, s, 'org_mode.job.pass_import.undo_finish', true);
   g.update('pass_imports', {
     where: { id: s.importId },
     require: 'one',
-    set: { reverted: UNDO_DONE },
+    set: {
+      reverted: failed ? UNDO_FAILED : UNDO_DONE,
+      removed: await removedCount(ctx.env.DB, s.importId),
+    },
   });
+  if (failed)
+    g.audit({
+      at: ctx.clock.now(),
+      orgId: s.orgId,
+      actorType: 'system',
+      actorId: null,
+      action: 'pass_import.undo_failed',
+      targetType: 'pass_import',
+      targetId: s.importId,
+      requestId: ctx.requestId,
+      ipPrefix: null,
+      detail: JSON.stringify({ importId: s.importId, code: failed }),
+    });
   await g.commit();
 }
 
@@ -181,8 +208,21 @@ export async function undoResultOf(
   imp: Pick<ImportRow, 'id' | 'reverted' | 'undo_cancelled'>,
 ): Promise<NonNullable<PassImportDto['undo']>> {
   return {
-    state: imp.reverted === UNDO_DONE ? 'done' : 'running',
+    state:
+      imp.reverted === UNDO_DONE ? 'done' : imp.reverted === UNDO_FAILED ? 'failed' : 'running',
     ...(await undoCounts(db, imp.id, PASS_IMPORT_PROBLEMS)),
     emailsCancelled: imp.undo_cancelled,
+    unrevertable: await unrevertableCount(db, imp.id),
   };
+}
+
+/** Updated rows an undo cannot restore: imports committed before undo existed kept no earlier values. */
+export async function unrevertableCount(db: D1Database, importId: string): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM pass_import_rows
+     WHERE import_id = ? AND result = 'updated' AND before IS NULL AND undone_at IS NULL`,
+    [importId],
+  );
+  return row?.n ?? 0;
 }

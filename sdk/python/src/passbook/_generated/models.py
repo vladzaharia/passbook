@@ -4310,12 +4310,13 @@ class PassImportMappingsSavedItemPlanMappingValueTransform(_Model):
     options: _Dict[str, _Any] | None = None
 
 class PassImportUndo(_Model):
-    state: _Literal["running", "done"] | str
+    state: _Literal["running", "done", "failed"] | str
     removed: int
     restored: int
     keptTotal: int
     kept: _List[PassImportUndoKeptItem]
     emailsCancelled: int
+    unrevertable: int | None = None
 
 class PassImportUndoKeptItem(_Model):
     passId: str
@@ -4368,6 +4369,7 @@ class PassImportsCheckResult(_Model):
     mapping: PassImportsCheckResultMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsCheckResultColumnsItem(_Model):
     pointer: str
@@ -4461,6 +4463,7 @@ class PassImportsCommitResult(_Model):
     mapping: PassImportsCommitResultMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsCommitResultColumnsItem(_Model):
     pointer: str
@@ -4575,6 +4578,7 @@ class PassImportsCreateResult(_Model):
     mapping: PassImportsCreateResultMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsCreateResultColumnsItem(_Model):
     pointer: str
@@ -4660,6 +4664,7 @@ class PassImportsListItem(_Model):
     mapping: PassImportsListItemMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsListItemColumnsItem(_Model):
     pointer: str
@@ -4746,6 +4751,7 @@ class PassImportsListResultItemsItem(_Model):
     mapping: PassImportsListResultItemsItemMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsListResultItemsItemColumnsItem(_Model):
     pointer: str
@@ -4854,6 +4860,7 @@ class PassImportsRetrieveResult(_Model):
     mapping: PassImportsRetrieveResultMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsRetrieveResultColumnsItem(_Model):
     pointer: str

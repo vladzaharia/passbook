@@ -3245,6 +3245,7 @@ type PassImportUndo struct {
 	KeptTotal       int64                    `json:"keptTotal"`
 	Kept            []PassImportUndoKeptItem `json:"kept"`
 	EmailsCancelled int64                    `json:"emailsCancelled"`
+	Unrevertable    *int64                   `json:"unrevertable,omitempty"`
 }
 
 type PassImportUndoKeptItem struct {
@@ -3305,6 +3306,7 @@ type PassImportsCheckResult struct {
 	Mapping           *PassImportsCheckResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                               `json:"emailHoldUntil,omitempty"`
 	Undo              *PassImportUndo                      `json:"undo,omitempty"`
+	Unrevertable      *int64                               `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCheckResultColumnsItem struct {
@@ -3413,6 +3415,7 @@ type PassImportsCommitResult struct {
 	Mapping           *PassImportsCommitResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
 	Undo              *PassImportUndo                       `json:"undo,omitempty"`
+	Unrevertable      *int64                                `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCommitResultColumnsItem struct {
@@ -3545,6 +3548,7 @@ type PassImportsCreateResult struct {
 	Mapping           *PassImportsCreateResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
 	Undo              *PassImportUndo                       `json:"undo,omitempty"`
+	Unrevertable      *int64                                `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCreateResultColumnsItem struct {
@@ -3641,6 +3645,7 @@ type PassImportsListItem struct {
 	Mapping           *PassImportsListItemMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                            `json:"emailHoldUntil,omitempty"`
 	Undo              *PassImportUndo                   `json:"undo,omitempty"`
+	Unrevertable      *int64                            `json:"unrevertable,omitempty"`
 }
 
 type PassImportsListItemColumnsItem struct {
@@ -3786,6 +3791,7 @@ type PassImportsRetrieveResult struct {
 	Mapping           *PassImportsRetrieveResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                  `json:"emailHoldUntil,omitempty"`
 	Undo              *PassImportUndo                         `json:"undo,omitempty"`
+	Unrevertable      *int64                                  `json:"unrevertable,omitempty"`
 }
 
 type PassImportsRetrieveResultColumnsItem struct {

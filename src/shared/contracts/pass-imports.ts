@@ -100,13 +100,15 @@ export const PassImportEmailSendSchema = z.discriminatedUnion('send', [
 
 /** `POST /pass-imports/{id}/undo`. Kept passes were edited or scanned since the import. */
 export const PassImportUndoResultSchema = z.object({
-  state: z.enum(['running', 'done']),
+  state: z.enum(['running', 'done', 'failed']),
   removed: count,
   restored: count,
   keptTotal: count,
   kept: z.array(z.object({ passId: IdSchema, code: z.string().max(64) })).max(PASS_IMPORT_PROBLEMS),
   /** Held emails that will not go out. */
   emailsCancelled: count,
+  /** Updated rows no undo can restore (the import kept no earlier values). */
+  unrevertable: count.optional(),
 });
 
 export const PassImportCommitSchema = z.strictObject({
@@ -210,6 +212,8 @@ export const PassImportSchema = z.object({
   emailHoldUntil: TimestampSchema.nullable().optional(),
   /** Present once an undo was asked for. */
   undo: PassImportUndoResultSchema.optional(),
+  /** Before an undo: updated rows it could not restore. */
+  unrevertable: count.optional(),
 });
 export type PassImportDto = z.infer<typeof PassImportSchema>;
 

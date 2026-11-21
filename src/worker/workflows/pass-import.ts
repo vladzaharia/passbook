@@ -139,12 +139,24 @@ async function runUndo(
   await step.do('start', () =>
     setWorkflowStatus(ctx.env.DB, instanceId, 'running', ctx.clock.now()),
   );
-  for (let n = 0; n < MAX_CHUNKS; n++) {
-    const result = await step.do(`undo-${n}`, STEP_RETRY, () => undoChunk(ctx, params));
-    if (result.revoked) end = { state: 'failed', code: 'IMPORT_STARTER_REVOKED' };
-    if (!result.more) break;
+  try {
+    for (let n = 0; n < MAX_CHUNKS; n++) {
+      const result = await step.do(`undo-${n}`, STEP_RETRY, () => undoChunk(ctx, params));
+      if (result.revoked) end = { state: 'failed', code: 'IMPORT_STARTER_REVOKED' };
+      if (!result.more) break;
+    }
+  } catch (error) {
+    // A suspended org, or a write that keeps failing: end the undo as failed so it can be asked for again.
+    ctx.log.warn('pass_import.undo_failed', {
+      importId: params.importId,
+      code: 'IMPORT_UNDO_FAILED',
+      error,
+    });
+    end = { state: 'failed', code: 'IMPORT_UNDO_FAILED' };
   }
-  if (end.state === 'done') await step.do('undo-finish', () => finishUndo(ctx, params));
+  await step.do('undo-finish', () =>
+    finishUndo(ctx, params, end.state === 'done' ? undefined : (end.code ?? 'IMPORT_UNDO_FAILED')),
+  );
   await step.do('close', () =>
     setWorkflowStatus(
       ctx.env.DB,

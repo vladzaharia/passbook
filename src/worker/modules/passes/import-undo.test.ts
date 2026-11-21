@@ -109,6 +109,37 @@ describe('undo', () => {
   });
 });
 
+describe('undo progress and failure', () => {
+  it('counts removed passes in progress and reports updates it cannot restore', async () => {
+    await h.existing('U-NB', { memberName: 'Old', points: 1 });
+    const id = await imported([HEAD, 'A,1,,U-P1', 'New,2,,U-NB'].join('\n'));
+    await run(h.kit.env.DB, 'UPDATE pass_import_rows SET before = NULL WHERE import_id = ?', [id]);
+    expect((await h.get(id)).unrevertable).toBe(1);
+    await undo(id);
+    await runUndo(id);
+    const got = await h.get(id);
+    expect(got.progress?.removed).toBe(1);
+    expect(got.undo).toMatchObject({ state: 'done', removed: 1, restored: 0, keptTotal: 1 });
+  });
+
+  it('ends as failed when the org is suspended, and starts again once it is active', async () => {
+    const id = await imported([HEAD, 'A,1,,U-SUSP'].join('\n'));
+    await undo(id);
+    await run(h.kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [h.kit.org.id]);
+    await runUndo(id);
+    await run(h.kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [h.kit.org.id]);
+    expect((await h.get(id)).undo?.state).toBe('failed');
+    const audit = await first<{ n: number }>(
+      h.kit.env.DB,
+      "SELECT count(*) AS n FROM audit_log WHERE action = 'pass_import.undo_failed' AND target_id = ?",
+      [id],
+    );
+    expect(audit?.n).toBe(1);
+    await undo(id);
+    expect(h.created.filter((c) => c.id.startsWith(undoInstanceId(id)))).toHaveLength(2);
+  });
+});
+
 describe('held email', () => {
   const held = { email: { send: 'held', holdMs: 60_000 } };
   const HOLD_HEAD = 'Name,Points,Email,Id';

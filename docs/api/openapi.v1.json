@@ -4722,7 +4722,8 @@
             "type": "string",
             "enum": [
               "running",
-              "done"
+              "done",
+              "failed"
             ]
           },
           "removed": {
@@ -4760,6 +4761,10 @@
             "maxItems": 100
           },
           "emailsCancelled": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unrevertable": {
             "type": "integer",
             "minimum": 0
           }
@@ -63676,6 +63681,10 @@
                     },
                     "undo": {
                       "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -64608,6 +64617,10 @@
                           },
                           "undo": {
                             "$ref": "#/components/schemas/PassImportUndo"
+                          },
+                          "unrevertable": {
+                            "type": "integer",
+                            "minimum": 0
                           }
                         },
                         "required": [
@@ -65540,6 +65553,10 @@
                     },
                     "undo": {
                       "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -66638,6 +66655,10 @@
                     },
                     "undo": {
                       "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -67571,6 +67592,10 @@
                     },
                     "undo": {
                       "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [

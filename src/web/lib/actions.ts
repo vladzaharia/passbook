@@ -159,6 +159,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass_import.finish': a('Import finished', CircleCheck, 'success'),
   'pass_import.remove_created': a('Import passes removed', I.removeFromWallet, 'warning'),
   'pass_import.undo': a('Import undone', I.removeFromWallet, 'warning'),
+  'pass_import.undo_failed': a('Import undo failed', I.removeFromWallet, 'danger'),
   'pass_import.results_export': a('Import results exported', ENTITY.pass.icon, 'info'),
   'retention.hold.place': a('Legal hold placed', Lock, 'warning'),
   'retention.hold.release': a('Legal hold released', ShieldCheck, 'info'),

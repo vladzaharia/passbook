@@ -10,6 +10,7 @@ import {
   pendingMail,
   revertUndo,
   UNDO_DONE,
+  UNDO_FAILED,
   UNDO_RUNNING,
   UNDOABLE,
   undoResultOf,
@@ -88,7 +89,14 @@ export async function undoImport(
     starter: await starterOf(ctx, a),
     cancelled: holding ? await pendingMail(ctx.env.DB, id) : 0,
   });
-  if (!(await startUndoRun(ctx, a, imp, undoInstanceId(id)))) {
+  if (
+    !(await startUndoRun(
+      ctx,
+      a,
+      imp,
+      undoInstanceId(id, imp.reverted === UNDO_FAILED ? now : undefined),
+    ))
+  ) {
     await revertUndo(ctx, a, id);
     throw new UnavailableError('The undo did not start. Try again.', 'WORKFLOW_START');
   }
