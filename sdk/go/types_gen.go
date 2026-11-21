@@ -2727,60 +2727,6 @@ type MessageRulesUpdateResultOffset struct {
 	When   string `json:"when"`
 }
 
-type NativeScannerCapabilities struct {
-	Platform        string                                   `json:"platform"`
-	AppVersion      string                                   `json:"appVersion"`
-	Camera          NativeScannerCapabilitiesCamera          `json:"camera"`
-	Keyboard        NativeScannerCapabilitiesKeyboard        `json:"keyboard"`
-	NFC             NativeScannerCapabilitiesNfc             `json:"nfc"`
-	Haptics         *bool                                    `json:"haptics,omitempty"`
-	Vas             NativeScannerCapabilitiesVas             `json:"vas"`
-	ExternalReader  NativeScannerCapabilitiesExternalReader  `json:"externalReader"`
-	CustomerDisplay NativeScannerCapabilitiesCustomerDisplay `json:"customerDisplay"`
-	Layout          *NativeScannerCapabilitiesLayout         `json:"layout,omitempty"`
-}
-
-type NativeScannerCapabilitiesCamera struct {
-	Available  bool   `json:"available"`
-	Permission string `json:"permission"`
-}
-
-type NativeScannerCapabilitiesCustomerDisplay struct {
-	Supported bool `json:"supported"`
-	Available bool `json:"available"`
-	Active    bool `json:"active"`
-}
-
-type NativeScannerCapabilitiesExternalReader struct {
-	Mode      string `json:"mode"`
-	Connected *bool  `json:"connected"`
-}
-
-type NativeScannerCapabilitiesKeyboard struct {
-	Supported            bool  `json:"supported"`
-	Connected            *bool `json:"connected"`
-	ConnectionObservable bool  `json:"connectionObservable"`
-}
-
-type NativeScannerCapabilitiesLayout struct {
-	Posture  string         `json:"posture"`
-	Division map[string]any `json:"division"`
-}
-
-type NativeScannerCapabilitiesNfc struct {
-	Available  bool     `json:"available"`
-	Reading    bool     `json:"reading"`
-	Continuous *bool    `json:"continuous,omitempty"`
-	Formats    []string `json:"formats"`
-}
-
-type NativeScannerCapabilitiesVas struct {
-	DeviceSupported bool   `json:"deviceSupported"`
-	Available       bool   `json:"available"`
-	Reader          string `json:"reader"`
-	Reason          string `json:"reason"`
-}
-
 type NfcBindingsUpdateParams struct {
 	Binding string  `json:"binding"`
 	PassID  *string `json:"passId,omitempty"`
@@ -2962,6 +2908,7 @@ type Org struct {
 	Slug              string      `json:"slug"`
 	Name              string      `json:"name"`
 	Status            string      `json:"status"`
+	Personal          *bool       `json:"personal,omitempty"`
 	DefaultIdentityID *string     `json:"defaultIdentityId"`
 	Branding          OrgBranding `json:"branding"`
 	CreatedAt         int64       `json:"createdAt"`
@@ -3011,6 +2958,7 @@ type OrgSummary struct {
 	Slug              string           `json:"slug"`
 	Name              string           `json:"name"`
 	Status            string           `json:"status"`
+	Personal          *bool            `json:"personal,omitempty"`
 	DefaultIdentityID *string          `json:"defaultIdentityId"`
 	Branding          OrgBranding      `json:"branding"`
 	CreatedAt         int64            `json:"createdAt"`
@@ -3019,6 +2967,7 @@ type OrgSummary struct {
 	PassesToUpdate    *int64           `json:"passesToUpdate,omitempty"`
 	Counts            OrgSummaryCounts `json:"counts"`
 	CountsCapped      bool             `json:"countsCapped"`
+	PersonalOwner     map[string]any   `json:"personalOwner,omitempty"`
 }
 
 type OrgSummaryCounts struct {

@@ -404,14 +404,6 @@ __all__ = [
     "MessageRulesUpdateResultMatchItem2",
     "MessageRulesUpdateResultMatchItem3",
     "MessageRulesUpdateResultOffset",
-    "NativeScannerCapabilities",
-    "NativeScannerCapabilitiesCamera",
-    "NativeScannerCapabilitiesCustomerDisplay",
-    "NativeScannerCapabilitiesExternalReader",
-    "NativeScannerCapabilitiesKeyboard",
-    "NativeScannerCapabilitiesLayout",
-    "NativeScannerCapabilitiesNfc",
-    "NativeScannerCapabilitiesVas",
     "NfcBindingsUpdateParams",
     "NfcEnrollmentsCreateParams",
     "NfcKeysetsCreateParams",
@@ -3689,52 +3681,6 @@ class MessageRulesUpdateResultOffset(_Model):
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class NativeScannerCapabilities(_Model):
-    platform: _Literal["ios", "android"] | str
-    appVersion: str
-    camera: NativeScannerCapabilitiesCamera
-    keyboard: NativeScannerCapabilitiesKeyboard
-    nfc: NativeScannerCapabilitiesNfc
-    haptics: bool | None = None
-    vas: NativeScannerCapabilitiesVas
-    externalReader: NativeScannerCapabilitiesExternalReader
-    customerDisplay: NativeScannerCapabilitiesCustomerDisplay
-    layout: NativeScannerCapabilitiesLayout | None = None
-
-class NativeScannerCapabilitiesCamera(_Model):
-    available: bool
-    permission: _Literal["unknown", "prompt", "granted", "denied", "restricted", "unavailable"] | str
-
-class NativeScannerCapabilitiesCustomerDisplay(_Model):
-    supported: bool
-    available: bool
-    active: bool
-
-class NativeScannerCapabilitiesExternalReader(_Model):
-    mode: _Literal["keyboard", "unknown"] | str
-    connected: bool | None
-
-class NativeScannerCapabilitiesKeyboard(_Model):
-    supported: bool
-    connected: bool | None
-    connectionObservable: bool
-
-class NativeScannerCapabilitiesLayout(_Model):
-    posture: _Literal["unknown", "folded", "unfolded", "half-folded"] | str
-    division: _Dict[str, _Any] | None
-
-class NativeScannerCapabilitiesNfc(_Model):
-    available: bool
-    reading: bool
-    continuous: bool | None = None
-    formats: _List[_Literal["ndef", "wallet-vas", "tag-uid", "tag-sun"] | str]
-
-class NativeScannerCapabilitiesVas(_Model):
-    deviceSupported: bool
-    available: bool
-    reader: _Literal["proximityReader", "android-native", "none"] | str
-    reason: str
-
 class NfcBindingsUpdateParams(_Model):
     binding: _Literal["pass", "user"] | str
     passId: str | None = None
@@ -3903,6 +3849,7 @@ class Org(_Model):
     slug: str
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
+    personal: bool | None = None
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int
@@ -3946,6 +3893,7 @@ class OrgSummary(_Model):
     slug: str
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
+    personal: bool | None = None
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int
@@ -3954,6 +3902,7 @@ class OrgSummary(_Model):
     passesToUpdate: int | None = None
     counts: OrgSummaryCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
 
 class OrgSummaryCounts(_Model):
     passes: int
