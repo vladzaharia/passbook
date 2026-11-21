@@ -2706,6 +2706,7 @@ export type ScanRecord = {
   override: boolean;
   offline: boolean;
   unverified?: boolean;
+  late?: boolean;
   actor: {
     type: "scanner" | "user";
     id: string;
@@ -2776,6 +2777,7 @@ export type ScanSession = {
     id: string;
     name: string;
     role: "door" | "desk" | "manager";
+    pinResetRequired?: true;
   } | null;
   staffList: Array<{
     id: string;
@@ -3124,6 +3126,7 @@ export type ScanStaff = {
   name: string;
   role: "door" | "desk" | "manager";
   pinSetAt: number;
+  pinResetRequired: boolean;
   locked: boolean;
   disabledAt: number | null;
   today: number;

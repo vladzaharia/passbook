@@ -5624,6 +5624,7 @@ type ScanRecord struct {
 	Override     bool            `json:"override"`
 	Offline      bool            `json:"offline"`
 	Unverified   *bool           `json:"unverified,omitempty"`
+	Late         *bool           `json:"late,omitempty"`
 	Actor        ScanRecordActor `json:"actor"`
 	UndoneAt     *int64          `json:"undoneAt"`
 	UndoneBy     *string         `json:"undoneBy"`
@@ -6162,15 +6163,16 @@ type ScanSetupsUpdateParamsSettingsTags struct {
 }
 
 type ScanStaff struct {
-	ID         string         `json:"id"`
-	OrgID      string         `json:"orgId"`
-	Name       string         `json:"name"`
-	Role       string         `json:"role"`
-	PINSetAt   int64          `json:"pinSetAt"`
-	Locked     bool           `json:"locked"`
-	DisabledAt *int64         `json:"disabledAt"`
-	Today      int64          `json:"today"`
-	LastScan   map[string]any `json:"lastScan"`
+	ID               string         `json:"id"`
+	OrgID            string         `json:"orgId"`
+	Name             string         `json:"name"`
+	Role             string         `json:"role"`
+	PINSetAt         int64          `json:"pinSetAt"`
+	PINResetRequired bool           `json:"pinResetRequired"`
+	Locked           bool           `json:"locked"`
+	DisabledAt       *int64         `json:"disabledAt"`
+	Today            int64          `json:"today"`
+	LastScan         map[string]any `json:"lastScan"`
 }
 
 type ScanStaffCreateParams struct {

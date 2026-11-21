@@ -6397,6 +6397,7 @@ class ScanRecord(_Model):
     override: bool
     offline: bool
     unverified: bool | None = None
+    late: bool | None = None
     actor: ScanRecordActor
     undoneAt: int | None
     undoneBy: str | None
@@ -6903,6 +6904,7 @@ class ScanStaff(_Model):
     name: str
     role: _Literal["door", "desk", "manager"] | str
     pinSetAt: int
+    pinResetRequired: bool
     locked: bool
     disabledAt: int | None
     today: int

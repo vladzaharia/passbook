@@ -1667,6 +1667,12 @@
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
+  "scan.postScanStaffPin": {
+    "resource": "terminal.staff",
+    "method": "setPin",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
   "scan.postScanTagEnrollmentsByIdComplete": {
     "resource": "terminal.tagEnrollments",
     "method": "complete",
