@@ -288,6 +288,7 @@ export function listSweepWaitingPasses(
     db,
     `SELECT p.id FROM passes p
     WHERE p.holder_email IS NOT NULL AND p.owner_user_id IS NULL
+      AND p.status = 'active' AND p.removed_at IS NULL
       AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
       -- A joined card's address was typed into a public form: only the holder's own sign-in attaches it.
       AND NOT EXISTS (SELECT 1 FROM join_marks ji WHERE ji.pass_id = p.id)

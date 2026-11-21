@@ -101,6 +101,7 @@ export async function waitingPassIds(
     db,
     `SELECT p.id FROM passes p
      WHERE p.holder_email = ? AND p.owner_user_id IS NULL
+       AND p.status = 'active' AND p.removed_at IS NULL
        AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
        AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
          WHERE t.pass_id = p.id AND t.state = 'pending')

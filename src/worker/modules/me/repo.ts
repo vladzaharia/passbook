@@ -42,6 +42,8 @@ export interface MyPassRow {
   personalization: string;
   /** 1 when a device registered the pass. */
   registered: number;
+  /** 1 for an ended pass not yet attached to the account: listed, never written. */
+  read_only: number;
 }
 
 // pass_versions keeps the built pass.json for recent versions; it is what the card renders. `version`
@@ -55,7 +57,8 @@ const SELECT = `
          COALESCE((SELECT pv.pass_json FROM pass_versions pv
                    WHERE pv.pass_id = p.id AND pv.version <= p.version AND pv.pass_json IS NOT NULL
                    ORDER BY pv.version DESC LIMIT 1), p.pending_pass_json) AS pass_json,
-         EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered
+         EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered,
+         (p.owner_user_id IS NULL) AS read_only
   FROM passes p
   JOIN templates t ON t.id = p.template_id
   JOIN orgs o ON o.id = p.org_id`;
@@ -63,21 +66,39 @@ const SELECT = `
 export const NO_PENDING_TRANSFER = `NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
   WHERE transfer.pass_id = p.id AND transfer.state = 'pending')`;
 
+/**
+ * An ended pass (voided; removed once its removal is published) waiting for this account's verified
+ * address: listed read-only, never attached or written. Not purged, not a joined card (a stranger's
+ * typed address), not contested by another account. Three parameters: the user, three times.
+ */
+const ENDED_WAITING = `(p.owner_user_id IS NULL AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
+  AND p.status = 'voided' AND (p.removed_at IS NULL OR p.removal_published_generation = p.lifecycle_generation)
+  AND EXISTS (SELECT 1 FROM user_emails e JOIN users u ON u.id = e.user_id
+    WHERE e.user_id = ? AND u.status = 'active' AND e.email = p.holder_email)
+  AND NOT EXISTS (SELECT 1 FROM users u2 JOIN user_emails e2 ON e2.user_id = u2.id
+    WHERE u2.id != ? AND u2.status = 'active' AND e2.email = p.holder_email)
+  AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = p.id AND b.user_id = ?)
+  AND NOT EXISTS (SELECT 1 FROM join_marks j WHERE j.pass_id = p.id)
+  AND ${NO_PENDING_TRANSFER})`;
+const OWNED = `(p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER})`;
+/** What My passes shows: the owned passes, and the ended ones waiting for the address. */
+const LISTED = `(${OWNED} OR ${ENDED_WAITING})`;
+const listedBinds = (userId: string) => [userId, userId, userId, userId];
+
 export const listMyPasses = (db: Db, userId: string, cursor: string | undefined, limit: number) =>
   all<MyPassRow>(
     db,
-    `${SELECT} WHERE p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
-      ${cursor ? 'AND p.id < ?' : ''} ORDER BY p.id DESC LIMIT ?`,
-    cursor ? [userId, cursor, limit + 1] : [userId, limit + 1],
+    `${SELECT} WHERE ${LISTED} ${cursor ? 'AND p.id < ?' : ''} ORDER BY p.id DESC LIMIT ?`,
+    cursor ? [...listedBinds(userId), cursor, limit + 1] : [...listedBinds(userId), limit + 1],
   );
 
+/** Owned passes only: every write (refresh, remove, help) starts here. */
 export const getMyPass = (db: Db, userId: string, passId: string) =>
-  first<MyPassRow>(
-    db,
-    `${SELECT} WHERE p.owner_user_id = ? AND p.id = ? AND p.deleted_at IS NULL
-    AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}`,
-    [userId, passId],
-  );
+  first<MyPassRow>(db, `${SELECT} WHERE ${OWNED} AND p.id = ?`, [userId, passId]);
+
+/** The detail read: owned, or ended and waiting for this account. */
+export const getMyPassListed = (db: Db, userId: string, passId: string) =>
+  first<MyPassRow>(db, `${SELECT} WHERE ${LISTED} AND p.id = ?`, [...listedBinds(userId), passId]);
 
 /** Fence the whole page and its status notices in one final D1 snapshot. */
 export async function portfolioSnapshot(db: Db, userId: string, ids: readonly string[]) {
@@ -85,8 +106,8 @@ export async function portfolioSnapshot(db: Db, userId: string, ids: readonly st
     stmt(
       db,
       `${SELECT} JOIN json_each(?) expected ON expected.value = p.id
-      WHERE p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}`,
-      [JSON.stringify(ids), userId],
+      WHERE ${LISTED}`,
+      [JSON.stringify(ids), ...listedBinds(userId)],
     ),
     stmt(
       db,

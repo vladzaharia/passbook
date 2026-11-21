@@ -65,6 +65,8 @@ export const MyPassSchema = z.object({
   tags: z.array(MyTagSchema).default([]),
   /** Apple device registration was reported; current installation is unknown (leaves Add all). */
   inWallet: z.boolean(),
+  /** An ended pass listed before it was attached to this account: no refresh, remove or download. */
+  readOnly: z.boolean().default(false),
   /** One pass only: the org's checked support contacts (the voided note names them). */
   support: z
     .object({
