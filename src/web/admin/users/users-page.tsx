@@ -170,13 +170,7 @@ export function UsersPage({
           emptyFiltered={
             <EmptyState art={ENTITY.user.art} variant="filtered" title="No users match" />
           }
-          empty={
-            <EmptyState
-              art="people"
-              title="No users yet"
-              description="Users appear after their first sign-in."
-            />
-          }
+          empty={<EmptyState art="people" title="No users yet" />}
           footer={<LoadMore query={list} shown={rows.length} noun={['user', 'users']} />}
           columns={COLUMNS}
         />

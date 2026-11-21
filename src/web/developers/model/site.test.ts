@@ -74,8 +74,15 @@ describe('portal model', () => {
     for (const s of samples) {
       expect(s.code, s.lang).toContain('PASSBOOK_KEY');
       expect(s.code, s.lang).not.toMatch(/pb_(live|test)_/);
-      // TypeScript goes through the SDK, which owns the path.
-      expect(s.code, s.lang).toContain(s.lang === 'ts' ? 'pb.passes.create(' : '/api/v1/passes');
+      // The SDKs own the path; curl spells it out.
+      expect(s.code, s.lang).toContain(
+        {
+          curl: '/api/v1/passes',
+          ts: 'pb.passes.create(',
+          py: 'pb.passes.create(',
+          go: 'pb.Passes.Create(',
+        }[s.lang as 'curl'],
+      );
     }
   });
 

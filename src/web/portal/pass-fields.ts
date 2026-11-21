@@ -37,20 +37,15 @@ function humanizeKey(key: string): string {
     .join(' ');
 }
 
-/**
- * The front fields as label/value rows, values formatted by each field's date or number style.
- * Two fields sharing a label ("Member" for the ID and the name) read by their keys instead.
- */
-export function fieldRows(
-  passJson: Record<string, unknown>,
-  { locale, now, timeZone }: { locale: string; now: Date; timeZone?: string },
-): { id: string; label: string; value: string }[] {
-  const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
-  if (!style) return [];
-  const block = passJson[style] as Record<string, unknown>;
-  const ctx = { locale, now, ...(timeZone ? { timeZone } : {}) };
-  const rows: { id: string; label: string; value: string }[] = [];
-  for (const group of GROUPS) {
+type Row = { id: string; label: string; value: string };
+
+function groupRows(
+  block: Record<string, unknown>,
+  groups: readonly string[],
+  ctx: { locale: string; now: Date; timeZone?: string },
+): Row[] {
+  const rows: Row[] = [];
+  for (const group of groups) {
     const list = block[group];
     if (!Array.isArray(list)) continue;
     for (const f of list) {
@@ -59,13 +54,34 @@ export function fieldRows(
       const { label, key, value } = spec;
       if (value === undefined || value === null || typeof value === 'object') continue;
       const text = formatValue(value as Json, spec, ctx).text;
+      if (!text.trim()) continue;
       const id = String(key ?? label ?? rows.length);
-      rows.push({ id, label: sentenceCase(String(label ?? key ?? '')), value: text });
+      rows.push({ id, label: sentenceCase(String(label ?? humanizeKey(id))), value: text });
     }
   }
+  return rows;
+}
+
+/**
+ * Label/value rows, values formatted by each field's date or number style: the front fields, or
+ * the back's. Expires follows unless a field on
+ * either side already says it. Two fields sharing a label read by their keys instead.
+ */
+export function fieldRows(
+  passJson: Record<string, unknown>,
+  { locale, now, timeZone }: { locale: string; now: Date; timeZone?: string },
+  side: 'front' | 'back' = 'front',
+): Row[] {
+  const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
+  if (!style) return [];
+  const block = passJson[style] as Record<string, unknown>;
+  const ctx = { locale, now, ...(timeZone ? { timeZone } : {}) };
+  const front = groupRows(block, GROUPS, ctx);
+  const back = groupRows(block, ['backFields'], ctx);
+  const rows = side === 'front' ? front : back;
   const expires = passJson.expirationDate;
   // A pass that already lists its own Expires field says it once.
-  const listed = rows.some((r) => /expir/i.test(`${r.id} ${r.label}`));
+  const listed = [...front, ...back].some((r) => /expir/i.test(`${r.id} ${r.label}`));
   if (typeof expires === 'string' && expires && !listed) {
     const text = formatExpiry(expires, timeZone);
     if (text) rows.push({ id: 'expirationDate', label: 'Expires', value: text });
@@ -73,27 +89,6 @@ export function fieldRows(
   const count = new Map<string, number>();
   for (const r of rows) count.set(r.label, (count.get(r.label) ?? 0) + 1);
   return rows.map((r) => ((count.get(r.label) ?? 0) > 1 ? { ...r, label: humanizeKey(r.id) } : r));
-}
-
-const NOTE_KEYS = /^(message|note|notes)$/i;
-
-/**
- * What the org wrote to the holder, from the back of the pass: its latest message first, then its
- * note. Plain text only; an empty field is not a note.
- */
-export function noteRows(
-  passJson: Record<string, unknown>,
-): { id: string; label: string; value: string }[] {
-  const style = STYLES.find((s) => passJson[s] && typeof passJson[s] === 'object');
-  const list = style ? (passJson[style] as Record<string, unknown>).backFields : null;
-  if (!Array.isArray(list)) return [];
-  const rows = list.flatMap((f: Record<string, unknown> | null) => {
-    const value = typeof f?.value === 'string' ? f.value.trim() : '';
-    const key = String(f?.key ?? '');
-    if (!value || !NOTE_KEYS.test(key)) return [];
-    return [{ id: key, label: sentenceCase(String(f?.label ?? humanizeKey(key))), value }];
-  });
-  return rows.sort((a, b) => Number(/^message$/i.test(b.id)) - Number(/^message$/i.test(a.id)));
 }
 
 /** "Updated Nov 1"; the year shows once it is not this year. */

@@ -5,7 +5,16 @@ import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { afterAll, describe, expect, it } from 'vitest';
 import { COPY_LANGS, copyAs, type Sent } from '../console/copy-as.ts';
-import { goString, pyString, shQuote, tsKey, tsLiteral, tsString } from '../model/code-literals.ts';
+import {
+  goRawString,
+  goString,
+  jsonText,
+  pyString,
+  shQuote,
+  tsKey,
+  tsLiteral,
+  tsString,
+} from '../model/code-literals.ts';
 import type { SampleOp } from '../model/sample-ts.ts';
 import { samplesFor } from '../model/samples.ts';
 import type { Json } from '../model/types.ts';
@@ -22,6 +31,7 @@ const dir = mkdtempSync(join(tmpdir(), 'code-literals-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 // The Go toolchain is optional on a machine; knip does not need to list it as a dependency.
 const GO = process.env.GO_BIN ?? 'go';
+const GOFMT = process.env.GOFMT_BIN ?? 'gofmt';
 const have = (cmd: string) => spawnSync('which', [cmd]).status === 0;
 const env = { ...process.env, PASSBOOK_KEY: 'sentinel-key' };
 
@@ -184,10 +194,12 @@ describe('the reference samples use the same literals', () => {
     writeFileSync(file, samples.curl ?? '');
     execFileSync('bash', ['-n', file]);
   });
-  it('TypeScript, Python and Go quote the URL and body as literals and parse', () => {
+  it('TypeScript, Python and Go put the body in literals, and parse', () => {
+    // The SDK samples carry no URL: the portal's origin, which can hold a quote, never reaches them.
+    for (const lang of ['ts', 'py', 'go'] as const) expect(samples[lang]).not.toContain(base);
     expect(samples.ts).toContain(`note: ${tsString(GO_PAYLOAD)}`);
-    expect(samples.py).toContain(pyString(`${base}/passes`));
-    expect(samples.go).toContain(goString(`${base}/passes`));
+    expect(samples.py).toContain(`"note": ${pyString(GO_PAYLOAD)}`);
+    expect(samples.go).toContain(goRawString(jsonText({ note: GO_PAYLOAD, other: TS_PAYLOAD })));
     const ts = join(dir, 'sample.mjs');
     writeFileSync(ts, samples.ts ?? '');
     execFileSync('node', ['--check', ts]);
@@ -198,10 +210,11 @@ describe('the reference samples use the same literals', () => {
       '-c',
       `import sys; compile(open(${JSON.stringify(py)}).read(), "s", "exec")`,
     ]);
-    if (have(GO)) {
+    // The Go sample imports the SDK, so only its syntax is checked here; sdk/go compiles every sample.
+    if (have(GOFMT)) {
       const go = join(dir, 'sample.go');
       writeFileSync(go, samples.go ?? '');
-      execFileSync(GO, ['vet', go], { env: { ...env, GOCACHE: join(dir, 'gocache') } });
+      execFileSync(GOFMT, ['-e', go]);
     }
   });
   it('covers every Copy as language', () => {

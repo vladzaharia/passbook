@@ -50,7 +50,7 @@ export interface StatusDeps {
 
 async function identityComponents(ctx: ServiceContext) {
   try {
-    await ensurePlatformIdentity(ctx.env, ctx.clock.now());
+    await ensurePlatformIdentity(ctx.env, ctx.clock.now(), ctx.log);
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     ctx.log.info('status.platform_identity_missing', { code: error.code });

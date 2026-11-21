@@ -11,7 +11,6 @@ import {
   Callout,
   Card,
   CardBody,
-  CardHeader,
   detailError,
   EmptyState,
   ErrorState,
@@ -165,14 +164,7 @@ function Loaded({ blueprint: b, tab }: { blueprint: Blueprint; tab: BlueprintTab
             />
           ) : null
         }
-        summary={
-          <KeyValue
-            items={[
-              { label: 'Style', value: styleList(b.styles) },
-              { label: 'Inputs', value: String(inputs.length) },
-            ]}
-          />
-        }
+        summary={<KeyValue items={[{ label: 'Inputs', value: String(inputs.length) }]} />}
       >
         <Tabs
           value={tab}
@@ -190,15 +182,8 @@ function Loaded({ blueprint: b, tab }: { blueprint: Blueprint; tab: BlueprintTab
               <LegacyPasses blueprint={b} />
               <StaffView blueprintId={b.id} version={b.activeVersion} />
               <Card>
-                <CardHeader title="Included" />
                 <CardBody>
-                  <KeyValue
-                    items={[
-                      { label: 'Style', value: styleList(b.styles) },
-                      { label: 'Inputs', value: String(inputs.length) },
-                      { label: 'Required', value: required.join(', ') || 'None' },
-                    ]}
-                  />
+                  <KeyValue items={[{ label: 'Required', value: required.join(', ') || 'None' }]} />
                 </CardBody>
               </Card>
             </div>

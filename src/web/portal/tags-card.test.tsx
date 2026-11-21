@@ -49,7 +49,8 @@ describe('Tags card', () => {
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
     });
-    await screen.findByRole('heading', { name: 'Details' });
+    await screen.findByRole('heading', { name: 'Membership', level: 1 });
+    await waitFor(() => expect(document.querySelector('.wl-holder-details')).not.toBeNull());
     expect(screen.queryByRole('heading', { name: 'Tags' })).toBeNull();
   });
 

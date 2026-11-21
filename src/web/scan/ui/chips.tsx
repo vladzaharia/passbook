@@ -1,4 +1,4 @@
-import { CloudOff, Keyboard, Users, X } from 'lucide-react';
+import { CloudOff, Users, X } from 'lucide-react';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CountUp } from '../../ui/count-up.tsx';
 import { ModeLabel as ModePill } from '../../ui/layout/mode-label.tsx';
@@ -85,35 +85,6 @@ export function PlaceChip({
         <CountUp value={inNow} />
         {capacity !== null ? (wide ? ` of ${capacity} in` : `/${capacity}`) : null}
       </span>
-    </span>
-  );
-}
-
-export type ReaderChipState = 'idle' | 'ready' | 'paused' | 'layout';
-
-const READER_TEXT: Record<ReaderChipState, string> = {
-  idle: 'Reader',
-  ready: 'Reader ready',
-  paused: 'Reader paused',
-  layout: 'Set the keyboard to U.S.',
-};
-
-/** A tap on a paused reader refocuses its field. */
-export function ReaderChip({ state, onTap }: { state: ReaderChipState; onTap?: () => void }) {
-  const amber = state === 'paused' || state === 'layout';
-  const content = (
-    <>
-      <Keyboard aria-hidden size={14} />
-      {READER_TEXT[state]}
-    </>
-  );
-  return amber && onTap ? (
-    <button type="button" className="scan-chip" data-tone="amber" onClick={onTap}>
-      {content}
-    </button>
-  ) : (
-    <span className="scan-chip" data-tone={amber ? 'amber' : undefined}>
-      {content}
     </span>
   );
 }

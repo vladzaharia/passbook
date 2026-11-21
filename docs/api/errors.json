@@ -228,6 +228,60 @@
       ]
     },
     {
+      "code": "ASC_AUTH",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_REFUSED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_UPSTREAM",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "ASSETS_INVALID",
       "statuses": [
         422
@@ -565,6 +619,33 @@
       ],
       "modules": [
         "webhooks"
+      ]
+    },
+    {
+      "code": "CERT_NOT_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "CERT_PENDING_KEY_MISSING",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "CERT_PENDING_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
       ]
     },
     {
@@ -1257,7 +1338,25 @@
       ]
     },
     {
+      "code": "IDENTITY_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "IDENTITY_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_EXPIRED",
       "statuses": [
         409
       ],
@@ -1304,7 +1403,25 @@
       ]
     },
     {
+      "code": "IDENTITY_PLATFORM_ENV_MISMATCH",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "IDENTITY_PROTECTED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_RETIRED",
       "statuses": [
         409
       ],
@@ -2701,6 +2818,15 @@
     },
     {
       "code": "REQUEST_LOG_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "RESOLVE_NOT_FOUND",
       "statuses": [
         404
       ],

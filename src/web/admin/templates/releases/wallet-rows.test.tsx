@@ -71,7 +71,6 @@ describe('wallet rows', () => {
       expect(screen.getByRole('button', { name: 'Review Google Wallet' })).toBeEnabled(),
     );
     await userEvent.click(screen.getByRole('button', { name: 'Review Google Wallet' }));
-    expect(await screen.findByText('Live mode · Google')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review Google Wallet' })).toHaveAttribute(
       'aria-pressed',
       'true',

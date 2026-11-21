@@ -27,7 +27,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     group: 'Pass email',
     label: 'Buddy in pass emails',
     kind: 'boolean',
-    help: "The PassBook buddy sits beside the organization's name.",
     schema: O['email.buddy'],
   },
   {
@@ -46,7 +45,7 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Emails per day',
     kind: 'int',
     optional: true,
-    help: 'Pass emails for this organization. 10 to 5000.',
+    help: '10 to 5000.',
     range: [10, 5000],
     schema: O['email.orgCapPerDay'],
   },
@@ -73,7 +72,6 @@ export const ORG_FIELDS: readonly SettingField[] = [
     label: 'Legal name',
     kind: 'text',
     optional: true,
-    help: 'Shown on the privacy page.',
     schema: O['privacy.legalName'],
   },
   {

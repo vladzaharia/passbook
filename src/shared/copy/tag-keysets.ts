@@ -5,7 +5,6 @@ export const KEYSET_COPY = {
   add: 'New keyset',
   empty: {
     title: 'No Secure keys',
-    body: 'A keyset holds the keys your Secure tags are written with.',
   },
   kind: {
     diversified: 'Key per tag, derived',

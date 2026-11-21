@@ -31,7 +31,7 @@ interface GuideRow {
 }
 
 /** The hand-written snippets listed in `<dir>/index.json`, with their files read. */
-function guideExamples(dir: string): Example[] {
+export function guideExamples(dir: string): Example[] {
   const index = optional<GuideRow[]>(join(dir, 'index.json')) ?? [];
   return index.map((row) => ({
     id: row.id,

@@ -56,12 +56,7 @@ export function RulesSection({
       />
       <CardBody>
         {items.length === 0 ? (
-          <EmptyState
-            inline
-            art={ENTITY.broadcast.art}
-            title="No automatic messages"
-            description="Send on a date or after a scan."
-          />
+          <EmptyState inline art={ENTITY.broadcast.art} title="No automatic messages" />
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {items.map((rule) => (

@@ -121,6 +121,34 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
     - Near a venue the pass appears on the lock screen. The barcode scans.
     - Void the pass; the phone shows it as voided.
 
+## Apple provisioner
+
+`workers/apple-provisioner` is a separate Worker that holds the App Store Connect key. The main Worker reaches it only through the `APPLE` service binding; it has no route and no `workers.dev` host. Its D1 holds the allowlist (`asc_pass_types`) and the append-only call ledger (`asc_calls`). Limits: 30 calls a minute and 200 a day per method, one revoke an hour, all fail closed (`ASC_BUDGET`).
+
+One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
+
+1. In App Store Connect create a Team key with the Admin role, named `passbook-provisioner`. The `.p8` downloads once.
+2. `npx wrangler d1 create apple-provisioner`, then put the id in `workers/apple-provisioner/wrangler.jsonc`.
+3. `npx wrangler d1 migrations apply apple-provisioner --config workers/apple-provisioner/wrangler.jsonc --remote`
+4. Secrets, from the `.p8` file and the key page (key id, issuer id):
+
+       npx wrangler secret put ASC_KEY_P8 --config workers/apple-provisioner/wrangler.jsonc < AuthKey_XXXX.p8
+       npx wrangler secret put ASC_KEY_ID --config workers/apple-provisioner/wrangler.jsonc
+       npx wrangler secret put ASC_ISSUER_ID --config workers/apple-provisioner/wrangler.jsonc
+
+5. Deploy the provisioner: `npx wrangler deploy --config workers/apple-provisioner/wrangler.jsonc`. Cloudflare fails a deploy whose service binding names a Worker that does not exist yet, so `wrangler.jsonc` does not carry the `APPLE` binding until the provisioner is live. Once it is, add this to `wrangler.jsonc` (before `send_email`), run `npm run gen`, commit, and deploy the main Worker (with `--first` if the deploy tool asks):
+
+       "services": [{ "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }],
+
+   Until then `ascClient` reports `ASC_UNAVAILABLE`.
+6. Seed the allowlist with the platform pass type: `node tools/apple-provisioner-seed.ts --apply --remote`. Without `--apply` it prints the command. The first `findPassType('pass.im.plrs.wallet')` call fills in Apple's id.
+
+Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any certificate of `pass.im.plrs.wallet` or `pass.mobile.passbook.wallet` (revoke those by hand in the developer portal). The main Worker may ask only for a superseded certificate after a reissue (design 5.1).
+
+Trust boundary: the service binding, not the lint rule (`tools/check-apple-binding.ts`), is the boundary. Anyone who can deploy Workers in the account can bind to or redeploy the provisioner, so scope Cloudflare API tokens and never give CI a token that can deploy `apple-provisioner`.
+
+Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
+
 ## Google and Samsung Wallet accounts
 
 Keep Apple signing and push in place. Provider accounts and reviews are isolated by organization,

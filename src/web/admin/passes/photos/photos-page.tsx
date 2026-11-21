@@ -105,7 +105,6 @@ export function PhotosPage() {
       ) : (
         <div className="flex flex-col gap-6">
           <Card>
-            <CardHeader title="Choose photos" />
             <CardBody className="flex flex-col gap-3">
               <FileDrop
                 multiple
@@ -123,8 +122,7 @@ export function PhotosPage() {
                 onCheckedChange={(checked) => setInclude(checked === true)}
               />
               <p className="text-sm text-fg-muted">
-                Photos are cropped to a square. Passes that cannot carry a Wallet photo keep it for
-                scanners only.
+                Passes that cannot carry a Wallet photo keep it for scanners only.
               </p>
             </CardBody>
           </Card>

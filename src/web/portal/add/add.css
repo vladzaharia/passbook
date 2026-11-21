@@ -1,6 +1,7 @@
-/* The add block (add-block.tsx): the buddy holds the job. Every box it sits on keeps 11/12 of its
-   art's height clear above it (M 66 px, S 44 px). On the sign it leans over the code and points
-   its teal pass down at it; on the badge's card, down at the badge (the nudge, aimed lower). Transform and opacity only. */
+/* The add block (add-block.tsx) and the lead (wallet-choice.tsx): one card, the buddy on its top
+   edge at the end, clear of the code (the nudge, aimed down at the code or the badge). Every box
+   it sits on keeps 11/12 of its art's height clear above it (M 66 px, S 44 px). Transform and
+   opacity only. */
 .wl-add {
   display: flex;
   min-width: 0;
@@ -13,32 +14,20 @@
   justify-items: center;
   gap: 1.5rem;
 }
-/* The sign is drawn like the buddy: its line and fill, its stitching, a pocket for the code. */
+/* The QR on a white tile, one hairline: no frame around it. With a buddy (the dialogs) it sits
+   on the tile's top edge; the pass page seats it on the lead's card instead. */
 .wl-sign {
-  --wl-seat-border: 1.5px;
+  --wl-seat-border: 0px;
   position: relative;
   width: fit-content;
   margin-top: 4.5rem;
-  padding: 1.125rem;
-  border: 1.5px solid var(--pk-border-strong);
-  border-radius: var(--pk-radius-xl);
-  background: var(--pk-surface-raised);
-  box-shadow: var(--wl-edge), var(--pk-elevation-1);
-}
-.wl-sign::before {
-  content: "";
-  position: absolute;
-  inset: 0.375rem;
-  border: 1.5px dashed var(--pk-border-strong);
-  border-radius: 0.75rem;
-  opacity: 0.7;
-  pointer-events: none;
 }
 .wl-sign-qr {
-  width: 10.5rem;
-  height: 10.5rem;
-  border-radius: 0.625rem;
-  padding: 0.5rem;
+  width: 10rem;
+  height: 10rem;
+  border-radius: var(--pk-radius-lg);
+  padding: 0.625rem;
+  box-shadow: 0 0 0 1px var(--pk-border-subtle);
 }
 .wl-add-scan > .wl-ways {
   width: 100%;
@@ -94,63 +83,20 @@
 }
 
 /* The code is down and to its left: the pass turns half as far again, the eyes drop. */
+/* On the lead's card it points down and left, at the code or the badge. */
+.wl-hero-buddy {
+  --wl-buddy-inset: 1.25rem;
+  --wl-drop: 18px;
+  --wl-aim: 1.6;
+  --wl-look: -2.2px 1.4px;
+}
 .wl-add-buddy {
   --wl-buddy-inset: 0.5rem;
   --wl-drop: 28px;
   --wl-aim: 1.6;
   --wl-look: -2.4px 1.6px;
 }
-.wl-add-buddy-sm {
-  --wl-buddy-inset: 1rem;
-  --wl-drop: 18px;
-  --wl-aim: 1.6;
-  --wl-look: -2.2px 1.4px;
-}
 
-/* No QR (the iPhone; a Mac without the public page): the badge on a card that fits it, at the
-   column's start beside the pass, centred on a phone. */
-.wl-add-here {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 2.75rem;
-  padding: 1.5rem 1rem;
-}
-/* Full width on a phone, the buddy just past the badge's end (Apple's 110 × 34 art at 44 px is
-   143 px wide): 50% less half the badge, the buddy and 6 px. */
-.wl-add-here > .wl-add-buddy-sm {
-  --wl-buddy-inset: calc(50% - 71.5px - 64px - 6px);
-}
-@media (min-width: 640px) {
-  .wl-add-here {
-    width: fit-content;
-    min-width: 15rem;
-    max-width: 100%;
-    align-self: center;
-    padding-inline: 2rem;
-  }
-  .wl-add-here > .wl-add-buddy-sm {
-    --wl-buddy-inset: 1rem;
-  }
-}
-/* Beside the pass the add block starts at its column; under it, it centres under the card. */
-@media (min-width: 1024px) {
-  .wl-add-here {
-    align-self: flex-start;
-  }
-}
-
-/* Apple registration reported: the happy buddy stands over the line. */
-.wl-added {
-  position: relative;
-  margin-top: 2.75rem;
-  padding: 1rem;
-}
-.wl-add-again[hidden] {
-  display: none;
-}
 /* Voided or expired: it sits on the notice, sad. */
 /* The buddy has its own row above the notice, clear of the notice's edge. */
 .wl-add-seat {
@@ -164,14 +110,21 @@
 .wl-add:has([data-awb]:focus-visible) .wl-add-buddy [data-look] {
   transform: translate(1.6px, 1.6px);
 }
-.wl-add-here:has([data-awb]:hover) [data-look],
-.wl-add-here:has([data-awb]:focus-visible) [data-look] {
+.wl-hero:has([data-awb]:hover) .wl-hero-buddy [data-look],
+.wl-hero:has([data-awb]:focus-visible) .wl-hero-buddy [data-look],
+.wl-hero:has(.wl-hero-action:hover) .wl-hero-buddy [data-look],
+.wl-hero:has(.wl-hero-action:focus-visible) .wl-hero-buddy [data-look],
+.wl-hero:has(.wl-native-badge:hover) .wl-hero-buddy [data-look],
+.wl-hero:has(.wl-native-badge:focus-visible) .wl-hero-buddy [data-look] {
   transform: translate(-2.2px, 1.4px);
 }
-/* Opened again from the registration line, the buddy stays there: no room kept above. */
+/* No buddy on the tile or the card (opened again from the registration line): no room above. */
 .wl-sign:not(:has(> [data-buddy])),
-.wl-add-here:not(:has(> [data-buddy])) {
+.wl-hero:not(:has(> [data-buddy])) {
   margin-top: 0;
+}
+.wl-hero:not(:has(> [data-buddy]))::before {
+  content: none;
 }
 /* Stacked under the sign on a phone, the ways centre with it. */
 @media (max-width: 639.98px) {
@@ -182,4 +135,153 @@
   .wl-add-scan .wl-way-label {
     justify-content: center;
   }
+}
+
+/* The lead: one raised card, a short foil ledge on its top edge under the buddy's feet. */
+.wl-hero {
+  position: relative;
+  margin-top: 3.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-xl);
+  background: var(--pk-surface-raised);
+  box-shadow: var(--wl-edge), var(--pk-elevation-1);
+}
+.wl-hero::before {
+  content: "";
+  position: absolute;
+  top: -1.5px;
+  right: 0.75rem;
+  width: 5.5rem;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--wl-foil);
+  pointer-events: none;
+}
+/* The QR and its one line, side by side from 640, stacked and centred below. */
+.wl-hero-scan .wl-add-scan {
+  gap: 1.25rem;
+}
+.wl-hero .wl-way-label {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.wl-hero .wl-way-label svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+@media (min-width: 640px) {
+  .wl-hero-scan .wl-add-scan {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    justify-content: start;
+  }
+  .wl-hero-scan .wl-add-scan > .wl-ways {
+    min-height: 0;
+  }
+}
+/* A Mac adds here too: the badge after a muted word, under a hairline. */
+.wl-way-here {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}
+.wl-way-here[hidden] {
+  display: none;
+}
+.wl-way-here > .wl-hero-note {
+  flex-basis: 100%;
+}
+.wl-way-here [data-awb] {
+  margin-top: 0;
+}
+.wl-hero-note {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}
+/* The phone's lead (the badge, a native badge, Show barcode, Print): no card around one control.
+   The action, then the buddy standing beside it on the same line, looking at it; Apple's line
+   under both. */
+.wl-hero-phone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 1rem;
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.wl-hero-phone::before {
+  content: none;
+}
+.wl-hero-phone > .wl-buddy[data-at] {
+  position: static;
+  order: 1;
+  translate: none;
+}
+.wl-hero-phone > .wl-hero-note {
+  order: 2;
+  flex-basis: 100%;
+}
+/* The kit's primary button (lg) as plain CSS: /p renders it without the kit. */
+.wl-hero-action {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-accent);
+  box-shadow: var(--pk-elevation-1);
+  color: var(--pk-accent-on);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color var(--wl-dur-hover) var(--wl-ease-move),
+    box-shadow var(--wl-dur-hover) var(--wl-ease-move);
+}
+.wl-hero-action:hover {
+  background: color-mix(in oklab, var(--pk-accent), var(--wl-hover-mix) 12%);
+  box-shadow: var(--wl-glow-accent);
+}
+.wl-hero-action:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.wl-hero-action svg {
+  width: 1rem;
+  height: 1rem;
+}
+/* Provider artwork stays proportional and unmodified, with clear space. */
+.wl-native-badge {
+  display: inline-flex;
+  max-width: 100%;
+  border-radius: var(--pk-radius-md);
+}
+.wl-native-badge:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.wl-native-badge img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 3rem;
+  object-fit: contain;
+}
+/* Android: Apple's way as one muted line. */
+.wl-add-line {
+  margin: 0;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
 }

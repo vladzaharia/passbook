@@ -314,17 +314,10 @@ describe('click to replay the wallet', () => {
 describe('renderErrorPage', () => {
   // The SPA's words and weights: not found leads to My passes, an error retries, all outline.
   it.each([
-    [404, 'Page not found', 'Check the link, or open My passes.', '/', 'Go to My passes', 'lost'],
-    [
-      403,
-      'You do not have access',
-      'Sign in with the account that has access.',
-      '/',
-      'Go to My passes',
-      'login',
-    ],
+    [404, 'Page not found', '', '/', 'Go to My passes', 'lost'],
+    [403, 'You do not have access', '', '/', 'Go to My passes', 'login'],
     [429, 'Too many requests', 'Try again in a minute.', '', 'Retry', 'login'],
-    [500, 'Something went wrong', 'Try again.', '', 'Retry', 'login'],
+    [500, 'Something went wrong', '', '', 'Retry', 'login'],
   ])(
     'renders %i as a hosted card with one outline action',
     (status, title, line, href, label, state) => {

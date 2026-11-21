@@ -78,14 +78,7 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
       isApiError(template.error) &&
       template.error.isForbidden)
   ) {
-    return (
-      <EmptyState
-        heading
-        art="building"
-        title="Choose an organization"
-        description="Choose an organization in the top bar to continue."
-      />
-    );
+    return <EmptyState heading art="building" title="Choose an organization" />;
   }
   if (template.isError && (scope.hasExplicitOrg || template.isFetchedAfterMount)) {
     return detailError(template, {

@@ -31,7 +31,10 @@ type Rail = z.infer<typeof ApiRailSchema>;
  * The organization whose log the caller reads: a try token's own, or the signed-in person's sandbox. Never one the
  * caller names, so a log is only ever the caller's.
  */
-async function orgOf(ctx: ServiceContext, auth: AuthContext | undefined): Promise<string> {
+export async function orgOfCaller(
+  ctx: ServiceContext,
+  auth: AuthContext | undefined,
+): Promise<string> {
   if (auth?.kind === 'api_key' && auth.via === 'try' && auth.orgId) return auth.orgId;
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
   const sandbox = await sandboxOfUser(ctx.env.DB, auth.userId);
@@ -61,7 +64,7 @@ export async function listRequestLog(
   auth: AuthContext | undefined,
   query: Query,
 ): Promise<{ items: Entry[]; nextCursor: string | null; capped: 'hour' | 'total' | null }> {
-  const orgId = await orgOf(ctx, auth);
+  const orgId = await orgOfCaller(ctx, auth);
   const { cursor, limit, ...filter } = query;
   const rows = await listLogs(ctx.env.DB, orgId, filter, limit + 1, ctx.clock.now(), cursor);
   const page = rows.slice(0, limit);
@@ -77,7 +80,7 @@ export async function getRequestLog(
   auth: AuthContext | undefined,
   id: string,
 ): Promise<Detail> {
-  const orgId = await orgOf(ctx, auth);
+  const orgId = await orgOfCaller(ctx, auth);
   const row = await getLog(ctx.env.DB, orgId, id, ctx.clock.now());
   if (!row) throw new NotFoundError('Request not found.', 'REQUEST_LOG_NOT_FOUND');
   return {
@@ -91,7 +94,7 @@ export async function getRequestLog(
 const HOUR = 3_600_000;
 
 export async function apiRail(ctx: ServiceContext, auth: AuthContext | undefined): Promise<Rail> {
-  const orgId = await orgOf(ctx, auth);
+  const orgId = await orgOfCaller(ctx, auth);
   const now = ctx.clock.now();
   const keyId =
     auth?.kind === 'api_key'

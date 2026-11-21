@@ -119,6 +119,42 @@
     "fix": "Remove unused files and upload an archive under 15 MB.",
     "retryable": false
   },
+  "ASC_AUTH": {
+    "title": "Apple key rejected",
+    "when": "Apple rejected the provisioner key.",
+    "fix": "Replace the provisioner key, then send the request again.",
+    "retryable": false
+  },
+  "ASC_CONFLICT": {
+    "title": "Apple reports a conflict",
+    "when": "Apple refused the request because the resource already exists or is in use.",
+    "fix": "Check the resource in Apple Developer, then send the request again.",
+    "retryable": false
+  },
+  "ASC_NOT_FOUND": {
+    "title": "Apple resource not found",
+    "when": "Apple has no such resource.",
+    "fix": "Check the identifier, then send the request again.",
+    "retryable": false
+  },
+  "ASC_REFUSED": {
+    "title": "Apple provisioner refused",
+    "when": "The Apple provisioner refused the request.",
+    "fix": "Check the request against the provisioner allowlist, then send it again.",
+    "retryable": false
+  },
+  "ASC_UNAVAILABLE": {
+    "title": "Apple provisioner unavailable",
+    "when": "The Apple provisioner is not configured.",
+    "fix": "Ask the platform owner to configure it, then send the request again.",
+    "retryable": true
+  },
+  "ASC_UPSTREAM": {
+    "title": "Apple request failed",
+    "when": "The request to Apple failed.",
+    "fix": "Send the request again in a minute.",
+    "retryable": true
+  },
   "ASSETS_INVALID": {
     "title": "Invalid template assets",
     "when": "An image in the template archive failed validation.",
@@ -309,6 +345,24 @@
     "title": "Capture endpoint has no URL",
     "when": "You tried to set the URL of a capture endpoint, which stores requests and has none.",
     "fix": "Leave the url out, or create a URL endpoint instead.",
+    "retryable": false
+  },
+  "CERT_NOT_PENDING": {
+    "title": "Certificate not pending",
+    "when": "The certificate is no longer pending.",
+    "fix": "Refresh the identity and start a new certificate request if needed.",
+    "retryable": false
+  },
+  "CERT_PENDING_KEY_MISSING": {
+    "title": "Pending key missing",
+    "when": "The key for the pending certificate is gone.",
+    "fix": "Start a new certificate request.",
+    "retryable": false
+  },
+  "CERT_PENDING_NOT_FOUND": {
+    "title": "No pending certificate",
+    "when": "The identity has no pending certificate.",
+    "fix": "Start a certificate request, then upload the certificate.",
     "retryable": false
   },
   "CONNECTION_CONFLICT": {
@@ -575,10 +629,34 @@
     "fix": "Use a new key for a new request; resend the identical request to replay.",
     "retryable": false
   },
+  "IDENTITY_CHANGED": {
+    "title": "Identity changed",
+    "when": "The identity changed while its certificate was being activated.",
+    "fix": "Reload the identity, then activate again.",
+    "retryable": true
+  },
+  "IDENTITY_EXPIRED": {
+    "title": "Identity expired",
+    "when": "The signing identity certificate has expired.",
+    "fix": "Upload a renewed certificate, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_NOT_FOUND": {
     "title": "Signing identity not found",
     "when": "No signing identity with this id exists in this mode and organization.",
     "fix": "Check the id with GET /api/v1/identities.",
+    "retryable": false
+  },
+  "IDENTITY_PLATFORM_ENV_MISMATCH": {
+    "title": "Platform identity mismatch",
+    "when": "The platform identity row does not match the deployed signing identity.",
+    "fix": "Ask the platform owner to align the deployed identity with the database.",
+    "retryable": false
+  },
+  "IDENTITY_RETIRED": {
+    "title": "Identity retired",
+    "when": "The signing identity no longer issues passes.",
+    "fix": "Choose another identity, then send the request again.",
     "retryable": false
   },
   "IF_MATCH_INVALID": {

@@ -274,7 +274,6 @@ describe('progress and results', () => {
     expect(await screen.findByText('120 of 160')).toBeTruthy();
     const bar = screen.getByRole('progressbar', { name: 'Passes handled' });
     expect(bar.getAttribute('aria-valuenow')).toBe('120');
-    expect(screen.getByText('You can leave this page.')).toBeTruthy();
     done = true;
     expect(await screen.findByText('All rows done.', undefined, { timeout: 5000 })).toBeTruthy();
     const settled = calls;
@@ -403,7 +402,7 @@ describe('progress and results', () => {
       {},
       ['passes:read'],
     );
-    await screen.findByText('Results');
+    await screen.findByText('Created');
     for (const name of ['Download results', 'Email the rest', 'Remove created passes'])
       expect(screen.queryByRole('button', { name })).toBeNull();
     expect(screen.getByRole('button', { name: 'Download rows with errors' })).toBeTruthy();
@@ -490,7 +489,7 @@ describe('progress and results', () => {
         },
       }),
     );
-    await screen.findByText('Results');
+    await screen.findByText('Created');
     expect(screen.queryByRole('button', { name: 'Remove created passes' })).toBeNull();
   });
 
@@ -501,7 +500,7 @@ describe('progress and results', () => {
     ['Test mode', 'url', 'test', undefined, false],
   ])('keep in sync: %s', async (_name, kind, mode, caps, shown) => {
     await open(finished({ source: { kind, name: 'docs.google.com' }, mode }), {}, caps);
-    await screen.findByText('Results');
+    await screen.findByText('Created');
     expect(!!screen.queryByRole('link', { name: 'Keep this sheet in sync' })).toBe(shown);
   });
 });

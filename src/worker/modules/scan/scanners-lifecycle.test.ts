@@ -7,6 +7,7 @@ import {
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { overrideDeps } from '../passes/deps.ts';
 import { createScannerStore } from './auth-store.ts';
@@ -119,7 +120,7 @@ describe('sample pass', () => {
     const made = makeTemplate({ id: f.ids.id(), orgId });
     await persistTemplate(f, made.resolved, { registry: made.registry });
     overrideDeps(env, { registry: made.registry });
-    await ensurePlatformIdentity(env, clock.now());
+    await ensurePlatformIdentity(env, clock.now(), nullLogger);
     const reviewer = await makeUser(f);
     await grantScanMembership(f, orgId, reviewer.id);
     const reviewerHeaders = fake.session({

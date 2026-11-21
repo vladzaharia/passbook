@@ -10,6 +10,7 @@ import {
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
@@ -47,7 +48,7 @@ beforeAll(async () => {
   });
   ctx = createServiceContext(env, { clock });
   overrideDeps(env, { apns: createFakeApns(), mailer: createFakeMailer() });
-  await ensurePlatformIdentity(env, clock.now());
+  await ensurePlatformIdentity(env, clock.now(), nullLogger);
   orgId = (await makeOrg(fixtures(env, clock), { name: 'E2E Gym' })).id;
 });
 afterAll(() => {

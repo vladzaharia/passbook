@@ -16,7 +16,16 @@ export type EventName =
   | 'auth.sign_in'
   | 'scan.result'
   | 'join.refused'
-  | 'tag.sun_failed';
+  | 'tag.sun_failed'
+  // The developer quickstart (PX13): one event per step, orgId only. `dev.fail` carries the problem code as its outcome.
+  | 'dev.view'
+  | 'dev.sandbox'
+  | 'dev.run'
+  | 'dev.live'
+  | 'dev.change'
+  | 'dev.home'
+  | 'dev.fail'
+  | 'dev.ttfp';
 
 export interface AnalyticsEvent {
   event: EventName;

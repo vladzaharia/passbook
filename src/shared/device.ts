@@ -21,7 +21,7 @@ export function passDevice(ua: string | undefined, touchPoints?: number): Device
   const text = ua ?? '';
   const device: PassDevice = /iPhone|iPod/.test(text)
     ? 'iphone'
-    : /Macintosh/.test(text) && (touchPoints ?? 0) < 2
+    : isDesktopMac(text, touchPoints)
       ? 'mac'
       : /Android/.test(text)
         ? /\bSM-[A-Z]\d|\bSAMSUNG(?!Browser)/i.test(text)
@@ -30,6 +30,20 @@ export function passDevice(ua: string | undefined, touchPoints?: number): Device
         : 'other';
   return { device, inApp: isInAppBrowser(text) };
 }
+
+/**
+ * A Mac, not an iPad: iPadOS Safari sends the Mac's agent, and only its touch points tell them
+ * apart. Self-contained, so the SSR pages run this same function in the browser (MAC_REVEAL_SCRIPT).
+ */
+export function isDesktopMac(ua: string, touchPoints?: number): boolean {
+  return /Macintosh/.test(ua) && (touchPoints || 0) < 2;
+}
+
+/**
+ * The SSR pages cannot see touch points, so a Mac agent may be an iPad: they render the safe
+ * variant (no Mac-only parts) and this script, nonced, shows the `data-mac-only` parts on a Mac.
+ */
+export const MAC_REVEAL_SCRIPT = `if((${isDesktopMac.toString()})(navigator.userAgent,navigator.maxTouchPoints))document.querySelectorAll('[data-mac-only]').forEach(function(e){e.hidden=false})`;
 
 /** The badge adds the pass right here. */
 export const canAddToWallet = (device: PassDevice): boolean =>

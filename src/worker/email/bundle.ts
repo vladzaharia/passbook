@@ -97,7 +97,7 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
   const addLine = input.passes.length === 1 ? HOLDER_COPY.emailAddLine : HOLDER_COPY.emailAddLines;
   const text = [
     TITLE,
-    `${input.bundleName} · ${HOLDER_COPY.count(input.passes.length)}`,
+    input.bundleName,
     ...(input.mode === 'test' ? [HOLDER_COPY.testNote('bundle')] : []),
     '',
     ...input.passes.map((p) =>
@@ -118,7 +118,7 @@ export function renderBundleEmail(input: BundleEmailInput): RenderedEmail {
   const muted = (margin: string, line: string) =>
     `<p class="e-muted" style="margin:${margin};${type('sm')};color:${c.muted}">${line}</p>`;
   const body = `${titleHtml(TITLE, '0 0 4px')}
-${muted('0 0 16px', `${escapeHtml(input.bundleName)} · ${HOLDER_COPY.count(input.passes.length)}`)}
+${muted('0 0 16px', escapeHtml(input.bundleName))}
 ${input.mode === 'test' ? testNoteHtml(HOLDER_COPY.testNote('bundle')) : ''}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border-collapse:collapse">${rows}</table>
 ${actions}

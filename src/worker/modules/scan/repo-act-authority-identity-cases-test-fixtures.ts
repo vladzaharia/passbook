@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { expectBlocked, raceGate } from './act-authority-test-fixtures.ts';
 import { act, kit, out, retireCredential, rows, tpl } from './act-test-fixtures.ts';
@@ -22,10 +23,12 @@ export function registerAuthorityIdentity() {
       );
       if (!identity) throw new Error('Missing signing identity');
       const set = (db: D1Database, team: string, type: string) =>
-        run(
-          db,
-          'UPDATE signing_identities SET team_identifier = ?, pass_type_identifier = ? WHERE id = ?',
-          [team, type, pass.identityId],
+        withoutTrigger(db, 'signing_identities_pti_immutable', () =>
+          run(
+            db,
+            'UPDATE signing_identities SET team_identifier = ?, pass_type_identifier = ? WHERE id = ?',
+            [team, type, pass.identityId],
+          ),
         );
       try {
         const response = await raceGate(

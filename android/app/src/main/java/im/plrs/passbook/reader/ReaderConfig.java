@@ -7,11 +7,15 @@ import java.util.Arrays;
 import java.util.List;
 
 public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String barcodeAction,
-                           String barcodeExtra) {
+                           String barcodeExtra, boolean unverifiedScanners) {
     public static final String LOCAL_ORIGIN = "https://appassets.androidplatform.net";
     public static final String HOME = LOCAL_ORIGIN + "/assets/index.html";
     public static final String DEFAULT_VERIFIER = "https://passbook.mobile/scan";
     public static final String DEFAULT_ID = "pass.im.plrs.wallet";
+
+    public ReaderConfig(String verifierUrl, List<String> passTypeIds, String barcodeAction, String barcodeExtra) {
+        this(verifierUrl, passTypeIds, barcodeAction, barcodeExtra, false);
+    }
 
     public ReaderConfig {
         verifierUrl = verifierUrl.trim();
@@ -54,13 +58,14 @@ public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String 
     public static ReaderConfig load(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("reader", Context.MODE_PRIVATE);
         return new ReaderConfig(prefs.getString("url", DEFAULT_VERIFIER), parseIds(prefs.getString("ids", DEFAULT_ID)),
-            prefs.getString("action", ""), prefs.getString("extra", ""));
+            prefs.getString("action", ""), prefs.getString("extra", ""), prefs.getBoolean("unverifiedScanners", false));
     }
 
     public void save(Context context) {
         context.getSharedPreferences("reader", Context.MODE_PRIVATE).edit()
             .putString("url", verifierUrl).putString("ids", String.join("\n", passTypeIds))
-            .putString("action", barcodeAction).putString("extra", barcodeExtra).apply();
+            .putString("action", barcodeAction).putString("extra", barcodeExtra)
+            .putBoolean("unverifiedScanners", unverifiedScanners).apply();
     }
 
     public static List<String> parseIds(String text) {

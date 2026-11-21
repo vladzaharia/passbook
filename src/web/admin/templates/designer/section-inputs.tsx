@@ -36,7 +36,6 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
         label="Label"
         value={spec.label}
         merge={`in-label:${spec.name}`}
-        help="Shown on the form when creating a pass."
         op={(v) => ({ op: 'input-set', name: spec.name, patch: { label: v } })}
       />
       {spec.type === 'list' ? (
@@ -74,7 +73,6 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
             label="Sample"
             value={spec.sample}
             options={choices(spec)}
-            help="Shown in the preview."
             onPick={(v) => set({ sample: v })}
           />
         </div>
@@ -90,7 +88,6 @@ function InputEditor({ spec, names }: { spec: InputSpec; names: string[] }) {
             label="Sample"
             value={spec.sample}
             merge={`in-sample:${spec.name}`}
-            help="Shown in the preview."
             error={
               spec.required && spec.sample === '' ? 'A required input needs a sample.' : undefined
             }
@@ -238,7 +235,6 @@ export function InputsSection() {
           label="List title"
           value={show(display.title)}
           options={withCustom(display.title)}
-          help="What a pass is called in lists."
           onPick={(v) =>
             v !== '__custom' && edit({ op: 'display', part: 'title', expr: v === 'none' ? '' : v })
           }

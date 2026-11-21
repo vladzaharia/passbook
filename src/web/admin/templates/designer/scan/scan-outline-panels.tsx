@@ -256,9 +256,6 @@ function Palette({ editor: e, initial = false }: { editor: Editor; initial?: boo
           <legend className="mb-2 text-sm font-medium text-fg-strong">
             Choose a starting panel
           </legend>
-          <p className="text-xs text-fg-muted">
-            An empty panel needs a row before it can be saved.
-          </p>
           <div className="grid gap-2 sm:grid-cols-2">
             {PRESET_ORDER.map((id) => (
               <OptionTile
@@ -275,7 +272,6 @@ function Palette({ editor: e, initial = false }: { editor: Editor; initial?: boo
               name="scan-preset"
               value="empty"
               label="Empty panel"
-              description="Choose rows yourself"
               checked={choice === 'empty'}
               onSelect={() => setChoice('empty')}
             />

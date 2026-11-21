@@ -6,6 +6,7 @@ import {
   makeTemplate,
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
+import { MAC_REVEAL_SCRIPT } from '../../../shared/device.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
@@ -34,7 +35,7 @@ const get = (path: string, headers: Record<string, string> = {}) =>
 const actor = { type: 'user', id: 'admin-1' } as const;
 
 describe('GET /p/:token', () => {
-  it('renders the pass without script, with a no-JS back toggle and a download link', async () => {
+  it('renders the pass with one nonced inline script, no card flip and a download link', async () => {
     const pass = await kit.pass();
     // A Mac: the badge sits beside the QR.
     const res = await get(`/p/${await linkToken(kit.env, pass)}`, {
@@ -51,15 +52,14 @@ describe('GET /p/:token', () => {
     expect(html).toContain('rel="apple-touch-icon"');
     expect(html).toContain('<meta name="theme-color"');
     expect(html).not.toContain('theme-toggle');
-    expect(html).toMatch(
-      /<input id="pc-flip" type="radio" class="pc-flip-toggle pc-sr" name="pc-flip"/,
-    );
-    expect(html).toContain(
-      '<label for="pc-flip-front">Front</label><label for="pc-flip">Details</label>',
-    );
+    // One details on the page: the list, not a flip to the card's back as well.
+    expect(html).not.toContain('pc-flip-toggle');
     expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
-    expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
+    // The one inline script: a Mac agent may be an iPad, the browser shows the Mac's badge.
+    const inline = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)];
+    expect(inline.map((m) => m[1])).toEqual([MAC_REVEAL_SCRIPT]);
+    expect(html).toMatch(/<script nonce="[^"]+">if\(/);
   });
 
   it('does not advertise native wallets without approved projections and accounts', async () => {
@@ -126,21 +126,25 @@ describe('GET /p/:token', () => {
   });
 
   it.each([
-    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, false],
-    ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, false],
-    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, true],
-    ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36', true, true],
-  ])('keeps the Apple badge available on %s', async (_name, ua, qr, guidance) => {
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1', false, true],
+    ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', true, true],
+    ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1', true, false],
+    [
+      'Windows',
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36',
+      true,
+      false,
+    ],
+  ])('on %s: the QR off the phone, the badge only where it adds', async (_name, ua, qr, badge) => {
     const pass = await kit.pass();
     const html = await (
       await get(`/p/${await linkToken(kit.env, pass)}`, { 'user-agent': ua })
     ).text();
-    expect(html.includes('Scan with the camera.')).toBe(qr);
-    expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
-    expect(html).toContain('alt="Add to Apple Wallet"');
-    expect(html.includes('Open this page on your phone to add the pass to your wallet.')).toBe(
-      guidance,
-    );
+    expect(html.includes('Scan with your iPhone camera.')).toBe(qr);
+    expect(html.includes(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`)).toBe(badge);
+    expect(html.includes('alt="Add to Apple Wallet"')).toBe(badge);
+    // Without a badge there is nothing for Apple's open-elsewhere line to explain.
+    expect(html).not.toContain('Open this page on your phone to add the pass to your wallet.');
   });
 
   it('asks in-app browsers to open Safari', async () => {
@@ -152,7 +156,7 @@ describe('GET /p/:token', () => {
     expect(html).toContain('Open in Safari to add to Apple Wallet.');
   });
 
-  it('leads with a QR of this page for desktop visitors, on the buddy’s sign', async () => {
+  it('leads with a QR of this page for desktop visitors, on a plain tile', async () => {
     const pass = await kit.pass();
     const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36';
     const html = await (
@@ -164,7 +168,7 @@ describe('GET /p/:token', () => {
     expect(qr?.[2]).toBeTruthy();
     const svg = atob((qr?.[1] ?? '').split(',')[1] ?? '');
     expect(svg).toContain('<svg');
-    expect(html).toContain('Scan with the camera.');
+    expect(html).toContain('Scan with your iPhone camera.');
     // The scan opens this page on the iPhone, whose badge adds.
     expect(html).toMatch(
       /<div class="wl-sign">[\s\S]*?<span class="wl-sign-qr [^"]*"><img src="data:/,
