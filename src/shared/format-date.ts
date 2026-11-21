@@ -36,7 +36,9 @@ export function formatEndedOn(
   if (!Number.isFinite(at)) return null;
   // A date-only expiry is a calendar day, not an instant: UTC keeps it from showing a day early.
   const dateOnly =
-    state === 'expired' && typeof pass.expirationDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(pass.expirationDate);
+    state === 'expired' &&
+    typeof pass.expirationDate === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(pass.expirationDate);
   try {
     return formatDayIn(at, dateOnly ? 'UTC' : timeZone, locale);
   } catch {
