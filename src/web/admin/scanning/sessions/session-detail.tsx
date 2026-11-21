@@ -13,6 +13,7 @@ import { AddDeviceDialog } from './add-device-dialog.tsx';
 import { useUpdateSession } from './api.ts';
 import { DeviceCard } from './device-card.tsx';
 import { DeviceSheet } from './device-sheet.tsx';
+import { PairSheet } from './pair-sheet.tsx';
 import { EndSessionDialog } from './end-session-dialog.tsx';
 import { SessionActions } from './session-actions.tsx';
 import { SessionActivity } from './session-activity.tsx';
@@ -42,7 +43,7 @@ export function SessionDetail({
 }) {
   const update = useUpdateSession(s.id);
   const setupNote = useCreated<string>(`scan-setup:${s.id}`);
-  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | HoursDialog | undefined>(
+  const [dialog, setDialog] = useState<'rules' | 'add' | 'pair' | 'end' | HoursDialog | undefined>(
     canManage && addDevice ? 'add' : undefined,
   );
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ export function SessionDetail({
           canManage ? (
             <SessionActions
               session={s}
-              onPair={() => setDialog('add')}
+              onPair={() => setDialog('pair')}
               onDuplicate={() => onDuplicate(s)}
               onEnd={() => setDialog('end')}
             />
@@ -187,6 +188,9 @@ export function SessionDetail({
           deviceNames={s.devices.map((d) => d.name)}
           onClose={() => setDialog(undefined)}
         />
+      ) : null}
+      {canManage && dialog === 'pair' ? (
+        <PairSheet sessionId={s.id} onClose={() => setDialog(undefined)} />
       ) : null}
       {canManage && dialog === 'end' ? (
         <EndSessionDialog session={s} onClose={() => setDialog(undefined)} />

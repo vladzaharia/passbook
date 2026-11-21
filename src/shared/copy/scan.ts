@@ -217,6 +217,7 @@ export const SCAN_COPY = {
     tryAgain: 'Try again',
     startScanning: 'Start scanning',
     pair: 'Pair',
+    join: 'Join',
     pairAgain: 'Pair again',
     reload: 'Reload',
     endShift: 'End shift',

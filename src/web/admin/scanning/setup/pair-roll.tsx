@@ -15,7 +15,7 @@ export interface PairDevice {
 }
 
 /** One device's code: counts down, polls for the device, and asks for a new code when spent. */
-function Slot({
+export function PairSlot({
   device,
   onPaired,
   pollMs,
@@ -117,7 +117,7 @@ export function PairRoll({
   const all = devices.length > 0 && devices.every((d) => paired.has(d.id));
   return (
     <section aria-label="Pair devices" className="grid gap-4">
-      {next ? <Slot key={next.id} device={next} onPaired={onPaired} pollMs={pollMs} /> : null}
+      {next ? <PairSlot key={next.id} device={next} onPaired={onPaired} pollMs={pollMs} /> : null}
       <div className="flex flex-wrap items-center gap-3">
         <p role="status" className="text-sm font-semibold text-fg-strong tabular-nums">
           <span key={paired.size} className="wl-digit inline-block">

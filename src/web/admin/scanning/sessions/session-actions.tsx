@@ -5,7 +5,7 @@ import { useUpdateSession } from './api.ts';
 
 /**
  * The header's actions: Pair devices, Scan as Admin, and More (Pause, Duplicate, End).
- * Pair devices opens the add-device dialog until the rolling pairing sheet lands.
+ * Pair devices opens the rolling pairing sheet.
  */
 export function SessionActions({
   session: s,

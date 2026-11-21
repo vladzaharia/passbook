@@ -17,6 +17,7 @@ export type BootScreen =
   | { s: 'pair'; error?: string | null; busy?: boolean }
   | {
       s: 'confirm';
+      sessionName?: string | null;
       scannerName: string;
       orgName: string;
       mode?: 'test' | 'live';
@@ -110,6 +111,7 @@ export function ScanAppView({
     body = (
       <PairConfirm
         scannerName={screen.scannerName}
+        sessionName={screen.sessionName}
         orgName={screen.orgName}
         {...(screen.mode ? { mode: screen.mode } : {})}
         error={screen.error ?? null}
