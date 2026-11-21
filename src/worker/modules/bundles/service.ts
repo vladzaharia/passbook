@@ -14,6 +14,7 @@ import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../
 import { principalOf, withIdempotency } from '../../platform/idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
+import { mayMailElsewhere } from '../passes/pass-service-delivery.ts';
 import { assertWritableMode, type ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
 import { enqueueBundleEmail, RECIPIENT_NOT_HOLDER } from './email-queue.ts';
@@ -289,8 +290,7 @@ export async function sendBundleEmail(
   assertWritableMode(orgScope, row.mode, 'bundle');
   const to = input.to ?? row.holder_email;
   if (!to) throw new ValidationError('The bundle has no email.', [], 'NO_RECIPIENT');
-  // API keys may not turn this into a mail relay.
-  if (actor.type !== 'user' && to.toLowerCase() !== row.holder_email?.toLowerCase())
+  if (to.toLowerCase() !== row.holder_email?.toLowerCase() && !mayMailElsewhere(actor, authority))
     throw new ValidationError('Only the bundle email can be used.', [], 'RECIPIENT_NOT_HOLDER');
   const send = () =>
     enqueueBundleEmail(

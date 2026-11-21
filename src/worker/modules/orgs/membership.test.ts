@@ -461,7 +461,8 @@ describe('organization memberships', () => {
     await run(env.DB, 'UPDATE users SET name = ? WHERE id = ?', ['Named Member', person.id]);
     const count = mail.length;
     const { token } = await join(org.id, person);
-    expect(mail[count]?.text).toContain(`Join ${org.name} on PassBook`);
+    expect(mail[count]?.text).toContain('You are invited to PassBook');
+    expect(mail[count]?.text).toContain(org.name);
     expect(mail[count]?.html).toContain(org.name);
     const members = OrgMemberListSchema.parse(
       await (await call('GET', `/${org.id}/memberships`)).json(),

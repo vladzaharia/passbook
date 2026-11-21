@@ -13,11 +13,22 @@ interface PinCounterScope {
   allKey: string;
   allWindow: number;
   scannerCap: number;
+  /** Wrong PINs for one named person across every paired device, in the window starting at `since`. */
+  staffAcrossDevices?: { staffId: string; since: number; cap: number };
 }
 
 export function preparePinCounters(db: D1Database, scope: PinCounterScope) {
-  const { guard, markerKey, personKey, personWindow, personCap, allKey, allWindow, scannerCap } =
-    scope;
+  const {
+    guard,
+    markerKey,
+    personKey,
+    personWindow,
+    personCap,
+    allKey,
+    allWindow,
+    scannerCap,
+    staffAcrossDevices,
+  } = scope;
   const marker = (state: number): PinReservationGuard => ({
     sql: 'EXISTS (SELECT 1 FROM counters WHERE key=? AND window_start=? AND count=?)',
     params: [markerKey, personWindow, state],
@@ -58,14 +69,17 @@ export function preparePinCounters(db: D1Database, scope: PinCounterScope) {
       'COALESCE((SELECT count FROM counters WHERE key=? AND window_start=?),0) < ?',
       [key, window, cap],
     );
+  const underPersonCap = and(underCap(1, personKey, personWindow, personCap), 'changes()=1');
+  const personGuess = staffAcrossDevices
+    ? and(
+        underPersonCap,
+        `COALESCE((SELECT SUM(count) FROM counters WHERE key LIKE 'scan:pin:%:' || ? AND window_start>=?),0) < ?`,
+        [staffAcrossDevices.staffId, staffAcrossDevices.since, staffAcrossDevices.cap],
+      )
+    : underPersonCap;
   const stmts = [
     bumpIfStmt(db, markerKey, personWindow, guarded(emptyMarker)),
-    bumpIfStmt(
-      db,
-      personKey,
-      personWindow,
-      guarded(and(underCap(1, personKey, personWindow, personCap), 'changes()=1')),
-    ),
+    bumpIfStmt(db, personKey, personWindow, guarded(personGuess)),
     bumpIfStmt(db, markerKey, personWindow, guarded(changed(1))),
     bumpIfStmt(db, allKey, allWindow, guarded(underCap(2, allKey, allWindow, scannerCap))),
     bumpIfStmt(db, markerKey, personWindow, guarded(changed(2)), 2),

@@ -192,6 +192,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
       const orgCol = `COALESCE(k.org_id, ${b.bind(named)})`;
       const live = `${withParams(b.params, keyLive('k', now, true))}
         AND (k.org_id IS NULL OR ${b.bind(named)} IS NULL OR k.org_id = ${b.bind(named)})
+        AND (k.org_id IS NOT NULL OR o.personal_user_id IS NULL)
         AND ${withParams(b.params, keyHoldsScope('k', p.scope))}
         AND ${developerTestOnly('o', 'k.mode')}`;
       const orgNone = `COALESCE(k.org_id, ${b.bind(named)}) IS NULL`;

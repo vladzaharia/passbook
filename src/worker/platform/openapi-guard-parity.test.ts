@@ -116,7 +116,8 @@ describe('OpenAPI document and guards agree', () => {
       expect(scopesOf('post', path)).toEqual(['scans:write']);
     expect(scopesOf('post', '/api/v1/passes/bulk-reissue')).toEqual(['passes:write']);
     expect(scopesOf('post', '/api/v1/passes/bulk-print')).toEqual(['passes:write']);
-    expect(scopesOf('get', '/api/v1/passes/bulk-print/{jobId}')).toEqual(['passes:read']);
+    expect(scopesOf('get', '/api/v1/passes/bulk-print/{jobId}')).toEqual(['passes:write']);
+    expect(scopesOf('get', '/api/v1/passes/bulk-print/{jobId}/pdf')).toEqual(['passes:write']);
     expect(scopesOf('delete', '/api/v1/pass-imports/{id}')).toEqual(['passes:write']);
     expect(scopesOf('post', '/api/v1/pass-imports/{id}/remove-created')).toEqual([]);
   });

@@ -39487,7 +39487,7 @@
     },
     "/api/v1/orgs/{orgId}/exports/{exportId}/link": {
       "post": {
-        "summary": "Get a download link for a finished export, good for 24 hours",
+        "summary": "Get a download link for a finished export, good for 1 hour, one download",
         "tags": [
           "org-lifecycle"
         ],
@@ -58931,6 +58931,16 @@
     },
     "/api/v1/passes/bulk-print/{jobId}": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "State of a bulk Print job",
         "tags": [
           "passes"
@@ -59015,16 +59025,6 @@
           "resource": "printJobs",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "apiKey": [
-              "passes:read"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
@@ -59118,6 +59118,16 @@
     },
     "/api/v1/passes/bulk-print/{jobId}/pdf": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "The combined PDF of a finished bulk Print job",
         "tags": [
           "passes"
@@ -59164,16 +59174,6 @@
           "resource": "printJobs",
           "method": "downloadPdf"
         },
-        "security": [
-          {
-            "apiKey": [
-              "passes:read"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",

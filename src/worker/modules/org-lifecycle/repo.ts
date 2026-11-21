@@ -14,12 +14,13 @@ export interface LifecycleRow {
   purge_voided_at: number | null;
   purged_at: number | null;
   closed_identity_id: string | null;
+  personal_user_id: string | null;
   held: number;
 }
 
 const HELD = `EXISTS (SELECT 1 FROM retention_holds h WHERE h.org_id = orgs.id AND h.released_at IS NULL)`;
 const SELECT = `SELECT id, slug, name, status, default_identity_id, closed_at, purge_after, purge_started_at,
-  purge_voided_at, purged_at, closed_identity_id, ${HELD} AS held FROM orgs`;
+  purge_voided_at, purged_at, closed_identity_id, personal_user_id, ${HELD} AS held FROM orgs`;
 
 export const lifecycleRow = (db: D1Database, id: string) =>
   first<LifecycleRow>(db, `${SELECT} WHERE id = ?`, [id]);
@@ -121,6 +122,29 @@ export const exportRows = (db: D1Database, orgId: string) =>
     `SELECT ${EXPORT_COLUMNS} FROM org_exports WHERE org_id = ? ORDER BY created_at DESC, id DESC LIMIT 50`,
     [orgId],
   );
+
+/** Remembers the newest link's expiry and reopens it: an older link no longer matches. */
+export async function setExportLink(db: D1Database, id: string, exp: number): Promise<void> {
+  await stmt(db, 'UPDATE org_exports SET link_exp = ?, link_used_at = NULL WHERE id = ?', [
+    exp,
+    id,
+  ]).run();
+}
+
+/** Spends the link once: true for the first caller holding the newest link's expiry. */
+export async function consumeExportLink(
+  db: D1Database,
+  id: string,
+  exp: number,
+  now: number,
+): Promise<boolean> {
+  const r = await stmt(
+    db,
+    'UPDATE org_exports SET link_used_at = ? WHERE id = ? AND link_exp = ? AND link_used_at IS NULL',
+    [now, id, exp],
+  ).run();
+  return (r.meta.changes ?? 0) === 1;
+}
 
 /** queued to running; false when another run owns it or it is done (an idempotent re-run). */
 export async function claimExport(db: D1Database, id: string): Promise<boolean> {

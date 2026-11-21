@@ -33,6 +33,8 @@ export const PIN_MISSES_PER_PERSON = 5;
 export const PIN_PERSON_WINDOW_MS = 5 * MINUTE;
 export const PIN_MISSES_PER_SCANNER = 20;
 export const PIN_SCANNER_WINDOW_MS = 60 * MINUTE;
+/** One person's wrong PINs per hour across all paired devices, so more devices do not mean more guesses. */
+export const PIN_MISSES_PER_STAFF_HOUR = 30;
 const windowOf = (now: number, size: number) => now - (now % size);
 
 export type PinReservationGuard = ScanPredicate;
@@ -80,6 +82,15 @@ export function preparePinReservation(
     allKey,
     allWindow,
     scannerCap,
+    ...(staffId === ANY_MANAGER || staffId === ANY_STAFF
+      ? {}
+      : {
+          staffAcrossDevices: {
+            staffId,
+            since: now - PIN_SCANNER_WINDOW_MS,
+            cap: PIN_MISSES_PER_STAFF_HOUR,
+          },
+        }),
   });
   const stmts = counters.stmts;
   let used = false;
