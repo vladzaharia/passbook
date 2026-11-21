@@ -33,7 +33,13 @@ export async function reviewTemplate(
 ): Promise<ReviewResult> {
   if (auth.kind === 'api_key' && auth.mode !== 'test') throw keyTestOnly();
   const authority = await authorizeTemplateWrite(ctx, auth, orgId, 'templates:review');
-  if (body.release) await authorizeTemplateWrite(ctx, auth, orgId, 'templates:publish');
+  if (body.release)
+    await authorizeTemplateWrite(
+      ctx,
+      stepAuth(auth, 'test', 'templates:publish'),
+      orgId,
+      'templates:publish',
+    );
   const keyMode: Mode[] | null = auth.kind === 'api_key' ? [auth.mode] : null;
   const sandbox = await isPreviewOnlyOrg(ctx.env.DB, orgId);
   const modes: Mode[] = keyMode ?? (sandbox ? ['test'] : ['test', 'live']);
