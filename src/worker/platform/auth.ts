@@ -26,7 +26,7 @@ import { enforceRateLimit } from './rate-limit.ts';
 import type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
 import type { ScannerAuth } from './scanner-auth.ts';
 import { serviceContext } from './service-context.ts';
-import { assertSignIn, declareSignIn } from './sign-in-guard.ts';
+import { assertSignIn, assertStepUp, declareSignIn } from './sign-in-guard.ts';
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
@@ -48,6 +48,8 @@ export interface SessionAuth {
   amr: Amr;
   /** An email session still inside the console grace window: when it ends (ms). Null otherwise. */
   consoleUntil?: number | null;
+  /** When the sign-in was last proven (ms); null for an email link or a provider that sent no `auth_time`. */
+  authTime?: number | null;
   /**
    * Stores resolve 'live'. Admin guards replace it from the x-passbook-mode header; holder routes
    * never read it (holders see all their passes).
@@ -238,6 +240,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const tillKey = 'scope' in auth && auth.tillKey === true;
   const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
   const sessionKind = sessionKindOf(auth);
+  const stepUp = auth.stepUp;
   const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
@@ -273,6 +276,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       return next();
     }
     const session = await sessionOrThrow(c, level);
+    if (stepUp) assertStepUp(c, session, stepUp.maxAgeSec);
     if (sessionKind === 'admin') requireAdminRole(c, session);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };

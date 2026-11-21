@@ -378,6 +378,8 @@ export async function makeSession(
     amr?: 'oidc' | 'magic_link' | 'breakglass';
     /** Idle and absolute lifetime, for suites that advance their clock past the defaults. */
     lifetimeMs?: number;
+    /** When the sign-in was proven (ms). Default: now for Polaris ID and break-glass; an email link has none. */
+    authTime?: number | null;
   },
 ): Promise<SessionFixture> {
   const cookieValue = f.ids.token();
@@ -386,12 +388,13 @@ export async function makeSession(
   const roles = options.roles ?? ['user'];
   await run(
     f.env.DB,
-    `INSERT INTO sessions (id_hash, user_id, amr, roles, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO sessions (id_hash, user_id, amr, auth_time, roles, csrf_secret, created_at, last_seen_at, idle_expires_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       await sha256Hex(cookieValue),
       options.userId,
       options.amr ?? 'oidc',
+      options.authTime !== undefined ? options.authTime : options.amr === 'magic_link' ? null : now,
       JSON.stringify(roles),
       csrf,
       now,

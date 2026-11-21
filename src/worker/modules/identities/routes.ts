@@ -18,6 +18,7 @@ import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { probeApns } from './apns-probe.ts';
@@ -47,6 +48,9 @@ guard(
     isOrgList(c) ? requireTenantSession(c, next) : requireAdmin(c, next),
   ),
 );
+
+// Revoking a certificate is irreversible: a recent sign-in.
+identitiesRoutes.post('/:id/revoke-certificate', requireStepUp(STEP_UP_SECONDS));
 
 register(
   identitiesRoutes,

@@ -24,6 +24,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { assertStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { listMyOrgMemberships } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
@@ -153,16 +154,15 @@ register(
     status: 201,
     response: OrgInvitationSchema,
   },
-  async (c) =>
-    c.json(
-      await inviteOrgMember(
-        serviceContext(c),
-        session(c),
-        c.req.valid('param').id,
-        c.req.valid('json'),
-      ),
+  async (c) => {
+    const input = c.req.valid('json');
+    // Inviting an org admin hands over the org: a recent sign-in. Other roles do not ask.
+    if (input.roles.includes('org_admin')) assertStepUp(c, session(c), STEP_UP_SECONDS);
+    return c.json(
+      await inviteOrgMember(serviceContext(c), session(c), c.req.valid('param').id, input),
       201,
-    ),
+    );
+  },
 );
 register(
   membershipRoutes,

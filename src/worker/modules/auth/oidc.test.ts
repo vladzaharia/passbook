@@ -121,6 +121,19 @@ describe('oidc sign-in', () => {
     expect(new URL(plain.headers.get('location') ?? '').searchParams.has('prompt')).toBe(false);
   });
 
+  it('passes max_age=0 to the provider for a step-up, and only then', async () => {
+    const start = await h.call('/auth/oidc/start?prompt=login&max_age=0&next=%2Fadmin%2Fapi-keys');
+    const url = new URL(start.headers.get('location') ?? '');
+    expect(url.searchParams.get('prompt')).toBe('login');
+    expect(url.searchParams.get('max_age')).toBe('0');
+    for (const q of ['max_age=600', 'max_age=-1', 'max_age=x'])
+      expect(
+        new URL(
+          (await h.call(`/auth/oidc/start?${q}`)).headers.get('location') ?? '',
+        ).searchParams.has('max_age'),
+      ).toBe(false);
+  });
+
   it('never grants a role whose group variable is unset', async () => {
     h.restore();
     h = await harness({ OIDC_ADMIN_GROUP: '' });

@@ -110,6 +110,7 @@ export async function resolveSession(
     csrfSecret: row.csrf_secret,
     amr: row.amr,
     consoleUntil: row.console_until,
+    authTime: row.auth_time,
     mode: 'live',
     expiresAt: Math.min(row.expires_at, row.idle_expires_at),
   };

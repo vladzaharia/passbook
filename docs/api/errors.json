@@ -4266,6 +4266,15 @@
       ]
     },
     {
+      "code": "STEP_UP_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "TAGS_OFF",
       "statuses": [
         409

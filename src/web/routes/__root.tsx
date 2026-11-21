@@ -7,6 +7,7 @@ import { useSession } from '../lib/session.ts';
 import { BareLayout } from '../ui/layout/bare-layout.tsx';
 import { StandaloneError } from '../ui/layout/error-pages.tsx';
 import { PortalLayout } from '../ui/layout/portal-layout.tsx';
+import { StepUpDialog } from '../ui/step-up-dialog.tsx';
 
 /** Discard state and initial-data seeds when the authenticated principal changes. */
 export function PrincipalBoundary({ children }: { children: ReactNode }) {
@@ -26,6 +27,7 @@ function RootComponent() {
     <PrincipalBoundary>
       <SkipLink />
       <RouteAnnouncer />
+      <StepUpDialog />
       {isAdminPath(pathname) ? (
         <Outlet />
       ) : isPublicPath(pathname) ? (

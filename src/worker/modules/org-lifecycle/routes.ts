@@ -15,6 +15,7 @@ import { requireAdmin, requireStrictSession } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import type { LifecycleActor } from './repo.ts';
@@ -53,6 +54,14 @@ orgLifecycleRoutes.use('*', async (c, next) => {
 orgLifecycleRoutes.use('/:orgId/reopen', requireAdmin);
 // Closing an org is a strong sign-in with no email-link grace, so the refusal names Polaris ID.
 orgLifecycleRoutes.use('/:orgId/close', requireStrictSession);
+// Close, reopen and export are the actions that end or empty an org: a recent sign-in.
+for (const path of [
+  '/:orgId/close',
+  '/:orgId/reopen',
+  '/:orgId/exports',
+  '/:orgId/exports/:exportId/link',
+])
+  orgLifecycleRoutes.post(path, requireStepUp(STEP_UP_SECONDS));
 
 register(
   orgLifecycleRoutes,

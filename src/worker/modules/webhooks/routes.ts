@@ -20,6 +20,7 @@ import {
 import { actorOf } from '../../platform/context.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeStoredEndpoint, authorizeWebhooks, webhookOrg } from './access.ts';
 import { registerCaptureRoutes } from './routes-captures.ts';
@@ -37,6 +38,9 @@ const CreateQuerySchema = z.object({ validate: z.literal('1').optional() });
  */
 export const webhookEndpointsRoutes = createRouter();
 guard(webhookEndpointsRoutes, requireTenantSessionOrApiKey(['webhooks:manage']));
+// Rotating or reading a signing secret hands over a credential: a recent sign-in, for a person (not a key).
+webhookEndpointsRoutes.post('/:id/secret', requireStepUp(STEP_UP_SECONDS));
+webhookEndpointsRoutes.post('/:id/captures/secret', requireStepUp(STEP_UP_SECONDS));
 
 register(
   webhookEndpointsRoutes,

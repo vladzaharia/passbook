@@ -78,7 +78,7 @@ async function beginFlow(
   c: Context<AppBindings>,
   rp: RelyingParty,
   discovered: Discovered,
-  input: { next: string | null; prompt?: 'login'; retried?: boolean },
+  input: { next: string | null; prompt?: 'login'; maxAge?: 0; retried?: boolean },
 ) {
   const ctx = serviceContext(c);
   const secrets = await newFlowSecrets();
@@ -101,6 +101,7 @@ async function beginFlow(
       nonce: secrets.nonce,
       codeChallenge: secrets.challenge,
       ...(input.prompt ? { prompt: input.prompt } : {}),
+      ...(input.maxAge === 0 ? { maxAge: 0 as const } : {}),
     }),
     302,
   );
@@ -118,10 +119,12 @@ export async function startOidc(c: Context<AppBindings>) {
     ctx.log.error('auth.oidc_discovery_failed', { error });
     throw new UpstreamError('Sign-in provider is unreachable.', 'OIDC_UNREACHABLE');
   }
-  // "Use another Polaris ID" (/auth/no-access) asks the provider to sign in again.
+  // "Use another Polaris ID" (/auth/no-access) and a step-up ask the provider to sign in again;
+  // max_age=0 makes it re-authenticate and put a new auth_time in the ID token.
   return beginFlow(c, rp, discovered, {
     next: safeNext(c.req.query('next')),
     ...(c.req.query('prompt') === 'login' ? { prompt: 'login' as const } : {}),
+    ...(c.req.query('max_age') === '0' ? { maxAge: 0 as const } : {}),
   });
 }
 

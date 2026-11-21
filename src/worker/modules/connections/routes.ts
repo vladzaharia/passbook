@@ -22,6 +22,7 @@ import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeConnection, authorizeStoredConnection as authorizeStored } from './access.ts';
 import * as actions from './actions.ts';
@@ -61,6 +62,8 @@ guard(
     methodScope({ read: 'connections:read', write: 'connections:write' }),
   ),
 );
+// A new webhook secret is a credential: a recent sign-in, for a person (not a key).
+connectionsRoutes.post('/:id/webhook-secret', requireStepUp(STEP_UP_SECONDS));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
 register(

@@ -13,6 +13,11 @@ export type ScopeRule = ApiScope | readonly ApiScope[] | { read: ApiScope; write
  * Who may call a route. Declared once per route (`RouteSpec.auth`); `requireCaller` enforces it and
  * `openapi-security.ts` writes it into the document, so the two cannot disagree.
  */
+/** A session must have signed in within `maxAgeSec`, else 403 STEP_UP_REQUIRED. Keys are never asked. */
+export interface StepUp {
+  maxAgeSec: number;
+}
+
 export type RouteAuth =
   /**
    * A bearer API key holding the scope, or else a tenant cookie session. `capability` is what the
@@ -33,6 +38,7 @@ export type RouteAuth =
        * Set it per route, never on a router guard, and only where every read and write goes through those two.
        */
       templateScoped?: true;
+      stepUp?: StepUp;
     }
   /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
   | {
@@ -44,6 +50,7 @@ export type RouteAuth =
        * grace. `any` admits an email link (holder features); `strict` takes no grace.
        */
       signIn?: 'any' | 'strict';
+      stepUp?: StepUp;
     }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
-  | { platform: PlatformScope };
+  | { platform: PlatformScope; stepUp?: StepUp };
