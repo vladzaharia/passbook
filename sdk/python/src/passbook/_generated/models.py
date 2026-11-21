@@ -300,10 +300,12 @@ __all__ = [
     "HoldersUnassignBody",
     "HoldersUnassignParams",
     "HoldersUnassignResult",
+    "IdentitiesCertificatesRevokeParams",
     "IdentitiesCreateParams",
     "IdentitiesPushKeyUploadParams",
     "IdentitiesRotateParams",
     "IdentitiesUpdateParams",
+    "IdentityRunsStartManagedParams",
     "InvitationsCreateParams",
     "JoinLinksUpsertParams",
     "LegalHoldsCreateParams",
@@ -677,6 +679,8 @@ __all__ = [
     "PlatformTemplatesShareParams",
     "PlatformUsersEmailsCreateParams",
     "PlatformUsersUpdateParams",
+    "PlatformWalletAccountsGoogleManagedCompleteParams",
+    "PlatformWalletAccountsGoogleManagedCreateParams",
     "PlatformWalletCredentialsResolveMigrationParams",
     "PlatformWalletCredentialsRevokeParams",
     "PlatformWalletCredentialsUpsertParams",
@@ -966,6 +970,8 @@ __all__ = [
     "VisitorsSendHostEmailBody",
     "VisitorsSendHostEmailParams",
     "VisitorsSendHostEmailResult",
+    "WalletAccountsGoogleManagedCreateParams",
+    "WalletAccountsGoogleSharedCreateParams",
     "WalletCredentialsRevokeParams",
     "WalletCredentialsUpsertParams",
     "WalletCredentialsUpsertParams1",
@@ -3013,6 +3019,11 @@ class HoldersUnassignResult(_Model):
     reissueRequired: bool
     updatedAt: int
 
+class IdentitiesCertificatesRevokeParams(_Model):
+    certificateId: str
+    reason: _Literal["compromised"] | str
+    confirm: str
+
 class IdentitiesCreateParams(_Model):
     orgId: str | None = None
     label: str
@@ -3037,6 +3048,11 @@ class IdentitiesUpdateParams(_Model):
     isDefault: bool | None = None
     nfcEnabled: bool | None = None
     apnsBinding: str | None = None
+    rotation: _Literal["auto", "manual"] | str | None = None
+    issuing: bool | None = None
+
+class IdentityRunsStartManagedParams(_Model):
+    handle: str | None = None
 
 class InvitationsCreateParams(_Model):
     email: str
@@ -3921,7 +3937,7 @@ class OrgsEntitlementsRetrieveResult(_Model):
     items: _List[OrgsEntitlementsRetrieveResultItemsItem]
 
 class OrgsEntitlementsRetrieveResultItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
@@ -5368,6 +5384,12 @@ class PlatformUsersEmailsCreateParams(_Model):
 
 class PlatformUsersUpdateParams(_Model):
     status: _Literal["active", "disabled"] | str
+
+class PlatformWalletAccountsGoogleManagedCompleteParams(_Model):
+    issuerId: str
+
+class PlatformWalletAccountsGoogleManagedCreateParams(_Model):
+    mode: _Literal["live"] | str
 
 class PlatformWalletCredentialsResolveMigrationParams(_Model):
     orgId: str
@@ -7539,6 +7561,12 @@ class VisitorsSendHostEmailParams(_Model):
 
 class VisitorsSendHostEmailResult(_Model):
     ok: _Literal[True]
+
+class WalletAccountsGoogleManagedCreateParams(_Model):
+    mode: _Literal["live"] | str
+
+class WalletAccountsGoogleSharedCreateParams(_Model):
+    issuerId: str
 
 class WalletCredentialsRevokeParams(_Model):
     expectedRevision: int

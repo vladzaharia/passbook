@@ -2074,6 +2074,12 @@ type HoldersUnassignResult struct {
 	UpdatedAt       int64          `json:"updatedAt"`
 }
 
+type IdentitiesCertificatesRevokeParams struct {
+	CertificateID string `json:"certificateId"`
+	Reason        string `json:"reason"`
+	Confirm       string `json:"confirm"`
+}
+
 type IdentitiesCreateParams struct {
 	OrgID          *string `json:"orgId,omitempty"`
 	Label          string  `json:"label"`
@@ -2101,6 +2107,12 @@ type IdentitiesUpdateParams struct {
 	IsDefault   *bool   `json:"isDefault,omitempty"`
 	NFCEnabled  *bool   `json:"nfcEnabled,omitempty"`
 	ApnsBinding *string `json:"apnsBinding,omitempty"`
+	Rotation    *string `json:"rotation,omitempty"`
+	Issuing     *bool   `json:"issuing,omitempty"`
+}
+
+type IdentityRunsStartManagedParams struct {
+	Handle *string `json:"handle,omitempty"`
 }
 
 type InvitationsCreateParams struct {
@@ -4635,6 +4647,14 @@ type PlatformUsersUpdateParams struct {
 	Status string `json:"status"`
 }
 
+type PlatformWalletAccountsGoogleManagedCompleteParams struct {
+	IssuerID string `json:"issuerId"`
+}
+
+type PlatformWalletAccountsGoogleManagedCreateParams struct {
+	Mode string `json:"mode"`
+}
+
 type PlatformWalletCredentialsResolveMigrationParams struct {
 	OrgID    string `json:"orgId"`
 	Mode     string `json:"mode"`
@@ -7078,6 +7098,14 @@ type VisitorsSendHostEmailParams struct {
 
 type VisitorsSendHostEmailResult struct {
 	Ok bool `json:"ok"`
+}
+
+type WalletAccountsGoogleManagedCreateParams struct {
+	Mode string `json:"mode"`
+}
+
+type WalletAccountsGoogleSharedCreateParams struct {
+	IssuerID string `json:"issuerId"`
 }
 
 type WalletCredentialsRevokeParams struct {
