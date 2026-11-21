@@ -2,7 +2,7 @@ import { Play } from 'lucide-react';
 import { useState } from 'react';
 import type { z } from 'zod';
 import type { Json } from '@/shared/contracts/common.ts';
-import type { ConnectionPreviewSchema } from '@/shared/contracts/connections.ts';
+import type { ConnectionPreviewSchema } from '@/shared/contracts/connection-preview.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { useSession } from '../../lib/session.ts';
 import { Badge, Button, Callout, Skeleton } from '../../ui/index.ts';
@@ -38,10 +38,13 @@ const FILTER: Record<CheckFilter, Sample['action'][]> = {
 
 function SampleCard({
   templateId,
+  version,
   orgId,
   input,
 }: {
   templateId: string;
+  /** The template's active version: a preview is of a release. */
+  version: string;
   orgId: string;
   input: FormValues;
 }) {
@@ -49,7 +52,7 @@ function SampleCard({
   const q = useReleasedPreview({
     templateId,
     orgId,
-    version: undefined,
+    version,
     principalId: session.authed?.user.id,
     mode: 'live',
     input,
@@ -63,7 +66,13 @@ function SampleCard({
         still
       />
     );
-  return <Skeleton className="aspect-[320/420] w-full" />;
+  return q.isError ? (
+    <p className="rounded-md border border-dashed border-border-strong p-3 text-center text-xs text-fg-muted">
+      No preview for this template.
+    </p>
+  ) : (
+    <Skeleton className="aspect-[320/420] w-full" />
+  );
 }
 
 /** What the next sync would do, over the first records: the import check's tiles and a sample card. */
@@ -72,6 +81,7 @@ export function FirstSync({
   pending,
   error,
   templateId,
+  version,
   orgId,
   canRun,
   onRun,
@@ -80,6 +90,7 @@ export function FirstSync({
   pending: boolean;
   error: unknown;
   templateId: string | null;
+  version: string | null;
   orgId: string;
   canRun: boolean;
   onRun: () => void;
@@ -142,10 +153,11 @@ export function FirstSync({
                 </li>
               ))}
           </ul>
-          {first && templateId ? (
+          {first && templateId && version ? (
             <div className="mx-auto w-full max-w-60">
               <SampleCard
                 templateId={templateId}
+                version={version}
                 orgId={orgId}
                 input={first.fields as Record<string, Json> as FormValues}
               />

@@ -1,10 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { type RefObject, useMemo, useState } from 'react';
 import type { z } from 'zod';
-import {
-  type ConnectorInfoSchema,
-  TestConfigResponseSchema,
-} from '@/shared/contracts/connections.ts';
+import { TestConfigResponseSchema } from '@/shared/contracts/connection-preview.ts';
+import type { ConnectorInfoSchema } from '@/shared/contracts/connections.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { api } from '../../lib/api.ts';
 import { Button } from '../../ui/index.ts';

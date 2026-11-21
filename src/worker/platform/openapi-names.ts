@@ -8,7 +8,7 @@ import {
   RotatedApiKeySchema,
 } from '../../shared/contracts/api-keys.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
-import { ConnectionPreviewSchema } from '../../shared/contracts/connections.ts';
+import { ConnectionPreviewSchema } from '../../shared/contracts/connection-preview.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import {
   PassImportUndoResultSchema,

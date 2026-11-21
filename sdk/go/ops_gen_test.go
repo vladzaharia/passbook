@@ -285,7 +285,7 @@ var generatedOps = []opCase{
 			if err := json.Unmarshal(body, &b); err != nil {
 				return nil, err
 			}
-			return c.Connections.TestConfig(ctx, &b)
+			return c.Connections.TestConfig(ctx, &b, nil)
 		},
 	},
 	{
@@ -315,7 +315,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"connections.preview", "POST", "/api/v1/connections/id1/preview", false,
-		"", `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
+		"", `{"ok":false,"records":0,"counts":{"create":0,"update":0,"unchanged":0,"skipped":0,"errors":0,"waiting":0},"releaseBlocked":"x","window":{"days":0,"limit":0,"since":0,"excluded":0},"samples":[{"ref":"x","action":"create","fields":{}}],"columns":[{"pointer":"x","label":"x","samples":["x"],"values":[{"value":"x","count":0}]}],"durationMs":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Connections.Preview(ctx, "id1")
 		},

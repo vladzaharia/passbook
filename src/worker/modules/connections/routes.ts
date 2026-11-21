@@ -10,6 +10,7 @@ import {
   OkSchema,
   RotateWebhookSecretQuerySchema,
   SyncNowResponseSchema,
+  TestConfigQuerySchema,
   TestConfigResponseSchema,
   TestConfigSchema,
   TestConnectionResponseSchema,
@@ -28,6 +29,7 @@ import { authorizeConnection, authorizeStoredConnection as authorizeStored } fro
 import * as actions from './actions.ts';
 import { registerConnectorCatalogRoutes } from './catalog-routes.ts';
 import { registerConnectionListRoutes } from './list-routes.ts';
+import { previewUnsaved } from './preview.ts';
 import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import * as service from './service.ts';
 import { testConfig } from './test-config.ts';
@@ -57,6 +59,7 @@ function assertLive(c: C): void {
 
 /** /api/v1/connections */
 export const connectionsRoutes = createRouter();
+registerConnectionPreviewRoute(connectionsRoutes);
 guard(
   connectionsRoutes,
   requireTenantSessionOrApiKey(
@@ -76,7 +79,6 @@ connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
-registerConnectionPreviewRoute(connectionsRoutes);
 register(
   connectionsRoutes,
   'connections',
@@ -173,6 +175,7 @@ register(
     method: 'post',
     path: '/test-config',
     summary: 'Test an unsaved configuration',
+    query: TestConfigQuerySchema,
     body: TestConfigSchema,
     response: TestConfigResponseSchema,
   },
@@ -186,6 +189,8 @@ register(
       input.orgId,
       'integrations:manage',
     );
+    if (c.req.valid('query').preview === 'true')
+      return c.json(await previewUnsaved(ctx, input, authority));
     return c.json(await testConfig(ctx, actor(c), input, authority));
   },
 );

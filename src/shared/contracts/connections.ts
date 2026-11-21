@@ -246,53 +246,6 @@ export const TestConnectionResponseSchema = z.object({
   durationMs: z.number().int(),
   sample: z.array(SampleFieldSchema).optional(),
 });
-/** What a first sync would do with the source's records. Nothing is written. */
-export const ConnectionPreviewSchema = z.object({
-  ok: z.boolean(),
-  errorCode: z.string().optional(),
-  /** Records read, at most 200. */
-  records: z.number().int(),
-  counts: z.object({
-    create: z.number().int(),
-    update: z.number().int(),
-    unchanged: z.number().int(),
-    /** Records that issue nothing: a "Don't issue" value, or issuing is off. */
-    skipped: z.number().int(),
-    errors: z.number().int(),
-  }),
-  /** First records by what they would do, with the template inputs they map to. */
-  samples: z
-    .array(
-      z.object({
-        ref: z.string().max(200),
-        action: z.enum(['create', 'update', 'unchanged', 'skipped', 'error']),
-        fields: z.record(z.string(), JsonSchema),
-        message: z.string().max(300).optional(),
-      }),
-    )
-    .max(10),
-  /** The source's own fields, three cells each, for the Map step. */
-  columns: z
-    .array(
-      z.object({
-        pointer: z.string().max(500),
-        label: z.string().max(200),
-        samples: z.array(z.string().max(80)).max(3),
-        /** Distinct text values of the records read, most common first; empty for a free-form field. */
-        values: z.array(z.object({ value: z.string().max(80), count: z.number().int() })).max(20),
-      }),
-    )
-    .max(60),
-  durationMs: z.number().int(),
-});
-/** Tests an unsaved configuration: nothing is stored; secrets are used once and dropped. */
-export const TestConfigSchema = z.object({
-  orgId: IdSchema,
-  connectorType: z.string().max(64),
-  config: z.record(z.string(), JsonSchema),
-  secrets: z.record(z.string(), z.string().max(4096)).optional(),
-});
-export const TestConfigResponseSchema = TestConnectionResponseSchema;
 /** Operator confirmation that the source system was checked for an uncertain webhook chunk. */
 export const ResolveWebhookFailureResponseSchema = z.object({
   ok: z.literal(true),

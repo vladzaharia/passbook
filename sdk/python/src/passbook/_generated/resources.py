@@ -438,10 +438,12 @@ class ConnectionsResource:
     def test_config(
         self,
         body: m.ConnectionsTestConfigBody | _Dict[str, _Any],
+        *,
+        preview: _Literal["true", "false"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.ConnectionsTestConfigResult:
         """Test an unsaved configuration `POST /api/v1/connections/test-config`"""
-        return self._core.request("POST", "/api/v1/connections/test-config", body=body, result=m.ConnectionsTestConfigResult, **opts)
+        return self._core.request("POST", "/api/v1/connections/test-config", body=body, query={"preview": preview}, result=m.ConnectionsTestConfigResult, **opts)
 
     def update(
         self,

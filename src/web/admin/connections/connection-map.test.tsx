@@ -14,7 +14,9 @@ const membership = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.s
 const preview = {
   ok: true,
   records: 9,
-  counts: { create: 4, update: 1, unchanged: 0, skipped: 3, errors: 1 },
+  counts: { create: 4, update: 1, unchanged: 0, skipped: 3, errors: 1, waiting: 0 },
+  releaseBlocked: null,
+  window: { days: 30, limit: 200, since: 1, excluded: 0 },
   samples: [
     { ref: 'o-1', action: 'skipped', fields: { name: 'Gift' } },
     { ref: 'o-2', action: 'error', fields: {}, message: 'Member name is required.' },
@@ -75,7 +77,7 @@ describe('connection map and first sync', () => {
     expect(await within(region).findByText('o-1')).toBeInTheDocument();
     expect(within(region).getByRole('button', { name: /Not issued/ })).toHaveTextContent('3');
     expect(within(region).getByText('Member name is required.')).toBeInTheDocument();
-    expect(within(region).getByText('9 records read. Nothing is written.')).toBeInTheDocument();
+    expect(within(region).getByText(/9 records from the last 30 days/)).toBeInTheDocument();
 
     await user.click(await screen.findByRole('combobox', { name: /Option for Gift card/ }));
     await user.click(await screen.findByRole('option', { name: "Don't issue" }));

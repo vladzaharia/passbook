@@ -181,6 +181,7 @@ __all__ = [
     "ConnectionPreviewColumnsItemValuesItem",
     "ConnectionPreviewCounts",
     "ConnectionPreviewSamplesItem",
+    "ConnectionPreviewWindow",
     "ConnectionsCreateBody",
     "ConnectionsCreateParams",
     "ConnectionsCreateParamsMappingValue",
@@ -223,8 +224,16 @@ __all__ = [
     "ConnectionsSyncResult",
     "ConnectionsTestConfigBody",
     "ConnectionsTestConfigParams",
+    "ConnectionsTestConfigParamsMappingValue",
+    "ConnectionsTestConfigParamsMappingValueTransform",
+    "ConnectionsTestConfigParamsVoidWhenItem",
     "ConnectionsTestConfigResult",
+    "ConnectionsTestConfigResultColumnsItem",
+    "ConnectionsTestConfigResultColumnsItemValuesItem",
+    "ConnectionsTestConfigResultCounts",
     "ConnectionsTestConfigResultSampleItem",
+    "ConnectionsTestConfigResultSamplesItem",
+    "ConnectionsTestConfigResultWindow",
     "ConnectionsTestResult",
     "ConnectionsTestResultSampleItem",
     "ConnectionsUpdateBody",
@@ -2287,6 +2296,8 @@ class ConnectionPreview(_Model):
     errorCode: str | None = None
     records: int
     counts: ConnectionPreviewCounts
+    releaseBlocked: str | None
+    window: ConnectionPreviewWindow
     samples: _List[ConnectionPreviewSamplesItem]
     columns: _List[ConnectionPreviewColumnsItem]
     durationMs: int
@@ -2307,12 +2318,19 @@ class ConnectionPreviewCounts(_Model):
     unchanged: int
     skipped: int
     errors: int
+    waiting: int
 
 class ConnectionPreviewSamplesItem(_Model):
     ref: str
     action: _Literal["create", "update", "unchanged", "skipped", "error"] | str
     fields: _Dict[str, _Any]
     message: str | None = None
+
+class ConnectionPreviewWindow(_Model):
+    days: int
+    limit: int
+    since: int
+    excluded: int
 
 class ConnectionsCreateParams(_Model):
     orgId: str
@@ -2721,6 +2739,23 @@ class ConnectionsTestConfigParams(_Model):
     connectorType: str
     config: _Dict[str, _Any]
     secrets: _Dict[str, str] | None = None
+    mapping: _Dict[str, ConnectionsTestConfigParamsMappingValue] | None = None
+    voidWhen: _List[ConnectionsTestConfigParamsVoidWhenItem] | None = None
+    autoCreate: bool | None = None
+    defaultTemplateId: str | None = None
+
+class ConnectionsTestConfigParamsMappingValue(_Model):
+    from_: str = _Field(alias="from")
+    transform: ConnectionsTestConfigParamsMappingValueTransform | None = None
+
+class ConnectionsTestConfigParamsMappingValueTransform(_Model):
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
+    options: _Dict[str, _Any] | None = None
+
+class ConnectionsTestConfigParamsVoidWhenItem(_Model):
+    from_: str = _Field(alias="from")
+    op: _Literal["in", "present"] | str
+    values: _List[str | float | bool] | None = None
 
 class ConnectionsTestConfigResult(_Model):
     ok: bool
@@ -2728,10 +2763,46 @@ class ConnectionsTestConfigResult(_Model):
     errorCode: str | None = None
     durationMs: int
     sample: _List[ConnectionsTestConfigResultSampleItem] | None = None
+    records: int | None = None
+    counts: ConnectionsTestConfigResultCounts | None = None
+    releaseBlocked: str | None = None
+    window: ConnectionsTestConfigResultWindow | None = None
+    samples: _List[ConnectionsTestConfigResultSamplesItem] | None = None
+    columns: _List[ConnectionsTestConfigResultColumnsItem] | None = None
+
+class ConnectionsTestConfigResultColumnsItem(_Model):
+    pointer: str
+    label: str
+    samples: _List[str]
+    values: _List[ConnectionsTestConfigResultColumnsItemValuesItem]
+
+class ConnectionsTestConfigResultColumnsItemValuesItem(_Model):
+    value: str
+    count: int
+
+class ConnectionsTestConfigResultCounts(_Model):
+    create: int
+    update: int
+    unchanged: int
+    skipped: int
+    errors: int
+    waiting: int
 
 class ConnectionsTestConfigResultSampleItem(_Model):
     pointer: str
     preview: str
+
+class ConnectionsTestConfigResultSamplesItem(_Model):
+    ref: str
+    action: _Literal["create", "update", "unchanged", "skipped", "error"] | str
+    fields: _Dict[str, _Any]
+    message: str | None = None
+
+class ConnectionsTestConfigResultWindow(_Model):
+    days: int
+    limit: int
+    since: int
+    excluded: int
 
 class ConnectionsTestResult(_Model):
     ok: bool

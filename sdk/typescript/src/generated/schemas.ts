@@ -427,6 +427,14 @@ export type ConnectionPreview = {
     unchanged: number;
     skipped: number;
     errors: number;
+    waiting: number;
+  };
+  releaseBlocked: string | null;
+  window: {
+    days: number;
+    limit: number;
+    since: number;
+    excluded: number;
   };
   samples: Array<{
     ref: string;
@@ -481,6 +489,20 @@ export type ConnectionsTestConfigParams = {
   connectorType: string;
   config: Record<string, unknown>;
   secrets?: Record<string, string>;
+  mapping?: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }>;
+  voidWhen?: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  autoCreate?: boolean;
+  defaultTemplateId?: string;
 };
 
 export type ConnectionsUpdateParams = {

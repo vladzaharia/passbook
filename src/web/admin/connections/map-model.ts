@@ -1,9 +1,6 @@
 import type { z } from 'zod';
-import type {
-  ConnectionPreviewSchema,
-  ConnectionSchema,
-  VoidRule,
-} from '@/shared/contracts/connections.ts';
+import type { ConnectionPreviewSchema } from '@/shared/contracts/connection-preview.ts';
+import type { ConnectionSchema, VoidRule } from '@/shared/contracts/connections.ts';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { optionOf } from '@/shared/issuing/matcher-values.ts';
 import {

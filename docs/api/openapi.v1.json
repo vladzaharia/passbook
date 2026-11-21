@@ -5339,6 +5339,9 @@
               },
               "errors": {
                 "type": "integer"
+              },
+              "waiting": {
+                "type": "integer"
               }
             },
             "required": [
@@ -5346,7 +5349,38 @@
               "update",
               "unchanged",
               "skipped",
-              "errors"
+              "errors",
+              "waiting"
+            ]
+          },
+          "releaseBlocked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "window": {
+            "type": "object",
+            "properties": {
+              "days": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "since": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "excluded": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "days",
+              "limit",
+              "since",
+              "excluded"
             ]
           },
           "samples": {
@@ -5444,6 +5478,8 @@
           "ok",
           "records",
           "counts",
+          "releaseBlocked",
+          "window",
           "samples",
           "columns",
           "durationMs"
@@ -22569,6 +22605,98 @@
               "type": "string",
               "maxLength": 4096
             }
+          },
+          "mapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "transform": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "enum",
+                        "bool-status",
+                        "date",
+                        "constant",
+                        "trim",
+                        "upper",
+                        "lower",
+                        "join"
+                      ]
+                    },
+                    "options": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                }
+              },
+              "required": [
+                "from"
+              ]
+            }
+          },
+          "voidWhen": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "in",
+                    "present"
+                  ]
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "minItems": 1,
+                  "maxItems": 20
+                }
+              },
+              "required": [
+                "from",
+                "op"
+              ]
+            },
+            "maxItems": 8
+          },
+          "autoCreate": {
+            "type": "boolean"
+          },
+          "defaultTemplateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
@@ -80421,6 +80549,185 @@
         ]
       }
     },
+    "/api/v1/connections/{id}/preview": {
+      "post": {
+        "summary": "Preview a sync",
+        "tags": [
+          "connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionPreview"
+                },
+                "example": {
+                  "ok": true,
+                  "records": 115,
+                  "counts": {
+                    "create": 98,
+                    "update": 4,
+                    "unchanged": 0,
+                    "skipped": 13,
+                    "errors": 0,
+                    "waiting": 0
+                  },
+                  "samples": [
+                    {
+                      "ref": "o-1001",
+                      "action": "create",
+                      "fields": {
+                        "memberName": "Maya Chen",
+                        "plan": "monthly"
+                      }
+                    },
+                    {
+                      "ref": "o-1002",
+                      "action": "skipped",
+                      "fields": {
+                        "memberName": "Sam Ortiz"
+                      }
+                    }
+                  ],
+                  "columns": [
+                    {
+                      "pointer": "/memberName",
+                      "label": "memberName",
+                      "samples": [
+                        "Maya Chen",
+                        "Sam Ortiz",
+                        "Ana Ruiz"
+                      ],
+                      "values": []
+                    },
+                    {
+                      "pointer": "/plan",
+                      "label": "plan",
+                      "samples": [
+                        "Monthly membership",
+                        "Gift card",
+                        "Monthly membership"
+                      ],
+                      "values": [
+                        {
+                          "value": "Monthly membership",
+                          "count": 84
+                        },
+                        {
+                          "value": "Gift card",
+                          "count": 13
+                        }
+                      ]
+                    }
+                  ],
+                  "durationMs": 412,
+                  "releaseBlocked": null,
+                  "window": {
+                    "days": 30,
+                    "limit": 200,
+                    "since": 1788000000000,
+                    "excluded": 0
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "connections.postConnectionsByIdPreview",
+        "x-sdk": {
+          "resource": "connections",
+          "method": "preview"
+        },
+        "description": "A dry run of the next sync over the last 30 days of records, at most 200: what it would create, update, leave unchanged, skip or reject. New records wait (`counts.waiting`) while the template has no approved release (`releaseBlocked`). It reads the source and the connection's passes and writes nothing: no cursor moves and no run is recorded. `columns` lists the source's fields with up to three sample cells and, for a field with few distinct values, those values and their counts. Needs connections:read and passes:read.",
+        "security": [
+          {
+            "apiKey": [
+              "connections:read"
+            ]
+          },
+          {
+            "apiKey": [
+              "connections:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "CONNECTION_CONFLICT",
+          "CONNECTION_DISABLED",
+          "CONNECTION_NOT_FOUND",
+          "CONNECTOR_NOT_FOUND",
+          "CONNECTOR_UNKNOWN",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "FORBIDDEN",
+          "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "MODE_UNSUPPORTED",
+          "NOT_FOUND",
+          "ORG_INACTIVE",
+          "ORG_NOT_FOUND",
+          "PASS_CONFLICT",
+          "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "UNAUTHENTICATED",
+          "UNSAFE_URL",
+          "VALIDATION",
+          "WEBHOOK_ALREADY_FINISHED",
+          "WEBHOOK_CONTEXT_CONFLICT",
+          "WEBHOOK_DISPATCH_INCOMPLETE",
+          "WEBHOOK_EFFECT_UNCERTAIN",
+          "WEBHOOK_ENQUEUE_FAILED",
+          "WEBHOOK_ITEM_BUSY",
+          "WEBHOOK_ITEM_PENDING",
+          "WEBHOOK_NOTHING_TO_RESOLVE",
+          "WEBHOOK_NOT_FOUND",
+          "WEBHOOK_PAYLOAD",
+          "WEBHOOK_PAYLOAD_MISSING",
+          "WEBHOOK_REFERENCE_MODE",
+          "WEBHOOK_REFERENCE_MODE_CHANGED",
+          "WEBHOOK_RESOLVE_CONFLICT",
+          "WEBHOOK_RETENTION_FAILED",
+          "WEBHOOK_RETENTION_UNAVAILABLE",
+          "WEBHOOK_SIGNATURE",
+          "WEBHOOK_SNAPSHOT_UNAVAILABLE",
+          "WEBHOOK_STALE_CONTEXT",
+          "WEBHOOK_STILL_PENDING",
+          "WEBHOOK_UNAVAILABLE",
+          "WEBHOOK_WORK_CHANGED"
+        ]
+      }
+    },
     "/api/v1/connections/{id}/webhook-failures": {
       "get": {
         "summary": "List retained webhook status",
@@ -81906,172 +82213,6 @@
         ]
       }
     },
-    "/api/v1/connections/{id}/preview": {
-      "post": {
-        "summary": "Preview a sync",
-        "tags": [
-          "connections"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConnectionPreview"
-                },
-                "example": {
-                  "ok": true,
-                  "records": 115,
-                  "counts": {
-                    "create": 98,
-                    "update": 4,
-                    "unchanged": 0,
-                    "skipped": 13,
-                    "errors": 0
-                  },
-                  "samples": [
-                    {
-                      "ref": "o-1001",
-                      "action": "create",
-                      "fields": {
-                        "memberName": "Maya Chen",
-                        "plan": "monthly"
-                      }
-                    },
-                    {
-                      "ref": "o-1002",
-                      "action": "skipped",
-                      "fields": {
-                        "memberName": "Sam Ortiz"
-                      }
-                    }
-                  ],
-                  "columns": [
-                    {
-                      "pointer": "/memberName",
-                      "label": "memberName",
-                      "samples": [
-                        "Maya Chen",
-                        "Sam Ortiz",
-                        "Ana Ruiz"
-                      ],
-                      "values": []
-                    },
-                    {
-                      "pointer": "/plan",
-                      "label": "plan",
-                      "samples": [
-                        "Monthly membership",
-                        "Gift card",
-                        "Monthly membership"
-                      ],
-                      "values": [
-                        {
-                          "value": "Monthly membership",
-                          "count": 84
-                        },
-                        {
-                          "value": "Gift card",
-                          "count": 13
-                        }
-                      ]
-                    }
-                  ],
-                  "durationMs": 412
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "connections.postConnectionsByIdPreview",
-        "x-sdk": {
-          "resource": "connections",
-          "method": "preview"
-        },
-        "description": "A dry run of the next sync over at most 200 records: what it would create, update, leave unchanged, skip or reject. It reads the source and the connection's passes and writes nothing, so no cursor moves and no run is recorded. `columns` lists the source's fields with up to three sample cells and, for a field with few distinct values, those values and their counts.",
-        "security": [
-          {
-            "apiKey": [
-              "connections:write"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "CONNECTION_CONFLICT",
-          "CONNECTION_DISABLED",
-          "CONNECTION_NOT_FOUND",
-          "CONNECTOR_NOT_FOUND",
-          "CONNECTOR_UNKNOWN",
-          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
-          "FORBIDDEN",
-          "HOLDER_EMAIL_INVALID",
-          "IDP_SIGN_IN_REQUIRED",
-          "INVALID_API_KEY",
-          "MISSING_SCOPE",
-          "MODE_UNSUPPORTED",
-          "NOT_FOUND",
-          "ORG_INACTIVE",
-          "ORG_NOT_FOUND",
-          "PASS_CONFLICT",
-          "RATE_LIMITED",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_RELEASE_CONFLICT",
-          "TEMPLATE_RELEASE_REQUIRED",
-          "UNAUTHENTICATED",
-          "UNSAFE_URL",
-          "VALIDATION",
-          "WEBHOOK_ALREADY_FINISHED",
-          "WEBHOOK_CONTEXT_CONFLICT",
-          "WEBHOOK_DISPATCH_INCOMPLETE",
-          "WEBHOOK_EFFECT_UNCERTAIN",
-          "WEBHOOK_ENQUEUE_FAILED",
-          "WEBHOOK_ITEM_BUSY",
-          "WEBHOOK_ITEM_PENDING",
-          "WEBHOOK_NOTHING_TO_RESOLVE",
-          "WEBHOOK_NOT_FOUND",
-          "WEBHOOK_PAYLOAD",
-          "WEBHOOK_PAYLOAD_MISSING",
-          "WEBHOOK_REFERENCE_MODE",
-          "WEBHOOK_REFERENCE_MODE_CHANGED",
-          "WEBHOOK_RESOLVE_CONFLICT",
-          "WEBHOOK_RETENTION_FAILED",
-          "WEBHOOK_RETENTION_UNAVAILABLE",
-          "WEBHOOK_SIGNATURE",
-          "WEBHOOK_SNAPSHOT_UNAVAILABLE",
-          "WEBHOOK_STALE_CONTEXT",
-          "WEBHOOK_STILL_PENDING",
-          "WEBHOOK_UNAVAILABLE",
-          "WEBHOOK_WORK_CHANGED"
-        ]
-      }
-    },
     "/api/v1/connections/{id}": {
       "get": {
         "summary": "Connection with runs and metrics",
@@ -83140,6 +83281,20 @@
         "tags": [
           "connections"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "preview",
+            "in": "query"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -83187,6 +83342,157 @@
                           "preview"
                         ]
                       }
+                    },
+                    "records": {
+                      "type": "integer"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "create": {
+                          "type": "integer"
+                        },
+                        "update": {
+                          "type": "integer"
+                        },
+                        "unchanged": {
+                          "type": "integer"
+                        },
+                        "skipped": {
+                          "type": "integer"
+                        },
+                        "errors": {
+                          "type": "integer"
+                        },
+                        "waiting": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "create",
+                        "update",
+                        "unchanged",
+                        "skipped",
+                        "errors",
+                        "waiting"
+                      ]
+                    },
+                    "releaseBlocked": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "window": {
+                      "type": "object",
+                      "properties": {
+                        "days": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "since": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "excluded": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "days",
+                        "limit",
+                        "since",
+                        "excluded"
+                      ]
+                    },
+                    "samples": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ref": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "action": {
+                            "type": "string",
+                            "enum": [
+                              "create",
+                              "update",
+                              "unchanged",
+                              "skipped",
+                              "error"
+                            ]
+                          },
+                          "fields": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "message": {
+                            "type": "string",
+                            "maxLength": 300
+                          }
+                        },
+                        "required": [
+                          "ref",
+                          "action",
+                          "fields"
+                        ]
+                      },
+                      "maxItems": 10
+                    },
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "pointer": {
+                            "type": "string",
+                            "maxLength": 500
+                          },
+                          "label": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "samples": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 80
+                            },
+                            "maxItems": 3
+                          },
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "string",
+                                  "maxLength": 80
+                                },
+                                "count": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "count"
+                              ]
+                            },
+                            "maxItems": 20
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "label",
+                          "samples",
+                          "values"
+                        ]
+                      },
+                      "maxItems": 60
                     }
                   },
                   "required": [

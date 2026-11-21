@@ -6,7 +6,9 @@ import { mapOfState, stateOfConnection } from './map-model.ts';
 const preview = {
   ok: true,
   records: 9,
-  counts: { create: 0, update: 0, unchanged: 0, skipped: 0, errors: 0 },
+  counts: { create: 0, update: 0, unchanged: 0, skipped: 0, errors: 0, waiting: 0 },
+  releaseBlocked: null,
+  window: { days: 30, limit: 200, since: 1, excluded: 0 },
   samples: [],
   durationMs: 1,
   columns: [

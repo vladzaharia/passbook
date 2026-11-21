@@ -785,6 +785,11 @@ export type ConnectionsRetrieveSummaryResult = {
 /** Request body of `connections.testConfig`. */
 export type ConnectionsTestConfigBody = ConnectionsTestConfigParams;
 
+/** Query of `connections.testConfig`. */
+export type ConnectionsTestConfigQuery = {
+  preview?: "true" | "false";
+};
+
 /** Response of `connections.testConfig`. */
 export type ConnectionsTestConfigResult = {
   ok: boolean;
@@ -794,6 +799,37 @@ export type ConnectionsTestConfigResult = {
   sample?: Array<{
     pointer: string;
     preview: string;
+  }>;
+  records?: number;
+  counts?: {
+    create: number;
+    update: number;
+    unchanged: number;
+    skipped: number;
+    errors: number;
+    waiting: number;
+  };
+  releaseBlocked?: string | null;
+  window?: {
+    days: number;
+    limit: number;
+    since: number;
+    excluded: number;
+  };
+  samples?: Array<{
+    ref: string;
+    action: "create" | "update" | "unchanged" | "skipped" | "error";
+    fields: Record<string, unknown>;
+    message?: string;
+  }>;
+  columns?: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+    values: Array<{
+      value: string;
+      count: number;
+    }>;
   }>;
 };
 

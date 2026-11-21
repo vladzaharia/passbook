@@ -468,9 +468,9 @@ func (r *ConnectionsResource) Test(ctx context.Context, id string, opts ...Reque
 }
 
 // TestConfig Test an unsaved configuration `POST /api/v1/connections/test-config`
-func (r *ConnectionsResource) TestConfig(ctx context.Context, body *ConnectionsTestConfigBody, opts ...RequestOption) (*ConnectionsTestConfigResult, error) {
+func (r *ConnectionsResource) TestConfig(ctx context.Context, body *ConnectionsTestConfigBody, query *ConnectionsTestConfigQuery, opts ...RequestOption) (*ConnectionsTestConfigResult, error) {
 	var out ConnectionsTestConfigResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/test-config", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/test-config", query: queryValues(query), body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

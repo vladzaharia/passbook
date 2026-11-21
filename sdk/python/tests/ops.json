@@ -1375,7 +1375,15 @@
     "update": 0,
     "unchanged": 0,
     "skipped": 0,
-    "errors": 0
+    "errors": 0,
+    "waiting": 0
+   },
+   "releaseBlocked": "x",
+   "window": {
+    "days": 0,
+    "limit": 0,
+    "since": 0,
+    "excluded": 0
    },
    "samples": [
     {

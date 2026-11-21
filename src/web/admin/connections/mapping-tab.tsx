@@ -221,6 +221,7 @@ export function MappingTab({
             pending={actions.preview.isPending}
             error={actions.preview.error}
             templateId={templateId || null}
+            version={template.data?.activeVersion ?? null}
             orgId={c.orgId}
             canRun={canManage && c.enabled}
             onRun={() => actions.preview.mutate()}

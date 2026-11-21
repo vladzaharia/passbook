@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  makeApiKey,
   makeOrg,
   makeSession,
   makeUser,
@@ -8,8 +9,10 @@ import {
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { first } from '../../platform/db.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { getDeps, setDeps } from './deps.ts';
 import { addMembership, createDemo, type Kit, linkedPass, makeKit } from './test-kit.ts';
 
 let kit: Kit;
@@ -112,5 +115,73 @@ describe('POST /connections/{id}/preview', () => {
     expect([403, 404]).toContain(res.status);
     const test = await preview(conn.id, { ...session.headers, 'x-passbook-mode': 'test' });
     expect(test.status).toBe(404);
+  });
+
+  it('reads with connections:read and passes:read keys, and refuses a key missing either', async () => {
+    const conn = await createDemo(kit, { config: { count: 2 }, ...mapped } as never);
+    const both = await makeApiKey(kit, {
+      orgId: kit.org.id,
+      scopes: ['connections:read', 'passes:read'],
+    });
+    expect((await preview(conn.id, both.headers)).status).toBe(200);
+    const noPasses = await makeApiKey(kit, { orgId: kit.org.id, scopes: ['connections:read'] });
+    expect((await preview(conn.id, noPasses.headers)).status).toBe(403);
+    const noConn = await makeApiKey(kit, { orgId: kit.org.id, scopes: ['passes:read'] });
+    expect((await preview(conn.id, noConn.headers)).status).toBe(403);
+  });
+
+  it('holds new records back while the template has no approved release', async () => {
+    const conn = await createDemo(kit, {
+      config: { count: 2 },
+      ...mapped,
+      autoCreate: true,
+      defaultTemplateId: kit.templateId,
+    } as never);
+    const real = getDeps().requireApprovedRelease;
+    setDeps({
+      requireApprovedRelease: async () => {
+        throw new ConflictError('No release.', 'TEMPLATE_RELEASE_REQUIRED');
+      },
+    });
+    try {
+      const res = await preview(conn.id);
+      expect(res.json.releaseBlocked).toBe('TEMPLATE_RELEASE_REQUIRED');
+      expect(res.json.counts).toMatchObject({ create: 0, waiting: 2 });
+    } finally {
+      setDeps({ requireApprovedRelease: real });
+    }
+  });
+
+  it('states the 30 day window', async () => {
+    const conn = await createDemo(kit, { config: { count: 1 } } as never);
+    const { window } = (await preview(conn.id)).json;
+    expect(window).toMatchObject({ days: 30, limit: 200, excluded: 0 });
+    expect(window.since).toBe(kit.clock.now() - 30 * 86_400_000);
+  });
+});
+
+describe('POST /connections/test-config?preview=true', () => {
+  it('dry-runs an unsaved configuration with its mapping and stores nothing', async () => {
+    const before = await count('SELECT COUNT(*) AS n FROM connections');
+    const res = await app.request(
+      '/api/v1/connections/test-config?preview=true',
+      {
+        method: 'POST',
+        headers: { ...session.headers, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: kit.org.id,
+          connectorType: 'demo',
+          config: { count: 3 },
+          ...mapped,
+          autoCreate: true,
+          defaultTemplateId: kit.templateId,
+        }),
+      },
+      kit.env,
+    );
+    const json = (await res.json()) as Record<string, any>;
+    expect(res.status).toBe(200);
+    expect(json.counts).toMatchObject({ create: 3, errors: 0 });
+    expect(await count('SELECT COUNT(*) AS n FROM connections')).toBe(before);
   });
 });

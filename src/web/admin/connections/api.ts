@@ -8,10 +8,10 @@ import {
 import { useMemo } from 'react';
 import { z } from 'zod';
 import { OkSchema } from '@/shared/contracts/common.ts';
+import { ConnectionPreviewSchema } from '@/shared/contracts/connection-preview.ts';
 import {
   ConnectionDetailSchema,
   ConnectionListSchema,
-  ConnectionPreviewSchema,
   ConnectionSchema,
   ConnectorInfoSchema,
   ConnectorListSchema,

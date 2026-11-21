@@ -133,7 +133,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"scan-setup:read\" added",
-    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
+    "note": "A key can hold scan-setup:read to read the org\u2019s managed scanner and screen setups."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
@@ -813,7 +813,95 @@
     "operationId": "connections.postConnectionsByIdPreview",
     "op": "POST /api/v1/connections/{id}/preview",
     "change": "new operation",
-    "note": "Preview a sync: what the next sync would create, update or skip over at most 200 records, with the source fields and their common values. Writes nothing."
+    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config 200.columns: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "200.columns: field added",
+    "note": "With preview=true the response also carries the dry run: records, counts, releaseBlocked, window, samples and columns."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config 200.counts: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "200.counts: field added",
+    "note": "With preview=true the response also carries the dry run: records, counts, releaseBlocked, window, samples and columns."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config 200.records: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "200.records: field added",
+    "note": "With preview=true the response also carries the dry run: records, counts, releaseBlocked, window, samples and columns."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config 200.releaseBlocked: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "200.releaseBlocked: field added",
+    "note": "With preview=true the response also carries the dry run: records, counts, releaseBlocked, window, samples and columns."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config 200.samples: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "200.samples: field added",
+    "note": "With preview=true the response also carries the dry run: records, counts, releaseBlocked, window, samples and columns."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config 200.window: field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "200.window: field added",
+    "note": "With preview=true the response also carries the dry run: records, counts, releaseBlocked, window, samples and columns."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config body.autoCreate: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "body.autoCreate: optional input field added",
+    "note": "Used only with preview=true: the mapping, void rules and template the dry run applies."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config body.defaultTemplateId: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "body.defaultTemplateId: optional input field added",
+    "note": "Used only with preview=true: the mapping, void rules and template the dry run applies."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config body.mapping: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "body.mapping: optional input field added",
+    "note": "Used only with preview=true: the mapping, void rules and template the dry run applies."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config body.voidWhen: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "body.voidWhen: optional input field added",
+    "note": "Used only with preview=true: the mapping, void rules and template the dry run applies."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config optional parameter query:preview added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "optional parameter query:preview added",
+    "note": "With preview=true, test-config dry-runs the unsaved configuration with the mapping, rules and template given."
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
