@@ -10,7 +10,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { listMyOrgMemberships } from '../orgs/access.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { tenantAuthorityOf } from '../passes/http.ts';
+import { orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
 import type { ScanActor } from './actor.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { scannerHasTemplates } from './repo-device.ts';
@@ -55,6 +55,10 @@ export async function readableScanningPage<
     authority: TenantPassWrite,
   ) => Promise<{ items: T[]; nextCursor: string | null }>,
 ) {
+  if (auth.kind === 'api_key') {
+    const orgId = orgIdOf(auth, query.orgId);
+    return list({ ...query, orgId }, await tenantAuthorityOf(ctx, auth, orgId, 'scanning:read'));
+  }
   if (auth.kind !== 'session') throw new ForbiddenError();
   const session = { ...auth, roles: [...auth.roles] };
   const selection = { ...query };

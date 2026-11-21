@@ -17,6 +17,7 @@ export type EventName =
   | 'scan.result'
   | 'join.refused'
   | 'tag.sun_failed'
+  | 'tag.sun_limited'
   // The developer quickstart (PX13): one event per step, orgId only. `dev.fail` carries the problem code as its outcome.
   | 'dev.view'
   | 'dev.sandbox'

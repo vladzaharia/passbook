@@ -14,7 +14,11 @@ async function targetAuthority(
   capability: Capability,
   kind: 'scanner' | 'session',
 ) {
-  if (auth.kind === 'session' && !(await getOrgAccess(ctx, auth.userId, orgId))) {
+  const outsider =
+    auth.kind === 'api_key'
+      ? auth.orgId !== null && auth.orgId !== orgId
+      : auth.kind === 'session' && !(await getOrgAccess(ctx, auth.userId, orgId));
+  if (outsider) {
     throw kind === 'scanner'
       ? new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND')
       : new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
