@@ -232,7 +232,7 @@ describe('Scanner page', () => {
     const toggle = await screen.findByRole('checkbox', { name: 'Ask staff for their PIN' });
     expect(toggle).toBeEnabled();
     expect(
-      screen.getByText(/shared across this organization’s live and test modes/i),
+      screen.getByText(/Staff accounts are shared by live and test/i),
     ).toBeVisible();
     await user.click(toggle);
     await user.click(await screen.findByRole('button', { name: /Save/ }));
