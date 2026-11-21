@@ -28323,6 +28323,10 @@
                           "inWallet": {
                             "type": "boolean"
                           },
+                          "readOnly": {
+                            "type": "boolean",
+                            "default": false
+                          },
                           "support": {
                             "type": "object",
                             "properties": {
@@ -29207,6 +29211,10 @@
                     },
                     "inWallet": {
                       "type": "boolean"
+                    },
+                    "readOnly": {
+                      "type": "boolean",
+                      "default": false
                     },
                     "support": {
                       "type": "object",
@@ -142082,69 +142090,6 @@
         ]
       }
     },
-    "/b/{token}/{passId}/open": {
-      "get": {
-        "summary": "Open one pass of the bundle on its own page",
-        "tags": [
-          "public"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 200
-            },
-            "required": true,
-            "name": "token",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "passId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "302": {
-            "description": "Success"
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "public.getBByTokenByPassIdOpen",
-        "x-sdk": {
-          "resource": "public.bundles",
-          "method": "openPass",
-          "sdk": false,
-          "reason": "Public page or capability link; the token in the URL is the credential."
-        },
-        "security": [],
-        "x-public": true,
-        "x-codes": [
-          "ASSET_NOT_FOUND",
-          "LINK_NOT_FOUND",
-          "NOT_FOUND",
-          "PASS_NOT_FOUND",
-          "PASS_VERSION_MISSING",
-          "RATE_LIMITED",
-          "VALIDATION"
-        ]
-      }
-    },
     "/b/{token}/{passId}/assets/{name}": {
       "get": {
         "summary": "Pass image",
@@ -142202,6 +142147,69 @@
         "x-sdk": {
           "resource": "public.bundles",
           "method": "downloadPassAsset",
+          "sdk": false,
+          "reason": "Public page or capability link; the token in the URL is the credential."
+        },
+        "security": [],
+        "x-public": true,
+        "x-codes": [
+          "ASSET_NOT_FOUND",
+          "LINK_NOT_FOUND",
+          "NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "PASS_VERSION_MISSING",
+          "RATE_LIMITED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/b/{token}/{passId}": {
+      "get": {
+        "summary": "One pass of the bundle (server-rendered HTML)",
+        "tags": [
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "passId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "public.getBByTokenByPassId",
+        "x-sdk": {
+          "resource": "public.bundles",
+          "method": "retrievePass",
           "sdk": false,
           "reason": "Public page or capability link; the token in the URL is the credential."
         },

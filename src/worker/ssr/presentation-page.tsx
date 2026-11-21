@@ -41,6 +41,8 @@ export interface PresentationPageProps {
   backHref: string;
   /** A pass page's own barcode may be saved on this device; a bundle's member's may not. */
   offline?: boolean;
+  /** The save script for this page's family (a bundle member's, else the pass page's). */
+  offlineScript?: string;
   /** The pass's expiry (ms); the saved copy keeps it. */
   expiresAt?: number | null;
   nonce: string;
@@ -92,7 +94,7 @@ export function renderPresentationPage(props: PresentationPageProps): string {
     body: `${ribbon}${code}${saved}${back}`,
     after:
       props.offline && props.barcode
-        ? `<script nonce="${props.nonce}">${OFFLINE_SCRIPT}</script>`
+        ? `<script nonce="${props.nonce}">${props.offlineScript ?? OFFLINE_SCRIPT}</script>`
         : '',
   });
 }

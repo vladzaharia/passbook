@@ -1153,9 +1153,9 @@
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
   },
-  "public.getBByTokenByPassIdOpen": {
+  "public.getBByTokenByPassId": {
     "resource": "public.bundles",
-    "method": "openPass",
+    "method": "retrievePass",
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
   },

@@ -5,7 +5,7 @@ import { HOLDER_COPY } from './copy/holder.ts';
  * - opt-in: only the Save button writes it, and Remove (or a 404/410 from the server) deletes it;
  * - one cache per token, named by a hash of it (`barcode:<sha256>`), so no token string sits in Cache
  *   Storage, holding the page's own HTML under one fixed key and nothing else;
- * - the copy is shown offline for at most 30 days, and never past the pass's own expiry;
+ * - the copy is shown offline for at most 7 days, and never past the pass's own expiry;
  * - the server's answer wins: network first, and only a failed network, 408, 429 or a 5xx falls back
  *   to the copy. Any redirect or other 4xx (404, 410, a host policy 421, a 403) deletes it;
  * - the worker is registered with the page's own path as scope and answers only a navigation to
@@ -15,7 +15,7 @@ import { HOLDER_COPY } from './copy/holder.ts';
 export const PASS_SW_PATH = '/p/sw.js';
 
 /** How long a saved copy may be shown, counted from the last time the server confirmed it. */
-export const SAVED_MAX_DAYS = 30;
+export const SAVED_MAX_DAYS = 7;
 
 /** Shared by the worker and the page: the cache name, its one key, and how a copy is written. */
 const HELPERS = `const KEY = location.origin + '/p/saved';
@@ -34,7 +34,12 @@ async function keep(name, res) {
 
 const EXPIRED_PAGE = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${HOLDER_COPY.connectToRefresh}</title><p style="font:16px system-ui;margin:2rem">${HOLDER_COPY.connectToRefresh}</p>`;
 
-export const PASS_SW_SOURCE = `${HELPERS}const PAGE = /^\\/p\\/([A-Za-z0-9_-]{16,128})\\/barcode$/;
+/**
+ * One worker source per family of door views: /p/<token>/barcode (key: the token) and, for a
+ * bundle's member, /b/<bundle token>/<pass id>/barcode (key: both, so a rotated bundle or another
+ * member never shares a cache). `pattern` is a regexp literal, `key` an expression over its match `m`.
+ */
+const swSource = (pattern: string, key: string) => `${HELPERS}const PAGE = ${pattern};
 const MAX = ${SAVED_MAX_DAYS} * 864e5;
 const EXPIRED = ${JSON.stringify(EXPIRED_PAGE)};
 self.addEventListener('install', () => self.skipWaiting());
@@ -44,7 +49,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET' || req.mode !== 'navigate') return;
   const url = new URL(req.url);
   const m = url.origin === location.origin ? PAGE.exec(url.pathname) : null;
-  if (m) e.respondWith(serve(req, m[1]));
+  if (m) e.respondWith(serve(req, ${key}));
 });
 async function drop(name) {
   await caches.delete(name);
@@ -59,8 +64,8 @@ async function saved(name) {
   await drop(name);
   return new Response(EXPIRED, { status: 503, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 }
-async function serve(req, token) {
-  const name = 'barcode:' + (await hashOf(token));
+async function serve(req, key) {
+  const name = 'barcode:' + (await hashOf(key));
   if (!(await caches.has(name))) return fetch(req);
   let res;
   try {
@@ -78,12 +83,24 @@ async function serve(req, token) {
 }
 `;
 
+export const PASS_SW_SOURCE = swSource(
+  String.raw`/^\/p\/([A-Za-z0-9_-]{16,128})\/barcode$/`,
+  'm[1]',
+);
+
+/** A bundle member's door view is saved under the bundle's own worker, never a member's pass link. */
+export const BUNDLE_SW_PATH = '/b/sw.js';
+export const BUNDLE_SW_SOURCE = swSource(
+  String.raw`/^\/b\/([A-Za-z0-9_-]{43})\/([0-9a-f-]{36})\/barcode$/`,
+  "m[1] + '/' + m[2]",
+);
+
 /** The page's Save / Remove controls; hidden until the script confirms the browser can do it. */
-export const OFFLINE_SCRIPT = `${HELPERS}(async () => {
+const offlineScript = (swPath: string, key: string) => `${HELPERS}(async () => {
   const box = document.querySelector('[data-offline]');
   if (!box || !('serviceWorker' in navigator) || !('caches' in window)) return;
   const path = location.pathname;
-  const name = 'barcode:' + (await hashOf(path.split('/')[2]));
+  const name = 'barcode:' + (await hashOf(${key}));
   const [save, drop, state, fail] = ['save', 'drop', 'state', 'fail'].map((k) => box.querySelector('[data-' + k + ']'));
   const show = (on) => {
     save.hidden = on;
@@ -101,7 +118,7 @@ export const OFFLINE_SCRIPT = `${HELPERS}(async () => {
     save.disabled = true;
     fail.hidden = true;
     try {
-      await navigator.serviceWorker.register('${PASS_SW_PATH}', { scope: path });
+      await navigator.serviceWorker.register('${swPath}', { scope: path });
       await navigator.serviceWorker.ready;
       const res = await fetch(path, { cache: 'no-store' });
       if (!res.ok || res.redirected) throw new Error('save');
@@ -119,3 +136,9 @@ export const OFFLINE_SCRIPT = `${HELPERS}(async () => {
   });
 })();
 `;
+
+export const OFFLINE_SCRIPT = offlineScript(PASS_SW_PATH, "path.split('/')[2]");
+export const BUNDLE_OFFLINE_SCRIPT = offlineScript(
+  BUNDLE_SW_PATH,
+  "path.split('/')[2] + '/' + path.split('/')[3]",
+);

@@ -51,6 +51,7 @@ export const HOLDER_COPY = {
   otherWays: 'Other ways',
   showBarcode: 'Show barcode',
   showAtDoor: 'Show at the door',
+  allPassesLink: 'All passes',
   allPasses: (n: number) => `All passes (${n})`,
   /** The barcode page's tab and link preview: the pass title can be a holder's name. */
   barcodeTitle: 'Barcode',

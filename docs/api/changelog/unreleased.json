@@ -280,6 +280,22 @@
     "note": "Reads one provisioning run and its steps."
   },
   {
+    "key": "GET /api/v1/me/passes 200.items[].readOnly: field added",
+    "class": "additive",
+    "operationId": "me.getMePasses",
+    "op": "GET /api/v1/me/passes",
+    "change": "200.items[].readOnly: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/me/passes/{id} 200.readOnly: field added",
+    "class": "additive",
+    "operationId": "me.getMePassesById",
+    "op": "GET /api/v1/me/passes/{id}",
+    "change": "200.readOnly: field added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/metrics/platform/developer new operation",
     "class": "additive",
     "operationId": "metrics.getMetricsPlatformDeveloper",
@@ -544,12 +560,12 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
-    "key": "GET /b/{token}/{passId}/open new operation",
+    "key": "GET /b/{token}/{passId} new operation",
     "class": "additive",
-    "operationId": "public.getBByTokenByPassIdOpen",
-    "op": "GET /b/{token}/{passId}/open",
+    "operationId": "public.getBByTokenByPassId",
+    "op": "GET /b/{token}/{passId}",
     "change": "new operation",
-    "note": "A bundle page's peek opens that pass's own page. The pass link stays out of the bundle's HTML."
+    "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
   },
   {
     "key": "PATCH /api/v1/brand 200.kind: field added",

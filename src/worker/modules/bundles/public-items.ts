@@ -33,7 +33,7 @@ export function bundleItems(
             ? 'voided'
             : 'active',
       downloadHref: model.channels.effective.apple.on ? `/b/${token}/${pass.id}/pass.pkpass` : null,
-      href: `/b/${token}/${pass.id}/open`,
+      href: `/b/${token}/${pass.id}`,
       barcodeHref: model.channels.effective.mobile.on
         ? `/b/${token}/${pass.id}/barcode`
         : undefined,

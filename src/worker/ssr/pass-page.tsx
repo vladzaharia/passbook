@@ -89,7 +89,9 @@ export interface PassPageProps {
   publicUrl: string;
   /** The holder's page in the portal (sign-in first when needed): a row of the other ways, only
    * with a holder email (resend). */
-  portalHref: string;
+  portalHref?: string;
+  /** A bundle's member page: the way back to the bundle. */
+  backHref?: string;
   voided: boolean;
   /** The org removed the pass from Wallet; its note, if it wrote one. */
   removal?: { message: string | null } | null;
@@ -130,6 +132,16 @@ function PassBody(props: PassPageProps) {
       <OrgBar orgName={props.orgName} brand={props.brand} />
       <TestRibbon mode={props.mode} what="pass" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        {props.backHref ? (
+          <p className="mb-2 text-sm">
+            <a
+              href={props.backHref}
+              className="text-fg-muted underline underline-offset-4 hover:text-fg-strong"
+            >
+              {HOLDER_COPY.allPassesLink}
+            </a>
+          </p>
+        ) : null}
         <HolderHeading heading={headingOf(props)} bare />
         <HolderPassView
           pass={
@@ -156,7 +168,9 @@ function PassBody(props: PassPageProps) {
           publicUrl={props.publicUrl}
           support={props.support}
           endedOn={props.endedOn ?? null}
-          {...(props.resend ? { resend: props.resend, portalHref: props.portalHref } : {})}
+          {...(props.resend && props.portalHref
+            ? { resend: props.resend, portalHref: props.portalHref }
+            : {})}
           {...(props.signin ? { signin: props.signin } : {})}
           {...(props.notice ? { notice: props.notice } : {})}
           details={

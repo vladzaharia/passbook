@@ -59,7 +59,7 @@ publicRoutes.route('/', resendRoutes);
 publicRoutes.route('/', signInRoutes);
 publicRoutes.route('/', holderPrintRoutes);
 
-function endedFor(
+export function endedFor(
   view: { voided: boolean; expired: boolean },
   pass: { status: string; modifiedAt: number },
   voidedAt: number | null,

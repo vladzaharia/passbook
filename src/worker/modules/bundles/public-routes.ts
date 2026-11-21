@@ -6,7 +6,7 @@ import {
   PublicBundlePassParamSchema,
 } from '../../../shared/contracts/bundles.ts';
 import { passDevice } from '../../../shared/device.ts';
-import { revealToken } from '../../platform/capability-token.ts';
+import { BUNDLE_OFFLINE_SCRIPT } from '../../../shared/pass-offline.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -28,6 +28,7 @@ import { presentationForPass } from '../public/presentation.ts';
 import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { isTokenShape, openPublicAsset, supportContacts } from '../public/service.ts';
 import { bundleItems } from './public-items.ts';
+import { registerMemberPage } from './public-member.ts';
 import {
   addablePass,
   assertBundleMember,
@@ -39,10 +40,13 @@ import {
   fenceBundleStream,
   recordBundleEvents,
 } from './public-service.ts';
+import { bundleSwRoutes } from './routes-sw.ts';
 import { bundleWalletLocation, bundleWalletProviders } from './wallet-links.ts';
 
 /** /b: bearer-link bundle page, its .pkpasses and per-pass files. No sign-in. */
 export const bundlePublicRoutes = createRouter();
+// Registered first, so the /:token limits below never see /sw.js.
+bundlePublicRoutes.route('/', bundleSwRoutes);
 // Valid assets are limited per token and network prefix; a prefix's misses are counted and, past
 // a threshold, refused before any lookup.
 bundlePublicRoutes.use('/:token/:passId/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
@@ -52,9 +56,9 @@ bundlePublicRoutes.use(
 );
 bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/passes.pkpasses', rateLimit('RL_PUBLIC'));
+bundlePublicRoutes.use('/:token/:passId', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/pass.pkpass', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/barcode', rateLimit('RL_PUBLIC'));
-bundlePublicRoutes.use('/:token/:passId/open', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/wallet/:provider', rateLimit('RL_PUBLIC'));
 
 register(
@@ -231,7 +235,9 @@ register(
       const model = await presentationForPass(ctx, pass);
       const html = renderPresentationPage({
         ...model,
-        backHref: `/b/${p.token}`,
+        backHref: `/b/${p.token}/${pass.id}`,
+        offline: true,
+        offlineScript: BUNDLE_OFFLINE_SCRIPT,
         nonce: c.var.nonce,
         theme,
       });
@@ -250,36 +256,6 @@ register(
       }
       throw error;
     }
-  },
-);
-
-register(
-  bundlePublicRoutes,
-  'public',
-  {
-    method: 'get',
-    path: '/{token}/{passId}/open',
-    summary: 'Open one pass of the bundle on its own page',
-    params: PublicBundlePassParamSchema,
-    status: 302,
-  },
-  async (c) => {
-    const ctx = svc(c);
-    const p = c.req.valid('param');
-    const bundle = await bundleForToken(ctx, p.token);
-    // Any state: an ended member's page is its way back. The pass link stays out of the bundle's HTML.
-    const pass = await bundlePass(ctx, bundle, p.passId);
-    const token = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
-    await assertBundleMember(ctx, bundle, pass);
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'cache-control': 'private, no-store',
-        'referrer-policy': 'no-referrer',
-        'x-robots-tag': 'noindex, nofollow',
-        location: `/p/${token}`,
-      },
-    });
   },
 );
 
@@ -319,3 +295,5 @@ register(
     return new Response(fenceBundleStream(ctx, bundle, [pass], asset.body, false), { headers });
   },
 );
+
+registerMemberPage(bundlePublicRoutes);

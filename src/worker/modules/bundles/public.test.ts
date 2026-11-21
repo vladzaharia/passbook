@@ -75,7 +75,7 @@ describe('GET /b/:token', () => {
     // One count, no badge per pass; the other two are peeks, plain links to their own pages.
     for (const p of passes) expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
     expect(html.match(/class="wl-peek"/g)).toHaveLength(2);
-    expect(html.match(/href="\/b\/[^/"]+\/[^/"]+\/open"/g)).toHaveLength(2);
+    expect(html.match(/href="\/b\/[^/"]+\/[0-9a-f-]{36}"/g)).toHaveLength(2);
     expect(html).not.toContain('Open in My passes');
     // The pass tokens never reach the page.
     for (const p of passes) expect(html).not.toContain(p.downloadToken);
@@ -108,29 +108,74 @@ describe('GET /b/:token', () => {
     expect(html).toContain('For Apple Wallet, open this page on an iPhone.');
   });
 
-  it('opens a member on its own page from the bundle link, and nothing outside the bundle', async () => {
-    const { passes, token } = await bundleWith(2);
-    const res = await get(`/b/${token}/${passes[0]?.id}/open`);
-    expect(res.status).toBe(302);
-    const location = res.headers.get('location') ?? '';
-    expect(location).toMatch(/^\/p\/[A-Za-z0-9_-]{43}$/);
-    expect((await get(location)).status).toBe(200);
-    expect(res.headers.get('cache-control')).toContain('no-store');
-    expect(res.headers.get('referrer-policy')).toBe('no-referrer');
+  it('serves a member page under the bundle capability, carrying no member token anywhere', async () => {
+    const { passes, bundle, headers, token } = await bundleWith(3);
+    const [live, voided, removed] = passes;
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided?.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [
+      Date.now(),
+      removed?.id,
+    ]);
+    const android =
+      'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
+    const bodies: string[] = [];
+    for (const p of passes) {
+      const res = await get(`/b/${token}/${p.id}`, { 'user-agent': android });
+      expect(res.status).toBe(200);
+      expect(res.headers.get('location')).toBeNull();
+      bodies.push(await res.text());
+    }
+    const bundlePage = await (await get(`/b/${token}`)).text();
+    const barcode = await get(`/b/${token}/${live?.id}/barcode`);
+    bodies.push(bundlePage, await barcode.text());
+    // Not one /b response carries a member's own link or token, in its body or its headers.
+    for (const body of bodies) {
+      for (const p of passes) expect(body).not.toContain(p.downloadToken);
+      expect(body).not.toMatch(/\/p\/[A-Za-z0-9_-]{16,}/);
+      expect(body).not.toMatch(/\/(print|sign-in|resend)\b/);
+    }
+    for (const res of [await get(`/b/${token}/${live?.id}`), barcode])
+      for (const [, value] of res.headers) {
+        for (const p of passes) expect(value).not.toContain(p.downloadToken);
+      }
+    expect(bodies[0]).toContain(`href="/b/${token}/${live?.id}/barcode"`);
+    expect(bodies[0]).toContain(`href="/b/${token}"`);
+    // Ended members render ended: no barcode, no file.
+    for (const ended of [bodies[1], bodies[2]]) {
+      expect(ended).not.toContain('/barcode"');
+      expect(ended).not.toContain('pass.pkpass');
+    }
+    // Outside the bundle, or once the bundle is rotated, every member page, file and barcode is a 404.
     const other = await makePass();
-    expect((await get(`/b/${token}/${other.id}/open`)).status).toBe(404);
-    expect((await get(`/b/${'a'.repeat(43)}/${passes[0]?.id}/open`)).status).toBe(404);
+    expect((await get(`/b/${token}/${other.id}`)).status).toBe(404);
+    const rotate = await app.request(
+      `${ORIGIN}/api/v1/bundles/${bundle.id}/rotate-link`,
+      { method: 'POST', headers },
+      kit.env,
+    );
+    expect(rotate.status).toBe(200);
+    for (const path of ['', '/barcode', '/pass.pkpass'])
+      expect((await get(`/b/${token}/${live?.id}${path}`)).status).toBe(404);
   });
 
-  it('serves a member barcode page under the bundle token, with nothing to save', async () => {
+  it('saves a member door view under the bundle worker, scoped to that member', async () => {
+    const { passes, token } = await bundleWith(2);
+    const page = await (await get(`/b/${token}/${passes[0]?.id}/barcode`)).text();
+    expect(page).toContain('data-offline');
+    expect(page).toContain('/b/sw.js');
+    const sw = await get('/b/sw.js');
+    expect(sw.status).toBe(200);
+    expect(sw.headers.get('content-type')).toContain('javascript');
+    expect(await sw.text()).toContain('barcode:');
+  });
+
+  it('serves a member barcode page under the bundle token', async () => {
     const { passes, token } = await bundleWith(2);
     const res = await get(`/b/${token}/${passes[0]?.id}/barcode`);
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('<svg');
-    expect(html).not.toContain('data-offline');
-    expect(html).not.toMatch(/<script\b/);
-    expect(html).toContain(`href="/b/${token}"`);
+    expect(html).toContain(`href="/b/${token}/${passes[0]?.id}"`);
     expect(res.headers.get('cache-control')).toContain('no-store');
     // A pass outside the bundle and a rotated token are 404 pages.
     const other = await makePass();
