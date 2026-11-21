@@ -50,7 +50,7 @@ describe('email the rest', () => {
     const before = await mails();
     const res = await call(id);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ sent: 3, skipped: 0, nextCursor: null });
+    expect(await res.json()).toEqual({ sent: 3, skipped: 0, alreadyQueued: 0, nextCursor: null });
     expect(await mails()).toBe(before + 3);
     expect(await unmailed(id)).toBe(0);
     expect((await h.get(id)).progress?.notEmailed).toBe(0);
@@ -59,11 +59,13 @@ describe('email the rest', () => {
       "SELECT detail FROM audit_log WHERE action = 'pass_import.email_rest' AND target_id = ?",
       [id],
     );
-    expect(audit.map((a) => JSON.parse(a.detail))).toEqual([{ importId: id, sent: 3, skipped: 0 }]);
+    expect(audit.map((a) => JSON.parse(a.detail))).toEqual([
+      { importId: id, sent: 3, skipped: 0, alreadyQueued: 0 },
+    ]);
     expect(audit[0]?.detail).not.toMatch(/@x\.co/);
 
     const again = await call(id);
-    expect(await again.json()).toEqual({ sent: 0, skipped: 0, nextCursor: null });
+    expect(await again.json()).toEqual({ sent: 0, skipped: 0, alreadyQueued: 0, nextCursor: null });
     expect(await mails()).toBe(before + 3);
   });
 
@@ -83,7 +85,7 @@ describe('email the rest', () => {
     await bump(h.kit.env.DB, `pass-email:live:org:${h.kit.org.id}`, now - (now % 86_400_000), 500);
     const before = await mails();
     const res = await call(id);
-    expect(await res.json()).toEqual({ sent: 0, skipped: 3, nextCursor: null });
+    expect(await res.json()).toEqual({ sent: 0, skipped: 3, alreadyQueued: 0, nextCursor: null });
     expect(await mails()).toBe(before);
     expect(await unmailed(id)).toBe(3);
     expect((await h.get(id)).progress?.notEmailed).toBe(3);
@@ -100,7 +102,12 @@ describe('email the rest', () => {
       [h.kit.org.id],
     );
     await run(h.kit.env.DB, 'UPDATE passes SET removed_at = 1 WHERE id = ?', [gone?.id ?? '']);
-    expect(await (await call(id)).json()).toEqual({ sent: 2, skipped: 0, nextCursor: null });
+    expect(await (await call(id)).json()).toEqual({
+      sent: 2,
+      skipped: 0,
+      alreadyQueued: 0,
+      nextCursor: null,
+    });
   });
 
   it('needs operate and an import that has run', async () => {
