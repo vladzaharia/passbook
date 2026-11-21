@@ -55,7 +55,7 @@ export function fillMenuSheet(
     const c = DEV_COPY.sheet;
     sandbox.replaceChildren(
       heading(`${c.sandbox} ${opts.sandbox}`),
-      link(PATHS.home, c.workbench),
+      link(`${PATHS.home}#workbench`, c.workbench),
       ...(shown.some((s) => s.space === 'admin') ? [link('/admin/api-keys', c.keys)] : []),
     );
     sandbox.hidden = false;

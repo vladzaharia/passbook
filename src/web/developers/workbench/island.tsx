@@ -26,11 +26,16 @@ type Load =
 export function WorkbenchIsland({
   fetchFn = (input, init) => fetch(input, init),
   links,
+  initial,
 }: {
   fetchFn?: typeof fetch;
   links?: WorkbenchLinks;
+  /** A home the mount already read: no second request on first paint. */
+  initial?: DeveloperHome;
 }) {
-  const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const [load, setLoad] = useState<Load>(
+    initial ? { kind: 'ready', home: initial } : { kind: 'loading' },
+  );
   const [wave] = useState(firstVisit);
   const read = useCallback(() => {
     setLoad({ kind: 'loading' });
@@ -39,7 +44,10 @@ export function WorkbenchIsland({
       (error: unknown) => setLoad({ kind: 'failed', out: error instanceof HomeError && error.out }),
     );
   }, [fetchFn]);
-  useEffect(read, [read]);
+  const [first] = useState(initial === undefined);
+  useEffect(() => {
+    if (first) read();
+  }, [first, read]);
   if (load.kind === 'loading')
     return (
       <p className="wb-loading sm muted" aria-busy>

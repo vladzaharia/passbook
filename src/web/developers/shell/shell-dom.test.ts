@@ -134,6 +134,7 @@ describe('islands', () => {
       'run',
       'snippets',
       'webhook-tester',
+      'workbench',
     ]);
   });
 

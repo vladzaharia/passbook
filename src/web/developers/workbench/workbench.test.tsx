@@ -1,6 +1,7 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { updateSession } from '../console/session.ts';
 import { homeClosed, homeDone, homeFresh, homeNone, homeProgressed } from './home-fixtures.ts';
 import { mount } from './index.tsx';
 import { WorkbenchIsland } from './island.tsx';
@@ -121,14 +122,42 @@ describe('WorkbenchIsland', () => {
 });
 
 describe('the workbench island mount', () => {
-  it('leaves the prerendered page alone when signed out', async () => {
-    const el = document.createElement('div');
-    el.innerHTML = '<a href="/login">Sign in</a>';
+  const page = () => {
+    document.body.innerHTML =
+      '<div id="workbench" data-island="workbench"></div><div data-home-marketing="">Hero</div>';
+    return document.getElementById('workbench') as HTMLElement;
+  };
+  const marketing = () => document.querySelector<HTMLElement>('[data-home-marketing]');
+  afterEach(() => document.body.replaceChildren());
+
+  it('leaves the public home alone when signed out', async () => {
+    updateSession({ kind: 'out' });
+    const el = page();
+    await mount(el);
+    expect(el.innerHTML).toBe('');
+    expect(marketing()?.hidden).toBe(false);
+  });
+
+  it('leaves it alone without developer access', async () => {
+    updateSession({ kind: 'none', csrf: 'c', siteKey: '' });
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => Response.json({ authenticated: false })),
+      vi.fn(async () => new Response(null, { status: 403 })),
     );
+    const el = page();
     await mount(el);
-    expect(el.innerHTML).toBe('<a href="/login">Sign in</a>');
+    expect(el.innerHTML).toBe('');
+    expect(marketing()?.hidden).toBe(false);
+  });
+
+  it('replaces the home with the Workbench for a developer, reading the home once', async () => {
+    updateSession({ kind: 'none', csrf: 'c', siteKey: '' });
+    const fetchFn = vi.fn(async () => Response.json(homeFresh));
+    vi.stubGlobal('fetch', fetchFn);
+    const el = page();
+    await act(() => mount(el));
+    expect(marketing()?.hidden).toBe(true);
+    expect(await screen.findByRole('heading', { name: homeFresh.sandbox?.name })).toBeTruthy();
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 });
