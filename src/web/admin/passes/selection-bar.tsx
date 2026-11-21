@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { PencilLine, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { BUNDLE_MAX_PASSES } from '@/shared/contracts/bundles.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
@@ -8,6 +9,7 @@ import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
 import { errorMessage, UserMessageError } from '../../lib/errors.ts';
 import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
+import { orgPath } from '../../lib/scope.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import {
   Button,
@@ -22,6 +24,8 @@ import { passKeys, useBulkPassAction } from './api.ts';
 import { BulkChannelsDialog } from './bulk-channels-dialog.tsx';
 import { BulkPrintAction } from './bulk-print.tsx';
 import { BundleDialog } from './bundle-dialog.tsx';
+import { useCanChange } from './change/entry-links.tsx';
+import { leaveSelection } from './change/selection.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { fingerprint, newKey } from './format.ts';
 
@@ -59,6 +63,8 @@ export function SelectionBar({
   const [channels, setChannels] = useState(false);
   const emailKey = useRef<{ fp: string; key: string }>({ fp: '', key: newKey() });
   const barRef = useBottomBar<HTMLElement>();
+  const navigate = useNavigate();
+  const mayChange = useCanChange();
   const compact = useMediaQuery(BELOW_LG);
   const ids = picked.map((p) => p.id);
   const n = ids.length;
@@ -67,7 +73,19 @@ export function SelectionBar({
   const operable = Boolean(canOperate && orgId && picked.every((p) => p.orgId === orgId));
   const canChannel = operable && changeable > 0 && n <= CHANNELS_LIMIT;
   const canShare = n <= BUNDLE_MAX_PASSES && bundleOrgId !== null;
+  const templateIds = [...new Set(picked.map((p) => p.templateId))];
+  const canChange = operable && mayChange && changeable > 0 && templateIds.length <= 20;
   if (n === 0) return null;
+
+  function change() {
+    if (!orgId) return;
+    leaveSelection(orgId, {
+      kind: 'ids',
+      ids: picked.filter((p) => p.removedAt === null).map((p) => p.id),
+      templateIds,
+    });
+    void navigate({ href: orgPath(orgId, '/passes/change') });
+  }
 
   async function run(action: 'void' | 'send_email' | 'remove', message?: string) {
     if (!operable) throw new Error('Pass operation is not available in this organization.');
@@ -122,6 +140,9 @@ export function SelectionBar({
         <p role="status" className="mr-auto text-sm font-medium text-fg-strong tabular-nums">
           {n} selected
         </p>
+        <Button disabled={!canChange} iconStart={<PencilLine aria-hidden />} onClick={change}>
+          Change
+        </Button>
         <Button
           variant="outline"
           disabled={!operable || emailable === 0}

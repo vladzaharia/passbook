@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type { TemplateDetailSchema, TemplateVersionSchema } from '@/shared/contracts/templates.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import { Badge, Button, Card, CardBody, CardHeader, ListRow, ListRows } from '../../ui/index.ts';
+import { TellHoldersLink } from '../passes/change/entry-links.tsx';
 import { ValidationReport } from './validation-report.tsx';
 import { versionName, versionNumber } from './versions.ts';
 
@@ -38,7 +39,14 @@ export function VersionsPanel({ template }: { template: Template }) {
   return (
     <div className="grid gap-4">
       <Card>
-        <CardHeader title="Version history" />
+        <CardHeader
+          title="Version history"
+          actions={
+            template.orgId && template.passesOnOlderVersions > 0 ? (
+              <TellHoldersLink orgId={template.orgId} templateId={template.id} />
+            ) : undefined
+          }
+        />
         <CardBody>
           <ListRows label="Versions">
             {newestFirst.map((v) => {

@@ -15,6 +15,7 @@ import {
   toast,
 } from '../../../ui/index.ts';
 import { handOffToConnection } from '../../connections/import-handoff.ts';
+import { ChangeTheseLink } from '../change/entry-links.tsx';
 import { downloadImportFile, emailTheRest, removeCreated, useFailedRows } from './api.ts';
 import { ProblemsTable } from './problems.tsx';
 
@@ -140,6 +141,9 @@ export function ImportResults({
               {C.results.viewPasses}
             </Link>
           </Button>
+          {canOperate && p.created + p.updated > 0 ? (
+            <ChangeTheseLink orgId={orgId} importId={imp.id} />
+          ) : null}
           {canOperate ? (
             <Button
               variant="outline"
