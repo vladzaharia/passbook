@@ -44,6 +44,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
+| `scan-setup:read` | `GET /scan-setups` and `GET /scan-setups/{id}`: read the org's managed scanner and screen setups. Needs `scanning:read` to delegate. Reaches nothing else; another org's setup is a 404 |
 
 ### Token types
 
@@ -778,7 +779,7 @@ feed takes `?apiVersion=` and defaults to the newest.
 
 ## Scanner console
 
-Console routes need a session and `scanning:manage`. They act on the console mode (`x-passbook-mode`); a scanner, setup or event of the other mode is a 404. The one exception is `POST /templates/{id}/scan-setup`, which a key with `scanning:write` also calls: it acts in the key's org and mode, its events and session have no user creator, and the audit rows name the key.
+Console routes need a session and `scanning:manage`; `GET /scan-setups` and `GET /scan-setups/{id}` also take a key with `scan-setup:read`. Setup writes stay session-only (`scan-setup:write` is reserved and cannot be minted). They act on the console mode (`x-passbook-mode`); a scanner, setup or event of the other mode is a 404. The one exception is `POST /templates/{id}/scan-setup`, which a key with `scanning:write` also calls: it acts in the key's org and mode, its events and session have no user creator, and the audit rows name the key.
 
 - `POST /scanners/{id}/pairing`, `/pair-here`, `/token` on a removed scanner answer 409 `SCANNER_REVOKED`. Send `?restore=true` to restore it; the audit log records `scanner.restore`.
 - `GET /scan-staff?orgId=&q=&limit=&cursor=` returns `items`, and `hasMore` with `nextCursor` when there are more. Pass `nextCursor` as `cursor` for the next page.
