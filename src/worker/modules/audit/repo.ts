@@ -185,9 +185,10 @@ export async function loadLabels(
  */
 export function auditStmt(
   db: D1Database,
-  ctx: Pick<ServiceContext, 'clock' | 'requestId'>,
+  ctx: Pick<ServiceContext, 'clock' | 'requestId' | 'via'>,
   entry: AuditEntry,
 ): D1PreparedStatement {
+  const detail = ctx.via ? { ...entry.detail, via: ctx.via } : entry.detail;
   return stmt(
     db,
     `INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
@@ -202,7 +203,7 @@ export function auditStmt(
       entry.targetId ?? null,
       ctx.requestId,
       entry.ipPrefix ?? null,
-      entry.detail ? JSON.stringify(redactDetail(entry.detail)) : null,
+      detail ? JSON.stringify(redactDetail(detail)) : null,
     ],
   );
 }

@@ -1,6 +1,6 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import { type Check, rawCheck } from '../../platform/authority-checks.ts';
-import type { Principal } from '../../platform/authority-principal.ts';
+import { developerTestOnly, type Principal } from '../../platform/authority-principal.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
@@ -31,6 +31,7 @@ export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: 
       JOIN orgs o ON o.id = m.org_id
       WHERE m.id = ? AND m.org_id = ? AND m.user_id = ? AND m.revoked_at IS NULL
         AND u.status = 'active' AND ${orgEpochMatchSql('o')}
+        AND ${developerTestOnly('o', authority.mode === 'live' ? "'live'" : "'test'")}
         AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ?
           AND s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > ? AND s.idle_expires_at > ?)
         AND EXISTS (SELECT 1 FROM json_each(m.roles) r JOIN json_each(?) g ON g.value = r.value WHERE r.type = 'text')
@@ -39,7 +40,8 @@ export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: 
   return `(${target} AND EXISTS (
     SELECT 1 FROM api_keys k JOIN orgs o ON o.id = ? AND ${orgEpochMatchSql('o')}
     WHERE k.id = ? AND k.org_id IS ? AND (k.org_id IS NULL OR k.org_id = o.id)
-      AND k.mode = ? AND ${keyLive('k', 0).sql} AND ${keyHoldsScope('k', authority.scope).sql}
+      AND k.mode = ? AND ${developerTestOnly('o', 'k.mode')}
+      AND ${keyLive('k', 0).sql} AND ${keyHoldsScope('k', authority.scope).sql}
   ))`;
 }
 

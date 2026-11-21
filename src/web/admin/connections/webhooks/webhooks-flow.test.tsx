@@ -212,7 +212,13 @@ describe('endpoint actions', () => {
       hooks(calls, undefined, {
         '/api/v1/webhook-endpoints/we1/test': () =>
           new Response(
-            JSON.stringify({ ok: false, status: 503, durationMs: 90, errorCode: null }),
+            JSON.stringify({
+              ok: false,
+              status: 503,
+              durationMs: 90,
+              errorCode: null,
+              captureId: null,
+            }),
             {
               headers: { 'content-type': 'application/json' },
             },
@@ -298,7 +304,7 @@ describe('secrets, focus, sending and lookups', () => {
     const gets = getsOf();
     await user.click(screen.getByRole('button', { name: 'Send test event' }));
     expect(await screen.findByText('Sending…')).toBeVisible();
-    release(json({ ok: true, status: 200, durationMs: 5, errorCode: null }));
+    release(json({ ok: true, status: 200, durationMs: 5, errorCode: null, captureId: null }));
     await waitFor(() => expect(getsOf()).toBeGreaterThan(gets));
     await waitFor(() => expect(screen.queryByText('Sending…')).toBeNull());
   });

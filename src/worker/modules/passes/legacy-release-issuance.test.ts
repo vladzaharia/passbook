@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   makeApiKey,
@@ -232,7 +233,7 @@ const issue = (headers: Record<string, string>, data: object) =>
       method: 'POST',
       headers: {
         ...headers,
-        origin: ORIGIN,
+        ...originUnlessKey(headers, ORIGIN),
         'content-type': 'application/json',
         'idempotency-key': unique(),
       },

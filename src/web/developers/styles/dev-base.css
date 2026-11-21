@@ -1,0 +1,259 @@
+/* The developer portal's shell: tokens, bar, nav, layout, type and small controls. Everything
+   reads the kit tokens (generated/ssr-tokens.css); hex appears only in pass art. */
+@import "../../../generated/ssr-tokens.css";
+@import "../../../generated/ssr-controls.css";
+@import "../../ui/art/art.css";
+@import "../../ui/art/art-records.css";
+@import "../../ui/art/art-details.css";
+@import "../../ui/art/art-wallet.css";
+@import "../../ui/art/wallet-states.css";
+@import "../../ui/art/scenes/rest.css";
+@import "../../ui/layout/brand-mark.css";
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("../../../../node_modules/@polaris-key/brand/fonts/jetbrains-mono-var-latin.woff2")
+    format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Portal-only roles, derived from tokens. Dark first; light follows the OS or the saved choice. */
+:root {
+  --dp-violet: var(--polaris-key-violet-dark);
+  --dp-gold: var(--polaris-key-gold-dark);
+  --dp-stage: radial-gradient(
+    120% 90% at 50% 0%,
+    color-mix(in oklab, var(--pk-accent) 9%, var(--pk-surface-raised)),
+    var(--pk-surface-page) 70%
+  );
+  --dp-glass: rgb(255 255 255 / 0.04);
+  --syn-key: var(--pk-info);
+  --syn-str: var(--pk-success);
+  --syn-lit: var(--pk-accent-fg);
+  --syn-num: var(--pk-warning);
+  --syn-kw: var(--dp-violet);
+  --syn-fn: var(--pk-text-strong);
+  --syn-com: var(--pk-text-subtle);
+  --syn-pun: var(--pk-text-muted);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --dp-violet: var(--polaris-key-violet-light);
+    --dp-gold: var(--polaris-key-gold-light);
+    --dp-stage: radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--pk-accent) 7%, var(--pk-surface-raised)),
+      var(--pk-surface-sunken) 75%
+    );
+    --dp-glass: rgb(6 9 18 / 0.025);
+  }
+}
+[data-theme="light"] {
+  --dp-violet: var(--polaris-key-violet-light);
+  --dp-gold: var(--polaris-key-gold-light);
+  --dp-stage: radial-gradient(
+    120% 90% at 50% 0%,
+    color-mix(in oklab, var(--pk-accent) 7%, var(--pk-surface-raised)),
+    var(--pk-surface-sunken) 75%
+  );
+  --dp-glass: rgb(6 9 18 / 0.025);
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  font-family: var(--pk-font-sans);
+  background: var(--pk-surface-page);
+  color: var(--pk-text-default);
+  font-size: 14px;
+  line-height: 1.43;
+  -webkit-font-smoothing: antialiased;
+  scroll-padding-top: 80px;
+}
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--pk-surface-page);
+}
+a {
+  color: var(--pk-accent-fg);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+a.btn:hover,
+a.card:hover,
+.sidenav a:hover,
+.topnav a:hover {
+  text-decoration: none;
+}
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+code,
+kbd,
+pre {
+  font-family: var(--pk-font-mono);
+}
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+h1,
+h2,
+h3 {
+  color: var(--pk-text-strong);
+  text-wrap: balance;
+}
+svg.lucide,
+.iconbtn svg,
+.btn svg,
+.pill svg,
+.mode svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 40;
+  padding: 8px 12px;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-raised);
+  border: 1px solid var(--pk-border-strong);
+}
+.skip:focus {
+  top: 12px;
+}
+:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+
+/* Foil: the page's top edge only (as on the sign-in card). */
+.foil-edge {
+  height: 3px;
+  background: var(--wl-foil);
+}
+
+/* ---------- Top bar ---------- */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-inline: 24px;
+  border-bottom: 1px solid var(--pk-border-subtle);
+  background: color-mix(in oklab, var(--pk-surface-page) 88%, transparent);
+  backdrop-filter: blur(12px);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pk-text-strong);
+  font-weight: 600;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.brand:hover {
+  text-decoration: none;
+}
+.brand .wl-mark {
+  width: 22px;
+  height: 22px;
+  color: var(--pk-accent);
+}
+.brand .sub {
+  color: var(--pk-text-muted);
+  font-weight: 500;
+  padding-left: 8px;
+  border-left: 1px solid var(--pk-border-subtle);
+}
+.topnav {
+  display: flex;
+  gap: 2px;
+  margin-left: 12px;
+}
+.topnav a {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding-inline: 10px;
+  border-radius: var(--pk-radius-md);
+  color: var(--pk-text-muted);
+  font-weight: 500;
+}
+.topnav a:hover {
+  color: var(--pk-text-strong);
+}
+.topnav a[aria-current] {
+  color: var(--pk-text-strong);
+  background: var(--pk-state-hover-tint);
+}
+.top-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--pk-info);
+  background: var(--pk-info-subtle);
+  border: 1px solid color-mix(in oklab, var(--pk-info-border) 60%, transparent);
+  white-space: nowrap;
+}
+.mode svg {
+  width: 14px;
+  height: 14px;
+}
+.iconbtn {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--pk-radius-md);
+  color: var(--pk-text-muted);
+}
+.iconbtn:hover {
+  background: var(--pk-state-hover-tint);
+  color: var(--pk-text-strong);
+}
+.menu-btn {
+  display: none;
+}

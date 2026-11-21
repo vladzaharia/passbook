@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { isDarkBackground } from '@/shared/pass-view/color.ts';
+import { TestBand } from '../../pass-card/test-band.tsx';
 import { WalletCode } from '../barcode.tsx';
 import '../wallet-previews.css';
 import './google.css';
@@ -27,10 +28,13 @@ export function GoogleCard({
   type,
   classBody,
   objectBody,
+  testBand,
 }: {
   type: string;
   classBody: unknown;
   objectBody: unknown;
+  /** A sandbox pass: the TEST PREVIEW band across the card's top. */
+  testBand?: boolean;
 }) {
   const m = googleModel(type, classBody, objectBody);
   const tone = m.bg ? (isDarkBackground(m.bg) ? 'dark' : 'light') : 'plain';
@@ -44,6 +48,7 @@ export function GoogleCard({
         style={m.bg ? { background: m.bg } : undefined}
         aria-label={`${m.kind} card`}
       >
+        {testBand ? <TestBand /> : null}
         <header className="wp-g-top">
           <Logo src={m.logo} name={m.issuer} />
           <span className="wp-g-issuer">{m.issuer}</span>

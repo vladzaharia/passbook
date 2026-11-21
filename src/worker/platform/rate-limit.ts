@@ -73,6 +73,8 @@ const TIERS: Record<ApiRateTier, { name: RateLimitName; limit: number }> = {
   high: { name: 'RL_API_KEY_HIGH', limit: 3000 },
   bulk: { name: 'RL_API_KEY_BULK', limit: 12000 },
 };
+/** Calls a minute a key of `tier` may make. */
+export const tierLimit = (tier: ApiRateTier): number => TIERS[tier].limit;
 /** The RL_API_ORG budget across all of one org's keys; keep equal to wrangler.jsonc. */
 export const API_ORG_LIMIT = 6000;
 

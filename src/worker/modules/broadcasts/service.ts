@@ -12,9 +12,11 @@ import {
   FeatureLimitError,
   ForbiddenError,
   NotFoundError,
+  SandboxQuotaError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -109,7 +111,9 @@ async function insertRefusal(
   const limit = (await entitlementsOf(ctx, orgId))['messages.perDay'];
   const used = await manualBroadcastsToday(ctx.env.DB, orgId, mode, now);
   return typeof limit === 'number' && used >= limit
-    ? new FeatureLimitError({ key: 'messages.perDay', limit, used })
+    ? (await isPreviewOnlyOrg(ctx.env.DB, orgId))
+      ? new SandboxQuotaError({ key: 'messages.perDay', limit, used })
+      : new FeatureLimitError({ key: 'messages.perDay', limit, used })
     : new ForbiddenError();
 }
 

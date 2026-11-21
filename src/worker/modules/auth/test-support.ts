@@ -144,7 +144,9 @@ export async function harness(
         headers.set('content-type', 'application/json');
         rest.body = JSON.stringify(json);
       }
-      if (rest.method && rest.method !== 'GET' && !headers.has('sec-fetch-site')) {
+      // A browser's same-origin hint, for cookie calls only: a key call comes from a server (KEY_IN_BROWSER).
+      const keyCall = /^Bearer\s+(?:wlt|pb|pbp|pbo)_/i.test(headers.get('authorization') ?? '');
+      if (rest.method && rest.method !== 'GET' && !headers.has('sec-fetch-site') && !keyCall) {
         headers.set('sec-fetch-site', 'same-origin');
       }
       const pending: Promise<unknown>[] = [];

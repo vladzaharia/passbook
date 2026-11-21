@@ -1,5 +1,7 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { API_VERSIONS } from './api-version.ts';
 import type { AppBindings } from './context.ts';
+import { withErrorCodes } from './openapi-codes.ts';
 import { withDecisions, withIdempotencyKey } from './openapi-decisions.ts';
 import { withNamedBodies, withReference } from './openapi-reference.ts';
 import { withSdkNames } from './openapi-sdk.ts';
@@ -88,7 +90,7 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
   registerWebhookEvents(app);
   const doc = app.getOpenAPI31Document({
     openapi: '3.1.0',
-    info: { title: 'PassBook API', version: '1.0.0' },
+    info: { title: 'PassBook API', version: API_VERSIONS.at(-1) ?? '1.0.0' },
     servers: [{ url: PUBLIC_BASE_URL }],
   }) as unknown as Doc;
   const secured = withSecurity(
@@ -97,5 +99,7 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
       withReference(withSdkNames(withParamMarks(withOperationIds(withKebabTags(doc))))),
     ) as never,
   );
-  return withIdempotencyKey(withDecisions(app, secured as never) as never) as unknown as Doc;
+  return withErrorCodes(
+    withIdempotencyKey(withDecisions(app, secured as never) as never) as never,
+  ) as unknown as Doc;
 }

@@ -26,7 +26,7 @@ page covers what it does not: conventions, headers, common tasks.
 
 ```
 curl "https://passbook.mobile/api/v1/passes" \
-  -H "Authorization: Bearer $WALLET_API_KEY"
+  -H "Authorization: Bearer $PASSBOOK_KEY"
 ```
 
 | Scope | Allows |
@@ -57,6 +57,14 @@ Keys made before this carry `wlt_` and keep working as service (org) or platform
 A secret scanner can match the labels. Keys are never logged: the logger and audit rows redact every label.
 
 **Personal keys and sessions.** A personal key is its own credential, bounded by the membership and the user, not by a browser session: signing out or revoking a session does not end it. Revoke it, retire it, or remove the membership.
+
+**Keys stay on servers.** A key sent with browser headers is refused: 403 `KEY_IN_BROWSER`, live or test, before the secret is checked. Browser headers are `Sec-Fetch-Site`, `Origin` or a `__Host-wallet_` cookie. curl, Node `fetch`, Python, Go and Workers `fetch` send none of them (`Sec-Fetch-Mode`, `User-Agent` and other cookies do not count). `/api/v1` sends no CORS headers. In the browser, the developer portal's Try it uses a try token (see Developer sandbox).
+
+Two proxy setups forward the browser's headers with your key and get refused:
+- nginx `proxy_pass` forwards every client header. Add `proxy_set_header Origin "";`, `proxy_set_header Cookie "";` and `proxy_set_header Sec-Fetch-Site "";` (and the other `Sec-Fetch-*`).
+- A Worker or Node proxy that passes the incoming request or its headers on (`fetch(new Request(url, request))`, `http-proxy-middleware`). Build new headers with only what PassBook needs: `Authorization`, `Content-Type`, `Idempotency-Key`, `If-Match`.
+
+Rollout: a key made before 1 December 2026 that is sent from a browser still works until 31 December 2026. The answer carries a `PassBook-Warning` header saying so, and we log `KEY_IN_BROWSER_SEEN` with the org and key prefix. Keys made from 1 December 2026 are refused at once.
 
 **Roles.** `roles` holds role presets: `org_admin`, `integration_admin`, `template_author`, `template_reviewer`,
 `template_publisher`, `pass_operator`, `read_only`. The role's scopes are copied into the key's `scopes` when it is made and the role stays as a label: a bundle that gains a scope later never reaches an existing key. A creator can give a role only if every scope in it is within their own roles
@@ -226,32 +234,13 @@ management check and must not be used as a general tenant capability grant.
 
 ## Changes for existing clients
 
-Dated changes, newest last; `/api/v1` is unversioned and changes only additively (new fields,
-routes and filters). The reference's `info.version` is not a release number.
-
-Clients written against the earlier API keep working with these differences (as of 2026-11).
-
-- **Pass create with a key**: `templateVersion`, `releaseId` and `releaseGeneration` are optional
-  together. Send none and the server uses the scope's effective approved release; with none it
-  returns `409 TEMPLATE_RELEASE_REQUIRED` (approve and publish a release in the admin console, then
-  retry). Send only some and it returns `422`. `mode` defaults to the key's mode; a mismatch is
-  `409 MODE_MISMATCH`.
-- **Lists**: a global key or a session without `orgId` gets `422 ORG_REQUIRED`. A session listing a
-  forbidden org's passes gets `403`, not an empty `200`.
-- **Cutover**: uploaded templates start with a `legacy` release at their active version, so
-  existing integrations keep creating passes. New versions need a candidate, a second reviewer
-  and a release (see [Approved template releases](#approved-template-releases)).
-- **Lists and filters**: every collection `GET` returns `{ items, nextCursor }` and takes `cursor`;
-  `nextCursor` is `null` on the last page and on lists that return everything at once. `after` stays
-  only on the `/events` and `/scan/live` streams. `createdAfter`, `createdBefore` and
-  `updatedSince` (ms) are the names for `from`, `to` and `since`; the old names still work and are
-  marked deprecated in the reference. `orgId` is `x-platform-only`: an org-bound key never sends it.
+Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-20` to opt in; without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date.
 
 ## Conventions for new routes
 
 - **Status**: creating a resource returns `201`; queuing a job returns `202` and names the job
-  or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` and
-  `POST /offboard` answer `200` today; they change only under a dated version.
+  or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` answers
+  `201` under `PassBook-Version: 2026-11-20` and later, `200` without it. `POST /offboard` is an action and stays `200`.
 - **Lists**: return `pageOf(item)` (`{ items, nextCursor }`) and take `cursor` and `limit`. Use
   `after` only for an ordered stream.
 - **Time filters**: `createdAfter`, `createdBefore`, `updatedSince`, in ms.
@@ -266,11 +255,11 @@ secret. Sign the raw request body:
 ts=$(date +%s)
 sig=$(printf '%s.%s' "$ts" "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | sed 's/^.* //')
 curl -X POST "https://passbook.mobile/hooks/connections/$CONNECTION_ID" \
-  -H "x-wallet-timestamp: $ts" -H "x-wallet-signature: v1=$sig" \
+  -H "x-passbook-timestamp: $ts" -H "x-passbook-signature: v1=$sig" \
   -H "Content-Type: application/json" --data-binary "$BODY"
 ```
 
-The MAC is HMAC-SHA-256 over `<timestamp>.<raw body>`, hex, prefixed `v1=`. The timestamp is in
+The older `x-wallet-timestamp` and `x-wallet-signature` are accepted too. The MAC is HMAC-SHA-256 over `<timestamp>.<raw body>`, hex, prefixed `v1=`. The timestamp is in
 seconds; the server refuses one older than 5 minutes or more than 1 minute ahead, a body over
 256 KB, and a signature that does not match (constant-time compare). Use the exact bytes you
 send: re-serializing the JSON changes the MAC. Rotate the secret with
@@ -287,11 +276,25 @@ send: re-serializing the JSON changes the MAC. Rotate the secret with
 
 Branch on `code`, not `detail`. Quote `requestId` when asking for help.
 
+`KEY_IN_BROWSER` (403): an API key was sent with browser headers. Call from your server; a proxy must strip `Origin`, `Sec-Fetch-*` and `Cookie` (see Authenticate).
+
 `FEATURE_NOT_INCLUDED` (403) carries `feature`: the organization's plan lacks it, so ask PassBook to turn it on. Every key call of an organization also needs its `api` feature: `off` refuses all, `read` allows only GET and HEAD (so `POST` reads such as `/broadcasts/preview` and `/scan/lookup` are refused too), `full` allows all. Platform-wide keys are not limited by it. Operations that need a feature carry `x-feature` in the OpenAPI document.
 
 Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google`, `wallet.samsung`), `print` and `nfc` (Basic to bind tags, Secure to create keysets). A channel the plan lacks reads `{ "on": false, "source": "platform", "reason": "not_included" }`, creating a print, binding a tag or turning `nfc.tags` on answers `FEATURE_NOT_INCLUDED`, and the settings entry for `nfc.tags` carries `blockedByPlan`. A downgrade only pauses: passes, copies, printed tickets and tag bindings stay (a printed ticket and a bound tag still admit at the door), only new prints, binds and wallet offers are refused, and an upgrade turns them back on.
 
 `FEATURE_LIMIT_REACHED` (403) carries `feature`, `limit` and `used`: a create would pass the organization's cap for that feature. It covers live and test passes, templates, members (pending invitations count), API keys, scanner devices, webhook endpoints, connections, broadcasts a day and join cards a day (a join visitor sees only the daily-limit answer). A downgrade never removes anything: what exists stays, only new creates are refused, and a removed or revoked item frees its slot. A pass import that reaches the limit stops creating: it reports the rest as `skipped` (`progress.skipped`, row code `FEATURE_LIMIT_REACHED`) and still applies its updates. A connection sync records each refused record as failed and goes on. Daily limits count per mode, so test-mode work never uses up the live allowance. Emails a day (`email.perDay`) lower the organization's own daily email cap and answer `EMAIL_RATE_LIMITED`.
+
+## Developer sandbox
+
+`POST /api/v1/developer/sandbox` (a signed-in person: session, CSRF and a Turnstile token; never a key) makes your sandbox, once per person: a `developer` organization with you as admin, a Test personal key (`pbp_test_...`, 30 days, the secret shown once) and a "Quickstart ticket" template released in Test. `GET` reads it back, with `turnstileSiteKey` for the check that makes one. A repeat `POST` finishes a sandbox a failed request left half made and returns it; the key is minted once, so the repeat has `key: null` and `previousKey`: roll it. `DELETE` closes your sandbox (read-only, keys revoked); it is not made again.
+
+**Try tokens.** `POST /api/v1/developer/try-token` (signed-in person, CSRF) returns `{ token, expiresAt }`: a `pbtry_` bearer that acts as your sandbox's Test key for 15 minutes, and the one bearer a browser may send. It works only beside the session cookie it was made for, so it cannot be used from curl or another machine. Audit rows of its writes carry `via: "try"`. It ends at expiry, sign-out, a revoked session, a revoked, expired or retired key, a closed sandbox, or `DELETE /api/v1/developer/try-token` (ends every try token of your sandbox). Routes for a signed-in person never take it, except the request log and rail below. Minting and using share `RL_API_TRY`: 60 a minute per session. The portal keeps it in memory and refreshes it at 12 minutes; never store it or put it in a URL.
+
+**Request log.** `GET /api/v1/developer/logs` lists the Test calls your sandbox's key made: method, route, path, status, `code`, duration and request id, newest first, for 7 days. Filters: `status` (`2xx`, `4xx`, `5xx` or one status), `code`, `path` (anywhere in it), `method`, `keyId`, with `cursor` and `limit`. `GET /api/v1/developer/logs/{id}` adds the request and response bodies for the first 24 hours (`hasBodies`, `bodiesExpireAt`). Bodies are JSON in which only known-safe fields (ids, states, kinds, codes, versions, times, counts) keep their value; every other value is `[redacted]`, and a body over 16 KB or not JSON is a one-line marker. Only a developer organization's Test calls are logged: a Live call or a real organization's call writes nothing. A sandbox records at most 2,000 calls an hour and 20,000 in all; past that `capped` is `hour` or `total` and newer calls are not recorded until the hour turns or older rows expire. `GET /api/v1/developer/rail` returns the key's mode, scopes, rate tier and the calls of the last hour. All three read your own sandbox with the session, or with the try token beside it; a real API key is refused (401). Rows are written after the response (`waitUntil`), so a call is never slower for it. A call refused before its key is known (401, a missing scope) is not logged.
+
+**Public status.** `/developers/status` (and `/developers/status.json`) shows components (API, Apple push, email, webhook delivery, and Google or Samsung Wallet once a platform credential exists) as operational, degraded, outage or not enabled, and incident notes. No organization, count or identity is in it. Incident notes are rows of `status_incidents`; see `docs/operations.md`.
+
+A sandbox pass is a preview. Nothing in a sandbox is ever signed, added to a wallet, pushed or mailed: issue and send calls answer with the same shapes, `downloadUrl` is the TEST preview page (`/preview/<link>`, a signed link that expires after 30 days; the page is noindex and has no Add button), pass detail carries `testPreview: true`, and mail lands in the test inbox. `GET /p/<token>/pass.pkpass` answers `SANDBOX_PREVIEW_ONLY` (409). A sandbox never holds Live: a Live key or request is refused. Its plan is the `developer` preset (500 test passes, 10 templates, 3 webhook endpoints); a create at a cap answers `SANDBOX_QUOTA` (403) with `feature`, `limit` and `used`, as `FEATURE_LIMIT_REACHED` does elsewhere. A sandbox with no activity for 90 days closes.
 
 ## Approved template releases
 
@@ -454,7 +457,7 @@ evidence. Routes must be deployed before use; see [operations](operations.md#goo
 
 ```
 curl -X POST https://passbook.mobile/api/v1/passes \
-  -H "Authorization: Bearer $WALLET_API_KEY" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Idempotency-Key: member-000123-v1" \
   -H "Content-Type: application/json" \
   -d '{ "templateId": "<template id>", "externalId": "member-000123",
@@ -465,12 +468,12 @@ curl -X POST https://passbook.mobile/api/v1/passes \
 An org-bound key sends no `orgId`, `mode` or release fields: the key's org and mode apply and the
 effective approved release is used (see Changes for existing clients).
 
-- `input` is validated against the template's `inputs` schema. See `GET /api/v1/templates/{id}`.
+- `input` is validated against the template's `inputs` schema. `GET /api/v1/templates/{id}/input-schema` returns it as JSON Schema (key scope `templates:read`).
 - `Idempotency-Key` (1 to 200 chars): a retry with the same key and body returns the first result.
   The same key with a different body is 422 `IDEMPOTENCY_KEY_REUSED`.
 - `templateId` must be a template. A blueprint answers 409 `TEMPLATE_IS_BLUEPRINT`
   (`docs/design/blueprints-and-templates.md`).
-- Optional: `serial`, `externalId`, `identityId`, `connectionId` + `externalRef`.
+- Optional: `serial` (honored only on your own signing identity), `externalId` (your key, any time), `identityId`, `connectionId` + `externalRef` (connection-created passes only).
 - `externalId` is your own key. `GET /passes?externalId=` returns the passes with exactly that value
   (case-sensitive, inside the key's org and mode). It is not unique by default. A template whose
   manifest sets `"externalId": { "unique": true }` allows one pass per value, per org and mode: a
@@ -508,14 +511,14 @@ parameter (an org-bound key needs none). An import belongs to the caller's mode.
 
 ```
 curl -X POST "https://passbook.mobile/api/v1/pass-imports" \
-  -H "Authorization: Bearer $WALLET_API_KEY" -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" -H "Content-Type: application/json" \
   -d '{ "templateId": "<template id>",
         "source": { "kind": "file", "name": "people.csv", "csv": "Name,Ref\nAna,A1\nBen,A2" },
         "plan": { "mapping": { "holder": { "from": "/Name" } },
                   "holderEmail": null, "externalId": { "from": "/Ref" },
                   "match": "externalId", "keepManual": false, "save": false } }'
 # state "ready" with counts; fix errors or send skipInvalid, then:
-curl -X POST ".../pass-imports/$ID/commit" -H "Authorization: Bearer $WALLET_API_KEY" \
+curl -X POST ".../pass-imports/$ID/commit" -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" -d '{ "skipInvalid": false, "email": false }'
 ```
 
@@ -531,7 +534,7 @@ without it. Guide: [importing-passes.md](importing-passes.md).
 
 ```
 curl -X PATCH https://passbook.mobile/api/v1/passes/$ID \
-  -H "Authorization: Bearer $WALLET_API_KEY" -H "If-Match: 3" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" -H "If-Match: 3" \
   -H "Content-Type: application/json" \
   -d '{ "input": { "points": 1300 } }'
 ```
@@ -661,7 +664,11 @@ events of its own mode only. Other orgs' and the other mode's endpoints answer `
 | `POST /webhook-endpoints` | manage | `{ orgId?, url, description?, eventTypes, templateIds? }`. `201` `{ endpoint, secret }`. `?validate=1` checks everything, writes nothing, answers `200 { ok: true }` |
 | `GET`, `PATCH`, `DELETE /webhook-endpoints/{id}` | read, manage, manage | `PATCH` takes any create field plus `status` (`active`, `paused`) and `apiVersion`. A resume clears the failure counters |
 | `POST /webhook-endpoints/{id}/secret` | manage | `{ overlapHours: 0 \| 24 \| 72 }` (default 24). `{ secret }`, shown once |
-| `POST /webhook-endpoints/{id}/test` | manage | sends one `webhook.test` to this endpoint: `{ ok, status, durationMs, errorCode }`. 10 a minute per org and mode, then `429`; the destination host's shared send budget is charged too |
+| `POST /webhook-endpoints/{id}/test` | manage | `{ type? }`, default `webhook.test`: sends one signed event to this endpoint: `{ ok, status, durationMs, errorCode, captureId }`. Any other type carries sample data (`sample: true` on the event, `externalId` `sample_order_1042`) and goes to Test endpoints only (`409 SAMPLE_EVENT_LIVE`). 10 a minute per org and mode, then `429`; the destination host's shared send budget is charged too |
+| `POST /webhook-endpoints/capture` | manage | the sandbox's capture endpoint, made if it has none: `201 { endpoint, secret }`, or `200` with `secret: null` when it exists. `409 CAPTURE_DEVELOPER_ONLY` outside a developer sandbox in Test |
+| `GET /webhook-endpoints/{id}/captures`, `.../captures/{captureId}` | read | stored requests, newest first (`type`, `limit`, `cursor`): headers and the raw body |
+| `POST /webhook-endpoints/{id}/captures/{captureId}/replay` | manage | signs the stored body again and stores it as a new capture, same event id |
+| `POST /webhook-endpoints/{id}/captures/secret` | manage | `{ secret }`, the capture endpoint's current signing secret; audited as `webhook.capture_secret.reveal` |
 | `GET /webhook-endpoints/{id}/deliveries` | read | `state`, `type`, `limit`, `cursor`; newest first |
 | `GET /webhook-endpoints/{id}/deliveries/{eventId}` | read | adds `attemptLog` and the `payload` |
 | `POST /webhook-endpoints/{id}/deliveries/{eventId}/replay` | manage | one delivery again; `409 DELIVERY_PENDING` while it waits |
@@ -686,6 +693,16 @@ retries, and a `Retry-After` on `429` or `503` is honored (capped). After 72 hou
 10 failed attempts in a row the endpoint is disabled and its pending deliveries are cancelled; patch
 `status: "active"` to resume. Redirects are not followed. The response body is ignored. Sends to one host are paced per org
 (120 a minute) and across all orgs (600 a minute); a delivery over its share waits, uncounted.
+
+### Capture endpoints (the webhook tester)
+
+A developer sandbox in Test mode has a capture endpoint (`target: "capture"`). It stores the signed request
+PassBook would send, with the same headers, body and signature code, and sends nothing: it has no URL, takes
+nothing from outside, and exists nowhere else. `POST /test` with a `type`, a pass change in the sandbox and a
+replay all land there; erasing a pass erases its captures. It keeps 200 captures per endpoint, 600 an hour per org and 256 KiB per capture, for 7
+days; over the hourly count a delivery waits and a test send answers `429`. The developer portal's
+Webhooks page reads them every 3 seconds and checks each signature in the browser. `docs/api/webhook-vectors.json`
+holds golden requests signed by the server, passing and failing, for testing your own verification.
 
 ### Receive and verify
 
@@ -785,7 +802,7 @@ A `scans:write` key scans as one of the terminals it was minted for, in its own 
 
 ```bash
 curl -X POST https://passbook.mobile/api/v1/scan/actions \
-  -H "Authorization: Bearer $WALLET_API_KEY" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "x-passbook-device: $TERMINAL_ID" \
   -H "Content-Type: application/json" -d '{ ... }'
 ```

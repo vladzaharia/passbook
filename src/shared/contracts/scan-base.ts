@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { IdSchema } from './common.ts';
 
-/** Idempotency keys: UUIDv7, made by the client. */
+/** Idempotency keys: UUIDv7, made by the client. No `i` flag: the document would print it inside the pattern. */
 export const UuidV7Schema = z
   .string()
-  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  .regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/);
 
 /** An IANA zone name the runtime knows. */
 export const TimeZoneSchema = z

@@ -2,6 +2,7 @@ import { retryDelaySeconds } from '../../jobs/retry.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertNotPreviewOnly, isPreviewOnlyOrg } from '../developer/fence.ts';
 import type { PassEventInput } from '../events/record.ts';
 import { isOrgServingPass } from '../orgs/active.ts';
 import { depsOf } from '../passes/deps.ts';
@@ -162,6 +163,11 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     await finishOutbox(db, row.id, lease, 'cancelled', now, 'ORG_INACTIVE');
     return;
   }
+  // A developer org's pass is never in a wallet, so no device exists to reach: the push ends here, unsent.
+  if (await isPreviewOnlyOrg(db, pass.orgId)) {
+    await finishOutbox(db, row.id, lease, 'cancelled', now, 'SANDBOX_PREVIEW_ONLY');
+    return;
+  }
   const deps = depsOf(ctx.env);
   const identity = await deps.identities.byId(pass.identityId).catch((error: unknown) => {
     if (!(error instanceof NotFoundError)) throw error;
@@ -213,6 +219,7 @@ export async function deliverPush(ctx: ServiceContext, outboxId: string): Promis
     await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'PASS_GONE');
     return;
   }
+  await assertNotPreviewOnly(db, pass.orgId);
   const results = await deps.apns.send(target, [...byToken.keys()], now);
   if (!(await pushPassCurrent(db, fence))) {
     await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'PASS_GONE');

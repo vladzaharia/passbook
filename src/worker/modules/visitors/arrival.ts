@@ -6,6 +6,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { emailRate, limitReached } from '../delivery/email-limits.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { depsOf } from '../passes/deps.ts';
 import type { ScanActor } from '../scan/guard.ts';
 import type { Candidate } from '../scan/repo-lookup.ts';
@@ -41,6 +42,7 @@ export async function mailHost(
     });
     return false;
   }
+  await assertNotPreviewOnly(ctx.env.DB, v.orgId);
   const mail = visitorArrivalEmail({ name: v.name, place, at, timeZone, base: baseUrl(ctx.env) });
   try {
     await depsOf(ctx.env).mailer.send({ to: v.hostEmail, ...mail });

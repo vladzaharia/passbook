@@ -79,52 +79,62 @@ function MetricsSkeleton() {
 }
 
 /** Directory links remain available even when overview metrics fail to load. */
+function CountText({ count, loading }: { count: number | undefined; loading: boolean }) {
+  return (
+    <p className="text-2xl font-semibold text-fg-strong tabular-nums">
+      {count === undefined ? (
+        <span className="text-sm font-normal text-fg-muted">
+          {loading ? 'Loading count…' : 'Count unavailable'}
+        </span>
+      ) : (
+        formatCount(count)
+      )}
+    </p>
+  );
+}
+
 function GovernanceSummary({
-  organizations,
+  counts,
   loading,
   filtered,
 }: {
-  organizations: number | undefined;
+  counts: { organizations?: number; users?: number; walletAccounts?: number };
   loading: boolean;
   filtered: boolean;
 }) {
+  const cards = [
+    {
+      title: `Organizations${filtered ? ' · filtered' : ''}`,
+      count: counts.organizations,
+      to: '/admin/platform/orgs',
+      link: 'View organizations',
+    },
+    {
+      title: `Users${filtered ? ' · filtered' : ''}`,
+      count: counts.users,
+      to: '/admin/platform/users',
+      link: 'View users',
+    },
+    {
+      title: `Wallet accounts${filtered ? ' · filtered' : ''}`,
+      count: counts.walletAccounts,
+      to: '/admin/platform/wallet-accounts',
+      link: 'View wallet accounts',
+    },
+  ];
   return (
-    <section aria-label="Platform directories" className="grid items-start gap-3 md:grid-cols-3">
-      <Card>
-        <CardBody className="flex flex-col items-start gap-2">
-          <h2 className="text-sm font-semibold text-fg-strong">
-            Organizations{filtered ? ' · filtered' : ''}
-          </h2>
-          <p className="text-2xl font-semibold text-fg-strong tabular-nums">
-            {organizations === undefined ? (
-              <span className="text-sm font-normal text-fg-muted">
-                {loading ? 'Loading count…' : 'Count unavailable'}
-              </span>
-            ) : (
-              formatCount(organizations)
-            )}
-          </p>
-          <Button asChild variant="link">
-            <Link to="/admin/platform/orgs">View organizations</Link>
-          </Button>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardBody className="flex flex-col items-start gap-2">
-          <h2 className="text-sm font-semibold text-fg-strong">Users</h2>
-          <Button asChild variant="link">
-            <Link to="/admin/platform/users">View users</Link>
-          </Button>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardBody className="flex flex-col items-start gap-2">
-          <h2 className="text-sm font-semibold text-fg-strong">Wallet accounts</h2>
-          <Button asChild variant="link">
-            <Link to="/admin/platform/wallet-accounts">View wallet accounts</Link>
-          </Button>
-        </CardBody>
-      </Card>
+    <section aria-label="Platform directories" className="grid gap-3 md:grid-cols-3">
+      {cards.map((card) => (
+        <Card key={card.to}>
+          <CardBody className="flex h-full flex-col items-start gap-2">
+            <h2 className="text-sm font-semibold text-fg-strong">{card.title}</h2>
+            <CountText count={card.count} loading={loading} />
+            <Button asChild variant="link" className="mt-auto">
+              <Link to={card.to}>{card.link}</Link>
+            </Button>
+          </CardBody>
+        </Card>
+      ))}
     </section>
   );
 }
@@ -177,12 +187,7 @@ export function OverviewPage({
   );
   return (
     <>
-      <PageHeader
-        title="Overview"
-        // Platform pages ignore mode (lib/mode.ts): no mode words here.
-        meta={`Metrics: ${organizationName ?? 'All organizations'}`}
-        actions={firstRun ? undefined : picker}
-      />
+      <PageHeader title="Overview" actions={firstRun ? undefined : picker} />
       <div className="flex flex-col gap-6">
         <div className="flex max-w-md flex-col gap-2">
           <Label htmlFor={filterId}>Organization</Label>
@@ -235,7 +240,11 @@ export function OverviewPage({
         </div>
         <Health />
         <GovernanceSummary
-          organizations={data?.setup.orgs}
+          counts={{
+            organizations: data?.setup.orgs,
+            users: data?.directory?.users,
+            walletAccounts: data?.directory?.walletAccounts,
+          }}
           loading={metrics.isPending}
           filtered={Boolean(orgId)}
         />
@@ -262,9 +271,7 @@ export function OverviewPage({
                 }
               />
             )}
-            {checklist ? (
-              <GetStarted setup={data.setup} organization={organizationName} onDismiss={dismiss} />
-            ) : null}
+            {checklist ? <GetStarted setup={data.setup} onDismiss={dismiss} /> : null}
             {/* With no passes yet the checklist stands in for the (empty) charts. */}
             {firstRun ? null : (
               <ChartsCard data={data} range={shownRange} enter={arrived} busy={busy} />

@@ -52,18 +52,13 @@ import { useStageMotion } from './stage-state.ts';
 const devices = (n: number) =>
   n === 0 ? 'Not in a Wallet yet' : `On ${n} ${n === 1 ? 'device' : 'devices'}`;
 
+const newest = <T extends { createdAt: number }>(items: readonly T[]): T | null =>
+  items.reduce<T | null>((a, d) => (!a || d.createdAt > a.createdAt ? d : a), null);
+
 /** What last went out: the newest email and the newest published version, one line each. */
 function lastSent(p: PassDetailDto): string[] {
-  const email = p.deliveries
-    .filter((d) => d.kind === 'email')
-    .reduce<(typeof p.deliveries)[number] | null>(
-      (a, d) => (!a || d.createdAt > a.createdAt ? d : a),
-      null,
-    );
-  const published = p.versions.reduce<(typeof p.versions)[number] | null>(
-    (a, v) => (!a || v.createdAt > a.createdAt ? v : a),
-    null,
-  );
+  const email = newest(p.deliveries.filter((d) => d.kind === 'email'));
+  const published = newest(p.versions);
   const mail = !email
     ? null
     : email.state === 'sent'
@@ -131,8 +126,9 @@ export function LoadedPassDetail({
       previewSource(source, template.data, {
         input: p.personalization,
         version: p.templateVersion,
+        testBand: p.testPreview,
       }),
-    [source, template.data, p.personalization, p.templateVersion],
+    [source, template.data, p.personalization, p.templateVersion, p.testPreview],
   );
   const stage = (size: 'column' | 'card' | 'sheet') => (
     <div className="relative">
@@ -143,7 +139,8 @@ export function LoadedPassDetail({
         title={entityLabel(p.title, 'Pass')}
         templateId={p.templateId}
         orgId={p.orgId}
-        channels={p.channels}
+        // A sandbox pass is a preview on every channel, so every channel shows, each with its band.
+        channels={p.testPreview ? undefined : p.channels}
         apple={
           <PassPreviewPanel
             passJson={source.passJson}
@@ -155,6 +152,7 @@ export function LoadedPassDetail({
             settle={motion.settle}
             dim={voided}
             removed={removed}
+            testBand={p.testPreview}
             unsaved={draft !== null}
             waiting={waiting}
             // Browsing versions crossfades in place; a new current version mints the same card.

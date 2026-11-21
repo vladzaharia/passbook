@@ -197,6 +197,29 @@ export async function recentAudit(db: D1Database, scope: Scope, limit: number, t
   );
 }
 
+export interface DirectoryCounts {
+  users: number;
+  walletAccounts: number;
+}
+
+/** The platform overview's directory cards: users (org members when filtered) and wallet accounts. */
+export async function directoryCounts(db: D1Database, orgId?: string): Promise<DirectoryCounts> {
+  const row = await first<DirectoryCounts>(
+    db,
+    orgId
+      ? `SELECT
+           (SELECT count(DISTINCT user_id) FROM org_memberships WHERE org_id = ? AND revoked_at IS NULL) AS users,
+           (SELECT count(*) FROM signing_identities WHERE org_id = ?)
+             + (SELECT count(*) FROM wallet_credentials WHERE org_id = ? AND revoked_at IS NULL) AS walletAccounts`
+      : `SELECT
+           (SELECT count(*) FROM users) AS users,
+           (SELECT count(*) FROM signing_identities)
+             + (SELECT count(*) FROM wallet_credentials WHERE revoked_at IS NULL) AS walletAccounts`,
+    orgId ? [orgId, orgId, orgId] : [],
+  );
+  return { users: row?.users ?? 0, walletAccounts: row?.walletAccounts ?? 0 };
+}
+
 export interface SetupCounts {
   orgs: number;
   assignedTemplates: number;

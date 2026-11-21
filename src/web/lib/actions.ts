@@ -43,7 +43,6 @@ export interface ActionEntry {
 
 const a = (label: string, icon: LucideIcon, tone: Tone): ActionEntry => ({ label, icon, tone });
 const I = ACTION_ICON;
-
 /** Audit and activity vocabulary: a label, a glyph and a tone per action code. */
 export const ACTIONS: Record<string, ActionEntry> = {
   'broadcast.cancel': a('Message cancelled', I.void, 'warning'),
@@ -51,6 +50,9 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'broadcast.send': a('Message sent', I.updateDevices, 'info'),
   'broadcast.update': a('Message edited', I.edit, 'info'),
   'broadcast.retry': a('Message sent again', I.updateDevices, 'info'),
+  'developer_sandbox.close': a('Developer sandbox closed', Pause, 'warning'),
+  'developer_sandbox.create': a('Developer sandbox made', ENTITY.org.icon, 'success'),
+  'developer_sandbox.try_revoke': a('Try it sessions ended', ENTITY.apiKey.icon, 'warning'),
   'message_rule.create': a('Message rule created', ENTITY.broadcast.icon, 'success'),
   'message_rule.update': a('Message rule edited', I.edit, 'info'),
   'message_rule.pause': a('Message rule paused', Pause, 'warning'),
@@ -71,6 +73,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'connection.webhook_resolve': a('Webhook item resolved', CircleCheck, 'info'),
   'connection.webhook_secret': a('Webhook secret rotated', I.rotate, 'info'),
   'connection.webhook_secret_revoke_previous': a('Old webhook secret revoked', I.rotate, 'warning'),
+  'webhook.capture_secret.reveal': a('Capture secret viewed', I.test, 'info'),
   'webhook.endpoint.create': a('Webhook endpoint created', ENTITY.connection.icon, 'success'),
   'webhook.endpoint.update': a('Webhook endpoint updated', I.edit, 'info'),
   'webhook.endpoint.delete': a('Webhook endpoint deleted', I.delete, 'danger'),

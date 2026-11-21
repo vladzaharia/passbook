@@ -1,0 +1,73 @@
+/* The TEST band of a sandbox pass: real text on gold stripes, the same on every channel. Pass art
+   may use hex, so these are fixed colours. The host sets --tb-size (the font size) and places it. */
+.test-band {
+  --tb-size: 9px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--tb-size) * 1.9);
+  margin: 0;
+  padding: 0 0.5em;
+  overflow: hidden;
+  background: repeating-linear-gradient(135deg, #ffc24d 0 0.9em, #f5b532 0.9em 1.8em);
+  color: #3b2a00;
+  font-family: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--tb-size);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: center;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+/* PassCard: over the card's top padding, so the layout under it does not move. It sits beside the card,
+   not in it, so a style's mask (the event ticket's notch) cannot cut the text. */
+.pc-root[data-test-band] {
+  position: relative;
+}
+.pc-root[data-test-band][data-face] .pc-card {
+  padding-top: calc(var(--pc-pad) + var(--u) * 6);
+}
+.pc-root > .test-band {
+  --u: calc(100cqw / 320);
+  --tb-size: calc(var(--u) * 10.5);
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  height: calc(var(--u) * 16);
+  border-radius: calc(var(--u) * 14) calc(var(--u) * 14) 0 0;
+}
+
+/* Google: the card's own padding is 1rem. */
+.wp-g-card > .test-band {
+  --tb-size: 0.6875rem;
+  flex: none;
+  margin: -1rem -1rem 0;
+}
+
+/* Samsung: first row of the card, over the banner. */
+.wp-s-card > .test-band {
+  --tb-size: 0.6875rem;
+  position: relative;
+  z-index: 2;
+  flex: none;
+}
+
+/* Paper: across the sheet's top edge, sized in the sheet's own millimetres. */
+.pp-fit > .test-band {
+  --mm: calc(100cqw / var(--w));
+  --tb-size: calc(var(--mm) * 2.6);
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  border-radius: calc(var(--mm) * 1.5) calc(var(--mm) * 1.5) 0 0;
+}
+@media print {
+  .pp-fit > .test-band {
+    --mm: 1mm;
+    border-radius: 0;
+  }
+}

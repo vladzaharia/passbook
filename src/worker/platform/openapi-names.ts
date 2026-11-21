@@ -60,9 +60,16 @@ import {
 } from '../../shared/contracts/scanning-sessions.ts';
 import {
   TemplateDetailSchema,
+  TemplateInputSchemaSchema,
   TemplateListSchema,
   TemplateSummarySchema,
 } from '../../shared/contracts/templates.ts';
+import {
+  CaptureEndpointCreatedSchema,
+  CaptureSecretSchema,
+  WebhookCaptureListSchema,
+  WebhookCaptureSchema,
+} from '../../shared/contracts/webhook-captures.ts';
 import {
   EventFeedPageSchema,
   WebhookDeliveryDetailSchema,
@@ -125,6 +132,7 @@ const names = {
   ApiKeyRetired: RetiredApiKeySchema,
   TemplateSummary: TemplateSummarySchema,
   TemplateDetail: TemplateDetailSchema,
+  TemplateInputSchema: TemplateInputSchemaSchema,
   TemplatePage: TemplateListSchema,
   CapturedEmail: CapturedEmailSchema,
   CapturedEmailDetail: CapturedEmailDetailSchema,
@@ -135,6 +143,10 @@ const names = {
   WebhookDeliveryPage: WebhookDeliveryListSchema,
   WebhookDeliveryDetail: WebhookDeliveryDetailSchema,
   WebhookTestResult: WebhookTestResultSchema,
+  WebhookCapture: WebhookCaptureSchema,
+  WebhookCapturePage: WebhookCaptureListSchema,
+  CaptureEndpointCreated: CaptureEndpointCreatedSchema,
+  CaptureSecret: CaptureSecretSchema,
   EventPage: EventFeedPageSchema,
 };
 

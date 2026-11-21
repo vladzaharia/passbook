@@ -12,6 +12,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
 import { deliverBundleEmail } from '../bundles/deliver.ts';
 import { holderChannels, recordCopy } from '../channels/gate.ts';
+import { assertSignedObject, isPreviewOnlyOrg, testPreviewUrl } from '../developer/fence.ts';
 import { isJoinCard } from '../join/repo-issues.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
@@ -163,7 +164,10 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
     fromName,
     downloadUrl: channels.effective.apple.on ? `${base}/p/${plainToken}/pass.pkpass` : null,
     printUrl: channels.holderPrint ? `${base}/p/${plainToken}/print` : null,
-    manageUrl: `${base}/p/${plainToken}`,
+    // A developer org's holder has no wallet to add the pass to: the link is its TEST preview page.
+    manageUrl: (await isPreviewOnlyOrg(db, pass.orgId))
+      ? await testPreviewUrl(ctx.env, base, pass, ctx.clock.now())
+      : `${base}/p/${plainToken}`,
     badgeUrl: emailAssetUrl(base, EMAIL_BADGE.path),
     publicBaseUrl: base,
     walletOffers,
@@ -207,6 +211,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   let attachments: { filename: string; type: string; content: Uint8Array }[] | undefined;
   try {
     if (attachApple) {
+      assertSignedObject(pass.objectKey);
       const object = await ctx.env.BUCKET.get(pass.objectKey);
       if (!object) throw new PermanentEmailError('Pass object is missing.');
       attachments = [
@@ -247,6 +252,11 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
       ctx.clock.now(),
       ATTEMPT_CANCEL_CODE[attempt],
     );
+    return;
+  }
+  // Developer mail is captured above; reaching the mailer is a bug, and the row ends instead of retrying.
+  if (await isPreviewOnlyOrg(db, pass.orgId)) {
+    await finishOutbox(db, row.id, lease, 'cancelled', ctx.clock.now(), 'SANDBOX_PREVIEW_ONLY');
     return;
   }
   let messageId: string;

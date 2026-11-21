@@ -12,13 +12,16 @@ import type { AppBindings } from '../../platform/context.ts';
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { requireTenantSessionOrApiKey } from '../passes/http.ts';
+import { orgIdOf, requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeConnection } from './access.ts';
 import { connectorInfo } from './dto.ts';
 
 const ConnectionOrgQuerySchema = z.object({ orgId: IdSchema.optional() });
 
-async function authorizeCatalog(c: Context<AppBindings>, orgId: string | undefined): Promise<void> {
+async function authorizeCatalog(c: Context<AppBindings>, named: string | undefined): Promise<void> {
+  // An org key acts in its own org; a session admin without an org reads the platform catalog.
+  const auth = c.var.auth;
+  const orgId = auth?.kind === 'api_key' ? orgIdOf(auth, named) : named;
   if (orgId !== undefined) {
     await authorizeConnection(serviceContext(c), c.var.auth, orgId, 'integrations:read');
     return;

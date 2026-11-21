@@ -312,6 +312,20 @@ describe('auth', () => {
     expect((await call(preview, { method: 'POST', ...json({}) }, reader)).status).toBe(200);
   });
 
+  it('serves the input schema to a templates:read key, equal to the template inputs', async () => {
+    const path = `/${templateId}/input-schema`;
+    const noScope = auth.apiKey({ scopes: ['passes:write'] });
+    expect((await call(path, {}, noScope)).status).toBe(403);
+    const reader = auth.apiKey({ scopes: ['templates:read'] });
+    const res = await call(path, {}, reader);
+    expect(res.status).toBe(200);
+    const detail = (await (await call(`/${templateId}`, {}, reader)).json()) as {
+      inputSchema: unknown;
+    };
+    expect(await res.json()).toEqual(detail.inputSchema);
+    expect((await call(path, {}, {})).status).toBe(401);
+  });
+
   it('enforces CSRF on admin writes', async () => {
     const { 'x-csrf-token': _drop, ...noCsrf } = admin;
     const res = await call(`/${templateId}`, { method: 'DELETE' }, noCsrf);

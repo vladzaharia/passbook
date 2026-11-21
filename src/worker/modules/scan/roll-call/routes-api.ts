@@ -7,6 +7,7 @@ import {
   RollCallMarksResponseSchema,
   RollCallSchema,
 } from '../../../../shared/contracts/scan-roll-call.ts';
+import { atLeast } from '../../../platform/api-version.ts';
 import { assertOrgAccess } from '../../../platform/auth.ts';
 import { limitBody } from '../../../platform/body-limit.ts';
 import type { AppBindings } from '../../../platform/context.ts';
@@ -112,10 +113,17 @@ register(
     path: '/',
     summary: 'Start a roll call, or join the open one',
     query: OrgQuerySchema,
+    status: 201,
     response: RollCallSchema,
   },
-  async (c) =>
-    c.json(await startRollCall(serviceContext(c), await callerOf(c, c.req.valid('query'), true))),
+  async (c) => {
+    const call = await startRollCall(
+      serviceContext(c),
+      await callerOf(c, c.req.valid('query'), true),
+    );
+    // 200 until a client pins PassBook-Version 2026-11-20 (docs/api/versions.json).
+    return c.json(call, atLeast(c, '2026-11-20') ? 201 : 200);
+  },
 );
 register(
   rollCallRoutes,
