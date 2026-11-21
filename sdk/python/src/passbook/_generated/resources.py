@@ -1601,6 +1601,15 @@ class ScannersResource:
         """Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`"""
         return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/revoke", result=m.ScannersRevokeResult, **opts)
 
+    def set_mode(
+        self,
+        id: str,
+        body: m.ScannersSetModeBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersSetModeResult:
+        """Go live or move to test mode `POST /api/v1/scanners/{id}/mode`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/mode", body=body, result=m.ScannersSetModeResult, **opts)
+
     def update(
         self,
         id: str,

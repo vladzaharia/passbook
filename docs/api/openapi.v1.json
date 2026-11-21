@@ -24103,6 +24103,24 @@
           }
         }
       },
+      "ScannersSetModeParams": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "detachEvent": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
       "ScannersCreateParams": {
         "type": "object",
         "properties": {
@@ -24384,24 +24402,6 @@
           "kind",
           "accepts",
           "timeZone"
-        ]
-      },
-      "ScannersSetModeParams": {
-        "type": "object",
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "live",
-              "test"
-            ]
-          },
-          "detachEvent": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "mode"
         ]
       },
       "ScanSetupsCreateParams": {
@@ -114531,6 +114531,257 @@
         ]
       }
     },
+    "/api/v1/scanners/{id}/mode": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
+        "summary": "Go live or move to test mode",
+        "tags": [
+          "scanners"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScannersSetModeParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scanner"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScannersByIdMode",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "setMode"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "ADMITS_TOO_MANY",
+          "API_KEY_NO_APPROVAL",
+          "API_KEY_ORG_REQUIRED",
+          "API_KEY_ROUTE",
+          "ASSET_NOT_FOUND",
+          "BLUEPRINT_NOT_SCANNABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "CSRF_ORIGIN",
+          "DEVICE_REQUIRED",
+          "ENROLLMENT_ENDED",
+          "ENROLLMENT_NOT_FOUND",
+          "EVENT_ARCHIVED",
+          "EVENT_IN_USE",
+          "EVENT_MATCH_INPUT",
+          "EVENT_NEEDS_CAPACITY",
+          "EVENT_NOT_FOUND",
+          "EVENT_TEMPLATE_NO_CHECK_IN",
+          "EVENT_TEMPLATE_RELEASE_REQUIRED",
+          "FORBIDDEN",
+          "GROUP_ENTRY_ONLY",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMAGE_NOT_FOUND",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOTE_CAP",
+          "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
+          "NOTE_NOT_FOUND",
+          "NOTE_ROLE",
+          "NOT_FOUND",
+          "NOT_INSIDE",
+          "OFFLINE_OFF",
+          "OFFLINE_TOO_BIG",
+          "ORG_INACTIVE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PAIRING_INVALID",
+          "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
+          "PHOTO_PASS_INACTIVE",
+          "PHOTO_ROLE",
+          "PIN_GENERATION_FAILED",
+          "PIN_INVALID",
+          "PIN_MANAGER_REQUIRED",
+          "RATE_LIMITED",
+          "ROLE_NOT_ALLOWED",
+          "ROLL_CALL_ENDED",
+          "ROLL_CALL_NOT_FOUND",
+          "ROLL_CALL_NO_PLACES",
+          "ROLL_CALL_NO_SESSION",
+          "ROLL_CALL_TOO_LARGE",
+          "SAMPLE_TEST_ONLY",
+          "SCANNER_ADMIN_ROLE",
+          "SCANNER_ADMIN_SETUP_EXISTS",
+          "SCANNER_ADMIN_USER",
+          "SCANNER_CANNOT_SCAN",
+          "SCANNER_CHANGED",
+          "SCANNER_EXPIRED",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_PAIRABLE",
+          "SCANNER_NOT_TERMINAL",
+          "SCANNER_REPAIR",
+          "SCANNER_REVOKED",
+          "SCANNER_ROLE_INVALID",
+          "SCANNER_SETUP_EXISTS",
+          "SCANNER_UNASSIGNED",
+          "SCANNER_UNAUTHENTICATED",
+          "SCANNER_WATCH_INVALID",
+          "SCANNER_WATCH_MODE",
+          "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_DEVICE_CHANGED",
+          "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_HOLD_RANGE",
+          "SCANNING_HOURS_NONE",
+          "SCANNING_SESSION_CHANGED",
+          "SCANNING_SESSION_CLOSED",
+          "SCANNING_SESSION_CONFIG_REQUIRED",
+          "SCANNING_SESSION_COUNTS_UNAVAILABLE",
+          "SCANNING_SESSION_MODE",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCANNING_SESSION_OPEN",
+          "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
+          "SCANNING_SESSION_SCOPE_INVALID",
+          "SCANNING_SESSION_SETTINGS_INVALID",
+          "SCAN_ACCESS_CHANGED",
+          "SCAN_ADMIN_SETUP_REQUIRED",
+          "SCAN_BODY_INVALID",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_COUNTS_UNAVAILABLE",
+          "SCAN_CREDENTIAL_CHANGED",
+          "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+          "SCAN_EVENT_CHANGED",
+          "SCAN_EXPORT_RANGE",
+          "SCAN_EXPORT_TOO_LARGE",
+          "SCAN_HISTORY_UNAVAILABLE",
+          "SCAN_IN_PROGRESS",
+          "SCAN_KEY_REUSED",
+          "SCAN_LIVE_ORIGIN",
+          "SCAN_LOOKUP_DISABLED",
+          "SCAN_MARK_OUT_INVALID",
+          "SCAN_MODE_MISMATCH",
+          "SCAN_NOT_FOUND",
+          "SCAN_NO_SESSION",
+          "SCAN_OVERRIDE_FORBIDDEN",
+          "SCAN_OVERRIDE_INVALID",
+          "SCAN_OVERRIDE_NOTE_CLOSED",
+          "SCAN_OVERRIDE_TAKEN",
+          "SCAN_PASS_CHANGED",
+          "SCAN_SCOPE_NOT_ALLOWED",
+          "SCAN_SCOPE_REQUIRED",
+          "SCAN_SEARCH_FORBIDDEN",
+          "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
+          "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
+          "SCAN_STAFF_CHANGED",
+          "SCAN_STAFF_CURSOR",
+          "SCAN_STAFF_NOT_FOUND",
+          "SCAN_SUMMARY_SESSION_FORBIDDEN",
+          "SCAN_SURFACE_UNSUPPORTED",
+          "SCAN_TOO_MANY_MISSES",
+          "SCAN_TOO_MANY_OVERRIDES",
+          "SCAN_UNDO_EXPIRED",
+          "SCAN_UNDO_FORBIDDEN",
+          "SCREEN_ONLY",
+          "SCREEN_REQUIRED",
+          "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
+          "STAFF_NAME_TAKEN",
+          "STAFF_REQUIRED",
+          "STAFF_SIGN_IN_DISABLED",
+          "STAFF_SIGN_IN_UNAVAILABLE",
+          "TAG_APPROVAL_REQUIRED",
+          "TAG_ASSIGN_FORBIDDEN",
+          "TAG_CARD_AMBIGUOUS",
+          "TAG_CHECK_FAILED",
+          "TAG_HOLDER_CHANGED",
+          "TAG_LIMIT",
+          "TAG_NOT_FOUND",
+          "TAG_NO_ACCOUNT",
+          "TAG_PASS_NOT_ACCEPTED",
+          "TAG_POOL_UNSUPPORTED",
+          "TAG_REQUEST_EXPIRED",
+          "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
+          "TAG_SUN_REPLAY",
+          "TAG_UID_RANDOM",
+          "TAG_UNDO_EXPIRED",
+          "TAG_UNDO_FORBIDDEN",
+          "TAG_UNREADABLE",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_RELEASED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TERMINAL_NOT_FOUND",
+          "TERMINAL_ONLY",
+          "UNAUTHENTICATED",
+          "UNDO_SUPERSEDED",
+          "UNDO_UNCONFIRMED",
+          "UNLOCK_REQUIRED",
+          "USER_NOT_FOUND",
+          "VALIDATION",
+          "ZONE_ARCHIVED",
+          "ZONE_CYCLE",
+          "ZONE_DEPTH",
+          "ZONE_EVENT_SESSION",
+          "ZONE_KEY_TAKEN",
+          "ZONE_NAME_TAKEN",
+          "ZONE_NOT_FOUND"
+        ]
+      }
+    },
     "/api/v1/scanners": {
       "get": {
         "summary": "List scanners",
@@ -115911,251 +116162,6 @@
         "x-sdk": {
           "resource": "scanners",
           "method": "rotateToken"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ACTOR_CHANGED",
-          "ADMITS_TOO_MANY",
-          "API_KEY_NO_APPROVAL",
-          "API_KEY_ORG_REQUIRED",
-          "API_KEY_ROUTE",
-          "ASSET_NOT_FOUND",
-          "BLUEPRINT_NOT_SCANNABLE",
-          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
-          "CSRF_ORIGIN",
-          "DEVICE_REQUIRED",
-          "ENROLLMENT_ENDED",
-          "ENROLLMENT_NOT_FOUND",
-          "EVENT_ARCHIVED",
-          "EVENT_IN_USE",
-          "EVENT_MATCH_INPUT",
-          "EVENT_NEEDS_CAPACITY",
-          "EVENT_NOT_FOUND",
-          "EVENT_TEMPLATE_NO_CHECK_IN",
-          "EVENT_TEMPLATE_RELEASE_REQUIRED",
-          "FORBIDDEN",
-          "GROUP_ENTRY_ONLY",
-          "IDEMPOTENCY_KEY_REUSED",
-          "IDP_SIGN_IN_REQUIRED",
-          "IMAGE_NOT_FOUND",
-          "INVALID_API_KEY",
-          "INVALID_CURSOR",
-          "MISSING_SCOPE",
-          "NOTE_CAP",
-          "NOTE_DEVICE_CAP",
-          "NOTE_HELD",
-          "NOTE_NOT_FOUND",
-          "NOTE_ROLE",
-          "NOT_FOUND",
-          "NOT_INSIDE",
-          "OFFLINE_OFF",
-          "OFFLINE_TOO_BIG",
-          "ORG_INACTIVE",
-          "ORG_NOT_FOUND",
-          "ORG_REQUIRED",
-          "PAIRING_INVALID",
-          "PASS_CONFLICT",
-          "PASS_NOT_FOUND",
-          "PHOTO_PASS_INACTIVE",
-          "PHOTO_ROLE",
-          "PIN_GENERATION_FAILED",
-          "PIN_INVALID",
-          "PIN_MANAGER_REQUIRED",
-          "RATE_LIMITED",
-          "ROLE_NOT_ALLOWED",
-          "ROLL_CALL_ENDED",
-          "ROLL_CALL_NOT_FOUND",
-          "ROLL_CALL_NO_PLACES",
-          "ROLL_CALL_NO_SESSION",
-          "ROLL_CALL_TOO_LARGE",
-          "SAMPLE_TEST_ONLY",
-          "SCANNER_ADMIN_ROLE",
-          "SCANNER_ADMIN_SETUP_EXISTS",
-          "SCANNER_ADMIN_USER",
-          "SCANNER_CANNOT_SCAN",
-          "SCANNER_CHANGED",
-          "SCANNER_EXPIRED",
-          "SCANNER_NAME_TAKEN",
-          "SCANNER_NOT_FOUND",
-          "SCANNER_NOT_PAIRABLE",
-          "SCANNER_NOT_TERMINAL",
-          "SCANNER_REPAIR",
-          "SCANNER_REVOKED",
-          "SCANNER_ROLE_INVALID",
-          "SCANNER_SETUP_EXISTS",
-          "SCANNER_UNASSIGNED",
-          "SCANNER_UNAUTHENTICATED",
-          "SCANNER_WATCH_INVALID",
-          "SCANNER_WATCH_MODE",
-          "SCANNER_WATCH_NOT_FOUND",
-          "SCANNING_DEVICE_CHANGED",
-          "SCANNING_DEVICE_NOT_FOUND",
-          "SCANNING_HOLD_RANGE",
-          "SCANNING_HOURS_NONE",
-          "SCANNING_SESSION_CHANGED",
-          "SCANNING_SESSION_CLOSED",
-          "SCANNING_SESSION_CONFIG_REQUIRED",
-          "SCANNING_SESSION_COUNTS_UNAVAILABLE",
-          "SCANNING_SESSION_MODE",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCANNING_SESSION_OPEN",
-          "SCANNING_SESSION_PAUSED",
-          "SCANNING_SESSION_REMOVE_DEVICES",
-          "SCANNING_SESSION_SCOPE_INVALID",
-          "SCANNING_SESSION_SETTINGS_INVALID",
-          "SCAN_ACCESS_CHANGED",
-          "SCAN_ADMIN_SETUP_REQUIRED",
-          "SCAN_BODY_INVALID",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_COUNTS_UNAVAILABLE",
-          "SCAN_CREDENTIAL_CHANGED",
-          "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
-          "SCAN_EVENT_CHANGED",
-          "SCAN_EXPORT_RANGE",
-          "SCAN_EXPORT_TOO_LARGE",
-          "SCAN_HISTORY_UNAVAILABLE",
-          "SCAN_IN_PROGRESS",
-          "SCAN_KEY_REUSED",
-          "SCAN_LIVE_ORIGIN",
-          "SCAN_LOOKUP_DISABLED",
-          "SCAN_MARK_OUT_INVALID",
-          "SCAN_MODE_MISMATCH",
-          "SCAN_NOT_FOUND",
-          "SCAN_NO_SESSION",
-          "SCAN_OVERRIDE_FORBIDDEN",
-          "SCAN_OVERRIDE_INVALID",
-          "SCAN_OVERRIDE_NOTE_CLOSED",
-          "SCAN_OVERRIDE_TAKEN",
-          "SCAN_PASS_CHANGED",
-          "SCAN_SCOPE_NOT_ALLOWED",
-          "SCAN_SCOPE_REQUIRED",
-          "SCAN_SEARCH_FORBIDDEN",
-          "SCAN_SETTINGS_INVALID",
-          "SCAN_SETUP_ADMIN_SCOPE",
-          "SCAN_SETUP_CHANGED",
-          "SCAN_SETUP_CHECKS_FAILED",
-          "SCAN_SETUP_CONFLICT",
-          "SCAN_SETUP_INVALID",
-          "SCAN_SETUP_KEY_REQUIRED",
-          "SCAN_SETUP_KEY_REUSED",
-          "SCAN_SETUP_LIVE_ONLY",
-          "SCAN_SETUP_NAME_TAKEN",
-          "SCAN_STAFF_CHANGED",
-          "SCAN_STAFF_CURSOR",
-          "SCAN_STAFF_NOT_FOUND",
-          "SCAN_SUMMARY_SESSION_FORBIDDEN",
-          "SCAN_SURFACE_UNSUPPORTED",
-          "SCAN_TOO_MANY_MISSES",
-          "SCAN_TOO_MANY_OVERRIDES",
-          "SCAN_UNDO_EXPIRED",
-          "SCAN_UNDO_FORBIDDEN",
-          "SCREEN_ONLY",
-          "SCREEN_REQUIRED",
-          "SESSION_OPEN_FORBIDDEN",
-          "STAFF_NAME_REQUIRED",
-          "STAFF_NAME_TAKEN",
-          "STAFF_REQUIRED",
-          "STAFF_SIGN_IN_DISABLED",
-          "STAFF_SIGN_IN_UNAVAILABLE",
-          "TAG_APPROVAL_REQUIRED",
-          "TAG_ASSIGN_FORBIDDEN",
-          "TAG_CARD_AMBIGUOUS",
-          "TAG_CHECK_FAILED",
-          "TAG_HOLDER_CHANGED",
-          "TAG_LIMIT",
-          "TAG_NOT_FOUND",
-          "TAG_NO_ACCOUNT",
-          "TAG_PASS_NOT_ACCEPTED",
-          "TAG_POOL_UNSUPPORTED",
-          "TAG_REQUEST_EXPIRED",
-          "TAG_SCANNER_ONLY",
-          "TAG_SUN_RATE_LIMITED",
-          "TAG_SUN_REPLAY",
-          "TAG_UID_RANDOM",
-          "TAG_UNDO_EXPIRED",
-          "TAG_UNDO_FORBIDDEN",
-          "TAG_UNREADABLE",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_NOT_RELEASED",
-          "TEMPLATE_RELEASE_CONFLICT",
-          "TERMINAL_NOT_FOUND",
-          "TERMINAL_ONLY",
-          "UNAUTHENTICATED",
-          "UNDO_SUPERSEDED",
-          "UNDO_UNCONFIRMED",
-          "UNLOCK_REQUIRED",
-          "USER_NOT_FOUND",
-          "VALIDATION",
-          "ZONE_ARCHIVED",
-          "ZONE_CYCLE",
-          "ZONE_DEPTH",
-          "ZONE_EVENT_SESSION",
-          "ZONE_KEY_TAKEN",
-          "ZONE_NAME_TAKEN",
-          "ZONE_NOT_FOUND"
-        ]
-      }
-    },
-    "/api/v1/scanners/{id}/mode": {
-      "post": {
-        "summary": "Go live or move to test mode",
-        "tags": [
-          "scanners"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScannersSetModeParams"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Scanner"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.postScannersByIdMode",
-        "x-sdk": {
-          "resource": "scanners",
-          "method": "setMode"
         },
         "security": [
           {

@@ -1313,6 +1313,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanners.setMode", "POST", "/api/v1/scanners/id1/mode", false,
+		`{"mode":"live"}`, `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScannersSetModeBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Scanners.SetMode(ctx, "id1", &b)
+		},
+	},
+	{
 		"scanners.revoke", "POST", "/api/v1/scanners/id1/revoke", false,
 		"", `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

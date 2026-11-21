@@ -5,7 +5,6 @@ import {
   IdParamSchema,
   ScannerListQuerySchema,
   ScannerListSchema,
-  ScannerModeSchema,
   ScannerPairingSchema,
   ScannerPairingStateSchema,
   ScannerSamplePassSchema,
@@ -22,7 +21,6 @@ import { pairHere, replaceTerminalToken } from './pairing-token.ts';
 import { setScannerCookie } from './routes-pair.ts';
 import { registerScannerWrites } from './routes-scanners-key.ts';
 import { createSamplePass } from './sample-pass.ts';
-import { changeMode } from './scanner-mode.ts';
 import { listScanners, loadScanner, scannerView } from './scanner-views.ts';
 import { createScanner } from './scanners.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
@@ -208,29 +206,6 @@ register(
       {
         'cache-control': 'no-store',
       },
-    );
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'post',
-    path: '/{id}/mode',
-    summary: 'Go live or move to test mode',
-    params: IdParamSchema,
-    body: ScannerModeSchema,
-    response: ScannerSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
-    return c.json(
-      scopedScanningView(
-        await changeMode(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
-        row.orgId,
-      ),
     );
   },
 );

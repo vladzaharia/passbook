@@ -1,11 +1,16 @@
 import { IdParamSchema } from '../../../shared/contracts/common.ts';
-import { ScannerSchema, UpdateScannerSchema } from '../../../shared/contracts/scanners.ts';
+import {
+  ScannerModeSchema,
+  ScannerSchema,
+  UpdateScannerSchema,
+} from '../../../shared/contracts/scanners.ts';
 import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, type C, tenantAuthorityOf } from '../passes/http.ts';
+import { changeMode } from './scanner-mode.ts';
 import { loadScanner } from './scanner-views.ts';
 import { updateScanner } from './scanners.ts';
 import { revokeScanner } from './scanning-devices.ts';
@@ -80,6 +85,28 @@ export function registerScannerWrites(router: Router): void {
       return c.json(
         scopedScanningView(
           await revokeScanner(w.ctx, w.actorId, w.row.id, w.authority),
+          w.row.orgId,
+        ),
+      );
+    },
+  );
+  register(
+    router,
+    'scanners',
+    {
+      method: 'post',
+      path: '/{id}/mode',
+      summary: 'Go live or move to test mode',
+      auth: WRITE,
+      params: IdParamSchema,
+      body: ScannerModeSchema,
+      response: ScannerSchema,
+    },
+    async (c) => {
+      const w = await writer(c, c.req.valid('param').id);
+      return c.json(
+        scopedScanningView(
+          await changeMode(w.ctx, w.actorId, w.row.id, c.req.valid('json'), w.authority),
           w.row.orgId,
         ),
       );

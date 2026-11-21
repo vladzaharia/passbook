@@ -236,3 +236,26 @@ describe('scanner edit and revoke by scanning:write key', () => {
     expect((await send('POST', `${path}/revoke`, k.headers)).status).toBe(200);
   });
 });
+
+describe('scanner mode move by scanning:write key', () => {
+  it('moves a device to test mode with a live key, and refuses a test key and a read-only key', async () => {
+    const made = await fixture.call('POST', '/scanners', {
+      orgId: orgId(),
+      name: 'Key mode scanner',
+      kind: 'device',
+      accepts: { templateIds: [await eventTemplate(fixture.kit, 'Mode ticket')] },
+      timeZone: 'UTC',
+    });
+    expect(made.status).toBe(201);
+    const device = (await made.json()) as { id: string };
+    const path = `/scanners/${device.id}/mode`;
+    const read = await keyOf(['scan-setup:read']);
+    expect((await send('POST', path, read.headers, { mode: 'test' })).status).toBe(403);
+    const test = await keyOf(['scanning:write'], 'test');
+    expect((await send('POST', path, test.headers, { mode: 'test' })).status).toBe(404);
+    const k = await keyOf(['scanning:write']);
+    const moved = await send('POST', path, k.headers, { mode: 'test' });
+    expect(moved.status).toBe(200);
+    expect(await audit('scanner.mode_change', device.id)).toEqual({ t: 'api_key', a: k.id });
+  });
+});

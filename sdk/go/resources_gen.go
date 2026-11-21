@@ -1732,6 +1732,15 @@ func (r *ScannersResource) Revoke(ctx context.Context, id string, opts ...Reques
 	return &out, nil
 }
 
+// SetMode Go live or move to test mode `POST /api/v1/scanners/{id}/mode`
+func (r *ScannersResource) SetMode(ctx context.Context, id string, body *ScannersSetModeBody, opts ...RequestOption) (*ScannersSetModeResult, error) {
+	var out ScannersSetModeResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/mode", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Update Edit a scanner `PATCH /api/v1/scanners/{id}`
 func (r *ScannersResource) Update(ctx context.Context, id string, body *ScannersUpdateBody, opts ...RequestOption) (*ScannersUpdateResult, error) {
 	var out ScannersUpdateResult

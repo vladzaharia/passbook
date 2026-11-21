@@ -6776,10 +6776,14 @@ type ScannersCreateParamsSettingsTags struct {
 
 type ScannersRevokeResult = Scanner
 
+type ScannersSetModeBody = ScannersSetModeParams
+
 type ScannersSetModeParams struct {
 	Mode        string `json:"mode"`
 	DetachEvent *bool  `json:"detachEvent,omitempty"`
 }
+
+type ScannersSetModeResult = Scanner
 
 type ScannersUpdateBody = ScannersUpdateParams
 

@@ -6,7 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
-import { adminGrant, audited, scannerEpoch, sessionEpoch } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited, scannerEpoch, sessionEpoch } from './repo-admin-grant.ts';
 import { assertAdminConfigurationAuthority } from './repo-scanner-configuration-authority.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
 import { addScannerMode } from './repo-scanners.ts';
@@ -115,8 +115,7 @@ export async function changeMode(
   g.add(
     audited(g, ctx, {
       orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scanner.mode_change',
       targetType: 'scanner',
       targetId: id,

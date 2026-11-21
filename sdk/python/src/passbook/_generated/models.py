@@ -958,7 +958,9 @@ __all__ = [
     "ScannersCreateParamsSettingsCheckIn",
     "ScannersCreateParamsSettingsTags",
     "ScannersRevokeResult",
+    "ScannersSetModeBody",
     "ScannersSetModeParams",
+    "ScannersSetModeResult",
     "ScannersUpdateBody",
     "ScannersUpdateParams",
     "ScannersUpdateParamsAccepts1",
@@ -9463,6 +9465,10 @@ ScanZonesCreateBody = ScanZonesCreateParams
 ScanZonesUpdateBody = ScanZonesUpdateParams
 
 ScannersRevokeResult = Scanner
+
+ScannersSetModeBody = ScannersSetModeParams
+
+ScannersSetModeResult = Scanner
 
 ScannersUpdateBody = ScannersUpdateParams
 
