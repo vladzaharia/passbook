@@ -4,6 +4,7 @@ import { createElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { fetchPreview } from './preview-batch.ts';
+import { clearSavedPasses } from './saved-passes.ts';
 import { leaveSignedOut, membershipsQuery, sessionQuery, useInvalidateSession } from './session.ts';
 import {
   json,
@@ -26,6 +27,8 @@ function clientWith(kind: SessionKind, memberships: OrgMembership[] = []) {
   client.setQueryData(membershipsQuery.queryKey, { items: memberships });
   return client;
 }
+
+vi.mock('./saved-passes.ts', () => ({ clearSavedPasses: vi.fn(async () => undefined) }));
 
 describe('session and membership scope', () => {
   it('loads memberships for the authenticated session and rejects another user’s grants', async () => {
@@ -169,6 +172,11 @@ describe('session and membership scope', () => {
     // jsdom cannot navigate; leaveSignedOut still runs its cleanup before attempting to leave.
     leaveSignedOut('/login');
     await rejected;
+  });
+
+  it("clears this phone's saved passes on every way out", async () => {
+    leaveSignedOut('/login');
+    await waitFor(() => expect(clearSavedPasses).toHaveBeenCalled());
   });
 
   it('keeps cached memberships but marks them stale when the session is invalidated', async () => {

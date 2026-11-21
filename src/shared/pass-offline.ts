@@ -208,6 +208,14 @@ ${HELPERS}  const TOKEN = /^\\/p\\/([A-Za-z0-9_-]{16,128})\\/barcode$/;
     }
   };
   window.PassSave = { mount, clearAll };
+  // A sign-out form (Switch account) posts only after this phone's saved passes are cleared.
+  document.addEventListener('submit', (e) => {
+    const form = e.target;
+    const action = form && form.getAttribute ? form.getAttribute('action') || '' : '';
+    if (!/^\\/auth\\/logout(\\?|$)/.test(action)) return;
+    e.preventDefault();
+    Promise.race([clearAll(), new Promise((r) => setTimeout(r, 1500))]).catch(() => {}).then(() => form.submit());
+  });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => mount(document));
   else mount(document);
 })();
@@ -215,8 +223,7 @@ ${HELPERS}  const TOKEN = /^\\/p\\/([A-Za-z0-9_-]{16,128})\\/barcode$/;
 
 /**
  * The door view's own script: shows "Works offline" when this device holds a saved copy, keeps the
- * screen awake where the browser has Screen Wake Lock, and offers install only when the browser
- * fires beforeinstallprompt. Nothing here touches the network.
+ * screen awake where the browser has Screen Wake Lock. Nothing here touches the network.
  */
 export const DOOR_SCRIPT = `(() => {
 ${HELPERS}  const note = document.querySelector('[data-door-saved]');

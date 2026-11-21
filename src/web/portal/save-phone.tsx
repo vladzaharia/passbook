@@ -108,7 +108,7 @@ export function SaveSheet() {
 export function SaveMount({ door }: { door: string | null }) {
   useEffect(() => {
     if (!door) return;
-    void import('./save-client.ts').then((m) => m.mount());
+    import('./save-client.ts').then((m) => m.mount()).catch((_error: unknown) => {});
   }, [door]);
   return null;
 }

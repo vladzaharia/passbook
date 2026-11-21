@@ -18,6 +18,7 @@ import { fixtureToken } from '../../../../test/helpers/tokens.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
+import { DROP_SCRIPT } from '../../../shared/pass-offline.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { qrDataUri } from '../../../web/portal/holder-qr.tsx';
 import { createApp } from '../../app.ts';
@@ -577,12 +578,13 @@ describe('presentation barcode', () => {
     for (const path of ['/p/short/barcode', `/p/${'z'.repeat(43)}/barcode`, oldPath]) {
       const res = await publicGet(path);
       expect(res.status).toBe(404);
-      // Only the nonced drop script (static; it names no token), never anything else.
-      expect(
-        ((await res.clone().text()).match(/<script\b[^>]*>/gi) ?? []).filter(
-          (t) => !/^<script nonce="[^"]+">$/.test(t),
-        ),
-      ).toEqual([]);
+      // Only the nonced drop script, byte for byte (static; it names no token).
+      const scripts = [
+        ...(await res.clone().text()).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi),
+      ];
+      expect(scripts.length).toBe(1);
+      expect(scripts[0]?.[1]).toMatch(/^ nonce="[^"]+"$/);
+      expect(scripts[0]?.[2]).toBe(DROP_SCRIPT);
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
     const html = await presentationHtml(

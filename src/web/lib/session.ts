@@ -239,11 +239,10 @@ export function leaveSignedOut(target: string, next?: string): void {
   } catch {
     // Storage blocked: the sign-in page just skips the wave.
   }
-  window.location.assign(target);
+  // Every way out (sign out, everywhere, switch) first clears this phone's saved passes.
+  void clearSavedPasses().then(() => window.location.assign(target));
 }
 
 export async function signOut(csrfToken?: string, options: SignOutOptions = {}): Promise<void> {
-  const target = await endSession(csrfToken, options);
-  await clearSavedPasses();
-  leaveSignedOut(target, options.next);
+  leaveSignedOut(await endSession(csrfToken, options), options.next);
 }

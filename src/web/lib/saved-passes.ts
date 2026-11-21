@@ -4,7 +4,11 @@
  */
 export async function clearSavedPasses(): Promise<void> {
   try {
-    await (await import('../portal/save-client.ts')).clearAll();
+    // Bounded: a stuck cache or registry never holds sign-out back.
+    await Promise.race([
+      import('../portal/save-client.ts').then((m) => m.clearAll()),
+      new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+    ]);
   } catch {
     // Cache Storage or the worker registry refused: leaving matters more than the cleanup.
   }

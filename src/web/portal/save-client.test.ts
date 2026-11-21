@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PASS_SAVE_SOURCE } from '../../shared/pass-offline.ts';
 import { clearAll, mount } from './save-client.ts';
 
 const TOKEN = 'abcdefghijklmnop0123';
@@ -82,5 +83,36 @@ describe('the app save client', () => {
     await clearAll();
     expect([...stores.keys()]).toEqual(['other']);
     expect(reg.unregister).toHaveBeenCalled();
+  });
+
+  it('writes the same cache, key and entry as the /p script (parity)', async () => {
+    const entries: Record<string, [string, string, string, [string, string][]]> = {};
+    for (const impl of ['client', 'script'] as const) {
+      const { stores } = stubBrowser();
+      vi.stubGlobal('matchMedia', () => ({ matches: true }));
+      document.body.innerHTML = `<div data-save-phone="${PATH}"><a data-save-do href="#">Save</a></div>`;
+      if (impl === 'client') mount();
+      else {
+        (window as unknown as { PassSave?: unknown }).PassSave = undefined;
+        new Function(PASS_SAVE_SOURCE)();
+      }
+      const host = document.querySelector('[data-save-phone]') as HTMLElement;
+      (host.querySelector('[data-save-do]') as HTMLElement).click();
+      await vi.waitFor(() => expect(host.getAttribute('data-save')).toBe('saved'));
+      const [[name, entry]] = [...stores.entries()].map(
+        ([n, m]) => [n, [...m.entries()][0]] as const,
+      );
+      const [key, res] = entry as [string, Response];
+      entries[impl] = [
+        name,
+        key,
+        await res.text(),
+        [...res.headers.entries()].filter(([k]) => k !== 'x-saved-at').sort(),
+      ];
+      document.body.innerHTML = '';
+      vi.unstubAllGlobals();
+    }
+    expect(entries.script).toEqual(entries.client);
+    expect(entries.client?.[3]).toContainEqual(['x-expires-at', '4102444800000']);
   });
 });

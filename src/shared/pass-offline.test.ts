@@ -405,6 +405,54 @@ describe('save.js hardening', () => {
   });
 });
 
+describe('sign-out forms', () => {
+  it('clears the saved passes before a logout form posts, and leaves other forms alone', async () => {
+    const caches = fakeCaches();
+    await seed(caches);
+    let onSubmit: (e: unknown) => void = () => {};
+    const win = { crypto, caches } as Record<string, unknown>;
+    new Function(
+      'document',
+      'navigator',
+      'window',
+      'caches',
+      'location',
+      'fetch',
+      'matchMedia',
+      'crypto',
+      PASS_SAVE_SOURCE,
+    )(
+      {
+        readyState: 'complete',
+        addEventListener: (t: string, f: (e: unknown) => void) => {
+          if (t === 'submit') onSubmit = f;
+        },
+        querySelectorAll: () => [],
+      },
+      { serviceWorker: { getRegistrations: async () => [] } },
+      win,
+      caches,
+      { href: `${ORIGIN}/`, origin: ORIGIN },
+      vi.fn(),
+      () => ({ matches: true }),
+      crypto,
+    );
+    const form = (action: string) => ({
+      getAttribute: () => action,
+      submit: vi.fn(),
+    });
+    const other = form('/search');
+    const prevented = vi.fn();
+    onSubmit({ target: other, preventDefault: prevented });
+    expect(prevented).not.toHaveBeenCalled();
+    const out = form('/auth/logout?next=%2Flogin');
+    onSubmit({ target: out, preventDefault: prevented });
+    expect(prevented).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(out.submit).toHaveBeenCalled());
+    expect(caches.stores.size).toBe(0);
+  });
+});
+
 describe('the retired-link drop script', () => {
   it("deletes that token's copy and its worker, and only on a pass or door path", async () => {
     for (const [pathname, expected] of [
