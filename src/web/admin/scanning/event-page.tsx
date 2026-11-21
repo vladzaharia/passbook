@@ -1,11 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
-import {
-  type ScanEventDto,
-  ScanEventSchema,
-  ScannerListSchema,
-} from '@/shared/contracts/scanners.ts';
+import { admitsOf, type ScanEventDto, ScanEventSchema } from '@/shared/contracts/scanners.ts';
 import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { formatEventTime } from '@/web/lib/format.ts';
@@ -26,10 +23,11 @@ import {
   StatusPill,
   TwoPane,
 } from '@/web/ui/index.ts';
-import { AssignDialog } from './events/assign-dialog.tsx';
+import { AddToSessionDialog } from './events/add-to-session-dialog.tsx';
 import { EventDialog } from './events/event-dialog.tsx';
 import { useOrgTemplates } from './scanner-api.ts';
-import { scannerStatus } from './scanners/labels.ts';
+import { useScanningSessions } from './sessions/api.ts';
+import { SessionStatePill } from './sessions/session-state.tsx';
 
 export function EventPage({ eventId }: { eventId: string }) {
   const { hasExplicitOrg, requestedOrgId } = useOrgScope();
@@ -116,29 +114,19 @@ function EventDetail({
   const upcoming = event.status === 'live' && event.opensAt > now;
   const [dialog, setDialog] = useState<'edit' | 'assign' | 'archive' | null>(null);
   const templates = useOrgTemplates(event.orgId);
-  const scanners = useQuery({
-    queryKey: ['admin', 'scanning', 'event-scanners', eventId, event.orgId],
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/scanners', ScannerListSchema, {
-        query: { orgId: event.orgId, limit: 200 },
-        signal,
-      }),
-    refetchInterval: 30_000,
-  });
+  const sessions = useScanningSessions(event.orgId);
   const archive = useMutation({
     mutationFn: () =>
       api.post(`/api/v1/scan-events/${encodeURIComponent(eventId)}/archive`, ScanEventSchema),
     onSuccess: () => client.invalidateQueries({ queryKey: ['admin', 'scanning'] }),
   });
-  const assigned =
-    scanners.data?.items.filter(
-      (s) =>
-        s.orgId === event.orgId &&
-        s.status !== 'revoked' &&
-        s.accepts &&
-        'eventId' in s.accepts &&
-        s.accepts.eventId === eventId,
-    ) ?? [];
+  const admitting = (sessions.data?.pages.flatMap((p) => p.items) ?? []).filter(
+    (s) =>
+      s.orgId === event.orgId &&
+      s.status !== 'ended' &&
+      s.accepts !== null &&
+      admitsOf(s.accepts).eventIds.includes(eventId),
+  );
   const editable = canManage && event.mode === mode && event.status !== 'archived';
   return (
     <>
@@ -181,29 +169,26 @@ function EventDetail({
           aside={
             <Card>
               <div className="flex flex-col gap-4 p-5">
-                <h2 className="font-semibold">Readiness</h2>
-                <p>
-                  {assigned.filter((s) => s.status === 'paired').length} of {assigned.length}{' '}
-                  {assigned.length === 1 ? 'scanner' : 'scanners'} paired
-                </p>
-                {assigned.map((s) => (
+                <h2 className="font-semibold">Sessions</h2>
+                {admitting.map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-2">
-                    <a
+                    <Link
                       className="text-accent-fg"
-                      href={`/admin/scanning/scanners/${encodeURIComponent(s.id)}`}
+                      to="/admin/o/$orgId/scanning/sessions/$sessionId"
+                      params={{ orgId: s.orgId, sessionId: s.id }}
                     >
                       {s.name}
-                    </a>
-                    <StatusPill status={scannerStatus(s)} />
+                    </Link>
+                    <SessionStatePill session={s} />
                   </div>
                 ))}
                 {editable ? (
                   <Button variant="secondary" onClick={() => setDialog('assign')}>
-                    Assign scanners
+                    Add to a session
                   </Button>
                 ) : null}
-                {scanners.isError ? (
-                  <Callout tone="danger">{errorMessage(scanners.error)}</Callout>
+                {sessions.isError ? (
+                  <Callout tone="danger">{errorMessage(sessions.error)}</Callout>
                 ) : null}
               </div>
             </Card>
@@ -290,7 +275,7 @@ function EventDetail({
         <EventDialog orgId={event.orgId} event={event} onClose={() => setDialog(null)} />
       ) : null}
       {editable && dialog === 'assign' ? (
-        <AssignDialog event={event} onClose={() => setDialog(null)} />
+        <AddToSessionDialog event={event} onClose={() => setDialog(null)} />
       ) : null}
       <ConfirmDialog
         open={editable && dialog === 'archive'}

@@ -1,10 +1,12 @@
 import { Pencil } from 'lucide-react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import { offlineModeOf } from '@/shared/scan-offline.ts';
 import { zoneLabel } from '@/web/lib/timezones.ts';
 import { Button, Callout, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
-import { sessionAccepts, sessionRuleLabel } from './draft.ts';
-import { hoursSummary } from './session-hours.ts';
 
+const OFFLINE = { stop: 'Stop', decide: 'Staff decide', list: 'Offline list' } as const;
+
+/** The rules the setup rows leave out. Edit opens the full rules dialog. */
 export function SessionSummary({
   session,
   onEdit,
@@ -12,26 +14,16 @@ export function SessionSummary({
   session: ScanningSession;
   onEdit?: (() => void) | undefined;
 }) {
-  const shared = [
-    ['Accepts', sessionAccepts(session)],
-    ['Admission', sessionRuleLabel(session)],
-    ['Staff PIN', session.settings.staffSignIn ? 'Required' : 'Not required'],
-    [
-      'Without a PIN',
-      session.settings.roleWithoutSignIn === 'desk' ? 'Desk staff' : 'Check-in staff',
-    ],
+  const rows = [
+    ['Offline', OFFLINE[offlineModeOf(session.settings)]],
+    ['Lookup', session.settings.lookup ? 'On' : 'Off'],
+    ['Photos', session.settings.showPhoto === false ? 'Off' : 'On'],
     ['Time zone', zoneLabel(session.timeZone)],
-  ];
-  const hours = hoursSummary(session.hours);
-  const defaults = [
-    ['On scan', session.settings.flow === 'auto' ? 'Automatic check-in' : 'Review'],
-    ['Reader', session.settings.reader === 'none' ? 'Camera' : 'Hardware scanner'],
-    ['People lookup', session.settings.lookup ? 'On' : 'Off'],
   ];
   return (
     <Card>
       <CardHeader
-        title="Session rules"
+        title="More rules"
         actions={
           onEdit ? (
             <Button size="sm" variant="ghost" iconStart={<Pencil aria-hidden />} onClick={onEdit}>
@@ -40,42 +32,18 @@ export function SessionSummary({
           ) : undefined
         }
       />
-      <CardBody className="grid gap-6">
-        <div>
-          <h3 className="mb-3 text-xs font-semibold text-fg-muted">SHARED RULES</h3>
-          <dl className="grid gap-3">
-            {shared.map(([label, value]) => (
-              <div key={label} className="grid gap-1 text-sm">
-                <dt className="text-fg-muted">{label}</dt>
-                <dd className="font-medium text-fg-strong">{value}</dd>
-              </div>
-            ))}
-            <div className="grid gap-1 text-sm">
-              <dt className="text-fg-muted">Hours</dt>
-              <dd className="grid gap-0.5 font-medium text-fg-strong">
-                {hours.length
-                  ? hours.map((line) => <span key={line}>{line}</span>)
-                  : session.hoursInvalid
-                    ? 'Closed'
-                    : 'Always open'}
-              </dd>
+      <CardBody className="grid gap-3">
+        <dl className="grid gap-2">
+          {rows.map(([label, value]) => (
+            <div key={label} className="flex items-baseline justify-between gap-3 text-sm">
+              <dt className="text-fg-muted">{label}</dt>
+              <dd className="text-right text-fg-strong">{value}</dd>
             </div>
-            {session.hoursInvalid ? (
-              <Callout tone="warning">Hours could not be read. Edit and save them again.</Callout>
-            ) : null}
-          </dl>
-        </div>
-        <div className="border-t border-border pt-4">
-          <h3 className="mb-3 text-xs font-semibold text-fg-muted">DEVICE DEFAULTS</h3>
-          <dl className="grid gap-3">
-            {defaults.map(([label, value]) => (
-              <div key={label} className="grid gap-1 text-sm">
-                <dt className="text-fg-muted">{label}</dt>
-                <dd className="font-medium text-fg-strong">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+          ))}
+        </dl>
+        {session.hoursInvalid ? (
+          <Callout tone="warning">Hours could not be read. Edit and save them again.</Callout>
+        ) : null}
       </CardBody>
     </Card>
   );
