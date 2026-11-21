@@ -117,6 +117,8 @@ const TENANT_KEY_ALLOWLIST: Record<string, string> = {
     'the scanner mode move is the one org-scope write that names its destination mode; the source mode is checked with exactlyOne in the same grant',
   'src/worker/modules/developer/repo-grants.ts':
     'a platform-scope job grant makes a sandbox org in one batch: no tenant exists yet, so its membership and sandbox rows name the org the same batch inserts; the close update names the one org the sweep read',
+  'src/worker/modules/org-lifecycle/repo-state.ts':
+    'a platform close or reopen names the org whose developer sandbox it syncs (a platform grant pins no tenant)',
   'src/worker/modules/orgs/repo-personal.ts':
     "a platform-scope grant makes the signing-in admin's personal org in one batch: its invitation and membership name the org the same batch inserts; the builder pins every row to the grant's org and user (authority-personal.ts)",
   'src/worker/platform/entitlements.ts':

@@ -4,6 +4,7 @@ import { checkFromName } from '../email-from-name.ts';
 import { DATA_CLASSES, type RetentionClass } from '../privacy/data-classes.ts';
 import { CHANNELS, ChannelSchema } from './channels.ts';
 import { IdSchema, PlainLineSchema } from './common.ts';
+import { TimeZoneSchema } from './scan-base.ts';
 
 export {
   SettingEntrySchema,
@@ -89,6 +90,8 @@ export const PlatformSettingsSchema = z.object({
   'retention.webhooksMaxDays': maxDays('webhooks'),
 });
 export const OrgSettingsSchema = z.object({
+  /** The org's clock for day boundaries (zone Clear at, hours) where no zone or event has its own. Unset: UTC. */
+  'org.timeZone': TimeZoneSchema.optional(),
   'branding.accent': z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)

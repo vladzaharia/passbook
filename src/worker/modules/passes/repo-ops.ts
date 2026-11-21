@@ -154,7 +154,13 @@ export async function insertWorkflowRun(
 /** Reserve a tenant bulk workflow only while the initiating authority is still valid. */
 export async function insertTenantBulkWorkflowRun(
   db: D1Database,
-  row: { instanceId: string; orgId: string; targetId: string | null; now: number },
+  row: {
+    instanceId: string;
+    orgId: string;
+    targetId: string | null;
+    now: number;
+    runGuard?: string;
+  },
   authority: TenantPassWrite,
 ): Promise<boolean> {
   if (
@@ -164,8 +170,8 @@ export async function insertTenantBulkWorkflowRun(
     return false;
   const inserted = await first<{ instance_id: string }>(
     db,
-    `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
-     SELECT ?, 'bulk_reissue', ?, ?, 'queued', ?
+    `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at, run_guard)
+     SELECT ?, 'bulk_reissue', ?, ?, 'queued', ?, ?
      WHERE ? = ? AND ${tenantPassAuthoritySql(authority)}
      RETURNING instance_id`,
     [
@@ -173,6 +179,7 @@ export async function insertTenantBulkWorkflowRun(
       row.orgId,
       row.targetId,
       row.now,
+      row.runGuard ?? null,
       row.orgId,
       authority.orgId,
       ...tenantPassAuthorityParams(authority, row.now),
@@ -202,6 +209,19 @@ export async function insertPlatformAdminBulkWorkflowRun(
     ],
   );
   return inserted !== null;
+}
+
+/** Frees the guard of a key-started run that never finished within the window, so a stuck run does not block its target. */
+export async function releaseStaleRunGuard(
+  db: D1Database,
+  runGuard: string,
+  since: number,
+): Promise<void> {
+  await run(
+    db,
+    'UPDATE workflow_runs SET run_guard = NULL WHERE run_guard = ? AND started_at <= ?',
+    [runGuard, since],
+  );
 }
 
 export const setWorkflowStatus = (

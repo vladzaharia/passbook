@@ -28,6 +28,7 @@ import { useCreated } from '../passes/created.tsx';
 import { PassPreview, PassPreviewPanel } from '../passes/pass-preview.tsx';
 import { PreviewLayout } from '../passes/preview-layout.tsx';
 import { useTemplatePreview } from './api.ts';
+import { useTemplateChannels } from './channels/api.ts';
 import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
@@ -78,6 +79,8 @@ export function TemplateDetailContent({
     scope.orgId,
     candidate?.version,
   );
+  // The Channels tab's own data: each preview tab follows it.
+  const channels = useTemplateChannels(t.id, scope.orgId ?? '', Boolean(scope.orgId));
   const source = useMemo(
     () => previewSource(preview.data, t, { version: candidate?.version }),
     [preview.data, t, candidate?.version],
@@ -130,6 +133,8 @@ export function TemplateDetailContent({
         title={t.name}
         templateId={t.id}
         orgId={scope.orgId}
+        channels={channels.data?.effective}
+        channelsTab="channels"
         apple={
           <PassPreviewPanel
             passJson={preview.data.passJson}

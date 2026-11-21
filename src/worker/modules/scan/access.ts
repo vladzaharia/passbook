@@ -24,6 +24,7 @@ import {
   zoneNodes,
 } from './repo-access.ts';
 import type { Candidate } from './repo-lookup.ts';
+import { orgTimeZoneOf, orgTimeZoneStmt } from './repo-org-clock.ts';
 import { type ScanGateSnapshot, scanEffectFromResult } from './repo-scan-effect.ts';
 import type { Found, Stop } from './resolve.ts';
 import type { EvaluationReadPlan } from './resolve-evaluate.ts';
@@ -57,6 +58,7 @@ interface LoadedAccess {
   visitAt: number | null;
   /** The same zones with their occupancy settings, and the pass's rows at them. */
   occupancy: { zones: OccZone[]; rows: PlaceRow[] };
+  orgTimeZone: string | null;
 }
 export interface AccessReads extends EvaluationReadPlan {
   loaded(): LoadedAccess | null;
@@ -75,6 +77,7 @@ export function planAccessReads(
     ...(session ? [sessionZonesStmt(ctx.env.DB, actor.orgId, session)] : []),
     ...accessGateReads(ctx.env.DB, found.pass.id),
     zoneRowsStmt(ctx.env.DB, actor.orgId, found.pass.id),
+    orgTimeZoneStmt(ctx.env.DB, actor.orgId),
   ];
   let loaded: LoadedAccess | null = null;
   return {
@@ -91,6 +94,7 @@ export function planAccessReads(
           zones: occZonesOf(results[0]),
           rows: (results[at + 2]?.results ?? []) as unknown as PlaceRow[],
         },
+        orgTimeZone: orgTimeZoneOf(results[at + 3]),
       };
     },
     loaded: () => loaded,
@@ -172,7 +176,14 @@ export function accessStop(
   if (!manifest) return null;
   const event = actor.event !== null;
   const loaded = event
-    ? { zones: [], zoneIds: [], gate: null, visitAt: null, occupancy: { zones: [], rows: [] } }
+    ? {
+        zones: [],
+        zoneIds: [],
+        gate: null,
+        visitAt: null,
+        occupancy: { zones: [], rows: [] },
+        orgTimeZone: null,
+      }
     : reads?.loaded();
   // The read did not land: nothing is let in on a guess.
   if (!loaded) return stop('refused', 'not_found', { stale: true });
@@ -185,7 +196,7 @@ export function accessStop(
     now,
     zones: loaded.zones,
     scannerZoneIds: loaded.zoneIds,
-    timeZone: actor.timeZone,
+    timeZone: loaded.orgTimeZone ?? actor.timeZone,
   });
   if (d.planUnknown && !event)
     ctx.log.warn('scan.access.plan_unknown', {

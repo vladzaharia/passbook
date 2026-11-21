@@ -1,12 +1,12 @@
 import { lazy, type ReactNode, Suspense, useState } from 'react';
 import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
-import { CHANNEL_COPY, channelReason } from '@/shared/copy/channels.ts';
+import { channelReasonText } from '@/shared/copy/channels.ts';
 import { PREVIEW_COPY, PREVIEW_LABEL } from '@/shared/copy/previews.ts';
 import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
-import { Callout } from '../ui/callout.tsx';
 import { SegmentedControl } from '../ui/segmented-control.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
+import './channel-switch.css';
 import { PREVIEW_CHANNELS, type PreviewChannel, type PreviewSource } from './types.ts';
 import { useWalletPreviews } from './use-wallet-previews.ts';
 
@@ -17,8 +17,10 @@ export interface ChannelPreviewsProps {
   apple: ReactNode;
   /** The Paper pane: pluggable, so the paper design can change without touching the switcher. */
   paper: ReactNode;
-  /** A pass's effective channels: only the ones on are shown, the rest are listed with why. */
+  /** Effective channels of a pass or template: a channel that is off stays as a disabled tab with its reason. */
   channels?: EffectiveChannels | undefined;
+  /** Shown with the empty state when every channel is off: where to turn one on. */
+  emptyAction?: ReactNode;
   /** The page picks the channel (and draws its own switcher): only that channel's pane shows. */
   value?: PreviewChannel | undefined;
   className?: string;
@@ -26,6 +28,11 @@ export interface ChannelPreviewsProps {
 
 /** The narrow-column menu pulls Radix's popper and dialog; a wide column never needs it. */
 const Select = lazy(() => import('../ui/select.tsx').then((m) => ({ default: m.Select })));
+
+/** Its art registry is only needed when no channel is on. */
+const EmptyState = lazy(() =>
+  import('../ui/empty-state.tsx').then((m) => ({ default: m.EmptyState })),
+);
 
 /** Both pull the router (and, for Mobile, the portal) with them: loaded only when their channel opens. */
 const WalletChannel = lazy(() =>
@@ -37,33 +44,44 @@ const MobilePreview = lazy(() =>
 
 /**
  * One switcher for every way a pass reaches a holder: Apple, Google, Samsung, Mobile and Paper.
- * On a pass only its effective channels show and the others say why they are off.
+ * A channel that is off or not available is a disabled tab that says why.
  */
 export function ChannelPreviews({
   source,
   apple,
   paper,
   channels,
+  emptyAction,
   value,
   className,
 }: ChannelPreviewsProps) {
   const shown = PREVIEW_CHANNELS.filter((c) => channels?.[c]?.on !== false);
-  const off = PREVIEW_CHANNELS.filter((c) => channels?.[c]?.on === false);
   const [picked, setPicked] = useState<PreviewChannel>('apple');
   const current = value ?? (shown.includes(picked) ? picked : shown[0]);
   const [width, measure] = useContainerWidth();
   // Five segments need about 19 rem; a narrower column gets the same choice as a menu.
   const compact = width > 0 && width < 300;
-  const options = shown.map((value) => ({ value, label: PREVIEW_LABEL[value] }));
+  const options = PREVIEW_CHANNELS.map((value) => {
+    const status = channels?.[value];
+    if (status?.on !== false) return { value, label: PREVIEW_LABEL[value] };
+    const reason = status.reason ? channelReasonText(status.reason) : PREVIEW_COPY.off;
+    return { value, label: PREVIEW_LABEL[value], reason };
+  });
+  const menu = options.map((o) => (o.reason ? { ...o, disabled: true, title: o.reason } : o));
   const wallets = useWalletPreviews(source, current === 'google' || current === 'samsung');
-  if (!current) return <Callout tone="warning">{CHANNEL_COPY.nothingOn}</Callout>;
+  if (!current)
+    return (
+      <Suspense fallback={<Skeleton className="h-32 w-full rounded-md" />}>
+        <EmptyState inline art="wallet" title={PREVIEW_COPY.nothing} action={emptyAction} />
+      </Suspense>
+    );
   return (
     <div ref={measure} className={cn('flex w-full min-w-0 flex-col items-center gap-4', className)}>
       {value ? null : compact ? (
         <Suspense fallback={<Skeleton className="h-9 w-full rounded-md" />}>
           <Select
             label={PREVIEW_COPY.switcher}
-            options={options}
+            options={menu}
             value={current}
             onValueChange={(v) => setPicked(v as PreviewChannel)}
             className="w-full"
@@ -105,17 +123,6 @@ export function ChannelPreviews({
         ) : null}
         {current === 'paper' ? paper : null}
       </div>
-      {off.length > 0 && !value ? (
-        <section className="w-full" aria-label={PREVIEW_COPY.offTitle}>
-          <h4 className="mb-1 text-xs font-semibold text-fg-muted">{PREVIEW_COPY.offTitle}</h4>
-          <ul className="flex flex-col gap-0.5 text-sm text-fg-muted">
-            {off.map((c) => {
-              const reason = channels?.[c]?.reason;
-              return <li key={c}>{reason ? channelReason(c, reason) : PREVIEW_LABEL[c]}</li>;
-            })}
-          </ul>
-        </section>
-      ) : null}
     </div>
   );
 }
