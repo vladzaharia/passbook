@@ -80,7 +80,6 @@ export function DesignerHeader({
                   onTry={() => void controls.tryVersion(draft ?? '')}
                   onRelease={() => controls.release(draft ?? '')}
                   onReview={() => controls.startReview(draft ?? '')}
-                  pending={controls.trying}
                 />
               ) : null}
               {undoRedo ? (

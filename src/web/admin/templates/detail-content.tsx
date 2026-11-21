@@ -197,7 +197,6 @@ export function TemplateDetailContent({
         onTry={() => void controls.tryVersion(draftHash)}
         onRelease={() => controls.release(draftHash)}
         onReview={() => void navigate({ to: '.', search: { review: draftHash } })}
-        tryPending={controls.trying}
       />
       {state && !archived ? (
         <ReleaseStrip
