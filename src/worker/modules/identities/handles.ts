@@ -1,6 +1,6 @@
 import { MANAGED_PREFIX } from '../../../shared/identity-handle.ts';
 
-export { HANDLE_PATTERN, handleBase, MANAGED_PREFIX } from '../../../shared/identity-handle.ts';
+export { HANDLE_PATTERN, handleBase } from '../../../shared/identity-handle.ts';
 
 /** Refused as a handle. Also seeded into `identity_handles` so the database refuses them too. */
 export const RESERVED_HANDLES: ReadonlySet<string> = new Set([

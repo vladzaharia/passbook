@@ -146,7 +146,7 @@ describe('GET /wallet-identities', () => {
   });
 
   it('filters by kind and status and reads kind, status and renewal', async () => {
-    const res = await call('/api/v1/wallet-identities?kind=managed&orgId=' + orgB, admin);
+    const res = await call(`/api/v1/wallet-identities?kind=managed&orgId=${orgB}`, admin);
     const body = (await res.json()) as { items: Record<string, unknown>[] };
     expect(body.items).toHaveLength(1);
     expect(body.items[0]).toMatchObject({ kind: 'managed', rotation: 'auto', issuing: true });

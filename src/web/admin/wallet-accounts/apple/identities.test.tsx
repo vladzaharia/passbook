@@ -120,9 +120,11 @@ describe('identities list', () => {
           }),
           row({
             id: 'i3',
+            label: 'Old',
             identifier: 'pass.old',
             kind: 'own',
             status: 'expired',
+            notAfter: Date.now() - 2.5 * DAY,
             isDefault: false,
           }),
         ]),
@@ -135,7 +137,7 @@ describe('identities list', () => {
     for (const text of ['Managed', 'Renewing', 'Expired', 'Active', 'Oct 1, 2027', 'Manual'])
       expect(screen.getAllByText(text).length).toBeGreaterThan(0);
     expect(screen.getByText('1,204')).toBeInTheDocument();
-    expect(screen.getByText(/pass.old: certificate has expired/)).toBeInTheDocument();
+    expect(screen.getByText(/Old: certificate has expired/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
       '/admin/platform/wallet-accounts/i3',
