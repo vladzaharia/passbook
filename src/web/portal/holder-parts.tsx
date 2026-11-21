@@ -1,4 +1,4 @@
-import { Ban, Clock, EyeOff } from 'lucide-react';
+import { Ban, Clock, EyeOff, Mail } from 'lucide-react';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { Callout } from '../ui/callout.tsx';
 
@@ -82,7 +82,8 @@ export function Notice({
   );
 }
 
-/** Pass page: mail the pass to its holder again. A plain form, so it works without script. */
+/** Pass page: mail the pass to its holder again, a row of the other ways. A plain form, so it
+ * works without script. */
 export function SendAgain({
   action,
   again,
@@ -91,21 +92,19 @@ export function SendAgain({
   again: 'sent' | 'wait' | null | undefined;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <>
       <form method="post" action={action}>
-        <button
-          type="submit"
-          className="inline-flex min-h-11 items-center rounded-md border border-border-strong px-4 text-sm font-medium text-fg-strong"
-        >
-          {HOLDER_COPY.emailPassAgain}
+        <button type="submit" className="wl-other">
+          <Mail aria-hidden />
+          <span>{HOLDER_COPY.emailPassAgain}</span>
         </button>
       </form>
       {again ? (
-        <p role="status" className="text-sm text-fg-muted">
+        <p role="status" className="wl-other-status">
           {again === 'sent' ? HOLDER_COPY.sendAgainSent : HOLDER_COPY.sendAgainWait}
         </p>
       ) : null}
-    </div>
+    </>
   );
 }
 

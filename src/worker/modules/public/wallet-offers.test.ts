@@ -85,17 +85,23 @@ describe('pending native wallets on holder surfaces', () => {
     ['Mac', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15'],
     ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1'],
     ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36'],
-  ])('keeps Apple available and withholds unverified providers on %s', async (_name, ua) => {
+  ])('keeps Apple available and withholds unverified providers on %s', async (name, ua) => {
     const { pass, google, samsung } = fixture;
     const response = await get(`/p/${await linkToken(fixture.kit.env, pass)}`, {
       'user-agent': ua,
     });
     expect(response.status).toBe(200);
     const html = await response.text();
-    expect(html).toContain(`href="/p/${await linkToken(fixture.kit.env, pass)}/pass.pkpass"`);
+    // Apple is the badge where it adds and the QR on a computer (iPad, Windows).
+    if (name === 'iPad' || name === 'Windows') {
+      expect(html).toContain('Scan with your iPhone camera.');
+      expect(html).not.toContain('alt="Add to Apple Wallet"');
+    } else {
+      expect(html).toContain(`href="/p/${await linkToken(fixture.kit.env, pass)}/pass.pkpass"`);
+      expect(html).toContain('alt="Add to Apple Wallet"');
+    }
     expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'google'));
     expect(html).not.toContain(pathFor(await linkToken(fixture.kit.env, pass), 'samsung'));
-    expect(html).toContain('alt="Add to Apple Wallet"');
     expect(html).not.toContain('alt="Add to Google Wallet"');
     expect(html).not.toContain('alt="Add to Samsung Wallet"');
     expect(html).not.toContain(google.privateKeyPem);

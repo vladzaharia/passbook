@@ -97,20 +97,19 @@ function Detail({
       onAdd={() => setDip((n) => n + 1)}
       rise={dealt}
       details={
-        <div className="flex flex-col gap-6">
+        // Fragments: with no tags and an empty back the details area stays empty, so no gap.
+        <>
           {state === 'active' && pass.channels?.nfc.on !== false ? (
             <TagsCard tags={pass.tags} orgName={pass.orgName} />
           ) : null}
           <PassDetails
             passJson={pass.passJson}
             view={view}
-            state={state}
-            title={title}
             locale={navigator.language}
             now={new Date()}
             timeZone={localZone()}
           />
-        </div>
+        </>
       }
       buddy={(props) => <Buddy {...props} />}
     />
