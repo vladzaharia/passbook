@@ -4,7 +4,6 @@
  */
 import type { ReportedHardware } from '../../../shared/contracts/scan-hardware.ts';
 import type { NativeScannerCapabilities } from '../../../shared/contracts/scanning-sessions.ts';
-import { isFound } from './items.ts';
 import type { HardwareItem, HardwareKind, HardwareState } from './types.ts';
 
 export const HARDWARE_EVENT = 'passbook:hardware';
@@ -37,7 +36,7 @@ export function summarize(items: readonly HardwareItem[]): ReportedHardware[] {
     const kind = KIND[i.kind];
     const state = STATE[i.state];
     // The wedge row off means the view reads nothing; it is not a device.
-    if (!kind || !state || !isFound(i) || (i.kind === 'wedge' && i.state === 'off')) continue;
+    if (!kind || !state || (i.kind === 'wedge' && i.state === 'off')) continue;
     const builtIn = i.builtIn ?? (i.kind === 'camera' && i.facing !== 'external');
     const connected = i.connected ?? null;
     const same = out.find(
