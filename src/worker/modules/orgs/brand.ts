@@ -10,6 +10,12 @@ import { requireOrg } from './service.ts';
 /** Content-addressed, same-origin path of a web logo. */
 export const brandLogoPath = (orgId: string, sha: string) => `/brand/${orgId}/${sha}.png`;
 
+/** Holder pages use the pass logo as the web logo: as chosen, else while no web logo is uploaded. */
+export const webSameAsLogo = (
+  chosen: boolean | undefined,
+  stored: Pick<z.infer<typeof OrgBrandingSchema>, 'web'>,
+) => chosen ?? !stored.web;
+
 /** Org settings win over the legacy branding fields; unsafe values are dropped. */
 export async function orgBrandOf(ctx: ServiceContext, orgId: string): Promise<OrgBrand> {
   const [row, settings, allowed] = await Promise.all([
@@ -23,13 +29,17 @@ export async function orgBrandOf(ctx: ServiceContext, orgId: string): Promise<Or
     orgId,
     name: row.name,
     accent: stored.accent ?? settings['branding.accent'] ?? null,
-    logo: stored.web
-      ? { path: brandLogoPath(orgId, stored.web.sha), w: stored.web.w, h: stored.web.h }
-      : null,
+    logo: shownLogo(orgId, stored, webSameAsLogo(settings['branding.webLogoSameAsLogo'], stored)),
     supportEmail: safeMail(settings['support.email'] ?? stored.supportEmail),
     supportUrl: safeUrl(settings['support.url'] ?? stored.supportUrl),
     mark: effectiveMark(stored.mark, allowed),
   };
+}
+
+/** The logo holder pages show: the pass logo when chosen and present, else the web logo. */
+function shownLogo(orgId: string, stored: z.infer<typeof OrgBrandingSchema>, same: boolean) {
+  const image = same && stored.logo ? stored.logo : stored.web;
+  return image ? { path: brandLogoPath(orgId, image.sha), w: image.w, h: image.h } : null;
 }
 
 /** The brand kit DTO of the API and the admin section. */

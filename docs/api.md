@@ -42,6 +42,9 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
+| `org:read` | read the org's pass setup (`GET /orgs/{orgId}/pass-setup`) and features. Any console member can mint it. Org-bound keys |
+| `org:write` | change the org's pass setup (`PATCH /orgs/{orgId}/pass-setup`, `POST /orgs/{orgId}/brand-assets`): name, brand, support, email, allowed channels. Only `org_admin` can mint it |
+| `wallet:write` | with `org:write`, allowing Google or Samsung also turns a ready wallet account on. Needs `integrations:manage` to delegate |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
 | `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, rate limited. Only `org_admin` can mint it |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |

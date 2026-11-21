@@ -281,6 +281,9 @@ describe('mintable scopes', () => {
     expect([...MINTABLE_SCOPES]).toEqual([
       ...Object.keys(LEGACY_SCOPE_CAPABILITY),
       'brand:manage',
+      'org:read',
+      'org:write',
+      'wallet:write',
       'scanning:write',
       'scan-setup:read',
       'scanning:admin',
@@ -308,7 +311,11 @@ describe('mintable scopes', () => {
         for (const entry of op.security ?? [])
           for (const scope of (entry as { apiKey?: string[] }).apiKey ?? []) named.add(scope);
     // `scans:write` is the terminal scope: modules/scan/guard-api-key.ts checks it, not a route rule.
-    const unaccepted = MINTABLE_SCOPES.filter((s) => !named.has(s) && s !== 'scans:write');
+    // `wallet:write` is the second scope a pass-setup save needs to turn a wallet account on (the service
+    // asks for it only then); no route names it as its own rule.
+    const unaccepted = MINTABLE_SCOPES.filter(
+      (s) => !named.has(s) && s !== 'scans:write' && s !== 'wallet:write',
+    );
     expect(unaccepted).toEqual([]);
   });
 });

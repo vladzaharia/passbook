@@ -1,12 +1,17 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { PassSetup, PassSetupResult } from '../../../shared/contracts/pass-setup.ts';
 import { PassSetupResultSchema } from '../../../shared/contracts/pass-setup.ts';
+import { createApp } from '../../app.ts';
+import { denyAllStores } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
+import { createApiKeyStore } from '../api-keys/service.ts';
+import { createSessionStore } from '../auth/sessions.ts';
 import { clearSettingsCache, getOrgSettings } from '../settings/service.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { type Api, auditOf, setupApi } from '../webhooks/api-test-fixtures.ts';
+import { orgBrandOf } from './brand.ts';
 import { brandingKey, webLogoKey } from './branding-files.ts';
 import { BRANDING_GC_GRACE_MS, sweepBrandingGc } from './branding-gc.ts';
 import { seedTemplate } from './pass-setup-test-fixtures.ts';
@@ -272,6 +277,67 @@ describe('PATCH pass-setup: dry run and apply', () => {
     const res = await patch({ brand: { support: { email: null } } });
     expect(res.json.view.brand.support.email).toEqual({ value: null, source: 'passbook' });
     expect(JSON.parse((await orgRow())?.branding ?? '{}')).toEqual({});
+  });
+});
+
+describe('an org:write key', () => {
+  it('renames the org, audited with the key as the actor', async () => {
+    const res = await patch({ brand: { name: 'Keyed Gym' } }, { headers: orgWrite });
+    expect(res.status).toBe(200);
+    const [row] = await all<{ actor_type: string; actor_id: string | null; detail: string }>(
+      api.rig.db,
+      "SELECT actor_type, actor_id, detail FROM audit_log WHERE action = 'org.pass_setup_update'",
+    );
+    expect(row?.actor_type).toBe('api_key');
+    expect(row?.actor_id).toBeTruthy();
+    expect(JSON.parse(row?.detail ?? '{}').changes['brand.name']).toEqual({
+      from: 'Test Gym',
+      to: 'Keyed Gym',
+    });
+  });
+});
+
+describe('the web logo follows the pass logo', () => {
+  const brandOf = () => orgBrandOf(ctx(), orgId);
+  const fetchLogo = async (path: string) => {
+    const app = createApp({
+      stores: {
+        ...denyAllStores,
+        sessions: createSessionStore(api.rig.kit.env, api.rig.kit.clock),
+        apiKeys: createApiKeyStore(api.rig.kit.env, api.rig.kit.clock),
+      },
+      clock: api.rig.kit.clock,
+    });
+    return app.request(`https://wallet.test${path}`, {}, api.rig.kit.env);
+  };
+
+  it('is the pass logo while no web logo exists, and serves its bytes', async () => {
+    const png = makePng(480, 150);
+    const sha = await sha256Hex(png);
+    await stage('logo', png);
+    await patch({ brand: { logo: { sha } } });
+    const brand = await brandOf();
+    expect(brand.logo?.path).toBe(`/brand/${orgId}/${sha}.png`);
+    const res = await fetchLogo(brand.logo?.path ?? '');
+    expect(res.status).toBe(200);
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(png);
+    expect((await fetchLogo(`/brand/${orgId}/${'0'.repeat(64)}.png`)).status).toBe(404);
+    expect((await view()).brand.webLogo.sameAsLogo).toBe(true);
+  });
+
+  it('a web logo wins until the org chooses the pass logo, and off means the web logo only', async () => {
+    const logo = makePng(480, 150);
+    const web = makePng(400, 100);
+    const [logoSha, webSha] = await Promise.all([sha256Hex(logo), sha256Hex(web)]);
+    await stage('logo', logo);
+    await stage('webLogo', web);
+    await patch({ brand: { logo: { sha: logoSha }, webLogo: { sha: webSha } } });
+    expect((await brandOf()).logo?.path).toBe(`/brand/${orgId}/${webSha}.png`);
+    expect((await view()).brand.webLogo.sameAsLogo).toBe(false);
+    await patch({ brand: { webLogoSameAsLogo: true } });
+    expect((await brandOf()).logo?.path).toBe(`/brand/${orgId}/${logoSha}.png`);
+    await patch({ brand: { webLogoSameAsLogo: false, webLogo: null } });
+    expect((await brandOf()).logo).toBeNull();
   });
 });
 

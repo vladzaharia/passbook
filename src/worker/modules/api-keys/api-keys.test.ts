@@ -115,6 +115,34 @@ describe('the scanning:admin scope', () => {
   });
 });
 
+describe('the pass-setup scopes', () => {
+  const mint = async (role: OrgRole, scopes: string[], mode: 'live' | 'test' = 'live') => {
+    const org = await makeOrg(f());
+    const { headers } = await memberHeaders(org.id, role);
+    const res = await h.call('/api/v1/api-keys', {
+      method: 'POST',
+      json: { name: 'setup', scopes, orgId: org.id, mode },
+      headers: mode === 'test' ? { ...headers, 'x-passbook-mode': 'test' } : headers,
+    });
+    return res;
+  };
+
+  it('org:write is minted by an org admin only; org:read by an integration admin too', async () => {
+    expect((await mint('org_admin', ['org:read', 'org:write'])).status).toBe(201);
+    expect((await mint('org_admin', ['org:write'], 'test')).status).toBe(201);
+    expect((await mint('integration_admin', ['org:read'])).status).toBe(201);
+    const refused = await mint('integration_admin', ['org:write']);
+    expect(refused.status).toBeGreaterThanOrEqual(400);
+    expect(refused.status).toBeLessThan(500);
+  });
+
+  it('wallet:write follows integrations:manage', async () => {
+    expect((await mint('integration_admin', ['wallet:write'])).status).toBe(201);
+    expect((await mint('org_admin', ['wallet:write'])).status).toBe(201);
+    expect((await mint('template_author', ['wallet:write'])).status).toBe(403);
+  });
+});
+
 describe('credential identity invariant', () => {
   it('rejects in-place identity and authority changes while a new key resolves independently', async () => {
     const org = await makeOrg(f());

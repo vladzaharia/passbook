@@ -29,6 +29,7 @@ import { placeholderSlots, sourceArtHashes } from '../passes/branding.ts';
 import { getOrgSettings, getPlatformSettings, type OrgSettings } from '../settings/service.ts';
 import { enrolmentView } from '../wallet-providers/enrolment-read.ts';
 import { type EnrolmentRow, enrolmentsOf } from '../wallet-providers/repo-enrolments.ts';
+import { webSameAsLogo } from './brand.ts';
 import { allowedMarks, effectiveMark } from './brand-mark.ts';
 import {
   apnsHealthOf,
@@ -269,7 +270,7 @@ export async function loadSetupFacts(
       icon: { ...by(shown(stored.icon)), templatesOwn: 0 },
       webLogo: {
         ...by(shown(stored.web)),
-        sameAsLogo: settings['branding.webLogoSameAsLogo'],
+        sameAsLogo: webSameAsLogo(settings['branding.webLogoSameAsLogo'], stored),
       },
       passColors: { ...by(stored.passColors), templatesOwn: 0 },
       logoHasName: by(stored.logoHasName),
