@@ -376,6 +376,22 @@
     "note": "Lists the org's shared Google issuers."
   },
   {
+    "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
+    "class": "additive",
+    "operationId": "pass-imports.getPassImportsById",
+    "op": "GET /api/v1/pass-imports/{id}",
+    "change": "200.problems[].label: field added",
+    "note": "Each problem carries the field label as the form shows it."
+  },
+  {
+    "key": "GET /api/v1/pass-imports/{id} 200.problems[].value: field added",
+    "class": "additive",
+    "operationId": "pass-imports.getPassImportsById",
+    "op": "GET /api/v1/pass-imports/{id}",
+    "change": "200.problems[].value: field added",
+    "note": "Each problem carries the offending cell as written (value) and the field label, for the operator."
+  },
+  {
     "key": "GET /api/v1/pass-imports/{id} 200.unrevertable: field added",
     "class": "additive",
     "operationId": "pass-imports.getPassImportsById",
@@ -958,6 +974,14 @@
     "op": "POST /api/v1/pass-imports/{id}/commit",
     "change": "request.email: union added",
     "note": "email also takes {send: now} or {send: held, holdMs}; held mail goes out after the wait unless the import is undone."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/email-rest 409: IMPORT_UNDO_RUNNING added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdEmailRest",
+    "op": "POST /api/v1/pass-imports/{id}/email-rest",
+    "change": "409: IMPORT_UNDO_RUNNING added",
+    "note": "email-rest sends now, also during a hold, and is refused while an undo runs."
   },
   {
     "key": "POST /api/v1/pass-imports/{id}/undo new operation",

@@ -3,7 +3,7 @@ import {
   type PassImportDto,
 } from '../../../shared/contracts/pass-imports.ts';
 import { jobGrant } from '../../platform/authority.ts';
-import { exactlyOne } from '../../platform/authority-checks.ts';
+import { exactlyOne, rawCheck } from '../../platform/authority-checks.ts';
 import { inList } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -29,7 +29,7 @@ export async function beginUndo(
   ctx: ServiceContext,
   authority: TenantPassWrite,
   id: string,
-  s: { starter: DeferredStarter; cancelled: number },
+  s: { starter: DeferredStarter; cancelled: number; instance: string },
 ): Promise<void> {
   const g = importGrant(ctx, authority, id, {
     state: inList(UNDOABLE),
@@ -40,7 +40,9 @@ export async function beginUndo(
     require: 'one',
     set: {
       reverted: UNDO_RUNNING,
-      starter: JSON.stringify(s.starter),
+      undo_starter: JSON.stringify(s.starter),
+      undo_instance: s.instance,
+      undo_at: ctx.clock.now(),
       undo_cancelled: s.cancelled,
     },
   });
@@ -69,8 +71,25 @@ export async function revertUndo(
   g.update('pass_imports', {
     where: { id },
     require: 'one',
-    set: { reverted: 0, starter: null, undo_cancelled: 0 },
+    set: {
+      reverted: 0,
+      undo_starter: null,
+      undo_instance: null,
+      undo_at: null,
+      undo_cancelled: 0,
+    },
   });
+  await g.commit();
+}
+
+/** A running undo whose run is dead ends failed, so the next ask goes through `beginUndo` again. */
+export async function failUndo(
+  ctx: ServiceContext,
+  authority: TenantPassWrite,
+  id: string,
+): Promise<void> {
+  const g = importGrant(ctx, authority, id, { reverted: UNDO_RUNNING });
+  g.update('pass_imports', { where: { id }, require: 'one', set: { reverted: UNDO_FAILED } });
   await g.commit();
 }
 
@@ -86,7 +105,12 @@ function undoGrant(ctx: ServiceContext, s: Scope, purpose: string, inactiveOk = 
     tables: TABLES,
     codes: CODES,
     checks: [
-      exactlyOne('pass_imports', { id: s.importId, reverted: UNDO_RUNNING }, undefined, 'stale'),
+      exactlyOne(
+        'pass_imports',
+        { id: s.importId, reverted: UNDO_RUNNING, state: inList(UNDOABLE) },
+        undefined,
+        'stale',
+      ),
     ],
   });
 }
@@ -221,8 +245,30 @@ export async function unrevertableCount(db: D1Database, importId: string): Promi
   const row = await first<{ n: number }>(
     db,
     `SELECT count(*) AS n FROM pass_import_rows
-     WHERE import_id = ? AND result = 'updated' AND before IS NULL AND undone_at IS NULL`,
+     WHERE import_id = ? AND result = 'updated'
+       AND ((before IS NULL AND undone_at IS NULL) OR undo_code = 'IMPORT_UNDO_NO_BEFORE')`,
     [importId],
   );
   return row?.n ?? 0;
 }
+
+export interface StuckUndo {
+  id: string;
+  org_id: string;
+  mode: 'live' | 'test';
+  undo_instance: string | null;
+}
+
+/** Undos asked for before `before` that are still running. */
+export function stuckUndos(db: D1Database, before: number, limit: number): Promise<StuckUndo[]> {
+  return all<StuckUndo>(
+    db,
+    `SELECT id, org_id, mode, undo_instance FROM pass_imports
+     WHERE reverted = ? AND undo_at < ? ORDER BY undo_at LIMIT ?`,
+    [UNDO_RUNNING, before, limit],
+  );
+}
+
+/** The publish of a removal refuses (and rolls its claim back) when the pass was scanned meanwhile. */
+export const noScansCheck = (passId: string) =>
+  rawCheck('stale', 'NOT EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = ?)', [passId]);

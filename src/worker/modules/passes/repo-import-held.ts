@@ -1,6 +1,7 @@
 import { jobGrant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
 import { inList } from '../../platform/authority-expr.ts';
+import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Scope } from './repo-import-commit.ts';
 
@@ -28,7 +29,7 @@ function heldGrant(ctx: ServiceContext, s: Scope) {
   });
 }
 
-/** Claims rows for mail in one guarded write; a repeat or an undo in between wins nothing. */
+/** Claims rows for mail in one guarded write, marking them pending until they are sent or refused. */
 export async function claimHeld(
   ctx: ServiceContext,
   s: Scope,
@@ -38,7 +39,7 @@ export async function claimHeld(
   const g = heldGrant(ctx, s);
   const claim = g.joined('pass_import_rows', {
     where: { import_id: s.importId, result: 'created', emailed: 0, row_no: inList([...rows]) },
-    set: { emailed: 1 },
+    set: { mail_pending_at: ctx.clock.now() },
     returning: ['row_no'],
   });
   const results = await g.commit();
@@ -46,18 +47,23 @@ export async function claimHeld(
   return (won ?? []).map((r) => r.row_no);
 }
 
-/** Gives claimed rows back when their mail was refused, and records what is still not emailed. */
+/** Settles a page: sent rows are emailed, refused rows go back as not emailed (email-rest can send them). */
 export async function settleHeld(
   ctx: ServiceContext,
   s: Scope,
-  refused: readonly number[],
+  settled: { sent: readonly number[]; refused: readonly number[] },
   notEmailed: number,
 ): Promise<void> {
   const g = heldGrant(ctx, s);
-  if (refused.length > 0)
+  if (settled.sent.length > 0)
     g.joined('pass_import_rows', {
-      where: { import_id: s.importId, emailed: 1, row_no: inList([...refused]) },
-      set: { emailed: 0 },
+      where: { import_id: s.importId, emailed: 0, row_no: inList([...settled.sent]) },
+      set: { emailed: 1, mail_pending_at: null },
+    });
+  if (settled.refused.length > 0)
+    g.joined('pass_import_rows', {
+      where: { import_id: s.importId, emailed: 0, row_no: inList([...settled.refused]) },
+      set: { mail_pending_at: null },
     });
   g.update('pass_imports', {
     where: { id: s.importId },
@@ -65,4 +71,42 @@ export async function settleHeld(
     set: { not_emailed: notEmailed },
   });
   await g.commit();
+}
+
+export interface HeldRow {
+  row_no: number;
+  pass_id: string;
+  holder_email: string;
+  mail_pending_at: number | null;
+}
+
+/** Created rows with an address and no mail yet, after `after`; a pending row is a claim a step left behind. */
+export function heldCandidates(
+  db: D1Database,
+  importId: string,
+  after: number,
+  limit: number,
+): Promise<HeldRow[]> {
+  return all<HeldRow>(
+    db,
+    `SELECT row_no, pass_id, holder_email, mail_pending_at FROM pass_import_rows
+     WHERE import_id = ? AND result = 'created' AND emailed = 0 AND holder_email IS NOT NULL
+       AND row_no > ? ORDER BY row_no LIMIT ?`,
+    [importId, after, limit],
+  );
+}
+
+/** A mail for the pass was queued since `since`: a pending row's step got that far. */
+export async function mailQueuedSince(
+  db: D1Database,
+  passId: string,
+  since: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      "SELECT 1 AS n FROM outbox WHERE pass_id = ? AND kind = 'email' AND created_at >= ? LIMIT 1",
+      [passId, since],
+    )) !== null
+  );
 }

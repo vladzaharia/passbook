@@ -19,8 +19,8 @@ export type ImportProblem = z.infer<typeof PassImportProblemSchema>;
 /** The one constructor of problems: column, field and message are clamped to the contract so a row's problems always parse. */
 export function problem(
   row: number,
-  p: Omit<ImportProblem, 'row' | 'severity' | 'column' | 'field'> &
-    Partial<Pick<ImportProblem, 'column' | 'field' | 'severity'>>,
+  p: Omit<ImportProblem, 'row' | 'severity' | 'column' | 'field' | 'label' | 'value'> &
+    Partial<Pick<ImportProblem, 'column' | 'field' | 'severity' | 'label' | 'value'>>,
 ): ImportProblem {
   return {
     row,
@@ -28,8 +28,23 @@ export function problem(
     ...p,
     column: p.column?.slice(0, 200) ?? null,
     field: p.field?.slice(0, 64) ?? null,
+    // The label the form shows and the cell as written: org data for the operator, never for a holder.
+    label: (p.label ?? (p.field ? KEY_LABELS[p.field] : undefined) ?? null)?.slice(0, 200) ?? null,
+    value: p.value?.slice(0, 200) ?? null,
     message: p.message.slice(0, 200),
   };
+}
+
+const KEY_LABELS: Record<string, string> = {
+  externalId: 'External ID',
+  holderEmail: 'Holder email',
+};
+
+/** A cell or input value as text for a problem; null when empty or not a plain value. */
+export function shown(v: unknown): string | null {
+  return typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+    ? String(v)
+    : null;
 }
 
 /** One sentence per row problem. The row number rides in `ImportProblem.row`, not in the text. */

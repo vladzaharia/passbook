@@ -142,6 +142,10 @@ export const PassImportProblemSchema = z.object({
   row: z.number().int().min(2),
   column: z.string().max(200).nullable(),
   field: z.string().max(64).nullable(),
+  /** The field as the form labels it (`x-label`), for the operator. */
+  label: z.string().max(200).nullable().optional(),
+  /** The offending cell as written, up to 200 characters: the organization's own data, shown to its operator only. */
+  value: z.string().max(200).nullable().optional(),
   code: z.string().max(64),
   message: z.string().max(200),
   severity: z.enum(['error', 'warning']),

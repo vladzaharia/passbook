@@ -172,6 +172,12 @@ export async function createImport(
   return importDto(ctx, await requireImport(ctx, a, id), suggestion ? { mapping: suggestion } : {});
 }
 
+/** An import is terminal once an undo was asked for: it can be read, not checked, committed or discarded. */
+export function assertNotUndone(imp: ImportRow): void {
+  if (imp.reverted !== 0)
+    throw new ConflictError('This import was undone. Upload the file again.', 'IMPORT_UNDONE');
+}
+
 export async function checkImport(
   ctx: ServiceContext,
   a: TenantPassWrite,
@@ -179,6 +185,7 @@ export async function checkImport(
   plan: ImportPlan,
 ): Promise<PassImportDto> {
   const imp = await requireImport(ctx, a, id);
+  assertNotUndone(imp);
   if (!OPEN.includes(imp.state) || imp.expires_at <= ctx.clock.now())
     throw new ConflictError(
       imp.state === 'committing' || imp.state === 'done'
@@ -197,6 +204,7 @@ export async function discardImport(
   id: string,
 ): Promise<void> {
   const imp = await requireImport(ctx, a, id);
+  assertNotUndone(imp);
   if (imp.state === 'committing') throw new ConflictError('This import is running.', 'IMPORT_BUSY');
   await discardDraft(ctx, a, id);
   if (imp.object_key) await ctx.env.BUCKET.delete(imp.object_key);

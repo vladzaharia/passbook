@@ -6,8 +6,7 @@ import type { ImportRunParams } from './import-apply.ts';
 import { getPassForWrite } from './pass-access.ts';
 import { reissuePrincipalValid, starterFits } from './repo-bulk-principal.ts';
 import { progressOf, type Scope } from './repo-import-commit.ts';
-import { emailCandidates } from './repo-import-email.ts';
-import { claimHeld, settleHeld } from './repo-import-held.ts';
+import { claimHeld, heldCandidates, mailQueuedSince, settleHeld } from './repo-import-held.ts';
 import { getImport } from './repo-imports.ts';
 
 /** Mails a step queues: each is a few D1 calls, and a step must stay well under the subrequest limit. */
@@ -40,34 +39,66 @@ export async function releaseHeldPage(
     });
     return { next: null };
   }
-  const rows = await emailCandidates(db, imp.id, imp.org_id, after, HELD_PAGE + 1);
-  const page = rows.slice(0, HELD_PAGE);
-  const won = new Set(
-    await claimHeld(
-      ctx,
-      s,
-      page.map((r) => r.row_no),
-    ),
-  );
-  const scope = { orgId: imp.org_id, mode: imp.mode, principal: 'session' as const };
-  const refused: number[] = [];
-  for (const row of page) {
-    if (!won.has(row.row_no)) continue;
-    try {
-      const pass = await getPassForWrite(db, row.pass_id, scope);
-      await enqueuePassEmail(ctx, {
-        passId: row.pass_id,
-        to: row.holder_email,
-        attach: false,
-        expected: pass,
-      });
-    } catch (error) {
-      if (!(error instanceof AppError)) throw error;
-      refused.push(row.row_no);
-      ctx.log.warn('pass_import.held_refused', { importId: imp.id, code: error.code });
+  try {
+    const rows = await heldCandidates(db, imp.id, after, HELD_PAGE + 1);
+    const page = rows.slice(0, HELD_PAGE);
+    const won = new Set(
+      await claimHeld(
+        ctx,
+        s,
+        page.map((r) => r.row_no),
+      ),
+    );
+    const scope = { orgId: imp.org_id, mode: imp.mode, principal: 'session' as const };
+    const sent: number[] = [];
+    const refused: number[] = [];
+    for (const row of page) {
+      if (!won.has(row.row_no)) continue;
+      try {
+        // A step that died after queuing the mail left the row pending: do not mail it twice.
+        if (
+          row.mail_pending_at !== null &&
+          (await mailQueuedSince(db, row.pass_id, row.mail_pending_at))
+        ) {
+          sent.push(row.row_no);
+          continue;
+        }
+        const pass = await getPassForWrite(db, row.pass_id, scope);
+        // Only the pass's current holder, while it is live: an address fixed during the hold is the one that counts.
+        if (
+          pass.status !== 'active' ||
+          pass.removedAt !== null ||
+          !pass.holderEmail ||
+          pass.holderEmail.toLowerCase() !== row.holder_email.toLowerCase()
+        ) {
+          refused.push(row.row_no);
+          continue;
+        }
+        await enqueuePassEmail(ctx, {
+          passId: row.pass_id,
+          to: pass.holderEmail,
+          attach: false,
+          expected: pass,
+        });
+        sent.push(row.row_no);
+      } catch (error) {
+        if (!(error instanceof AppError)) throw error;
+        refused.push(row.row_no);
+        ctx.log.warn('pass_import.held_refused', { importId: imp.id, code: error.code });
+      }
     }
+    await settleHeld(ctx, s, { sent, refused }, (await progressOf(db, imp.id)).notEmailed);
+    const last = page[page.length - 1];
+    return { next: rows.length > HELD_PAGE && last ? last.row_no : null };
+  } catch (error) {
+    // An undo (or a suspended org) won the race for the claim: nothing more to send, and not a failure.
+    if (
+      error instanceof AppError &&
+      (error.code === 'IMPORT_STATE' || error.code === 'IMPORT_NOT_FOUND')
+    ) {
+      ctx.log.info('pass_import.held_stopped', { importId: imp.id, code: error.code });
+      return { next: null };
+    }
+    throw error;
   }
-  await settleHeld(ctx, s, refused, (await progressOf(db, imp.id)).notEmailed);
-  const last = page[page.length - 1];
-  return { next: rows.length > HELD_PAGE && last ? last.row_no : null };
 }

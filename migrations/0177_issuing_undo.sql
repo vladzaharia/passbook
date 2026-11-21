@@ -13,3 +13,9 @@ ALTER TABLE pass_imports ADD COLUMN email_hold_ms INTEGER;
 ALTER TABLE pass_imports ADD COLUMN undo_cancelled INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE pass_import_rows ADD COLUMN written_version INTEGER;
 ALTER TABLE pass_import_rows ADD COLUMN undo_code TEXT;
+-- The undo keeps its own starter and instance (the commit's stay), and held mail marks a row pending
+-- between its claim and its send, so a step that dies leaves a trace.
+ALTER TABLE pass_imports ADD COLUMN undo_starter TEXT;
+ALTER TABLE pass_imports ADD COLUMN undo_instance TEXT;
+ALTER TABLE pass_imports ADD COLUMN undo_at INTEGER;
+ALTER TABLE pass_import_rows ADD COLUMN mail_pending_at INTEGER;

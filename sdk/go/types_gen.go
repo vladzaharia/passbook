@@ -3362,6 +3362,8 @@ type PassImportsCheckResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3471,6 +3473,8 @@ type PassImportsCommitResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3604,6 +3608,8 @@ type PassImportsCreateResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3701,6 +3707,8 @@ type PassImportsListItemProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3847,6 +3855,8 @@ type PassImportsRetrieveResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`

@@ -30,6 +30,9 @@ export interface ImportRow {
   email_hold_until: number | null;
   reverted: number;
   undo_cancelled: number;
+  undo_starter: string | null;
+  undo_instance: string | null;
+  undo_at: number | null;
   rows: number;
   to_create: number;
   to_update: number;
@@ -194,7 +197,11 @@ export async function beginCheck(
   /** False for a re-check of some rows: the others stay. */
   clearRows = true,
 ): Promise<void> {
-  const g = importGrant(ctx, authority, id, stateIn(['mapping', 'checking', 'ready', 'stale']));
+  // An undone (or undoing) import is terminal: a check or commit would feed the undo new rows.
+  const g = importGrant(ctx, authority, id, {
+    ...stateIn(['mapping', 'checking', 'ready', 'stale']),
+    reverted: 0,
+  });
   g.update('pass_imports', {
     where: { id },
     require: 'one',
@@ -284,12 +291,10 @@ export async function discardDraft(
   authority: TenantPassWrite,
   id: string,
 ): Promise<void> {
-  const g = importGrant(
-    ctx,
-    authority,
-    id,
-    stateIn(['mapping', 'checking', 'ready', 'stale', 'failed']),
-  );
+  const g = importGrant(ctx, authority, id, {
+    ...stateIn(['mapping', 'checking', 'ready', 'stale', 'failed']),
+    reverted: 0,
+  });
   g.update('pass_imports', {
     where: { id },
     require: 'one',

@@ -42,7 +42,7 @@ export async function beginCommit(
   s: CommitStart,
 ): Promise<void> {
   const now = ctx.clock.now();
-  const g = importGrant(ctx, authority, id, { state: 'ready', check_id: s.checkId });
+  const g = importGrant(ctx, authority, id, { state: 'ready', check_id: s.checkId, reverted: 0 });
   g.update('pass_imports', {
     where: { id },
     require: 'one',

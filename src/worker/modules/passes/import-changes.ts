@@ -55,7 +55,13 @@ export async function rowChanges(
   // Dates read in the org's own zone; UTC only for an org that has none.
   const timeZone = (await readOrgTimeZone(ctx.env.DB, imp.org_id)) ?? undefined;
   for (const r of wanted) {
-    const before = objectOf(r.before) ?? objectOf(now.get(r.pass_id ?? ''));
+    // The commit keeps `{ personalization, fieldSources }`; an older import kept the inputs flat.
+    const stored = objectOf(r.before);
+    const earlier =
+      stored && typeof stored.personalization === 'object' && stored.personalization !== null
+        ? (stored.personalization as Record<string, Json>)
+        : stored;
+    const before = earlier ?? objectOf(now.get(r.pass_id ?? ''));
     const input = objectOf(r.input);
     // A finished row without its earlier values has nothing left to compare against.
     if (!before || !input || (r.state !== 'planned' && !r.before)) continue;

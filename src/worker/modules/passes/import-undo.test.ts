@@ -4,7 +4,7 @@ import { createJobContext } from '../../platform/service-context.ts';
 import { runPassImport } from '../../workflows/pass-import.ts';
 import { releaseHeldPage } from './import-held.ts';
 import { HEAD, type ImportHarness, setupImportHarness, stepOf } from './import-test-fixtures.ts';
-import { UNDO_WINDOW_MS, undoInstanceId } from './import-undo.ts';
+import { UNDO_WINDOW_MS } from './import-undo.ts';
 
 let h: ImportHarness;
 beforeAll(async () => {
@@ -16,10 +16,20 @@ beforeEach(async () => {
 });
 
 const undo = (id: string, headers = h.admin) => h.api(headers, 'POST', `/${id}/undo`, {});
-const runUndo = (id: string) =>
+const instanceOf = async (id: string) =>
+  (
+    await first<{ undo_instance: string }>(
+      h.kit.env.DB,
+      'SELECT undo_instance FROM pass_imports WHERE id = ?',
+      [id],
+    )
+  )?.undo_instance ?? '';
+const instancesOf = (id: string) =>
+  h.created.filter((c) => c.id.startsWith(`pass-import-undo-${id}-`));
+const runUndo = async (id: string) =>
   runPassImport(
     h.kit.env,
-    undoInstanceId(id),
+    await instanceOf(id),
     { importId: id, orgId: h.kit.org.id, mode: 'live', undo: true },
     stepOf(),
   );
@@ -84,7 +94,7 @@ describe('undo', () => {
     const id = await imported([HEAD, 'A,1,,U-ONCE'].join('\n'));
     await undo(id);
     await undo(id);
-    expect(h.created.filter((c) => c.id === undoInstanceId(id))).toHaveLength(1);
+    expect(instancesOf(id)).toHaveLength(1);
   });
 
   it('refuses an import that is running, not run, or older than a day', async () => {
@@ -136,7 +146,7 @@ describe('undo progress and failure', () => {
     );
     expect(audit?.n).toBe(1);
     await undo(id);
-    expect(h.created.filter((c) => c.id.startsWith(undoInstanceId(id)))).toHaveLength(2);
+    expect(instancesOf(id)).toHaveLength(2);
   });
 });
 

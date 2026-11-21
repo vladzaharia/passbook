@@ -1944,6 +1944,8 @@ export type PassImportsListResult = {
       row: number;
       column: string | null;
       field: string | null;
+      label?: string | null;
+      value?: string | null;
       code: string;
       message: string;
       severity: "error" | "warning";
@@ -2081,6 +2083,8 @@ export type PassImportsCreateResult = {
     row: number;
     column: string | null;
     field: string | null;
+    label?: string | null;
+    value?: string | null;
     code: string;
     message: string;
     severity: "error" | "warning";
@@ -2236,6 +2240,8 @@ export type PassImportsRetrieveResult = {
     row: number;
     column: string | null;
     field: string | null;
+    label?: string | null;
+    value?: string | null;
     code: string;
     message: string;
     severity: "error" | "warning";
@@ -2376,6 +2382,8 @@ export type PassImportsCheckResult = {
     row: number;
     column: string | null;
     field: string | null;
+    label?: string | null;
+    value?: string | null;
     code: string;
     message: string;
     severity: "error" | "warning";
@@ -2511,6 +2519,8 @@ export type PassImportsCommitResult = {
     row: number;
     column: string | null;
     field: string | null;
+    label?: string | null;
+    value?: string | null;
     code: string;
     message: string;
     severity: "error" | "warning";

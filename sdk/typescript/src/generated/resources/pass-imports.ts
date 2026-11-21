@@ -86,7 +86,7 @@ export class PassImportsResource {
     return this.core.request({ method: 'GET', path: `/api/v1/pass-imports/${encodeURIComponent(id)}` }, options);
   }
 
-  /** Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest` */
+  /** Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest` */
   sendEmails(id: string, body: PassImportsSendEmailsBody, options?: RequestOptions): Promise<PassImportsSendEmailsResult> {
     return this.core.request({ method: 'POST', path: `/api/v1/pass-imports/${encodeURIComponent(id)}/email-rest`, body }, options);
   }

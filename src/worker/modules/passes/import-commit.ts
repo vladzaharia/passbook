@@ -6,7 +6,7 @@ import { startRun } from '../../platform/workflow-runs.ts';
 import type { TenantPassWrite } from './http.ts';
 import { releaseImportEmail, reserveImportEmail } from './import-email.ts';
 import { importDto } from './import-read.ts';
-import { requireImport } from './import-service.ts';
+import { assertNotUndone, requireImport } from './import-service.ts';
 import { type DeferredStarter, reissuePrincipalOf } from './repo-bulk-principal.ts';
 import { beginCommit, revertCommit } from './repo-import-commit.ts';
 import { emailableCount } from './repo-import-rows.ts';
@@ -55,6 +55,7 @@ export async function commitImport(
   },
 ): Promise<PassImportDto> {
   const imp = await requireImport(ctx, a, id);
+  assertNotUndone(imp);
   if (imp.state === 'committing' || imp.state === 'done') return importDto(ctx, imp);
   const now = ctx.clock.now();
   if (imp.state === 'ready' && imp.expires_at <= now)

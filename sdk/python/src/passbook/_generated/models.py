@@ -4417,6 +4417,8 @@ class PassImportsCheckResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4511,6 +4513,8 @@ class PassImportsCommitResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4626,6 +4630,8 @@ class PassImportsCreateResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4712,6 +4718,8 @@ class PassImportsListItemProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4799,6 +4807,8 @@ class PassImportsListResultItemsItemProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4908,6 +4918,8 @@ class PassImportsRetrieveResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str

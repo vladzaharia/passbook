@@ -290,7 +290,7 @@ register(
     method: 'post',
     path: '/{id}/email-rest',
     summary:
-      'Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice',
+      'Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice',
     params: IdParamSchema,
     query: OrgQuerySchema,
     body: PassImportEmailRestSchema,

@@ -7,6 +7,7 @@ import { requireImport } from './import-service.ts';
 import { resendEmail } from './pass-service-delivery.ts';
 import { progressOf } from './repo-import-commit.ts';
 import { claimRows, emailCandidates, recordEmailRest, releaseRows } from './repo-import-email.ts';
+import { UNDO_RUNNING } from './repo-import-undo.ts';
 import type { Actor } from './service.ts';
 
 type Result = z.infer<typeof PassImportEmailRestResultSchema>;
@@ -16,7 +17,8 @@ export const EMAIL_PAGE = 50;
 const ENDED = ['done', 'failed', 'stale', 'expired'];
 
 /**
- * Emails the passes an import created that went out without mail (past the day's cap at commit, or mail off).
+ * Sends now the mail of the passes an import created that went out without it (past the day's cap at
+ * commit, or mail off). During a hold it sends the held mail ahead of the wait.
  * Rows are claimed (`emailed = 1`) in a guarded write before any mail is queued, and given back if the mail
  * is refused, so a repeat or a double click mails nobody twice. The caps are the normal ones: the org's 500 a
  * day and 3 an hour per holder are enforced when each mail is queued, and a refused row is counted as skipped.
@@ -30,6 +32,8 @@ export async function emailRest(
 ): Promise<Result> {
   const imp = await requireImport(ctx, authority, id);
   if (imp.state === 'committing') throw new ConflictError('This import is running.', 'IMPORT_BUSY');
+  if (imp.reverted === UNDO_RUNNING)
+    throw new ConflictError('This import is being undone.', 'IMPORT_UNDO_RUNNING');
   if (imp.committed_at === null || !ENDED.includes(imp.state))
     throw new ConflictError('This import created no passes.', 'IMPORT_STATE');
   const after = Number(cursor ?? 0);

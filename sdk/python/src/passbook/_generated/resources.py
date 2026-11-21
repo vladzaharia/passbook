@@ -867,7 +867,7 @@ class PassImportsResource:
         body: m.PassImportsSendEmailsBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.PassImportsSendEmailsResult:
-        """Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`"""
+        """Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`"""
         return self._core.request("POST", f"/api/v1/pass-imports/{_p(id)}/email-rest", body=body, result=m.PassImportsSendEmailsResult, **opts)
 
     def undo(

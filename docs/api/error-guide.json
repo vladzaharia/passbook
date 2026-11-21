@@ -935,6 +935,12 @@
     "fix": "Remove the pass on its own with POST /api/v1/passes/{id}/remove.",
     "retryable": false
   },
+  "IMPORT_PASS_GONE": {
+    "title": "Pass already gone",
+    "when": "An undo found a pass the import made that was removed or deleted since.",
+    "fix": "Nothing to do; the pass is already out of Wallet.",
+    "retryable": false
+  },
   "IMPORT_PLAN_INVALID": {
     "title": "Import mapping invalid",
     "when": "The column mapping does not match the template's inputs.",
@@ -959,10 +965,28 @@
     "fix": "Split the file and import it in parts.",
     "retryable": false
   },
+  "IMPORT_UNDONE": {
+    "title": "Import was undone",
+    "when": "The import was undone or is being undone, so it can no longer be checked, committed or discarded.",
+    "fix": "Upload the file again as a new import.",
+    "retryable": false
+  },
   "IMPORT_UNDO_EXPIRED": {
     "title": "Undo window has passed",
     "when": "The import ended more than 24 hours ago, so it can no longer be undone.",
     "fix": "Remove or change the passes one by one, or run a change that sets the earlier values.",
+    "retryable": false
+  },
+  "IMPORT_UNDO_NO_BEFORE": {
+    "title": "Earlier values not kept",
+    "when": "An undo found an updated row from an import that ran before undo kept earlier values.",
+    "fix": "Change the pass by hand or import the earlier values again.",
+    "retryable": false
+  },
+  "IMPORT_UNDO_RUNNING": {
+    "title": "Undo is running",
+    "when": "The import is being undone, so its held mail cannot be sent now.",
+    "fix": "Wait for the undo to finish, then read the result from GET /api/v1/pass-imports/{id}.",
     "retryable": false
   },
   "INVALID_API_KEY": {

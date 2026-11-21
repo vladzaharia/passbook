@@ -115,6 +115,7 @@ describe('mapping: auto', () => {
     expect(imp.counts).toMatchObject({ create: 1, errors: 1, errorsCreate: 1, errorsUpdate: 0 });
     expect(imp.problems[0]?.message).toBe('Status must be Active or Suspended.');
     expect(imp.problems[0]?.message).not.toMatch(/Gone/);
+    expect(imp.problems[0]).toMatchObject({ label: 'Status', value: 'Gone', field: 'status' });
   });
 });
 

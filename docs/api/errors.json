@@ -1774,6 +1774,15 @@
       ]
     },
     {
+      "code": "IMPORT_PASS_GONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IMPORT_PLAN_INVALID",
       "statuses": [
         422
@@ -1810,7 +1819,34 @@
       ]
     },
     {
+      "code": "IMPORT_UNDONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IMPORT_UNDO_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_NO_BEFORE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_RUNNING",
       "statuses": [
         409
       ],

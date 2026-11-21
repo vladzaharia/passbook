@@ -925,7 +925,7 @@ func (r *PassImportsResource) Retrieve(ctx context.Context, id string, opts ...R
 	return &out, nil
 }
 
-// SendEmails Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`
+// SendEmails Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`
 func (r *PassImportsResource) SendEmails(ctx context.Context, id string, body *PassImportsSendEmailsBody, opts ...RequestOption) (*PassImportsSendEmailsResult, error) {
 	var out PassImportsSendEmailsResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/email-rest", body: body}, &out, opts); err != nil {
