@@ -7,6 +7,7 @@ import type {
   OrgSummarySchema,
   UpdateOrgSchema,
 } from '../../../shared/contracts/orgs.ts';
+import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
 import type { Actor } from '../../platform/context.ts';
 import {
   BadRequestError,
@@ -35,6 +36,7 @@ import {
   type OrgWriteAuthority,
   updateOrgRow,
 } from './repo-org-writes.ts';
+import { personalOwners } from './repo-personal.ts';
 
 type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
@@ -61,6 +63,7 @@ export function toDto(row: OrgRow): OrgDto {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     configRevision: row.config_revision,
+    personal: row.personal_user_id !== null,
   };
 }
 
@@ -84,6 +87,9 @@ async function checkIdentity(ctx: ServiceContext, orgId: string | null, identity
 }
 
 async function checkSlug(ctx: ServiceContext, slug: string, exceptId?: string) {
+  // The personal- namespace belongs to personal orgs, which keep their own slug when renamed.
+  if (slug.startsWith(PERSONAL_ORG_COPY.slugPrefix))
+    throw new BadRequestError(PERSONAL_ORG_COPY.slugReserved, 'ORG_SLUG_RESERVED');
   if (await slugTaken(ctx.env.DB, slug, exceptId))
     throw new ConflictError('That slug is taken.', 'ORG_SLUG_TAKEN');
 }
@@ -100,24 +106,49 @@ export async function listOrgs(
     page.map((r) => r.id),
     mode,
   );
+  const owners = await ownersOf(ctx, page);
   return {
-    items: page.map((row) => summarize(row, counts.get(row.id))),
+    items: page.map((row) => summarize(row, counts.get(row.id), owners)),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }
 
-function summarize(row: OrgRow, counts?: Summary['counts']): Summary {
+/** Names of the owners of the personal orgs among `rows`: for platform views only. */
+const ownersOf = async (ctx: ServiceContext, rows: OrgRow[]) =>
+  personalOwners(
+    ctx.env.DB,
+    rows.flatMap((r) => (r.personal_user_id ? [r.personal_user_id] : [])),
+  );
+
+function summarize(
+  row: OrgRow,
+  counts?: Summary['counts'],
+  owners?: Map<string, string | null>,
+): Summary {
   const c = counts ?? { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 };
-  return { ...toDto(row), counts: c, countsCapped: Object.values(c).some((n) => n >= COUNT_CAP) };
+  const owner = row.personal_user_id
+    ? { id: row.personal_user_id, name: owners?.get(row.personal_user_id) ?? null }
+    : null;
+  return {
+    ...toDto(row),
+    counts: c,
+    countsCapped: Object.values(c).some((n) => n >= COUNT_CAP),
+    ...(owners && owner ? { personalOwner: owner } : {}),
+  };
 }
 
 export async function getOrg(
   ctx: ServiceContext,
   id: string,
   mode: Mode = 'live',
+  platform = false,
 ): Promise<Summary> {
   const row = await requireOrg(ctx, id);
-  return summarize(row, (await countsFor(ctx.env.DB, [id], mode)).get(id));
+  return summarize(
+    row,
+    (await countsFor(ctx.env.DB, [id], mode)).get(id),
+    platform ? await ownersOf(ctx, [row]) : undefined,
+  );
 }
 
 export async function createOrg(
@@ -140,6 +171,7 @@ export async function createOrg(
     created_at: now,
     updated_at: now,
     config_revision: 1,
+    personal_user_id: null,
   };
   const preset = input.preset ?? 'standard';
   await insertOrgAsAdmin(ctx, row, admin, preset);

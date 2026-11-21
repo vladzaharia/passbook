@@ -4,9 +4,11 @@ import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import type { PassJson, Personalization } from '../../../passkit/types.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { PREVIEW_CONTENT_TYPE, PREVIEW_OBJECT_SUFFIX } from '../developer/fence.ts';
-import { brandingWarnings, type TenantBranding } from './branding.ts';
+import { brandingWarnings, type TenantBranding, tenantPassJson } from './branding.ts';
 import type { Artifact, BuildRequest } from './builder.ts';
 import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
+import { withBackContacts } from './contacts.ts';
+import { issuerName } from './issuer.ts';
 import { applyRemoval } from './remove-build.ts';
 import type { AssetRow } from './repo-history-assets.ts';
 import { barcodeHashOf, lookupHashOf, lookupValueOf } from './scan-code.ts';
@@ -26,6 +28,20 @@ export function displayOf(
   return {
     title: text(template.manifest.display.title),
     subtitle: text(template.manifest.display.subtitle),
+  };
+}
+
+/** The template's pass.json as this org issues it, and the issuer name the pass prints. */
+export function tenantOf(
+  req: BuildRequest,
+  resolved: ResolvedTemplate,
+  branding: TenantBranding,
+  contacts: Parameters<typeof withBackContacts>[1],
+) {
+  const base = tenantPassJson(resolved.passJson, req.orgName, branding, req.personal);
+  return {
+    passJson: withBackContacts(base, contacts),
+    issuer: issuerName(req.orgName, req.personal, resolved.passJson),
   };
 }
 

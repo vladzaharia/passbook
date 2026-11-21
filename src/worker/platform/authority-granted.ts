@@ -1,6 +1,7 @@
 // Grant plumbing shared by authority.ts: the opaque statement type and the grant-insert SQL.
 import type { Check } from './authority-checks.ts';
 import { AuthorityError } from './authority-error.ts';
+import { PERSONAL_ORG_PURPOSE } from './authority-personal.ts';
 import {
   actorSql,
   Binds,
@@ -147,8 +148,9 @@ export function grantInsert(
 
 const PURPOSE = /^(org_mode|org|platform)\.[a-z0-9_]+(\.[a-z0-9_]+)+$/;
 
-/** org_mode purposes only a platform admin (naming the org and mode) holds: no org principal, key or job. */
+/** Purposes only a platform admin session holds: no org principal, key or job. */
 const PLATFORM_ADMIN_PURPOSES: readonly string[] = [
+  PERSONAL_ORG_PURPOSE,
   'org_mode.wallet.enrolment_hold',
   'org_mode.wallet.enrolment_release',
   'org_mode.wallet.migration_resolve',

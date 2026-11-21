@@ -4,6 +4,7 @@ import { emailBrandOf } from '../../email/brand.ts';
 import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { passEmailOrgName } from '../delivery/email-from.ts';
 import { readBranding, tenantPassJson } from '../passes/branding.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { orgBrandOf } from './brand.ts';
@@ -40,20 +41,22 @@ export async function renderEmailPreview(
   const raw = JSON.parse(row.branding) as { supportEmail?: string; supportUrl?: string };
   const branding = readBranding(raw);
   const { iconUrl, logo } = await previewImages(ctx, orgId, branding, template, origin);
-  const passJson = tenantPassJson(template.passJson, row.name, branding);
+  const personal = row.personal_user_id !== null;
+  const passJson = tenantPassJson(template.passJson, row.name, branding, personal);
+  const orgName = passEmailOrgName({ name: row.name, personal });
   const colors = resolveColors(passJson);
   const support = (value: string | undefined, saved: string | undefined, legacy?: string) =>
     value === undefined ? (saved ?? legacy) : value || legacy;
   const sample = `${origin}/p/sample`;
   return renderPassEmail({
-    orgName: row.name,
+    orgName,
     supportEmail: support(draft.supportEmail, settings['support.email'], raw.supportEmail),
     supportUrl: support(draft.supportUrl, settings['support.url'], raw.supportUrl),
     downloadUrl: `${sample}/pass.pkpass`,
     manageUrl: sample,
     badgeUrl: emailAssetUrl(origin, EMAIL_BADGE.path),
     attached: false,
-    passTitle: `${row.name} membership`,
+    passTitle: `${orgName} membership`,
     summary: {
       fields: [
         { label: 'Member', value: 'Alex Morgan' },

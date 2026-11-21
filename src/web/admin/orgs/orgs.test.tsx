@@ -161,6 +161,25 @@ describe('orgs list', () => {
     expect(screen.queryByRole('link', { name: /passes in Acme Gym/ })).toBeNull();
   });
 
+  it('marks a personal organization with a badge and keeps its stored name', async () => {
+    await renderApp('/admin/orgs', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/orgs': () =>
+          json({
+            items: [
+              provisioning({ id: 'p1', name: 'Ada Lovelace', slug: 'personal-ada-lovelace' }),
+              provisioning(),
+            ].map((org, i) => (i === 0 ? { ...org, personal: true } : org)),
+            nextCursor: null,
+          }),
+      },
+    });
+    const link = await screen.findByRole('link', { name: 'Ada Lovelace' });
+    expect(within(link.parentElement as HTMLElement).getByText('Personal')).toBeInTheDocument();
+    expect(screen.getAllByText('Personal')).toHaveLength(1);
+  });
+
   it('identifies counts capped by the organization API as lower bounds', async () => {
     await renderApp('/admin/orgs', {
       session: 'admin',

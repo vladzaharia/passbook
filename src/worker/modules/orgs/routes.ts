@@ -36,6 +36,8 @@ const PlatformOrgSummarySchema = OrgSummarySchema.pick({
   slug: true,
   name: true,
   status: true,
+  personal: true,
+  personalOwner: true,
   createdAt: true,
   counts: true,
   countsCapped: true,
@@ -117,7 +119,7 @@ register(
   async (c) =>
     c.json(
       PlatformOrgSummarySchema.parse(
-        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth)),
+        await getOrg(serviceContext(c), c.req.valid('param').id, modeOf(c.var.auth), true),
       ),
     ),
 );
@@ -174,7 +176,7 @@ register(
     const ctx = serviceContext(c);
     const id = c.req.valid('param').id;
     await setOrgStatus(ctx, requestActor(c), id, c.req.valid('json').status, adminOf(c));
-    return c.json(PlatformOrgSummarySchema.parse(await getOrg(ctx, id, modeOf(c.var.auth))));
+    return c.json(PlatformOrgSummarySchema.parse(await getOrg(ctx, id, modeOf(c.var.auth), true)));
   },
 );
 register(

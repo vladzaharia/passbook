@@ -202,6 +202,7 @@ export async function buildTransfer(
   const artifact = await buildArtifact(ctx, {
     orgId: p.orgId,
     orgName: org.name,
+    personal: org.personal,
     branding: org.branding,
     passId: p.id,
     serial: credentials.serial,

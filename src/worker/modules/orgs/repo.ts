@@ -14,6 +14,8 @@ export interface OrgRow {
   updated_at: number;
   /** Moves with name, slug, branding, default identity and org settings; the CAS for edits. */
   config_revision: number;
+  /** The user this personal org belongs to; set at creation, never changed. */
+  personal_user_id: string | null;
 }
 
 export interface OrgCounts {
@@ -25,7 +27,7 @@ export interface OrgCounts {
 }
 
 const COLUMNS =
-  'id, slug, name, status, default_identity_id, branding, created_at, updated_at, config_revision';
+  'id, slug, name, status, default_identity_id, branding, created_at, updated_at, config_revision, personal_user_id';
 
 export function getOrgRow(db: D1Database, id: string): Promise<OrgRow | null> {
   return first<OrgRow>(db, `SELECT ${COLUMNS} FROM orgs WHERE id = ? AND status != 'deleted'`, [
@@ -167,12 +169,14 @@ export interface OrgForPassRow {
   status: string;
   default_identity_id: string | null;
   branding: string | null;
+  /** 1 for a personal org: read here, from the row, never from a template or request. */
+  personal: number;
 }
 
 export function orgForPassStmt(db: D1Database, orgId: string) {
   return stmt(
     db,
-    'SELECT id, slug, name, status, default_identity_id, branding FROM orgs WHERE id = ?',
+    'SELECT id, slug, name, status, default_identity_id, branding, personal_user_id IS NOT NULL AS personal FROM orgs WHERE id = ?',
     [orgId],
   );
 }

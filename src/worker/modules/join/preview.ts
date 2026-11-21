@@ -60,7 +60,7 @@ export async function joinPreview(
   for (const g of readiness.generated) input[g.key] = GENERATED;
   const tenant = {
     ...template,
-    passJson: tenantPassJson(template.passJson, link.orgName, branding),
+    passJson: tenantPassJson(template.passJson, link.orgName, branding, org?.personal === true),
   };
   const { pass, droppedImages } = bindPass(tenant, input, {});
   delete pass.barcode;

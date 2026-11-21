@@ -9,6 +9,8 @@ export interface PassOrg {
   defaultIdentityId: string | null;
   /** Raw branding JSON; read it with readBranding. */
   branding: unknown;
+  /** A personal org: its passes keep the template's own issuer name. */
+  personal: boolean;
 }
 
 export async function getOrg(db: D1Database, orgId: string): Promise<PassOrg | null> {
@@ -31,6 +33,7 @@ export function mapPassOrg(row: OrgForPassRow | null): PassOrg | null {
     status: row.status,
     defaultIdentityId: row.default_identity_id,
     branding,
+    personal: row.personal === 1,
   };
 }
 

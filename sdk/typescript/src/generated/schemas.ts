@@ -851,6 +851,7 @@ export type Org = {
   slug: string;
   name: string;
   status: "active" | "suspended" | "deleted";
+  personal?: boolean;
   defaultIdentityId: string | null;
   branding: OrgBranding;
   createdAt: number;
@@ -892,6 +893,7 @@ export type OrgSummary = {
   slug: string;
   name: string;
   status: "active" | "suspended" | "deleted";
+  personal?: boolean;
   defaultIdentityId: string | null;
   branding: OrgBranding;
   createdAt: number;
@@ -906,6 +908,10 @@ export type OrgSummary = {
     members?: number;
   };
   countsCapped: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
 };
 
 export type OrgsCloseParams = {

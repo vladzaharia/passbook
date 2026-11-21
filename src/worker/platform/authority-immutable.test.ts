@@ -245,7 +245,7 @@ describe('Rule-2 immutable inputs', () => {
           ]),
           `${t.table}.${column}`,
         ).rejects.toThrow(
-          /connections identity is immutable|orgs identity is immutable|org kind is immutable|passes identity is immutable|scan_events identity is immutable|scan_staff identity is immutable|scanner ID is immutable|scanners identity is immutable|scanning_sessions identity is immutable|invalid wallet provider account transition|provider instance identity is immutable|provider keyset commitment is immutable/,
+          /connections identity is immutable|orgs identity is immutable|orgs personal marker is immutable|org kind is immutable|passes identity is immutable|scan_events identity is immutable|scan_staff identity is immutable|scanner ID is immutable|scanners identity is immutable|scanning_sessions identity is immutable|invalid wallet provider account transition|provider instance identity is immutable|provider keyset commitment is immutable/,
         );
       }
     }
