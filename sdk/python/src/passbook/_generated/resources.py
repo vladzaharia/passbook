@@ -1473,6 +1473,42 @@ class ScansResource:
         return self._core.paginate("GET", "/api/v1/scans", query={"cursor": cursor, "limit": limit, "q": q, "scannerId": scanner_id, "staffId": staff_id, "eventId": event_id, "templateId": template_id, "passId": pass_id, "outcome": outcome, "reason": reason, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before}, result=m.ScansListResult, cursor_param="cursor", **opts)
 
 
+class TemplatesReviewsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def approve(
+        self,
+        id: str,
+        body: m.TemplatesReviewsApproveBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesReviewsApproveResult:
+        """Approve a requested template version in Test and Live, and release it when asked `POST /api/v1/templates/{id}/review`"""
+        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/review", body=body, result=m.TemplatesReviewsApproveResult, **opts)
+
+    def list(
+        self,
+        *,
+        state: _Literal["open"] | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.TemplatesReviewsListItem]:
+        """List template versions waiting for review `GET /api/v1/template-reviews`"""
+        return self._core.paginate("GET", "/api/v1/template-reviews", query={"state": state, "cursor": cursor, "limit": limit}, result=m.TemplatesReviewsListResult, cursor_param="cursor", **opts)
+
+    def request(
+        self,
+        id: str,
+        body: m.TemplatesReviewsRequestBody | _Dict[str, _Any],
+        *,
+        dry_run: _Literal["0", "1", "true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesReviewsRequestResult:
+        """Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`"""
+        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/review-requests", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.TemplatesReviewsRequestResult, **opts)
+
+
 class TemplatesCandidatesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1579,22 +1615,6 @@ class TemplatesReleasesResource:
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/releases/impact", query={"mode": mode, "provider": provider, "version": version}, result=m.TemplatesReleasesRetrieveImpactResult, **opts)
 
 
-class TemplatesReviewsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def request(
-        self,
-        id: str,
-        body: m.TemplatesReviewsRequestBody | _Dict[str, _Any],
-        *,
-        dry_run: _Literal["0", "1", "true", "false"] | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.TemplatesReviewsRequestResult:
-        """Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`"""
-        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/review-requests", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.TemplatesReviewsRequestResult, **opts)
-
-
 class TemplatesVersionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1624,10 +1644,10 @@ class TemplatesVersionsResource:
 class TemplatesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.reviews = TemplatesReviewsResource(core)
         self.candidates = TemplatesCandidatesResource(core)
         self.channels = TemplatesChannelsResource(core)
         self.releases = TemplatesReleasesResource(core)
-        self.reviews = TemplatesReviewsResource(core)
         self.versions = TemplatesVersionsResource(core)
 
     def download_package(

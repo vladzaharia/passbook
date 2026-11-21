@@ -5,6 +5,11 @@
 import { AuthorityError } from './authority-error.ts';
 
 export const PERSONAL_ORG_PURPOSE = 'platform.org.personal';
+/**
+ * `platform.org.create_admin`: a platform admin creates an org and joins it as `org_admin` in one batch.
+ * The rules are the personal org's, except the org is not marked personal and takes any preset but developer.
+ */
+export const CREATOR_ORG_PURPOSE = 'platform.org.create_admin';
 export const PERSONAL_ORG_TABLES = [
   'orgs',
   'org_entitlements',
@@ -38,7 +43,8 @@ export function personalOrgInsert(
   copies: boolean,
 ): void {
   const { purpose, principal, target } = input;
-  if (purpose !== PERSONAL_ORG_PURPOSE) return;
+  const personal = purpose === PERSONAL_ORG_PURPOSE;
+  if (!personal && purpose !== CREATOR_ORG_PURPOSE) return;
   if (
     principal.kind !== 'platform' ||
     principal.userId === undefined ||
@@ -57,13 +63,20 @@ export function personalOrgInsert(
   if (at(orgColumn) !== target) throw refuse(`${t}.${orgColumn} must be the grant's org.`);
   if (t !== 'orgs' && !state.org) throw refuse(`${t} follows the orgs row of the same grant.`);
   if (t === 'orgs') {
-    if (at('personal_user_id') !== principal.userId)
-      throw refuse('A personal org belongs to the grant principal.');
+    if (personal ? at('personal_user_id') !== principal.userId : at('personal_user_id') != null)
+      throw refuse(
+        personal ? 'A personal org belongs to the grant principal.' : 'This org is not personal.',
+      );
     if ((at('status') ?? 'active') !== 'active' || (at('kind') ?? 'standard') !== 'standard')
       throw refuse('A personal org is an active standard org.');
   }
-  if (t === 'org_entitlements' && at('preset') !== 'standard')
-    throw refuse('A personal org has the standard preset.');
+  if (
+    t === 'org_entitlements' &&
+    (personal ? at('preset') !== 'standard' : at('preset') === 'developer')
+  )
+    throw refuse(
+      personal ? 'A personal org has the standard preset.' : 'A sandbox is not made here.',
+    );
   if (t === 'org_invitations') {
     if (typeof at('accepted_at') !== 'number')
       throw refuse('The invitation of a personal org is already accepted.');
@@ -83,5 +96,6 @@ export function personalOrgInsert(
 
 /** Everything but an insert (update, delete, upsert, joined, parts) is outside this purpose. */
 export function personalOrgOnlyInserts(purpose: string, what: string): void {
-  if (purpose === PERSONAL_ORG_PURPOSE) throw refuse(`${purpose} only inserts, not ${what}.`);
+  if (purpose === PERSONAL_ORG_PURPOSE || purpose === CREATOR_ORG_PURPOSE)
+    throw refuse(`${purpose} only inserts, not ${what}.`);
 }

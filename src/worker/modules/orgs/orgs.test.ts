@@ -76,6 +76,33 @@ async function join(orgId: string, userId = orgAdmin.userId) {
 }
 
 describe('orgs api', () => {
+  it('joins the creator as org_admin in the create batch unless addMe is false', async () => {
+    const created = await call('POST', '', { slug: 'with-me', name: 'With me' });
+    expect(created.status).toBe(201);
+    const { id } = (await created.json()) as { id: string };
+    const rows = await all<{ roles: string; accepted_at: number | null }>(
+      appEnv.DB,
+      `SELECT m.roles AS roles, i.accepted_at AS accepted_at FROM org_memberships m
+       JOIN org_invitations i ON i.id = m.invitation_id
+       WHERE m.org_id = ? AND m.user_id = ?`,
+      [id, platformAdmin.userId],
+    );
+    expect(rows).toEqual([{ roles: '["org_admin"]', accepted_at: expect.any(Number) }]);
+    expect((await call('GET', `/${id}/workspace`)).status).toBe(200);
+    const audited = await all<{ detail: string }>(
+      appEnv.DB,
+      "SELECT detail FROM audit_log WHERE org_id = ? AND action = 'org.create'",
+      [id],
+    );
+    expect(JSON.parse(audited[0]?.detail ?? '{}')).toMatchObject({ addMe: true });
+
+    const apart = await call('POST', '', { slug: 'without-me', name: 'Without me', addMe: false });
+    const other = ((await apart.json()) as { id: string }).id;
+    expect(await all(appEnv.DB, 'SELECT 1 FROM org_memberships WHERE org_id = ?', [other])).toEqual(
+      [],
+    );
+  });
+
   it('rejects header-injection and bidi characters in the name', async () => {
     for (const name of ['Acme\r\nBcc: x@y.z', 'Acme\u202Eevil', 'A\u2028B']) {
       expect((await call('POST', '', { slug: 'inj-org', name })).status).toBe(422);
@@ -100,6 +127,7 @@ describe('orgs api', () => {
       slug: 'acme',
       name: 'Acme',
       branding: { accent: '#112233' },
+      addMe: false,
     });
     expect(created.status).toBe(201);
     const org = (await created.json()) as { id: string; status: string; branding: object };

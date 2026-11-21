@@ -33,6 +33,7 @@ import {
 import { ACTION_ICON } from './action-icons.ts';
 import { AUTH_ACTIONS } from './actions-auth.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
+import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -287,7 +288,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'identity.push_key_remove': a('Push key removed', I.pushKey, 'warning'),
   'identity.push_key_rotate': a('Push key rotated', I.rotate, 'info'),
   'identity.push_key_set': a('Push key set', I.pushKey, 'success'),
-  'template.version': a('Template version added', ENTITY.version.icon, 'info'),
+  ...TEMPLATE_VERSION_ACTIONS,
   'user.disable': a('User disabled', UserX, 'warning'),
   'user.email_add': a('Email added', MailPlus, 'success'),
   'user.email_primary': a('Primary email changed', Star, 'info'),

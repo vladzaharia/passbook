@@ -9,6 +9,7 @@ const setup = {
   assignedTemplates: 3,
   passes: 1200,
   approvedTemplates: 2,
+  releasedTemplates: 0,
   walletPasses: 800,
   passEmailsSent: 9,
   latestPassId: 'p9',

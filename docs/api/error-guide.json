@@ -2567,6 +2567,12 @@
     "fix": "Approve a release with POST /api/v1/templates/{id}/candidates/{candidateId}/approve.",
     "retryable": false
   },
+  "TEMPLATE_REVIEW_NOT_FOUND": {
+    "title": "No review requested",
+    "when": "No review was requested for this version, or it was released already.",
+    "fix": "Ask the author to request review of this version, then review it again.",
+    "retryable": false
+  },
   "TEMPLATE_REVIEW_REQUIRED": {
     "title": "Review required",
     "when": "Another reviewer must approve this version before it is released in Live.",
