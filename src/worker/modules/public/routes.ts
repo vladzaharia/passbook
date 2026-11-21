@@ -28,7 +28,8 @@ import { holderPrintRoutes } from '../prints/routes-holder.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
-import { resendRoutes } from './routes-resend.ts';
+import { holderMailProps, resendRoutes } from './routes-resend.ts';
+import { signInRoutes } from './routes-signin.ts';
 import { swRoutes } from './routes-sw.ts';
 import {
   isTokenShape,
@@ -60,9 +61,8 @@ publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/barcode', rateLimit('RL_PUBLIC'));
 
 publicRoutes.route('/', resendRoutes);
+publicRoutes.route('/', signInRoutes);
 publicRoutes.route('/', holderPrintRoutes);
-
-const againOf = (v: string | undefined) => (v === 'sent' || v === 'wait' ? v : null);
 
 function endedFor(
   view: { voided: boolean; expired: boolean },
@@ -177,9 +177,9 @@ register(
           lang,
         ),
         ...(notice ? { notice } : {}),
-        ...(pass.holderEmail && !model.removal
-          ? { resend: { action: `${page}/resend`, again: againOf(c.req.query('again')) } }
-          : {}),
+        ...(await holderMailProps(svcCtx, page, pass, Boolean(model.removal), (name) =>
+          c.req.query(name),
+        )),
       });
       await assertPassSnapshot(svcCtx, snapshot);
       svcCtx.waitUntil(

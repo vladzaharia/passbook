@@ -1,4 +1,4 @@
-import { Ban, RefreshCw } from 'lucide-react';
+import { Ban, ChevronRight, RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { EffectiveChannels } from '../../shared/contracts/channels.ts';
 import type { WalletOffer } from '../../shared/contracts/me.ts';
@@ -16,7 +16,8 @@ import { Callout } from '../ui/callout.tsx';
 import { AddBlock } from './add/add-block.tsx';
 import { type AddAreaProps, addMode } from './add/area.ts';
 import type { RenderBuddy } from './add/scan.tsx';
-import { Help, type HolderSupport, Notice, SendAgain } from './holder-parts.tsx';
+import { EndedCard, type EndedSignIn } from './ended-card.tsx';
+import { Help, type HolderSupport, SendAgain } from './holder-parts.tsx';
 import { OtherWays, WalletLead } from './wallet-choice.tsx';
 import './holder-pass.css';
 
@@ -62,6 +63,8 @@ export interface HolderPassViewProps {
   notice?: string;
   /** /p: Send it again posts here; the portal has it in its menu instead. */
   resend?: { action: string; again: 'sent' | 'wait' | null };
+  /** /p, an ended pass with a holder email: "Email me my passes" posts here. */
+  signin?: EndedSignIn;
   /** The app's Buddy (its scene in view, click replay); /p's plays once on load. */
   buddy?: RenderBuddy;
   /** /p: the server cannot tell a Mac from an iPad (MAC_REVEAL_SCRIPT shows the Mac's parts). */
@@ -109,7 +112,12 @@ export function HolderPassView(props: HolderPassViewProps) {
   const printable = state === 'active' ? props.printHref : undefined;
   const nothing = state === 'active' && choices.length === 0 && !printable;
   const help =
-    state !== 'voided' && !support?.platform && (support?.email || support?.url) ? support : null;
+    state !== 'voided' &&
+    state !== 'expired' &&
+    !support?.platform &&
+    (support?.email || support?.url)
+      ? support
+      : null;
   // On the iPhone the badge's card leads, so it is on the first screen; the pass follows it.
   const lead = mode === 'phone' && device.device === 'iphone';
   const apple = area ? <AddBlock {...area} buddy={buddy} /> : null;
@@ -121,7 +129,11 @@ export function HolderPassView(props: HolderPassViewProps) {
       data-rise={props.rise || undefined}
     >
       <div className="wl-holder-pass">
-        <div className="relative isolate w-full max-w-[22rem]">{props.pass}</div>
+        <div
+          className={`relative isolate w-full ${state === 'active' ? 'max-w-[22rem]' : 'max-w-[16rem]'}`}
+        >
+          {props.pass}
+        </div>
         {props.toggle}
       </div>
       <div className="wl-holder-add">
@@ -133,18 +145,21 @@ export function HolderPassView(props: HolderPassViewProps) {
           </div>
         ) : null}
         {state === 'active' ? null : (
-          // A pass that cannot be added: the buddy sits on the notice, sad.
+          // A pass that cannot be added: the buddy sits on the card's edge, sad (glad once the
+          // sign-in link is on its way).
           <div className="wl-add-seat">
-            {state === 'voided'
-              ? buddy({ size: 'sm', mood: 'sad', scene: 'tear', at: 'end' })
-              : buddy({ size: 'sm', mood: 'sad', state: 'expired', at: 'end' })}
-            <Notice
+            {props.signin?.state === 'sent'
+              ? buddy({ size: 'sm', mood: 'happy', scene: 'cheer', at: 'end' })
+              : state === 'voided'
+                ? buddy({ size: 'sm', mood: 'sad', scene: 'tear', at: 'end' })
+                : buddy({ size: 'sm', mood: 'sad', state: 'expired', at: 'end' })}
+            <EndedCard
               state={state}
               orgName={props.orgName}
               support={support}
               message={props.removalMessage}
               endedOn={props.endedOn}
-              inWallet={props.inWallet}
+              signin={props.signin}
             />
           </div>
         )}
@@ -173,7 +188,21 @@ export function HolderPassView(props: HolderPassViewProps) {
           />
         </div>
       ) : null}
-      {props.details ? <div className="wl-holder-details">{props.details}</div> : null}
+      {props.details ? (
+        <div className="wl-holder-details">
+          {state === 'active' ? (
+            props.details
+          ) : (
+            <details className="wl-ended-details">
+              <summary>
+                <ChevronRight aria-hidden />
+                {HOLDER_COPY.details}
+              </summary>
+              {props.details}
+            </details>
+          )}
+        </div>
+      ) : null}
       {help ? (
         <div className="wl-holder-help border-t border-border pt-4">
           <Help support={help} />
