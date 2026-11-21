@@ -1,6 +1,5 @@
 import type { ScanSetupCheck, ScanSetupFix } from '@/shared/contracts/scan-setup-intent.ts';
 import { SCAN_SETUP_COPY } from '@/shared/copy/scan-setup.ts';
-import type { SetupIssue } from '@/shared/scan-setup-plan-derive.ts';
 import { DIRECTION_LABEL } from './draft.ts';
 
 /** `{name}` marks filled from params; an unknown mark stays out of the sentence. */
