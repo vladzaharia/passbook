@@ -31,6 +31,7 @@ import {
 } from './repo-scanning-sessions.ts';
 import { addSessionZones, sessionZoneIds } from './repo-zones.ts';
 import { acceptedTemplateIds, checkAccepts } from './scanner-validation.ts';
+import { addDeviceRevokes } from './scanning-device-revocation.ts';
 import {
   assertSessionReadAuthority,
   assertSessionWriteCountAuthority,
@@ -142,6 +143,12 @@ export async function applyScanningSessionUpdate(
   authority: TenantPassWrite,
 ) {
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);
+  if (input.removeDevices && input.status !== 'ended')
+    throw new ValidationError(
+      'Devices are removed when the session ends.',
+      [{ path: 'removeDevices', message: 'Set the status to ended.' }],
+      'SCANNING_SESSION_REMOVE_DEVICES',
+    );
   if (input.revision !== undefined && input.revision !== row.updated_at)
     throw new ConflictError(
       'This session changed. Reload its settings and try again.',
@@ -230,6 +237,15 @@ export async function applyScanningSessionUpdate(
     now,
   );
   if (input.zoneIds) addSessionZones(g, id, input.zoneIds, true);
+  if (input.removeDevices)
+    addDeviceRevokes(
+      g,
+      ctx,
+      row.org_id,
+      actorId,
+      authority,
+      devices.filter((d) => d.revoked_at === null).map((d) => d.scanner_id),
+    );
   addSessionPropagation(
     g,
     next,

@@ -1,4 +1,5 @@
-import { AppError } from '../../platform/errors.ts';
+import type { Grant } from '../../platform/authority.ts';
+import { AppError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { kickScreen } from './live.ts';
@@ -65,4 +66,30 @@ export async function revokeScanner(
   }
   if (row.deviceRole !== 'scan') await kickScreen(ctx, row.orgId, row.mode, id);
   return scannerView(ctx, id);
+}
+
+/** End with Remove its devices: every live device of the session is revoked in the session's own write. Console sessions only. */
+export function addDeviceRevokes(
+  g: Grant,
+  ctx: ServiceContext,
+  orgId: string,
+  userId: string,
+  authority: TenantPassWrite,
+  scannerIds: readonly string[],
+): void {
+  if (authority.kind !== 'session') throw new ForbiddenError();
+  for (const id of scannerIds) {
+    addScannerRevoke(g, id, ctx.clock.now());
+    addAdminDeviceRelease(g, id);
+    g.add(
+      audited(g, ctx, {
+        orgId,
+        actorType: 'user',
+        actorId: userId,
+        action: 'scanner.revoke',
+        targetType: 'scanner',
+        targetId: id,
+      }),
+    );
+  }
 }

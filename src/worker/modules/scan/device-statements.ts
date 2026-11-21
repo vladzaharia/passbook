@@ -6,12 +6,14 @@ import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
+import { takenScannerNames } from './repo-setup-intent.ts';
 import {
   effectiveSessionSettings,
   type ResolvedSessionScope,
   resolveSessionScope,
 } from './scanning-session-dto.ts';
 import type { SetupCapture } from './setup-capture.ts';
+import { numberedName } from './setup-names.ts';
 import { planSetup, type SetupPlan, setupStatements } from './setup-statements.ts';
 
 /** A session takes this many live devices. */
@@ -68,11 +70,14 @@ export async function planScanningDevice(
     ...(scope.restricted ? { acceptAllTemplates: false } : {}),
   });
   const role = roleForSurface(input.surface);
+  const name =
+    input.name ??
+    numberedName(parent.name, 40, await takenScannerNames(ctx.env.DB, parent.org_id, parent.mode));
   const plan = await planSetup(
     ctx,
     {
       orgId: parent.org_id,
-      name: input.name,
+      name,
       kind: 'device',
       deviceRole: role,
       accepts: parent.accepts ? JSON.parse(parent.accepts) : null,

@@ -33,6 +33,8 @@ describe('docs/api/reference', () => {
       expect(request, `${id} has no JSON request body`).toBeTruthy();
       expect(validateAgainst(doc, request ?? {}, ref.request), `${id} request`).toEqual([]);
     }
+    for (const [name, value] of Object.entries(ref.requests ?? {}))
+      expect(validateAgainst(doc, request ?? {}, value), `${id} request ${name}`).toEqual([]);
     if (ref.response !== undefined) {
       expect(response, `${id} has no JSON 2xx body`).toBeTruthy();
       expect(validateAgainst(doc, response ?? {}, ref.response), `${id} response`).toEqual([]);

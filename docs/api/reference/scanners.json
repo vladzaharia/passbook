@@ -1,0 +1,198 @@
+{
+  "scanners.postScanningSessionsSetup": {
+    "description": "Makes the zones, events, staff, sessions and devices for a set of doors in one batch. Send an `Idempotency-Key`: the same key and body replays the answer with `replayed: true` and no PINs or pairing codes (codes that ran out are reissued, `pairingReissued: true`); the same key with another body is 409 `SCAN_SETUP_KEY_REUSED`. PINs and pairing codes appear once. `?dryRun=true` returns the plan and its checks with refs in place of ids and writes nothing. Any `error` check is 422 `SCAN_SETUP_CHECKS_FAILED`. A key (`scanning:write`) cannot make zones or staff (403 `SCAN_SETUP_CONSOLE_ONLY`) and its devices come with no pairing code.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "front_desk",
+      "places": [
+        {
+          "ref": "gym",
+          "name": "Gym",
+          "max": 60
+        }
+      ],
+      "staff": [
+        {
+          "name": "Maya Chen",
+          "role": "manager"
+        },
+        {
+          "name": "Sam Ortiz",
+          "role": "desk"
+        }
+      ],
+      "doors": [
+        {
+          "name": "Front desk",
+          "place": "gym",
+          "admits": {
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1",
+              "0193a1b2-7c00-7000-8000-0000000000b2"
+            ]
+          },
+          "hours": {
+            "every": ["06:00-22:00"]
+          }
+        }
+      ]
+    },
+    "requests": {
+      "Front desk": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "preset": "front_desk",
+        "places": [
+          {
+            "ref": "gym",
+            "name": "Gym",
+            "max": 60
+          }
+        ],
+        "staff": [
+          {
+            "name": "Maya Chen",
+            "role": "manager"
+          },
+          {
+            "name": "Sam Ortiz",
+            "role": "desk"
+          }
+        ],
+        "doors": [
+          {
+            "name": "Front desk",
+            "place": "gym",
+            "admits": {
+              "templateIds": [
+                "0193a1b2-7c00-7000-8000-0000000000b1",
+                "0193a1b2-7c00-7000-8000-0000000000b2"
+              ]
+            },
+            "hours": {
+              "every": ["06:00-22:00"]
+            }
+          }
+        ]
+      },
+      "Event night": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "preset": "event_night",
+        "events": [
+          {
+            "ref": "gala",
+            "name": "Saturday gala",
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "opensAt": 1795129200000,
+            "closesAt": 1795212000000,
+            "max": 300
+          }
+        ],
+        "doors": [
+          {
+            "name": "Gala door",
+            "admits": {
+              "events": ["gala"]
+            },
+            "devices": [
+              {
+                "layout": "phone"
+              },
+              {
+                "layout": "phone"
+              }
+            ]
+          }
+        ]
+      },
+      "Several areas": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "preset": "venue",
+        "places": [
+          {
+            "ref": "club",
+            "name": "Club",
+            "max": 200
+          },
+          {
+            "ref": "vip",
+            "name": "VIP",
+            "inside": "club",
+            "max": 20
+          }
+        ],
+        "doors": [
+          {
+            "name": "Main door",
+            "place": "club",
+            "admits": {
+              "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+            }
+          },
+          {
+            "name": "VIP door",
+            "place": "vip",
+            "admits": {
+              "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "replayed": false,
+      "pairingReissued": false,
+      "mode": "live",
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "ref": "door-1",
+          "name": "Front desk",
+          "devices": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "name": "Front desk 1",
+              "pairing": {
+                "code": "ABCDE-FGHJK",
+                "url": "https://passbook.mobile/scan#pair=ABCDE-FGHJK",
+                "expiresAt": 1795129800000
+              }
+            },
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000e2",
+              "name": "Front desk 2",
+              "pairing": {
+                "code": "KLMNP-QRSTV",
+                "url": "https://passbook.mobile/scan#pair=KLMNP-QRSTV",
+                "expiresAt": 1795129800000
+              }
+            }
+          ]
+        }
+      ],
+      "zones": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "ref": "gym",
+          "name": "Gym",
+          "created": true
+        }
+      ],
+      "events": [],
+      "staff": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+          "name": "Maya Chen",
+          "role": "manager",
+          "pin": "482913"
+        },
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000f2",
+          "name": "Sam Ortiz",
+          "role": "desk",
+          "pin": "730256"
+        }
+      ],
+      "checks": []
+    }
+  }
+}

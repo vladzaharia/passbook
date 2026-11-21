@@ -13,7 +13,14 @@ import { getUser } from '../users/repo.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { createPairing, hashPairCode, newPairCode, PAIR_TTL_MS, type Pairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
-import { audited, eventsOpen, scopeTemplatesUsable, sessionEpoch } from './repo-admin-grant.ts';
+import {
+  adminActorOf,
+  audited,
+  createdByOf,
+  eventsOpen,
+  scopeTemplatesUsable,
+  sessionEpoch,
+} from './repo-admin-grant.ts';
 import { addScannerTemplates, addSetupInsert } from './repo-admin-unguarded.ts';
 import { addScannerInsert } from './repo-scanners.ts';
 import { requirePairingAuthority } from './repo-scanners-pair.ts';
@@ -190,7 +197,7 @@ export function setupStatements(
     settings: JSON.stringify(settings),
     timeZone: input.timeZone,
     expiresAt: kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
-    createdBy: userId,
+    createdBy: createdByOf(capture.authority, userId),
     now,
     ...(pairing ? { pair: { hash: pairing.hash, expiresAt: pairing.expiresAt } } : {}),
   });
@@ -200,8 +207,7 @@ export function setupStatements(
   g.add(
     audited(g, ctx, {
       orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(capture.authority, userId),
       action: 'scanner.setup_create',
       targetType: 'scanner',
       targetId: id,
@@ -212,8 +218,7 @@ export function setupStatements(
     g.add(
       audited(g, ctx, {
         orgId,
-        actorType: 'user',
-        actorId: userId,
+        ...adminActorOf(capture.authority, userId),
         action: 'scanner.pairing_create',
         targetType: 'scanner',
         targetId: id,
