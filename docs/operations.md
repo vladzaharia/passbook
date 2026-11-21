@@ -148,6 +148,14 @@ Trust boundary: the service binding, not the lint rule (`tools/check-apple-bindi
 
 Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
 
+## Managed identity runs
+
+`IdentityProvision` (workflow binding `IDENTITY_PROVISION`) provisions a managed pass type and certificate for an org (`provision`) and replaces a certificate (`rotate`). The daily hook `identities.rotation_plan` starts a rotate run 60 days before expiry for every `rotation='auto'` identity with no open run. Adding the binding needs `npm run deploy -- --first`.
+
+- Runs are rows in `identity_runs`: `step`, `state`, `error_code`. A run waits as `waiting: apple_unavailable` while the `APPLE` binding is missing and tries again daily for 45 days.
+- A failed run is retried by the planner the next day. At 45 days to expiry platform admins get an email and an audit row (`identity.rotation_overdue`); status goes amber at 30 days and red at 14; from 7 days an email goes out daily.
+- A rotation never revokes the old certificate.
+
 ## Google and Samsung Wallet accounts
 
 Keep Apple signing and push in place. Provider accounts and reviews are isolated by organization,
