@@ -138,6 +138,21 @@ saved no channel policy for the template:
   default. The source stays `template`. Platform, org, capability and pass levels apply as before.
 - The Apple build key and `pass.json` ignore it, like `wallets`.
 
+## Keep the template's own brand
+
+By default a pass takes the organization's logo, icon and pass colours where the organization sets them, and the
+template's own where it does not. An optional `brand` block lets one template keep its own:
+
+```json
+"brand": { "colors": "template", "logo": "template" }
+```
+
+- Keys: `colors`, `logo`, `icon`. Values: `org` (the default) or `template`. A part left out follows the
+  organization. `template` keeps the template's colours or image even where the organization sets one.
+- A template without the block builds exactly as before. The designer writes the block when the author uses
+  **Override for this template** on Colors or Images, and removes it again with **Use organization**.
+- Unknown keys and other values are errors (`BRAND_UNKNOWN`, `BRAND_SOURCE`, `BRAND_SHAPE`).
+
 ## Google and Samsung wallets
 
 Both compile from the same pass; the matrix of what each carries is
