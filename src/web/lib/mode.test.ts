@@ -71,6 +71,17 @@ describe('mode store', () => {
   });
 });
 
+describe('?mode= in the URL', () => {
+  it('is adopted when a tab opens, and kept', async () => {
+    vi.resetModules();
+    window.history.replaceState(null, '', '/admin/passes?mode=test');
+    const fresh = await import('./mode.ts');
+    expect(fresh.getMode()).toBe('test');
+    expect(localStorage.getItem(MODE_KEY)).toBe('test');
+    window.history.replaceState(null, '', '/');
+  });
+});
+
 describe('the API client', () => {
   const Any = z.object({ ok: z.boolean() });
   const run = async () => {
