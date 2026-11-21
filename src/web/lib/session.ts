@@ -5,6 +5,7 @@ import { NEXT_COOKIE, NEXT_COOKIE_PATH, safeNextPath } from '@/shared/next.ts';
 import { api, resetSessionEnded } from './api.ts';
 import { ApiError, problemToError } from './errors.ts';
 import { clearLocalDrafts } from './local-drafts.ts';
+import { setTestOnlyOrgs } from './mode.ts';
 import { clearPreviewBatches } from './preview-batch.ts';
 import { loginHref } from './redirect.ts';
 
@@ -87,6 +88,7 @@ export const membershipsQuery = queryOptions({
     if (!same() || memberships.items.some((membership) => membership.userId !== session.user.id)) {
       throw sessionChangedError();
     }
+    setTestOnlyOrgs(memberships.items.filter((m) => m.testOnly).map((m) => m.orgId));
     return memberships;
   },
   staleTime: MEMBERSHIPS_STALE_MS,
