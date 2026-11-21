@@ -97,7 +97,7 @@ export async function reviewTemplate(
   const release = body.release
     ? ((await releaseTemplate(
         ctx,
-        auth,
+        stepAuth(auth, 'test', 'templates:publish'),
         templateId,
         orgId,
         { orgId, version: body.version, modes: approved },
