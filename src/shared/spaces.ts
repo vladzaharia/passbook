@@ -43,6 +43,12 @@ export function needsPocketId(
   return space === 'admin' || space === 'developers';
 }
 
+/** The operator space a path opens (Admin or Developers), else null. Drives the sign-in page's layout. */
+export function operatorSpaceOf(path: string | null | undefined): 'admin' | 'developers' | null {
+  const first = (path ?? '').split(/[/?#]/)[1];
+  return first === 'admin' || first === 'developers' ? first : null;
+}
+
 /** Developer features: the `developer` role, which platform admins have implied. */
 export const hasDeveloperAccess = (roles: readonly string[]): boolean =>
   roles.includes('admin') || roles.includes('developer');
