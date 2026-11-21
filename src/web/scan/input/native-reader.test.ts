@@ -34,6 +34,36 @@ describe('native scanner adapter', () => {
     expect(s.client?.result('input-1', 'accepted')).toBe(false);
   });
 
+  it('acknowledges receipt before any verdict, and keeps earlier reads pending', () => {
+    const s = setup();
+    s.read.mockReturnValueOnce('input-1').mockReturnValueOnce('input-2');
+    s.event({ event: 'scan', id: 'native-1', source: 'barcode', value: 'A' });
+    expect(s.sent.at(-1)).toEqual({ version: 1, op: 'scanAck', id: 'native-1' });
+    s.event({ event: 'scan', id: 'native-2', source: 'barcode', value: 'B' });
+    expect(s.sent.at(-1)).toEqual({ version: 1, op: 'scanAck', id: 'native-2' });
+    expect(s.sent.filter((m) => m.op === 'result')).toEqual([]);
+    expect(s.cancelled).not.toHaveBeenCalled();
+    expect(s.client?.result('input-1', 'accepted')).toBe(true);
+    expect(s.sent.at(-1)).toMatchObject({ op: 'result', id: 'native-1' });
+    expect(s.client?.result('input-2', 'rejected')).toBe(true);
+  });
+
+  it('acknowledges a scan the page refuses, then reports the error', () => {
+    const s = setup();
+    s.read.mockReturnValueOnce(null as never);
+    s.event({ event: 'scan', id: 'native-3', source: 'barcode', value: 'C' });
+    expect(s.sent.slice(-2)).toEqual([
+      { version: 1, op: 'scanAck', id: 'native-3' },
+      { version: 1, op: 'result', id: 'native-3', outcome: 'error' },
+    ]);
+  });
+
+  it('does not acknowledge a malformed scan', () => {
+    const s = setup();
+    s.event({ event: 'scan', id: 'native-4', source: 'barcode' });
+    expect(s.sent.filter((m) => m.op === 'scanAck')).toEqual([]);
+  });
+
   it('starts native hardware when the scan session starts', () => {
     const s = setup();
     s.client?.start();
@@ -146,7 +176,12 @@ describe('native scanner adapter, bridge v2 tags', () => {
 
   it('says hello with the versions it speaks and keeps v1 until the app answers', () => {
     const s = setup();
-    expect(s.sent[0]).toEqual({ version: 2, op: 'hello', versions: [1, 2] });
+    expect(s.sent[0]).toEqual({
+      version: 2,
+      op: 'hello',
+      versions: [1, 2],
+      features: ['scanAck'],
+    });
     expect(s.sent[1]).toEqual({ version: 1, op: 'stop' });
     s.client?.start();
     expect(s.sent.at(-1)).toEqual({ version: 1, op: 'start' });

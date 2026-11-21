@@ -155,7 +155,14 @@ export async function createRuntime(
     }
   };
   native = connectNativeReader({
-    read: emit,
+    // The app has the read (scanAck) before this runs. The loop handles one that lands during
+    // review or a result (held, queued or chipped); a read it cannot take says so here.
+    read(read) {
+      const current = store.getSnapshot().state;
+      if (!held && (!current.started || current.block || document.hidden))
+        notice('Not scanning right now. Resume, then scan again.', false);
+      return emit(read);
+    },
     cancelled(id) {
       const l = store.getSnapshot().state.loop;
       if ((l.s === 'checking' || l.s === 'applying') && l.input.id === id)
