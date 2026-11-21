@@ -106,7 +106,8 @@ describe('Visitors page', () => {
           ? json(visitor({ name: 'Leo Park' }), 201)
           : json({ items: [], nextCursor: null }),
     });
-    await user.click(await screen.findByRole('button', { name: 'New visitor' }));
+    await screen.findByText(/^No visitors/);
+    await user.click(screen.getByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
     await user.click(within(dialog).getByRole('button', { name: 'Invite' }));
     expect(await within(dialog).findAllByText('Required.')).toHaveLength(3);
@@ -135,7 +136,8 @@ describe('Visitors page', () => {
           ? problem(409, 'VISITOR_TEMPLATE_MISSING', 'Make a guest pass template first.')
           : json({ items: [], nextCursor: null }),
     });
-    await user.click(await screen.findByRole('button', { name: 'New visitor' }));
+    await screen.findByText(/^No visitors/);
+    await user.click(screen.getByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
     await user.type(within(dialog).getByLabelText(/^Name/), 'Leo Park');
     await user.type(within(dialog).getByLabelText(/^Host(?! email)/), 'Ana Ruiz');
@@ -157,7 +159,8 @@ describe('Visitors page', () => {
       '/api/v1/visitors': (_url, init) =>
         init?.method === 'POST' ? json(visitor({}), 201) : json({ items: [], nextCursor: null }),
     });
-    await user.click(await screen.findByRole('button', { name: 'New visitor' }));
+    await screen.findByText(/^No visitors/);
+    await user.click(screen.getByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
     await user.type(within(dialog).getByLabelText(/^Name/), 'Leo Park');
     expect(within(dialog).queryByLabelText(/^Host email/)).toBeNull();

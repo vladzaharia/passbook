@@ -321,7 +321,8 @@ describe('orgs list', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click((await screen.findAllByRole('button', { name: 'New organization' }))[0]!);
+    await screen.findByText('No organizations');
+    await ui.click(screen.getByRole('button', { name: 'New organization' }));
     const dialog = await screen.findByRole('dialog');
     await ui.type(within(dialog).getByLabelText(/Name/), 'Acme');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));

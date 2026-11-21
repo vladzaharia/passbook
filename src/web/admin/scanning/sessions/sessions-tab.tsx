@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ArrowUpRight, Copy, MonitorSmartphone, Play, Radio, ScanLine } from 'lucide-react';
+import { ArrowUpRight, Copy, MonitorSmartphone, Play, Plus, Radio, ScanLine } from 'lucide-react';
 import { useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
@@ -51,7 +51,17 @@ export function SessionsTab({
     return (
       <div>
         <SetupChecklist onNew={canManage ? onNew : undefined} />
-        <EmptyState art="scanner" title="No scanning sessions" />
+        <EmptyState
+          art="scanner"
+          title="No scanning sessions"
+          action={
+            canManage ? (
+              <Button iconStart={<Plus aria-hidden />} onClick={onNew}>
+                New scanning session
+              </Button>
+            ) : undefined
+          }
+        />
       </div>
     );
   const online = items.reduce((n, s) => n + s.onlineCount, 0);
