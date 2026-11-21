@@ -54,3 +54,20 @@ export async function connectionNames(
       names.set(c.id, c.name);
   return names;
 }
+
+/** The inputs of these passes of the org, by id. */
+export async function personalizationsOf(
+  db: D1Database,
+  orgId: string,
+  ids: readonly string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const part of chunk([...new Set(ids)], LOOKUP))
+    for (const p of await all<{ id: string; personalization: string }>(
+      db,
+      `SELECT id, personalization FROM passes WHERE org_id = ? AND id IN (${placeholders(part.length)})`,
+      [orgId, ...part],
+    ))
+      out.set(p.id, p.personalization);
+  return out;
+}

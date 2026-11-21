@@ -140,6 +140,24 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
     - Near a venue the pass appears on the lock screen. The barcode scans.
     - Void the pass; the phone shows it as voided.
 
+## Automatic deploys
+
+`.github/workflows/deploy.yml` deploys every green commit on `main`. Agents never deploy.
+
+- **Trigger**: the `ci` workflow finishes successfully for a push to `main`. The deploy checks out that run's `head_sha`, never a PR and never a newer unchecked commit. Runs queue (`production-deploy`, never cancelled).
+- **Order**: the tag `deployed/production` marks the last deployed commit. A run whose commit is already contained in the tag is skipped, so an older run cannot roll production back.
+- **Steps**: gen (tree must stay clean), typecheck, biome, `check:rules`, `deploy:check -- --secrets`, build (tree must stay clean), `npm run deploy -- --apply [--first]`, move the tag, smoke checks, job summary (sha, version now serving, migrations that were pending).
+- **`--first`**: chosen by `tools/deploy-needs-first.ts`, which diffs `wrangler.jsonc` at the tagged commit against the new one and flags added workflows, queue consumers, Durable Object classes and exports, and custom domains (the things only `wrangler deploy` registers). No tag means `--first`. The step log names the reason.
+- **Smoke checks** (against `https://passbook.mobile`): `/`, `/login`, `/admin`, `/developers`, `/scan` return 200; `/api/v1/orgs` returns 401; `developers.passbook.mobile` and `wallet.plrs.im` return 308. A failure fails the job; the summary prints the previous version id.
+- **No secrets**: the run ends with a notice and succeeds, nothing is deployed, and the tag does not move. Once the secrets exist, the next green main commit deploys everything since.
+- **Roll back** (by hand; migrations are forward-only, so prefer a fix-forward commit): `npx wrangler rollback <previous-version-id> --message "why"`. Ids are in the job summary or `npx wrangler deployments list`. Then fix main; the next green commit deploys again. To redeploy an older commit, move the tag back first (`git push -f origin <sha>:refs/tags/deployed/production`).
+- **Owner setup** (once):
+  1. Create a Cloudflare API token (My Profile → API Tokens → Create custom token) with Account: Workers Scripts Edit, D1 Edit, Queues Edit, Workers R2 Storage Edit, Account Settings Read; Zone: Workers Routes Edit, DNS Edit, Zone Read on `passbook.mobile`, `plrs.im`; User: User Details Read. Scope accounts and zones to this account. The token can redeploy any Worker in the account, including `apple-provisioner`; see its trust boundary above.
+  2. In GitHub: Settings → Environments → New environment `production`. Optional: Required reviewers. That makes every deploy wait for an approval, so it is no longer automatic.
+  3. In that environment add secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (`07a2eb0d4916b220da1f9c1387b5f6d8`).
+  4. Optional: restrict the environment's deployment branches to `main`.
+- **Alternative**: Cloudflare Workers Builds connected to the repo needs no GitHub secret but builds outside the `ci` gate, the secret check, the `--first` logic and the smoke checks. Use GitHub Actions.
+
 ## Apple provisioner
 
 `workers/apple-provisioner` is a separate Worker that holds the App Store Connect key. The main Worker reaches it only through the `APPLE` service binding; it has no route and no `workers.dev` host. Its D1 holds the allowlist (`asc_pass_types`) and the append-only call ledger (`asc_calls`). Limits: 30 calls a minute and 200 a day per method, one revoke an hour, at most 2 certificate orders per pass type in 30 days and 1 revoke per pass type in 7 days, all fail closed (`ASC_BUDGET`). It logs `provisioner.cert_ordered`, `provisioner.cert_revoked` and, past half the daily budget, `provisioner.budget_high` (error); alert on the last two.

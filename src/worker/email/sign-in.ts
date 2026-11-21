@@ -1,4 +1,5 @@
 import type { MagicPrefer } from '../../shared/contracts/session.ts';
+import { IDENTITY_LINK_MAIL_LINE } from '../../shared/copy/sign-in.ts';
 import type { EmailMood } from '../../shared/email-art.ts';
 import { safeUrl } from './safe.ts';
 import {
@@ -26,6 +27,8 @@ export interface SignInEmailInput {
   requester?: string;
   /** sign_in: `code` leads with the code (asked from the installed app). Layout only. */
   prefer?: MagicPrefer;
+  /** sign_in: the proof for linking a Polaris ID account; says so and tells the reader not to share the code. */
+  identityLink?: boolean;
 }
 
 export interface RenderedEmail {
@@ -74,7 +77,9 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
     ? input.requester
       ? `Adds this address to the account of ${input.requester}.`
       : ''
-    : '';
+    : input.identityLink
+      ? IDENTITY_LINK_MAIL_LINE
+      : '';
 
   const lines = codeFirst
     ? [title, input.code, `Or open this link: ${input.link}`, expiry]

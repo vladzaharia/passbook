@@ -225,12 +225,16 @@ export interface SetupCounts {
   assignedTemplates: number;
   passes: number;
   approvedTemplates: number;
+  releasedTemplates: number;
   walletPasses: number;
   passEmailsSent: number;
   latestPassId: string | null;
 }
 
-/** First-run counts follow the requested org, template and checklist mode. */
+/**
+ * First-run counts follow the requested org and template. Passes and Wallet passes count Test and Live,
+ * since a first pass is a Test one; approved templates and sent emails follow the checklist mode.
+ */
 export async function setupCounts(
   db: D1Database,
   scope?: Pick<Scope, 'orgId' | 'templateId'>,
@@ -247,7 +251,7 @@ export async function setupCounts(
        (SELECT count(*) FROM orgs WHERE status != 'deleted'${orgId ? ' AND id = ?' : ''}) AS orgs,
        (SELECT count(*) FROM templates WHERE org_id IS NOT NULL AND status != 'deleted'
          ${orgId ? 'AND org_id = ?' : ''}${templateId ? ' AND id = ?' : ''}) AS assignedTemplates,
-       (SELECT count(*) FROM passes WHERE deleted_at IS NULL AND mode = ?
+       (SELECT count(*) FROM passes WHERE deleted_at IS NULL
          ${orgId ? 'AND org_id = ?' : ''}${templateId ? ' AND template_id = ?' : ''}) AS passes,
        (SELECT count(*) FROM outbox o
          LEFT JOIN passes p ON p.id = o.pass_id AND p.org_id = o.org_id
@@ -259,14 +263,17 @@ export async function setupCounts(
          WHERE r.provider = 'apple' AND r.mode = ?
            AND ${orgId ? 'r.org_id = ?' : 'r.org_id IS NOT NULL'}${templateId ? ' AND r.template_id = ?' : ''})
          AS approvedTemplates,
-       (SELECT count(*) FROM passes p WHERE p.deleted_at IS NULL AND p.mode = ?
+       (SELECT count(DISTINCT r.template_id) FROM template_releases r
+         WHERE r.provider = 'apple' AND r.mode = 'live'
+           AND ${orgId ? 'r.org_id = ?' : 'r.org_id IS NOT NULL'}${templateId ? ' AND r.template_id = ?' : ''})
+         AS releasedTemplates,
+       (SELECT count(*) FROM passes p WHERE p.deleted_at IS NULL
          ${orgId ? 'AND p.org_id = ?' : ''}${templateId ? ' AND p.template_id = ?' : ''}
          AND EXISTS (SELECT 1 FROM registrations g WHERE g.pass_id = p.id)) AS walletPasses`,
     [
       ...orgParams,
       ...(orgId ? [orgId] : []),
       ...templateParams,
-      mode,
       ...orgParams,
       ...templateParams,
       mode,
@@ -275,7 +282,8 @@ export async function setupCounts(
       mode,
       ...orgParams,
       ...templateParams,
-      mode,
+      ...orgParams,
+      ...templateParams,
       ...orgParams,
       ...templateParams,
     ],
@@ -294,6 +302,7 @@ export async function setupCounts(
     assignedTemplates: row?.assignedTemplates ?? 0,
     passes: row?.passes ?? 0,
     approvedTemplates: row?.approvedTemplates ?? 0,
+    releasedTemplates: row?.releasedTemplates ?? 0,
     walletPasses: row?.walletPasses ?? 0,
     passEmailsSent: row?.passEmailsSent ?? 0,
     latestPassId: latest?.id ?? null,

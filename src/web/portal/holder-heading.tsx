@@ -14,6 +14,8 @@ export interface HolderHeadingProps {
   actions?: ReactNode;
   /** The page's bar already names the org: the h1 is what the pass is, with no eyebrow or mark. */
   bare?: boolean;
+  /** h2 beside My passes' stack at /, where the page's h1 is My passes. */
+  level?: 1 | 2;
 }
 
 /**
@@ -21,7 +23,16 @@ export interface HolderHeadingProps {
  * the pass is (the h1); the holder's name stays a field. The actions end the row at its right, or
  * wrap under the title on a phone.
  */
-export function HolderHeading({ heading, icon, crumbs, meta, actions, bare }: HolderHeadingProps) {
+export function HolderHeading({
+  heading,
+  icon,
+  crumbs,
+  meta,
+  actions,
+  bare,
+  level = 1,
+}: HolderHeadingProps) {
+  const Title = level === 1 ? 'h1' : 'h2';
   const split = heading.kind !== null && heading.org !== '';
   return (
     <header className="wl-hh mb-6 flex min-w-0 flex-col gap-3">
@@ -35,12 +46,12 @@ export function HolderHeading({ heading, icon, crumbs, meta, actions, bare }: Ho
             {split && !bare ? (
               <p className="truncate text-sm font-medium text-fg-muted">{heading.org}</p>
             ) : null}
-            <h1
+            <Title
               tabIndex={-1}
               className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong [overflow-wrap:anywhere]"
             >
               {split ? heading.kind : heading.title}
-            </h1>
+            </Title>
             {meta ? (
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-fg-muted">
                 {meta}

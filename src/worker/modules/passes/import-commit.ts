@@ -6,7 +6,7 @@ import { startRun } from '../../platform/workflow-runs.ts';
 import type { TenantPassWrite } from './http.ts';
 import { releaseImportEmail, reserveImportEmail } from './import-email.ts';
 import { importDto } from './import-read.ts';
-import { requireImport } from './import-service.ts';
+import { assertNotUndone, requireImport } from './import-service.ts';
 import { type DeferredStarter, reissuePrincipalOf } from './repo-bulk-principal.ts';
 import { beginCommit, revertCommit } from './repo-import-commit.ts';
 import { emailableCount } from './repo-import-rows.ts';
@@ -34,7 +34,7 @@ export async function instanceStatus(
 }
 
 /** The starter of a request: a membership or a key, never a platform session (those act through a membership). */
-async function starterOf(ctx: ServiceContext, a: TenantPassWrite): Promise<DeferredStarter> {
+export async function starterOf(ctx: ServiceContext, a: TenantPassWrite): Promise<DeferredStarter> {
   const principal = await reissuePrincipalOf(ctx.env.DB, a, undefined);
   if (principal === undefined || principal.kind === 'platform')
     throw new ConflictError('Sign in again to start this import.', 'IMPORT_STATE');
@@ -49,9 +49,13 @@ export async function commitImport(
   ctx: ServiceContext,
   a: TenantPassWrite,
   id: string,
-  body: { skipInvalid: boolean; email: boolean },
+  body: {
+    skipInvalid: boolean;
+    email: boolean | { send: 'now' } | { send: 'held'; holdMs: number };
+  },
 ): Promise<PassImportDto> {
   const imp = await requireImport(ctx, a, id);
+  assertNotUndone(imp);
   if (imp.state === 'committing' || imp.state === 'done') return importDto(ctx, imp);
   const now = ctx.clock.now();
   if (imp.state === 'ready' && imp.expires_at <= now)
@@ -63,15 +67,19 @@ export async function commitImport(
       `${imp.errors} rows have errors. Fix them or skip them.`,
       'IMPORT_HAS_ERRORS',
     );
-  const reserved = body.email
-    ? await reserveImportEmail(
-        ctx.env.DB,
-        a.mode,
-        a.orgId,
-        now,
-        await emailableCount(ctx.env.DB, id),
-      )
-    : 0;
+  // `true` and `{send:'now'}` mail as each pass is made; `held` makes them first and mails after the wait.
+  const mail = body.email === true ? { send: 'now' as const } : body.email || null;
+  const holdMs = mail?.send === 'held' ? mail.holdMs : null;
+  const reserved =
+    mail?.send === 'now'
+      ? await reserveImportEmail(
+          ctx.env.DB,
+          a.mode,
+          a.orgId,
+          now,
+          await emailableCount(ctx.env.DB, id),
+        )
+      : 0;
   const reservation = {
     mode: a.mode,
     org_id: a.orgId,
@@ -82,7 +90,8 @@ export async function commitImport(
   try {
     await beginCommit(ctx, a, id, {
       checkId: imp.check_id,
-      email: body.email,
+      email: mail !== null,
+      holdMs,
       skipInvalid: body.skipInvalid,
       starter: await starterOf(ctx, a),
       emailBudget: reserved,

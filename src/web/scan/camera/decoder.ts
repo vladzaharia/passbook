@@ -1,8 +1,10 @@
+import { trustedWorkerUrl } from '../../lib/trusted-worker-url.ts';
 import type { CodeFormat } from '../input/types.ts';
+import decodeWorkerUrl from './decode-worker.ts?worker&url';
 import type { CameraHit, CameraReply, CameraRequest } from './protocol.ts';
 /** One frame in flight. A dead worker must never leave the camera looking ready. */
 export function createDecoder(failed: () => void) {
-  const worker = new Worker(new URL('./decode-worker.ts', import.meta.url), { type: 'module' });
+  const worker = new Worker(trustedWorkerUrl(decodeWorkerUrl), { type: 'module' });
   let closed = false;
   let ready = false;
   let id = 0;

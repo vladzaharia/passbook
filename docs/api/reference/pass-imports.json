@@ -1,0 +1,123 @@
+{
+  "pass-imports.getPassImportsMappings": {
+    "description": "Lists a template's saved column mappings. A mapping is picked for a new file when at least 80% of its columns are in the file's headers.",
+    "response": {
+      "saved": [
+        {
+          "name": "Gym export",
+          "columns": ["Member #", "Name", "Holder email"],
+          "savedAt": 1790000000000,
+          "plan": {
+            "mapping": {
+              "memberName": {
+                "from": "/Name"
+              }
+            },
+            "holderEmail": {
+              "from": "/Holder email"
+            },
+            "externalId": {
+              "from": "/Member #"
+            },
+            "match": "externalId",
+            "keepManual": false,
+            "save": true
+          }
+        }
+      ]
+    }
+  },
+  "pass-imports.putPassImportsMappings": {
+    "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
+    "request": {
+      "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
+      "name": "Gym export",
+      "columns": ["Member #", "Name", "Holder email"],
+      "plan": {
+        "mapping": {
+          "memberName": {
+            "from": "/Name"
+          }
+        },
+        "holderEmail": {
+          "from": "/Holder email"
+        },
+        "externalId": {
+          "from": "/Member #"
+        },
+        "match": "externalId",
+        "keepManual": false,
+        "save": true
+      }
+    },
+    "requests": {
+      "Match by member number": {
+        "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
+        "name": "Gym export",
+        "columns": ["Member #", "Name", "Holder email"],
+        "plan": {
+          "mapping": {
+            "memberName": {
+              "from": "/Name"
+            }
+          },
+          "holderEmail": {
+            "from": "/Holder email"
+          },
+          "externalId": {
+            "from": "/Member #"
+          },
+          "match": "externalId",
+          "keepManual": false,
+          "save": true
+        }
+      }
+    },
+    "response": {
+      "saved": [
+        {
+          "name": "Gym export",
+          "columns": ["Member #", "Name", "Holder email"],
+          "savedAt": 1790000000000,
+          "plan": {
+            "mapping": {
+              "memberName": {
+                "from": "/Name"
+              }
+            },
+            "holderEmail": {
+              "from": "/Holder email"
+            },
+            "externalId": {
+              "from": "/Member #"
+            },
+            "match": "externalId",
+            "keepManual": false,
+            "save": true
+          }
+        }
+      ]
+    }
+  },
+  "pass-imports.deletePassImportsMappings": {
+    "description": "Deletes a saved column mapping by name. A name that is not saved changes nothing.",
+    "response": {
+      "saved": []
+    }
+  },
+  "pass-imports.postPassImportsByIdUndo": {
+    "description": "Undoes an ended import for 24 hours after it ends, as a background run. Passes it created are removed unless they were edited or scanned since. Passes it updated get their earlier values back while still at the version the import wrote. Anything else is kept and listed in `kept`. Held emails are cancelled; emails already sent are not recalled. Asking again returns the same run. Poll GET /pass-imports/{id} for `undo`.",
+    "request": {},
+    "requests": {
+      "Undo the import": {}
+    },
+    "response": {
+      "state": "running",
+      "removed": 0,
+      "restored": 0,
+      "keptTotal": 0,
+      "kept": [],
+      "emailsCancelled": 3
+    }
+  }
+}

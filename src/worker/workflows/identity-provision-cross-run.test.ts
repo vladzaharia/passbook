@@ -73,18 +73,17 @@ describe('a certificate Apple issued survives a failed run', () => {
     expect(await adoptByPubkey([early, late], csr.pubkeySha256)).toBe(late);
   });
 
-  it('stops and alerts after three certificates in 30 days', async () => {
+  it('stops and alerts after two certificates in 30 days, as the provisioner does', async () => {
     const h = await harness('capped');
     await provision(h);
     const id = (await identity(h))?.id ?? '';
     const now = h.kit.clock.now();
-    for (const n of [1, 2])
-      await run(
-        h.env.DB,
-        `INSERT INTO identity_certificates (id, identity_id, origin, state, created_at, asc_certificate_id)
-         VALUES (?, ?, 'asc', 'failed', ?, ?)`,
-        [`cap-${n}`, id, now, `a-${n}`],
-      );
+    await run(
+      h.env.DB,
+      `INSERT INTO identity_certificates (id, identity_id, origin, state, created_at, asc_certificate_id)
+       VALUES ('cap-1', ?, 'asc', 'failed', ?, 'a-1')`,
+      [id, now],
+    );
     const { runId } = await startRotation(h.kit.ctx, { identityId: id, createdBy: null });
     await run(
       h.env.DB,

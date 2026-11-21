@@ -226,9 +226,7 @@ describe('Use blueprint', () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/templates\/made1$/),
     );
-    expect(
-      await screen.findByText(/Template created · Version 1, from the Balance card blueprint/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Template created')).toBeInTheDocument();
   });
 
   it('on a phone creates the template from the dialog', async () => {
@@ -245,7 +243,7 @@ describe('Use blueprint', () => {
     });
     await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: ORG.id, name: 'Balance card' }]));
-    expect(await screen.findByText(/Template created · Version 1/)).toBeInTheDocument();
+    expect(await screen.findByText('Template created')).toBeInTheDocument();
   });
 
   it('shows a taken name as the form error', async () => {
@@ -310,7 +308,7 @@ describe('templates', () => {
         '/api/v1/templates/previews': previewsHandler,
       },
     });
-    expect(target(await screen.findByRole('link', { name: 'Balance card' }))).toBe(
+    expect(target(await screen.findByRole('link', { name: 'From Balance card' }))).toBe(
       `/admin/blueprints/${ID}`,
     );
   });

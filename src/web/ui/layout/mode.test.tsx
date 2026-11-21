@@ -29,27 +29,6 @@ describe('a developer sandbox', () => {
     trackCurrentPath(() => '/admin/platform/orgs');
     expect(getMode()).toBe('live');
   });
-
-  it('locks the Test switch on, in its own pages only', () => {
-    setTestOnlyOrgs(['sbx']);
-    trackCurrentPath(() => '/admin/o/sbx/passes');
-    const { unmount } = render(
-      <TooltipProvider>
-        <ModeSwitch />
-      </TooltipProvider>,
-    );
-    const lock = screen.getByRole('switch', { name: 'Test mode' });
-    expect(lock).toBeChecked();
-    expect(lock).toBeDisabled();
-    unmount();
-    trackCurrentPath(() => '/admin/o/other/passes');
-    render(
-      <TooltipProvider>
-        <ModeSwitch />
-      </TooltipProvider>,
-    );
-    expect(screen.getByRole('switch', { name: 'Test mode' })).toBeEnabled();
-  });
 });
 
 describe('ModePill', () => {
@@ -90,14 +69,14 @@ describe('TestStrip', () => {
         <ModeBand />
       </TooltipProvider>,
     );
-    await user.click(screen.getByRole('switch', { name: 'Test mode' }));
+    await user.click(screen.getByRole('radio', { name: 'Test' }));
     expect(screen.getByRole('status')).toHaveClass('wl-test-strip');
     expect(screen.getByRole('status')).toHaveTextContent('New emails go to the Test inbox.');
   });
 });
 
 describe('ModeSwitch and ModeBand', () => {
-  it('turns Test mode on and off and shows the band while on', async () => {
+  it('switches between Live and Test and shows the band while on', async () => {
     const user = userEvent.setup();
     const { container } = render(
       <TooltipProvider>
@@ -105,22 +84,18 @@ describe('ModeSwitch and ModeBand', () => {
         <ModeBand />
       </TooltipProvider>,
     );
-    const toggle = screen.getByRole('switch', { name: 'Test mode' });
-    expect(toggle).toHaveAttribute('aria-checked', 'false');
-    // The words on screen are the control's name.
-    expect(screen.getByText('Test mode')).toHaveAttribute(
-      'id',
-      toggle.getAttribute('aria-labelledby'),
-    );
+    const live = screen.getByRole('radio', { name: 'Live' });
+    const test = screen.getByRole('radio', { name: 'Test' });
+    expect(live).toHaveAttribute('aria-checked', 'true');
     expect(screen.queryByRole('status')).toBeNull();
-    await user.click(toggle);
+    await user.click(test);
     expect(getMode()).toBe('test');
-    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    expect(test).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('status')).toHaveTextContent('Test mode');
     expect((await axe(container)).violations).toEqual([]);
-    await user.click(toggle);
+    await user.click(live);
     expect(getMode()).toBe('live');
-    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    expect(live).toHaveAttribute('aria-checked', 'true');
     expect(screen.queryByRole('status')).toBeNull();
   });
 });

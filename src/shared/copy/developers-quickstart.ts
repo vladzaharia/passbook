@@ -10,8 +10,8 @@ export const QS_COPY = {
   steps: {
     signIn: {
       title: 'Sign in',
-      line: 'A magic link or your identity provider.',
-      cta: 'Sign in',
+      line: 'Polaris ID, with your passkey.',
+      cta: 'Sign in with Polaris ID',
     },
     sandbox: {
       title: 'Create your sandbox',
@@ -95,5 +95,20 @@ export const QS_COPY = {
     noReleaseLine: 'Finishing the setup approves it. Your sandbox is the only reviewer.',
   },
   status: 'Status page',
+  /** Step 1 when a session exists but does not open Developers. */
+  gate: {
+    email: {
+      title: 'Use Polaris ID',
+      line: 'Email links open My passes only.',
+      cta: 'Sign in with Polaris ID',
+    },
+    noaccess: {
+      title: 'No developer access',
+      line: 'Ask an administrator for developer access.',
+      cta: 'Use another Polaris ID',
+      passes: 'My passes',
+      signedInAs: (email: string) => `Signed in as ${email}`,
+    },
+  },
   signedOutStage: 'Sign in to see your pass here.',
 } as const;

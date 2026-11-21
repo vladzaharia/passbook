@@ -543,6 +543,7 @@ describe('get started', () => {
     assignedTemplates: 0,
     passes: 0,
     approvedTemplates: 0,
+    releasedTemplates: 0,
     walletPasses: 0,
     passEmailsSent: 0,
     latestPassId: null,
@@ -577,7 +578,7 @@ describe('get started', () => {
     expect(modes.length).toBeGreaterThan(0);
     expect(modes.every((mode) => mode === null)).toBe(true);
     expect(screen.queryByText(/Test mode/)).toBeNull();
-    expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull();
   });
 
   it('replaces the charts with four steps that check themselves', async () => {

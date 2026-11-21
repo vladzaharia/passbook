@@ -7,13 +7,14 @@ import {
   pageOf,
   TimestampSchema,
 } from './common.ts';
-import { MappingEntrySchema, MappingSchema } from './connections.ts';
 import {
   FieldChangeSchema,
   MappingSuggestionSchema,
   PlanMappingEntrySchema,
   PlanMappingSchema,
 } from './issuing.ts';
+
+const count = z.number().int().nonnegative();
 
 export const PASS_IMPORT_MAX_ROWS = 2000;
 export const PASS_IMPORT_MAX_BYTES = 2_000_000;
@@ -40,14 +41,29 @@ export const PassImportSourceSchema = z.discriminatedUnion('kind', [
 
 export const PassImportMatchSchema = z.enum(['externalId', 'email', 'none']);
 
+/** Cell fixes from the check, by spreadsheet row then column pointer. */
+export const PASS_IMPORT_MAX_OVERRIDES = 200;
+export const PassImportOverridesSchema = z
+  .record(
+    z.string().regex(/^[1-9]\d{0,5}$/),
+    z.record(z.string().max(500), z.string().max(PASS_IMPORT_MAX_CELL)),
+  )
+  .refine(
+    (o) =>
+      Object.values(o).reduce((n, cells) => n + Object.keys(cells).length, 0) <=
+      PASS_IMPORT_MAX_OVERRIDES,
+    `Fix at most ${PASS_IMPORT_MAX_OVERRIDES} cells in place; fix the rest in the file.`,
+  );
+
 export const PassImportPlanSchema = z
   .strictObject({
-    mapping: MappingSchema,
-    holderEmail: MappingEntrySchema.nullable(),
-    externalId: MappingEntrySchema.nullable(),
+    mapping: PlanMappingSchema,
+    holderEmail: PlanMappingEntrySchema.nullable(),
+    externalId: PlanMappingEntrySchema.nullable(),
     match: PassImportMatchSchema,
     keepManual: z.boolean().default(false),
     save: z.boolean().default(true),
+    overrides: PassImportOverridesSchema.optional(),
   })
   .refine((p) => p.match !== 'externalId' || p.externalId !== null, {
     path: ['externalId'],
@@ -62,12 +78,45 @@ export const CreatePassImportSchema = z.strictObject({
   templateId: IdSchema,
   source: PassImportSourceSchema,
   plan: PassImportPlanSchema.optional(),
+  /** `auto`: with no plan, map the file from the template (or a saved mapping of the same columns). */
+  mapping: z.literal('auto').optional(),
 });
 export const CheckPassImportSchema = z.strictObject({ plan: PassImportPlanSchema });
+/** Commit email: `held` waits out the undo window. The console holds; the API sends now. */
+export const PASS_IMPORT_HOLD_DEFAULT_MS = 5 * 60_000;
+export const PASS_IMPORT_HOLD_MAX_MS = 60 * 60_000;
+export const PassImportEmailSendSchema = z.discriminatedUnion('send', [
+  z.strictObject({ send: z.literal('now') }),
+  z.strictObject({
+    send: z.literal('held'),
+    holdMs: z
+      .number()
+      .int()
+      .min(60_000)
+      .max(PASS_IMPORT_HOLD_MAX_MS)
+      .default(PASS_IMPORT_HOLD_DEFAULT_MS),
+  }),
+]);
+
+/** `POST /pass-imports/{id}/undo`. Kept passes were edited or scanned since the import. */
+export const PassImportUndoResultSchema = z.object({
+  state: z.enum(['running', 'done', 'failed']),
+  removed: count,
+  restored: count,
+  keptTotal: count,
+  kept: z.array(z.object({ passId: IdSchema, code: z.string().max(64) })).max(PASS_IMPORT_PROBLEMS),
+  /** Held emails that will not go out. */
+  emailsCancelled: count,
+  /** Updated rows no undo can restore (the import kept no earlier values). */
+  unrevertable: count.optional(),
+});
+
 export const PassImportCommitSchema = z.strictObject({
   skipInvalid: z.boolean().default(false),
-  email: z.boolean().default(false),
+  /** `true` sends now; `{send:'held', holdMs}` waits out the undo window; `false` sends nothing. */
+  email: z.union([z.boolean(), PassImportEmailSendSchema]).default(false),
 });
+export const PassImportUndoBodySchema = z.strictObject({});
 
 export const PassImportStateSchema = z.enum([
   'mapping',
@@ -93,12 +142,14 @@ export const PassImportProblemSchema = z.object({
   row: z.number().int().min(2),
   column: z.string().max(200).nullable(),
   field: z.string().max(64).nullable(),
+  /** The field as the form labels it (`x-label`), for the operator. */
+  label: z.string().max(200).nullable().optional(),
+  /** The offending cell as written, up to 200 characters: the organization's own data, shown to its operator only. */
+  value: z.string().max(200).nullable().optional(),
   code: z.string().max(64),
   message: z.string().max(200),
   severity: z.enum(['error', 'warning']),
 });
-
-const count = z.number().int().nonnegative();
 
 export const PassImportCountsSchema = z.object({
   rows: count,
@@ -108,6 +159,9 @@ export const PassImportCountsSchema = z.object({
   errors: count,
   warnings: count,
   emailable: count,
+  /** Rows with errors by what they would do once fixed. */
+  errorsCreate: count.optional(),
+  errorsUpdate: count.optional(),
 });
 
 export const PassImportProgressSchema = z.object({
@@ -160,6 +214,10 @@ export const PassImportSchema = z.object({
   mapping: MappingSuggestionSchema.optional(),
   /** Held import emails go out at this time unless the import is undone first. */
   emailHoldUntil: TimestampSchema.nullable().optional(),
+  /** Present once an undo was asked for. */
+  undo: PassImportUndoResultSchema.optional(),
+  /** Before an undo: updated rows it could not restore. */
+  unrevertable: count.optional(),
 });
 export type PassImportDto = z.infer<typeof PassImportSchema>;
 
@@ -203,45 +261,17 @@ export const PassImportEmailRestResultSchema = z.object({
   sent: count,
   /** Held back: the day's or the holder's hourly cap, or a pass that cannot be mailed now. */
   skipped: count,
+  /** Held mail a stopped run had already queued: marked emailed, not sent again and not counted in `sent`. */
+  alreadyQueued: count.optional(),
   nextCursor: z.string().nullable(),
 });
 
 // Issuing at scale. Additive: the routes above validate with the v1 shapes until the import server
 // and import undo take these.
 
-/** Cell fixes from the check, by spreadsheet row then column pointer. */
-export const PASS_IMPORT_MAX_OVERRIDES = 200;
-export const PassImportOverridesSchema = z
-  .record(
-    z.string().regex(/^[1-9]\d{0,5}$/),
-    z.record(z.string().max(500), z.string().max(PASS_IMPORT_MAX_CELL)),
-  )
-  .refine(
-    (o) =>
-      Object.values(o).reduce((n, cells) => n + Object.keys(cells).length, 0) <=
-      PASS_IMPORT_MAX_OVERRIDES,
-    `Fix at most ${PASS_IMPORT_MAX_OVERRIDES} cells in place; fix the rest in the file.`,
-  );
-
-export const PassImportPlanV2Schema = z
-  .strictObject({
-    mapping: PlanMappingSchema,
-    holderEmail: PlanMappingEntrySchema.nullable(),
-    externalId: PlanMappingEntrySchema.nullable(),
-    match: PassImportMatchSchema,
-    keepManual: z.boolean().default(false),
-    save: z.boolean().default(true),
-    overrides: PassImportOverridesSchema.optional(),
-  })
-  .refine((p) => p.match !== 'externalId' || p.externalId !== null, {
-    path: ['externalId'],
-    message: 'Map an External ID column to match on it.',
-  })
-  .refine((p) => p.match !== 'email' || p.holderEmail !== null, {
-    path: ['holderEmail'],
-    message: 'Map a Holder email column to match on it.',
-  });
-export type PassImportPlanV2 = z.infer<typeof PassImportPlanV2Schema>;
+/** The plan as stored and checked since issuing at scale: join entries, cell fixes. */
+export const PassImportPlanV2Schema = PassImportPlanSchema;
+export type PassImportPlanV2 = z.infer<typeof PassImportPlanSchema>;
 
 /** Named mappings per template, picked by the file's headers (80% overlap), in the stored plan JSON. */
 export const PASS_IMPORT_SAVED_MAX = 20;
@@ -255,31 +285,19 @@ export const SavedImportMappingSchema = z.object({
 export const SavedImportMappingsSchema = z.object({
   v: z.literal(2),
   saved: z.array(SavedImportMappingSchema).max(PASS_IMPORT_SAVED_MAX),
+  /** The plan of the last check that saved (the unnamed one). */
+  last: PassImportPlanSchema.optional(),
 });
-
-/** Commit email: `held` waits out the undo window. The console holds; the API sends now. */
-export const PASS_IMPORT_HOLD_DEFAULT_MS = 5 * 60_000;
-export const PASS_IMPORT_HOLD_MAX_MS = 60 * 60_000;
-export const PassImportEmailSendSchema = z.discriminatedUnion('send', [
-  z.strictObject({ send: z.literal('now') }),
-  z.strictObject({
-    send: z.literal('held'),
-    holdMs: z
-      .number()
-      .int()
-      .min(60_000)
-      .max(PASS_IMPORT_HOLD_MAX_MS)
-      .default(PASS_IMPORT_HOLD_DEFAULT_MS),
-  }),
-]);
-
-/** `POST /pass-imports/{id}/undo`. Kept passes were edited or scanned since the import. */
-export const PassImportUndoResultSchema = z.object({
-  state: z.enum(['running', 'done']),
-  removed: count,
-  restored: count,
-  keptTotal: count,
-  kept: z.array(z.object({ passId: IdSchema, code: z.string().max(64) })).max(PASS_IMPORT_PROBLEMS),
-  /** Held emails that will not go out. */
-  emailsCancelled: count,
+export const SavedImportMappingsQuerySchema = z.object({
+  templateId: IdSchema,
+  orgId: IdSchema.optional(),
+});
+export const PutSavedImportMappingSchema = SavedImportMappingSchema.omit({ savedAt: true }).extend({
+  templateId: IdSchema,
+});
+export const DeleteSavedImportMappingQuerySchema = SavedImportMappingsQuerySchema.extend({
+  name: PlainLineSchema(60),
+});
+export const SavedImportMappingsResultSchema = z.object({
+  saved: z.array(SavedImportMappingSchema).max(PASS_IMPORT_SAVED_MAX),
 });

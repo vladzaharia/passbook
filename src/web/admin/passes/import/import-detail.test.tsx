@@ -1,247 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetModeForTests } from '../../../lib/mode.ts';
-import { membershipFixture, renderApp } from '../../../lib/test-utils.tsx';
-import {
-  baseHandlers,
-  COUNTS,
-  checked,
-  finished,
-  importDto,
-  json,
-  ORG,
-} from './import-test-fixtures.ts';
+import { describe, expect, it } from 'vitest';
+import { body, open, setupImportDom } from './import-open-fixtures.ts';
+import { COUNTS, checked, finished, importDto, json } from './import-test-fixtures.ts';
 
-const membership = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug });
-const method = (init?: RequestInit) => (init?.method ?? 'GET').toUpperCase();
-const body = (init?: RequestInit) => JSON.parse(String(init?.body));
-
-type Handler = (u: URL, init?: RequestInit) => Response;
-
-/** Opens /admin/passes/import/imp1 with `imp` served until a handler changes it. */
-async function open(
-  imp: Record<string, unknown>,
-  extra: Record<string, Handler> = {},
-  caps?: string[],
-) {
-  return renderApp('/admin/passes/import/imp1', {
-    session: 'admin',
-    memberships: [caps ? membershipFixture(ORG.id, { capabilities: caps as never }) : membership],
-    selectedOrg: ORG.id,
-    handlers: { ...baseHandlers(), '/api/v1/pass-imports/imp1': () => json(imp), ...extra },
-  });
-}
-
-beforeEach(() => {
-  URL.createObjectURL = vi.fn(() => 'blob:x');
-  URL.revokeObjectURL = vi.fn();
-  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-});
-afterEach(() => {
-  vi.restoreAllMocks();
-  resetModeForTests();
-});
-
-describe('match columns', () => {
-  it('maps by name on open, pins Holder email and External ID, and posts the plan', async () => {
-    const user = userEvent.setup();
-    const posts: unknown[] = [];
-    await open(importDto(), {
-      '/api/v1/pass-imports/imp1/check': (_u, init) => {
-        posts.push(body(init));
-        return json(checked());
-      },
-    });
-    expect(await screen.findByText('Match columns')).toBeTruthy();
-    expect(screen.getAllByText('Holder email').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('External ID').length).toBeGreaterThan(0);
-    await user.click(screen.getByRole('button', { name: 'Check' }));
-    await waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0]).toEqual({
-      plan: {
-        mapping: { name: { from: '/Name' }, level: { from: '/Level' } },
-        holderEmail: { from: '/Email' },
-        externalId: { from: '/Id' },
-        match: 'externalId',
-        keepManual: false,
-        save: true,
-      },
-    });
-  });
-
-  it('refuses to match on an External ID that is not mapped', async () => {
-    const user = userEvent.setup();
-    const posts: unknown[] = [];
-    await open(importDto({ columns: [{ pointer: '/Name', label: 'Name', samples: ['Maya'] }] }), {
-      '/api/v1/pass-imports/imp1/check': (_u, init) => {
-        posts.push(body(init));
-        return json(checked());
-      },
-    });
-    await user.click(await screen.findByRole('button', { name: 'Check' }));
-    expect(await screen.findByText('Map an External ID column to match on it.')).toBeTruthy();
-    expect(posts).toHaveLength(0);
-  });
-
-  it("hides the keep-edited switch for Don't match", async () => {
-    const user = userEvent.setup();
-    await open(importDto());
-    await screen.findByText('Match columns');
-    expect(screen.getByText("Don't overwrite edits made in the console")).toBeTruthy();
-    await user.click(screen.getByRole('combobox', { name: 'Find passes by' }));
-    await user.click(await screen.findByRole('option', { name: "Don't match" }));
-    expect(screen.queryByText("Don't overwrite edits made in the console")).toBeNull();
-  });
-
-  it('shows the check failure', async () => {
-    const user = userEvent.setup();
-    await open(importDto(), {
-      '/api/v1/pass-imports/imp1/check': () =>
-        json(
-          {
-            type: 'about:blank',
-            title: 'Conflict',
-            status: 409,
-            code: 'IMPORT_STATE',
-            detail: 'The import changed. Reload.',
-          },
-          409,
-        ),
-    });
-    await user.click(await screen.findByRole('button', { name: 'Check' }));
-    expect(await screen.findByText('The import changed. Reload.')).toBeTruthy();
-  });
-});
-
-describe('check', () => {
-  it('shows the counts line, previews of the planned input and the problems', async () => {
-    const previews: unknown[] = [];
-    await open(checked(), {
-      '/api/v1/templates/tpl1/preview': (_u, init) => {
-        previews.push(body(init));
-        return json({
-          passJson: { formatVersion: 1, organizationName: 'H', description: 'M', generic: {} },
-          warnings: [],
-          assetBaseUrl: '/a',
-          assetNames: [],
-        });
-      },
-    });
-    expect(
-      await screen.findByText('120 to create · 40 to update · 12 unchanged · 3 errors'),
-    ).toBeTruthy();
-    expect(screen.getByText('New')).toBeTruthy();
-    expect(screen.getByText('Update')).toBeTruthy();
-    await waitFor(() => expect(previews).toHaveLength(2));
-    expect(previews[0]).toMatchObject({ input: { name: 'Maya' }, version: 'a1b2c3d4e5f6a7b8' });
-    const table = screen.getByRole('table', { name: 'Problems' });
-    expect(within(table).getByText('Email is not valid.')).toBeTruthy();
-    expect(within(table).getByText('Warning')).toBeTruthy();
-  });
-
-  it('downloads the rows with errors through an authenticated request', async () => {
-    const user = userEvent.setup();
-    const seen: string[] = [];
-    const { fetchMock } = await open(checked(), {
-      '/api/v1/pass-imports/imp1/errors.csv': (u) => {
-        seen.push(u.search);
-        return new Response('a,Problem', { headers: { 'content-type': 'text/csv' } });
-      },
-    });
-    await user.click(await screen.findByRole('button', { name: 'Download rows with errors' }));
-    await waitFor(() => expect(seen).toEqual(['?orgId=org1']));
-    expect(URL.createObjectURL).toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalled();
-  });
-
-  it('gates commit on skipping the rows with errors, and posts the email choice', async () => {
-    const user = userEvent.setup();
-    const posts: unknown[] = [];
-    await open(checked(), {
-      '/api/v1/pass-imports/imp1/commit': (_u, init) => {
-        posts.push(body(init));
-        return json(
-          importDto({
-            state: 'committing',
-            plan: checked().plan,
-            counts: checked().counts,
-            committedAt: 1,
-            progress: {
-              done: 0,
-              created: 0,
-              updated: 0,
-              unchanged: 0,
-              failed: 0,
-              notEmailed: 0,
-              removed: 0,
-            },
-          }),
-        );
-      },
-    });
-    await user.click(await screen.findByRole('button', { name: /^(Create|Update) \d+/ }));
-    const go = await screen.findByRole('button', { name: 'Create 120 and update 40' });
-    expect(go).toHaveProperty('disabled', false);
-    expect(
-      screen.getByText('The first 80 get an email. The rest are listed after the import.'),
-    ).toBeTruthy();
-    await user.click(screen.getByRole('switch', { name: 'Email new holders' }));
-    await user.click(go);
-    await waitFor(() => expect(posts).toEqual([{ skipInvalid: true, email: true }]));
-    expect(await screen.findByText('0 of 160')).toBeTruthy();
-  });
-
-  it('shows the plain budget when it covers everyone, and no switch when nobody has an email', async () => {
-    const user = userEvent.setup();
-    await open(checked({ counts: { ...COUNTS, errors: 0, emailable: 50 } }));
-    await user.click(await screen.findByRole('button', { name: /^(Create|Update) \d+/ }));
-    expect(await screen.findByText('You can send 80 more pass emails today.')).toBeTruthy();
-    expect(screen.queryByRole('checkbox')).toBeNull();
-  });
-
-  it('offers a re-check when the template moved, and blocks commit meanwhile', async () => {
-    const user = userEvent.setup();
-    const posts: unknown[] = [];
-    await open(checked({ state: 'stale' }), {
-      '/api/v1/pass-imports/imp1/check': (_u, init) => {
-        posts.push(body(init));
-        return json(checked());
-      },
-    });
-    expect(await screen.findByText('The template changed. Check again to finish.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^(Create|Update) \d+/ })).toHaveProperty(
-      'disabled',
-      true,
-    );
-    await user.click(screen.getByRole('button', { name: 'Check again' }));
-    await waitFor(() => expect(posts).toHaveLength(1));
-  });
-
-  it('goes back to the columns', async () => {
-    const user = userEvent.setup();
-    await open(checked());
-    await user.click(await screen.findByRole('button', { name: 'Change columns' }));
-    expect(await screen.findByText('Match columns')).toBeTruthy();
-  });
-
-  it('discards the draft and returns to the import page', async () => {
-    const user = userEvent.setup();
-    const deletes: string[] = [];
-    const { router } = await open(checked(), {
-      '/api/v1/pass-imports/imp1': (_u, init) => {
-        if (method(init) !== 'DELETE') return json(checked());
-        deletes.push('imp1');
-        return json({ ok: true });
-      },
-    });
-    await user.click(await screen.findByRole('button', { name: 'Discard' }));
-    await waitFor(() => expect(deletes).toEqual(['imp1']));
-    await waitFor(() =>
-      expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/passes\/import$/),
-    );
-  });
-});
+setupImportDom();
 
 describe('progress and results', () => {
   it('counts "120 of 160", then shows the results and stops polling', async () => {
@@ -271,11 +34,11 @@ describe('progress and results', () => {
         );
       },
     });
-    expect(await screen.findByText('120 of 160')).toBeTruthy();
+    expect(await screen.findByText(/120 of 160/)).toBeTruthy();
     const bar = screen.getByRole('progressbar', { name: 'Passes handled' });
     expect(bar.getAttribute('aria-valuenow')).toBe('120');
     done = true;
-    expect(await screen.findByText('All rows done.', undefined, { timeout: 5000 })).toBeTruthy();
+    expect(await screen.findByText('172 done', undefined, { timeout: 5000 })).toBeTruthy();
     const settled = calls;
     await new Promise((r) => setTimeout(r, 2600));
     expect(calls).toBe(settled);
@@ -327,26 +90,17 @@ describe('progress and results', () => {
     await waitFor(() => expect(seen).toEqual(['/api/v1/pass-imports/imp1/results.csv']));
   });
 
-  it('says what was skipped, lists it, and links to the passes of this import', async () => {
-    await open(
-      finished({
-        counts: { ...COUNTS, errors: 1 },
-        problems: [
-          {
-            row: 4,
-            column: 'Tier',
-            field: 'tier',
-            code: 'INPUT',
-            severity: 'error',
-            message: 'Tier must be Plus or Pro.',
-          },
-        ],
-        problemTotals: { errors: 1, warnings: 0 },
-      }),
-    );
-    expect(await screen.findByText('172 rows done, 1 skipped.')).toBeTruthy();
-    expect(screen.getByText('Skipped rows')).toBeTruthy();
-    expect(screen.getByText('Tier must be Plus or Pro.')).toBeTruthy();
+  it('says what was skipped, offers the file, and links to the passes of this import', async () => {
+    const user = userEvent.setup();
+    const seen: string[] = [];
+    await open(finished({ counts: { ...COUNTS, errors: 1 }, errorFile: true }), {
+      '/api/v1/pass-imports/imp1/errors.csv': (u) => {
+        seen.push(u.pathname);
+        return new Response('Row', { headers: { 'content-type': 'text/csv' } });
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: '1 skipped row' }));
+    await waitFor(() => expect(seen).toEqual(['/api/v1/pass-imports/imp1/errors.csv']));
     const link = screen.getByRole('link', { name: 'View passes' });
     expect(link.getAttribute('href')).toContain('importId=imp1');
   });
@@ -385,7 +139,7 @@ describe('progress and results', () => {
     expect(await screen.findByText(/60 emailed\. 4 held back/)).toBeTruthy();
   });
 
-  it('hides the mail and download actions from a member who cannot operate, but keeps the error file', async () => {
+  it('hides the mail, download and undo actions from a member who cannot operate', async () => {
     await open(
       finished({
         errorFile: true,
@@ -403,15 +157,7 @@ describe('progress and results', () => {
       ['passes:read'],
     );
     await screen.findByText('Created');
-    for (const name of ['Download results', 'Email the rest', 'Remove created passes'])
-      expect(screen.queryByRole('button', { name })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Download rows with errors' })).toBeTruthy();
-  });
-
-  it('hides Create, Discard and Change columns from a member who cannot operate', async () => {
-    await open(checked(), {}, ['passes:read']);
-    await screen.findByText(/120 to create/);
-    for (const name of [/^(Create|Update) \d+/, 'Discard', 'Change columns'])
+    for (const name of ['Download results', 'Email the rest', 'Undo import'])
       expect(screen.queryByRole('button', { name })).toBeNull();
   });
 
@@ -450,38 +196,138 @@ describe('progress and results', () => {
     expect(await screen.findByText('Showing the first 100 of 120.')).toBeTruthy();
   });
 
-  it('removes the created passes page by page after a confirm', async () => {
+  it('undoes the import after a confirm, and says what it removed and restored', async () => {
     const user = userEvent.setup();
-    const cursors: unknown[] = [];
-    await open(finished(), {
-      '/api/v1/pass-imports/imp1/remove-created': (_u, init) => {
-        const { cursor } = body(init);
-        cursors.push(cursor);
-        return json(
-          cursor === null
-            ? { removed: 50, skipped: [], nextCursor: '51' }
-            : {
-                removed: 70,
-                skipped: [{ passId: 'p9', code: 'IMPORT_PASS_SCANNED' }],
-                nextCursor: null,
-              },
-        );
+    const posts: unknown[] = [];
+    await open(finished({ finishedAt: Date.now() }), {
+      '/api/v1/pass-imports/imp1/undo': (_u, init) => {
+        posts.push(body(init));
+        return json({
+          state: 'done',
+          removed: 120,
+          restored: 40,
+          keptTotal: 2,
+          kept: [],
+          emailsCancelled: 0,
+        });
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Remove created passes' }));
-    expect(await screen.findByText('Remove created passes?')).toBeTruthy();
-    await user.click(screen.getByRole('button', { name: 'Remove' }));
-    await waitFor(() => expect(cursors).toEqual([null, '51']));
-    expect(await screen.findByText(/120 passes removed/)).toBeTruthy();
+    await user.click(await screen.findByRole('button', { name: 'Undo import' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Undo this import?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Undo import' }));
+    expect(await screen.findByText(/Removed 120 · Restored 40 · 0 emails cancelled/)).toBeTruthy();
+    expect(screen.getByText('Kept 2, changed since.')).toBeTruthy();
+    expect(posts).toHaveLength(1);
   });
 
-  it('hides Remove created when everything created is already removed', async () => {
+  it('says so when the undo failed, and keeps the button', async () => {
+    const user = userEvent.setup();
+    await open(finished({ finishedAt: Date.now() }), {
+      '/api/v1/pass-imports/imp1/undo': () =>
+        json({
+          state: 'failed',
+          removed: 0,
+          restored: 0,
+          keptTotal: 0,
+          kept: [],
+          emailsCancelled: 0,
+        }),
+    });
+    await user.click(await screen.findByRole('button', { name: 'Undo import' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Undo this import?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Undo import' }));
+    expect(await screen.findByText('The undo did not finish. Try again.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Undo import' })).toBeTruthy();
+  });
+
+  it('names the updates that cannot be undone', async () => {
+    const user = userEvent.setup();
+    await open(finished({ finishedAt: Date.now() }), {
+      '/api/v1/pass-imports/imp1/undo': () =>
+        json({
+          state: 'done',
+          removed: 5,
+          restored: 1,
+          keptTotal: 0,
+          kept: [],
+          emailsCancelled: 0,
+          unrevertable: 3,
+        }),
+    });
+    await user.click(await screen.findByRole('button', { name: 'Undo import' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Undo this import?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Undo import' }));
+    expect(await screen.findByText("3 updates can't be undone.")).toBeTruthy();
+  });
+
+  it('shows an undo the server already ran, from the import itself', async () => {
     await open(
       finished({
+        finishedAt: Date.now(),
+        undo: {
+          state: 'done',
+          removed: 7,
+          restored: 2,
+          keptTotal: 0,
+          kept: [],
+          emailsCancelled: 5,
+        },
+      }),
+    );
+    expect(await screen.findByText(/Removed 7 · Restored 2 · 5 emails cancelled/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Undo import' })).toBeNull();
+  });
+
+  it('names updates that cannot be undone before the undo', async () => {
+    await open(finished({ finishedAt: Date.now(), unrevertable: 4 }));
+    expect(await screen.findByText(/4 updates can't be undone\./)).toBeTruthy();
+  });
+
+  it('counts down to the held emails, with Send now', async () => {
+    const user = userEvent.setup();
+    const sent: unknown[] = [];
+    await open(
+      finished({
+        emailHoldUntil: Date.now() + 4 * 60_000 + 44_000,
+        finishedAt: Date.now(),
         progress: {
           done: 160,
           created: 120,
           updated: 40,
+          unchanged: 12,
+          failed: 0,
+          skipped: 0,
+          notEmailed: 93,
+          removed: 0,
+        },
+      }),
+      {
+        '/api/v1/pass-imports/imp1/email-rest': (_u, init) => {
+          sent.push(body(init));
+          return json({ sent: 93, skipped: 0, nextCursor: null });
+        },
+      },
+    );
+    expect(await screen.findByText(/until 93 emails go out/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Email the rest' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Send now' }));
+    await waitFor(() => expect(sent).toHaveLength(1));
+  });
+
+  it('offers no undo a day after the import finished', async () => {
+    await open(finished());
+    await screen.findByText('Created');
+    expect(screen.queryByRole('button', { name: 'Undo import' })).toBeNull();
+  });
+
+  it('hides Undo when everything created is already removed and nothing was updated', async () => {
+    await open(
+      finished({
+        finishedAt: Date.now(),
+        progress: {
+          done: 160,
+          created: 120,
+          updated: 0,
           unchanged: 12,
           failed: 0,
           notEmailed: 0,
@@ -490,7 +336,7 @@ describe('progress and results', () => {
       }),
     );
     await screen.findByText('Created');
-    expect(screen.queryByRole('button', { name: 'Remove created passes' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Undo import' })).toBeNull();
   });
 
   it.each([

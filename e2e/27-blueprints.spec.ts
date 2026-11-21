@@ -60,9 +60,8 @@ test('Use blueprint: designer draft, Create template, release, then a pass', asy
   );
   await page.getByRole('button', { name: 'Create template' }).click();
   await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/templates\/[0-9a-f-]+$/.test(u.pathname));
-  await expect(
-    page.getByText(/Template created · Version 1, from the Balance card blueprint/),
-  ).toBeVisible();
+  await expect(page.getByText('Template created', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('From Balance card')).toBeVisible();
   const templateId = new URL(page.url()).pathname.split('/').pop() as string;
 
   const api = await apiAs('admin');

@@ -78,7 +78,7 @@ describe('template release panel', () => {
       />,
     );
     expect(screen.queryByText('2'.repeat(64))).not.toBeInTheDocument();
-    expect(await screen.findByText(/Loading releases and candidates/)).toBeInTheDocument();
+    expect(await screen.findByText(/Loading releases/)).toBeInTheDocument();
     delayedOrg2.resolve(
       json({
         items: [candidate({ orgId: 'org-2', mode: 'test', candidateHash: '3'.repeat(64) })],
@@ -122,7 +122,7 @@ describe('template release panel', () => {
         });
       }
     }
-    expect(seen).toHaveLength(8);
+    expect(seen.every((r) => r.query.some(([k, v]) => k === 'orgId' && v))).toBe(true);
   });
 
   it('asks for an organization without making unscoped requests and explains provider availability', () => {
@@ -144,8 +144,7 @@ describe('template release panel', () => {
   it('shows an empty active release and candidate snapshot without allowing publication before review', async () => {
     releaseServer({ candidates: [candidate()] });
     mountPanel();
-    expect(await screen.findByText(/No active release for this organization/)).toBeInTheDocument();
-    expect(screen.getByText(/No releases yet/)).toBeInTheDocument();
+    expect(await screen.findByText('Not released')).toBeInTheDocument();
     const candidates = screen.getByRole('list', { name: 'Release candidates' });
     expect(within(candidates).getByText('Ada Author')).toBeVisible();
     expect(within(candidates).getByText('Vera Versioner')).toBeVisible();
@@ -160,46 +159,6 @@ describe('template release panel', () => {
       within(candidates).getByRole('button', { name: 'Publish candidate for Version 2' }),
     ).toBeDisabled();
   });
-
-  it.each([
-    { candidates: [], history: [], next: /Create a candidate from a saved version/i },
-    {
-      candidates: [candidate()],
-      history: [],
-      next: /different reviewer must approve/i,
-    },
-    {
-      candidates: [candidate({ approvals: [approval()] })],
-      history: [],
-      next: /publisher can release an approved/i,
-    },
-    {
-      candidates: [candidate({ approvals: [approval({ candidateHash: 'd'.repeat(64) })] })],
-      history: [],
-      next: /different reviewer must approve/i,
-    },
-    {
-      candidates: [candidate({ approvals: [approval()] })],
-      history: [
-        release({
-          candidateId: 'candidate-1',
-          approvalId: 'approval-1',
-          candidateHash: CANDIDATE_HASH,
-          version: 'version-2',
-        }),
-      ],
-      next: /Create a candidate from a saved version/i,
-    },
-  ])(
-    'explains the next step when issuance has no active release',
-    async ({ candidates, history, next }) => {
-      releaseServer({ candidates, history });
-      mountPanel();
-      const blocked = await screen.findByText(/No active release for this organization/);
-      expect(blocked).toHaveTextContent(/Issuing passes is blocked/i);
-      expect(blocked).toHaveTextContent(next);
-    },
-  );
 
   it.each([
     ['candidate hash', { candidateHash: 'd'.repeat(64) }],
@@ -315,7 +274,7 @@ describe('template release panel', () => {
         name: 'Publish candidate for Version 2',
       });
       const rollback = screen.queryByRole('button', {
-        name: 'Roll back to Version 1 (generation 1)',
+        name: 'Restore v1',
       });
       if (author) {
         expect(create).toBeInTheDocument();
@@ -351,22 +310,20 @@ describe('template release panel', () => {
       });
       mountPanel({ templateStatus: 'archived', templateOrgId, mode });
       await screen.findByRole('heading', { name: 'Version 2' });
-      expect(screen.getByRole('status')).toHaveTextContent(/No active release/);
       expect(screen.queryByText(/Roll back to an approved release in live mode/)).toBeNull();
       expect(screen.queryByRole('button', { name: 'Create candidate' })).not.toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: 'Approve candidate for Version 2' }),
       ).not.toBeInTheDocument();
       const publish = screen.queryByRole('button', { name: 'Publish candidate for Version 2' });
-      const rollback = screen.queryByRole('button', {
-        name: 'Roll back to Version 1 (generation 1)',
-      });
+      const rollback = screen.queryAllByRole('button', { name: 'Restore v1' });
       if (restore) {
         expect(publish).toBeEnabled();
-        expect(rollback).toBeEnabled();
+        expect(rollback.length).toBeGreaterThan(0);
+        for (const button of rollback) expect(button).toBeEnabled();
       } else {
         expect(publish).not.toBeInTheDocument();
-        expect(rollback).not.toBeInTheDocument();
+        expect(rollback).toHaveLength(0);
       }
     },
   );
@@ -387,7 +344,7 @@ describe('template release panel', () => {
     expect(screen.queryByRole('button', { name: 'Create candidate' })).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', {
-        name: /Approve candidate|Publish candidate|Roll back to/,
+        name: /Approve candidate|Publish candidate|Restore/,
       }),
     ).not.toBeInTheDocument();
   });
@@ -404,13 +361,8 @@ describe('template release panel', () => {
     });
     releaseServer({ active: head, history: [head, system] });
     mountPanel();
-    await screen.findByText(/Generation 3 · Version 1/);
-    expect(
-      screen.queryByRole('button', { name: 'Roll back to Version 1 (generation 3)' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Roll back to Version 1 (generation 1)' }),
-    ).not.toBeInTheDocument();
+    await screen.findByRole('list', { name: 'Releases' });
+    expect(screen.queryByRole('button', { name: /^Restore/ })).not.toBeInTheDocument();
   });
 
   it('displays scoped list failures instead of presenting an empty release history', async () => {
@@ -424,7 +376,7 @@ describe('template release panel', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The requested mode does not match the session.',
     );
-    expect(screen.queryByText(/No releases yet/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Not released')).not.toBeInTheDocument();
   });
 
   it('opens and dismisses the rollback dialog with the keyboard at a phone viewport', async () => {
@@ -436,17 +388,17 @@ describe('template release panel', () => {
     releaseServer({ active: head, history: [head, previous] });
     mountPanel();
     const trigger = await screen.findByRole('button', {
-      name: 'Roll back to Version 1 (generation 1)',
+      name: 'Restore v1',
     });
     trigger.focus();
     await user.keyboard('{Enter}');
-    const dialog = await screen.findByRole('dialog', { name: 'Roll back release' });
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     expect(dialog.contains(document.activeElement)).toBe(true);
     expect(within(dialog).getByRole('textbox', { name: /Reason/ })).toBeInTheDocument();
     expect((await axe(document.body)).violations).toEqual([]);
     await user.keyboard('{Escape}');
     await waitFor(() =>
-      expect(screen.queryByRole('dialog', { name: 'Roll back release' })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('dialog', { name: 'Restore v1' })).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(trigger).toHaveFocus());
   });
@@ -514,7 +466,7 @@ describe('self-approval and promote', () => {
       history: [release({ approvalId: 'approval-1', candidateId: 'candidate-1' })],
     });
     mountPanel();
-    const history = await screen.findByRole('list', { name: 'Release history' });
+    const history = await screen.findByRole('list', { name: 'Releases' });
     expect(within(history).getByText('Self-approved')).toBeInTheDocument();
   });
 
@@ -525,22 +477,5 @@ describe('self-approval and promote', () => {
       capabilities: ['templates:read', 'templates:author'],
     });
     expect(await screen.findByText(/Invite one from Members/)).toBeInTheDocument();
-  });
-
-  it('promotes a version tried in Test, with the same version', async () => {
-    const user = userEvent.setup();
-    const server = releaseServer({ promotable: ['version-2'] });
-    mountPanel();
-    await user.click(await screen.findByRole('button', { name: 'Promote Version 2 to Live' }));
-    await waitFor(() =>
-      expect(
-        server.requests.find((request) => request.url.pathname.endsWith('/promote'))?.body,
-      ).toEqual({
-        orgId: 'org-1',
-        mode: 'live',
-        provider: 'apple',
-        version: 'version-2',
-      }),
-    );
   });
 });

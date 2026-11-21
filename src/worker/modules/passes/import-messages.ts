@@ -3,14 +3,24 @@ import {
   PASS_IMPORT_MAX_CELL,
   type PassImportProblemSchema,
 } from '../../../shared/contracts/pass-imports.ts';
+import { humanize } from '../../../shared/issuing/fields.ts';
+
+/** The label the form shows for an input: `x-label`, else `title`, else the humanized key. */
+export function labelOf(def: Record<string, unknown> | undefined, key: string): string {
+  const x = def?.['x-label'];
+  const title = def?.title;
+  if (typeof x === 'string' && x !== '') return x;
+  if (typeof title === 'string' && title !== '') return title;
+  return humanize(key);
+}
 
 export type ImportProblem = z.infer<typeof PassImportProblemSchema>;
 
 /** The one constructor of problems: column, field and message are clamped to the contract so a row's problems always parse. */
 export function problem(
   row: number,
-  p: Omit<ImportProblem, 'row' | 'severity' | 'column' | 'field'> &
-    Partial<Pick<ImportProblem, 'column' | 'field' | 'severity'>>,
+  p: Omit<ImportProblem, 'row' | 'severity' | 'column' | 'field' | 'label' | 'value'> &
+    Partial<Pick<ImportProblem, 'column' | 'field' | 'severity' | 'label' | 'value'>>,
 ): ImportProblem {
   return {
     row,
@@ -18,8 +28,22 @@ export function problem(
     ...p,
     column: p.column?.slice(0, 200) ?? null,
     field: p.field?.slice(0, 64) ?? null,
+    // The label the form shows and the cell as written: org data for the operator, never for a holder.
+    label: (p.label ?? (p.field ? KEY_LABELS[p.field] : undefined) ?? null)?.slice(0, 200) ?? null,
     message: p.message.slice(0, 200),
   };
+}
+
+const KEY_LABELS: Record<string, string> = {
+  externalId: 'External ID',
+  holderEmail: 'Holder email',
+};
+
+/** A cell or input value as text for a problem; null when empty or not a plain value. */
+export function shown(v: unknown): string | null {
+  return typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+    ? String(v)
+    : null;
 }
 
 /** One sentence per row problem. The row number rides in `ImportProblem.row`, not in the text. */
@@ -99,7 +123,13 @@ function describeInput(
     case 'maxItems':
       return `${label} allows at most ${num('maxItems')} items.`;
     case 'enum': {
-      const values = Array.isArray(s.enum) ? s.enum.map(String).slice(0, 8) : [];
+      const names = (s['x-enumLabels'] ?? {}) as Record<string, unknown>;
+      const values = Array.isArray(s.enum)
+        ? s.enum
+            .map((v) => (typeof names[String(v)] === 'string' ? names[String(v)] : String(v)))
+            .map(String)
+            .slice(0, 8)
+        : [];
       const last = values.pop();
       if (last === undefined) return `${label} is not valid.`;
       return `${label} must be ${values.length ? `${values.join(', ')} or ` : ''}${last}.`;

@@ -175,12 +175,15 @@ describe('GET /p/:token', () => {
     );
   });
 
-  it('links the holder to the pass in the portal, quietly, once', async () => {
-    const pass = await kit.pass();
-    const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
-    expect(html.match(/<a [^>]*>Open in My passes<\/a>/g)).toEqual([
-      expect.stringContaining(`href="/passes/${pass.id}"`),
-    ]);
+  it('lists My passes in the other ways only when the pass has a holder email', async () => {
+    const row = /<a class="wl-other" href="([^"]+)">(?:(?!<\/a>)[\s\S])*?<span>My passes<\/span>/g;
+    const bare = await kit.pass();
+    const none = await (await get(`/p/${await linkToken(kit.env, bare)}`)).text();
+    expect(none).not.toContain('My passes</span>');
+    expect(none).not.toContain('Open in My passes');
+    const mailed = await kit.pass({ holderEmail: 'holder@example.test' });
+    const html = await (await get(`/p/${await linkToken(kit.env, mailed)}`)).text();
+    expect([...html.matchAll(row)].map((m) => m[1])).toEqual([`/passes/${mailed.id}`]);
   });
 
   it('links a voided pass to the org support, once', async () => {

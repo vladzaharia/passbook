@@ -32,7 +32,7 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     if (m.type() === 'error' && /TrustedHTML|Trusted Types/.test(m.text())) errors.push(m.text());
   });
 
-  // Signed out: no authenticated call on any page, a Console nav item that is current, a sign-in action.
+  // Signed out: no authenticated call on any page, Reference current under Console and Playground, a sign-in action.
   for (const path of [
     '/developers/reference/passes',
     '/developers/logs',
@@ -44,10 +44,9 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   }
   expect(failures).toEqual([]);
   await page.goto('/developers/console');
-  await expect(page.getByRole('link', { name: 'Console', exact: true }).first()).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  await expect(
+    page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Reference' }),
+  ).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('main').getByRole('link', { name: 'Sign in to try' })).toBeVisible();
   await shot(page, 'console-signed-out');
   await page.goto('/developers/playground');
@@ -60,10 +59,13 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
 
   // Sign in and make sure there is a sandbox.
   await page.goto('/developers/quickstart');
-  await page.locator('main').getByRole('link', { name: 'Sign in' }).click();
-  await page.getByRole('link', { name: 'Sign in with Polaris ID' }).click();
+  await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
   await page.waitForURL((u) => u.pathname === '/developers/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
+  // Polaris ID lands straight on the page, so wait for the island to pick a state.
+  await create
+    .or(page.getByRole('button', { name: 'Run', exact: true }).and(page.locator(':enabled')))
+    .waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
     await expect(page.getByText(/^PASSBOOK_KEY=pbp_test_/)).toBeVisible();

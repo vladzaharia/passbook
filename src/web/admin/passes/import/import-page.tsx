@@ -18,10 +18,9 @@ export function ImportPage() {
       ) : !canOperate ? (
         <EmptyState art="lock" title={C.forbidden} />
       ) : (
-        <div className="flex flex-col gap-6">
-          <SourceStep orgId={orgId} />
+        <SourceStep orgId={orgId}>
           <RecentImports orgId={orgId} />
-        </div>
+        </SourceStep>
       )}
     </>
   );
