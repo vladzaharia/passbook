@@ -43,7 +43,7 @@ async function livePass(ctx: ServiceContext, a: TagAuthority, passId: string): P
  * Binds an existing tag to a pass or to the pass's owner: what Undo and a change of "works with" do. The
  * tag's own rules apply (`decideBind`): the same holder's binding is replaced, another's is refused.
  */
-async function place(
+export async function place(
   ctx: ServiceContext,
   a: TagAuthority,
   tagId: string,
