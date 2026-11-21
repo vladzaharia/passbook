@@ -63,7 +63,6 @@ export function SearchResults({
       </p>
       <div className="op-list-head">
         <span>{result ? resultsLine(items.length) : (hint ?? '')}</span>
-        <span>{OPERATOR_COPY.ready.typing}</span>
       </div>
       <div className="op-list-scroll">
         {error ? (

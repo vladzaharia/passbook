@@ -14,9 +14,7 @@ describe('device flip client', () => {
   it('asks the server to show the customer screen, then reloads the session', async () => {
     const setRole = vi.fn().mockResolvedValue({});
     const refetch = vi.fn().mockResolvedValue(undefined);
-    render(
-      <FlipSheet open mode="Door" api={apiWith(setRole)} refetch={refetch} onClose={() => {}} />,
-    );
+    render(<FlipSheet open api={apiWith(setRole)} refetch={refetch} onClose={() => {}} />);
     await act(async () => {
       fireEvent.click(screen.getAllByRole('button', { name: 'Show to customer' })[0] as Element);
     });
@@ -46,11 +44,8 @@ describe('device flip client', () => {
 });
 
 describe('change mode', () => {
-  it('names the current mode and where the others are set', () => {
-    render(
-      <FlipSheet open mode="Desk" api={apiWith(vi.fn())} refetch={vi.fn()} onClose={() => {}} />,
-    );
-    expect(screen.getByText('This device is in Desk mode.')).toBeTruthy();
+  it('says where the other modes are set', () => {
+    render(<FlipSheet open api={apiWith(vi.fn())} refetch={vi.fn()} onClose={() => {}} />);
     expect(screen.getByText(/set by an admin/)).toBeTruthy();
     expect(screen.getByText('Change mode')).toBeTruthy();
   });

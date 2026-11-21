@@ -12,11 +12,8 @@ export function FlipSheet({
   api,
   refetch,
   onClose,
-  mode,
 }: {
   open: boolean;
-  /** The mode this device is in now. */
-  mode: string;
   api: ScanApi;
   refetch: () => Promise<void>;
   onClose: () => void;
@@ -38,7 +35,6 @@ export function FlipSheet({
     <Sheet open={open} onOpenChange={(value) => !value && !busy && onClose()}>
       <SheetContent title={SCAN_COPY.changeMode.title} className="scan-detail-sheet">
         <div className="flex flex-col gap-4 p-5">
-          <p className="text-sm text-fg">{SCAN_COPY.changeMode.current.replace('{mode}', mode)}</p>
           <p className="text-sm text-fg-muted">{SCAN_COPY.changeMode.adminNote}</p>
           <p className="text-sm text-fg-muted">{SCAN_COPY.changeMode.customerSub}</p>
           {error ? <Callout tone="danger">{error}</Callout> : null}

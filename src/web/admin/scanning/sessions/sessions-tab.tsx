@@ -51,11 +51,7 @@ export function SessionsTab({
     return (
       <div>
         <SetupChecklist onNew={canManage ? onNew : undefined} />
-        <EmptyState
-          art="scanner"
-          title="No scanning sessions"
-          description="Create a session to share admission rules across devices."
-        />
+        <EmptyState art="scanner" title="No scanning sessions" />
       </div>
     );
   const online = items.reduce((n, s) => n + s.onlineCount, 0);
@@ -87,7 +83,6 @@ export function SessionsTab({
                     <ArrowUpRight className="size-4 shrink-0" aria-hidden />
                   </Link>
                 </h2>
-                <p className="mt-1 truncate text-xs text-fg-muted">{s.orgName}</p>
               </div>
               {canManage ? <CardMenu session={s} onDuplicate={onDuplicate} /> : null}
             </div>

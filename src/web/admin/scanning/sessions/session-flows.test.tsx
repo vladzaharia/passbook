@@ -234,7 +234,7 @@ describe('session configuration flows', () => {
     expect(within(dialog).getByText('Staff access')).toBeInTheDocument();
     const staffSignIn = within(dialog).getByRole('switch', { name: 'Require staff sign-in' });
     expect(staffSignIn).toHaveAccessibleDescription(
-      /Bearer-token terminals do not use staff PINs and always use the access level below/i,
+      /Tills have no staff PINs and use the access level below/i,
     );
     expect(within(dialog).getByText(/Admin-as-scanner sessions use/i)).toHaveTextContent(
       'the signed-in administrator’s Manager permissions',

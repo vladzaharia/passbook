@@ -55,7 +55,7 @@ export function RollCallDialogs({
         description={
           roll.call && roll.call.counts.unconfirmed > 0
             ? fill(R.endConfirm, { n: roll.call.counts.unconfirmed })
-            : R.endConfirmNone
+            : undefined
         }
         confirmLabel={R.end}
         onConfirm={async () => {

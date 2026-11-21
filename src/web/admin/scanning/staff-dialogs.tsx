@@ -140,12 +140,7 @@ export function StaffFormDialog({
         >
           <Form {...check.form} id={formId} className="grid gap-4" onValid={submit}>
             {error ? <Callout tone="danger">{error}</Callout> : null}
-            <FormField
-              label="Name"
-              required
-              help="Shown to other staff on the scanner."
-              error={check.errors.name}
-            >
+            <FormField label="Name" required error={check.errors.name}>
               {(props) => (
                 <Input
                   {...props}
