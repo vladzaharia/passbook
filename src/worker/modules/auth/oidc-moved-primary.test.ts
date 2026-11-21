@@ -4,8 +4,10 @@ import { maskEmail } from '../../../shared/email.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { grantScanMembership } from '../scan/test-kit.ts';
+import { linkLifted } from './account-claims.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
+import { insertIdentity } from './repo.ts';
 import { verifyEmailForUser } from './service.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import { harness, ISSUER, type Jar, type TestHarness } from './test-support.ts';
@@ -154,6 +156,15 @@ describe('lift under trust off', () => {
     expect(text).toContain('Never share this code.');
     const code = /Code: (\d{6})/.exec(text)?.[1] ?? '';
     expect(code).not.toBe('');
+    // A browser with its own valid binding reaches the code lookup and still fails.
+    const other: Jar = new Map();
+    await h.call('/auth/magic/request', {
+      method: 'POST',
+      json: { email: `x-${uniq()}@example.test`, turnstileToken: 'ok' },
+      cookies: other,
+    });
+    expect(other.size).toBeGreaterThan(0);
+    expect((await codeConsume(member.primaryEmail, code, other)).status).toBe(400);
     expect((await codeConsume(member.primaryEmail, code, new Map())).status).toBe(400);
     expect(await identityOf(user.sub)).toBeNull();
   });
@@ -200,6 +211,44 @@ describe('lift under trust off', () => {
     expect(h.mail.some((m) => m.to === other && m.text.includes('Polaris ID was linked'))).toBe(
       true,
     );
+  });
+});
+
+describe('the lifted link guards', () => {
+  const ctx = () => createServiceContext(h.env, { clock: h.clock });
+  const row = (userId: string) => ({
+    provider: 'pocketid',
+    subject: `sub-${uniq()}`,
+    userId,
+    emailClaim: null,
+    emailVerified: false,
+    groups: ['wallet_users'],
+    now: 0,
+  });
+  const audits = async (userId: string) =>
+    (
+      await all(
+        h.env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'auth.identity_linked_moved_primary' AND target_id = ?",
+        [userId],
+      )
+    ).length;
+
+  it('onlyIfNone adds no row to an account that has an identity', async () => {
+    const member = await stuckMember();
+    expect(await insertIdentity(h.env.DB, row(member.id), true)).toBe(true);
+    expect(await insertIdentity(h.env.DB, row(member.id), true)).toBe(false);
+    expect(await identityCount(member.id)).toBe(1);
+  });
+
+  it('a second subject writes no audit row, and a replayed subject writes no second one', async () => {
+    const member = await stuckMember();
+    const first = row(member.id);
+    expect(await linkLifted(ctx(), first)).toBe(true);
+    expect(await linkLifted(ctx(), row(member.id))).toBe(false);
+    expect(await linkLifted(ctx(), first)).toBe(false);
+    expect(await identityCount(member.id)).toBe(1);
+    expect(await audits(member.id)).toBe(1);
   });
 });
 

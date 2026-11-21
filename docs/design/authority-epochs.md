@@ -539,7 +539,7 @@ Read by `tools/authority-scope.ts`: a file with a fence pattern must be listed h
 
 **WP1:**
 - `api-keys/repo.ts`
-- `orgs/{repo,repo-members,membership-service}.ts`
+- `orgs/{repo,repo-members,membership-service}.ts`, `auth/repo.ts`
 - `settings/repo.ts`
 - `users/repo.ts`
 - `passes/{http,repo-authority}.ts`

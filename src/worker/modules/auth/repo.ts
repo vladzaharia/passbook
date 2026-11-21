@@ -203,7 +203,7 @@ export function insertIdentityStmt(db: Db, row: NewIdentityRow, onlyIfNone = fal
 }
 
 export const IDENTITY_LINKED_SQL =
-  'EXISTS (SELECT 1 FROM auth_identities WHERE provider = ? AND subject = ? AND user_id = ?)';
+  'changes() = 1 AND EXISTS (SELECT 1 FROM auth_identities WHERE provider = ? AND subject = ? AND user_id = ?)';
 
 /** True when the identity was linked now; false when the subject was already linked. */
 export async function insertIdentity(db: Db, row: NewIdentityRow, onlyIfNone = false) {
