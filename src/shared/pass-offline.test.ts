@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { OFFLINE_SCRIPT, PASS_SW_SOURCE, SAVED_MAX_DAYS } from './pass-offline.ts';
+import { DOOR_SCRIPT, PASS_SAVE_SOURCE, PASS_SW_SOURCE, SAVED_MAX_DAYS } from './pass-offline.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TOKEN = 'abcdefghijklmnop0123';
@@ -184,95 +184,127 @@ describe('the barcode page worker', () => {
   });
 });
 
-type El = {
-  hidden: boolean;
-  disabled: boolean;
-  listeners: Record<string, () => Promise<void>>;
-  addEventListener: (t: string, f: () => Promise<void>) => void;
-};
+type Attrs = Record<string, string>;
+type Handler = (e: unknown) => Promise<void>;
 
-/** The page script against a fake DOM, registry and cache; `pathname` is the page's own. */
+/** The save script against a fake page: one host, its controls, a registry and a cache. */
 async function loadPage(
   caches: Caches,
   fetchImpl: () => Promise<Response>,
-  ready = Promise.resolve(),
+  opts: { ready?: Promise<void>; href?: string; ended?: boolean; workers?: boolean } = {},
 ) {
-  const el = (hidden: boolean): El => {
-    const b: El = {
-      hidden,
-      disabled: false,
-      listeners: {},
-      addEventListener(t, f) {
-        b.listeners[t] = f;
-      },
+  const attrs: Attrs = {};
+  const handlers: Record<string, Handler> = {};
+  const host = {
+    attrs,
+    getAttribute: (k: string) =>
+      k === 'data-save-phone' || k === 'data-save-ended' ? (opts.href ?? PATH) : (attrs[k] ?? null),
+    setAttribute: (k: string, v: string) => {
+      attrs[k] = v;
+    },
+    removeAttribute: (k: string) => {
+      delete attrs[k];
+    },
+    contains: () => true,
+    addEventListener: (t: string, f: Handler) => {
+      handlers[t] = f;
+    },
+    querySelector: () => null,
+  };
+  const reg: Record<string, unknown> = { unregister: vi.fn(async () => true) };
+  // A worker that finishes activating once `ready` resolves, as a statechange.
+  const worker = { state: 'activated', addEventListener: (_t: string, _f: () => void) => {} };
+  if (opts.ready !== undefined) {
+    let onChange: () => void = () => {};
+    worker.state = 'installing';
+    worker.addEventListener = (_t, f) => {
+      onChange = f;
     };
-    return b;
-  };
-  const parts = { save: el(false), drop: el(true), state: el(true), fail: el(true) };
-  let shown: () => void = () => {};
-  const revealed = new Promise<void>((r) => {
-    shown = r;
-  });
-  const box = {
-    get hidden() {
-      return !this.on;
-    },
-    set hidden(v: boolean) {
-      this.on = !v;
-      if (!v) shown();
-    },
-    on: false,
-    querySelector: (sel: string) => parts[/data-(\w+)/.exec(sel)?.[1] as keyof typeof parts],
-  };
-  const reg = { unregister: vi.fn(async () => true) };
+    reg.installing = worker;
+    void opts.ready.then(() => {
+      worker.state = 'activated';
+      onChange();
+    });
+  } else {
+    reg.active = worker;
+  }
   const sw = {
     register: vi.fn(async () => reg),
-    ready,
     getRegistration: vi.fn(async () => reg),
   };
-  new Function('document', 'navigator', 'window', 'caches', 'location', 'fetch', OFFLINE_SCRIPT)(
-    { querySelector: () => box },
-    { serviceWorker: sw },
-    { caches },
+  const globals: Record<string, unknown> = {};
+  const win = { crypto, caches, PassSave: undefined as unknown };
+  const doc = {
+    readyState: 'complete',
+    addEventListener: () => {},
+    querySelectorAll: (sel: string) =>
+      sel.includes('data-save-ended') ? (opts.ended ? [host] : []) : opts.ended ? [] : [host],
+  };
+  new Function(
+    'document',
+    'navigator',
+    'window',
+    'caches',
+    'location',
+    'fetch',
+    'matchMedia',
+    'crypto',
+    PASS_SAVE_SOURCE,
+  )(
+    doc,
+    opts.workers === false ? {} : { serviceWorker: sw },
+    Object.assign(win, globals),
     caches,
-    { pathname: PATH, origin: ORIGIN },
+    { href: `${ORIGIN}/p/${TOKEN}`, origin: ORIGIN },
     fetchImpl,
+    () => ({ matches: true }),
+    crypto,
   );
-  // The script hashes the token with real WebCrypto first; wait for it to reveal the box.
-  await revealed;
   await tick();
-  return { box, parts, sw, reg };
+  await tick();
+  const press = async (control: string) => {
+    const target = { closest: () => ({ hasAttribute: (k: string) => k === control }) };
+    await handlers.click?.({ target, preventDefault: () => {} });
+  };
+  return { host, reg, sw, press, state: () => attrs['data-save'] };
 }
-describe('the barcode page controls', () => {
-  it('saves only the page, scoped to its own path, then removes it', async () => {
+
+describe('the save controls', () => {
+  it('saves only the door view, scoped to its own path, then removes it', async () => {
     const caches = fakeCaches();
     const p = await loadPage(caches, async () => page('the page <i data-expires="4102444800000">'));
-    expect(p.box.hidden).toBe(false);
-    await p.parts.save.listeners.click?.();
+    expect(p.host.attrs['data-save-ready']).toBe('');
+    await p.press('data-save-do');
     expect(p.sw.register).toHaveBeenCalledWith('/p/sw.js', { scope: PATH });
     expect([...caches.stores.keys()]).toEqual([await NAME()]);
     const entry = caches.stores.get(await NAME())?.get(`${ORIGIN}/p/saved`);
     expect(entry?.headers.get('x-expires-at')).toBe('4102444800000');
-    expect(p.parts.drop.hidden).toBe(false);
-    await p.parts.drop.listeners.click?.();
+    expect(p.state()).toBe('saved');
+    await p.press('data-save-drop');
     expect(caches.stores.size).toBe(0);
     expect(p.reg.unregister).toHaveBeenCalled();
-    expect(p.parts.save.hidden).toBe(false);
+    expect(p.state()).toBeUndefined();
+  });
+
+  it('starts saved when this device already holds a copy', async () => {
+    const caches = fakeCaches();
+    await seed(caches);
+    const p = await loadPage(caches, async () => page('x'));
+    expect(p.state()).toBe('saved');
   });
 
   it('writes nothing until the worker is active', async () => {
     const caches = fakeCaches();
     let activate: () => void = () => {};
-    const p = await loadPage(
-      caches,
-      async () => page('x'),
-      new Promise<void>((r) => {
+    const p = await loadPage(caches, async () => page('x'), {
+      ready: new Promise<void>((r) => {
         activate = r;
       }),
-    );
-    const saving = p.parts.save.listeners.click?.();
+    });
+    const saving = p.press('data-save-do');
     await tick();
     expect(caches.stores.size).toBe(0);
+    expect(p.state()).toBe('busy');
     activate();
     await saving;
     expect(caches.stores.size).toBe(1);
@@ -281,24 +313,32 @@ describe('the barcode page controls', () => {
   it('keeps nothing, unregisters and says so when the page does not load', async () => {
     const caches = fakeCaches();
     const p = await loadPage(caches, async () => page('gone', 404));
-    await p.parts.save.listeners.click?.();
+    await p.press('data-save-do');
     expect(caches.stores.size).toBe(0);
     expect(p.reg.unregister).toHaveBeenCalled();
-    expect(p.parts.fail.hidden).toBe(false);
+    expect(p.state()).toBe('failed');
   });
 
-  it('stays hidden where the browser has no service workers', async () => {
-    const box = { hidden: true, querySelector: vi.fn() };
-    new Function('document', 'navigator', 'window', 'caches', 'location', 'fetch', OFFLINE_SCRIPT)(
-      { querySelector: () => box },
-      {},
-      {},
-      undefined,
-      { pathname: PATH, origin: ORIGIN },
-      vi.fn(),
-    );
-    await tick();
-    expect(box.hidden).toBe(true);
+  it('refuses a door on another origin or another path, and does nothing without service workers', async () => {
+    for (const href of [
+      'https://evil.test/p/abcdefghijklmnop0123/barcode',
+      '/p/short/barcode',
+      '/passes/1',
+    ]) {
+      const p = await loadPage(fakeCaches(), vi.fn(), { href });
+      expect(p.host.attrs['data-save-ready']).toBeUndefined();
+    }
+    const none = await loadPage(fakeCaches(), vi.fn(), { workers: false });
+    expect(none.host.attrs['data-save-ready']).toBeUndefined();
+  });
+
+  it('drops a saved copy from the page of a pass that ended', async () => {
+    const caches = fakeCaches();
+    await seed(caches);
+    const p = await loadPage(caches, async () => page('x'), { ended: true, href: PATH });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(caches.stores.size).toBe(0);
+    expect(p.reg.unregister).toHaveBeenCalled();
   });
 });
 
@@ -306,7 +346,7 @@ describe('save, void, offline, online', () => {
   it('shows the saved copy offline, then clears it once the server says the pass is gone', async () => {
     const caches = fakeCaches();
     const p = await loadPage(caches, async () => page('the barcode'));
-    await p.parts.save.listeners.click?.();
+    await p.press('data-save-do');
     let mode: 'void' | 'offline' = 'offline';
     const w = loadWorker(caches, async () => {
       if (mode === 'offline') throw new TypeError('offline');
@@ -320,5 +360,45 @@ describe('save, void, offline, online', () => {
     expect(caches.stores.size).toBe(0);
     expect(w.self.registration.unregister).toHaveBeenCalledOnce();
     expect(await (await w.request(URL_))?.text()).toBe('Pass unavailable');
+  });
+});
+
+describe('the door script', () => {
+  const run = async (opts: { saved: boolean; wake: boolean }) => {
+    const caches = fakeCaches();
+    if (opts.saved) await seed(caches);
+    const note = { hidden: true };
+    const request = vi.fn(async () => ({}));
+    const listeners: Record<string, (e: unknown) => void> = {};
+    new Function('document', 'navigator', 'window', 'caches', 'location', DOOR_SCRIPT)(
+      {
+        querySelector: (sel: string) => (sel === '[data-door-saved]' ? note : null),
+        addEventListener: () => {},
+        visibilityState: 'visible',
+      },
+      opts.wake ? { wakeLock: { request } } : {},
+      {
+        crypto,
+        caches,
+        addEventListener: (t: string, f: (e: unknown) => void) => {
+          listeners[t] = f;
+        },
+      },
+      caches,
+      { pathname: PATH },
+    );
+    await tick();
+    await tick();
+    return { note, request, listeners };
+  };
+
+  it('says Works offline only where a copy is held', async () => {
+    expect((await run({ saved: true, wake: false })).note.hidden).toBe(false);
+    expect((await run({ saved: false, wake: false })).note.hidden).toBe(true);
+  });
+
+  it('holds the screen awake only where the browser can', async () => {
+    expect((await run({ saved: false, wake: true })).request).toHaveBeenCalledWith('screen');
+    await expect(run({ saved: false, wake: false })).resolves.toBeDefined();
   });
 });

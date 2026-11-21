@@ -13,6 +13,7 @@ import type {
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { type DeviceInfo, MAC_REVEAL_SCRIPT } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
+import { PASS_SAVE_PATH } from '../../shared/pass-offline.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import cardBase from '../../web/pass-card/pass-card-base.css?raw';
@@ -29,12 +30,14 @@ import { PortalLink } from '../../web/portal/holder-parts.tsx';
 import holderPassCss from '../../web/portal/holder-pass.css?raw';
 import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
 import { PassDetails } from '../../web/portal/pass-details.tsx';
+import savePhoneCss from '../../web/portal/save-phone.css?raw';
 import artBase from '../../web/ui/art/art.css?raw';
 import artWallet from '../../web/ui/art/art-wallet.css?raw';
 import common from '../../web/ui/art/scenes/common.css?raw';
 import nudge from '../../web/ui/art/scenes/nudge.css?raw';
 import rest from '../../web/ui/art/scenes/rest.css?raw';
 import tear from '../../web/ui/art/scenes/tear.css?raw';
+import tuck from '../../web/ui/art/scenes/tuck.css?raw';
 import walletStates from '../../web/ui/art/wallet-states.css?raw';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage, type PageAction, REPLAY_SCRIPT } from './hosted.ts';
@@ -50,8 +53,8 @@ import { THEME_CSS } from './theme.ts';
  * loses the hosted pages' padding: the header and main pad themselves, like AppShell. Without
  * script, pressing the badge dips the card in CSS (the portal sets `dip`).
  */
-const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear].join('\n');
-export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${addCss}\n${RIBBON_CSS}
+const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear, tuck].join('\n');
+export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${savePhoneCss}\n${addCss}\n${RIBBON_CSS}
 ${ORG_SHELL_CSS}
 body{padding:0}
 @media (prefers-reduced-motion:no-preference){.wl-holder:has([data-awb]:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}}`;
@@ -198,6 +201,8 @@ export function renderPassPage(props: PassPageProps): string {
   // The tab says what the pass is, as the portal's does; never the holder.
   const title = headingOf(props).title;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
+  // Save to this phone and dropping a copy once the pass ended; both are no-ops without a host.
+  const save = props.barcodeHref ? `<script src="${PASS_SAVE_PATH}" defer></script>` : '';
   // A Mac agent may be an iPad: the Mac's badge shows only once the browser says it is a Mac.
   const mac =
     props.device.device === 'mac'
@@ -212,7 +217,7 @@ export function renderPassPage(props: PassPageProps): string {
           ? HOLDER_COPY.previewWallets
           : HOLDER_COPY.previewActive
         : HOLDER_COPY.expired;
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}${mac}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${save}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}${mac}</body></html>`;
 }
 
 /** The dead link's one way on: the login, which says the link did not work. Sends no mail. */

@@ -3,12 +3,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { OFFLINE_SCRIPT } from '../../shared/pass-offline.ts';
+import { escapeHtml } from '../../shared/html.ts';
+import { DOOR_SCRIPT } from '../../shared/pass-offline.ts';
 import type { PresentationBarcode } from '../modules/public/presentation.ts';
-import type { PageTheme } from './head.ts';
-import { actionHtml, hostedPage } from './hosted.ts';
+import { documentStart, type PageTheme } from './head.ts';
+import { actionHtml } from './hosted.ts';
+import { orgLogoHtml, orgMarkHtml } from './org-bar.tsx';
+import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
 import { PresentationCode } from './presentation-code.tsx';
 import { RIBBON_CSS, TestRibbon } from './test-ribbon.tsx';
+import { THEME_CSS } from './theme.ts';
 
 export const PRESENTATION_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
@@ -18,17 +22,30 @@ export const PRESENTATION_HEADERS = {
   'x-robots-tag': 'noindex, nofollow',
 };
 
-/** The code's tile and the offline row, on the hosted card (hosted.ts). */
+/**
+ * The door view: a white field the scanner reads against, in every theme. The kit supplies the
+ * button; everything else is this page's. Nothing but the code, the pass's name and the way
+ * back. No text of the credential or its altText: they never reach page text (presentation.test.ts).
+ */
 const CSS = `${RIBBON_CSS}
-.presentation-figure{margin:0;display:flex;justify-content:center}
-.presentation-code{display:flex;justify-content:center;align-items:center;width:min(100%,26rem);padding:1.25rem;border:1px solid var(--pk-border-subtle);border-radius:var(--pk-radius-lg);background:#fff;color:#000;box-shadow:var(--pk-elevation-1)}
-.presentation-code[data-square=true]{width:min(100%,20rem)}
+html,body{background:#fff;color:#0b1220}
+body{margin:0;min-height:100dvh}
+.door{display:flex;flex-direction:column;align-items:center;gap:1.5rem;min-height:100dvh;box-sizing:border-box;width:100%;max-width:30rem;margin:0 auto;padding:max(1.5rem,env(safe-area-inset-top)) 1.25rem max(1.5rem,env(safe-area-inset-bottom))}
+.door-head{display:flex;flex-direction:column;align-items:center;gap:.25rem;text-align:center}
+.door-head h1{margin:0;font-size:1.25rem;line-height:1.75rem;font-weight:600;overflow-wrap:anywhere;color:#0b1220}
+.door-head p{margin:0;font-size:.875rem;line-height:1.25rem;color:#4b5563}
+.brand{display:flex;justify-content:center;margin-bottom:.5rem}
+.org-logo{display:block;max-width:100%;height:auto}
+.org-name{display:none}
+.presentation-figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:.75rem;width:100%}
+.presentation-code{display:flex;justify-content:center;align-items:center;width:100%;padding:1rem;box-sizing:border-box;background:#fff;color:#000}
+.presentation-code[data-square=true]{width:min(100%,24rem)}
 .presentation-code svg{display:block;width:100%;height:auto}
 .presentation-unavailable p{margin:0}
-.presentation-offline{display:flex;flex-direction:column;gap:.75rem}
-.presentation-offline[hidden],.presentation-offline [hidden]{display:none}
-.presentation-offline p{margin:0;font-size:.875rem;line-height:1.25rem;color:var(--pk-text-muted)}
-@media(max-width:360px){.presentation-code{padding:1rem}}
+.door-foot{display:flex;flex-direction:column;align-items:center;gap:.75rem;margin-top:auto}
+.door-foot p{margin:0;font-size:.875rem;line-height:1.25rem;color:#4b5563}
+.door-foot [hidden]{display:none}
+@media(max-width:360px){.presentation-code{padding:.5rem}}
 `;
 
 export interface PresentationPageProps {
@@ -39,11 +56,12 @@ export interface PresentationPageProps {
   passTitle: string;
   mode: Mode;
   backHref: string;
-  /** A pass page's own barcode may be saved on this device; a bundle's member's may not. */
+  /** A pass page's own door view may be saved on this device; a bundle's member's may not. */
   offline?: boolean;
   /** The pass's expiry (ms); the saved copy keeps it. */
   expiresAt?: number | null;
   nonce: string;
+  /** Ignored: the door is white in every theme. */
   theme?: PageTheme;
 }
 
@@ -53,46 +71,19 @@ export function renderPresentationPage(props: PresentationPageProps): string {
   const code = renderToStaticMarkup(
     <PresentationCode barcode={props.barcode} orgName={props.orgName} />,
   );
-  const saved =
-    props.offline && props.barcode
-      ? renderToStaticMarkup(
-          <div
-            className="presentation-offline"
-            data-offline
-            {...(props.expiresAt ? { 'data-expires': props.expiresAt } : {})}
-            hidden
-          >
-            <button type="button" className="btn outline" data-save>
-              {HOLDER_COPY.saveOffline}
-            </button>
-            <p data-state hidden>
-              {HOLDER_COPY.savedOffline}
-            </p>
-            <button type="button" className="btn outline" data-drop hidden>
-              {HOLDER_COPY.removeSaved}
-            </button>
-            <p data-fail role="alert" hidden>
-              {HOLDER_COPY.saveOfflineFailed}
-            </p>
-          </div>,
-        )
-      : '';
+  const saveable = Boolean(props.offline && props.barcode);
   const back = actionHtml({ label: HOLDER_COPY.backToPass, href: props.backHref, icon: ArrowLeft });
-  return hostedPage({
-    nonce: props.nonce,
-    theme: props.theme,
-    ...(props.brand ? { brand: props.brand } : {}),
-    title: props.passTitle,
-    headTitle: HOLDER_COPY.barcodeTitle,
-    art: 'login',
-    wide: true,
-    replay: false,
-    css: CSS,
-    head: '<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">',
-    body: `${ribbon}${code}${saved}${back}`,
-    after:
-      props.offline && props.barcode
-        ? `<script nonce="${props.nonce}">${OFFLINE_SCRIPT}</script>`
-        : '',
-  });
+  // The expiry rides in the page so the worker can refuse a saved copy past it.
+  const expires = saveable && props.expiresAt ? ` data-expires="${props.expiresAt}"` : '';
+  const foot = `<div class="door-foot"${expires}>${
+    saveable
+      ? `<p data-door-saved hidden>${escapeHtml(HOLDER_COPY.worksOffline)}</p><button type="button" class="btn outline" data-door-install hidden>${escapeHtml(HOLDER_COPY.installDoor)}</button>`
+      : ''
+  }${back}</div>`;
+  const logo = props.brand?.logo ? `<div class="brand">${orgLogoHtml(props.brand)}</div>` : '';
+  const head = `<div class="door-head">${logo}<h1>${escapeHtml(props.passTitle)}</h1><p>${escapeHtml(props.orgName)}</p></div>`;
+  const manifest = saveable
+    ? `<link rel="manifest" href="${escapeHtml(props.backHref)}/barcode/manifest.webmanifest">`
+    : '';
+  return `${documentStart('light')}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><meta property="og:title" content="${escapeHtml(HOLDER_COPY.barcodeTitle)}"><meta name="apple-mobile-web-app-title" content="${escapeHtml(props.orgName || 'Pass')}">${manifest}<title>${escapeHtml(HOLDER_COPY.barcodeTitle)} · ${escapeHtml(props.brand?.name || props.orgName || 'PassBook')}</title><style nonce="${props.nonce}">${THEME_CSS}${props.brand ? `${ORG_SHELL_CSS}\n${brandCss(props.brand)}` : ''}${CSS}</style></head><body><main class="door">${ribbon}${head}${code}${foot}${orgMarkHtml(props.brand)}</main>${saveable ? `<script nonce="${props.nonce}">${DOOR_SCRIPT}</script>` : ''}</body></html>`;
 }

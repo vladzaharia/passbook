@@ -1,8 +1,10 @@
 import { HOLDER_COPY } from './copy/holder.ts';
 
 /**
- * Offline copy of one pass's barcode page. The page is a bearer credential, so the copy is narrow:
- * - opt-in: only the Save button writes it, and Remove (or a 404/410 from the server) deletes it;
+ * Save to this phone: an offline copy of one pass's door view (/p/<token>/barcode). The page is a
+ * bearer credential, so the copy is narrow:
+ * - opt-in: only "Save to this phone" on the pass page writes it, and "Remove from this phone" (or
+ *   a 404/410 from the server, or the pass page itself finding the pass ended) deletes it;
  * - one cache per token, named by a hash of it (`barcode:<sha256>`), so no token string sits in Cache
  *   Storage, holding the page's own HTML under one fixed key and nothing else;
  * - the copy is shown offline for at most 30 days, and never past the pass's own expiry;
@@ -13,6 +15,8 @@ import { HOLDER_COPY } from './copy/holder.ts';
  * The door still verifies on the server; a saved copy of a voided pass is refused there.
  */
 export const PASS_SW_PATH = '/p/sw.js';
+/** The pass page's and the portal's save controls (one source: this file). */
+export const PASS_SAVE_PATH = '/p/save.js';
 
 /** How long a saved copy may be shown, counted from the last time the server confirmed it. */
 export const SAVED_MAX_DAYS = 30;
@@ -78,44 +82,135 @@ async function serve(req, token) {
 }
 `;
 
-/** The page's Save / Remove controls; hidden until the script confirms the browser can do it. */
-export const OFFLINE_SCRIPT = `${HELPERS}(async () => {
-  const box = document.querySelector('[data-offline]');
-  if (!box || !('serviceWorker' in navigator) || !('caches' in window)) return;
-  const path = location.pathname;
-  const name = 'barcode:' + (await hashOf(path.split('/')[2]));
-  const [save, drop, state, fail] = ['save', 'drop', 'state', 'fail'].map((k) => box.querySelector('[data-' + k + ']'));
-  const show = (on) => {
-    save.hidden = on;
-    drop.hidden = !on;
-    state.hidden = !on;
+/**
+ * The save controls, served at /p/save.js for the pass page and the portal alike. `mount(root)`
+ * wires every `[data-save-phone]` host in root; the host's `data-save` is idle (absent), busy,
+ * saved or failed, and CSS does the rest. Only the door view's own path is ever registered or
+ * fetched, and only when it is on this origin. A host marked `data-save-ended` (a pass that no
+ * longer works) drops any saved copy instead.
+ */
+export const PASS_SAVE_SOURCE = `${HELPERS}(() => {
+  const TOKEN = /^\\/p\\/([A-Za-z0-9_-]{16,128})\\/barcode$/;
+  const can = () => 'serviceWorker' in navigator && 'caches' in window && !!(window.crypto && crypto.subtle);
+  const pathOf = (href) => {
+    try {
+      const u = new URL(href, location.href);
+      return u.origin === location.origin && TOKEN.test(u.pathname) ? u.pathname : null;
+    } catch {
+      return null;
+    }
   };
-  const clear = async () => {
-    await caches.delete(name);
+  const nameOf = async (path) => 'barcode:' + (await hashOf(path.split('/')[2]));
+  const clear = async (path) => {
+    await caches.delete(await nameOf(path));
     const reg = await navigator.serviceWorker.getRegistration(path);
     if (reg) await reg.unregister();
   };
-  box.hidden = false;
-  caches.has(name).then(show, () => {});
-  save.addEventListener('click', async () => {
-    save.disabled = true;
-    fail.hidden = true;
+  const save = async (path) => {
     try {
-      await navigator.serviceWorker.register('${PASS_SW_PATH}', { scope: path });
-      await navigator.serviceWorker.ready;
+      // Not serviceWorker.ready: it waits on the worker for this page's URL, and this page is not
+      // in the door view's scope.
+      const reg = await navigator.serviceWorker.register('${PASS_SW_PATH}', { scope: path });
+      const worker = reg.installing || reg.waiting || reg.active;
+      if (worker && worker.state !== 'activated') {
+        await new Promise((resolve, reject) => {
+          worker.addEventListener('statechange', () => {
+            if (worker.state === 'activated') resolve();
+            else if (worker.state === 'redundant') reject(new Error('worker'));
+          });
+        });
+      }
       const res = await fetch(path, { cache: 'no-store' });
       if (!res.ok || res.redirected) throw new Error('save');
-      await keep(name, res);
-      show(true);
-    } catch {
-      await clear();
-      fail.hidden = false;
+      await keep(await nameOf(path), res);
+    } catch (e) {
+      await clear(path);
+      throw e;
     }
-    save.disabled = false;
+  };
+  const replay = (host) => {
+    const buddy = host.querySelector('[data-when="saved"] [data-scene="tuck"]');
+    if (!buddy || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    buddy.removeAttribute('data-run');
+    buddy.getBoundingClientRect();
+    buddy.setAttribute('data-run', '');
+  };
+  const sheet = (host, open) => {
+    const dlg = host.querySelector('[data-save-sheet]');
+    if (!dlg) return;
+    if (!open) return dlg.close ? dlg.close() : dlg.removeAttribute('open');
+    if (dlg.showModal) dlg.showModal();
+    else dlg.setAttribute('open', '');
+  };
+  const mount = (root) => {
+    for (const host of (root || document).querySelectorAll('[data-save-phone]:not([data-save-ready])')) {
+      const path = pathOf(host.getAttribute('data-save-phone'));
+      if (!path || !can()) continue;
+      host.setAttribute('data-save-ready', '');
+      nameOf(path).then((name) => caches.has(name)).then((on) => {
+        if (on) host.setAttribute('data-save', 'saved');
+      }, () => {});
+      host.addEventListener('click', async (e) => {
+        const el = e.target && e.target.closest ? e.target : null;
+        const act = el && el.closest('[data-save-do],[data-save-drop],[data-save-done]');
+        if (!act || !host.contains(act)) return;
+        e.preventDefault();
+        if (act.hasAttribute('data-save-done')) return sheet(host, false);
+        if (host.getAttribute('data-save') === 'busy') return;
+        if (act.hasAttribute('data-save-drop')) {
+          await clear(path);
+          host.removeAttribute('data-save');
+          return;
+        }
+        host.setAttribute('data-save', 'busy');
+        try {
+          await save(path);
+          host.setAttribute('data-save', 'saved');
+          replay(host);
+          sheet(host, true);
+        } catch {
+          // Nothing was kept (save() cleared it); the failed state says so.
+          host.setAttribute('data-save', 'failed');
+        }
+      });
+    }
+    for (const host of (root || document).querySelectorAll('[data-save-ended]')) {
+      const path = pathOf(host.getAttribute('data-save-ended'));
+      if (path && can()) clear(path).catch(() => {});
+    }
+  };
+  window.PassSave = { mount };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => mount(document));
+  else mount(document);
+})();
+`;
+
+/**
+ * The door view's own script: shows "Works offline" when this device holds a saved copy, keeps the
+ * screen awake where the browser has Screen Wake Lock, and offers install only when the browser
+ * fires beforeinstallprompt. Nothing here touches the network.
+ */
+export const DOOR_SCRIPT = `${HELPERS}(() => {
+  const note = document.querySelector('[data-door-saved]');
+  if (note && 'caches' in window && window.crypto && crypto.subtle) {
+    hashOf(location.pathname.split('/')[2])
+      .then((h) => caches.has('barcode:' + h))
+      .then((on) => { note.hidden = !on; }, () => {});
+  }
+  if ('wakeLock' in navigator) {
+    const hold = () => navigator.wakeLock.request('screen').catch(() => {});
+    hold();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') hold();
+    });
+  }
+  const install = document.querySelector('[data-door-install]');
+  let offer = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    offer = e;
+    if (install) install.hidden = false;
   });
-  drop.addEventListener('click', async () => {
-    await clear();
-    show(false);
-  });
+  if (install) install.addEventListener('click', () => offer && offer.prompt());
 })();
 `;

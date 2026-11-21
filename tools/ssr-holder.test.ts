@@ -27,7 +27,9 @@ const SHEETS = [
   'src/web/ui/art/art.css',
   'src/web/ui/art/art-wallet.css',
   'src/web/ui/art/wallet-states.css',
+  'src/web/ui/art/scenes/tuck.css',
   'src/web/portal/holder-pass.css',
+  'src/web/portal/save-phone.css',
   'src/web/portal/add/add.css',
 ]
   .map(read)
@@ -69,6 +71,11 @@ const PAGES = [
       { provider: 'google', href: '/p/t/wallet/google', installation: 'unknown' },
       { provider: 'samsung', href: '/p/t/wallet/samsung', installation: 'unknown' },
     ],
+  }),
+  page({
+    device: { device: 'android', inApp: false },
+    barcodeHref: '/p/abcdefghijklmnop0123/barcode',
+    publicUrl: 'https://wallet.test/p/abcdefghijklmnop0123',
   }),
   page({ voided: true }),
   page({ view: view({ expirationDate: '2020-01-01T00:00:00Z' }) }),

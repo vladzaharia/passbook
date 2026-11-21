@@ -27,6 +27,7 @@ import { holderPrintRoutes } from '../prints/routes-holder.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
+import { doorManifestRoutes } from './routes-door-manifest.ts';
 import { holderMailProps, resendRoutes } from './routes-resend.ts';
 import { signInRoutes } from './routes-signin.ts';
 import { swRoutes } from './routes-sw.ts';
@@ -56,6 +57,7 @@ publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/barcode', rateLimit('RL_PUBLIC'));
 
 publicRoutes.route('/', resendRoutes);
+publicRoutes.route('/', doorManifestRoutes);
 publicRoutes.route('/', signInRoutes);
 publicRoutes.route('/', holderPrintRoutes);
 

@@ -59,10 +59,20 @@ export const HOLDER_COPY = {
   presentUnavailable: 'Barcode unavailable',
   presentUnavailableLine: (org: string) => `Ask ${org || 'the organization'} for help.`,
   backToPass: 'Back to pass',
-  saveOffline: 'Save for offline',
+  /** Save to this phone: the lead, its states, the home-screen sheet and the door view. */
   saveToPhone: 'Save to this phone',
-  savedOffline: 'Saved on this device',
-  removeSaved: 'Remove from this device',
+  saving: 'Saving',
+  onThisPhone: 'On this phone',
+  worksOffline: 'Works offline',
+  showAtDoor: 'Show at the door',
+  removeFromPhone: 'Remove from this phone',
+  homeScreenTitle: 'Add to Home screen',
+  homeStepTap: 'Tap',
+  homeStepMenu: 'the browser menu',
+  homeStepChoose: 'Choose Add to Home screen',
+  done: 'Done',
+  /** The door view's install button, only where the browser offers it. */
+  installDoor: 'Add to Home screen',
   connectToRefresh: 'Connect to refresh this pass.',
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */

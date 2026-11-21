@@ -111,7 +111,8 @@ describe('GET /b/:token', () => {
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('<svg');
-    expect(html).not.toContain('data-offline');
+    expect(html).not.toContain('data-door-saved');
+    expect(html).not.toContain('rel="manifest"');
     expect(html).not.toMatch(/<script\b/);
     expect(html).toContain(`href="/b/${token}"`);
     expect(res.headers.get('cache-control')).toContain('no-store');
