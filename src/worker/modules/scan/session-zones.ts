@@ -17,12 +17,15 @@ export async function sessionZoneChecks(
   zoneIds: readonly string[],
   eventId: string | null | undefined,
   sessionId?: string,
+  /** Zones the same batch creates: live by construction, not in the database yet. */
+  made?: ReadonlyMap<string, unknown>,
 ): Promise<Check[]> {
   if (zoneIds.length === 0) return [];
   if (eventId)
     throw new ValidationError('An event session takes no zones.', [], 'ZONE_EVENT_SESSION');
-  const found = await zonesInOrg(ctx.env.DB, orgId, zoneIds);
-  if (found.length !== new Set(zoneIds).size)
+  const stored = zoneIds.filter((id) => !made?.has(id));
+  const found = await zonesInOrg(ctx.env.DB, orgId, stored);
+  if (found.length !== new Set(stored).size)
     throw new NotFoundError('Zone not found.', 'ZONE_NOT_FOUND');
   const linked = sessionId ? await sessionZoneIds(ctx.env.DB, orgId, sessionId) : [];
   const added = found.filter((z) => !linked.includes(z.id));
