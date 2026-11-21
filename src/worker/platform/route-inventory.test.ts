@@ -127,6 +127,7 @@ const SCANNER = [
   'POST /api/v1/scan/session/open-now',
   'POST /api/v1/scan/sign-out',
   'POST /api/v1/scan/staff',
+  'POST /api/v1/scan/staff/pin',
   'POST /api/v1/scan/tag-enrollments/:id/complete',
   'POST /api/v1/scan/tag-enrollments/:id/decline',
   'POST /api/v1/scan/tags/bind',
