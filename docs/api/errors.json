@@ -2189,6 +2189,15 @@
       ]
     },
     {
+      "code": "ORG_SLUG_RESERVED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "ORG_SLUG_TAKEN",
       "statuses": [
         409
