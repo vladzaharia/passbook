@@ -64,6 +64,7 @@ export function toDto(row: OrgRow): OrgDto {
     updatedAt: row.updated_at,
     configRevision: row.config_revision,
     personal: row.personal_user_id !== null,
+    kind: row.kind,
   };
 }
 
@@ -172,6 +173,7 @@ export async function createOrg(
     updated_at: now,
     config_revision: 1,
     personal_user_id: null,
+    kind: 'standard',
   };
   const preset = input.preset ?? 'standard';
   await insertOrgAsAdmin(ctx, row, admin, preset);

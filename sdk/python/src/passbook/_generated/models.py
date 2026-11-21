@@ -3863,6 +3863,7 @@ class Org(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
+    kind: _Literal["standard", "developer"] | str | None = None
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int
@@ -3907,6 +3908,7 @@ class OrgSummary(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
+    kind: _Literal["standard", "developer"] | str | None = None
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int

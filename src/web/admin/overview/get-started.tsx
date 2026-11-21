@@ -4,7 +4,15 @@ import { type CSSProperties, type ReactNode, useCallback, useState } from 'react
 import type { MetricsOverview } from '@/shared/contracts/metrics.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { useChangeCount } from '@/web/lib/motion.ts';
-import { type ArtName, Button, Card, CardBody, Checklist, EntityArt } from '@/web/ui/index.ts';
+import {
+  type ArtName,
+  Button,
+  Card,
+  CardBody,
+  Checklist,
+  EmptyState,
+  EntityArt,
+} from '@/web/ui/index.ts';
 
 const KEY = 'wallet-get-started-dismissed';
 
@@ -185,5 +193,22 @@ export function GetStarted({
         />
       </CardBody>
     </Card>
+  );
+}
+
+/** A developer org is a Test-only sandbox: the way in is the Developers workbench. */
+export function SandboxCard() {
+  return (
+    <EmptyState
+      art="wallet"
+      artState="empty"
+      mood="happy"
+      title="Developer sandbox"
+      action={
+        <Button asChild variant="outline" iconEnd={<ChevronRight aria-hidden />}>
+          <a href="/developers">Open Developers</a>
+        </Button>
+      }
+    />
   );
 }

@@ -399,7 +399,7 @@ describe('a developer org never holds Live', () => {
         },
       );
     const live = await mint('live');
-    expect(live.status).toBe(403);
+    await expectProblem(live, 409, 'ORG_TEST_ONLY');
     expect(
       (
         await first<{ n: number }>(

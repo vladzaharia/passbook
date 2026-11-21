@@ -80,6 +80,21 @@ describe('organization overview', () => {
     expect(await screen.findByRole('list', { name: 'Recent activity' })).toBeInTheDocument();
   });
 
+  it('shows the sandbox card, not Get started, for a developer org', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [{ ...member(), testOnly: true }],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity({ templates: [] })),
+    });
+    expect(await screen.findByText('Developer sandbox')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Developers' })).toHaveAttribute(
+      'href',
+      '/developers',
+    );
+    expect(screen.queryByText('Get started')).toBeNull();
+  });
+
   it('shows the organization counts as links to their lists', async () => {
     await renderApp('/admin', {
       session: 'user',
