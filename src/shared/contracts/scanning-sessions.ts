@@ -16,6 +16,7 @@ import {
   TimeZoneSchema,
 } from './scan.ts';
 import { HoursSpanSchema, ZoneIdsSchema } from './scan-access.ts';
+import { NativeHardwareEntrySchema, ReportedHardwareSchema } from './scan-hardware.ts';
 import { AdmitsSchema } from './scanners.ts';
 
 /** Layout and sign-in method are independent: an admin is another device in the session. */
@@ -72,6 +73,8 @@ export const NativeScannerCapabilitiesSchema = z.strictObject({
         .nullable(),
     })
     .optional(),
+  /** Bridge v1, additive: one entry per unit. Reports carry the summary, not this list. */
+  hardware: z.array(NativeHardwareEntrySchema).max(16).optional(),
 });
 export type NativeScannerCapabilities = z.infer<typeof NativeScannerCapabilitiesSchema>;
 
@@ -82,7 +85,9 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
   camera: z.enum(['unknown', 'available', 'unavailable']),
   keyboard: z.boolean(),
   nativeBarcode: z.boolean(),
-  native: NativeScannerCapabilitiesSchema.optional(),
+  native: NativeScannerCapabilitiesSchema.omit({ hardware: true }).optional(),
+  /** Found hardware by kind and state. Optional: older devices send none. */
+  hardware: z.array(ReportedHardwareSchema).max(16).optional(),
   surfaces: z.array(ScanSurfaceSchema).min(1).max(4),
   preferred: ScanSurfaceSchema,
 });

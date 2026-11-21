@@ -1,0 +1,139 @@
+/* Hardware pill and panel. State tints: on = accent and a green badge, needs a person = amber,
+   error = red, ready = muted, off = faint. */
+:root {
+  --hw-red: #b91c1c;
+  --hw-red-fill: rgb(185 28 28 / 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --hw-red: #f87171;
+    --hw-red-fill: rgb(248 113 113 / 0.16);
+  }
+}
+:root[data-theme="dark"] {
+  --hw-red: #f87171;
+  --hw-red-fill: rgb(248 113 113 / 0.16);
+}
+
+/* The pill: 28 tall like the chips, a 44 hit area. */
+.hw-pill {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  box-sizing: border-box;
+  height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sd-fill-gray);
+  color: var(--sd-strong);
+  cursor: pointer;
+}
+.hw-pill::before {
+  content: "";
+  position: absolute;
+  inset-block: -8px;
+  inset-inline: -4px;
+}
+.hw-pill:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .hw-pill:hover {
+    background: color-mix(in oklab, var(--sd-fill-gray) 100%, var(--sd-strong) 8%);
+  }
+}
+.hw-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--sd-muted);
+}
+.hw-glyph::after {
+  content: "";
+  position: absolute;
+  inset-block-start: -3px;
+  inset-inline-end: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--scan-glass-solid, var(--pk-surface-raised));
+  background: transparent;
+  opacity: 0;
+}
+.hw-glyph[data-state="active"] {
+  color: var(--sd-accent);
+}
+.hw-glyph[data-state="active"]::after {
+  background: var(--scan-ok);
+  opacity: 1;
+}
+.hw-glyph[data-state="attention"] {
+  color: var(--sd-chip-gold-fg);
+}
+.hw-glyph[data-state="attention"]::after {
+  background: var(--scan-heads);
+  opacity: 1;
+}
+.hw-glyph[data-state="error"] {
+  color: var(--hw-red);
+}
+.hw-glyph[data-state="error"]::after {
+  background: var(--hw-red);
+  opacity: 1;
+}
+.hw-glyph[data-state="off"] {
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hw-glyph {
+    animation: hw-pop 260ms var(--wl-ease-out, ease-out) both;
+  }
+  .hw-glyph[data-blink] {
+    animation: hw-blink 520ms var(--wl-ease-out, ease-out) both;
+  }
+}
+@keyframes hw-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes hw-blink {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: none;
+  }
+  35% {
+    transform: scale(1.3) rotate(-8deg);
+    filter: drop-shadow(0 0 6px var(--sd-accent));
+  }
+}
+
+/* In the operator's top bar: an op chip. */
+.op-top .hw-pill {
+  border: 1px solid var(--op-line);
+  background: var(--op-raised);
+}
+/* On the monitor's header: a touch larger, it is read from a distance. */
+.scan-live-header .hw-pill {
+  height: 36px;
+  padding-inline: 12px;
+  gap: 9px;
+  border-radius: 18px;
+  border: 1px solid var(--pk-border-subtle, var(--sd-line));
+  background: var(--pk-surface-raised, var(--sd-fill-gray));
+}

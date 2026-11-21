@@ -61,7 +61,10 @@
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFujM8ev6K0ns9wy",
     "SSRF_DENY_HOSTS": "plrs.im",
     // "1" serves /scan, scan.webmanifest and the decoder worker. Off in production until M1.
-    "SCAN_ENABLED": "1"
+    "SCAN_ENABLED": "1",
+    // "1" stores the hardware summary devices report. Off for one release, so a rollback past
+    // the tolerant reader never meets rows with it.
+    "DEVICE_REPORT_HARDWARE": "0"
   },
 
   "secrets": {
