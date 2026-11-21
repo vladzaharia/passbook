@@ -40,7 +40,7 @@ export async function insertSession(
     idHash: string;
     userId: string;
     amr: Amr;
-    authTime?: number;
+    authTime?: number | null;
     roles: string[];
     csrfSecret: string;
     now: number;

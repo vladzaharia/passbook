@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import type { RouterRoute } from 'hono/types';
 import { expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
+import type { SignInLevel } from '../../shared/sign-in.ts';
 import { createApp } from '../app.ts';
 import { isKnownGuard } from './auth.ts';
 import { isPublicHandler } from './openapi.ts';
@@ -195,12 +196,13 @@ function undecidedRoutes(routes?: readonly RouterRoute[]): string[] {
     .sort();
 }
 
-/** The sign-in level of every route a session guard covers: `idp` unless every such guard says `any`. */
-function signInLevels(): Record<string, 'idp' | 'any'> {
-  const levels: Record<string, 'idp' | 'any'> = {};
+/** The sign-in level of every route a session guard covers; the strictest guard wins. */
+function signInLevels(): Record<string, SignInLevel> {
+  const levels: Record<string, SignInLevel> = {};
   for (const { key, covering } of coverage()) {
     const own = covering.map((g) => signInLevelOf(g.handler)).filter((l) => l !== undefined);
-    if (own.length > 0) levels[key] = own.includes('idp') ? 'idp' : 'any';
+    if (own.length > 0)
+      levels[key] = own.includes('strict') ? 'strict' : own.includes('idp') ? 'idp' : 'any';
   }
   return levels;
 }
@@ -270,12 +272,15 @@ it('lets an email-link session reach only the holder routes, and deny every othe
       .map(([key]) => key)
       .sort(),
   ).toEqual(SIGN_IN_ANY);
-  // The console and the developer tools are on that list's complement.
-  for (const route of [
-    'GET /api/v1/orgs',
-    'POST /api/v1/developer/sandbox',
-    'POST /api/v1/developer/try-token',
-    'GET /api/v1/api-keys',
-  ])
+  // The console is on that list's complement; sandboxes, Try it, org close and accepting an invitation take no grace.
+  for (const route of ['GET /api/v1/orgs', 'GET /api/v1/api-keys'])
     expect(levels[route], route).toBe('idp');
+  for (const route of [
+    'POST /api/v1/developer/sandbox',
+    'DELETE /api/v1/developer/sandbox',
+    'POST /api/v1/developer/try-token',
+    'DELETE /api/v1/developer/try-token',
+    'POST /api/v1/orgs/:orgId/close',
+  ])
+    expect(levels[route], route).toBe('strict');
 });

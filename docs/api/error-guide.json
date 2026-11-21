@@ -647,6 +647,12 @@
     "fix": "Check the id with GET /api/v1/identities.",
     "retryable": false
   },
+  "IDP_SIGN_IN_REQUIRED": {
+    "title": "Polaris ID sign-in required",
+    "when": "A session made with an email link called a console or developer route. Only a Polaris ID sign-in opens them.",
+    "fix": "Sign in with Polaris ID at the signInUrl in the problem, then send the request again. API keys are not affected.",
+    "retryable": false
+  },
   "IDENTITY_PLATFORM_ENV_MISMATCH": {
     "title": "Platform identity mismatch",
     "when": "The platform identity row does not match the deployed signing identity.",
@@ -873,6 +879,12 @@
     "title": "Key creator left the organization",
     "when": "The user who created this key is no longer a member of the organization.",
     "fix": "Create a new key from a current member with POST /api/v1/api-keys.",
+    "retryable": false
+  },
+  "KEY_OWNER_NEEDS_IDP": {
+    "title": "Key owner needs Polaris ID",
+    "when": "A personal key's owner has never signed in with Polaris ID, and the email sign-in grace period for the console has ended.",
+    "fix": "Ask the key's owner to sign in with Polaris ID once. The key then works again unchanged.",
     "retryable": false
   },
   "KEY_TEST_ONLY": {
@@ -1125,6 +1137,12 @@
     "title": "Pairing code invalid",
     "when": "The pairing code is wrong, used or expired.",
     "fix": "Create a new pairing code and enter it again.",
+    "retryable": false
+  },
+  "PASSKEY_REQUIRED": {
+    "title": "Passkey required",
+    "when": "A Polaris ID sign-in finished with an emailed login code instead of a passkey, twice.",
+    "fix": "Sign in to Polaris ID with your passkey, not a code.",
     "retryable": false
   },
   "PASS_CONFLICT": {

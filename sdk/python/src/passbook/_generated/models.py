@@ -5437,6 +5437,7 @@ class Problem(_Model):
     feature: str | None = None
     limit: int | None = None
     used: int | None = None
+    signInUrl: str | None = None
 
 class ProblemIssuesItem(_Model):
     path: str
