@@ -476,7 +476,7 @@ describe('confirm page and token', () => {
     const user = await makeUser(f());
     await run(
       h.env.DB,
-      `INSERT INTO auth_identities (provider, subject, user_id, groups, created_at) VALUES ('pocketid', ?, ?, '["wallet-admins"]', 0)`,
+      `INSERT INTO auth_identities (provider, subject, user_id, groups, created_at) VALUES ('pocketid', ?, ?, '["wallet_admins"]', 0)`,
       [`s${uniq()}`, user.id],
     );
     await run(h.env.DB, `UPDATE users SET last_roles = '["admin","user"]' WHERE id = ?`, [user.id]);

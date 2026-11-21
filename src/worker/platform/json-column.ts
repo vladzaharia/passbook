@@ -26,7 +26,12 @@ export function parseJsonArray<T>(
   return parsed.filter(accept);
 }
 
-export type StoredRole = 'admin' | 'user';
+export type StoredRole = 'admin' | 'user' | 'developer' | 'console';
 
 export const parseRoles = (raw: string, log?: Logger): StoredRole[] =>
-  parseJsonArray(raw, 'roles', (r): r is StoredRole => r === 'admin' || r === 'user', log);
+  parseJsonArray(
+    raw,
+    'roles',
+    (r): r is StoredRole => r === 'admin' || r === 'user' || r === 'developer' || r === 'console',
+    log,
+  );

@@ -16,6 +16,8 @@ export const SessionResponseSchema = z.discriminatedUnion('authenticated', [
     amr: z.enum(['oidc', 'magic_link', 'breakglass']),
     /** An email session still inside the console grace window: when it ends (ms). Null otherwise. */
     consoleUntil: TimestampSchema.nullable().optional(),
+    /** The admin group is required for an org console (`OIDC_CONSOLE_GROUP_REQUIRED`). */
+    consoleGroupRequired: z.boolean().optional(),
     expiresAt: TimestampSchema,
   }),
   z.object({

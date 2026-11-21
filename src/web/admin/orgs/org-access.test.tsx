@@ -84,7 +84,14 @@ const handlers = (extra: Record<string, FetchHandler> = {}) => ({
   '/api/v1/settings': () =>
     json({
       items: [],
-      oidc: { issuer: 'https://id.plrs.im', adminGroup: null, userGroup: null },
+      oidc: {
+        issuer: 'https://id.plrs.im',
+        platformAdminGroup: null,
+        adminGroup: null,
+        developerGroup: null,
+        userGroup: null,
+        consoleGroupRequired: false,
+      },
       nextCursor: null,
     }),
   ...extra,
