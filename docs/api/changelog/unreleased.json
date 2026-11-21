@@ -29,7 +29,7 @@
     "operationId": "developer.getResolve",
     "op": "GET /api/v1/developer/resolve",
     "change": "new operation",
-    "note": ""
+    "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
   },
   {
     "key": "GET /api/v1/metrics/platform/developer new operation",
@@ -37,7 +37,7 @@
     "operationId": "metrics.getMetricsPlatformDeveloper",
     "op": "GET /api/v1/metrics/platform/developer",
     "change": "new operation",
-    "note": ""
+    "note": "Platform admins: sandboxes by quickstart step, completion and time to first pass, last 30 days."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
