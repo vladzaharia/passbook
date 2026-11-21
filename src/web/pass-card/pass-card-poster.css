@@ -94,37 +94,52 @@
   height: calc(var(--u) * 100);
   max-width: calc(var(--u) * 100);
 }
+/* The title takes its own full-width row and wraps by word; the labelled fields share a row
+   beneath it (wrapping to a second row when they cannot all keep a readable width). Nothing in
+   here may shrink to a per-character column. */
 .pc-poster-primary {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: calc(var(--u) * 12);
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--u) * 8);
 }
 .pc-title {
   margin: 0;
   min-width: 0;
-  flex: 1 1 auto;
   font-size: calc(var(--u) * 26);
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.1;
   overflow-wrap: break-word;
+  word-break: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 .pc-poster-primary .pc-primary {
-  flex: 0 1 auto;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
-  gap: calc(var(--u) * 12);
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: calc(var(--u) * 8) calc(var(--u) * 14);
 }
-.pc-poster-primary .pc-primary .pc-field {
-  align-items: flex-end;
-  text-align: end;
-  white-space: nowrap;
+.pc-root[data-face="front"] .pc-poster-primary .pc-primary .pc-field[data-fk] {
+  flex: 1 1 calc(var(--u) * 84);
+  min-width: 0;
+  align-items: flex-start;
+  text-align: start;
 }
-.pc-poster-primary .pc-primary .pc-value {
+.pc-root[data-face="front"] .pc-poster-primary .pc-primary .pc-field[data-fk] > .pc-value {
   font-size: calc(var(--u) * 16);
   font-weight: 500;
   line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .pc-poster-primary .pc-primary .pc-label {
   order: -1;
