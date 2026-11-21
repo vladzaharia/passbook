@@ -25,7 +25,6 @@ import {
   CardBody,
   CardHeader,
   CountLink,
-  EntityAvatar,
   JsonViewer,
   KeyValue,
   ListRow,
@@ -34,6 +33,7 @@ import {
 } from '../../ui/index.ts';
 import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplateActions } from './api.ts';
+import { TemplateOrgMark } from './gallery.tsx';
 import { JoinSection } from './join/join-section.tsx';
 import { styleList } from './labels.ts';
 import { OrgDialog } from './template-dialogs.tsx';
@@ -73,9 +73,7 @@ export function TemplateOverview({
                 label: 'Organization',
                 value: (
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
-                    {t.orgId ? (
-                      <EntityAvatar kind="org" id={t.orgId} name={t.orgName ?? ''} />
-                    ) : null}
+                    {t.orgId ? <TemplateOrgMark template={t} /> : null}
                     <span className="truncate">
                       {t.orgId ? (t.orgName ?? t.orgId) : 'All organizations'}
                     </span>
