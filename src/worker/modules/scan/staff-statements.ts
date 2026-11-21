@@ -10,6 +10,7 @@ import { audited } from './repo-admin-grant.ts';
 import { addStaffInsert } from './repo-staff.ts';
 import type { SetupCapture } from './setup-capture.ts';
 import { hashPin } from './staff-pin.ts';
+import { newUniquePin } from './staff-pin-unique.ts';
 
 export type CreateStaff = z.infer<typeof CreateScanStaffSchema>;
 
@@ -39,7 +40,7 @@ export async function planStaff(ctx: ServiceContext, input: CreateStaff): Promis
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const id = ctx.ids.id();
-  const pin = ctx.ids.code(6);
+  const pin = await newUniquePin(ctx, input.orgId, id);
   return { input, id, pin, pinHash: await hashPin(ctx.env, id, pin) };
 }
 

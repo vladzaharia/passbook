@@ -878,5 +878,13 @@
     "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.kind: field added",
     "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
+    "key": "GET /api/v1/scan-staff 200.pinOnlyOff: field added",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "200.pinOnlyOff: field added",
+    "note": "The staff list says pinOnlyOff: true while PIN-only sign-in is off after repeated wrong PINs."
   }
 ]
