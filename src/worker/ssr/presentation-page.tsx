@@ -39,7 +39,7 @@ export interface PresentationPageProps {
   passTitle: string;
   mode: Mode;
   backHref: string;
-  /** A pass page's own barcode may be saved on this device; a bundle's member's may not. */
+  /** Show Save to this device: a pass's own barcode page, and a bundle member's under the bundle's own worker. */
   offline?: boolean;
   /** The save script for this page's family (a bundle member's, else the pass page's). */
   offlineScript?: string;

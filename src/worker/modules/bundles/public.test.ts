@@ -3,6 +3,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -125,18 +126,21 @@ describe('GET /b/:token', () => {
       expect(res.headers.get('location')).toBeNull();
       bodies.push(await res.text());
     }
+    const plain = await Promise.all(
+      passes.map((p) => revealToken(kit.env, 'pass', p.id, p.orgId, p.downloadToken)),
+    );
     const bundlePage = await (await get(`/b/${token}`)).text();
     const barcode = await get(`/b/${token}/${live?.id}/barcode`);
     bodies.push(bundlePage, await barcode.text());
     // Not one /b response carries a member's own link or token, in its body or its headers.
     for (const body of bodies) {
-      for (const p of passes) expect(body).not.toContain(p.downloadToken);
+      for (const t of plain) expect(body).not.toContain(t);
       expect(body).not.toMatch(/\/p\/[A-Za-z0-9_-]{16,}/);
       expect(body).not.toMatch(/\/(print|sign-in|resend)\b/);
     }
     for (const res of [await get(`/b/${token}/${live?.id}`), barcode])
       for (const [, value] of res.headers) {
-        for (const p of passes) expect(value).not.toContain(p.downloadToken);
+        for (const t of plain) expect(value).not.toContain(t);
       }
     expect(bodies[0]).toContain(`href="/b/${token}/${live?.id}/barcode"`);
     expect(bodies[0]).toContain(`href="/b/${token}"`);
@@ -294,6 +298,17 @@ describe('rate limit', () => {
     expect((await hit('2.2.2.2')).status).toBe(200);
     for (let i = 0; i < 5; i++) await get(`/b/${token}/${passes[0]?.id}/assets/icon.png`, {}, env);
     expect((await get(`/b/${token}`, { 'cf-connecting-ip': '3.3.3.3' }, env)).status).toBe(200);
+  });
+
+  it('counts the archive once and a member page once', async () => {
+    const { token, passes } = await bundleWith(1);
+    const env = { ...kit.env, RL_PUBLIC: fakeLimiter(1) as unknown as RateLimit };
+    const ip = { 'cf-connecting-ip': '4.4.4.4' };
+    expect((await get(`/b/${token}/passes.pkpasses`, ip, env)).status).toBe(200);
+    expect((await get(`/b/${token}/passes.pkpasses`, ip, env)).status).toBe(429);
+    const member = { 'cf-connecting-ip': '5.5.5.5' };
+    expect((await get(`/b/${token}/${passes[0]?.id}`, member, env)).status).toBe(200);
+    expect((await get(`/b/${token}/${passes[0]?.id}`, member, env)).status).toBe(429);
   });
 });
 

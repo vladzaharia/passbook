@@ -56,7 +56,11 @@ bundlePublicRoutes.use(
 );
 bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/passes.pkpasses', rateLimit('RL_PUBLIC'));
-bundlePublicRoutes.use('/:token/:passId', rateLimit('RL_PUBLIC'));
+// The member page's limit; the archive path matches this pattern too and has its own, so skip it.
+const memberLimit = rateLimit('RL_PUBLIC');
+bundlePublicRoutes.use('/:token/:passId', (c, next) =>
+  c.req.param('passId') === 'passes.pkpasses' ? next() : memberLimit(c, next),
+);
 bundlePublicRoutes.use('/:token/:passId/pass.pkpass', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/barcode', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/wallet/:provider', rateLimit('RL_PUBLIC'));
