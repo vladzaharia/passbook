@@ -1,4 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
+import { apiAs, uid } from './helpers/api.ts';
+import { addOrgMember, createOrgWithRoles } from './helpers/seed.ts';
 
 async function openMenu(page: Page) {
   await page.getByRole('button', { name: 'Account menu' }).click();
@@ -101,6 +103,34 @@ test.describe('admin', () => {
 
 test.describe('organization member', () => {
   test.use({ storageState: 'e2e/.auth/user.json' });
+
+  // Admin needs a membership; this test makes its own instead of relying on another spec's.
+  let grant: { orgId: string; id: string } | undefined;
+  test.beforeAll(async () => {
+    const admin = await apiAs('admin');
+    const member = await apiAs('user');
+    try {
+      const slug = uid('menubar-member').toLowerCase();
+      const org = await createOrgWithRoles(admin, { slug, name: `Menubar member ${slug}` });
+      const membership = await addOrgMember(admin, org.id, member, ['pass_operator']);
+      grant = { orgId: org.id, id: membership.id };
+    } finally {
+      await member.dispose();
+      await admin.dispose();
+    }
+  });
+  test.afterAll(async () => {
+    if (!grant) return;
+    const admin = await apiAs('admin');
+    try {
+      await admin.send(
+        'DELETE',
+        `/api/v1/orgs/${encodeURIComponent(grant.orgId)}/memberships/${encodeURIComponent(grant.id)}`,
+      );
+    } finally {
+      await admin.dispose();
+    }
+  });
 
   test('an organization member gets Admin, and never Developers without the role', async ({
     page,

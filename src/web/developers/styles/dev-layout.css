@@ -126,6 +126,29 @@
   font-size: 16px;
   line-height: 24px;
 }
+/* The same chunks size spacing in rem, and this site's root is smaller than 16 px: pin the bar's px. */
+[data-menubar] .gap-1 {
+  gap: 4px;
+}
+[data-menubar] .gap-2 {
+  gap: 8px;
+}
+[data-menubar] .px-2 {
+  padding-inline: 8px;
+}
+[data-menubar] .px-3 {
+  padding-inline: 12px;
+}
+[data-menubar] .h-9 {
+  height: 36px;
+}
+[data-menubar] .min-h-8 {
+  min-height: 32px;
+}
+[data-menubar] .size-5 {
+  width: 20px;
+  height: 20px;
+}
 /* The island chunks load their own utility CSS after this file: [data-menubar] outranks a bare class. */
 [data-menubar] button[data-search][aria-label] {
   display: none;
