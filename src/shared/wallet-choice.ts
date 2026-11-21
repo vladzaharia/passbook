@@ -46,19 +46,23 @@ export const NATIVE_WALLET_BADGES: Record<
   },
 };
 
-/** What leads per device: the wallet that adds here, else the browser barcode. */
+/**
+ * What leads per device: the wallet that adds here; on a computer (Windows, Linux, an old iPad
+ * agent) Apple's QR, since a barcode on a computer's screen never reaches the door; else the
+ * browser barcode.
+ */
 const LEAD: Record<PassDevice, readonly WalletChoiceId[]> = {
   iphone: ['apple'],
   mac: ['apple'],
   galaxy: ['samsung', 'google', 'browser'],
   android: ['google', 'browser'],
-  other: ['browser'],
+  other: ['apple', 'browser'],
 };
 
 /**
- * Which ways a holder has, best first. Device detection only orders: Apple leads on an iPhone or
- * Mac, Samsung then Google on a Galaxy, Google on other Android, the browser barcode elsewhere,
- * the rest after. A provider's offer is dropped only when its issuance is disabled, so a Galaxy
+ * Which ways a holder has, best first. Device detection only orders: Apple leads on an iPhone, a
+ * Mac or a computer (its QR), Samsung then Google on a Galaxy, Google on other Android, the
+ * browser barcode next, the rest after. A provider's offer is dropped only when its issuance is disabled, so a Galaxy
  * holder never sees Samsung while it is dark.
  */
 export function walletChoices(input: WalletChoiceInput): WalletChoice[] {
