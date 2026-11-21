@@ -189,7 +189,7 @@ export function ScanLoop({
         name: scanner?.name ?? 'Scan as admin',
         staff: session.staff?.name,
         mode: modeLabel(session),
-        ...(handheld && access.direction
+        ...(handheld && access.direction && !access.direction.onCycle
           ? { direction: SCAN_COPY.direction[access.direction.value] }
           : {}),
         state: capsuleStateOf(s.online, l.s),

@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { ChevronDown } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.ts';
@@ -8,7 +7,6 @@ import { Button, DataTable, EmptyState, ErrorState, LoadMore } from '@/web/ui/in
 import { useNow } from '../../../ui/rel-time.tsx';
 import { useScannerPages } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
-import { type ScanningSearch, withTab } from '../search.ts';
 import { scannerColumns } from './scanner-columns.tsx';
 import { PairDialog, RevokeDialog } from './scanner-dialogs.tsx';
 
@@ -59,17 +57,6 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
   const more = revokedList.hasNextPage ? '+' : '';
   return (
     <>
-      <p className="mb-3 text-sm text-fg-muted">
-        Add devices from a{' '}
-        <Link
-          className="text-accent-fg underline-offset-2 hover:underline"
-          to="."
-          search={(prev) => withTab(prev as ScanningSearch, 'sessions')}
-        >
-          session
-        </Link>
-        .
-      </p>
       <DataTable
         caption="Scanners"
         loading={live.isPending}
