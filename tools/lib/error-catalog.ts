@@ -17,10 +17,11 @@ export interface ErrorCatalog {
   codes: CatalogCode[];
 }
 
-/** Codes the catalog carries before any source scan: PX7 implements the two sandbox ones. */
+/** Codes the catalog carries before any source scan: PX7 implements the two sandbox ones; S7 the staff PIN one. */
 const DECLARED: Record<string, { status: number; module: string }> = {
   SANDBOX_QUOTA: { status: 403, module: 'sandbox' },
   SANDBOX_PREVIEW_ONLY: { status: 409, module: 'sandbox' },
+  STAFF_PIN_AMBIGUOUS: { status: 409, module: 'scan' },
   VALIDATION: { status: 422, module: 'platform' },
   INTERNAL: { status: 500, module: 'platform' },
   HTTP_ERROR: { status: 400, module: 'platform' },

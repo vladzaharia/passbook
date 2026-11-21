@@ -3791,6 +3791,15 @@
       ]
     },
     {
+      "code": "STAFF_PIN_AMBIGUOUS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "STAFF_REQUIRED",
       "statuses": [
         403

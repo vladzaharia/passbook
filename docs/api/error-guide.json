@@ -1877,6 +1877,12 @@
     "fix": "Choose a different name.",
     "retryable": false
   },
+  "STAFF_PIN_AMBIGUOUS": {
+    "title": "PIN shared",
+    "when": "Staff sign-in without a name matched more than one active staff member.",
+    "fix": "Pick the name and enter the PIN again.",
+    "retryable": false
+  },
   "STAFF_REQUIRED": {
     "title": "Staff sign-in required",
     "when": "The scanner has no signed-in staff member.",

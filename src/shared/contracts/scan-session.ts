@@ -94,7 +94,8 @@ export const ScanPairPreviewSchema = z.object({
   mode: ModeSchema,
 });
 export const ScanStaffSignInSchema = z.object({
-  staffId: IdSchema,
+  /** Omitted: the PIN is matched among the org's active staff; several matches answer `STAFF_PIN_AMBIGUOUS`. */
+  staffId: IdSchema.optional(),
   pin: z.string().regex(/^\d{6}$/),
 });
 export const ScanLookupRequestSchema = z.object({
