@@ -604,6 +604,12 @@ export type HoldersUnassignParams = {
   passId: string;
 };
 
+export type IdentitiesCertificatesRevokeParams = {
+  certificateId: string;
+  reason: "compromised";
+  confirm: string;
+};
+
 export type IdentitiesCreateParams = {
   orgId?: string | null;
   label: string;
@@ -631,6 +637,12 @@ export type IdentitiesUpdateParams = {
   isDefault?: boolean;
   nfcEnabled?: boolean;
   apnsBinding?: string | null;
+  rotation?: "auto" | "manual";
+  issuing?: boolean;
+};
+
+export type IdentityRunsStartManagedParams = {
+  handle?: string;
 };
 
 export type InvitationsCreateParams = {
@@ -1595,6 +1607,14 @@ export type PlatformUsersEmailsCreateParams = {
 
 export type PlatformUsersUpdateParams = {
   status: "active" | "disabled";
+};
+
+export type PlatformWalletAccountsGoogleManagedCompleteParams = {
+  issuerId: string;
+};
+
+export type PlatformWalletAccountsGoogleManagedCreateParams = {
+  mode: "live";
 };
 
 export type PlatformWalletCredentialsResolveMigrationParams = {
@@ -3707,6 +3727,14 @@ export type VisitorsCreateParams = {
 
 export type VisitorsSendHostEmailParams = {
   timeZone?: string;
+};
+
+export type WalletAccountsGoogleManagedCreateParams = {
+  mode: "live";
+};
+
+export type WalletAccountsGoogleSharedCreateParams = {
+  issuerId: string;
 };
 
 export type WalletCredentialsRevokeParams = {

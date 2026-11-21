@@ -21,6 +21,13 @@ function workerActions(): Map<string, string> {
         if (code) found.set(code, file.replace(`${process.cwd()}/`, ''));
     }
   }
+  // auditOnce(ctx, run, 'action', ...): the action sits within the call's first lines.
+  for (const file of sources(WORKER)) {
+    const text = readFileSync(file, 'utf8');
+    for (let at = text.indexOf('auditOnce('); at !== -1; at = text.indexOf('auditOnce(', at + 1))
+      for (const [, code] of text.slice(at, at + 250).matchAll(/'([a-z_]+\.[a-z_.]+)'/g))
+        if (code) found.set(code, file.replace(`${process.cwd()}/`, ''));
+  }
   return found;
 }
 

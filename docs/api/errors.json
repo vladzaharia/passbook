@@ -237,6 +237,24 @@
       ]
     },
     {
+      "code": "ASC_CERT_DER_MISSING",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "ASC_CERT_MISSING",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "ASC_CONFLICT",
       "statuses": [
         409
@@ -249,6 +267,16 @@
       "code": "ASC_NOT_FOUND",
       "statuses": [
         404
+      ],
+      "modules": [
+        "identities",
+        "workflows"
+      ]
+    },
+    {
+      "code": "ASC_PASS_TYPE_MISSING",
+      "statuses": [
+        502
       ],
       "modules": [
         "identities"
@@ -1119,6 +1147,33 @@
       ]
     },
     {
+      "code": "GOOGLE_ISSUER_NOT_OWNED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "GOOGLE_ISSUER_NOT_SHARED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "GOOGLE_UNAVAILABLE",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "GROUP_ENTRY_ONLY",
       "statuses": [
         422
@@ -1192,6 +1247,24 @@
       ]
     },
     {
+      "code": "IAM_BAD_ACCOUNT",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "IAM_BAD_KEY",
+      "statuses": [
+        502
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "IDEMPOTENCY_IN_PROGRESS",
       "statuses": [
         409
@@ -1227,9 +1300,54 @@
       ]
     },
     {
+      "code": "IDENTITY_ALREADY_PROVISIONED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_CERT_CAP",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_CERT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_CERT_NOT_REVOCABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "IDENTITY_CHANGED",
       "statuses": [
         409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_CONFIRM_MISMATCH",
+      "statuses": [
+        422
       ],
       "modules": [
         "identities"
@@ -1246,6 +1364,51 @@
     },
     {
       "code": "IDENTITY_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_HANDLE_ADMIN_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_HANDLE_FIXED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_HANDLE_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_HANDLE_RESERVED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_HANDLE_TAKEN",
       "statuses": [
         409
       ],
@@ -1292,6 +1455,24 @@
       ]
     },
     {
+      "code": "IDENTITY_NOT_READY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_NOT_ROTATABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "IDENTITY_PLATFORM_ENV_MISMATCH",
       "statuses": [
         503
@@ -1310,7 +1491,63 @@
       ]
     },
     {
+      "code": "IDENTITY_PTI_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_REISSUE_PENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "IDENTITY_RETIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_RUN_CLOSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_RUN_INCOMPLETE",
+      "statuses": [
+        502,
+        503
+      ],
+      "modules": [
+        "identities",
+        "workflows"
+      ]
+    },
+    {
+      "code": "IDENTITY_RUN_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
+      "code": "IDENTITY_RUN_OPEN",
       "statuses": [
         409
       ],
@@ -2061,6 +2298,15 @@
       ]
     },
     {
+      "code": "OIDC_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "identities"
+      ]
+    },
+    {
       "code": "OIDC_UNCONFIGURED",
       "statuses": [
         503
@@ -2166,7 +2412,8 @@
         "retention",
         "scan",
         "settings",
-        "templates"
+        "templates",
+        "wallet-providers"
       ]
     },
     {
@@ -2206,6 +2453,7 @@
         "audit",
         "bundles",
         "delivery",
+        "identities",
         "passes",
         "scan",
         "templates"
@@ -5013,6 +5261,42 @@
       ]
     },
     {
+      "code": "WALLET_ISSUER_CLAIMED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_ISSUER_EXISTS",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_ISSUER_NOT_WAITING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_KEY_HELD",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "WALLET_MODE_MISMATCH",
       "statuses": [
         403
@@ -5025,6 +5309,15 @@
       "code": "WALLET_OFFER_NOT_FOUND",
       "statuses": [
         404
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_PLATFORM_CREDENTIAL_MISSING",
+      "statuses": [
+        409
       ],
       "modules": [
         "wallet-providers"
@@ -5070,6 +5363,15 @@
       "code": "WALLET_PROJECTION_UNSUPPORTED",
       "statuses": [
         409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
+      "code": "WALLET_RUN_BUSY",
+      "statuses": [
+        503
       ],
       "modules": [
         "wallet-providers"

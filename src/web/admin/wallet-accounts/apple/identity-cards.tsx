@@ -23,6 +23,7 @@ import {
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
 import { ExpiryPill } from './expiry.tsx';
+import { IdentityStatusPill, KIND_LABEL, renewalText } from './identity-status.tsx';
 import { useUpdateIdentity } from './queries.ts';
 
 type Identity = z.infer<typeof IdentitySchema>;
@@ -211,6 +212,9 @@ export function OverviewCard({
         <KeyValue
           items={[
             { label: 'Owner', value: orgName(identity.orgId) },
+            { label: 'Kind', value: KIND_LABEL[identity.kind] },
+            { label: 'Status', value: <IdentityStatusPill status={identity.status} /> },
+            { label: 'Renews', value: renewalText(identity) },
             {
               label: 'Passes',
               value: (
