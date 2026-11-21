@@ -29,7 +29,7 @@ UPDATE signing_identities SET provenance = 'platform' WHERE org_id IS NULL;
 
 CREATE TABLE identity_certificates (
   id TEXT PRIMARY KEY,
-  identity_id TEXT NOT NULL REFERENCES signing_identities (id) ON DELETE CASCADE,
+  identity_id TEXT NOT NULL REFERENCES signing_identities (id) ON UPDATE CASCADE ON DELETE CASCADE,
   credential_id TEXT REFERENCES credentials (id) ON DELETE SET NULL,
   cert_sha256 TEXT,
   not_before INTEGER,
