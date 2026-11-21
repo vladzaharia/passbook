@@ -4,7 +4,7 @@ import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { escapeHtml } from '../../shared/html.ts';
-import { DOOR_SCRIPT } from '../../shared/pass-offline.ts';
+import { DOOR_SCRIPT, EXPIRES_HEADER } from '../../shared/pass-offline.ts';
 import type { PresentationBarcode } from '../modules/public/presentation.ts';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml } from './hosted.ts';
@@ -47,6 +47,12 @@ body{margin:0;min-height:100dvh}
 .door-foot [hidden]{display:none}
 @media(max-width:360px){.presentation-code{padding:.5rem}}
 `;
+
+/** The door view's headers; the pass's own expiry rides in one so a saved copy can honour it. */
+export const presentationHeaders = (expiresAt: number | null | undefined) => ({
+  ...PRESENTATION_HEADERS,
+  ...(expiresAt ? { [EXPIRES_HEADER]: String(expiresAt) } : {}),
+});
 
 export interface PresentationPageProps {
   barcode: PresentationBarcode | null;

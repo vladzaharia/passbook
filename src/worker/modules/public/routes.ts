@@ -1,7 +1,6 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
 import { formatEndedOn } from '../../../shared/format-date.ts';
-import { EXPIRES_HEADER } from '../../../shared/pass-offline.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
 import { writeEvent } from '../../platform/analytics.ts';
@@ -16,7 +15,11 @@ import {
 } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
-import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
+import {
+  PRESENTATION_HEADERS,
+  presentationHeaders,
+  renderPresentationPage,
+} from '../../ssr/presentation-page.tsx';
 import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { codesReplacedNotice } from '../channels/service.ts';
 import { recordPassEvent } from '../events/record.ts';
@@ -56,11 +59,6 @@ publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/barcode', rateLimit('RL_PUBLIC'));
 
-// The saved door view's relative "back" link (./) lands here: its HTML carries no token.
-publicRoutes.get('/:token/', (c) => {
-  const token = c.req.param('token');
-  return isTokenShape(token) ? c.redirect(`/p/${token}`, 308) : c.text('Not found', 404);
-});
 publicRoutes.route('/', resendRoutes);
 publicRoutes.route('/', signInRoutes);
 publicRoutes.route('/', holderPrintRoutes);
@@ -230,13 +228,7 @@ register(
       });
       await assertPassSnapshot(ctx, snapshot);
       ctx.waitUntil(recordCopy(ctx, pass, 'mobile'));
-      return new Response(html, {
-        headers: {
-          ...PRESENTATION_HEADERS,
-          // The saved copy reads the pass's expiry from here, not from the page.
-          ...(model.expiresAt ? { [EXPIRES_HEADER]: String(model.expiresAt) } : {}),
-        },
-      });
+      return new Response(html, { headers: presentationHeaders(model.expiresAt) });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
         return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false, drop: true }), {
