@@ -54,18 +54,26 @@ export const ResetDeveloperSandboxSchema = z.object({
 export type ResetDeveloperSandbox = z.infer<typeof ResetDeveloperSandboxSchema>;
 
 /**
- * What a reset did: the sandbox, the new key (the secret shown once; the old key is revoked), the rows deleted, the test
- * passes that could not be deleted now (`kept`: a hold or an unfinished retirement) and the resets left today.
+ * What a reset did: the sandbox, the new key (the secret shown once; the old key is revoked when the reset starts),
+ * the rows deleted, the test passes that could not be deleted now (`kept`: a hold or an unfinished retirement) and
+ * the resets left today. `more`: the time ran out before the purge finished, so there is no new key yet; ask again
+ * (it resumes and costs no reset).
  */
 export const SandboxResetSchema = z.object({
   sandbox: DeveloperSandboxSchema,
-  key: CreatedDeveloperSandboxSchema.shape.key.unwrap(),
+  key: CreatedDeveloperSandboxSchema.shape.key,
   deleted: z.object({
     passes: z.number().int().nonnegative(),
     captures: z.number().int().nonnegative(),
     calls: z.number().int().nonnegative(),
+    other: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe('Bundles, captured emails, imports, broadcasts, rules and idempotency records.'),
   }),
   kept: z.number().int().nonnegative(),
+  more: z.boolean(),
   resetsLeft: z.number().int().min(0).max(3),
 });
 export type SandboxReset = z.infer<typeof SandboxResetSchema>;

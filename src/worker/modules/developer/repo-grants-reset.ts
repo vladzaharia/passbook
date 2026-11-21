@@ -1,6 +1,7 @@
+import { SANDBOX_KEY_NAME } from '../../../shared/copy/developer.ts';
 import { developerSandboxGrant } from '../../jobs/developer-sandbox.ts';
 import { rawCheck } from '../../platform/authority-checks.ts';
-import { exists } from '../../platform/authority-cond.ts';
+import { condCheck, exists, notExists } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -23,23 +24,26 @@ const liveSession = (by: { userId: string; sessionIdHash: string }, now: number)
 
 /**
  * `platform.job.developer_sandbox.restart`: claims a reset. In one batch it checks the person's live session, an
- * open sandbox of theirs and fewer than `RESETS_PER_DAY` resets in the last day (counted from the audit rows
- * this very batch writes), restarts the quickstart track at `startedAt` and audits it. The funnel's `first_*`
- * columns are never named: they are set once. Nothing is deleted here; the purge that follows repeats the
- * claim's stamp as its guard. False when a check refused or the org was no longer open.
+ * open sandbox of theirs whose `track_started_at` is still `prevStart` (compare and swap: two resets read the same
+ * value, one wins), fewer than `RESETS_PER_DAY` resets in the last day (counted from the audit rows this very
+ * batch writes) and no legal hold on the org; it then restarts the quickstart track at `startedAt`, revokes the
+ * person's sandbox keys (nothing new is written during the purge that follows) and audits it. The funnel's
+ * `first_*` columns are never named: they are set once. Nothing is deleted here; the purge repeats the claim's
+ * stamp as its guard. A refused check throws `SANDBOX_CONFLICT`.
  */
 export async function restartTrack(
   ctx: ServiceContext,
   sandbox: { id: string; orgId: string },
   by: { userId: string; sessionIdHash: string },
   startedAt: number,
-): Promise<boolean> {
+  prevStart: number | null,
+): Promise<void> {
   const { orgId } = sandbox;
   const now = ctx.clock.now();
   const owner = rawCheck(
     'config',
-    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ? AND d.closed_at IS NULL)',
-    [sandbox.id, by.userId],
+    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ? AND d.closed_at IS NULL AND d.track_started_at IS ?)',
+    [sandbox.id, by.userId, prevStart],
   );
   const room = rawCheck(
     'config',
@@ -49,7 +53,12 @@ export async function restartTrack(
   const g = developerSandboxGrant(
     ctx,
     'platform.job.developer_sandbox.restart',
-    [liveSession(by, now), owner, room],
+    [
+      liveSession(by, now),
+      owner,
+      room,
+      condCheck('config', notExists('retention_holds', { org_id: orgId, released_at: null })),
+    ],
     orgId,
   );
   g.update('developer_sandboxes', {
@@ -63,6 +72,16 @@ export async function restartTrack(
     where: { org_id: orgId, user_id: by.userId, closed_at: null },
     returning: ['id'],
   });
+  g.update('api_keys', {
+    set: { revoked_at: now },
+    where: {
+      org_id: orgId,
+      created_by: by.userId,
+      name: SANDBOX_KEY_NAME,
+      kind: 'personal',
+      revoked_at: null,
+    },
+  });
   grantedAudit(g, ctx, {
     orgId,
     actorType: 'user',
@@ -71,8 +90,7 @@ export async function restartTrack(
     targetType: 'org',
     targetId: orgId,
   });
-  const [restarted] = await g.commit();
-  return (restarted?.results.length ?? 0) > 0;
+  await g.commit();
 }
 
 /**
@@ -85,7 +103,7 @@ export async function reopenSandbox(
   ctx: ServiceContext,
   sandbox: { id: string; orgId: string },
   by: { userId: string; sessionIdHash: string },
-): Promise<boolean> {
+): Promise<void> {
   const { orgId } = sandbox;
   const now = ctx.clock.now();
   const owner = rawCheck(
@@ -122,8 +140,7 @@ export async function reopenSandbox(
     targetType: 'org',
     targetId: orgId,
   });
-  const [reopened] = await g.commit();
-  return (reopened?.results.length ?? 0) > 0;
+  await g.commit();
 }
 
 /**
@@ -146,7 +163,13 @@ export async function deleteCaptures(
   const g = developerSandboxGrant(
     ctx,
     'platform.job.developer_sandbox.reset_rows',
-    [claim],
+    [
+      claim,
+      condCheck(
+        'config',
+        notExists('retention_holds', { org_id: sandbox.orgId, released_at: null }),
+      ),
+    ],
     sandbox.orgId,
   );
   g.delete('webhook_captures', { where: { org_id: sandbox.orgId }, returning: ['id'] });

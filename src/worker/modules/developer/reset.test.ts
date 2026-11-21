@@ -7,7 +7,7 @@ import {
   SandboxResetSchema,
 } from '../../../shared/contracts/index.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { deleteSandboxRows } from './repo-reset.ts';
+import { deleteSlice, RESET_TABLES, type ResetTable } from './repo-reset.ts';
 import { logKit } from './request-log-test-fixtures.ts';
 import { BROWSER, bearer } from './try-token-test-fixtures.ts';
 
@@ -22,6 +22,14 @@ afterAll(() => t.unstub());
 type Dev = Awaited<ReturnType<typeof t.developer>>;
 const DAY = 86_400_000;
 const db = () => t.kit.env.DB;
+
+/** Every table a reset empties, deleted for `orgId` under a claimed `(person, stamp)`; the rows it removed. */
+async function sweep(orgId: string, userId: string, stamp: number): Promise<number> {
+  let total = 0;
+  for (const table of Object.keys(RESET_TABLES) as ResetTable[])
+    total += await deleteSlice(db(), table, orgId, userId, stamp);
+  return total;
+}
 
 const json = (headers: Record<string, string>, method: string, body: unknown) => ({
   method,
@@ -104,8 +112,8 @@ describe('POST /developer/sandbox/reset', () => {
     expect(body.deleted.calls).toBeGreaterThan(0);
     expect(body.kept).toBe(0);
     expect(body.resetsLeft).toBe(2);
-    expect(body.key.secret).toMatch(/^pbp_test_/);
-    expect(body.key.id).not.toBe(d.key.id);
+    expect(body.key?.secret).toMatch(/^pbp_test_/);
+    expect(body.key?.id).not.toBe(d.key.id);
     expect(await count('passes', orgId)).toBe(0);
     expect(await count('webhook_captures', orgId)).toBe(0);
     expect(await count('request_log', orgId)).toBe(0);
@@ -117,7 +125,7 @@ describe('POST /developer/sandbox/reset', () => {
       401,
       'INVALID_API_KEY',
     );
-    expect((await t.call('/passes', { headers: bearer(body.key.secret) })).status).toBe(200);
+    expect((await t.call('/passes', { headers: bearer(body.key?.secret ?? '') })).status).toBe(200);
     // The track restarts, the funnel's first values stay.
     const home = (await (await t.call('/developer/home', { headers: d.browser })).json()) as {
       progress: { next: string; passAt: number | null; restartedAt: number | null };
@@ -185,8 +193,7 @@ describe('POST /developer/sandbox/reset', () => {
       )
     )?.t;
     // No claim yet (the track never restarted): the stamp is null, so nothing matches.
-    const none = await deleteSandboxRows(db(), orgId, d.user.id, t.kit.clock.now());
-    expect(Object.values(none).reduce((n, v) => n + v, 0)).toBe(0);
+    expect(await sweep(orgId, d.user.id, t.kit.clock.now())).toBe(0);
     expect(stamp).toBeNull();
     expect(await count('request_log', orgId)).toBe(rows);
     // A real org has no developer sandbox, so no claim can stand.
@@ -196,7 +203,7 @@ describe('POST /developer/sandbox/reset', () => {
       'INSERT INTO idempotency_keys (org_id, key, request_hash, created_at) VALUES (?, ?, ?, ?)',
       [real.id, 'k2', 'h', t.kit.clock.now()],
     );
-    await deleteSandboxRows(db(), real.id, d.user.id, 1);
+    await sweep(real.id, d.user.id, 1);
     expect(await count('idempotency_keys', real.id)).toBe(1);
     // After a real claim, a different person or an older stamp still deletes nothing.
     t.kit.clock.advance(1000);
@@ -209,10 +216,8 @@ describe('POST /developer/sandbox/reset', () => {
       )
     )?.t as number;
     const other = await makeUser(t.kit.f);
-    const foreign = await deleteSandboxRows(db(), orgId, other.id, claimed);
-    const old = await deleteSandboxRows(db(), orgId, d.user.id, claimed - 1);
-    expect(Object.values(foreign).reduce((n, v) => n + v, 0)).toBe(0);
-    expect(Object.values(old).reduce((n, v) => n + v, 0)).toBe(0);
+    expect(await sweep(orgId, other.id, claimed)).toBe(0);
+    expect(await sweep(orgId, d.user.id, claimed - 1)).toBe(0);
   });
 
   it('allows 3 a day, refuses the 4th without deleting anything, and the day rolls', async () => {
@@ -222,7 +227,7 @@ describe('POST /developer/sandbox/reset', () => {
       t.kit.clock.advance(1000);
       const res = await reset(d);
       expect(res.status, await res.clone().text()).toBe(200);
-      key = SandboxResetSchema.parse(await res.json()).key.secret;
+      key = SandboxResetSchema.parse(await res.json()).key?.secret ?? '';
     }
     const freshKey = async () => key;
     await makePass(d, await freshKey());
@@ -343,7 +348,7 @@ describe('POST /developer/sandbox/reopen', () => {
         headers: { ...adminSession.headers, ...BROWSER },
       }),
       409,
-      'SANDBOX_CONFLICT',
+      'SANDBOX_REOPEN_ADMIN',
     );
     const other = await makeSession(t.kit.f, {
       userId: (await makeUser(t.kit.f)).id,

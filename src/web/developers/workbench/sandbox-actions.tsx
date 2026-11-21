@@ -12,6 +12,15 @@ import { loadSession } from '../console/session.ts';
 import { verify } from '../console/turnstile.ts';
 import { copyToClipboard } from '../playground/copy.ts';
 
+/** The step-up answer: the sentence and the link to Polaris ID, as the Keys page shows it. */
+function Problem({ text, signInUrl }: { text: string; signInUrl: string | undefined }) {
+  return (
+    <p className="sm qs-bad" role="alert">
+      {text} {signInUrl ? <a href={signInUrl}>Continue to Polaris ID</a> : null}
+    </p>
+  );
+}
+
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** The new key after a reset or reopen: text only, shown once, and gone when the panel is closed. */
@@ -53,7 +62,7 @@ function NewKey({
 /** Reset: a consequence confirm, the Turnstile check, then the new key. */
 export function ResetAction({ onChanged }: { onChanged: () => void }) {
   const [step, setStep] = useState<'idle' | 'confirm' | 'working' | 'done'>('idle');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; signInUrl: string | undefined } | null>(null);
   const [out, setOut] = useState<WithKey | null>(null);
   const [showCheck, setShowCheck] = useState(false);
   const host = useRef<HTMLDivElement>(null);
@@ -65,10 +74,24 @@ export function ResetAction({ onChanged }: { onChanged: () => void }) {
       if (session.kind !== 'ready' || !host.current) throw new ActionError('Reload and try again.');
       host.current.replaceChildren();
       const token = await verify(host.current, session.siteKey, setShowCheck);
-      setOut(await resetSandbox(session.csrf, token));
+      const done = await resetSandbox(session.csrf, token);
+      if (done.more) {
+        // The purge ran out of time: no key yet. Asking again resumes it and spends no reset.
+        setError({
+          text: `Part of the data is left (${plural(done.deleted?.passes ?? 0, 'pass', 'passes')} deleted so far). Reset again to finish. It costs no reset.`,
+          signInUrl: undefined,
+        });
+        setStep('confirm');
+        return;
+      }
+      setOut(done);
       setStep('done');
     } catch (e) {
-      setError(e instanceof ActionError ? e.message : 'The check did not pass. Try again.');
+      setError(
+        e instanceof ActionError
+          ? { text: e.message, signInUrl: e.signInUrl }
+          : { text: 'The check did not pass. Try again.', signInUrl: undefined },
+      );
       setStep('confirm');
     }
   };
@@ -77,7 +100,7 @@ export function ResetAction({ onChanged }: { onChanged: () => void }) {
       <NewKey
         done
         secret={out.secret}
-        line={`Reset. Deleted ${plural(out.deleted?.passes ?? 0, 'pass', 'passes')}, ${plural(out.deleted?.captures ?? 0, 'captured event')} and ${plural(out.deleted?.calls ?? 0, 'call')}. ${out.resetsLeft ?? 0} left today.`}
+        line={`Reset. Deleted ${plural(out.deleted?.passes ?? 0, 'pass', 'passes')}, ${plural(out.deleted?.captures ?? 0, 'captured event')} and ${plural(out.deleted?.calls ?? 0, 'call')}.${out.kept ? ` ${plural(out.kept, 'pass', 'passes')} could not be deleted yet.` : ''} ${out.resetsLeft ?? 0} left today.`}
         onClose={() => {
           setStep('idle');
           setOut(null);
@@ -96,11 +119,7 @@ export function ResetAction({ onChanged }: { onChanged: () => void }) {
         <section className="wb-act wb-confirm" aria-label={resetSandboxConfirm.title}>
           <strong>{resetSandboxConfirm.title}</strong>
           <p className="sm">{resetSandboxConfirm.description}</p>
-          {error ? (
-            <p className="sm qs-bad" role="alert">
-              {error}
-            </p>
-          ) : null}
+          {error ? <Problem text={error.text} signInUrl={error.signInUrl} /> : null}
           <div className="wrap-row g2">
             <button
               type="button"
@@ -136,7 +155,7 @@ export function ReopenAction({
   onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; signInUrl: string | undefined } | null>(null);
   const [out, setOut] = useState<WithKey | null>(null);
   if (sandbox.reopenUntil === null || sandbox.closeReason === 'admin') return null;
   if (out)
@@ -159,7 +178,11 @@ export function ReopenAction({
       if (session.kind === 'out') throw new ActionError('Sign in again.');
       setOut(await reopenSandbox(session.csrf));
     } catch (e) {
-      setError(e instanceof ActionError ? e.message : 'That did not work. Try again.');
+      setError(
+        e instanceof ActionError
+          ? { text: e.message, signInUrl: e.signInUrl }
+          : { text: 'That did not work. Try again.', signInUrl: undefined },
+      );
     } finally {
       setBusy(false);
     }
@@ -176,11 +199,7 @@ export function ReopenAction({
         <Unlock aria-hidden="true" />
         Reopen
       </button>
-      {error ? (
-        <p className="sm qs-bad" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {error ? <Problem text={error.text} signInUrl={error.signInUrl} /> : null}
     </>
   );
 }

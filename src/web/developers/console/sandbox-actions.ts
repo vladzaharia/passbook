@@ -5,11 +5,21 @@ export interface WithKey {
   sandbox: Sandbox;
   secret: string | null;
   /** Reset only: what it deleted. */
-  deleted?: { passes: number; captures: number; calls: number };
+  deleted?: { passes: number; captures: number; calls: number; other: number };
+  kept?: number;
+  /** The purge ran out of time: no new key yet. Ask again; it resumes and costs no reset. */
+  more?: boolean;
   resetsLeft?: number;
 }
 
-export class ActionError extends Error {}
+export class ActionError extends Error {
+  /** STEP_UP_REQUIRED: where Polaris ID asks for a fresh sign-in. */
+  readonly signInUrl: string | undefined;
+  constructor(message: string, signInUrl?: string) {
+    super(message);
+    this.signInUrl = signInUrl;
+  }
+}
 
 async function post(path: string, csrf: string, body?: unknown): Promise<Record<string, unknown>> {
   const res = await fetch(`/api/v1/developer/sandbox/${path}`, {
@@ -25,6 +35,9 @@ async function post(path: string, csrf: string, body?: unknown): Promise<Record<
   if (!res.ok)
     throw new ActionError(
       typeof out.detail === 'string' ? out.detail : 'That did not work. Reload and try again.',
+      out.code === 'STEP_UP_REQUIRED' && typeof out.signInUrl === 'string'
+        ? out.signInUrl
+        : undefined,
     );
   return out;
 }
@@ -53,6 +66,8 @@ export async function resetSandbox(csrf: string, turnstileToken: string): Promis
     sandbox: sandboxOf(b.sandbox as Record<string, unknown>),
     secret: secretOf(b.key),
     ...(deleted ? { deleted } : {}),
+    ...(typeof b.kept === 'number' ? { kept: b.kept } : {}),
+    ...(b.more === true ? { more: true } : {}),
     ...(typeof b.resetsLeft === 'number' ? { resetsLeft: b.resetsLeft } : {}),
   };
 }

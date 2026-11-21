@@ -100,11 +100,11 @@ class HookAbort extends Error {
  * The quickstart ticket: a copy of the event-ticket blueprint, released in Test. Each step reads what is already
  * there, so a retry after a failure does only what is missing. Its id, or null if it could not be made.
  */
-async function quickstartTemplate(
+export async function quickstartTemplate(
   ctx: ServiceContext,
   auth: SessionAuth,
   orgId: string,
-  tick: (step: SandboxStep) => Promise<void>,
+  tick: (step: SandboxStep) => Promise<void> = async () => undefined,
 ): Promise<string | null> {
   const db = ctx.env.DB;
   const scope = { orgId, mode: 'test', provider: 'apple' } as const;

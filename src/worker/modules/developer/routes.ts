@@ -17,6 +17,7 @@ import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
 import { developerHome } from './home.ts';
 import { reopenOwnSandbox, resetSandbox } from './reset.ts';
@@ -159,7 +160,12 @@ register(
     summary:
       'Start over: delete your sandbox test passes, captured webhooks and request log, restart the quickstart and replace the key',
     operationId: 'developer.postSandboxReset',
-    auth: { human: true, signIn: 'strict', developer: true },
+    auth: {
+      human: true,
+      signIn: 'strict',
+      developer: true,
+      stepUp: { maxAgeSec: STEP_UP_SECONDS },
+    },
     body: ResetDeveloperSandboxSchema,
     response: SandboxResetSchema,
   },
@@ -198,12 +204,22 @@ register(
     path: '/sandbox/reopen',
     summary: 'Reopen your closed sandbox inside its 30 days, with a new key',
     operationId: 'developer.postSandboxReopen',
-    auth: { human: true, signIn: 'strict', developer: true },
+    auth: {
+      human: true,
+      signIn: 'strict',
+      developer: true,
+      stepUp: { maxAgeSec: STEP_UP_SECONDS },
+    },
     response: CreatedDeveloperSandboxSchema,
   },
   async (c) => {
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    await enforceRateLimit(
+      c.env,
+      'RL_REFRESH',
+      `RL_REFRESH:developer-sandbox-reopen:${auth.userId}`,
+    );
     c.header('cache-control', 'no-store');
     return c.json(await reopenOwnSandbox(serviceContext(c), auth));
   },

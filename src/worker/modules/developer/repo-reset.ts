@@ -1,5 +1,6 @@
 import { all, first, run } from '../../platform/db.ts';
 import { orgPasses } from '../org-lifecycle/repo-purge.ts';
+import { UNRESERVED_BUNDLE } from '../sandbox/repo.ts';
 
 /**
  * True only for the sandbox whose reset this call claimed: a developer org, active, its sandbox record open and
@@ -13,54 +14,92 @@ export const RESETTING = `EXISTS (SELECT 1 FROM orgs o JOIN developer_sandboxes 
     AND NOT EXISTS (SELECT 1 FROM retention_holds h WHERE h.org_id = o.id AND h.released_at IS NULL))`;
 
 const SLICE = 500;
-const MAX_SLICES = 20;
-
-export interface SandboxRowsDeleted {
-  request_log: number;
-  idempotent_requests: number;
-  idempotency_keys: number;
-}
-
-/** One table in slices of `SLICE` rowids, so a reset never holds the database long. `delete` runs one slice. */
-async function sliced(slice: () => Promise<{ changes: number }>): Promise<number> {
-  let total = 0;
-  for (let i = 0; i < MAX_SLICES; i++) {
-    const { changes } = await slice();
-    total += changes;
-    if (changes < SLICE) break;
-  }
-  return total;
-}
 
 /**
- * The rows a reset removes besides passes, each only in the sandbox's own org and only while the claim stands
- * (`RESETTING`). Test data only: the org, template, capture endpoint, keys, membership and the funnel stay.
- * The hourly capture counters stay too, so a reset gives back no abuse budget.
+ * What a reset deletes besides passes and captured webhooks, each only in the sandbox's own org, in Test, and
+ * while the claim stands. A request or an email still in flight is left (a settled idempotency record, a
+ * forward that is not sending). Bundles go with their capability links; broadcasts and rules are Test only.
  */
-export async function deleteSandboxRows(
+export const RESET_TABLES = {
+  request_log: { where: 'at <= ?3', rowid: true },
+  idempotent_requests: { where: 'created_at <= ?3 AND status IS NOT NULL', rowid: false },
+  idempotency_keys: { where: 'created_at <= ?3 AND resource_id IS NOT NULL', rowid: false },
+  captured_emails: {
+    where: `NOT EXISTS (SELECT 1 FROM sandbox_forwards f WHERE f.capture_id = captured_emails.id
+      AND f.state IN ('sending', 'unknown'))`,
+    rowid: true,
+  },
+  bundles: { where: `mode = 'test' AND ${UNRESERVED_BUNDLE}`, rowid: true },
+  pass_imports: { where: "mode = 'test' AND state <> 'committing'", rowid: true },
+  broadcasts: { where: "mode = 'test' AND state <> 'sending'", rowid: true },
+  message_rules: { where: "mode = 'test'", rowid: true },
+} as const;
+
+export type ResetTable = keyof typeof RESET_TABLES;
+
+/**
+ * One slice of one table: at most `SLICE` rows, with `RESETTING` repeated in the statement. A table with no
+ * rowid is a single statement (its rows are few and short-lived). The rows removed; `SLICE` means "ask again".
+ */
+export async function deleteSlice(
   db: D1Database,
+  table: ResetTable,
   orgId: string,
   userId: string,
   stamp: number,
-): Promise<SandboxRowsDeleted> {
+): Promise<number> {
+  const spec = RESET_TABLES[table];
   const p = [orgId, userId, stamp];
-  return {
-    request_log: await sliced(() =>
-      run(
-        db,
-        `DELETE FROM request_log WHERE rowid IN (SELECT rowid FROM request_log WHERE org_id = ?1 AND ${RESETTING} LIMIT ${SLICE})`,
-        p,
-      ),
-    ),
-    // Short-lived and few: one statement each.
-    idempotent_requests: (
-      await run(db, `DELETE FROM idempotent_requests WHERE org_id = ?1 AND ${RESETTING}`, p)
-    ).changes,
-    idempotency_keys: (
-      await run(db, `DELETE FROM idempotency_keys WHERE org_id = ?1 AND ${RESETTING}`, p)
-    ).changes,
-  };
+  if (!spec.rowid)
+    return (
+      await run(db, `DELETE FROM ${table} WHERE org_id = ?1 AND ${spec.where} AND ${RESETTING}`, p)
+    ).changes;
+  return (
+    await run(
+      db,
+      `DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table}
+         WHERE org_id = ?1 AND ${spec.where} AND ${RESETTING} LIMIT ${SLICE})`,
+      p,
+    )
+  ).changes;
 }
+
+export const SLICE_ROWS = SLICE;
+
+/** The uploaded files of the sandbox's Test imports: removed with their rows. */
+export const importObjectKeys = async (db: D1Database, orgId: string): Promise<string[]> =>
+  (
+    await all<{ object_key: string }>(
+      db,
+      "SELECT object_key FROM pass_imports WHERE org_id = ? AND mode = 'test' AND object_key IS NOT NULL",
+      [orgId],
+    )
+  ).map((r) => r.object_key);
+
+/** How many of the person's sandbox keys are still open: none means the last reset has not minted its key. */
+export const openKeyCount = async (
+  db: D1Database,
+  orgId: string,
+  userId: string,
+  name: string,
+): Promise<number> =>
+  (
+    await first<{ n: number }>(
+      db,
+      "SELECT count(*) AS n FROM api_keys WHERE org_id = ? AND created_by = ? AND name = ? AND kind = 'personal' AND revoked_at IS NULL",
+      [orgId, userId, name],
+    )
+  )?.n ?? 0;
+
+/** `track_started_at` as stored: null until the first reset. */
+export const trackStartRaw = async (db: D1Database, orgId: string): Promise<number | null> =>
+  (
+    await first<{ t: number | null }>(
+      db,
+      'SELECT track_started_at AS t FROM developer_sandboxes WHERE org_id = ?',
+      [orgId],
+    )
+  )?.t ?? null;
 
 /** The sandbox's test passes after `after`, by id: soft-deleted ones too. The org is checked by the caller's claim. */
 export const sandboxPasses = (db: D1Database, orgId: string, after: string, limit: number) =>
@@ -106,14 +145,6 @@ export const trackStartedAt = async (db: D1Database, orgId: string) =>
     )
   )?.t ?? 0;
 
-/** The person's own sandbox keys not yet revoked. */
-export const openSandboxKeys = (db: D1Database, orgId: string, userId: string, name: string) =>
-  all<{ id: string }>(
-    db,
-    "SELECT id FROM api_keys WHERE org_id = ? AND created_by = ? AND name = ? AND kind = 'personal' AND revoked_at IS NULL",
-    [orgId, userId, name],
-  );
-
 /** A closed org's window: when it purges, and whether the purge has started. */
 export const reopenWindow = (db: D1Database, orgId: string) =>
   first<{ purge_after: number | null; purge_started_at: number | null }>(
@@ -129,3 +160,13 @@ export const orgHeld = async (db: D1Database, orgId: string): Promise<boolean> =
     'SELECT 1 AS x FROM retention_holds WHERE org_id = ? AND released_at IS NULL LIMIT 1',
     [orgId],
   )) !== null;
+
+/** Why the sandbox closed: `user`, `idle` or `admin`. */
+export const closeReasonOf = async (db: D1Database, orgId: string): Promise<string | null> =>
+  (
+    await first<{ close_reason: string | null }>(
+      db,
+      'SELECT close_reason FROM developer_sandboxes WHERE org_id = ?',
+      [orgId],
+    )
+  )?.close_reason ?? null;
