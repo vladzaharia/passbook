@@ -4976,6 +4976,7 @@ class PassImportsSendEmailsParams(_Model):
 class PassImportsSendEmailsResult(_Model):
     sent: int
     skipped: int
+    alreadyQueued: int | None = None
     nextCursor: str | None
 
 class PassImportsUndoParams(_Model):

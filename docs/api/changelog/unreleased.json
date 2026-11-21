@@ -976,6 +976,14 @@
     "note": "email also takes {send: now} or {send: held, holdMs}; held mail goes out after the wait unless the import is undone."
   },
   {
+    "key": "POST /api/v1/pass-imports/{id}/email-rest 200.alreadyQueued: field added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdEmailRest",
+    "op": "POST /api/v1/pass-imports/{id}/email-rest",
+    "change": "200.alreadyQueued: field added",
+    "note": "Held mail a stopped run had already queued is settled and counted here, not in sent."
+  },
+  {
     "key": "POST /api/v1/pass-imports/{id}/email-rest 409: IMPORT_UNDO_RUNNING added",
     "class": "additive",
     "operationId": "pass-imports.postPassImportsByIdEmailRest",

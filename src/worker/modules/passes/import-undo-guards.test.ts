@@ -275,7 +275,20 @@ describe('N2-N4', () => {
       id2,
     ]);
     const sent = await h.api(h.admin, 'POST', `/${id2}/email-rest`, { cursor: null });
-    expect(((await sent.json()) as { sent: number }).sent).toBe(1);
+    expect(await sent.json()).toMatchObject({ sent: 1, alreadyQueued: 0 });
+    // A claim whose mail the dead step had queued is settled, not sent again and not counted as sent.
+    const id3 = await imported([hd, 'A,1,a@x.co,N-5'].join('\n'), held);
+    const p3 = await passOf('N-5');
+    await run(h.kit.env.DB, 'UPDATE pass_import_rows SET mail_pending_at = 1 WHERE import_id = ?', [
+      id3,
+    ]);
+    await run(
+      h.kit.env.DB,
+      "INSERT INTO outbox (id, org_id, kind, pass_id, created_at) VALUES ('ob-n5', ?, 'email', ?, 2)",
+      [h.kit.org.id, p3?.id ?? ''],
+    );
+    const queued = await h.api(h.admin, 'POST', `/${id3}/email-rest`, { cursor: null });
+    expect(await queued.json()).toMatchObject({ sent: 0, alreadyQueued: 1 });
   });
 });
 

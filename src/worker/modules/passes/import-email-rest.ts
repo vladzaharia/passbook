@@ -65,6 +65,8 @@ export async function emailRest(
     principal: authority.kind === 'session' ? ('session' as const) : ('api_key' as const),
   };
   const sentRows: number[] = [];
+  /** Rows a dead held-mail step had already queued: marked emailed, not mailed again, not counted as sent. */
+  const alreadyQueued: number[] = [];
   const refused: number[] = [];
   for (const row of page) {
     if (!won.has(row.row_no)) continue;
@@ -73,8 +75,11 @@ export async function emailRest(
       const queued =
         row.mail_pending_at !== null &&
         (await mailQueuedSince(ctx.env.DB, row.pass_id, row.mail_pending_at));
-      if (!queued) await resendEmail(ctx, actor, row.pass_id, {}, scope, authority);
-      sentRows.push(row.row_no);
+      if (queued) alreadyQueued.push(row.row_no);
+      else {
+        await resendEmail(ctx, actor, row.pass_id, {}, scope, authority);
+        sentRows.push(row.row_no);
+      }
     } catch (error) {
       if (!(error instanceof AppError)) {
         // Not an answer of the mail rules: give back every claimed row that was not sent, then fail.
@@ -82,7 +87,7 @@ export async function emailRest(
           ctx,
           authority,
           imp.id,
-          [...won].filter((n) => !sentRows.includes(n)),
+          [...won].filter((n) => !sentRows.includes(n) && !alreadyQueued.includes(n)),
         );
         throw error;
       }
@@ -96,14 +101,19 @@ export async function emailRest(
   }
   await releaseRows(ctx, authority, imp.id, refused);
   const sent = sentRows.length;
-  if (sent > 0) {
+  if (sent > 0 || alreadyQueued.length > 0) {
     const { notEmailed } = await progressOf(ctx.env.DB, imp.id);
-    await recordEmailRest(ctx, authority, imp.id, notEmailed, { sent, skipped: refused.length });
+    await recordEmailRest(ctx, authority, imp.id, notEmailed, {
+      sent,
+      skipped: refused.length,
+      alreadyQueued: alreadyQueued.length,
+    });
   }
   const last = page[page.length - 1];
   return {
     sent,
     skipped: refused.length,
+    alreadyQueued: alreadyQueued.length,
     nextCursor: rows.length > EMAIL_PAGE && last ? String(last.row_no) : null,
   };
 }

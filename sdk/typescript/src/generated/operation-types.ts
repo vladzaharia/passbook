@@ -2597,6 +2597,7 @@ export type PassImportsSendEmailsBody = PassImportsSendEmailsParams;
 export type PassImportsSendEmailsResult = {
   sent: number;
   skipped: number;
+  alreadyQueued?: number;
   nextCursor: string | null;
 };
 

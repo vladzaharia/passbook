@@ -3900,9 +3900,10 @@ type PassImportsSendEmailsParams struct {
 }
 
 type PassImportsSendEmailsResult struct {
-	Sent       int64   `json:"sent"`
-	Skipped    int64   `json:"skipped"`
-	NextCursor *string `json:"nextCursor"`
+	Sent          int64   `json:"sent"`
+	Skipped       int64   `json:"skipped"`
+	AlreadyQueued *int64  `json:"alreadyQueued,omitempty"`
+	NextCursor    *string `json:"nextCursor"`
 }
 
 type PassImportsUndoBody = PassImportsUndoParams

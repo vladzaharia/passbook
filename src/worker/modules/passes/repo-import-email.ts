@@ -88,7 +88,7 @@ export async function recordEmailRest(
   authority: TenantPassWrite,
   id: string,
   notEmailed: number,
-  detail: { sent: number; skipped: number },
+  detail: { sent: number; skipped: number; alreadyQueued: number },
 ): Promise<void> {
   const g = importGrant(ctx, authority, id, { state: inList(ENDED) });
   g.update('pass_imports', { where: { id }, require: 'one', set: { not_emailed: notEmailed } });

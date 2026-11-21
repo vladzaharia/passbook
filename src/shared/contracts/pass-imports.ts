@@ -261,6 +261,8 @@ export const PassImportEmailRestResultSchema = z.object({
   sent: count,
   /** Held back: the day's or the holder's hourly cap, or a pass that cannot be mailed now. */
   skipped: count,
+  /** Held mail a stopped run had already queued: marked emailed, not sent again and not counted in `sent`. */
+  alreadyQueued: count.optional(),
   nextCursor: z.string().nullable(),
 });
 
