@@ -5,6 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { resolveTemplate } from './builder.ts';
 import type { ImportProblem } from './import-messages.ts';
+import { splitInput } from './import-plan.ts';
 import { personalizationsOf } from './repo-import-lookup.ts';
 import type { ImportRowRecord } from './repo-import-rows.ts';
 import type { ImportRow } from './repo-imports.ts';
@@ -62,7 +63,7 @@ export async function rowChanges(
         ? (stored.personalization as Record<string, Json>)
         : stored;
     const before = earlier ?? objectOf(now.get(r.pass_id ?? ''));
-    const input = objectOf(r.input);
+    const input = r.input === null ? null : splitInput(r.input).input;
     // A finished row without its earlier values has nothing left to compare against.
     if (!before || !input || (r.state !== 'planned' && !r.before)) continue;
     const kept = new Set(

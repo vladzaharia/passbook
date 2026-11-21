@@ -143,3 +143,27 @@ export function parsePlan(json: string | null, log: Logger): ImportPlan | null {
   log.warn('pass_import.plan_unreadable', { code: 'IMPORT_PLAN_UNREADABLE' });
   return null;
 }
+
+/** Where a row's input keeps the unread cells; never a pass input. */
+export const RAW_KEY = '$raw';
+
+/** A stored row input split into the pass input and the unread cells: nothing else may read `$raw`. */
+export function splitInput(json: string | null): {
+  input: Record<string, Json>;
+  raw: Record<string, string>;
+} {
+  let parsed: Record<string, Json> = {};
+  try {
+    const v: unknown = json === null ? {} : JSON.parse(json);
+    if (typeof v === 'object' && v !== null && !Array.isArray(v))
+      parsed = v as Record<string, Json>;
+  } catch {
+    parsed = {};
+  }
+  const { [RAW_KEY]: raw, ...input } = parsed;
+  const cells =
+    typeof raw === 'object' && raw !== null && !Array.isArray(raw)
+      ? Object.fromEntries(Object.entries(raw).filter(([, v]) => typeof v === 'string'))
+      : {};
+  return { input, raw: cells as Record<string, string> };
+}

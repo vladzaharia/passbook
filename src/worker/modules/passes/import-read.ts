@@ -10,7 +10,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { rowChanges } from './import-changes.ts';
 import { type ImportProblem, shown } from './import-messages.ts';
-import { columnsOf, parsePlan } from './import-plan.ts';
+import { columnsOf, parsePlan, splitInput } from './import-plan.ts';
 import { parseImport } from './import-source.ts';
 import {
   emailableCount,
@@ -35,12 +35,7 @@ function withValues(
   problems: ImportProblem[],
   row: { input: string | null; external_id: string | null; holder_email: string | null },
 ): ImportProblem[] {
-  let input: Record<string, unknown> = {};
-  try {
-    input = row.input === null ? {} : (JSON.parse(row.input) as Record<string, unknown>);
-  } catch {
-    input = {};
-  }
+  const { input, raw: unread } = splitInput(row.input);
   return problems.map((p) => {
     const raw =
       p.field === 'externalId'
@@ -48,7 +43,7 @@ function withValues(
         : p.field === 'holderEmail'
           ? row.holder_email
           : p.field
-            ? input[p.field]
+            ? (input[p.field] ?? unread[p.field])
             : undefined;
     const value = shown(raw);
     return value === null ? p : { ...p, value: value.slice(0, 200) };
@@ -141,7 +136,7 @@ export async function importDto(
     previews: previews.map((p) => ({
       row: p.row_no,
       action: p.action as 'create' | 'update',
-      input: p.input ? (JSON.parse(p.input) as Record<string, never>) : {},
+      input: splitInput(p.input).input as Record<string, never>,
     })),
     problems: flat.slice(0, PASS_IMPORT_PROBLEMS),
     problemTotals: totals,

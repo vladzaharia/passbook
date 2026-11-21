@@ -10,7 +10,13 @@ import type { TenantPassWrite } from './http.ts';
 import { type CheckedRow, checkRows, rowChecker } from './import-check.ts';
 import { rememberPlan } from './import-mappings.ts';
 import { type PlannedRow, planRows, summarize } from './import-match.ts';
-import { type ImportPlan, missingColumns, parsePlan, planProblems } from './import-plan.ts';
+import {
+  type ImportPlan,
+  missingColumns,
+  parsePlan,
+  planProblems,
+  RAW_KEY,
+} from './import-plan.ts';
 import { parseImport } from './import-source.ts';
 import { activeZoneKeys } from './repo-access-zones.ts';
 import { createdRowNumbers, insertRows, type RowInsert, rowCounts } from './repo-import-rows.ts';
@@ -48,6 +54,10 @@ export function assertPlan(
     );
 }
 
+/** The row's input, with the unread cells beside it under `$raw`: apply and preview read it back with `splitInput`. */
+const inputJson = (input: object, raw: Record<string, string> | undefined): string =>
+  JSON.stringify(raw && Object.keys(raw).length > 0 ? { ...input, [RAW_KEY]: raw } : input);
+
 const rowOf = (r: PlannedRow): RowInsert => ({
   row: r.row,
   action: r.action,
@@ -55,7 +65,7 @@ const rowOf = (r: PlannedRow): RowInsert => ({
   expectedVersion: r.expectedVersion,
   externalId: r.externalId,
   holderEmail: r.holderEmail,
-  input: r.input ? JSON.stringify(r.input) : null,
+  input: r.input ? inputJson(r.input, r.raw) : null,
   problems: r.problems.length > 0 ? JSON.stringify(r.problems) : null,
 });
 

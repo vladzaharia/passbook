@@ -13,6 +13,7 @@ import {
   inputMessage,
   labelOf,
   problem,
+  shown,
 } from './import-messages.ts';
 import { headerOf, type ImportPlan, recordOf, withOverrides } from './import-plan.ts';
 
@@ -22,6 +23,8 @@ export interface CheckedRow {
   externalId: string | null;
   holderEmail: string | null;
   input: Personalization | null;
+  /** Cells the plan's enum or date step could not read, as written (200 characters): kept with the row's input, not in it. */
+  raw?: Record<string, string>;
   problems: ImportProblem[];
 }
 
@@ -98,6 +101,7 @@ function unreadValues(
   rc: RowCheckContext,
   record: Record<string, Json>,
   input: Personalization,
+  raw: Record<string, string>,
 ): ImportProblem[] {
   const props = (rc.manifest.inputs.properties ?? {}) as Record<string, Record<string, unknown>>;
   const out: ImportProblem[] = [];
@@ -107,6 +111,8 @@ function unreadValues(
     const column = headerOf(entry.from, rc.header);
     const cell = column === null ? undefined : record[column];
     if (cell === undefined || input[field] !== undefined) continue;
+    const text = shown(cell);
+    if (text !== null) raw[field] = text.slice(0, 200);
     out.push(
       problem(row, {
         column,
@@ -134,6 +140,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
 
   return rows.map(({ row, cells: raw }): CheckedRow => {
     const problems: ImportProblem[] = [];
+    const rawCells: Record<string, string> = {};
     const add = (p: Parameters<typeof problem>[1]) => problems.push(problem(row, p));
     const out = (
       input: Personalization | null,
@@ -144,6 +151,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
       externalId,
       holderEmail,
       input,
+      raw: rawCells,
       problems,
     });
 
@@ -169,7 +177,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
     // 2-4. Map, read the text as the input types, check each value on its own. A blank cell is unset.
     const record = recordOf(header, cells);
     const input = coerceInput(rc.manifest.inputs, applyMapping(plan.mapping, record));
-    problems.push(...unreadValues(row, rc, record, input));
+    problems.push(...unreadValues(row, rc, record, input, rawCells));
     problems.push(...checkInputs(row, input, 'keys'));
 
     // 6. Holder email.
