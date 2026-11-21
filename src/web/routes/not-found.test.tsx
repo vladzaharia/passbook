@@ -9,7 +9,10 @@ describe('unknown URLs', () => {
   it('show the not-found page with Sign in to a signed-out visitor', async () => {
     await renderApp('/no-such-page', { session: 'anon' });
     expect(await screen.findByRole('heading', { name: STATE_COPY.pageNotFound })).toBeVisible();
-    expect(await screen.findByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+    // The menubar's Sign in and the page's way out both lead to /login.
+    const links = await screen.findAllByRole('link', { name: 'Sign in' });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) expect(link).toHaveAttribute('href', '/login');
   });
 
   it('send a signed-out visitor from a real holder page to Sign in', async () => {
