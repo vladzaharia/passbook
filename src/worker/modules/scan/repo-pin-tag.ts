@@ -15,6 +15,21 @@ export const pinTagStateStatement = (db: Db, orgId: string, id: string) =>
     orgId,
   ]);
 
+/** Whether this scanner gave this person a new PIN since `since` (the window for a repeat after a reload). */
+export const recentSelfResetStatement = (
+  db: Db,
+  orgId: string,
+  scannerId: string,
+  staffId: string,
+  since: number,
+) =>
+  stmt(
+    db,
+    `SELECT 1 AS one FROM audit_log WHERE org_id = ? AND action = 'scan_staff.pin_self_reset'
+       AND actor_id = ? AND target_id = ? AND at >= ? LIMIT 1`,
+    [orgId, scannerId, staffId, since],
+  );
+
 /** The active person who has this tag. */
 export const staffWithTagStatement = (db: Db, orgId: string, tag: string) =>
   stmt(db, 'SELECT id FROM scan_staff WHERE org_id = ? AND pin_tag = ? AND disabled_at IS NULL', [
@@ -59,6 +74,8 @@ export async function setOwnPinGrant(
   scanner: ScannerRow,
   staff: { id: string; authEpoch: number },
   change: { pinHash: string; pinTag: string; macVersion: number; now: number },
+  /** A repeat inside the window: the flag is already clear. */
+  repeat = false,
 ): Promise<void> {
   const g = grant(ctx, {
     purpose: 'org_mode.scan.staff.pin_self',
@@ -72,7 +89,11 @@ export async function setOwnPinGrant(
       rowIs(
         'scan_staff',
         staff.id,
-        { auth_epoch: staff.authEpoch, disabled_at: null, pin_reset_required: 1 },
+        {
+          auth_epoch: staff.authEpoch,
+          disabled_at: null,
+          ...(repeat ? {} : { pin_reset_required: 1 }),
+        },
         'config',
       ),
     ],

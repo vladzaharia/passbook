@@ -137,6 +137,30 @@ describe('the PIN tag', () => {
       await session(await signIn((await device()).headers, person, done.pin));
     });
 
+    it('draws another PIN within 10 minutes on the same scanner and voids the first; not later, not elsewhere', async () => {
+      const { kit, problem, signIn, call } = fixture;
+      const { person, scanner } = await flagged('381729');
+      const first = await issued(await getPin(scanner.headers));
+      kit.clock.advance(5 * 60_000);
+      const second = await issued(await getPin(scanner.headers));
+      expect(second.pin).not.toBe(first.pin);
+      expect(
+        (await audits('scan_staff.pin_self_reset')).filter((r) => r.target_id === person.id),
+      ).toHaveLength(2);
+      expect(
+        (await call('POST', '/scan/staff', (await device()).headers, { pin: first.pin })).status,
+      ).toBe(400);
+      expect(
+        (await call('POST', '/scan/staff', (await device()).headers, { pin: second.pin })).status,
+      ).toBe(200);
+      // Another device signed in as the same person has no window of its own.
+      const other = await device();
+      await signIn(other.headers, person, second.pin);
+      await problem(await getPin(other.headers), 409, 'STAFF_PIN_RESET_NOT_REQUIRED');
+      kit.clock.advance(11 * 60_000);
+      await problem(await getPin(scanner.headers), 409, 'STAFF_PIN_RESET_NOT_REQUIRED');
+    });
+
     it('is only for a person whose PIN needs replacing, and is rate limited', async () => {
       const { kit, problem, signIn } = fixture;
       const fine = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '264813' });
