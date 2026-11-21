@@ -1,5 +1,6 @@
--- Console and developer work needs a strong sign-in (Polaris ID or break-glass). Users who reach
--- a console by email link today keep it until `auth.consoleEmailUntil`; new members never get grace.
+-- Console and developer work needs a strong sign-in (Polaris ID or break-glass). Every active member
+-- who may reach a console today keeps an email session's console until `auth.consoleEmailUntil`
+-- (strong sessions never read it); new members never get grace.
 CREATE TABLE console_email_grace (
   user_id TEXT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
   created_at INTEGER NOT NULL
@@ -7,13 +8,15 @@ CREATE TABLE console_email_grace (
 INSERT INTO console_email_grace (user_id, created_at)
 SELECT u.id, CAST(unixepoch() AS INTEGER) * 1000 FROM users u
 WHERE u.status = 'active'
-  AND EXISTS (SELECT 1 FROM org_memberships m WHERE m.user_id = u.id AND m.revoked_at IS NULL)
-  AND NOT EXISTS (SELECT 1 FROM auth_identities i WHERE i.user_id = u.id AND i.provider = 'pocketid');
+  AND EXISTS (SELECT 1 FROM org_memberships m WHERE m.user_id = u.id AND m.revoked_at IS NULL);
 -- Grace ends 21 days after this migration. A database with nobody in grace (a fresh one) enforces at once.
 INSERT INTO settings (scope, key, value, updated_at)
 SELECT 'platform', 'auth.consoleEmailUntil', CAST((CAST(unixepoch() AS INTEGER) + 21 * 86400) * 1000 AS TEXT),
   CAST(unixepoch() AS INTEGER) * 1000
 WHERE EXISTS (SELECT 1 FROM console_email_grace);
+
+-- A sign-in link mailed with an invitation no longer joins an org (joining needs Polaris ID): end them.
+UPDATE magic_links SET expires_at = created_at WHERE invitation_id IS NOT NULL AND consumed_at IS NULL;
 
 -- How the key's creator signed in; NULL for keys made before this migration or by another key.
 ALTER TABLE api_keys ADD COLUMN created_amr TEXT CHECK (created_amr IS NULL OR created_amr IN ('oidc', 'magic_link', 'breakglass'));

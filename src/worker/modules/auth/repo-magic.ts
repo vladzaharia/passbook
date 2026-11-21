@@ -113,6 +113,8 @@ export const linkTrace = (db: Db, tokenHash: string) =>
     invitation_id: string | null;
     has_identity: number;
     has_account: number;
+    /** An invitation-bound link that migration 0169 expired at once (`expires_at = created_at`). */
+    voided: number;
     inv_accepted_at: number | null;
     inv_revoked_at: number | null;
     inv_expires_at: number | null;
@@ -120,7 +122,7 @@ export const linkTrace = (db: Db, tokenHash: string) =>
   }>(
     db,
     `SELECT m.redirect_path, m.purpose, m.email, m.consumed_at, m.invitation_id,
-       m.pending_identity IS NOT NULL AS has_identity,
+       m.pending_identity IS NOT NULL AS has_identity, m.expires_at <= m.created_at AS voided,
        EXISTS (SELECT 1 FROM user_emails e WHERE e.email = m.email) AS has_account,
        i.accepted_at AS inv_accepted_at, i.revoked_at AS inv_revoked_at,
        i.expires_at AS inv_expires_at, o.status AS org_status
