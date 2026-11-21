@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
+import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
+import { scanLine } from '@/shared/copy/scan.ts';
+import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
-import type { PreviewSource } from '../../../channel-previews/types.ts';
+import { lockedAction } from '../../../channel-previews/channel-stage.tsx';
+import type { PreviewChannel, PreviewSource } from '../../../channel-previews/types.ts';
 import { useTemplateChannels } from '../channels/api.ts';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
@@ -34,14 +38,27 @@ export function DesignerStage({
 }) {
   const { passJson, assets, assetBase } = card;
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
-  // The designer edits every channel's design, so what only the template turned off stays open;
-  // what the organization or platform withholds is disabled.
+  // The designer edits every channel's design, so what only the template turned off stays open, with
+  // a note that follows the Channels and brand tab; what the organization, plan or PassBook withholds
+  // is locked and names its level.
   const effective = useMemo(() => {
     const all = channels.data?.effective;
     if (!all) return undefined;
     return Object.fromEntries(
       Object.entries(all).map(([c, s]) => [c, s.source === 'template' ? { ...s, on: true } : s]),
     ) as EffectiveChannels;
+  }, [channels.data]);
+  const notes = useMemo(() => {
+    const all = channels.data?.effective;
+    if (!all) return undefined;
+    return Object.fromEntries(
+      (Object.keys(all) as (keyof typeof all)[])
+        .filter((c) => c !== 'nfc' && !all[c].on && all[c].source === 'template')
+        .map((c) => [
+          c,
+          scanLine(TEMPLATE_BRAND_COPY.designer.channelOff, { channel: CHANNEL_LABEL[c] }),
+        ]),
+    ) as Partial<Record<PreviewChannel, string>>;
   }, [channels.data]);
   const source = useMemo<PreviewSource | null>(
     () =>
@@ -61,6 +78,8 @@ export function DesignerStage({
     <ChannelPreviews
       source={source}
       channels={effective}
+      notes={notes}
+      lockedAction={lockedAction({ orgId })}
       apple={<DesignerPreview {...card} />}
       paper={
         <PaperPreview
