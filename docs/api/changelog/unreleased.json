@@ -128,14 +128,6 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
-    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.postOrgsInvitationsAccept",
-    "op": "POST /api/v1/orgs/invitations/accept",
-    "change": "200.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
@@ -150,6 +142,14 @@
     "op": "POST /api/v1/orgs/{id}/status",
     "change": "200.personalOwner: field added",
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
