@@ -1,4 +1,5 @@
 import { ScanReasonSchema, type ScanRecordDto } from '../../../shared/contracts/index.ts';
+import { directedLabel } from './direction-label.ts';
 import type { ScanActor } from './guard.ts';
 import type { HistoryPolicy } from './history-policy.ts';
 import type { HistoryRow } from './history-row.ts';
@@ -54,7 +55,7 @@ export function projectScanRecord(
     reason: reason.success ? reason.data : null,
     kind: action?.kind ?? null,
     actionId: action?.id ?? null,
-    actionLabel: action?.label ?? null,
+    actionLabel: action ? directedLabel(action.kind, action.label, row.direction) : null,
     direction: action ? row.direction : null,
     passId: noPolicy ? null : row.passId,
     passTitle: title,

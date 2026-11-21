@@ -5,6 +5,7 @@ import type {
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { directedLabel } from './direction-label.ts';
 import type { ScanActor } from './guard.ts';
 import type { HistoryRow } from './history-row.ts';
 import {
@@ -110,7 +111,12 @@ export async function recentFor(
         at: row.at,
         outcome: row.outcome ?? 'refused',
         reason: reason.success ? reason.data : null,
-        actionLabel: row.actionKind === 'undo' ? 'Undo' : (action?.label ?? 'Scan'),
+        actionLabel:
+          row.actionKind === 'undo'
+            ? 'Undo'
+            : action
+              ? directedLabel(action.kind, action.label, row.direction)
+              : 'Scan',
         title: policy.titleVisible(title) ? title : null,
         value: null,
         undoable:
