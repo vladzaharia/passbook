@@ -23,7 +23,7 @@ describe('operation codes', () => {
 
   it('puts the shared auth and validation codes on the operation, beside its own', () => {
     const doc = read<Doc>('docs/api/openapi.v1.json');
-    const op = doc.paths['/api/v1/templates/{id}/input-schema']?.get as { 'x-codes': string[] };
+    const op = doc.paths?.['/api/v1/templates/{id}/input-schema']?.get as { 'x-codes': string[] };
     for (const c of [
       'UNAUTHENTICATED',
       'MISSING_SCOPE',
