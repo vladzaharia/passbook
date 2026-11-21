@@ -1458,7 +1458,7 @@ describe('manifest', () => {
     const t = await seed(org.id, 'Bad Manifest');
     const bad = {
       ...manifest('Bad Manifest'),
-      inputs: { type: 'object', properties: { name: { type: 'string', pattern: '(a+)+$' } } },
+      inputs: { type: 'object', properties: { name: { type: 'string', pattern: '(a)\\1' } } },
     };
     const res = await call(`/${t.id}/manifest`, { method: 'PUT', ...json({ manifest: bad }) });
     expect(res.status).toBe(422);

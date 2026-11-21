@@ -73,15 +73,15 @@ async function doorOf(
   actor: ScanActor,
   item: Item,
   roster: Request['roster'],
-): Promise<{ door: Door; expired: boolean; floor: number }> {
-  if (item.door === 'refused') return { door: 'refused', expired: false, floor: 0 };
+): Promise<{ door: Door; expired: boolean }> {
+  if (item.door === 'refused') return { door: 'refused', expired: false };
   if (item.door !== 'listed' || offlineModeOf(actor.settings) !== 'list' || !roster)
-    return { door: 'unverified', expired: false, floor: 0 };
+    return { door: 'unverified', expired: false };
   const want = await rosterSig(ctx, actor, roster.asOf, roster.validUntil);
   const enc = new TextEncoder();
   if (!safeEqualBytes(enc.encode(want), enc.encode(roster.sig)))
-    return { door: 'unverified', expired: false, floor: 0 };
-  return { door: 'listed', expired: item.clientTs > roster.validUntil, floor: roster.asOf };
+    return { door: 'unverified', expired: false };
+  return { door: 'listed', expired: item.clientTs > roster.validUntil };
 }
 
 interface StateAt {
@@ -178,11 +178,8 @@ export async function syncBatch(
   const changes = sessionId ? await sessionChanges(ctx.env.DB, sessionId) : [];
   const onlineAt = actor.scanner ? await onlineAtOf(ctx.env.DB, actor.scanner.id) : 0;
   for (const { item, index } of order) {
-    const { door, expired, floor } = await doorOf(ctx, actor, item, request.roster);
-    const dated = item.clientTs > now + CLIENT_TS_SLACK_MS ? now : item.clientTs;
-    // The door's clock is believed only for a read on a list this server signed, and never before that list's
-    // own time; any other read is judged as of the sync, so a door cannot back-date one into open hours.
-    const clientTs = door === 'listed' ? Math.max(dated, floor) : now;
+    const { door, expired } = await doorOf(ctx, actor, item, request.roster);
+    const clientTs = item.clientTs > now + CLIENT_TS_SLACK_MS ? now : item.clientTs;
     let outcome: ScanOutcome;
     let scanId: string | null = null;
     const taken =

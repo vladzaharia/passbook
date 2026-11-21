@@ -110,8 +110,8 @@ export async function update(
   if (input.config !== undefined) {
     const config = parseWith(def.configSchema, input.config, 'config');
     assertFixedConfig(def, conn, config);
-    assertCredentialOrigin(def, conn, config, input.secrets);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
+    assertCredentialOrigin(def, conn, config, input.secrets);
     patch.config = config;
     patch.connectorVersion = def.version;
     patch.cursor = null;

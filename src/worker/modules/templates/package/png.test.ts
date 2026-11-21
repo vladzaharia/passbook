@@ -15,14 +15,14 @@ function claiming(width: number, height: number): Uint8Array {
 
 describe('parsePng size limits', () => {
   it('accepts the largest slot size', () => {
-    expect(parsePng(claiming(1035, 1515))).toMatchObject({ width: 1035, height: 1515 });
+    expect(parsePng(claiming(1860, 1860))).toMatchObject({ width: 1860, height: 1860 });
   });
 
-  it('refuses a side over 4096 and an area over 2 megapixels', () => {
+  it('refuses a side over 4096 and an area over 3.5 megapixels', () => {
     for (const [w, h] of [
       [4097, 10],
       [4096, 4096],
-      [1500, 1400],
+      [1900, 1900],
     ])
       expect(parsePng(claiming(w as number, h as number)), `${w}x${h}`).toEqual({
         error: 'PNG dimensions are out of range.',

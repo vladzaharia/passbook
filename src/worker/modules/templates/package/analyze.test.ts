@@ -458,7 +458,7 @@ describe('uploaded manifests', () => {
     const nested = {
       type: 'object',
       properties: {
-        a: { type: 'object', properties: { pattern: { type: 'string', pattern: 'x+' } } },
+        a: { type: 'object', properties: { pattern: { type: 'string', pattern: '(a)\\1' } } },
       },
     };
     expect((await run({ inputs: nested })).codes).toContain('error:SCHEMA_PATTERN');

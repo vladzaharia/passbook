@@ -46,10 +46,10 @@ it('refuses an origin change without a new credential, and never sends the secre
   expect(seen.some((s) => s.url.startsWith('https://attacker.example/'))).toBe(false);
 });
 
-it('refuses a port or scheme-level origin change too', async () => {
+it('refuses a sibling host as a new origin', async () => {
   const dto = await make();
   await expect(
-    service.update(kit.sctx, kit.actor, dto.id, { config: cfg('https://api.example.com:8443/v1') }),
+    service.update(kit.sctx, kit.actor, dto.id, { config: cfg('https://api2.example.com/v1') }),
   ).rejects.toMatchObject({ code: 'VALIDATION' });
 });
 

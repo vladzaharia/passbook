@@ -107,7 +107,8 @@ describe('issuing switches on a connection', () => {
     );
 
   const sources: [string, Record<string, unknown>][] = [
-    ['config', { config: { baseUrl: 'https://evil.example.com/v1' } }],
+    // A new host takes its credential in the same request.
+    ['config', { config: { baseUrl: 'https://evil.example.com/v1' }, secrets: { token: 'moved' } }],
     ['secrets', { secrets: { token: 'swapped' } }],
     ['webhookSecret', { webhookSecret: 'a-brand-new-webhook-secret' }],
     ['mode', { mode: 'webhook' }],
@@ -233,7 +234,10 @@ describe('issuing switches on a connection', () => {
 
   it('refuses a connections:write-only key on an armed connection and accepts a pass key', async () => {
     const armed = await httpArmed({ autoEmail: true });
-    const patch = { config: { baseUrl: 'https://evil.example.com/v1' } };
+    const patch = {
+      config: { baseUrl: 'https://evil.example.com/v1' },
+      secrets: { token: 'moved' },
+    };
     const path = `/api/v1/connections/${armed.id}`;
     expect(await keyRequest(['connections:write'], 'PATCH', path, patch)).toBe(403);
     expect(await keyRequest(['connections:write'], 'POST', `${path}/webhook-secret`, {})).toBe(403);
@@ -258,7 +262,12 @@ describe('issuing switches on a connection', () => {
         kit.sctx,
         kit.actor,
         armed.id,
-        { enabled: false, autoEmail: true, config: { baseUrl: 'https://x.example.com/v1' } },
+        {
+          enabled: false,
+          autoEmail: true,
+          config: { baseUrl: 'https://x.example.com/v1' },
+          secrets: { token: 'moved' },
+        },
         forged,
       ),
     ).rejects.toMatchObject({ status: 403, code: 'ACTOR_CHANGED' });
