@@ -1,7 +1,8 @@
 import { RefreshCw } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
-import { LOGIN_REASONS, type LoginReason } from '@/shared/copy/sign-in.ts';
+import { LOGIN_REASONS, type LoginReason } from '@/shared/copy/login-reasons.ts';
 import { homeFor, safeNextPath } from '@/shared/next.ts';
+import { needsPocketId, operatorSpaceOf } from '@/shared/spaces.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { clearSignedOut, signedOutJustNow, signedOutNext, useSession } from '../lib/session.ts';
 import { UnpluggedArt } from '../ui/art/unplugged.tsx';
@@ -35,7 +36,13 @@ export function LoginPage({
   const [scene, sceneActions] = useLoginScene();
   useEffect(clearSignedOut, []);
 
-  const roles = session?.authenticated ? session.roles : null;
+  const operator = operatorSpaceOf(next);
+  // An email session sent to Admin or Developers stays here: only Polaris ID opens them.
+  const emailAtOperator =
+    session?.authenticated === true &&
+    operator !== null &&
+    needsPocketId(operator, session.amr, session.consoleUntil);
+  const roles = session?.authenticated && !emailAtOperator ? session.roles : null;
   useEffect(() => {
     if (roles) goTo(homeFor(roles, next));
   }, [roles, next]);
@@ -43,6 +50,11 @@ export function LoginPage({
     document.title = 'Sign in · PassBook';
   }, []);
 
+  const loginNotice = reason
+    ? LOGIN_REASONS[reason]
+    : emailAtOperator
+      ? LOGIN_REASONS.polaris
+      : null;
   let front: ReactNode;
   let failed = false;
   let methods: { oidc: boolean; magic: boolean; siteKey: string } | null = null;
@@ -70,6 +82,8 @@ export function LoginPage({
         </Callout>
       </div>
     );
+  } else if (emailAtOperator) {
+    methods = { oidc: true, magic: false, siteKey: '' };
   } else if (!session.authenticated) {
     if (!session.oidcEnabled && !session.magicLinkEnabled) {
       failed = true;
@@ -94,7 +108,8 @@ export function LoginPage({
       <div className="relative z-10 w-full">
         <LoginCard
           next={next}
-          notice={reason ? LOGIN_REASONS[reason] : null}
+          notice={loginNotice}
+          operator={operator !== null}
           methods={methods}
           front={front}
           scene={sceneActions}

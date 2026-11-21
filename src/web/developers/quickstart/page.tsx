@@ -5,7 +5,8 @@ import { NAV_PATH } from '../pages/layout.tsx';
 import { EmptyStage, Layout, Progress, Step, Tag } from './parts.tsx';
 
 const C = QS_COPY.steps;
-const SIGN_IN_HERE = `/login?next=${encodeURIComponent(PATHS.quickstart)}`;
+/** Straight to Polaris ID: the sandbox step is where the page picks up. */
+const POLARIS_HERE = `/auth/oidc/start?next=${encodeURIComponent(`${PATHS.quickstart}#sandbox`)}`;
 
 /** Left nav for the page: where to go next, and the guides. On a phone it is the drawer, with the sections first. */
 export function QuickstartSide() {
@@ -54,7 +55,7 @@ export function QuickstartView() {
             <Step n={1} state="current" title={C.signIn.title}>
               <p className="sm muted">{C.signIn.line}</p>
               <p>
-                <a className="btn" href={SIGN_IN_HERE}>
+                <a className="btn" href={POLARIS_HERE}>
                   {C.signIn.cta}
                 </a>
               </p>

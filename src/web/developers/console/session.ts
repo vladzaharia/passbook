@@ -2,7 +2,7 @@
  * Who is looking: signed out, signed in without a sandbox, or with one. Plain fetches, no React:
  * the answer decides whether the console chunk loads at all.
  */
-import { needsPocketId, type SignInMethod } from '../../../shared/spaces.ts';
+import { hasDeveloperAccess, needsPocketId, type SignInMethod } from '../../../shared/spaces.ts';
 
 export interface Sandbox {
   id: string;
@@ -17,7 +17,15 @@ export type Session =
   /** `siteKey`: the check that finishes a sandbox's setup again (the quickstart's repair). */
   | { kind: 'ready'; csrf: string; sandbox: Sandbox; siteKey: string };
 
+/** Why a visitor counts as signed out: no session, an email link (holder only), or no developer group. */
+export interface Gate {
+  reason: 'none' | 'email' | 'noaccess';
+  /** Who is signed in, for the no-access line. */
+  email: string | null;
+}
+
 const API = '/api/v1';
+let gate: Gate = { reason: 'none', email: null };
 let pending: Promise<Session> | undefined;
 
 async function json(res: Response): Promise<Record<string, unknown>> {
@@ -32,8 +40,18 @@ async function read(): Promise<Session> {
   const head = { accept: 'application/json' };
   const me = await json(await fetch(`${API}/session`, { headers: head }));
   if (me.authenticated !== true || typeof me.csrfToken !== 'string') return { kind: 'out' };
+  const user = me.user as { primaryEmail?: unknown } | undefined;
+  const email = typeof user?.primaryEmail === 'string' ? user.primaryEmail : null;
   // An email link signs in to the holder's spaces only (shared/spaces.ts): here that is signed out.
-  if (needsPocketId('developers', me.amr as SignInMethod)) return { kind: 'out' };
+  if (needsPocketId('developers', me.amr as SignInMethod)) {
+    gate = { reason: 'email', email };
+    return { kind: 'out' };
+  }
+  const roles = Array.isArray(me.roles) ? (me.roles as string[]) : [];
+  if (!hasDeveloperAccess(roles)) {
+    gate = { reason: 'noaccess', email };
+    return { kind: 'out' };
+  }
   const csrf = me.csrfToken;
   const res = await fetch(`${API}/developer/sandbox`, { headers: head });
   if (res.status === 401) return { kind: 'out' };
@@ -58,6 +76,9 @@ async function read(): Promise<Session> {
     },
   };
 }
+
+/** Read after `loadSession()` resolved to `out`. */
+export const signedOutGate = (): Gate => gate;
 
 const listeners = new Set<(s: Session) => void>();
 
