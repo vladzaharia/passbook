@@ -19,6 +19,7 @@ const FEATURE_ROUTES: Record<string, unknown> = {
   'patch /api/v1/nfc/bindings/{bindingId}': { key: 'nfc', atLeast: 'basic' },
   'post /api/v1/nfc/passes/{passId}/enrollments': { key: 'nfc', atLeast: 'basic' },
   'post /api/v1/nfc/keysets': { key: 'nfc', atLeast: 'secure' },
+  'post /api/v1/orgs/{orgId}/identities/apple': 'identity.managed',
   'post /api/v1/orgs/{orgId}/wallet-accounts/google/managed': 'identity.managed',
 };
 
