@@ -14,7 +14,12 @@ import {
   OrgMembershipParamSchema,
   OrgMembershipSchema,
 } from '../../../shared/contracts/index.ts';
-import { requireHolderSession, requireSession, type SessionAuth } from '../../platform/auth.ts';
+import {
+  requireHolderSession,
+  requireSession,
+  requireStrictSession,
+  type SessionAuth,
+} from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -40,9 +45,9 @@ const session = (c: Context<AppBindings>): SessionAuth => {
 
 export const membershipRoutes = createRouter({ bodyLimit: false });
 
-// The landing document is public; the accepting POST is always session and CSRF protected.
+// The landing document is public; the accepting POST is always strong-session (no email-link grace) and CSRF protected.
 membershipRoutes.use('/invitations/accept', (c, next) =>
-  c.req.method === 'GET' ? next() : requireSession(c, next),
+  c.req.method === 'GET' ? next() : requireStrictSession(c, next),
 );
 // The caller's own list is read by the account menu and the setup banner; an email link may read it.
 membershipRoutes.use('/memberships/me', requireHolderSession);

@@ -13,6 +13,10 @@ export const SIGN_IN_SENT =
 
 /** 403 IDP_SIGN_IN_REQUIRED: the console and developer tools are not open to an email-link sign-in. */
 export const IDP_SIGN_IN_REQUIRED_MESSAGE = 'Sign in with Polaris ID to continue.';
+/** The invitation page for someone without a Polaris ID session; `{org}` is the organization's name. */
+export const INVITE_SIGN_IN_LINE = 'Sign in with Polaris ID to join {org}.';
+/** The admin shell's line for an email session still inside the console grace window. */
+export const graceLine = (date: string) => `Use Polaris ID by ${date} to keep Admin access.`;
 export const PASSKEY_REQUIRED_MESSAGE = 'Sign in to Polaris ID with your passkey, not a code.';
 
 export const INVALID_EMAIL = EMAIL_INVALID_MESSAGE;

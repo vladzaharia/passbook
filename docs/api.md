@@ -172,7 +172,7 @@ An active organization administrator, or a platform administrator acting explici
 The invitee opens the delivered link and signs in with a verified account address exactly matching
 the normalized invited address. Invitations expire after seven days, can be revoked, and are
 single-use. The link's token is sent only in the email and stored only as a hash; it is not returned
-by invitation APIs. The acceptance page names the organization with `POST /orgs/invitations/preview` and submits the token as `POST /orgs/invitations/accept`. Org member lists include each member's name and email. Revocation
+by invitation APIs. The acceptance page names the organization with `POST /orgs/invitations/preview` and submits the token as `POST /orgs/invitations/accept`. Accepting needs a Polaris ID sign-in, with no email-link grace: the page sends anyone else to `/auth/oidc/start`, and the POST answers 403 `IDP_SIGN_IN_REQUIRED` (`signInUrl` points back to the page). An invitee with no Polaris ID account asks the inviter for access first. Org member lists include each member's name and email. Revocation
 is effective on the next membership/capability lookup.
 If the mail provider reports a delivery failure, the invitation remains recorded and can be
 revoked or replaced; provider acceptance does not prove inbox delivery.
