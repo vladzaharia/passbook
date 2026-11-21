@@ -1,13 +1,21 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeUser } from '../../../../test/helpers/index.ts';
+import { makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
-import { run } from '../../platform/db.ts';
+import { PLATFORM_NAME } from '../../../shared/email-from-name.ts';
+import { first, run } from '../../platform/db.ts';
+import { signInOidc } from '../auth/oidc-sign-in.ts';
+import { resolveSession } from '../auth/sessions.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { passEmailOrgName } from '../delivery/email-from.ts';
+import { getHolderPass } from '../holders/repo.ts';
+import { approveCandidate, createCandidate, publishRelease } from '../templates/releases.ts';
 import { readBranding, tenantPassJson } from './branding.ts';
-import { buildArtifact } from './builder.ts';
+import { createPassRow } from './create.ts';
+import { finishCredentialTransfer, startCredentialTransfer } from './credential-transfer.ts';
 import { issuerName } from './issuer.ts';
-import { type Kit, setupKit } from './pass-test-fixtures.ts';
-import { getOrg, type PassOrg } from './repo-read-issuance.ts';
-import { getPass } from './repo-read-pass.ts';
+import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
+import { publishPass } from './publish.ts';
+import { getOrg } from './repo-read-issuance.ts';
 
 const base = {
   organizationName: 'Rain City Fit',
@@ -47,58 +55,138 @@ describe('tenantPassJson', () => {
   });
 });
 
-describe('personal org passes', () => {
+describe('personal org journey', () => {
   let kit: Kit;
   beforeAll(async () => {
     kit = await setupKit();
   });
-  // A personal org has one member, so it cannot run the two-person release flow the kit needs.
-  // The pass is made in the kit's org and rebuilt with the personal org's row, as every build path
-  // (create, publish, transfer) does through `PassOrg`.
-  const build = async (org: PassOrg) => {
-    const made = await kit.pass({ memberName: 'Pat' });
-    const pass = await getPass(kit.env.DB, made.id);
-    if (!pass) throw new Error('Missing pass');
-    return (
-      await buildArtifact(kit.ctx, {
-        orgId: pass.orgId,
-        orgName: org.name,
-        personal: org.personal,
-        branding: org.branding,
-        passId: pass.id,
-        serial: pass.serial,
-        authToken: pass.authToken,
-        webServiceUrl: pass.webServiceUrl,
-        identityId: pass.identityId,
-        templateId: pass.templateId,
-        templateVersion: pass.templateVersion,
-        personalization: pass.personalization,
-        status: pass.status,
-      })
-    ).passJson;
-  };
+  const latest = async (passId: string) =>
+    JSON.parse(
+      (
+        await first<{ pass_json: string }>(
+          kit.env.DB,
+          'SELECT pass_json FROM pass_versions WHERE pass_id = ? ORDER BY version DESC LIMIT 1',
+          [passId],
+        )
+      )?.pass_json ?? '{}',
+    ) as PassJson;
 
-  it('reads the flag from the org row and keeps the template issuer only for a personal org', async () => {
-    const owner = await makeUser(kit.fx);
-    const orgId = kit.fx.ids.id();
+  /**
+   * An admin signs in (the personal org is ensured), authors a template whose pass.json has its own issuer,
+   * approves it alone in Live as the org's only member, and issues a pass: the owner's whole path.
+   */
+  async function journey() {
+    const user = await makeUser(kit.fx);
+    await run(kit.env.DB, "UPDATE users SET name = 'Pat Owner' WHERE id = ?", [user.id]);
     await run(
       kit.env.DB,
-      'INSERT INTO orgs (id, slug, name, created_at, updated_at, personal_user_id) VALUES (?, ?, ?, 1, 1, ?)',
-      [orgId, `personal-${orgId.slice(-6)}`, 'Pat Owner', owner.id],
+      `INSERT INTO auth_identities (provider, subject, user_id, email_claim, email_verified, groups, created_at)
+       VALUES ('pocketid', ?, ?, ?, 1, '[]', 1)`,
+      [`sub-${user.id}`, user.id, user.primaryEmail],
     );
-    const personal = await getOrg(kit.env.DB, orgId);
-    const normal = await getOrg(kit.env.DB, kit.org.id);
-    if (!personal || !normal) throw new Error('Missing org');
-    expect([personal.personal, normal.personal]).toEqual([true, false]);
-    expect(await build(normal)).toMatchObject({
-      organizationName: kit.org.name,
-      description: expect.stringContaining(kit.org.name),
+    const signed = await signInOidc(
+      kit.ctx,
+      {
+        sub: `sub-${user.id}`,
+        email: user.primaryEmail,
+        emailVerified: true,
+        name: 'Pat Owner',
+        groups: ['wallet-admins'],
+      },
+      { ipPrefix: null, userAgent: null },
+    );
+    const org = await first<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM orgs WHERE personal_user_id = ?',
+      [user.id],
+    );
+    if (!org) throw new Error('No personal org');
+    const auth = await resolveSession(kit.env, kit.ctx.clock, signed.session.cookieValue);
+    if (!auth) throw new Error('No session');
+    const base = kit.template;
+    const resolved = kit.registry.add({
+      id: `tpl-rain-${org.id.slice(-6)}`,
+      orgId: org.id,
+      manifest: base.manifest,
+      passJson: {
+        ...base.passJson,
+        organizationName: 'Rain City Fit',
+        logoText: 'Rain City',
+        description: 'Gym pass',
+      } as PassJson,
+      assets: { 'icon.png': ICON_PNG },
     });
-    // Built again, as a reissue or transfer does, it stays the template's own.
-    for (let rebuilt = 0; rebuilt < 2; rebuilt++)
-      expect(await build(personal)).toMatchObject({
-        organizationName: 'placeholder',
-        description: 'Test pass',
-      });
+    await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+    const scope = { orgId: org.id, mode: 'live', provider: 'apple' } as const;
+    const candidate = await createCandidate(kit.ctx, auth, resolved.id, {
+      ...scope,
+      version: resolved.version,
+    });
+    const approval = await approveCandidate(kit.ctx, auth, resolved.id, candidate.id, {
+      ...scope,
+      candidateHash: candidate.candidateHash,
+      alone: true,
+    });
+    const release = await publishRelease(kit.ctx, auth, resolved.id, {
+      ...scope,
+      candidateId: candidate.id,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      expectedGeneration: 0,
+    });
+    const created = await createPassRow(jobCtxOf(kit), {
+      orgId: org.id,
+      templateId: resolved.id,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
+      input: { memberName: 'Pat' },
+      source: 'manual',
+      mode: 'live',
+      execution: { kind: 'system' },
+      actor: { type: 'user', id: user.id },
+    });
+    return { user, orgId: org.id, approval, pass: created };
+  }
+
+  it('lets a one-member org approve alone, release and issue a pass with the template issuer', async () => {
+    const { orgId, approval, pass, user } = await journey();
+    expect(approval.kind).toBe('sole');
+    expect(await latest(pass.id)).toMatchObject({
+      organizationName: 'Rain City Fit',
+      logoText: 'Rain City',
+      description: 'Gym pass',
+    });
+    const org = await getOrg(kit.env.DB, orgId);
+    expect(org?.personal).toBe(true);
+    expect(passEmailOrgName(org)).toBe(PLATFORM_NAME);
+    // A reissue builds the same pass: it does not flip back to the owner's name.
+    const { changed } = await publishPass(jobCtxOf(kit), {
+      passId: pass.id,
+      cause: 'admin',
+      actor: { type: 'user', id: user.id },
+    });
+    expect(changed).toBe(false);
+    expect(await latest(pass.id)).toMatchObject({ organizationName: 'Rain City Fit' });
+  });
+
+  it('keeps the template issuer through a credential transfer', async () => {
+    const { pass } = await journey();
+    const expected = await getHolderPass(kit.env.DB, pass.id, null);
+    if (!expected) throw new Error('Missing holder pass');
+    const started = await startCredentialTransfer(
+      jobCtxOf(kit),
+      { type: 'system', id: null },
+      pass.id,
+      { holderEmail: 'next@example.test', ownerUserId: null },
+      null,
+      { kind: 'tenant-holder', expected },
+    );
+    await finishCredentialTransfer(jobCtxOf(kit), started.transferId);
+    expect(await latest(pass.id)).toMatchObject({
+      organizationName: 'Rain City Fit',
+      logoText: 'Rain City',
+      description: 'Gym pass',
+    });
   });
 });
