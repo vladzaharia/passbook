@@ -1,0 +1,72 @@
+import { AppError } from '../../platform/errors.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordAudit } from '../audit/service.ts';
+import { emailPlatformAdmins } from './alerts.ts';
+import { probeApns } from './apns-probe.ts';
+import { abandonPendingCertificate } from './cert-history.ts';
+import { beginStep, loadRun } from './provision-run.ts';
+import { getCertificateRow } from './repo-certificates.ts';
+import { finishRun } from './repo-runs.ts';
+
+const CODE = /^([A-Z][A-Z0-9_]+): /;
+
+/** The stable code of a failure: an AppError's own, or the prefix a NonRetryableError carries. */
+export function failureCode(cause: unknown): string {
+  if (cause instanceof AppError) return cause.code;
+  const prefix = cause instanceof Error ? CODE.exec(cause.message)?.[1] : undefined;
+  return prefix ?? 'IDENTITY_RUN_FAILED';
+}
+
+/**
+ * The run ends `failed` with the code, an audit row and an error log (never the message: it can echo
+ * Apple's response). A rotation's unused key is deleted. The planner starts a new run tomorrow.
+ */
+export async function failRun(ctx: ServiceContext, runId: string, cause: unknown): Promise<void> {
+  const { run, ref } = await loadRun(ctx, runId);
+  if (run.state === 'succeeded' || run.state === 'failed') return;
+  const code = failureCode(cause);
+  if (run.kind === 'rotate' && ref.certId) {
+    const pending = await getCertificateRow(ctx.env.DB, ref.certId);
+    if (pending?.state === 'pending') await abandonPendingCertificate(ctx, pending.id);
+  }
+  await finishRun(ctx.env.DB, runId, 'failed', code, ctx.clock.now());
+  const identityId = ref.identityId ?? (run.target_type === 'identity' ? run.target_id : null);
+  await recordAudit(ctx, {
+    actorType: 'system',
+    orgId: run.org_id,
+    action: run.kind === 'rotate' ? 'identity.rotation_failed' : 'identity.provision_failed',
+    targetType: identityId ? 'identity' : 'org',
+    targetId: identityId ?? run.target_id,
+    detail: { runId, step: run.step, code },
+  });
+  ctx.log.error(run.kind === 'rotate' ? 'identity.rotation_failed' : 'identity.provision_failed', {
+    runId,
+    identityId,
+    step: run.step,
+    code: run.kind === 'rotate' ? 'IDENTITY_ROTATION_FAILED' : 'IDENTITY_PROVISION_FAILED',
+    reason: code,
+  });
+}
+
+/** Push still works with the new certificate? A failure alerts but never rolls back: the push key is independent. */
+export async function postCheck(ctx: ServiceContext, runId: string): Promise<void> {
+  const { run, ref } = await beginStep(ctx, runId, 'post-check');
+  const identityId = ref.identityId ?? run.target_id;
+  let failing: boolean;
+  try {
+    failing = (await probeApns(ctx, null, identityId)).health === 'failing';
+  } catch (error) {
+    ctx.log.warn('identity.apns_probe_failed', { identityId, code: 'PROBE_ERROR', error });
+    failing = true;
+  }
+  if (!failing) return;
+  ctx.log.error('identity.push_after_rotation_failed', {
+    identityId,
+    code: 'IDENTITY_PUSH_AFTER_ROTATION',
+  });
+  await emailPlatformAdmins(
+    ctx,
+    'Pass type push check failed',
+    `The push check failed after the certificate for ${identityId} changed. Check the identity.`,
+  );
+}

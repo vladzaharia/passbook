@@ -59,26 +59,32 @@ export interface PendingCertificate {
   now: number;
 }
 
-/** The key credential (fingerprint = public-key hash) and its pending history row, together. */
-export async function insertPendingCertificate(
-  db: D1Database,
-  p: PendingCertificate,
-): Promise<void> {
+/** The key credential (fingerprint = public-key hash) and its pending history row, as two statements. */
+export function pendingCertificateStmts(db: D1Database, p: PendingCertificate) {
   const c = p.credential;
-  await batch(db, [
-    stmt(
+  return {
+    credential: stmt(
       db,
       `INSERT INTO credentials (id, org_id, kind, kek_version, iv, wrapped_dek, ciphertext, fingerprint, created_at)
        VALUES (?, ?, 'pass_signer', ?, ?, ?, ?, ?, ?)`,
       [c.id, c.orgId, c.kekVersion, c.iv, c.wrappedDek, c.ciphertext, c.fingerprint, p.now],
     ),
-    stmt(
+    history: stmt(
       db,
       `INSERT INTO identity_certificates (id, identity_id, credential_id, origin, state, created_at)
        VALUES (?, ?, ?, ?, 'pending', ?)`,
       [p.id, p.identityId, c.id, p.origin, p.now],
     ),
-  ]);
+  };
+}
+
+/** The key credential and its pending history row, together. */
+export async function insertPendingCertificate(
+  db: D1Database,
+  p: PendingCertificate,
+): Promise<void> {
+  const s = pendingCertificateStmts(db, p);
+  await batch(db, [s.credential, s.history]);
 }
 
 export interface Activation {
