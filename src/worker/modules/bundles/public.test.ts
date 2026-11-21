@@ -50,6 +50,8 @@ async function bundleWith(count: number, mode: 'live' | 'test' = 'live') {
   const bundle = BundleSchema.parse(await res.json());
   return { passes, bundle, headers, token: bundle.url?.split('/b/')[1] ?? '' };
 }
+const ANDROID =
+  'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
 const get = (path: string, headers: Record<string, string> = {}, env = kit.env) =>
   app.request(`${ORIGIN}${path}`, { headers }, env);
 const events = (kind: string, passId: string) =>
@@ -146,7 +148,7 @@ describe('GET /b/:token', () => {
     expect(bodies[0]).toContain(`href="/b/${token}"`);
     // Ended members render ended: no barcode, no file.
     for (const ended of [bodies[1], bodies[2]]) {
-      expect(ended).not.toContain('/barcode"');
+      expect(ended).not.toMatch(/href="[^"]*\/barcode"/);
       expect(ended).not.toContain('pass.pkpass');
     }
     // Outside the bundle, or once the bundle is rotated, every member page, file and barcode is a 404.
@@ -164,13 +166,27 @@ describe('GET /b/:token', () => {
 
   it('saves a member door view under the bundle worker, scoped to that member', async () => {
     const { passes, token } = await bundleWith(2);
-    const page = await (await get(`/b/${token}/${passes[0]?.id}/barcode`)).text();
-    expect(page).toContain('data-offline');
-    expect(page).toContain('/b/sw.js');
-    const sw = await get('/b/sw.js');
-    expect(sw.status).toBe(200);
-    expect(sw.headers.get('content-type')).toContain('javascript');
-    expect(await sw.text()).toContain('barcode:');
+    const id = passes[0]?.id;
+    const member = await (await get(`/b/${token}/${id}`, { 'user-agent': ANDROID })).text();
+    expect(member).toContain(`data-save-phone="/b/${token}/${id}/barcode"`);
+    expect(member).toContain('<script src="/b/save.js" defer>');
+    const door = await get(`/b/${token}/${id}/barcode`);
+    expect(await door.text()).toContain('data-door-saved');
+    for (const path of ['/b/sw.js', '/b/save.js']) {
+      const res = await get(path);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('javascript');
+    }
+    const save = await (await get('/b/save.js')).text();
+    expect(save).toContain("createPolicy('passbook-save'");
+    expect(save).toContain("'/b/sw.js'");
+    expect(save).not.toContain("'/p/sw.js'");
+    expect(await (await get('/b/sw.js')).text()).toContain('barcode:');
+    // The saved page's relative back link lands on the member page.
+    const back = await get(`/b/${token}/${id}/`);
+    expect(back.status).toBe(308);
+    expect(back.headers.get('location')).toBe(`/b/${token}/${id}`);
+    expect(door.headers.get('content-security-policy')).toContain('passbook-save');
   });
 
   it('serves a member barcode page under the bundle token', async () => {
@@ -179,7 +195,9 @@ describe('GET /b/:token', () => {
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('<svg');
-    expect(html).toContain(`href="/b/${token}/${passes[0]?.id}"`);
+    // The saved copy keeps no token: its way back is relative, and /b/:token/:passId/ redirects.
+    expect(html).toContain('href="./"');
+    expect(html).toContain('data-door-saved');
     expect(res.headers.get('cache-control')).toContain('no-store');
     // A pass outside the bundle and a rotated token are 404 pages.
     const other = await makePass();

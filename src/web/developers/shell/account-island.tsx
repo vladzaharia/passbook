@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { POLARIS_ID_COPY } from '../../../shared/copy/sign-in.ts';
 import { personLabel } from '../../lib/format.ts';
+import { clearSavedPasses } from '../../lib/saved-passes.ts';
 import { ThemeProvider } from '../../lib/theme.tsx';
 import { Button } from '../../ui/button.tsx';
 import '../../styles/kit-controls.css';
@@ -31,6 +32,7 @@ async function signOut(csrfToken: string): Promise<void> {
   } catch {
     // The session is re-checked at /login either way.
   }
+  await clearSavedPasses();
   location.assign(target);
 }
 

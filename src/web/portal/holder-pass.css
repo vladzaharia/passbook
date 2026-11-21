@@ -320,3 +320,15 @@
     animation-delay: 440ms;
   }
 }
+
+/* A phone-width page keeps one QR, the pass's own: the add QR is for another screen to scan, so it
+   goes, with its line. A Mac's badge stays; with nothing left the card goes too. */
+@media (max-width: 639.98px) {
+  .wl-holder .wl-hero-scan:not(:has(.wl-way-here)) {
+    display: none;
+  }
+  .wl-holder .wl-hero-scan .wl-sign,
+  .wl-holder .wl-hero-scan .wl-way:not(.wl-way-here) {
+    display: none;
+  }
+}

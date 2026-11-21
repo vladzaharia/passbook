@@ -6,7 +6,7 @@ import {
   PublicBundlePassParamSchema,
 } from '../../../shared/contracts/bundles.ts';
 import { passDevice } from '../../../shared/device.ts';
-import { BUNDLE_OFFLINE_SCRIPT } from '../../../shared/pass-offline.ts';
+import { BUNDLE_DOOR_SCRIPT } from '../../../shared/pass-offline.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -19,7 +19,11 @@ import {
 import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage } from '../../ssr/pass-page.tsx';
-import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
+import {
+  PRESENTATION_HEADERS,
+  presentationHeaders,
+  renderPresentationPage,
+} from '../../ssr/presentation-page.tsx';
 import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { servePassFile } from '../passes/file.ts';
@@ -241,13 +245,13 @@ register(
         ...model,
         backHref: `/b/${p.token}/${pass.id}`,
         offline: true,
-        offlineScript: BUNDLE_OFFLINE_SCRIPT,
+        doorScript: BUNDLE_DOOR_SCRIPT,
         nonce: c.var.nonce,
         theme,
       });
       await assertBundleMember(ctx, bundle, pass);
       ctx.waitUntil(recordCopy(ctx, pass, 'mobile'));
-      return new Response(html, { headers: PRESENTATION_HEADERS });
+      return new Response(html, { headers: presentationHeaders(model.expiresAt) });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
         return new Response(

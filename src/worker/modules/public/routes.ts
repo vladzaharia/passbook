@@ -15,7 +15,11 @@ import {
 } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
-import { PRESENTATION_HEADERS, renderPresentationPage } from '../../ssr/presentation-page.tsx';
+import {
+  PRESENTATION_HEADERS,
+  presentationHeaders,
+  renderPresentationPage,
+} from '../../ssr/presentation-page.tsx';
 import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { codesReplacedNotice } from '../channels/service.ts';
 import { recordPassEvent } from '../events/record.ts';
@@ -189,7 +193,7 @@ register(
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
-        return new Response(renderNotFoundPage(c.var.nonce, theme), {
+        return new Response(renderNotFoundPage(c.var.nonce, theme, { drop: true }), {
           status: 404,
           headers: PAGE_HEADERS,
         });
@@ -224,10 +228,10 @@ register(
       });
       await assertPassSnapshot(ctx, snapshot);
       ctx.waitUntil(recordCopy(ctx, pass, 'mobile'));
-      return new Response(html, { headers: PRESENTATION_HEADERS });
+      return new Response(html, { headers: presentationHeaders(model.expiresAt) });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
-        return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false }), {
+        return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false, drop: true }), {
           status: 404,
           headers: PRESENTATION_HEADERS,
         });
