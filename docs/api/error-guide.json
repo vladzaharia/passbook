@@ -1013,6 +1013,12 @@
     "fix": "Send orgId with the request, or use a key scoped to one organization.",
     "retryable": false
   },
+  "ORG_SLUG_RESERVED": {
+    "title": "Slug reserved",
+    "when": "The slug starts with personal-, which belongs to personal organizations.",
+    "fix": "Choose a different slug.",
+    "retryable": false
+  },
   "ORG_SLUG_TAKEN": {
     "title": "Slug taken",
     "when": "Another organization already uses this slug.",

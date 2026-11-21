@@ -5,7 +5,7 @@
     "operationId": "brand.deleteBrandWebLogo",
     "op": "DELETE /api/v1/brand/web-logo",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
@@ -13,7 +13,7 @@
     "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
     "op": "DELETE /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -21,7 +21,7 @@
     "operationId": "orgs.getOrgs",
     "op": "GET /api/v1/orgs",
     "change": "200.items[].personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personalOwner: field added",
@@ -29,7 +29,7 @@
     "operationId": "orgs.getOrgs",
     "op": "GET /api/v1/orgs",
     "change": "200.items[].personalOwner: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
     "key": "GET /api/v1/orgs/{id} 200.personal: field added",
@@ -37,7 +37,7 @@
     "operationId": "orgs.getOrgsById",
     "op": "GET /api/v1/orgs/{id}",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "GET /api/v1/orgs/{id} 200.personalOwner: field added",
@@ -45,7 +45,7 @@
     "operationId": "orgs.getOrgsById",
     "op": "GET /api/v1/orgs/{id}",
     "change": "200.personalOwner: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.personal: field added",
@@ -53,7 +53,7 @@
     "operationId": "orgs.getOrgsByIdWorkspace",
     "op": "GET /api/v1/orgs/{id}/workspace",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.personalOwner: field added",
@@ -61,7 +61,7 @@
     "operationId": "orgs.getOrgsByIdWorkspace",
     "op": "GET /api/v1/orgs/{id}/workspace",
     "change": "200.personalOwner: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
     "key": "PATCH /api/v1/brand 200.personal: field added",
@@ -69,7 +69,7 @@
     "operationId": "brand.patchBrand",
     "op": "PATCH /api/v1/brand",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "PATCH /api/v1/orgs/{id} 200.personal: field added",
@@ -77,7 +77,7 @@
     "operationId": "orgs.patchOrgsById",
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "POST /api/v1/orgs 201.personal: field added",
@@ -85,7 +85,7 @@
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
     "change": "201.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
@@ -93,7 +93,7 @@
     "operationId": "orgs.postOrgsByIdStatus",
     "op": "POST /api/v1/orgs/{id}/status",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personalOwner: field added",
@@ -101,7 +101,7 @@
     "operationId": "orgs.postOrgsByIdStatus",
     "op": "POST /api/v1/orgs/{id}/status",
     "change": "200.personalOwner: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
     "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
@@ -109,7 +109,7 @@
     "operationId": "organization-memberships.postOrgsInvitationsAccept",
     "op": "POST /api/v1/orgs/invitations/accept",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.personal: field added",
@@ -117,7 +117,7 @@
     "operationId": "brand.putBrandWebLogo",
     "op": "PUT /api/v1/brand/web-logo",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   },
   {
     "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
@@ -125,6 +125,6 @@
     "operationId": "orgs.putOrgsByIdBrandingBySlot",
     "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.personal: field added",
-    "note": ""
+    "note": "Organizations carry personal: true for a personal org."
   }
 ]
