@@ -256,8 +256,9 @@ describe('placeholder art', () => {
     setPlaceholderHashes(new Set([icon.sha1]));
     onTestFinished(() => setPlaceholderHashes(null));
     expect((await create()).warnings.find((w) => w.code === 'PLATFORM_BRANDING')).toMatchObject({
-      message: "Uses the placeholder icon. Add the organization's icon in Pass branding.",
+      message: "Uses the placeholder icon. Add the organization's icon in Brand and channels.",
       path: 'icon',
+      fix: { action: 'upload_icon' },
     });
   });
 });
@@ -364,9 +365,10 @@ describe('tenant identity', () => {
       description: `${kit.org.name} store card`,
     });
     expect(plain.warnings.map((w) => w.code)).toContain('PLATFORM_BRANDING');
-    expect(plain.warnings.find((w) => w.code === 'PLATFORM_BRANDING')?.message).toBe(
-      "Uses the placeholder logo and icon. Add the organization's logo and icon in Pass branding.",
-    );
+    expect(plain.warnings.filter((w) => w.code === 'PLATFORM_BRANDING')).toMatchObject([
+      { path: 'logo', fix: { action: 'upload_logo' } },
+      { path: 'icon', fix: { action: 'upload_icon' } },
+    ]);
 
     await run(kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [
       JSON.stringify({

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { MODE_HEADER } from '@/shared/contracts/common.ts';
+import { newOrgFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { resetModeForTests, setMode } from '../../lib/mode.ts';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import {
@@ -1563,5 +1564,47 @@ describe('pass detail: header actions', () => {
     await userEvent.setup().click(await screen.findByRole('button', { name: 'More' }));
     await screen.findByRole('menuitem', { name: 'Copy link' });
     expect(screen.queryByRole('menuitem', { name: /Download/ })).toBeNull();
+  });
+});
+
+describe('pass detail: setup rows', () => {
+  const placeholder = (slot: 'logo' | 'icon') => ({
+    severity: 'warning',
+    code: 'PLATFORM_BRANDING',
+    message: `Uses the placeholder ${slot}. Add the organization's ${slot} in Brand and channels.`,
+    path: slot,
+    fix: { action: slot === 'logo' ? 'upload_logo' : 'upload_icon' },
+  });
+
+  it('shows the placeholder image and the org checks as rows with a fix, once each', async () => {
+    const user = userEvent.setup();
+    const server = newServer({ warnings: [placeholder('logo'), placeholder('icon')] });
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers(server, {
+        [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => json(viewOf(newOrgFacts())),
+      }),
+    });
+    expect(await screen.findByRole('button', { name: 'Add logo' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Add logo' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Add icon' })).toHaveLength(1);
+    expect(await screen.findByRole('button', { name: 'Add support' })).toBeInTheDocument();
+    expect(screen.queryByText(/Pass warnings/)).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Add logo' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Add logo' });
+    expect(within(sheet).getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('shows no rows when the setup is unreadable and the pass has no placeholder', async () => {
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers(newServer(), {
+        [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => problem(403, 'FORBIDDEN', 'No access'),
+      }),
+    });
+    await screen.findByLabelText(/Member name/);
+    expect(screen.queryByRole('button', { name: 'Add logo' })).toBeNull();
   });
 });

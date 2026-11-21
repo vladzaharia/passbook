@@ -10,7 +10,7 @@ import { cn } from '@/web/lib/cn.ts';
 import { Button, StatusPill, Switch } from '@/web/ui/index.ts';
 import { ChainBadge, LockPill } from './chain-badge.tsx';
 
-const ICON = {
+export const CHANNEL_ICON = {
   apple: Wallet,
   mobile: Smartphone,
   google: Wallet,
@@ -89,7 +89,7 @@ export function ChannelRow({
   ask?: ReactNode;
 }) {
   const id = useId();
-  const Icon = ICON[channel];
+  const Icon = CHANNEL_ICON[channel];
   const stop = stoppingLevel(row.levels);
   const above = stop?.state === 'locked';
   const status = channelStatusLine({ levels: row.levels, templates: row.templates });

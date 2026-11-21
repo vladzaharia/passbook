@@ -11,7 +11,7 @@ export function HoldDialog({
   enrolment,
   onClose,
 }: {
-  enrolment: PlatformWalletEnrolment | undefined;
+  enrolment: Pick<PlatformWalletEnrolment, 'orgId' | 'orgName' | 'mode' | 'provider'> | undefined;
   onClose: () => void;
 }) {
   const actions = useWalletActions();

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
+import { newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { resetModeForTests } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { resetShownCounts } from './count.ts';
@@ -215,6 +216,46 @@ describe('organization overview', () => {
     );
     expect(await screen.findByRole('region', { name: 'Get started' })).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Totals' })).toBeNull();
+  });
+
+  it('leads Get started with Brand and channels: the count and the first three to-dos', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member()],
+      selectedOrg: 'o1',
+      handlers: {
+        ...handlers(orgActivity({ templates: [] })),
+        '/api/v1/orgs/o1/pass-setup': () => json(viewOf(newOrgFacts())),
+      },
+    });
+    const list = await screen.findByRole('region', { name: 'Get started' });
+    await within(list).findByText('Brand and channels');
+    const steps = within(list).getAllByRole('listitem');
+    expect(steps[0]).toHaveTextContent('Brand and channels');
+    expect(steps[0]).toHaveTextContent('3 to do · Logo · Icon · Support');
+    expect(within(steps[0] as HTMLElement).getByRole('link', { name: 'Open' })).toHaveAttribute(
+      'href',
+      '/admin/o/o1/brand',
+    );
+    expect(steps[1]).toHaveTextContent('Use a blueprint');
+    // A suggestion never gates: the blueprint step is still open, and the next waits on it as before.
+    expect(within(steps[1] as HTMLElement).getByRole('link', { name: 'Blueprints' })).toBeVisible();
+    expect(within(list).getAllByRole('button', { name: 'Needs step 2' })).toHaveLength(3);
+  });
+
+  it('checks the Brand step off once nothing is left to do', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member()],
+      selectedOrg: 'o1',
+      handlers: {
+        ...handlers(orgActivity({ templates: [] })),
+        '/api/v1/orgs/o1/pass-setup': () => json(viewOf(readyFacts())),
+      },
+    });
+    const list = await screen.findByRole('region', { name: 'Get started' });
+    expect(await within(list).findByText('All set')).toBeInTheDocument();
+    expect(within(list).getAllByText('(done)')).toHaveLength(1);
   });
 
   it('shows no Get started checklist in a developer sandbox', async () => {

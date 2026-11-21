@@ -2,6 +2,7 @@ import { Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { formatExpiry } from '../../lib/format.ts';
 import { Button, Callout, Card, CardBody } from '../../ui/index.ts';
+import { PassChecks } from '../brand/pass-checks.tsx';
 import { describeSchema, type FieldDef, type FormValues } from './schema-form/index.ts';
 
 const shown = (v: unknown, field?: FieldDef) => {
@@ -22,6 +23,7 @@ interface Row {
 /** Review: one row per choice with Edit back to its step (the state is kept). */
 export function ReviewStep({
   org,
+  setup,
   mode,
   template,
   release,
@@ -35,6 +37,8 @@ export function ReviewStep({
   error,
 }: {
   org: string | undefined;
+  /** The org's setup rows; `onFixed` reads the preview's warnings again once an image landed. */
+  setup?: { orgId: string | undefined; templateId: string | undefined; onFixed: () => void };
   mode: 'live' | 'test';
   template: string | undefined;
   release?: { id: string; generation: number; provider: 'apple' } | undefined;
@@ -44,11 +48,16 @@ export function ReviewStep({
   send: boolean;
   steps: { org?: number; template: number; details: number; holder: number };
   onEdit: (step: number) => void;
-  /** The preview's: missing branding gets its own callout, the other warnings one line each. */
-  warnings: readonly { code: string; severity: string; message: string }[];
+  /** The preview's: missing branding and the org's checks get fix rows, the rest one line each. */
+  warnings: readonly {
+    code: string;
+    severity: string;
+    message: string;
+    path?: string | undefined;
+    fix?: { action: string } | undefined;
+  }[];
   error: ReactNode;
 }) {
-  const brandingMissing = all.some((w) => w.code === 'PLATFORM_BRANDING');
   const warnings = all
     .filter((w) => w.severity === 'warning' && w.code !== 'PLATFORM_BRANDING')
     .map((w) => w.message);
@@ -70,10 +79,13 @@ export function ReviewStep({
   ];
   return (
     <div className="flex flex-col gap-4">
-      {brandingMissing ? (
-        <Callout tone="warning" title="No pass branding">
-          The pass shows the placeholder logo and icon.
-        </Callout>
+      {setup?.orgId ? (
+        <PassChecks
+          orgId={setup.orgId}
+          templateId={setup.templateId}
+          warnings={all}
+          onFixed={setup.onFixed}
+        />
       ) : null}
       {warnings.length > 0 ? (
         <Callout

@@ -624,12 +624,44 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "GET /api/v1/templates/{id} 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesById",
+    "op": "GET /api/v1/templates/{id}",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/sample.csv new operation",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdSampleCsv",
     "op": "GET /api/v1/templates/{id}/sample.csv",
     "change": "new operation",
     "note": "Downloads a sample import file with the template's field labels and one valid row."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/versions/{version} 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdVersionsByVersion",
+    "op": "GET /api/v1/templates/{id}/versions/{version}",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesPreviews",
+    "op": "GET /api/v1/templates/previews",
+    "change": "200.items[].warnings[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/uploads/{id} 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesUploadsById",
+    "op": "GET /api/v1/templates/uploads/{id}",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
@@ -846,6 +878,14 @@
     "op": "PATCH /api/v1/templates/{id}",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "PATCH /api/v1/templates/{id} 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.patchTemplatesById",
+    "op": "PATCH /api/v1/templates/{id}",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
     "key": "PATCH /api/v1/users/{id} 200.lastRoles[]: enum value \"console\" added",
@@ -1336,12 +1376,36 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "POST /api/v1/templates/{id}/archive 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdArchive",
+    "op": "POST /api/v1/templates/{id}/archive",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/clone 201.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdClone",
     "op": "POST /api/v1/templates/{id}/clone",
     "change": "201.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/clone 201.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdClone",
+    "op": "POST /api/v1/templates/{id}/clone",
+    "change": "201.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/preview 200.warnings[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdPreview",
+    "op": "POST /api/v1/templates/{id}/preview",
+    "change": "200.warnings[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
     "key": "POST /api/v1/templates/{id}/release new operation",
@@ -1358,6 +1422,14 @@
     "op": "POST /api/v1/templates/{id}/restore",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/restore 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdRestore",
+    "op": "POST /api/v1/templates/{id}/restore",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
     "key": "POST /api/v1/templates/{id}/review new operation",
@@ -1384,12 +1456,36 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "POST /api/v1/templates/{id}/share 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdShare",
+    "op": "POST /api/v1/templates/{id}/share",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/use 201.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdUse",
     "op": "POST /api/v1/templates/{id}/use",
     "change": "201.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use 201.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUse",
+    "op": "POST /api/v1/templates/{id}/use",
+    "change": "201.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use/check 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUseCheck",
+    "op": "POST /api/v1/templates/{id}/use/check",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
     "key": "POST /api/v1/templates/{id}/use/check 200.template.release: field added",
@@ -1400,12 +1496,36 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "POST /api/v1/templates/{id}/use/check 200.template.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUseCheck",
+    "op": "POST /api/v1/templates/{id}/use/check",
+    "change": "200.template.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/versions 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdVersions",
+    "op": "POST /api/v1/templates/{id}/versions",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/versions 200.template.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdVersions",
     "op": "POST /api/v1/templates/{id}/versions",
     "change": "200.template.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/versions 200.template.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdVersions",
+    "op": "POST /api/v1/templates/{id}/versions",
+    "change": "200.template.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
     "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"console\" added",
@@ -1614,5 +1734,13 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/manifest 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdManifest",
+    "op": "PUT /api/v1/templates/{id}/manifest",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   }
 ]

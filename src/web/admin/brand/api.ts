@@ -38,9 +38,10 @@ export const patchPassSetup = (orgId: string, body: PassSetupPatch, dryRun: bool
 export const stageBrandAsset = (orgId: string, body: z.input<typeof StageBrandAssetSchema>) =>
   api.post(`${base(orgId)}/brand-assets`, StagedBrandAssetSchema, body);
 
-export function usePassSetup(orgId: string) {
+export function usePassSetup(orgId: string, enabled = true) {
   const mode = useMode();
   return useQuery({
+    enabled,
     queryKey: passSetupKey(orgId, mode),
     queryFn: ({ signal }) => getPassSetup(orgId, signal),
   });
