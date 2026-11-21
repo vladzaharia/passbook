@@ -2573,6 +2573,12 @@
     "fix": "Ask the author to request review of this version, then review it again.",
     "retryable": false
   },
+  "TEMPLATE_REVIEW_SUPERSEDED": {
+    "title": "Review request replaced",
+    "when": "A newer version of the template has an open request, so this one was replaced.",
+    "fix": "Review the newer version listed in the message.",
+    "retryable": false
+  },
   "TEMPLATE_REVIEW_REQUIRED": {
     "title": "Review required",
     "when": "Another reviewer must approve this version before it is released in Live.",

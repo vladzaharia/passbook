@@ -1,4 +1,5 @@
-import { all } from '../../platform/db.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
+import { all, first } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
 import { APPLE_ADAPTER_REVISION, AUDIENCE_POLICY_REVISION } from './release-content.ts';
 import { reviews } from './repo-sole-reviewer.ts';
@@ -17,7 +18,7 @@ export interface OpenReviewRow {
  */
 const OPEN = `FROM template_candidates c
   JOIN templates t ON t.id = c.template_id
-  WHERE c.org_id = ? AND c.mode = 'live' AND c.provider = 'apple'
+  WHERE c.org_id = ? AND c.mode = ? AND c.provider = 'apple'
     AND t.status = 'active' AND t.origin = 'uploaded'
     AND c.adapter_revision = ? AND c.audience_policy_revision = ?
     AND c.version = (SELECT v.version FROM template_versions v WHERE v.template_id = c.template_id
@@ -31,6 +32,7 @@ const OPEN = `FROM template_candidates c
 export async function listOpenReviews(
   db: D1Database,
   orgId: string,
+  mode: Mode,
   userId: string | null,
   after: { at: number; id: string } | null,
   limit: number,
@@ -51,6 +53,7 @@ export async function listOpenReviews(
      ORDER BY at DESC, template_id DESC LIMIT ?`,
     [
       orgId,
+      mode,
       APPLE_ADAPTER_REVISION,
       AUDIENCE_POLICY_REVISION,
       userId,
@@ -104,4 +107,26 @@ export async function olderOpenVersions(
     [templateId, orgId, version],
   );
   return rows.map((r) => r.version);
+}
+
+/**
+ * The newest saved version that still has an unreleased candidate, or null: a request for any older
+ * version was replaced by it.
+ */
+export async function newestRequestedVersion(
+  db: D1Database,
+  templateId: string,
+  orgId: string,
+): Promise<string | null> {
+  const row = await first<{ version: string }>(
+    db,
+    `SELECT v.version FROM template_versions v
+     WHERE v.template_id = ? AND EXISTS (SELECT 1 FROM template_candidates c
+       WHERE c.template_id = v.template_id AND c.version = v.version AND c.org_id = ?
+         AND c.provider = 'apple'
+         AND NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id AND r.source = 'approved'))
+     ORDER BY v.created_at DESC, v.version DESC LIMIT 1`,
+    [templateId, orgId],
+  );
+  return row?.version ?? null;
 }
