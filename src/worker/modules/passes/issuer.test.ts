@@ -1,14 +1,21 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { makeUser } from '../../../../test/helpers/index.ts';
+import { makeUser, persistTemplate } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
-import { all, first, run } from '../../platform/db.ts';
+import { PLATFORM_NAME } from '../../../shared/email-from-name.ts';
+import { first, run } from '../../platform/db.ts';
+import { signInOidc } from '../auth/oidc-sign-in.ts';
+import { resolveSession } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { passEmailOrgName } from '../delivery/email-from.ts';
 import { getHolderPass } from '../holders/repo.ts';
+import { approveCandidate, createCandidate, publishRelease } from '../templates/releases.ts';
 import { readBranding, tenantPassJson } from './branding.ts';
+import { createPassRow } from './create.ts';
 import { finishCredentialTransfer, startCredentialTransfer } from './credential-transfer.ts';
 import { issuerName } from './issuer.ts';
-import { type Kit, setupKit } from './pass-test-fixtures.ts';
+import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
 import { publishPass } from './publish.ts';
+import { getOrg } from './repo-read-issuance.ts';
 
 const base = {
   organizationName: 'Rain City Fit',
@@ -48,22 +55,7 @@ describe('tenantPassJson', () => {
   });
 });
 
-/** The release fixture adds its own members; lift the one-member triggers while it does, then restore them. */
-async function withFixtureMembers<T>(kit: Kit, setup: () => Promise<T>): Promise<T> {
-  const db = kit.env.DB;
-  const triggers = await all<{ name: string; sql: string }>(
-    db,
-    "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name LIKE '%_personal_single'",
-  );
-  for (const t of triggers) await run(db, `DROP TRIGGER ${t.name}`);
-  try {
-    return await setup();
-  } finally {
-    for (const t of triggers) await run(db, t.sql);
-  }
-}
-
-describe('personal org passes', () => {
+describe('personal org journey', () => {
   let kit: Kit;
   beforeAll(async () => {
     kit = await setupKit();
@@ -79,55 +71,107 @@ describe('personal org passes', () => {
       )?.pass_json ?? '{}',
     ) as PassJson;
 
-  it('prints the org name on a normal org, the template name on a personal one, and keeps it on reissue', async () => {
-    const normal = await kit.pass({ memberName: 'Normal' });
-    expect(await latest(normal.id)).toMatchObject({
-      organizationName: kit.org.name,
-      description: expect.stringContaining(kit.org.name),
-    });
-    const owner = await makeUser(kit.fx);
-    const orgId = kit.fx.ids.id();
+  /**
+   * An admin signs in (the personal org is ensured), authors a template whose pass.json has its own issuer,
+   * approves it alone in Live as the org's only member, and issues a pass: the owner's whole path.
+   */
+  async function journey() {
+    const user = await makeUser(kit.fx);
+    await run(kit.env.DB, "UPDATE users SET name = 'Pat Owner' WHERE id = ?", [user.id]);
     await run(
       kit.env.DB,
-      'INSERT INTO orgs (id, slug, name, created_at, updated_at, personal_user_id) VALUES (?, ?, ?, 1, 1, ?)',
-      [orgId, `personal-${orgId.slice(-6)}`, 'Pat Owner', owner.id],
+      `INSERT INTO auth_identities (provider, subject, user_id, email_claim, email_verified, groups, created_at)
+       VALUES ('pocketid', ?, ?, ?, 1, '[]', 1)`,
+      [`sub-${user.id}`, user.id, user.primaryEmail],
     );
-    await run(
+    const signed = await signInOidc(
+      kit.ctx,
+      {
+        sub: `sub-${user.id}`,
+        email: user.primaryEmail,
+        emailVerified: true,
+        name: 'Pat Owner',
+        groups: ['wallet-admins'],
+      },
+      { ipPrefix: null, userAgent: null },
+    );
+    const org = await first<{ id: string }>(
       kit.env.DB,
-      "INSERT INTO org_entitlements (org_id, preset, updated_at) VALUES (?, 'legacy', 1)",
-      [orgId],
+      'SELECT id FROM orgs WHERE personal_user_id = ?',
+      [user.id],
     );
-    const fresh = await withFixtureMembers(kit, () => kit.pass({ memberName: 'Fresh', orgId }));
-    expect(await latest(fresh.id)).toMatchObject({
-      organizationName: 'placeholder',
-      description: 'Test pass',
+    if (!org) throw new Error('No personal org');
+    const auth = await resolveSession(kit.env, kit.ctx.clock, signed.session.cookieValue);
+    if (!auth) throw new Error('No session');
+    const base = kit.template;
+    const resolved = kit.registry.add({
+      id: `tpl-rain-${org.id.slice(-6)}`,
+      orgId: org.id,
+      manifest: base.manifest,
+      passJson: {
+        ...base.passJson,
+        organizationName: 'Rain City Fit',
+        logoText: 'Rain City',
+        description: 'Gym pass',
+      } as PassJson,
+      assets: { 'icon.png': ICON_PNG },
     });
-    // A reissue does not flip it back to the owner's name.
+    await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+    const scope = { orgId: org.id, mode: 'live', provider: 'apple' } as const;
+    const candidate = await createCandidate(kit.ctx, auth, resolved.id, {
+      ...scope,
+      version: resolved.version,
+    });
+    const approval = await approveCandidate(kit.ctx, auth, resolved.id, candidate.id, {
+      ...scope,
+      candidateHash: candidate.candidateHash,
+      alone: true,
+    });
+    const release = await publishRelease(kit.ctx, auth, resolved.id, {
+      ...scope,
+      candidateId: candidate.id,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      expectedGeneration: 0,
+    });
+    const created = await createPassRow(jobCtxOf(kit), {
+      orgId: org.id,
+      templateId: resolved.id,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
+      input: { memberName: 'Pat' },
+      source: 'manual',
+      mode: 'live',
+      execution: { kind: 'system' },
+      actor: { type: 'user', id: user.id },
+    });
+    return { user, orgId: org.id, approval, pass: created };
+  }
+
+  it('lets a one-member org approve alone, release and issue a pass with the template issuer', async () => {
+    const { orgId, approval, pass, user } = await journey();
+    expect(approval.kind).toBe('sole');
+    expect(await latest(pass.id)).toMatchObject({
+      organizationName: 'Rain City Fit',
+      logoText: 'Rain City',
+      description: 'Gym pass',
+    });
+    const org = await getOrg(kit.env.DB, orgId);
+    expect(org?.personal).toBe(true);
+    expect(passEmailOrgName(org)).toBe(PLATFORM_NAME);
+    // A reissue builds the same pass: it does not flip back to the owner's name.
     const { changed } = await publishPass(jobCtxOf(kit), {
-      passId: fresh.id,
+      passId: pass.id,
       cause: 'admin',
-      actor: { type: 'user', id: owner.id },
+      actor: { type: 'user', id: user.id },
     });
     expect(changed).toBe(false);
-    const reissued = await latest(fresh.id);
-    expect(reissued.organizationName).toBe('placeholder');
-    expect(reissued.description).toBe('Test pass');
+    expect(await latest(pass.id)).toMatchObject({ organizationName: 'Rain City Fit' });
   });
 
   it('keeps the template issuer through a credential transfer', async () => {
-    const owner = await makeUser(kit.fx);
-    const orgId = kit.fx.ids.id();
-    await run(
-      kit.env.DB,
-      'INSERT INTO orgs (id, slug, name, created_at, updated_at, personal_user_id) VALUES (?, ?, ?, 1, 1, ?)',
-      [orgId, `personal-${orgId.slice(-6)}`, 'Pat Owner', owner.id],
-    );
-    await run(
-      kit.env.DB,
-      "INSERT INTO org_entitlements (org_id, preset, updated_at) VALUES (?, 'legacy', 1)",
-      [orgId],
-    );
-    const pass = await withFixtureMembers(kit, () => kit.pass({ memberName: 'Moving', orgId }));
+    const { pass } = await journey();
     const expected = await getHolderPass(kit.env.DB, pass.id, null);
     if (!expected) throw new Error('Missing holder pass');
     const started = await startCredentialTransfer(
@@ -140,8 +184,9 @@ describe('personal org passes', () => {
     );
     await finishCredentialTransfer(jobCtxOf(kit), started.transferId);
     expect(await latest(pass.id)).toMatchObject({
-      organizationName: 'placeholder',
-      description: 'Test pass',
+      organizationName: 'Rain City Fit',
+      logoText: 'Rain City',
+      description: 'Gym pass',
     });
   });
 });

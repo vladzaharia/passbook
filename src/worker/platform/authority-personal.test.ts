@@ -177,6 +177,67 @@ describe('platform.org.personal', () => {
     ).toBeNull();
   });
 
+  it('records nothing from a refused row', async () => {
+    const { g, user, orgId } = await personalGrant('personal-refused', ['admin', 'user']);
+    g.insertSelect('orgs', ORG_COLUMNS, [orgId, 'personal-r', 'R', 1, 1, user.id]);
+    const [cols, vals] = invitation('inv-r', orgId, '["read_only"]', user.primaryEmail);
+    expect(() => g.insertSelect('org_invitations', cols as string[], vals as never)).toThrow(
+      /org_admin only/,
+    );
+    expect(() =>
+      g.insertSelect(
+        'org_memberships',
+        ['id', 'org_id', 'user_id', 'invitation_id', 'roles', 'created_at'],
+        ['m-r', orgId, user.id, 'inv-r', '["org_admin"]', 1],
+      ),
+    ).toThrow(/same grant/);
+    const refusedOrg = await personalGrant('personal-refused-org', ['admin', 'user']);
+    expect(() =>
+      refusedOrg.g.insertSelect('orgs', ORG_COLUMNS, [
+        refusedOrg.orgId,
+        'personal-x',
+        'X',
+        1,
+        1,
+        'someone-else',
+      ]),
+    ).toThrow(/grant principal/);
+    expect(() =>
+      refusedOrg.g.insertSelect(
+        'org_entitlements',
+        ['org_id', 'preset', 'updated_at'],
+        [refusedOrg.orgId, 'standard', 1],
+      ),
+    ).toThrow(/follows the orgs row/);
+  });
+
+  it('shares no state between grants built from one input object', async () => {
+    const { s, route } = await setupGrant('personal-shared-input');
+    const user = await makeUser(s.f);
+    const session = await makeSession(s.f, { userId: user.id, roles: ['admin', 'user'] });
+    const orgId = s.f.ids.id();
+    const input = {
+      purpose: PERSONAL_ORG_PURPOSE,
+      principal: {
+        kind: 'platform' as const,
+        userId: user.id,
+        sessionIdHash: await sha256Hex(session.cookieValue),
+      },
+      target: orgId,
+      tables: PERSONAL_ORG_TABLES,
+    };
+    const first = grant(route, input);
+    const second = grant(route, input);
+    first.insertSelect('orgs', ORG_COLUMNS, [orgId, 'personal-s', 'S', 1, 1, user.id]);
+    expect(() =>
+      second.insertSelect(
+        'org_entitlements',
+        ['org_id', 'preset', 'updated_at'],
+        [orgId, 'standard', 1],
+      ),
+    ).toThrow(/follows the orgs row/);
+  });
+
   it('is held by a platform principal only', async () => {
     const { s, route } = await setupGrant('personal-principal');
     expect(() =>

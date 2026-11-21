@@ -61,14 +61,12 @@ export function personalOrgInsert(
       throw refuse('A personal org belongs to the grant principal.');
     if ((at('status') ?? 'active') !== 'active' || (at('kind') ?? 'standard') !== 'standard')
       throw refuse('A personal org is an active standard org.');
-    state.org = true;
   }
   if (t === 'org_entitlements' && at('preset') !== 'standard')
     throw refuse('A personal org has the standard preset.');
   if (t === 'org_invitations') {
     if (typeof at('accepted_at') !== 'number')
       throw refuse('The invitation of a personal org is already accepted.');
-    state.invitations.add(String(at('id')));
   }
   if (t === 'org_memberships') {
     if (at('user_id') !== principal.userId)
@@ -78,6 +76,9 @@ export function personalOrgInsert(
   }
   if ((t === 'org_memberships' || t === 'org_invitations') && at('roles') !== ADMIN_ROLES)
     throw refuse('A personal org grants org_admin only.');
+  // Recorded last, so a refused row leaves nothing behind.
+  if (t === 'orgs') state.org = true;
+  if (t === 'org_invitations') state.invitations.add(String(at('id')));
 }
 
 /** Everything but an insert (update, delete, upsert, joined, parts) is outside this purpose. */
