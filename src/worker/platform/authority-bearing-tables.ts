@@ -8,6 +8,8 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'signing_identities',
   'idempotency_keys',
   'idempotent_requests',
+  'identity_handles',
+  'identity_runs',
   'template_imports',
   'workflow_runs',
   'broadcasts',
