@@ -113,7 +113,7 @@ export function ResetAction({ onChanged }: { onChanged: () => void }) {
             </button>
             <button
               type="button"
-              className="btn sm ghost"
+              className="btn sm outline"
               disabled={step === 'working'}
               onClick={() => setStep('idle')}
             >

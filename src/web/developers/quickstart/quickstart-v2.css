@@ -273,3 +273,17 @@
     opacity: 0.4;
   }
 }
+
+/* A phone: the tab row scrolls instead of clipping, and the file name makes room. */
+.qs-code .code-h {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+@media (max-width: 520px) {
+  .qs-code .code-h .file {
+    display: none;
+  }
+  .qs-code .code-h .iconbtn {
+    margin-inline-start: auto;
+  }
+}

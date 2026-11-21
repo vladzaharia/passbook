@@ -87,6 +87,9 @@
   justify-content: flex-end;
   min-inline-size: 12.5rem;
 }
+[data-island="org-chip"][hidden] {
+  display: none;
+}
 .orgchip {
   display: inline-flex;
   align-items: center;

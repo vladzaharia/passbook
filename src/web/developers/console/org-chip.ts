@@ -92,6 +92,8 @@ function chipFor(session: Session): HTMLElement | null {
 export async function mountOrgChip(host: HTMLElement): Promise<void> {
   const show = (session: Session) => {
     const chip = chipFor(session);
+    // An empty placeholder is never "in view", so the slot is only hidden once the island has run and found no chip.
+    host.hidden = chip === null;
     if (chip) host.replaceChildren(chip);
   };
   show(await loadSession());
