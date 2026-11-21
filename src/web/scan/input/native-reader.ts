@@ -5,6 +5,10 @@ import type { RawRead } from './types.ts';
 /** The bridge versions this page speaks. The app answers `ready` with the highest it shares. */
 export const BRIDGE_VERSIONS = [1, 2] as const;
 export const TAG_READ_MAX_MS = 60_000;
+/** Additive `hello` features. Both sides ignore ones they do not know; the wire stays v2. */
+export const BRIDGE_FEATURES = ['scanAck'] as const;
+/** Scans that can await a verdict at once: a read during review or a result is held, not refused. */
+const MAX_PENDING = 8;
 
 interface Bridge {
   postMessage(message: string): void;
@@ -59,7 +63,7 @@ const CustomerBranding = z.strictObject({
     .nullable(),
 });
 
-/** Native acknowledgement is emitted only after this exact read receives a server verdict. */
+/** Receipt is acknowledged at once (`scanAck`); acceptance only after this exact read receives a server verdict. */
 export function connectNativeReader(
   options: {
     read(read: RawRead): string | null;
@@ -72,9 +76,12 @@ export function connectNativeReader(
   bridge = (globalThis as { PassBookNative?: Bridge }).PassBookNative,
 ) {
   if (!bridge) return null;
-  let pending: { nativeId: string; inputId: string } | null = null;
+  /** Input id to native id, oldest first. A new scan no longer drops the one before it. */
+  const pending = new Map<string, string>();
   /** Until the app answers `ready`, everything but `hello` speaks v1. */
   let version: 1 | 2 = 1;
+  /** The app named `scanAck` in its `features`; until then it is never sent one. */
+  let appAcks = false;
   let tagFormats = false;
   let tagSeq = 0;
   let tagPending: string | null = null;
@@ -97,9 +104,17 @@ export function connectNativeReader(
   const sendResult = (id: string, outcome: ReaderOutcome) => {
     send({ op: 'result', id, outcome });
   };
+  const track = (inputId: string, nativeId: string) => {
+    pending.set(inputId, nativeId);
+    for (const oldest of pending.keys()) {
+      if (pending.size <= MAX_PENDING) break;
+      pending.delete(oldest);
+    }
+  };
   const cancel = () => {
-    if (pending) options.cancelled(pending.inputId);
-    pending = null;
+    const inputs = [...pending.keys()];
+    pending.clear();
+    for (const inputId of inputs) options.cancelled(inputId);
   };
   const onMessage: NonNullable<Bridge['onmessage']> = ({ data }) => {
     let message: Record<string, unknown>;
@@ -113,6 +128,8 @@ export function connectNativeReader(
     // A message newer than the handshake is not from the app we agreed a version with.
     if (message.version > version) return;
     if (message.event === 'ready' || message.event === 'capabilities') {
+      if (Array.isArray(message.features)) appAcks = message.features.includes('scanAck');
+      else if (message.event === 'ready') appAcks = false;
       const capabilities = z.record(z.string(), z.unknown()).safeParse(message.capabilities);
       if (!capabilities.success) return;
       const display = CustomerDisplay.safeParse(capabilities.data.customerDisplay);
@@ -127,7 +144,8 @@ export function connectNativeReader(
       return;
     }
     if (message.event === 'timeout' || message.event === 'cancelled') {
-      cancel();
+      // A `cancelled` naming the one-shot tag read ends that read only; a barcode check in flight stays.
+      if (!(message.event === 'cancelled' && tagPending && message.id === tagPending)) cancel();
       if (tagPending) {
         tagPending = null;
         options.tagEnded?.(message.event);
@@ -137,8 +155,9 @@ export function connectNativeReader(
     if (message.event !== 'scan') return;
     const parsed = Scan.safeParse(message);
     if (!parsed.success) return;
-    cancel();
     const scan = parsed.data;
+    // Receipt, before any verdict, only to an app that advertised it: it frees its gate on this.
+    if (appAcks) send({ op: 'scanAck', id: scan.id });
     if (scan.source === 'nfc-tag') {
       // Tags need bridge v2. A v1 app never sends one, and a stray one is refused, not read.
       if (version < 2) {
@@ -155,7 +174,7 @@ export function connectNativeReader(
       };
       const tagInput = options.read({ method: 'nfc', tag });
       if (!tagInput) sendResult(scan.id, 'error');
-      else pending = { nativeId: scan.id, inputId: tagInput };
+      else track(tagInput, scan.id);
       return;
     }
     if (scan.source === 'apple-vas') {
@@ -165,10 +184,17 @@ export function connectNativeReader(
     }
     const inputId = options.read({ method: scan.method ?? 'wedge', code: scan.value });
     if (!inputId) sendResult(scan.id, 'error');
-    else pending = { nativeId: scan.id, inputId };
+    else track(inputId, scan.id);
   };
   bridge.onmessage = onMessage;
-  bridge.postMessage(JSON.stringify({ version: 2, op: 'hello', versions: [...BRIDGE_VERSIONS] }));
+  bridge.postMessage(
+    JSON.stringify({
+      version: 2,
+      op: 'hello',
+      versions: [...BRIDGE_VERSIONS],
+      features: [...BRIDGE_FEATURES],
+    }),
+  );
   send({ op: 'stop' });
   const formats = () => (version >= 2 && tagFormats ? { formats: ['wallet-vas', 'tag'] } : {});
   return {
@@ -198,9 +224,10 @@ export function connectNativeReader(
     },
     start: () => send({ op: 'start', ...formats() }),
     result(inputId: string, outcome: ReaderOutcome) {
-      if (pending?.inputId !== inputId) return false;
-      sendResult(pending.nativeId, outcome);
-      pending = null;
+      const nativeId = pending.get(inputId);
+      if (nativeId === undefined) return false;
+      pending.delete(inputId);
+      sendResult(nativeId, outcome);
       return true;
     },
     customerStatus(status: CustomerDisplayStatus, inputId: string | null = null) {

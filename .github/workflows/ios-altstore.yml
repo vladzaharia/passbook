@@ -1,0 +1,94 @@
+name: iOS AltStore
+on:
+  push:
+    tags: ['ios-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Marketing version X.Y.Z
+        required: true
+        default: "1.0.0"
+        type: string
+permissions: {}
+concurrency:
+  group: ios-altstore-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  ipa:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/ios-v')
+    runs-on: xcode-27
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    env:
+      PASSBOOK_XCODE: /Applications/Xcode_27.1.app
+      INPUT_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require a release from main
+        env:
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          git fetch origin main --depth=1
+          test "$RELEASE_COMMIT" = "$(git rev-parse origin/main)"
+      - name: Version for this release
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          OFFSET: ${{ vars.PASSBOOK_BUILD_NUMBER_OFFSET || '1000' }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/ios-v* ]]; then
+            version="${GITHUB_REF#refs/tags/ios-v}"
+          else
+            version="$INPUT_VERSION"
+          fi
+          numbers="$(ios/scripts/version.sh --ref refs/heads/main --version "$version" --run-number "$RUN_NUMBER" \
+            --run-attempt "$RUN_ATTEMPT" --offset "$OFFSET")"
+          printf '%s\n' "$numbers"
+          {
+            echo "VERSION=$(printf '%s\n' "$numbers" | sed -n 's/^marketing_version=//p')"
+            echo "BUILD=$(printf '%s\n' "$numbers" | sed -n 's/^build_number=//p')"
+          } >> "$GITHUB_ENV"
+      - name: Select Xcode
+        env:
+          XCODE_BUILD: ${{ vars.PASSBOOK_RELEASE_XCODE_BUILD }}
+        run: ios/scripts/select-xcode.sh --expect-build "$XCODE_BUILD"
+      - name: Install XcodeGen
+        run: ios/scripts/install-xcodegen.sh
+      - name: Archive without signing
+        run: ios/scripts/build.sh --archive --no-sign --marketing-version "$VERSION" --build-number "$BUILD"
+      - name: Check the archive
+        run: ios/scripts/check-archive.sh ios/build/PassBookScanner.xcarchive --version "$VERSION" --build "$BUILD"
+      - name: Package the IPA
+        run: |
+          app="$(ls -d ios/build/PassBookScanner.xcarchive/Products/Applications/*.app)"
+          out="ios/dist"
+          mkdir -p "$out" "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$app" "$RUNNER_TEMP/ipa/Payload/"
+          ipa="PassBookScanner-$VERSION.ipa"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/$out/$ipa" Payload)
+          (cd "$out" && shasum -a 256 "$ipa" > SHA256SUMS)
+          sha="$(cut -d' ' -f1 "$out/SHA256SUMS")"
+          printf '{\n  "version": "%s",\n  "build": "%s",\n  "bundleId": "mobile.passbook.scanner",\n  "ipa": "%s",\n  "sha256": "%s",\n  "minimumIos": "17.0",\n  "signed": false\n}\n' \
+            "$VERSION" "$BUILD" "$ipa" "$sha" > "$out/release.json"
+          {
+            echo "PassBook Scanner $VERSION ($BUILD). Unsigned IPA for AltStore and SideStore; they sign it with your Apple ID on install."
+            echo
+            echo "SHA-256: \`$sha\`"
+          } > "$out/notes.md"
+          echo "IPA=$out/$ipa" >> "$GITHUB_ENV"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="ios-v$VERSION"
+          files=("$IPA" ios/dist/SHA256SUMS ios/dist/release.json)
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --prerelease \
+              --title "PassBook Scanner iOS $VERSION" --notes-file ios/dist/notes.md
+          fi
+          echo "PassBook Scanner $VERSION ($BUILD) is on the $tag release." >> "$GITHUB_STEP_SUMMARY"

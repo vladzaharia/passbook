@@ -132,4 +132,38 @@ public class HardwareTest {
         Hardware.Registration both = Hardware.registration("custom.SCAN", Hardware.present(Set.of("com.sunmi.scanner")));
         assertEquals(List.of("custom.SCAN", "com.sunmi.scanner.ACTION_DATA_CODE_RECEIVED"), both.actions());
     }
+
+    @Test public void beforeApi34OnlyAFullKeyboardWithAVendorIdCountsAsAttached() {
+        assertTrue(Hardware.externalBeforeApi34("Logitech USB Keyboard", 0x046d, true, false));
+        assertFalse(Hardware.externalBeforeApi34("gpio-keys", 1, true, false));
+        assertFalse(Hardware.externalBeforeApi34("Headset Jack", 1, true, false));
+        assertFalse(Hardware.externalBeforeApi34("Volume keys", 0x0001, false, false));
+        assertFalse(Hardware.externalBeforeApi34("Some Keyboard", 0, true, false));
+        // A USB-attached internal scan engine with its vendor service installed is the built-in reader.
+        assertFalse(Hardware.externalBeforeApi34("Newland Scanner", 0x1eab, true, true));
+        assertTrue(Hardware.externalBeforeApi34("Newland Scanner", 0x1eab, true, false));
+    }
+
+    @Test public void inputIdsAreStablePerDeviceAndSalt() {
+        assertEquals(Hardware.stableId("sec-1", "salt"), Hardware.stableId("sec-1", "salt"));
+        assertNotEquals(Hardware.stableId("sec-1", "salt"), Hardware.stableId("sec-2", "salt"));
+        assertNotEquals(Hardware.stableId("sec-1", "salt"), Hardware.stableId("sec-1", "other"));
+        assertTrue(Hardware.stableId("sec-1", "salt") >= 0);
+    }
+
+    @Test public void aNonAlphabeticNodeIsNeverListedAsAKeyboardButStillCountsAsABuiltInReader() {
+        List<Hardware.Entry> entries = Hardware.build(new Hardware.Snapshot(List.of(), "granted", false, false, false,
+            List.of(new Hardware.Input(1, "Volume keys", "", true, true, false, false),
+                new Hardware.Input(2, "Sunmi Scanner", "", true, false, false, false)), Set.of(), List.of(), List.of(), false, false));
+        assertTrue(entries.stream().noneMatch(entry -> entry.kind().equals("keyboard")));
+        assertTrue(entries.stream().anyMatch(entry -> entry.kind().equals("barcode") && entry.builtIn()));
+    }
+
+    @Test public void namesAreNotCutThroughASurrogatePair() {
+        String name = "x".repeat(Hardware.MAX_NAME - 1) + "\uD83D\uDE00";
+        List<Hardware.Entry> entries = Hardware.build(new Hardware.Snapshot(List.of(), "granted", false, false, false,
+            List.of(new Hardware.Input(1, name, "", true, true, false)), Set.of(), List.of(), List.of(), false, false));
+        String cut = entries.get(0).name();
+        assertFalse(Character.isHighSurrogate(cut.charAt(cut.length() - 1)));
+    }
 }

@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import * as asn1js from 'asn1js';
 import * as pkijs from 'pkijs';
 import migration from '../../workers/apple-provisioner/migrations/0001_provisioner.sql?raw';
+import guards from '../../workers/apple-provisioner/migrations/0002_cert_guards.sql?raw';
 import { createApi } from '../../workers/apple-provisioner/src/api.ts';
 import type { Deps } from '../../workers/apple-provisioner/src/asc-http.ts';
 import type { ProvisionerEnv } from '../../workers/apple-provisioner/src/types.ts';
@@ -29,8 +30,10 @@ export const provisionerEnv: ProvisionerEnv = {
 /** The provisioner's tables in the worker project's D1. The setup drops triggers it did not migrate, so each test recreates all. */
 export async function resetLedger(): Promise<void> {
   await env.DB.prepare('DROP TABLE IF EXISTS asc_calls').run();
+  await env.DB.prepare('DROP TABLE IF EXISTS asc_certificates').run();
+  await env.DB.prepare('DROP TABLE IF EXISTS asc_revocations').run();
   await env.DB.prepare('DROP TABLE IF EXISTS asc_pass_types').run();
-  const statements = migration
+  const statements = `${migration}\n\n${guards}`
     .split('\n')
     .filter((l) => !l.startsWith('--'))
     .join('\n')
@@ -116,4 +119,18 @@ export async function ledger() {
     Record<string, unknown>
   >();
   return results;
+}
+
+/** A certificate the provisioner ordered `ageMs` before NOW; `active` marks it reported active. */
+export async function seedCertificate(
+  certId: string,
+  passTypeAscId: string,
+  ageMs: number,
+  active: boolean,
+): Promise<void> {
+  await env.DB.prepare(
+    'INSERT INTO asc_certificates (cert_id, pass_type_asc_id, ordered_at, activated_at) VALUES (?, ?, ?, ?)',
+  )
+    .bind(certId, passTypeAscId, NOW - ageMs, active ? NOW - ageMs : null)
+    .run();
 }
