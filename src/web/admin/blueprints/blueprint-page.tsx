@@ -164,14 +164,7 @@ function Loaded({ blueprint: b, tab }: { blueprint: Blueprint; tab: BlueprintTab
             />
           ) : null
         }
-        summary={
-          <KeyValue
-            items={[
-              { label: 'Style', value: styleList(b.styles) },
-              { label: 'Inputs', value: String(inputs.length) },
-            ]}
-          />
-        }
+        summary={<KeyValue items={[{ label: 'Inputs', value: String(inputs.length) }]} />}
       >
         <Tabs
           value={tab}

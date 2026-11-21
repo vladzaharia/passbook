@@ -9,7 +9,6 @@ import {
   Link2,
   List,
   Mail,
-  Pencil,
   ToggleLeft,
   Type,
 } from 'lucide-react';
@@ -17,14 +16,11 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { issueWords } from '@/shared/copy/issues.ts';
-import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
   Button,
   Callout,
   Card,
   CardBody,
-  CountLink,
-  EntityAvatar,
   JsonViewer,
   KeyValue,
   ListRow,
@@ -35,7 +31,6 @@ import { describeSchema, flatFields } from '../passes/schema-form/index.ts';
 import { useTemplateActions } from './api.ts';
 import { JoinSection } from './join/join-section.tsx';
 import { styleList } from './labels.ts';
-import { OrgDialog } from './template-dialogs.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
 
@@ -47,8 +42,6 @@ export function TemplateOverview({
   template: Template;
   canAssign: boolean;
 }) {
-  const { orgId } = useOrgScope();
-  const [changing, setChanging] = useState(false);
   const actions = useTemplateActions(t.id);
   const shareable = canAssign && t.orgId === null && t.origin === 'uploaded' && !t.blueprint;
   async function toggleShared() {
@@ -67,30 +60,6 @@ export function TemplateOverview({
         <CardBody>
           <KeyValue
             items={[
-              {
-                label: 'Organization',
-                value: (
-                  <span className="flex min-w-0 flex-wrap items-center gap-2">
-                    {t.orgId ? (
-                      <EntityAvatar kind="org" id={t.orgId} name={t.orgName ?? ''} />
-                    ) : null}
-                    <span className="truncate">
-                      {t.orgId ? (t.orgName ?? t.orgId) : 'All organizations'}
-                    </span>
-                    {canAssign ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        iconStart={<Pencil aria-hidden />}
-                        aria-label="Change organization"
-                        onClick={() => setChanging(true)}
-                      >
-                        Change
-                      </Button>
-                    ) : null}
-                  </span>
-                ),
-              },
               ...(shareable
                 ? [
                     {
@@ -111,17 +80,6 @@ export function TemplateOverview({
                     },
                   ]
                 : []),
-              {
-                label: 'Passes',
-                value: (
-                  <CountLink
-                    count={t.passCount}
-                    noun={['pass', 'passes']}
-                    to="/admin/passes"
-                    search={{ templateId: t.id, orgId }}
-                  />
-                ),
-              },
               { label: 'Styles', value: styleList(t.styles) },
               ...(t.fromBlueprint
                 ? [
@@ -151,9 +109,6 @@ export function TemplateOverview({
           title={`${warnings.length} ${warnings.length === 1 ? 'warning' : 'warnings'} in the active version`}
           items={warnings.map(issueWords)}
         />
-      ) : null}
-      {canAssign ? (
-        <OrgDialog key={String(changing)} template={t} open={changing} onOpenChange={setChanging} />
       ) : null}
     </div>
   );
