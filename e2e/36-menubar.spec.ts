@@ -64,13 +64,20 @@ test.describe('admin', () => {
   });
 });
 
-test.describe('holder', () => {
+test.describe('organization member', () => {
   test.use({ storageState: 'e2e/.auth/user.json' });
 
-  test('gets the holder spaces only, in the portal and on the developer site', async ({ page }) => {
+  test('an organization member gets Admin, and never Developers without the role', async ({
+    page,
+  }) => {
     await page.goto('/');
     let menu = await openMenu(page);
-    await expect(menu.getByRole('menuitem')).toHaveText(['My passes', 'Account', 'Sign out']);
+    await expect(menu.getByRole('menuitem')).toHaveText([
+      'My passes',
+      'Account',
+      'Admin',
+      'Sign out',
+    ]);
     await expect(menu.getByRole('menuitem', { name: 'My passes' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -78,7 +85,12 @@ test.describe('holder', () => {
     await page.keyboard.press('Escape');
     await page.goto('/developers');
     menu = await openMenu(page);
-    await expect(menu.getByRole('menuitem')).toHaveText(['My passes', 'Account', 'Sign out']);
+    await expect(menu.getByRole('menuitem')).toHaveText([
+      'My passes',
+      'Account',
+      'Admin',
+      'Sign out',
+    ]);
   });
 });
 

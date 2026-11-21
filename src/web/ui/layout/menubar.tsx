@@ -92,9 +92,9 @@ export function MenubarSearch({
       >
         <Search aria-hidden className="size-4" />
       </button>
+      {/* Named by its visible text, shortcut included. */}
       <button
         type="button"
-        aria-label={label}
         className={cn(SEARCH_BUTTON, 'max-sm:hidden sm:w-64 sm:justify-start')}
         {...props}
       >

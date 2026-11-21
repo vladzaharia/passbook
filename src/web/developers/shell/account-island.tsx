@@ -45,14 +45,13 @@ export function mountMenu(
     polarisId: boolean;
   },
 ): () => void {
-  const here = `${location.pathname}${location.search}`;
   const root = createRoot(host);
   root.render(
     <ThemeProvider>
       <div className="flex items-center gap-2">
         {props.polarisId ? (
           <Button asChild variant="outline" size="sm">
-            <a href={`/auth/oidc/start?next=${encodeURIComponent(here)}`}>
+            <a href={`/auth/oidc/start?next=${encodeURIComponent('/developers')}`}>
               {POLARIS_ID_COPY.signIn}
             </a>
           </Button>

@@ -97,7 +97,7 @@ describe('the developer site account island', () => {
     await mount(sessionFixture('admin', 'magic_link'));
     expect(await screen.findByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
       'href',
-      '/auth/oidc/start?next=%2F',
+      '/auth/oidc/start?next=%2Fdevelopers',
     );
     await user.click(screen.getByRole('button', { name: 'Account menu' }));
     expect(items(await screen.findByRole('menu'))).toEqual(['My passes', 'Account', 'Sign out']);
