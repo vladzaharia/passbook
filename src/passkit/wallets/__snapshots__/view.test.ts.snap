@@ -1740,7 +1740,7 @@ exports[`resolveWalletView over every starter and baked template > starter-store
     "balance": "semantics money: 25 USD",
     "memberId": "style text: CARD-0001",
     "subtitle": "style text: Alex Morgan",
-    "title": "style text: 25",
+    "title": "style text: 25 USD",
   },
   "schemes": [],
   "style": "storeCard",
