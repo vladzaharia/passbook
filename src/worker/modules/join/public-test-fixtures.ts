@@ -110,6 +110,12 @@ export async function publicKit<K extends Kit = Kit>(
       }))
         if (v !== null) form.set(k, v);
       const jar = options.jar ?? new Map();
+      // The mail work runs after the response; the test waits for it, as a Worker's isolate does.
+      const pending: Promise<unknown>[] = [];
+      const ctx = {
+        waitUntil: (p: Promise<unknown>) => void pending.push(p),
+        passThroughOnException: () => undefined,
+      } as unknown as ExecutionContext;
       return Promise.resolve(
         app.request(
           `${BASE}/j/${l.token}`,
@@ -125,8 +131,10 @@ export async function publicKit<K extends Kit = Kit>(
             body: options.body ?? form.toString(),
           },
           options.env ?? kit.env,
+          ctx,
         ),
-      ).then((res) => {
+      ).then(async (res) => {
+        await Promise.all(pending);
         absorb(jar, res);
         return res;
       });

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { linkToken, persistTemplate } from '../../../../test/helpers/index.ts';
 import { makeJoinLink } from '../../../../test/helpers/join.ts';
-import { issueToken } from '../../platform/capability-token.ts';
+import { issueToken, revealToken } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -74,12 +74,16 @@ const outboxOf = async (passId: string) =>
   )?.id ?? '';
 
 async function cardOf(res: Response) {
-  expect(res.status).toBe(303);
-  const token = new URL(res.headers.get('location') ?? '', 'https://x').pathname.replace('/p/', '');
+  // With an address the page is "Check your email"; the card is only in the mail.
+  expect([200, 303]).toContain(res.status);
   const row = await first<{ id: string }>(
     db(),
     'SELECT id FROM passes WHERE id = (SELECT pass_id FROM join_issues ORDER BY created_at DESC, rowid DESC LIMIT 1)',
   );
+  const pass = row ? await getPass(db(), row.id) : null;
+  const token = pass
+    ? await revealToken(t.kit.env, 'pass', pass.id, pass.orgId, pass.downloadToken)
+    : '';
   return { token, passId: row?.id ?? '' };
 }
 
@@ -538,19 +542,39 @@ describe('POST /j/:token: a card with an email', () => {
       )?.removed_at,
     ).toBe(1);
     const res = await t.post(l, { email: addr }, { jar: new Map() });
-    expect(res.status).toBe(303);
+    expect(res.status).toBe(200);
     expect(resends().filter((m) => m.passId === removed.id)).toHaveLength(0);
     const test = await t.link({ mode: 'test' });
     const live = email();
     await t.kit.pass({ holderEmail: live });
     // A live card does not stand in for the test link's: the test link makes its own.
-    expect((await t.post(test, { email: live }, { jar: new Map() })).status).toBe(303);
+    expect((await t.post(test, { email: live }, { jar: new Map() })).status).toBe(200);
     const row = await first<{ mode: string }>(
       db(),
       'SELECT mode FROM passes WHERE id = (SELECT pass_id FROM join_issues WHERE link_id = ?)',
       [test.id],
     );
     expect(row?.mode).toBe('test');
+  });
+
+  it('answers a known and a new address with the same status, page, headers and cookies', async () => {
+    const l = await t.link();
+    const known = email();
+    await t.kit.pass({ holderEmail: known });
+    const fresh = email();
+    const a = await t.post(l, { email: known }, { jar: new Map() });
+    const b = await t.post(l, { email: fresh }, { jar: new Map() });
+    expect([a.status, b.status]).toEqual([200, 200]);
+    expect(b.headers.get('location')).toBeNull();
+    expect(b.headers.getSetCookie()).toEqual(a.headers.getSetCookie());
+    const strip = async (r: Response, addr: string) =>
+      (await r.text()).replaceAll(addr, 'ADDR').replace(/nonce="[^"]*"/g, '');
+    expect(await strip(b, fresh)).toBe(await strip(a, known));
+    expect(
+      (await t.kit.env.DB.prepare('SELECT 1 FROM passes WHERE holder_email = ?')
+        .bind(fresh)
+        .first()) !== null,
+    ).toBe(true);
   });
 
   it('two submits of one new address make one card and one re-sent mail', async () => {
@@ -561,7 +585,7 @@ describe('POST /j/:token: a card with an email', () => {
       t.post(l, { email: addr }, { jar: new Map(), ip: '203.0.113.20' }),
       t.post(l, { email: addr }, { jar: new Map(), ip: '203.0.113.21' }),
     ]);
-    expect([a.status, b.status].sort()).toEqual([200, 303]);
+    expect([a.status, b.status]).toEqual([200, 200]);
     expect(await issues(l.id)).toHaveLength(1);
     expect(resends()).toHaveLength(1);
   });
@@ -668,7 +692,7 @@ describe('review fixes', () => {
     turnstile.verdict = verdictOf();
     expect(await t.post(l, { name: 'x'.repeat(41) })).toHaveProperty('status', 422);
     expect(await counter()).toBe(0);
-    expect((await t.post(l, { email: email() }, { jar: new Map() })).status).toBe(303);
+    expect((await t.post(l, { email: email() }, { jar: new Map() })).status).toBe(200);
     expect(await counter()).toBe(1);
   });
 
