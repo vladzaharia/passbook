@@ -69,7 +69,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
       clientTs: Date.now(),
     });
     expect(outcome.kind).toBe('ok');
-    await page.goto(`/admin/scanning?orgId=${orgId}&tab=scans&q=Admin%20Door%20Guest`);
+    await page.goto(`/admin/scanning?orgId=${orgId}&tab=activity&q=Admin%20Door%20Guest`);
     const row = page.getByRole('row').filter({ hasText: 'Admin Door Guest' });
     await row.getByRole('button').click();
     await expect(page.getByRole('dialog', { name: 'Scan', exact: true })).toContainText(
