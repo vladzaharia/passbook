@@ -1012,9 +1012,15 @@ describe('connector registry authorization', () => {
       mode: 'test',
     });
     for (const path of ['/api/v1/connectors', '/api/v1/connectors/demo']) {
-      for (const key of [bound, platform]) {
-        expect((await call('GET', path, undefined, key.headers)).status).toBe(422);
-      }
+      // An org key without orgId acts in its own org (and no other); a platform key must name one.
+      const own = await call('GET', path, undefined, bound.headers);
+      expect(own.status).toBe(200);
+      expect(own.json).toEqual(
+        (await call('GET', `${path}?orgId=${kit.org.id}`, undefined, bound.headers)).json,
+      );
+      const unnamed = await call('GET', path, undefined, platform.headers);
+      expect(unnamed.status).toBe(422);
+      expect(unnamed.json.code).toBe('ORG_REQUIRED');
       const unscopedWriteOnly = await call('GET', path, undefined, writeOnly.headers);
       expect(unscopedWriteOnly.status).toBe(403);
       expect(unscopedWriteOnly.json.code).toBe('MISSING_SCOPE');
