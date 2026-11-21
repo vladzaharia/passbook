@@ -34,9 +34,6 @@ export async function mountSheet(
 ): Promise<() => void> {
   const session = await loadSession();
   if (session.kind === 'out') {
-    const h = document.createElement('h3');
-    h.className = 'h2';
-    h.textContent = 'Sign in to try';
     const p = document.createElement('p');
     p.className = 'muted sm';
     p.textContent = 'Nothing is issued.';
@@ -44,7 +41,7 @@ export async function mountSheet(
     a.className = 'btn';
     a.href = '/login?next=%2Fdevelopers';
     a.textContent = 'Sign in to try';
-    body.replaceChildren(h, p, a);
+    body.replaceChildren(p, a);
     return () => body.replaceChildren();
   }
   const { mountRun } = await import('./app/mount.tsx');

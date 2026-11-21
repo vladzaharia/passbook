@@ -13,7 +13,6 @@ export function ConsoleView() {
         <Ticket
           stub={
             <div className="start">
-              <h3 className="h2">{c.signIn}</h3>
               <a className="btn" href={SIGN_IN}>
                 {c.signIn}
               </a>
