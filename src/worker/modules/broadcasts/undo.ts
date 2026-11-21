@@ -69,8 +69,10 @@ export async function undoBroadcast(
   const db = ctx.env.DB;
   const existing = await childOf(db, id, parent.org_id, parent.mode);
   if (existing) {
-    if (existing.state !== 'failed' || existing.error_code === null)
-      return resultOf(ctx, parent, existing);
+    const dead =
+      (existing.state === 'failed' && existing.error_code !== null) ||
+      (existing.state === 'cancelled' && existing.error_code === 'BROADCAST_STOPPED');
+    if (!dead) return resultOf(ctx, parent, existing);
     const instance = `broadcast-${existing.id}-${ctx.ids.token()}`;
     const [restarted] = await batch(db, [
       restartUndoStmt(

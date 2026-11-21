@@ -10,6 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
+import { limitChanges } from './change-limit.ts';
 import { prepareTarget, storedTargetOf } from './change-target.ts';
 import {
   assertCanChange,
@@ -23,6 +24,7 @@ import {
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { listItems } from './repo-items.ts';
+import { chosenTargetsStmts, resumableCount } from './repo-selection.ts';
 import { childOf } from './repo-undo.ts';
 import { getBroadcastDto, insertBroadcast } from './service.ts';
 import { launchBroadcast } from './start.ts';
@@ -54,6 +56,8 @@ export async function updateBroadcast(
   const body = await prepareTarget(ctx, row.mode, input);
   await checkTemplates(ctx, body, row.mode);
   const now = ctx.clock.now();
+  const token = ctx.ids.id();
+  const change = body.kind === 'change';
   const [edited] = await batch(ctx.env.DB, [
     repo.updateBroadcastStmt(
       ctx.env.DB,
@@ -62,9 +66,12 @@ export async function updateBroadcast(
       {
         name: nameOf(body),
         kind: body.kind,
-        target: storedTargetOf(body),
+        target: storedTargetOf(
+          body,
+          change ? { selection: body.target.passIds ? 'ids' : 'live', token } : {},
+        ),
         patch: body.patch,
-        notify: body.notify,
+        notify: body.notify ?? body.kind === 'message',
         state: body.send === 'draft' ? 'draft' : 'scheduled',
         at: body.send === 'draft' ? null : body.send === 'schedule' ? (body.at ?? now) : now,
         clearAfter: body.clearAfter ?? null,
@@ -72,6 +79,17 @@ export async function updateBroadcast(
       scope.authority,
       now,
     ),
+    // The save's own target rows replace the draft's: guarded by the token only this save wrote.
+    ...(change
+      ? chosenTargetsStmts(ctx.env.DB, {
+          id,
+          orgId: row.org_id,
+          mode: row.mode,
+          token,
+          ids: body.target.passIds ?? [],
+          replace: true,
+        })
+      : []),
   ]);
   if ((edited?.meta.changes ?? 0) !== 1)
     throw new ConflictError(
@@ -97,6 +115,7 @@ export async function retryBroadcast(
   actor: Actor,
   id: string,
   scope: BroadcastScope,
+  expectCount?: number,
 ): Promise<BroadcastDto> {
   const row = await requireWritableBroadcast(ctx, id, scope);
   assertCanChange(scope, row.kind);
@@ -109,6 +128,7 @@ export async function retryBroadcast(
   // An undo is asked for again with /undo; a run that was undone is not run again over its undo.
   if (stored.revertOf || (await childOf(ctx.env.DB, id, row.org_id, row.mode)))
     throw new ConflictError('This change was undone.', 'BROADCAST_NOT_RETRYABLE');
+  if (row.kind === 'change') return resumeChange(ctx, actor, row, scope, stored, expectCount);
   const { window, sentBy, message, expectCount: _seen, ...target } = stored;
   return insertBroadcast(
     ctx,
@@ -153,4 +173,55 @@ export async function listBroadcastItems(
     })),
     nextCursor,
   };
+}
+
+/**
+ * A change run is resumed, not copied: the new run takes only the passes the old one never changed
+ * (no `updated` or `unchanged` item), so no pass gets an operation twice. It needs the count of passes
+ * left (`expectCount`) and goes through the same rate limit as a new run. A run that never took its
+ * passes, or ended because its selection moved, is made again from the passes list.
+ */
+async function resumeChange(
+  ctx: ServiceContext,
+  actor: Actor,
+  row: repo.BroadcastRow,
+  scope: BroadcastScope,
+  stored: StoredBroadcastTarget,
+  expectCount: number | undefined,
+): Promise<BroadcastDto> {
+  if (row.parent_id !== null || row.error_code === 'SELECTION_CHANGED')
+    throw new ConflictError('Make this change again from the passes.', 'BROADCAST_NOT_RETRYABLE');
+  if ((await resumableCount(ctx.env.DB, row.id, row.org_id, row.mode)).all === 0)
+    throw new ConflictError(
+      'This change never took its passes. Make it again.',
+      'BROADCAST_NOT_RETRYABLE',
+    );
+  if (expectCount === undefined)
+    throw new ValidationError(
+      'Send expectCount: the passes this change has left.',
+      [{ path: 'expectCount', message: 'Required to resume a change.' }],
+      'EXPECT_COUNT_REQUIRED',
+    );
+  return insertBroadcast(
+    ctx,
+    actor,
+    row.mode,
+    {
+      orgId: row.org_id,
+      kind: 'change',
+      name: plainLine(row.name).slice(0, 80) || 'Change',
+      target: { templateIds: stored.templateIds, expectCount },
+      patch: JSON.parse(row.patch),
+      notify: row.notify === 1,
+      send: 'now',
+      ...(stored.message ? { message: stored.message } : {}),
+    },
+    scope.authority,
+    'broadcast.retry',
+    {
+      detail: { retryOf: row.id },
+      resume: { parentId: row.id },
+      limit: () => limitChanges(ctx, scope.authority),
+    },
+  );
 }

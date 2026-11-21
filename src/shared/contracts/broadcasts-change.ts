@@ -93,6 +93,8 @@ export const ChangeRunMessageSchema = PlainLineSchema(CHANGE_RUN_MESSAGE_MAX);
 export const CreateBroadcastBodySchema = z
   .object({
     ...createBroadcastFields,
+    /** A message notifies by default; a change tells holders only when asked (`true`). */
+    notify: z.boolean().optional(),
     target: ChangeRunTargetSchema,
     patch: BroadcastPatchSchema,
     /** A change run's lock-screen text; it needs `notify`. */
@@ -123,7 +125,7 @@ export const CreateBroadcastBodySchema = z
       return;
     }
     for (const bad of changeOpsOf(body.patch).issues) issue(['patch', bad.key], bad.message);
-    if (body.message !== undefined && !body.notify)
+    if (body.message !== undefined && body.notify !== true)
       issue(['message'], 'Turn on notify to send it.');
     if (target.match && (target.match.length > 3 || target.match.some((c) => 'op' in c)))
       issue(['target', 'match'], 'Runs match up to 3 values or ranges.');
@@ -135,7 +137,7 @@ export const UpdateBroadcastBodySchema = CreateBroadcastBodySchema;
 /** `POST /broadcasts/preview`: the target, and for a change the ops and text to show samples. */
 export const ChangePreviewBodySchema = z
   .object({
-    orgId: CreateBroadcastBodySchema.shape.orgId,
+    orgId: createBroadcastFields.orgId,
     target: ChangeRunTargetSchema,
     patch: BroadcastPatchSchema.optional(),
     notify: z.boolean().optional(),
@@ -152,6 +154,11 @@ export const ChangePreviewBodySchema = z
         message: 'Runs match values or ranges.',
       });
   });
+
+/** `POST /broadcasts/{id}/retry`: a change resumes with the count of passes it has left. */
+export const RetryQuerySchema = z.object({
+  expectCount: z.coerce.number().int().nonnegative().optional(),
+});
 
 /** `POST /broadcasts/{id}/undo`: a silent child run restores items still at the run's value. */
 export const BroadcastUndoResultSchema = z.object({
@@ -180,6 +187,6 @@ export const ChangeRunPreviewSchema = BroadcastPreviewSchema.extend({
   blocked: z.array(z.object({ code: z.string().max(64), count: n })),
   notified: n,
   silent: n,
-  /** True when the counts above come from the newest passes of a larger target. */
+  /** True when the counts come from the 200 newest passes and who is told is a guess: say "from the 200 newest". */
   estimated: z.boolean().optional(),
 });

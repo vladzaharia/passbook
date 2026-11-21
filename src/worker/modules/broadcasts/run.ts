@@ -8,6 +8,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishRun } from '../../platform/workflow-runs.ts';
 import { actorOf, failInvalidTarget, safeTargetFilter } from './apply.ts';
+import { snapshotTargets } from './change-snapshot.ts';
 import { countsOf } from './dto.ts';
 import {
   type BroadcastRow,
@@ -19,6 +20,7 @@ import {
 } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
 import { countRevertable } from './repo-items.ts';
+import { hasTargets, importTemplate } from './repo-selection.ts';
 import { countTargeted } from './repo-target.ts';
 import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
@@ -50,21 +52,31 @@ export async function startedBroadcast(
     return false;
   }
   const stored = StoredBroadcastTargetSchema.parse(JSON.parse(row.target));
+  const refuse = async (code: string) => {
+    ctx.log.warn('broadcast.blocked', { broadcastId, code });
+    await casState(ctx.env.DB, broadcastId, ['sending'], 'failed', {
+      finishedAt: ctx.clock.now(),
+      errorCode: code,
+    });
+    await finishRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), { errorCode: code });
+    return false;
+  };
+  if (row.kind === 'change' && !stored.revertOf && !stored.selection?.match(/^(ids|resume)$/)) {
+    // What a filter or an import matched is fixed once the run starts: its passes are snapshotted, so
+    // later pages cannot pick up passes created after the count (and an import still running is refused).
+    if (stored.importId) {
+      const imp = await importTemplate(ctx.env.DB, stored.importId, row.org_id, row.mode);
+      if (!imp?.ended) return refuse('IMPORT_NOT_ENDED');
+    }
+    if (!(await hasTargets(ctx.env.DB, broadcastId)) && !(await snapshotTargets(ctx, row)))
+      return refuse('MATCH_TOO_BROAD');
+  }
   const targeted = stored.revertOf
     ? await countRevertable(ctx.env.DB, stored.revertOf, row.org_id, row.mode)
     : await countTargeted(ctx.env.DB, filter, ctx.clock.now());
   // The admin confirmed a count; a selection that moved since (a schedule, a retry) applies nothing.
-  if (stored.expectCount !== undefined && selectionDrifted(stored.expectCount, targeted)) {
-    ctx.log.warn('broadcast.blocked', { broadcastId, code: 'SELECTION_CHANGED' });
-    await casState(ctx.env.DB, broadcastId, ['sending'], 'failed', {
-      finishedAt: ctx.clock.now(),
-      errorCode: 'SELECTION_CHANGED',
-    });
-    await finishRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), {
-      errorCode: 'SELECTION_CHANGED',
-    });
-    return false;
-  }
+  if (stored.expectCount !== undefined && selectionDrifted(stored.expectCount, targeted))
+    return refuse('SELECTION_CHANGED');
   await setTargeted(ctx.env.DB, broadcastId, targeted);
   await finishRun(ctx.env.DB, instanceId, 'running', ctx.clock.now());
   return true;
@@ -128,7 +140,9 @@ export async function finishBroadcast(
   // A retry after a failed follow-up insert loses the CAS but still owes the follow-up; the
   // unique parent index makes the insert idempotent.
   const settled = won ? state : row.state;
-  if (settled === 'sent' || settled === 'partial') await scheduleClear(ctx, row);
+  // A stopped message that reached some passes still clears them.
+  if (settled === 'sent' || settled === 'partial' || (stopped && counts.updated > 0))
+    await scheduleClear(ctx, row);
   await finishRun(ctx.env.DB, instanceId, errorCode ? 'errored' : 'complete', now, {
     errorCode:
       errorCode ?? (stopped ? 'BROADCAST_STOPPED' : state === 'sent' ? null : 'PARTIAL_FAILURE'),

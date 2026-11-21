@@ -25,8 +25,12 @@ export async function claimIdempotencyKey(
   additionalAuthority?: TenantPassWrite,
 ): Promise<boolean> {
   if (
-    (authority?.kind === 'session' && authority.capability !== 'passes:operate') ||
-    (authority?.kind === 'api_key' && authority.scope !== 'passes:write')
+    (authority?.kind === 'session' &&
+      authority.capability !== 'passes:operate' &&
+      authority.capability !== 'messages:manage') ||
+    (authority?.kind === 'api_key' &&
+      authority.scope !== 'passes:write' &&
+      authority.scope !== 'messages:write')
   )
     return false;
   if (additionalAuthority && !authority) return false;

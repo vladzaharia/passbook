@@ -125,7 +125,14 @@ export async function preparePublishAttempt(
           changeMessages: {
             previous: previous ? (JSON.parse(previous) as PassJson) : null,
             notify: options.notify,
-            ...(options.changeText === undefined ? {} : { text: options.changeText }),
+            ...(options.changeText === undefined
+              ? {}
+              : {
+                  text:
+                    typeof options.changeText === 'function'
+                      ? options.changeText(next.personalization)
+                      : options.changeText,
+                }),
           },
         }),
     ...(removalAt !== null ? { removal: { at: removalAt, message: removalSnapshot.message } } : {}),

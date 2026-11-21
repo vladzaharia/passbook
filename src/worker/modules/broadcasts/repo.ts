@@ -8,7 +8,14 @@ import { planGate } from './repo-day-limit.ts';
 
 export { followUpsOf } from './repo-followup.ts';
 export type { CountRow, ItemRow } from './repo-outcomes.ts';
-export { countItems, handledPassIds, insertItems } from './repo-outcomes.ts';
+export {
+  clearIntent,
+  countItems,
+  handledPassIds,
+  insertItems,
+  pendingIntents,
+  setIntent,
+} from './repo-outcomes.ts';
 export type { BroadcastKind, BroadcastState };
 
 export interface BroadcastRow {
@@ -222,7 +229,7 @@ export function scheduleBroadcastStmt(
   return stmt(
     db,
     `UPDATE broadcasts SET state = 'scheduled', at = ?
-     WHERE id = ? AND state = 'draft' AND kind = ? AND org_id = ? AND mode = ? AND (${guard.sql})`,
+     WHERE id = ? AND NOT (kind = 'change' AND parent_id IS NOT NULL) AND state = 'draft' AND kind = ? AND org_id = ? AND mode = ? AND (${guard.sql})`,
     [at, id, kind, authority.orgId, authority.mode, ...guard.params],
   );
 }
@@ -238,7 +245,7 @@ export function cancelBroadcastStmt(
   return stmt(
     db,
     `UPDATE broadcasts SET state = 'cancelled', finished_at = ?
-     WHERE id = ? AND state IN ('draft', 'scheduled') AND org_id = ? AND mode = ? AND (${guard.sql})`,
+     WHERE id = ? AND NOT (kind = 'change' AND parent_id IS NOT NULL) AND state IN ('draft', 'scheduled') AND org_id = ? AND mode = ? AND (${guard.sql})`,
     [now, id, authority.orgId, authority.mode, ...guard.params],
   );
 }
@@ -295,7 +302,7 @@ export function updateBroadcastStmt(
   return stmt(
     db,
     `UPDATE broadcasts SET name = ?, kind = ?, target = ?, patch = ?, notify = ?, state = ?, at = ?,
-       clear_after = ? WHERE id = ? AND state IN ('draft', 'scheduled') AND kind = ?
+       clear_after = ? WHERE id = ? AND NOT (kind = 'change' AND parent_id IS NOT NULL) AND state IN ('draft', 'scheduled') AND kind = ?
        AND org_id = ? AND mode = ? AND (${guard.sql})`,
     [
       e.name,

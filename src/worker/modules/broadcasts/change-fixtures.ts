@@ -1,6 +1,7 @@
 import { expect } from 'vitest';
 import { BroadcastSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
+import { run } from '../../platform/db.ts';
 import { runBroadcast } from '../../workflows/broadcast.ts';
 import { itemsWithBefore } from './repo-items.ts';
 import { type BroadcastAuth, type BroadcastKit, broadcastAuth, broadcastKit } from './test-kit.ts';
@@ -14,6 +15,8 @@ const stepRun = {
 } as unknown as Step;
 
 export interface ChangeKit {
+  /** A create first clears the change-run counters, so a file's runs stay under the hourly limit; `spread: false` tests the limit. */
+  state: { spread: boolean };
   kit: BroadcastKit;
   auth: BroadcastAuth;
   app: ReturnType<typeof createApp>;
@@ -44,12 +47,16 @@ export async function changeKit(): Promise<ChangeKit> {
   const app = createApp({ stores: auth.stores, clock: kit.clock });
   const api: ChangeKit['api'] = async (path, init = {}) =>
     app.request(`${ORIGIN}/api/v1${path}`, init, kit.env);
-  const post: ChangeKit['post'] = (path, body = {}, headers = auth.admin()) =>
-    api(path, {
+  const state = { spread: true };
+  const post: ChangeKit['post'] = async (path, body = {}, headers = auth.admin()) => {
+    if (path === '/broadcasts' && state.spread)
+      await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'change-run:%'");
+    return api(path, {
       method: 'POST',
       headers: { ...headers, 'content-type': 'application/json' },
       body: JSON.stringify(body),
     });
+  };
   const runNext = async () => {
     const instance = kit.broadcast.created.at(-1);
     const params = instance?.params as { broadcastId: string } | undefined;
@@ -60,6 +67,7 @@ export async function changeKit(): Promise<ChangeKit> {
   const get = async (id: string) =>
     BroadcastSchema.parse(await (await api(`/broadcasts/${id}`, { headers: auth.admin() })).json());
   return {
+    state,
     kit,
     auth,
     app,

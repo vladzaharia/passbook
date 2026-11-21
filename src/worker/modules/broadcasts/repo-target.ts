@@ -18,6 +18,8 @@ type TargetFilter = PassListFilter & {
   broadcastId?: string;
   /** Only these passes: a test send (one) or a change run's chosen passes (up to 5,000). */
   passIds?: string[];
+  /** Only the passes snapshotted for this change run (`broadcast_targets`). */
+  snapshot?: string;
   /** Only passes this broadcast updated: a follow-up that clears its message. */
   sentBy?: string;
 };
@@ -52,6 +54,11 @@ function targetWhere(filter: TargetFilter, now: number) {
     // json_each keeps the statement under D1's 100 bound parameters.
     where.push('passes.id IN (SELECT value FROM json_each(?))');
     params.push(JSON.stringify(filter.passIds));
+  }
+  if (filter.snapshot) {
+    where.push(`EXISTS (SELECT 1 FROM broadcast_targets bt WHERE bt.broadcast_id = ?
+      AND bt.pass_id = passes.id)`);
+    params.push(filter.snapshot);
   }
   if (filter.sentBy) {
     where.push(`EXISTS (SELECT 1 FROM broadcast_items bi WHERE bi.broadcast_id = ?
@@ -189,4 +196,34 @@ export async function targetRows(
     rows.push(...page.map(mapPass));
   }
   return rows;
+}
+
+/** Of these passes, the ones on a device and the ones at their daily push limit. */
+export async function sampleBudgetState(
+  db: D1Database,
+  ids: readonly string[],
+  orgId: string,
+  mode: Mode,
+  since: number,
+  limit: number,
+): Promise<{ onDevice: Set<string>; over: Set<string> }> {
+  const onDevice = new Set<string>();
+  const over = new Set<string>();
+  for (let i = 0; i < ids.length; i += 500) {
+    const json = JSON.stringify(ids.slice(i, i + 500));
+    const devices = await all<{ pass_id: string }>(
+      db,
+      'SELECT DISTINCT pass_id FROM registrations WHERE pass_id IN (SELECT value FROM json_each(?))',
+      [json],
+    );
+    for (const r of devices) onDevice.add(r.pass_id);
+    const full = await all<{ pass_id: string }>(
+      db,
+      `SELECT e.pass_id FROM pass_events e WHERE e.org_id = ? AND e.mode = ? AND ${notifiedWhere}
+         AND e.pass_id IN (SELECT value FROM json_each(?)) GROUP BY e.pass_id HAVING COUNT(*) >= ?`,
+      [orgId, mode, since, json, limit],
+    );
+    for (const r of full) over.add(r.pass_id);
+  }
+  return { onDevice, over };
 }

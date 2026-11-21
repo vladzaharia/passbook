@@ -1,3 +1,4 @@
+import type { Personalization } from '../../../passkit/types.ts';
 import type { PatchOp } from '../../../shared/contracts/broadcasts-change.ts';
 import {
   type ChangeAction,
@@ -17,7 +18,7 @@ import { budgetOutcomes, providerBudgets } from '../wallet-providers/notify-budg
 import { actorOf } from './actor.ts';
 import { applyAction, type DesignCache } from './apply-action.ts';
 import { fillTokens, resolveOps } from './change-ops.ts';
-import type { BroadcastRow, ItemRow } from './repo.ts';
+import { type BroadcastRow, type ItemRow, setIntent } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
 import { hasVersionFrom } from './repo-items.ts';
 import { StoredBroadcastTargetSchema } from './stored-target.ts';
@@ -78,12 +79,12 @@ const refused = (code: string) =>
 function textFor(
   plan: ChangePlan,
   t: TemplateFields,
-  next: Record<string, Json>,
+  next: Readonly<Record<string, Json | undefined>>,
 ): string | undefined {
   if (!plan.text) return undefined;
   return fillTokens(plan.text, (label) => {
     const f = t.fields.find((x) => x.label.toLowerCase() === label.toLowerCase());
-    return f ? formatValue(next[f.key], f) : null;
+    return f ? formatValue(next[f.key] ?? null, f) : null;
   });
 }
 
@@ -114,6 +115,12 @@ export async function applyChange(
   }
   if (JSON.stringify(first.from) === JSON.stringify(first.to))
     return { ...base, outcome: 'unchanged' };
+  await setIntent(
+    ctx.env.DB,
+    row.id,
+    pass.id,
+    JSON.stringify({ from: first.from, to: first.to, version: pass.version }),
+  );
   const seen: { values?: { from: Record<string, Json>; to: Record<string, Json> } } = {};
   try {
     const result = await publishPass(ctx, {
@@ -124,7 +131,10 @@ export async function applyChange(
       actor: actorOf(row),
       dispatch: false,
       notify: plan.notify,
-      ...(plan.text ? { changeText: textFor(plan, template, first.next) ?? plan.text } : {}),
+      // Read from the values the write finally carries, which a racing edit may have moved.
+      ...(plan.text
+        ? { changeText: (next: Personalization) => textFor(plan, template, next) ?? '' }
+        : {}),
       extraChecks: [creatorLive(row, ctx.clock.now())],
       mutate: (current) => {
         // The pass may have changed since selection; this reruns on each retry of the write.

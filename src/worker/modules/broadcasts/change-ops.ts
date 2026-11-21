@@ -81,10 +81,19 @@ export const tokensOf = (text: string): string[] =>
 
 /** The text with each token read from `valueFor` (the field's new value as the form shows it); `%` stays literal for Wallet. */
 export function fillTokens(text: string, valueFor: (label: string) => string | null): string {
-  return text
-    .replace(/%/g, '%%')
-    .replace(TOKEN, (_, label: string) => (valueFor(label.trim()) ?? '').replace(/%/g, '%%'))
+  const filled = text
+    .replace(TOKEN, (_, label: string) => valueFor(label.trim()) ?? '')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 200);
+    .slice(0, 200)
+    .replace(/%/g, '%%');
+  // Wallet wants the format specifier for the field's new value in every change message.
+  return `${filled} %@`;
 }
+
+const same = (a: Json | undefined, b: Json | undefined) =>
+  JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
+/** Every wanted key holds its value (an absent key reads as null). */
+export const atValues = (have: Record<string, Json | undefined>, want: Record<string, Json>) =>
+  Object.entries(want).every(([k, v]) => same(have[k], v));

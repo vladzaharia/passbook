@@ -46,7 +46,9 @@ export function restartUndoStmt(
     `UPDATE broadcasts SET state = 'scheduled', at = ?, created_by_type = ?, created_by_id = ?,
        created_at = ?, started_at = NULL, finished_at = NULL, error_code = NULL, stop_at = NULL,
        checked_at = NULL, instance = ?
-     WHERE id = ? AND parent_id = ? AND state = 'failed' AND error_code IS NOT NULL
+     WHERE id = ? AND parent_id = ?
+       AND ((state = 'failed' AND error_code IS NOT NULL)
+         OR (state = 'cancelled' AND error_code = 'BROADCAST_STOPPED'))
        AND kind = 'change' AND org_id = ? AND mode = ? AND (${guard.sql})${parent.sql}`,
     [
       now,

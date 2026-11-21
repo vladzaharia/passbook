@@ -7,7 +7,7 @@ import type { Pass } from '../passes/repo.ts';
 import { releaseMovePlan, type StampMove } from '../passes/stamps-keep.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { actorOf } from './actor.ts';
-import type { BroadcastRow, ItemRow } from './repo.ts';
+import { type BroadcastRow, type ItemRow, setIntent } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
 import { hasVersionFrom } from './repo-items.ts';
 
@@ -68,6 +68,21 @@ export async function applyAction(
   }
   const target = release;
   const seen: { from?: string } = {};
+  await setIntent(
+    ctx.env.DB,
+    row.id,
+    pass.id,
+    JSON.stringify(
+      target
+        ? {
+            action,
+            from: { templateVersion: pass.templateVersion },
+            to: { templateVersion: target.version },
+            version: pass.version,
+          }
+        : { action, from: { status: 'active' }, to: { status: 'voided' }, version: pass.version },
+    ),
+  );
   try {
     const result = await publishPass(ctx, {
       passId: pass.id,

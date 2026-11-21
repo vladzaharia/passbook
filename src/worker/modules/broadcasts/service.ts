@@ -1,6 +1,7 @@
 import type { BroadcastDto } from '../../../shared/contracts/broadcasts.ts';
 import type { CreateBroadcastBody } from '../../../shared/contracts/broadcasts-change.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { selectionDrifted } from '../../../shared/contracts/pass-selection.ts';
 import { batch } from '../../platform/db.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
 import {
@@ -30,6 +31,7 @@ import {
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { DAY_LIMIT_KEY, manualBroadcastsToday } from './repo-day-limit.ts';
+import { chosenTargetsStmts, resumableCount, resumeTargetsStmt } from './repo-selection.ts';
 import { launchBroadcast } from './start.ts';
 import type { StoredBroadcastTarget } from './stored-target.ts';
 
@@ -39,9 +41,9 @@ export async function createBroadcast(
   mode: Mode,
   body: CreateBroadcastBody,
   authority: TenantPassWrite,
-  onInserted?: () => void,
+  hooks: { onInserted?: () => void; limit?: () => Promise<void> } = {},
 ): Promise<BroadcastDto> {
-  return insertBroadcast(ctx, actor, mode, body, authority, 'broadcast.create', { onInserted });
+  return insertBroadcast(ctx, actor, mode, body, authority, 'broadcast.create', hooks);
 }
 
 export async function insertBroadcast(
@@ -54,18 +56,42 @@ export async function insertBroadcast(
   options: {
     detail?: Record<string, unknown>;
     onInserted?: () => void;
+    /** Runs after the body is validated and before anything is written (the rate limit). */
+    limit?: () => Promise<void>;
+    /** A retry of a change run: it takes the passes of this run that were never changed. */
+    resume?: { parentId: string };
     /** What only the server sets on a target, kept when a run is sent again. */
     keep?: Pick<StoredBroadcastTarget, 'window' | 'sentBy'>;
   } = {},
 ): Promise<BroadcastDto> {
-  const { detail = {}, onInserted, keep } = options;
+  const { detail = {}, onInserted, keep, limit, resume } = options;
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   if (input.at !== undefined) checkTime(ctx, input.at);
-  const body = await prepareTarget(ctx, mode, input);
+  const { expectCount: seen, ...bare } = input.target;
+  const body = await prepareTarget(ctx, mode, resume ? { ...input, target: bare } : input);
   await checkTemplates(ctx, body, mode);
+  if (resume) {
+    // A resumed run takes what its parent left: the count the admin saw is that remainder.
+    const left = (await resumableCount(ctx.env.DB, resume.parentId, body.orgId, mode)).left;
+    if (seen !== undefined && selectionDrifted(seen, left))
+      throw new ConflictError(
+        `${left} passes are left, not ${seen}. Review it again.`,
+        'SELECTION_CHANGED',
+      );
+  }
+  await limit?.();
   const now = ctx.clock.now();
   const id = ctx.ids.id();
+  const token = ctx.ids.id();
+  const change = body.kind === 'change';
+  const selection = !change
+    ? undefined
+    : resume
+      ? ('resume' as const)
+      : body.target.passIds
+        ? ('ids' as const)
+        : ('live' as const);
   const at = body.send === 'schedule' ? (body.at ?? now) : now;
   const [inserted] = await batch(ctx.env.DB, [
     repo.insertAuthorizedBroadcastStmt(
@@ -77,9 +103,16 @@ export async function insertBroadcast(
         kind: body.kind,
         name: nameOf(body),
         state: body.send === 'draft' ? 'draft' : 'scheduled',
-        target: { ...storedTargetOf(body), ...keep },
+        target: {
+          ...storedTargetOf(body, {
+            ...(selection ? { selection, token } : {}),
+            ...(resume ? { retryOf: resume.parentId } : {}),
+            ...(resume && seen !== undefined ? { expectCount: seen } : {}),
+          }),
+          ...keep,
+        },
         patch: body.patch,
-        notify: body.notify,
+        notify: body.notify ?? body.kind === 'message',
         at: body.send === 'draft' ? null : at,
         clearAfter: body.clearAfter ?? null,
         actor: { type: actor.type, id: actor.id },
@@ -88,6 +121,27 @@ export async function insertBroadcast(
       authority,
       now,
     ),
+    ...(selection === 'ids' && body.target.passIds
+      ? chosenTargetsStmts(ctx.env.DB, {
+          id,
+          orgId: body.orgId,
+          mode,
+          token,
+          ids: body.target.passIds,
+          replace: false,
+        })
+      : []),
+    ...(resume
+      ? [
+          resumeTargetsStmt(ctx.env.DB, {
+            id,
+            parentId: resume.parentId,
+            orgId: body.orgId,
+            mode,
+            token,
+          }),
+        ]
+      : []),
   ]);
   if ((inserted?.meta.changes ?? 0) !== 1)
     throw await insertRefusal(ctx, body.orgId, mode, now, body.kind);

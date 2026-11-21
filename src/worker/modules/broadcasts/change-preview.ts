@@ -15,7 +15,7 @@ import { activeRelease } from '../templates/releases.ts';
 import { targetFilter } from './apply.ts';
 import { resolveOps } from './change-ops.ts';
 import { prepareTarget, storedTargetOf } from './change-target.ts';
-import { countTarget, targetRows } from './repo-target.ts';
+import { countTarget, sampleBudgetState, targetRows } from './repo-target.ts';
 
 type Body = z.infer<typeof ChangePreviewBodySchema>;
 type ChangePreview = z.infer<typeof ChangeRunPreviewSchema>;
@@ -47,11 +47,14 @@ export async function previewChange(
     notify: body.notify ?? true,
     send: 'draft',
   });
-  const filter = targetFilter(
-    { org_id: body.orgId, mode, target: JSON.stringify(storedTargetOf(prepared)) },
-    null,
-    1,
-  );
+  const filter = {
+    ...targetFilter(
+      { org_id: body.orgId, mode, target: JSON.stringify(storedTargetOf(prepared)) },
+      null,
+      1,
+    ),
+    ...(prepared.target.passIds ? { passIds: prepared.target.passIds } : {}),
+  };
   const counts = await countTarget(ctx.env.DB, filter, now, now - BUDGET_WINDOW_MS, limit);
   const out: ChangePreview = {
     ...counts,
@@ -71,6 +74,7 @@ export async function previewChange(
   const blocked = new Map<string, number>();
   let unchanged = 0;
   let changing = 0;
+  const changingIds: string[] = [];
   for (const pass of rows) {
     if (action) {
       let latest: string | null = null;
@@ -87,6 +91,7 @@ export async function previewChange(
       }
       if (action === 'void' || (latest && latest !== pass.templateVersion)) {
         changing++;
+        changingIds.push(pass.id);
         if (out.samples.length < SAMPLES)
           out.samples.push({
             passId: pass.id,
@@ -111,6 +116,7 @@ export async function previewChange(
     else if (JSON.stringify(result.from) === JSON.stringify(result.to)) unchanged++;
     else {
       changing++;
+      changingIds.push(pass.id);
       if (out.samples.length < SAMPLES)
         out.samples.push({
           passId: pass.id,
@@ -122,16 +128,30 @@ export async function previewChange(
   const scale = counts.targeted > rows.length ? counts.targeted / rows.length : 1;
   const scaled = (n: number) => Math.round(n * scale);
   const willChange = scaled(changing);
-  const silent =
-    action !== 'void' && (body.notify ?? true)
-      ? Math.min(willChange, Math.round((willChange * counts.overBudget) / counts.targeted))
-      : willChange;
+  // Holders are told when the run asks, the pass is on a device and not at its daily limit, each read
+  // from the sampled passes themselves. Whether a field the pass shows changes is only known on build.
+  const asks = action !== 'void' && body.notify === true;
+  const state = asks
+    ? await sampleBudgetState(
+        ctx.env.DB,
+        changingIds,
+        body.orgId,
+        mode,
+        now - BUDGET_WINDOW_MS,
+        limit,
+      )
+    : null;
+  const told = state
+    ? changingIds.filter((id) => state.onDevice.has(id) && !state.over.has(id))
+    : [];
+  const silent = willChange - scaled(told.length);
   return {
     ...out,
     unchanged: scaled(unchanged),
     blocked: [...blocked].map(([code, n]) => ({ code, count: scaled(n) })),
-    notified: willChange - silent,
+    notified: scaled(told.length),
     silent,
-    ...(scale > 1 ? { estimated: true } : {}),
+    // Counts of a larger target come from its newest 200 passes; who is told is always an estimate.
+    estimated: true,
   };
 }

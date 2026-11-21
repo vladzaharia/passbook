@@ -1,22 +1,9 @@
 import { BroadcastUndoResultSchema } from '../../../shared/contracts/broadcasts-change.ts';
 import { BroadcastSchema, IdParamSchema } from '../../../shared/contracts/index.ts';
-import { bump } from '../../platform/counters.ts';
-import { RateLimitedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { actorFor, svc } from '../passes/http.ts';
 import type { BroadcastScope } from './guards.ts';
 import { stopBroadcast, undoBroadcast } from './undo.ts';
-
-const CHANGES_PER_KEY_HOUR = 6;
-const HOUR_MS = 60 * 60_000;
-
-/** A key starts at most six change runs an hour: each one rewrites and may notify many passes. */
-export async function limitKeyChanges(ctx: ReturnType<typeof svc>, keyId: string): Promise<void> {
-  const now = ctx.clock.now();
-  const window = Math.floor(now / HOUR_MS) * HOUR_MS;
-  if ((await bump(ctx.env.DB, `change-run:key:${keyId}`, window)) > CHANGES_PER_KEY_HOUR)
-    throw new RateLimitedError(Math.ceil((window + HOUR_MS - now) / 1000));
-}
 
 type ScopeOf = (
   c: Parameters<typeof svc>[0],

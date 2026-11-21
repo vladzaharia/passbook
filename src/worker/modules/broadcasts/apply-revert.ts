@@ -6,7 +6,15 @@ import { recordPassEvent } from '../events/record.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { actorOf } from './actor.ts';
-import { type BroadcastRow, casState, handledPassIds, type ItemRow, insertItems } from './repo.ts';
+import { atValues } from './change-ops.ts';
+import {
+  type BroadcastRow,
+  casState,
+  getBroadcast,
+  handledPassIds,
+  type ItemRow,
+  insertItems,
+} from './repo.ts';
 import { creatorIsActive, creatorLive } from './repo-creator.ts';
 import { hasVersionFrom, revertItems } from './repo-items.ts';
 
@@ -29,11 +37,6 @@ function touchedOf(json: string | null): Touched | null {
   }
 }
 
-const same = (a: Json | undefined, b: Json | undefined) =>
-  JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-const atValues = (have: Record<string, Json | undefined>, want: Record<string, Json>) =>
-  Object.entries(want).every(([k, v]) => same(have[k], v));
-
 const changed = () =>
   new ConflictError('The pass changed since the run.', 'BROADCAST_PASS_CHANGED');
 
@@ -51,13 +54,14 @@ async function revertVoid(
   undo: BroadcastRow,
   passId: string,
   version: number | null,
+  since: number,
 ): Promise<ItemRow> {
   const base = { passId, silent: false };
   const pass = await getPass(ctx.env.DB, passId, undo.org_id);
   if (!pass || pass.mode !== undo.mode || pass.removedAt !== null || version === null)
     return { ...base, outcome: 'unchanged' };
   if (pass.status === 'active') {
-    const done = await hasVersionFrom(ctx.env.DB, passId, 'schedule', undo.started_at ?? 0);
+    const done = await hasVersionFrom(ctx.env.DB, passId, 'schedule', since);
     return { ...base, outcome: done ? 'updated' : 'unchanged' };
   }
   if (pass.version !== version) return { ...base, outcome: 'unchanged' };
@@ -106,10 +110,11 @@ async function revertOne(
   passId: string,
   before: string | null,
   version: number | null,
+  since: number,
 ): Promise<ItemRow> {
   const base = { passId, silent: false };
   const touched = touchedOf(before);
-  if (touched?.action === 'void') return revertVoid(ctx, undo, passId, version);
+  if (touched?.action === 'void') return revertVoid(ctx, undo, passId, version, since);
   const pass = await getPass(ctx.env.DB, passId, undo.org_id);
   if (
     !touched ||
@@ -125,7 +130,7 @@ async function revertOne(
   }
   if (atValues(pass.personalization, touched.from)) {
     // An earlier try of this restore published and died before its item: count it once.
-    const done = await hasVersionFrom(ctx.env.DB, passId, 'schedule', undo.started_at ?? 0);
+    const done = await hasVersionFrom(ctx.env.DB, passId, 'schedule', since);
     return { ...base, outcome: done ? 'updated' : 'unchanged' };
   }
   if (!atValues(pass.personalization, touched.to)) return { ...base, outcome: 'unchanged' };
@@ -193,6 +198,8 @@ export async function revertChunk(
   parentId: string,
   cursor: string | null,
 ): Promise<{ nextCursor: string | null }> {
+  // A restart resets the undo's own start: look for its earlier attempt's writes from when the run ended.
+  const since = (await getBroadcast(ctx.env.DB, parentId, null))?.finished_at ?? 0;
   const items = await revertItems(
     ctx.env.DB,
     parentId,
@@ -209,7 +216,7 @@ export async function revertChunk(
   let restored = 0;
   for (const item of items) {
     if (done.has(item.pass_id)) continue;
-    const result = await revertOne(ctx, undo, item.pass_id, item.before, item.version);
+    const result = await revertOne(ctx, undo, item.pass_id, item.before, item.version, since);
     if (result.outcome === 'failed' && (await endIfRevoked(ctx, undo))) return { nextCursor: null };
     await insertItems(ctx.env.DB, undo.id, [result]);
     if (result.outcome === 'updated') restored++;

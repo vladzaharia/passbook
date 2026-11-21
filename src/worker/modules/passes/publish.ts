@@ -72,7 +72,7 @@ export interface PublishOptions {
    */
   notify?: boolean;
   /** With `notify`: this text replaces the template's change messages, on the first changed field only. */
-  changeText?: string;
+  changeText?: string | ((personalization: Personalization) => string);
   /**
    * Read after `mutate`: true sends the update's message even at the daily limit. Only for a
    * message that would otherwise be lost for good (the stamp that fills a card).

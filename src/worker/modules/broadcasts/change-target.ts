@@ -14,17 +14,24 @@ export type PreparedBody = Omit<CreateBroadcastBody, 'target'> & {
   target: CreateBroadcastBody['target'] & { templateIds: string[] };
 };
 
-/** What the run stores: the public target plus the selection and text only the server keeps. */
-export function storedTargetOf(body: PreparedBody): StoredBroadcastTarget {
+/**
+ * What the run stores: the public target plus the selection and text only the server keeps. Chosen
+ * passes are not stored here (that is up to 5,000 ids on every read of the run): they are rows in
+ * `broadcast_targets`, and only their source and the save's token stay.
+ */
+export function storedTargetOf(
+  body: PreparedBody,
+  save: Pick<StoredBroadcastTarget, 'selection' | 'token' | 'retryOf'> = {},
+): StoredBroadcastTarget {
   const { target } = body;
   return {
+    ...save,
     templateIds: target.templateIds,
     ...(target.onDevice !== undefined ? { onDevice: target.onDevice } : {}),
     ...(target.holderState ? { holderState: target.holderState } : {}),
     ...(target.q ? { q: target.q } : {}),
     ...(target.scan ? { scan: target.scan } : {}),
     ...(target.match ? { match: target.match as StoredBroadcastTarget['match'] } : {}),
-    ...(target.passIds ? { passIds: target.passIds } : {}),
     ...(target.importId ? { importId: target.importId } : {}),
     ...(target.expectCount !== undefined ? { expectCount: target.expectCount } : {}),
     ...(body.kind === 'change' && body.message ? { message: body.message } : {}),
@@ -45,6 +52,7 @@ export async function prepareTarget(
   if (target.passIds) {
     // The chosen passes must all exist in this org and mode: a stranger's id reads as missing.
     const ids = [...new Set(target.passIds)];
+    target.passIds = ids;
     const chosen = await chosenPassTemplates(ctx.env.DB, body.orgId, mode, ids);
     if (chosen.found !== ids.length)
       throw new NotFoundError('Some passes were not found.', 'PASS_NOT_FOUND');
@@ -52,6 +60,9 @@ export async function prepareTarget(
   } else if (target.importId) {
     const imp = await importTemplate(ctx.env.DB, target.importId, body.orgId, mode);
     if (!imp) throw new NotFoundError('Import not found.', 'IMPORT_NOT_FOUND');
+    // Its passes are fixed only once it has ended and not been undone.
+    if (!imp.ended)
+      throw new ConflictError('This import has not ended, or was undone.', 'IMPORT_NOT_ENDED');
     templateIds = [imp.template_id];
   }
   if (!templateIds?.length)
@@ -81,5 +92,7 @@ function countSelection(ctx: ServiceContext, mode: Mode, body: PreparedBody): Pr
     null,
     1,
   );
-  return countTargeted(ctx.env.DB, filter, ctx.clock.now());
+  // The chosen passes are not in the stored target: count them as the filter's own list.
+  const chosen = body.target.passIds ? { passIds: body.target.passIds } : {};
+  return countTargeted(ctx.env.DB, { ...filter, ...chosen }, ctx.clock.now());
 }

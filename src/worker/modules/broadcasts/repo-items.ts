@@ -68,7 +68,7 @@ export async function countRevertable(
     db,
     `SELECT COUNT(*) AS n FROM broadcast_items i JOIN broadcasts b ON b.id = i.broadcast_id
      WHERE i.broadcast_id = ? AND b.org_id = ? AND b.mode = ?
-       AND (i.outcome = 'updated' OR i.before IS NOT NULL)`,
+       AND i.before IS NOT NULL`,
     [parentId, orgId, mode],
   );
   return row?.n ?? 0;
@@ -107,7 +107,7 @@ export function revertItems(
     db,
     `SELECT i.pass_id, i.before, i.version FROM broadcast_items i JOIN broadcasts b ON b.id = i.broadcast_id
      WHERE i.broadcast_id = ? AND b.org_id = ? AND b.mode = ?
-       AND (i.outcome = 'updated' OR i.before IS NOT NULL) AND i.pass_id > ? ORDER BY i.pass_id LIMIT ?`,
+       AND i.before IS NOT NULL AND i.pass_id > ? ORDER BY i.pass_id LIMIT ?`,
     [parentId, orgId, mode, cursor ?? '', limit],
   );
 }

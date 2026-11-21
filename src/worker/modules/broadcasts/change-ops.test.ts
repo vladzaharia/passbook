@@ -54,7 +54,7 @@ describe('the text', () => {
   it('finds tokens and fills them, keeping a literal percent sign', () => {
     expect(tokensOf('Hi {Plan}, {Gate}')).toEqual(['Plan', 'Gate']);
     expect(fillTokens('Plan {Plan} at 100%', (l) => (l === 'Plan' ? 'Gold' : null))).toBe(
-      'Plan Gold at 100%%',
+      'Plan Gold at 100%% %@',
     );
   });
 });

@@ -15,6 +15,7 @@ import { actorOf } from './actor.ts';
 import type { DesignCache } from './apply-action.ts';
 import { applyChange, type ChangePlan, type FieldCache, planOf } from './apply-change.ts';
 import { endIfRevoked, revertChunk } from './apply-revert.ts';
+import { settlePending } from './change-intent.ts';
 import {
   type BroadcastRow,
   casState,
@@ -184,11 +185,26 @@ export async function failInvalidTarget(ctx: ServiceContext, row: BroadcastRow):
 }
 
 export function targetFilter(
-  row: Pick<BroadcastRow, 'org_id' | 'mode' | 'target'> & { id?: string; rule_id?: string | null },
+  row: Pick<BroadcastRow, 'org_id' | 'mode' | 'target'> & {
+    id?: string;
+    rule_id?: string | null;
+    kind?: string;
+  },
   cursor: string | null,
   limit: number,
+  /** Read the target's own filters, not the run's snapshot (the start that takes the snapshot). */
+  live = false,
 ) {
   const target = StoredBroadcastTargetSchema.parse(JSON.parse(row.target));
+  // A change run acts on the passes snapshotted for it; what it matched is fixed once it starts.
+  if (!live && row.kind === 'change' && row.id && !target.revertOf)
+    return {
+      orgId: row.org_id,
+      mode: row.mode,
+      snapshot: row.id,
+      ...(cursor ? { cursor } : {}),
+      limit,
+    };
   return {
     orgId: row.org_id,
     mode: row.mode,
@@ -216,9 +232,10 @@ export function safeTargetFilter(
   row: Parameters<typeof targetFilter>[0],
   cursor: string | null,
   limit: number,
+  live = false,
 ): ReturnType<typeof targetFilter> | null {
   try {
-    return targetFilter(row, cursor, limit);
+    return targetFilter(row, cursor, limit, live);
   } catch (error) {
     if (error instanceof ZodError || error instanceof RangeError) return null;
     throw error;
@@ -241,6 +258,7 @@ export async function applyChunk(
   }
   const stored = StoredBroadcastTargetSchema.parse(JSON.parse(row.target));
   if (stored.revertOf) return revertChunk(ctx, row, stored.revertOf, cursor);
+  if (row.kind === 'change') await settlePending(ctx, row);
   const page = await targetPage(ctx.env.DB, filter, ctx.clock.now());
   const done = await handledPassIds(ctx.env.DB, broadcastId, page.ids);
   const cache: MessagingInputs = new Map();

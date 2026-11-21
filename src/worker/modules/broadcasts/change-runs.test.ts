@@ -123,7 +123,7 @@ describe('the lock-screen text', () => {
       message: 'Go to {Gate} for 100%.',
     });
     const json = await lastJson(a.id);
-    expect(json).toContain('"changeMessage":"Go to Gate 9 for 100%%."');
+    expect(json).toContain('"changeMessage":"Go to Gate 9 for 100%%. %@"');
     expect(json).not.toContain('Gate is now %@');
   });
 
@@ -131,7 +131,11 @@ describe('the lock-screen text', () => {
     const a = await ck.kit.makePass();
     const send = (extra: Record<string, unknown>) =>
       ck.post('/broadcasts', body({ target: { passIds: [a.id] }, patch: { gate: 'B' }, ...extra }));
-    await expectProblem(await send({ message: 'Hi {Nope}' }), 422, 'BROADCAST_UNKNOWN_TOKEN');
+    await expectProblem(
+      await send({ message: 'Hi {Nope}', notify: true }),
+      422,
+      'BROADCAST_UNKNOWN_TOKEN',
+    );
     expect((await send({ message: 'Hi', notify: false })).status).toBe(422);
   });
 });
@@ -223,8 +227,9 @@ describe('preview', () => {
       targeted: 3,
       unchanged: 0,
       blocked: [{ code: 'NO_VALUE', count: 1 }],
-      notified: 2,
-      silent: 0,
+      notified: 0,
+      silent: 2,
+      estimated: true,
     });
     const samples = preview.samples as {
       passId: string;
@@ -285,7 +290,7 @@ describe('the push budget', () => {
         notify: true,
       })
     ).json()) as { notified: number; silent: number; overBudget: number };
-    expect(preview).toMatchObject({ overBudget: 1, notified: 1, silent: 1 });
+    expect(preview).toMatchObject({ overBudget: 1, notified: 0, silent: 2 });
     const done = await ck.change({
       target: { passIds: [full.id, fresh.id] },
       patch: { gate: { set: 'Z' } },
