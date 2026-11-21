@@ -62,7 +62,7 @@ function curl(op: SampleOp, base: string): string {
 
 /** Plain `fetch`, for as long as @passbook/sdk is not published. */
 function tsPlain(op: SampleOp, base: string): string {
-  const headers = ['Authorization: `Bearer ${process.env.PASSBOOK_KEY}`'];
+  const headers = [`Authorization: \`Bearer \${process.env.${KEY}}\``];
   if (op.idempotent) headers.push("'Idempotency-Key': crypto.randomUUID()");
   for (const [k, v] of Object.entries(op.sample.headers))
     headers.push(`${tsKey(k)}: ${tsString(v)}`);
