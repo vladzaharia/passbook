@@ -144,7 +144,6 @@ export function MyPassesPage() {
         art="wallet"
         artState="empty"
         title="No passes"
-        description={HOLDER_COPY.noPasses}
         action={
           <Button asChild variant="outline" iconStart={<Plus aria-hidden />}>
             <Link to="/account" search={{ add: 'email' }}>

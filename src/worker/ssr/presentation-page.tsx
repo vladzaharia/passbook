@@ -75,7 +75,6 @@ export function renderPresentationPage(props: PresentationPageProps): string {
             <p data-fail role="alert" hidden>
               {HOLDER_COPY.saveOfflineFailed}
             </p>
-            <p>{HOLDER_COPY.saveOfflineLine}</p>
           </div>,
         )
       : '';
@@ -86,7 +85,6 @@ export function renderPresentationPage(props: PresentationPageProps): string {
     ...(props.brand ? { brand: props.brand } : {}),
     title: props.passTitle,
     art: 'login',
-    lede: escapeHtml(HOLDER_COPY.presentLine),
     wide: true,
     replay: false,
     css: CSS,
