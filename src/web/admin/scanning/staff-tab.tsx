@@ -165,6 +165,10 @@ function OrganizationStaff({
           <StatusPill status="pin_locked" tone="warning">
             Locked on a scanner
           </StatusPill>
+        ) : row.original.pinResetRequired ? (
+          <StatusPill status="pin_reset" tone="warning">
+            Needs new PIN
+          </StatusPill>
         ) : (
           <span className="text-fg-muted">Set</span>
         ),

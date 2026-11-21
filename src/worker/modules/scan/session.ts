@@ -15,6 +15,7 @@ import { planCounts } from './counts.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import type { ScanActor } from './guard.ts';
 import { undoWindowMinutes } from './outcome.ts';
+import { pinTagStateStatement } from './repo-pin-tag.ts';
 import { scanAuthorizedStmt, scanReadAuthority, scanReadFence } from './repo-read-authority.ts';
 import {
   orgBrandingStmt,
@@ -106,6 +107,13 @@ async function sessionFor(
   const templates = screen ? [] : (scopedTemplates?.templates ?? []);
   const db = ctx.env.DB;
   const now = ctx.clock.now();
+  const resetRequired = actor.staff
+    ? (
+        await pinTagStateStatement(db, actor.orgId, actor.staff.id).first<{
+          pin_reset_required: number;
+        }>()
+      )?.pin_reset_required === 1
+    : false;
   // The cache write is under the strict fence: a paused or staffless actor reads but never fills.
   const counts =
     scopedTemplates === null
@@ -232,7 +240,12 @@ async function sessionFor(
     templates,
     formats,
     staff: actor.staff
-      ? { id: actor.staff.id, name: actor.staff.name, role: actor.staff.role }
+      ? {
+          id: actor.staff.id,
+          name: actor.staff.name,
+          role: actor.staff.role,
+          ...(resetRequired ? { pinResetRequired: true as const } : {}),
+        }
       : null,
     staffList: listStaff ? staffRows : null,
     ...(staffTruncated ? { staffTruncated: true } : {}),

@@ -4,6 +4,7 @@ import { CursorQuerySchema } from '../../../shared/contracts/common.ts';
 import {
   type ScanSession,
   ScanSessionSchema,
+  ScanStaffPinSchema,
   ScanStaffSearchSchema,
   ScanStaffSignInSchema,
 } from '../../../shared/contracts/scan-session.ts';
@@ -12,6 +13,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { scanActorOf } from './guard.ts';
+import { setOwnPin } from './staff-self-pin.ts';
 import { searchStaff, signInStaff, signOutStaff } from './staff-session.ts';
 
 const RosterQuery = z.object({ q: z.string().trim().min(1).max(80) });
@@ -53,6 +55,25 @@ export function registerScanStaffRoutes(scanRoutes: OpenAPIHono<AppBindings>): v
         withCsrf(
           c.var.auth,
           await signInStaff(serviceContext(c), scanActorOf(c), c.req.valid('json')),
+        ),
+      ),
+  );
+
+  register(
+    scanRoutes,
+    'scan',
+    {
+      method: 'post',
+      path: '/staff/pin',
+      summary: 'Replace your own PIN while a reset is required',
+      body: ScanStaffPinSchema,
+      response: ScanSessionSchema,
+    },
+    async (c) =>
+      c.json(
+        withCsrf(
+          c.var.auth,
+          await setOwnPin(serviceContext(c), scanActorOf(c), c.req.valid('json').pin),
         ),
       ),
   );

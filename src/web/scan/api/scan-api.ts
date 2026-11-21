@@ -45,6 +45,7 @@ import {
   ScanRecentSchema,
   ScanRosterSchema,
   ScanSessionSchema,
+  type ScanStaffPinSchema,
   ScanStaffSearchSchema,
   type ScanStaffSignInSchema,
   ScanSummarySchema,
@@ -254,6 +255,8 @@ export function createScanApi(deps: ScanApiDeps) {
     signOut: () => request('POST', '/unpair', null),
     staffSignIn: (body: z.infer<typeof ScanStaffSignInSchema>) =>
       request('POST', '/staff', ScanSessionSchema, body),
+    staffSetPin: (body: z.infer<typeof ScanStaffPinSchema>) =>
+      request('POST', '/staff/pin', ScanSessionSchema, body),
     staffSignOut: () => request('DELETE', '/staff', ScanSessionSchema),
     setRole: (body: ScanRoleChange) => request('POST', '/role', ScanSessionSchema, body),
     staffSearch: (q: string, call?: Call) =>

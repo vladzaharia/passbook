@@ -226,6 +226,8 @@ export const ScanRecordSchema = z.object({
   override: z.boolean(),
   offline: z.boolean(),
   unverified: z.boolean().default(false),
+  /** A back-dated offline read: it counts at the time it synced. */
+  late: z.boolean().default(false),
   actor: z.object({ type: z.enum(['scanner', 'user']), id: z.string() }),
   undoneAt: TimestampSchema.nullable(),
   undoneBy: z.string().nullable(),
@@ -266,6 +268,8 @@ export const ScanStaffSchema = z.object({
   name: z.string(),
   role: ScanRoleSchema,
   pinSetAt: TimestampSchema,
+  /** A shared PIN was seen: the person sets a new one at their next sign-in. */
+  pinResetRequired: z.boolean(),
   locked: z.boolean(),
   disabledAt: TimestampSchema.nullable(),
   today: z.number().int(),

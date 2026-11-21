@@ -1,5 +1,4 @@
 import { classifyD1Error } from '../../platform/db.ts';
-import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import type { ScannerRow } from './repo-device.ts';
@@ -12,14 +11,7 @@ import {
 } from './repo-pin-tag.ts';
 import { pinTag } from './staff-pin-hash.ts';
 
-const resetRequired = () =>
-  new AppError(
-    'STAFF_PIN_RESET_REQUIRED',
-    409,
-    'This PIN needs a reset. Ask an admin for a new one.',
-  );
-
-/** Staff whose PIN is held by someone else too: sign-in is refused until an admin resets it. */
+/** Staff whose PIN is held by someone else too: the next session asks each for a new PIN. */
 async function flagSharedPin(
   ctx: ServiceContext,
   scanner: ScannerRow,
@@ -45,8 +37,8 @@ async function flagSharedPin(
 }
 
 /**
- * After a PIN verified for this person: refuse a flagged one, and fill the tag of one from before tags.
- * A tag that is already another active person's is a shared PIN: both are flagged, neither signs in.
+ * After a PIN verified for this person: fill the tag of one from before tags. A tag that is already
+ * another active person's is a shared PIN: both are flagged, and the session asks each for a new PIN.
  */
 export async function afterVerifiedPin(
   ctx: ServiceContext,
@@ -60,7 +52,6 @@ export async function afterVerifiedPin(
     pin_tag: string | null;
     pin_reset_required: number;
   }>();
-  if (row?.pin_reset_required) throw resetRequired();
   if (!row || row.pin_tag !== null) return;
   const tag = await pinTag(ctx.env, orgId, pin);
   try {
@@ -72,6 +63,5 @@ export async function afterVerifiedPin(
     const other = await staffWithTagStatement(db, orgId, tag).first<{ id: string }>();
     await flagSharedPin(ctx, scanner, other ? [staffId, other.id] : [staffId]);
     ctx.log.warn('scan.pin_shared', { orgId, scannerId: scanner.id, code: 'PIN_SHARED' });
-    throw resetRequired();
   }
 }

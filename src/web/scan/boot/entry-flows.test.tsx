@@ -9,6 +9,7 @@ import { json, sessionFixture as platformSession, stubFetch } from '../../lib/te
 import type { ScanApi } from '../api/scan-api.ts';
 import { AdminStart } from './admin-start.tsx';
 import { sessionFixture } from './session.test-support.ts';
+import { StaffPinReset } from './staff-pin-reset.tsx';
 import { StaffStart } from './staff-start.tsx';
 
 afterEach(() => {
@@ -252,5 +253,55 @@ describe('scanner entry flows', () => {
       ),
     );
     expect(screen.queryByLabelText('Find your name')).not.toBeInTheDocument();
+  });
+});
+
+describe('a shared PIN: choosing a new one', () => {
+  const reset = (
+    setPin: ScanApi['staffSetPin'],
+    refetch = vi.fn().mockResolvedValue(undefined),
+  ) => {
+    render(
+      wrapper(
+        <StaffPinReset
+          session={sessionFixture()}
+          api={{ staffSetPin: setPin }}
+          refetch={refetch}
+        />,
+      ),
+    );
+    return { refetch, user: userEvent.setup() };
+  };
+  const key = async (user: ReturnType<typeof userEvent.setup>, digits: string) => {
+    for (const digit of digits) await user.click(screen.getByRole('button', { name: digit }));
+  };
+  it('asks twice, then sends the PIN once', async () => {
+    const setPin = vi.fn<ScanApi['staffSetPin']>().mockResolvedValue(sessionFixture());
+    const { user, refetch } = reset(setPin);
+    await key(user, '497205');
+    expect(screen.getByText('Enter it again')).toBeInTheDocument();
+    await key(user, '497205');
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+    expect(setPin).toHaveBeenCalledExactlyOnceWith({ pin: '497205' });
+  });
+  it('says when the two entries differ, and sends nothing', async () => {
+    const setPin = vi.fn<ScanApi['staffSetPin']>();
+    const { user } = reset(setPin);
+    await key(user, '497205');
+    await key(user, '497206');
+    expect(await screen.findByText("The PINs don't match.")).toBeInTheDocument();
+    expect(setPin).not.toHaveBeenCalled();
+  });
+  it('shows the refusal and starts over', async () => {
+    const setPin = vi
+      .fn<ScanApi['staffSetPin']>()
+      .mockRejectedValue(
+        new ApiError({ status: 400, code: 'PIN_WEAK', detail: 'Choose a different PIN.' }),
+      );
+    const { user } = reset(setPin);
+    await key(user, '111111');
+    await key(user, '111111');
+    expect(await screen.findByText('Choose a different PIN.')).toBeInTheDocument();
+    expect(screen.getByText('Your PIN is shared. Choose a new one.')).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { type Grant, grant } from '../../platform/authority.ts';
-import { exactlyOne } from '../../platform/authority-checks.ts';
+import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
+import { maxNow } from '../../platform/authority-expr.ts';
 import { stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ScannerRow, scannerEpochsOf } from './repo-device.ts';
@@ -48,3 +49,47 @@ export const fillPinTag = (g: Grant, id: string, tag: string) =>
 /** Sign-in is refused until an admin resets the PIN (which clears the flag). */
 export const flagPinReset = (g: Grant, id: string) =>
   g.update('scan_staff', { set: { pin_reset_required: 1 }, where: { id } });
+
+/**
+ * The signed-in person's own new PIN, while a reset is required. It moves with the epoch they were
+ * read at, so a PIN an admin reset in between is not overwritten.
+ */
+export async function setOwnPinGrant(
+  ctx: ServiceContext,
+  scanner: ScannerRow,
+  staff: { id: string; authEpoch: number },
+  change: { pinHash: string; pinTag: string; macVersion: number; now: number },
+): Promise<void> {
+  const g = grant(ctx, {
+    purpose: 'org_mode.scan.staff.pin_self',
+    principal: {
+      kind: 'scanner',
+      scannerId: scanner.id,
+      credentialEpoch: scannerEpochsOf(scanner).credential,
+    },
+    checks: [
+      exactlyOne('scanners', { id: scanner.id, revoked_at: null }, undefined, 'config'),
+      rowIs(
+        'scan_staff',
+        staff.id,
+        { auth_epoch: staff.authEpoch, disabled_at: null, pin_reset_required: 1 },
+        'config',
+      ),
+    ],
+    target: staff.id,
+    codes: STAFF_CODES,
+  });
+  g.update('scan_staff', {
+    set: {
+      pin_hash: change.pinHash,
+      pin_tag: change.pinTag,
+      pin_mac_version: change.macVersion,
+      pin_set_at: change.now,
+      pin_reset_required: 0,
+      updated_at: maxNow(change.now),
+    },
+    where: { id: staff.id },
+    require: 'one',
+  });
+  await g.commit();
+}

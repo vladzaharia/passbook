@@ -29,7 +29,7 @@ function staffScanner(actor: ScanActor) {
   return actor.scanner;
 }
 
-function requireSignIn(actor: ScanActor) {
+export function requireSignIn(actor: ScanActor) {
   const scanner = staffScanner(actor);
   if (!actor.settings.staffSignIn)
     throw new ForbiddenError(
@@ -43,7 +43,7 @@ function requireSignIn(actor: ScanActor) {
  * Re-read the binding after a mutation, in case another staff change won the race. The mutation has
  * committed, so a capture that lost a race to a later change is rebuilt from the rows as they are now.
  */
-async function staffSession(ctx: ServiceContext, actor: ScanActor): Promise<ScanSession> {
+export async function staffSession(ctx: ServiceContext, actor: ScanActor): Promise<ScanSession> {
   const previous = staffScanner(actor);
   const keyEnv = captureCredentialKeyEnv(ctx.env);
   for (let attempt = 0; ; attempt++) {

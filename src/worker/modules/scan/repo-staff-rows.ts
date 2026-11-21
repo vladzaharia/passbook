@@ -14,6 +14,7 @@ export type StaffActivityRaw = HistoryRaw & {
   m_name: string;
   m_role: ScanRole;
   m_pin_set_at: number;
+  m_pin_reset: number;
   m_disabled_at: number | null;
   m_locked: number;
   m_today: number;
@@ -42,6 +43,7 @@ export function staffItem(row: StaffActivityRaw, scannerName: string | null): St
     name: row.m_name,
     role: row.m_role,
     pinSetAt: row.m_pin_set_at,
+    pinResetRequired: row.m_pin_reset === 1,
     locked: Boolean(row.m_locked),
     disabledAt: row.m_disabled_at,
     today: row.m_today,

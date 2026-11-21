@@ -2825,6 +2825,15 @@
       ]
     },
     {
+      "code": "PIN_WEAK",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "PRIMARY_EMAIL",
       "statuses": [
         409
@@ -4202,7 +4211,7 @@
       ]
     },
     {
-      "code": "STAFF_PIN_RESET_REQUIRED",
+      "code": "STAFF_PIN_RESET_NOT_REQUIRED",
       "statuses": [
         409
       ],
@@ -4232,6 +4241,15 @@
       "code": "STAFF_SIGN_IN_DISABLED",
       "statuses": [
         403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_SIGN_IN_REQUIRED",
+      "statuses": [
+        409
       ],
       "modules": [
         "scan"

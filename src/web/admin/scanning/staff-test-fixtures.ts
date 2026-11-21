@@ -18,6 +18,7 @@ export const person = (overrides: Partial<ScanStaff> = {}): ScanStaff => ({
   name: 'Sam K.',
   role: 'door',
   pinSetAt: 1_800_000_000_000,
+  pinResetRequired: false,
   locked: false,
   disabledAt: null,
   today: 0,

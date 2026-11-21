@@ -186,6 +186,7 @@ export interface StaffBase {
   name: string;
   role: ScanRole;
   pinSetAt: number;
+  pinResetRequired: boolean;
   disabledAt: number | null;
 }
 
@@ -193,7 +194,7 @@ export interface StaffBase {
 export async function getStaffBase(db: Db, orgId: string, id: string): Promise<StaffBase | null> {
   const r = await stmt(
     db,
-    'SELECT id, org_id, name, role, pin_set_at, disabled_at FROM scan_staff WHERE id = ? AND org_id = ?',
+    'SELECT id, org_id, name, role, pin_set_at, pin_reset_required, disabled_at FROM scan_staff WHERE id = ? AND org_id = ?',
     [id, orgId],
   ).first<{
     id: string;
@@ -201,6 +202,7 @@ export async function getStaffBase(db: Db, orgId: string, id: string): Promise<S
     name: string;
     role: ScanRole;
     pin_set_at: number;
+    pin_reset_required: number;
     disabled_at: number | null;
   }>();
   return r
@@ -210,6 +212,7 @@ export async function getStaffBase(db: Db, orgId: string, id: string): Promise<S
         name: r.name,
         role: r.role,
         pinSetAt: r.pin_set_at,
+        pinResetRequired: r.pin_reset_required === 1,
         disabledAt: r.disabled_at,
       }
     : null;

@@ -52,7 +52,7 @@ export async function readStaffActivity(
         ) AS snapshot_ok
     ), page AS MATERIALIZED (
       SELECT st.id AS m_id, st.org_id AS m_org_id, st.name AS m_name, st.role AS m_role,
-        st.pin_set_at AS m_pin_set_at, st.disabled_at AS m_disabled_at,
+        st.pin_set_at AS m_pin_set_at, st.pin_reset_required AS m_pin_reset, st.disabled_at AS m_disabled_at,
         EXISTS (
           SELECT 1 FROM scanners sc
           WHERE sc.org_id = st.org_id AND sc.mode = ${mode} AND sc.revoked_at IS NULL

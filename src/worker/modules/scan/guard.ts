@@ -310,7 +310,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       if (!parent) throw unauthenticated();
       // A manager signs in while closed, to open early.
       if (
-        !c.req.path.endsWith('/staff') &&
+        !/\/staff(?:\/pin)?$/.test(c.req.path) &&
         !(
           sessionWindow(parent, ctx.clock.now()).open ||
           (await retriesCommitted(c, ctx.env.DB, actor))

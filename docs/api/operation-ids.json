@@ -360,6 +360,7 @@
   "scan.postScanSessionOpenNow",
   "scan.postScanSignOut",
   "scan.postScanStaff",
+  "scan.postScanStaffPin",
   "scan.postScanTagEnrollmentsByIdComplete",
   "scan.postScanTagEnrollmentsByIdDecline",
   "scan.postScanTagsBind",

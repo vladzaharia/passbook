@@ -2,12 +2,16 @@
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
+import { StaffPinReset } from './boot/staff-pin-reset.tsx';
 import { StaffStart } from './boot/staff-start.tsx';
 import { ScanShell } from './ui/scan-shell.tsx';
 
 const api = {
   staffSignIn: async () => {
     throw new Error('Wrong PIN. 4 tries left.');
+  },
+  staffSetPin: async () => {
+    throw new Error('Choose a different PIN.');
   },
 } as unknown as ScanApi;
 
@@ -32,6 +36,20 @@ export function StaffVisual({ by }: { by: string }) {
           initialByName={by === 'name'}
         />
       }
+    />
+  );
+}
+
+export function PinResetVisual() {
+  const session = sessionFixture({
+    branding: { accent: '#0f766e', logo: null },
+    staff: { id: 'a', name: 'Dana Door', role: 'door', pinResetRequired: true },
+  }) as ScanSession;
+  return (
+    <ScanShell
+      branding={session.branding}
+      cardMode="boot"
+      card={<StaffPinReset session={session} api={api} refetch={async () => undefined} />}
     />
   );
 }
