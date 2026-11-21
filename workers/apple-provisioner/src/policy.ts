@@ -1,6 +1,8 @@
 import { AscError } from './types.ts';
 
 export const MANAGED_PREFIX = 'pass.mobile.passbook.';
+/** Their certificates back every installed platform pass; the owner revokes them by hand. */
+export const PLATFORM_IDENTIFIERS = new Set(['pass.im.plrs.wallet', `${MANAGED_PREFIX}wallet`]);
 const HANDLE = /^[a-z][a-z0-9]{1,29}$/;
 const RESERVED = new Set([
   'wallet',

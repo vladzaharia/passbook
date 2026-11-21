@@ -15,6 +15,7 @@ import {
   assertPassTypeName,
   assertRevokeReason,
   managedIdentifier,
+  PLATFORM_IDENTIFIERS,
   refuse,
 } from './policy.ts';
 import {
@@ -119,7 +120,12 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
     try {
       return await fn(req);
     } catch (error) {
-      if (error instanceof AscError) last.status = last.status ?? error.code;
+      if (error instanceof AscError) {
+        // The code, not the last HTTP status: a refused lookup that read 200 must not ledger as 200.
+        last.status = error.code;
+        if (error.code === 'ASC_REFUSED')
+          await logRefusal(db, method, target, caller, deps.now(), error.message);
+      }
       throw error;
     } finally {
       await finish(
@@ -224,8 +230,22 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
         const rel = (cert.relationships as { passTypeId?: { data?: { id?: unknown } } } | undefined)
           ?.passTypeId;
         const owner = str(rel?.data?.id);
-        if (!owner || !(await allowedByAscId(db, owner)))
-          refuse('Certificate does not belong to an allowlisted pass type.');
+        const allowed = owner ? await allowedByAscId(db, owner) : null;
+        if (!owner || !allowed) refuse('Certificate does not belong to an allowlisted pass type.');
+        if (PLATFORM_IDENTIFIERS.has(allowed?.identifier ?? ''))
+          refuse('Platform pass type certificates are revoked by the owner only.');
+        // Installed passes depend on the newest certificate: only a superseded one may go.
+        const mine = certificate(cert);
+        const all = many(
+          await req(
+            'GET',
+            `/v1/passTypeIds/${encodeURIComponent(owner ?? '')}/certificates?limit=200`,
+          ),
+        ).map(certificate);
+        const newer = all.some(
+          (c) => c.ascId !== mine.ascId && (c.expiresAt ?? 0) > (mine.expiresAt ?? 0),
+        );
+        if (!newer) refuse('Refusing to revoke the newest certificate of a pass type.');
       });
       await ledgered('revokeCertificate', certAscId, runId, async (req) => {
         const res = await req('DELETE', `/v1/certificates/${certAscId}`);

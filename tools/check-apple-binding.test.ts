@@ -18,6 +18,17 @@ describe('findAppleBinding', () => {
     ]);
   });
 
+  it('catches imports of the client outside the workflow', () => {
+    const text = [
+      "import { ascClient } from '../identities/asc-client.ts';",
+      "const m = await import('./asc-client');",
+      "export * from './asc-client.ts';",
+      "import { x } from './other.ts';",
+    ].join('\n');
+    expect(findAppleBinding('src/worker/modules/passes/service.ts', text)).toHaveLength(3);
+    expect(findAppleBinding('src/worker/workflows/identity-provision.ts', text)).toEqual([]);
+  });
+
   it('allows the workflow and the client', () => {
     const text = 'env.APPLE.findPassType(x);';
     expect(findAppleBinding('src/worker/workflows/identity-provision.ts', text)).toEqual([]);

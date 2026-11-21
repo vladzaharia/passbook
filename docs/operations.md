@@ -135,8 +135,16 @@ One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
        npx wrangler secret put ASC_KEY_ID --config workers/apple-provisioner/wrangler.jsonc
        npx wrangler secret put ASC_ISSUER_ID --config workers/apple-provisioner/wrangler.jsonc
 
-5. Deploy the provisioner first: `npx wrangler deploy --config workers/apple-provisioner/wrangler.jsonc`. The main Worker's `APPLE` binding needs it to exist, so deploy the main Worker after, with `npm run deploy -- --first --apply` if the deploy tool asks for it.
+5. Deploy the provisioner: `npx wrangler deploy --config workers/apple-provisioner/wrangler.jsonc`. Cloudflare fails a deploy whose service binding names a Worker that does not exist yet, so `wrangler.jsonc` does not carry the `APPLE` binding until the provisioner is live. Once it is, add this to `wrangler.jsonc` (before `send_email`), run `npm run gen`, commit, and deploy the main Worker (with `--first` if the deploy tool asks):
+
+       "services": [{ "binding": "APPLE", "service": "apple-provisioner", "entrypoint": "AppleProvisioner" }],
+
+   Until then `ascClient` reports `ASC_UNAVAILABLE`.
 6. Seed the allowlist with the platform pass type: `node tools/apple-provisioner-seed.ts --apply --remote`. Without `--apply` it prints the command. The first `findPassType('pass.im.plrs.wallet')` call fills in Apple's id.
+
+Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any certificate of `pass.im.plrs.wallet` or `pass.mobile.passbook.wallet` (revoke those by hand in the developer portal). The main Worker may ask only for a superseded certificate after a reissue (design 5.1).
+
+Trust boundary: the service binding, not the lint rule (`tools/check-apple-binding.ts`), is the boundary. Anyone who can deploy Workers in the account can bind to or redeploy the provisioner, so scope Cloudflare API tokens and never give CI a token that can deploy `apple-provisioner`.
 
 Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
 

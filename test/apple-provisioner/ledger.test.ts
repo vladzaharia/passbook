@@ -106,28 +106,47 @@ describe('apple-provisioner ledger', () => {
 });
 
 describe('apple-provisioner revoke', () => {
-  const owner = (id: string) => ({ body: cert('C1', id) });
+  const certs = (...c: [string, string][]) => ({
+    data: c.map(([id, exp]) => ({ id, attributes: { expirationDate: exp } })),
+  });
+  /** C1 (older) and C2 (newer) under PT1; GET /certificates/C* names the owner. */
+  const apple =
+    (
+      ownerId: string,
+      list = certs(['C1', '2027-01-01T00:00:00Z'], ['C2', '2027-06-01T00:00:00Z']),
+    ) =>
+    ({ method, path }: { method: string; path: string }) =>
+      method === 'DELETE'
+        ? { status: 204 }
+        : path.includes('/certificates?')
+          ? { body: list }
+          : {
+              body: withExp(cert(path.includes('C2') ? 'C2' : 'C1', ownerId), path.includes('C2')),
+            };
+  const withExp = (c: ReturnType<typeof cert>, newer: boolean) => ({
+    data: {
+      ...c.data,
+      attributes: { expirationDate: newer ? '2027-06-01T00:00:00Z' : '2027-01-01T00:00:00Z' },
+    },
+  });
 
   it('revokes with reason compromised, for an allowlisted pass type, once an hour', async () => {
     await seedPassType('pass.mobile.passbook.henrys', 'PT1');
-    const { api, seen, clock } = stubApple(({ method }) =>
-      method === 'DELETE' ? { status: 204 } : owner('PT1'),
-    );
+    const { api, seen, clock } = stubApple(apple('PT1'));
     await api.revokeCertificate('C1', 'compromised');
     expect(seen.map((s) => `${s.method} ${s.path}`)).toEqual([
       'GET /v1/certificates/C1?include=passTypeId',
+      'GET /v1/passTypeIds/PT1/certificates?limit=200',
       'DELETE /v1/certificates/C1',
     ]);
-    await expect(api.revokeCertificate('C2', 'compromised')).rejects.toThrow(/^ASC_BUDGET/);
+    await expect(api.revokeCertificate('C1', 'compromised')).rejects.toThrow(/^ASC_BUDGET/);
     clock.now += 3_600_001;
-    await api.revokeCertificate('C2', 'compromised');
+    await api.revokeCertificate('C1', 'compromised');
   });
 
   it('refuses another reason, a bad id and a certificate of an unlisted pass type', async () => {
     await seedPassType('pass.mobile.passbook.henrys', 'PT1');
-    const { api, seen } = stubApple(({ method }) =>
-      method === 'DELETE' ? { status: 204 } : owner('OTHER'),
-    );
+    const { api, seen } = stubApple(apple('OTHER'));
     await expect(api.revokeCertificate('C1', 'superseded' as 'compromised')).rejects.toThrow(
       /^ASC_REFUSED/,
     );
@@ -139,11 +158,40 @@ describe('apple-provisioner revoke', () => {
   it('keeps the hourly slot after a refused lookup', async () => {
     await seedPassType('pass.mobile.passbook.henrys', 'PT1');
     let ownerId = 'OTHER';
-    const { api } = stubApple(({ method }) =>
-      method === 'DELETE' ? { status: 204 } : owner(ownerId),
-    );
+    const { api } = stubApple((seen) => apple(ownerId)(seen));
     await expect(api.revokeCertificate('C1', 'compromised')).rejects.toThrow(/^ASC_REFUSED/);
     ownerId = 'PT1';
     await api.revokeCertificate('C1', 'compromised');
+  });
+
+  it('refuses the newest certificate of a pass type', async () => {
+    await seedPassType('pass.mobile.passbook.henrys', 'PT1');
+    const { api, seen } = stubApple(apple('PT1'));
+    await expect(api.revokeCertificate('C2', 'compromised')).rejects.toThrow(/newest certificate/);
+    expect(seen.some((s) => s.method === 'DELETE')).toBe(false);
+  });
+
+  it.each([['pass.im.plrs.wallet'], ['pass.mobile.passbook.wallet']])(
+    'refuses platform pass type %s even for an older certificate',
+    async (identifier) => {
+      await seedPassType(identifier, 'PLAT');
+      const { api, seen } = stubApple(apple('PLAT'));
+      await expect(api.revokeCertificate('C1', 'compromised')).rejects.toThrow(/owner only/);
+      expect(seen.some((s) => s.method === 'DELETE')).toBe(false);
+    },
+  );
+
+  it('ledgers a refused lookup as ASC_REFUSED, not as the 200 it read', async () => {
+    await seedPassType('pass.mobile.passbook.henrys', 'PT1');
+    const { api } = stubApple(apple('OTHER'));
+    await expect(api.revokeCertificate('C1', 'compromised')).rejects.toThrow(/^ASC_REFUSED/);
+    const rows = await ledger();
+    expect(rows.find((r) => r.phase === 'end')).toMatchObject({
+      method: 'revokeCertificate.read',
+      status: 'ASC_REFUSED',
+    });
+    expect(rows.some((r) => r.phase === 'refused' && r.method === 'revokeCertificate.read')).toBe(
+      true,
+    );
   });
 });

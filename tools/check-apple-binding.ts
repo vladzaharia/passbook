@@ -1,5 +1,5 @@
 // The APPLE service binding reaches the App Store Connect key. Only the provisioning workflow and
-// its client may name it. Run in `npm run check:rules`.
+// its client may name it, or import the client. Run in `npm run check:rules`.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import ts from 'typescript';
@@ -16,6 +16,8 @@ function* sources(dir: string): Generator<string> {
   }
 }
 
+const CLIENT_SPECIFIER = /(^|\/)asc-client(\.ts)?$/;
+
 /** Lines naming `.APPLE`, `['APPLE']` or a destructured `APPLE`. */
 export function findAppleBinding(rel: string, text: string): string[] {
   if (ALLOWED.test(rel)) return [];
@@ -28,7 +30,15 @@ export function findAppleBinding(rel: string, text: string): string[] {
         ts.isStringLiteralLike(node.argumentExpression) &&
         node.argumentExpression.text === 'APPLE') ||
       (ts.isBindingElement(node) && (node.propertyName ?? node.name).getText(sf) === 'APPLE');
-    if (hit) found.push(`${rel}:${sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1}`);
+    const spec =
+      ts.isImportDeclaration(node) || ts.isExportDeclaration(node)
+        ? node.moduleSpecifier
+        : ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword
+          ? node.arguments[0]
+          : undefined;
+    const clientImport = spec && ts.isStringLiteralLike(spec) && CLIENT_SPECIFIER.test(spec.text);
+    if (hit || clientImport)
+      found.push(`${rel}:${sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1}`);
     ts.forEachChild(node, visit);
   };
   visit(sf);
