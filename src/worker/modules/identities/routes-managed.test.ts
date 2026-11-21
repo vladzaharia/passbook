@@ -427,7 +427,11 @@ describe('identity actions', () => {
         roles: ['admin', 'user'],
         amr: 'magic_link',
       });
-      await expectProblem(await revoke('wc-old', 'pass.test.wi-b', magic), 403, 'IDP_SIGN_IN_REQUIRED');
+      await expectProblem(
+        await revoke('wc-old', 'pass.test.wi-b', magic),
+        403,
+        'IDP_SIGN_IN_REQUIRED',
+      );
       await expectProblem(await revoke('wc-old', 'pass.test.wi-b', member), 403, 'FORBIDDEN');
     });
   });
