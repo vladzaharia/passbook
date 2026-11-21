@@ -153,7 +153,7 @@ export function exitRow(g: Grant, w: RowWrite): GrantedStatement {
   return g.upsert('scan_presence', COLUMNS, values, {
     when: w.when,
     copy: PREV,
-    update: ['state', 'entered_at', 'last_scan_id', 'due_at'],
+    update: ['state', 'tracking', 'entered_at', 'last_scan_id', 'due_at'],
     where: { state: 'in' },
     returning: ['last_scan_id'],
   });

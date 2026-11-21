@@ -110,7 +110,8 @@ export async function markOutEffect(
       orgId,
       scope: s.place,
       state: 'out',
-      tracking: held.tracking,
+      // An exit leaves the row tracked, whatever it was (`exitRow`).
+      tracking: 1,
       enteredAt: null,
       firstAt: held.firstAt,
       lastEntryAt: held.lastEntryAt,

@@ -1,17 +1,20 @@
 import type { ScanOccupancy, ScanReason } from '../../../shared/contracts/scan.ts';
+import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { Grant } from '../../platform/authority.ts';
 import type { AfterRead } from '../../platform/authority-after.ts';
-import { type GrantCond, not } from '../../platform/authority-cond.ts';
+import { exists, type GrantCond, not, notExists } from '../../platform/authority-cond.ts';
 import { waiveOf } from './access.ts';
 import type { FoundAccess } from './access-types.ts';
+import type { AdmissionPlan } from './admission-types.ts';
+import { localDayStart } from './counts.ts';
 import { type FoundOccupancy, occupancyView, occupancyWaivers } from './occupancy/admission.ts';
-import { insideOf, roomIn } from './occupancy/repo.ts';
+import { eventEntryPlan, eventExitPlan, hardLimited } from './occupancy/place.ts';
+import { insideOf, roomIn, waitedSince } from './occupancy/repo.ts';
 import {
   type EntryPlan,
   type ExitPlan,
   entryPlan,
   exitPlan,
-  hardLimited,
   type Waivers,
 } from './occupancy/rules.ts';
 import {
@@ -24,9 +27,11 @@ import {
   placeCounts,
 } from './occupancy/service.ts';
 import { accessQuiet, accessVisitOpen } from './repo-access.ts';
+import { capacityFullPredicate } from './repo-gates.ts';
 import type { ScanPresenceSnapshot } from './repo-scan-effect.ts';
 import { presenceSnapshot } from './repo-scan-effect-snapshots.ts';
-import { allOf } from './scan-write-statements.ts';
+import { capacityOpen } from './scan-write-grant.ts';
+import { admissionConds, allOf } from './scan-write-statements.ts';
 
 /** One reason a scan that did not move its place is held, and the condition that held it back. */
 interface OccupancyHold {
@@ -35,6 +40,8 @@ interface OccupancyHold {
   /** True while this rule lets the entry through. */
   holds: GrantCond;
 }
+
+type EventRepeat = { kind: 'daily'; dayStart: number } | { kind: 'cooldown'; ms: number } | null;
 
 /** A check-in at a tracked zone, planned from what the scan read (SA §20.4). */
 export interface OccupancyCommit {
@@ -67,12 +74,20 @@ export function planOccupancyCommit(
     open: GrantCond[];
     /** An exit's gate as the scan read it: the row moves only if the gate write will. */
     gateAsRead: GrantCond | null;
+    /** At an event: a single or daily limit's since checks, repeated in the entry. */
+    limit?: GrantCond[];
+    /** At an event: the presence row is still the one the scan read and signed (no ABA). */
+    cas?: GrantCond;
+    /** At an event: the action's own repeat rule, which the place does not carry. */
+    repeat?: EventRepeat;
   },
 ): OccupancyCommit | null {
   const { passId, scanId, now } = i;
   const base = { found: o, passId, scanId, now };
+  const spec = o.spec;
   if (o.direction === 'out') {
-    const exit = exitPlan(o.zones, o.zone.id);
+    const exit =
+      spec.kind === 'zone' ? exitPlan(spec.zones, spec.zone.id) : eventExitPlan(spec.event);
     if (!exit) return null;
     const holds = [{ reason: 'not_inside' as const, holds: insideOf(passId, exit.place, now) }];
     return {
@@ -80,17 +95,61 @@ export function planOccupancyCommit(
       entry: null,
       exit,
       waivers: {},
-      when: [...i.open, ...(i.gateAsRead ? [i.gateAsRead] : [])],
+      when: [
+        ...(spec.kind === 'event' && i.cas ? [i.cas] : []),
+        ...i.open,
+        ...(i.gateAsRead ? [i.gateAsRead] : []),
+      ],
       holds,
     };
   }
-  const access = i.access;
-  if (!access) return null;
   const waived = occupancyWaivers(i.override);
   // A Hard limit is never waived, whatever the override and its approver said.
-  const waivers =
-    waived.cap && hardLimited(o.zones, o.zone.id) ? { ...waived, cap: false } : waived;
-  const entry = entryPlan(o.zones, o.zone.id, now, o.orgTimeZone, waivers);
+  const capWaivers = waived.cap && hardLimited(spec) ? { ...waived, cap: false } : waived;
+  // A daily ticket's in row from an earlier day does not hold today's entry.
+  const stale =
+    spec.kind === 'event' &&
+    i.repeat?.kind === 'daily' &&
+    o.inside &&
+    (o.row?.entered_at ?? now) < i.repeat.dayStart;
+  const waivers = stale ? { ...capWaivers, inside: true } : capWaivers;
+  if (spec.kind === 'event') {
+    // An event's room is its own count (arrivals, or inside with re-entry), so it rides in `when`.
+    const e = spec.event;
+    const full =
+      e.capacity !== null && !waivers.cap
+        ? capacityOpen(capacityFullPredicate(e.orgId, e.mode, e.id, e.capacity, e.reentry, passId))
+        : null;
+    const entry = eventEntryPlan(e);
+    const r = i.repeat;
+    const rule =
+      r?.kind === 'daily' && i.override !== 'already_done'
+        ? {
+            reason: 'already_done' as const,
+            holds: waitedSince(passId, entry.place, r.dayStart - 1),
+          }
+        : r?.kind === 'cooldown' && i.override !== 'cooldown'
+          ? { reason: 'cooldown' as const, holds: waitedSince(passId, entry.place, now - r.ms) }
+          : null;
+    const holds: OccupancyHold[] = [
+      ...(waivers.inside
+        ? []
+        : [{ reason: 'still_inside' as const, holds: not(insideOf(passId, entry.place, now)) }]),
+      ...(rule ? [{ reason: rule.reason, holds: rule.holds }] : []),
+      ...(full ? [{ reason: 'capacity_full' as const, holds: full }] : []),
+    ];
+    const when = [
+      ...(i.cas ? [i.cas] : []),
+      ...(i.limit ?? []),
+      ...(rule ? [rule.holds] : []),
+      ...(full ? [full] : []),
+      ...i.open,
+    ];
+    return { ...base, entry, exit: null, waivers, when, holds };
+  }
+  const access = i.access;
+  if (!access) return null;
+  const entry = entryPlan(spec.zones, spec.zone.id, now, o.orgTimeZone, waivers);
   if (!entry) return null;
   const waive = waiveOf(i.override);
   const wait = waive.wait ? null : access.waitMs;
@@ -212,6 +271,34 @@ export function occupancyAfter(
       via: won ? scannerName : (o.row?.via ?? null),
     }),
     lost: why?.reason ?? null,
-    hard: hardLimited(o.zones, o.zone.id),
+    hard: hardLimited(o.spec),
+  };
+}
+
+/** What an event place's entry repeats from the scan: the limit, the row it read and the action's rule. */
+export function eventPlaceInputs(
+  o: FoundOccupancy | null,
+  passId: string,
+  plan: AdmissionPlan | undefined,
+  before: ScanPresenceSnapshot | null,
+  action: Pick<ResolvedScanAction, 'repeat' | 'cooldownMinutes'>,
+  now: number,
+): { limit?: GrantCond[]; cas?: GrantCond; repeat?: EventRepeat } {
+  if (o?.spec.kind !== 'event') return {};
+  const entering = o.direction === 'in';
+  const row = { pass_id: passId, scope: o.place };
+  const tz = o.spec.event.timeZone;
+  return {
+    limit: entering && plan?.limited ? admissionConds(passId, plan, before) : [],
+    cas: before
+      ? exists('scan_presence', { ...row, last_scan_id: before.lastScanId })
+      : notExists('scan_presence', row),
+    repeat: !entering
+      ? null
+      : action.repeat === 'daily'
+        ? { kind: 'daily', dayStart: localDayStart(now, tz) }
+        : action.repeat === 'cooldown'
+          ? { kind: 'cooldown', ms: (action.cooldownMinutes ?? 5) * 60_000 }
+          : null,
   };
 }

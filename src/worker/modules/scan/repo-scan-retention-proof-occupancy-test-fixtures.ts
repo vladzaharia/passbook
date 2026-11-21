@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { all, first, run } from '../../platform/db.ts';
+import { TURNAROUND_MS } from './occupancy/rules.ts';
 import { readVerifiedScanRetentionProofs } from './repo-scan-retention.ts';
 import {
   ACTION,
@@ -238,6 +239,7 @@ export function registerRetentionOccupancyTests() {
     });
     const pass = await kit.scanPass(templateId);
     const entry = await transition(scanner.headers, pass);
+    kit.clock.advance(TURNAROUND_MS + 1);
     const exit = await transition(scanner.headers, pass);
     expect(entry.checkIn).toMatchObject({ direction: 'in', inside: true });
     expect(exit.checkIn).toMatchObject({ direction: 'out', inside: false });
@@ -263,7 +265,9 @@ export function registerRetentionOccupancyTests() {
     });
     const pass = await kit.scanPass(templateId);
     expect((await transition(scanner.headers, pass)).checkIn?.direction).toBe('in');
+    kit.clock.advance(TURNAROUND_MS + 1);
     expect((await transition(scanner.headers, pass)).checkIn?.direction).toBe('out');
+    kit.clock.advance(TURNAROUND_MS + 1);
     const reentry = await transition(scanner.headers, pass);
     expect(reentry.checkIn?.direction).toBe('in');
     if (!reentry.scanId) throw new Error('Missing re-entry scan');
@@ -290,6 +294,7 @@ export function registerRetentionOccupancyTests() {
     const entry = await transition(scanner.headers, pass);
     expect(entry.kind).toBe('ok');
     if (!entry.scanId) throw new Error('Missing entry scan');
+    kit.clock.advance(TURNAROUND_MS + 1);
     const exit = await transition(scanner.headers, pass);
     if (!exit.scanId) throw new Error('Missing exit scan');
     const undo = await kit.post(scanner.headers, `/scans/${exit.scanId}/undo`, {

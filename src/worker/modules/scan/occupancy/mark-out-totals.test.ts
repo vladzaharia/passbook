@@ -9,7 +9,7 @@ import { scanningSessionsFixture } from '../scanning-sessions-test-fixtures.ts';
 import { codeOf, key } from '../test-kit.ts';
 import { exitGrant } from './auto-exit.ts';
 import type { DueRow } from './repo-reads.ts';
-import { exitAsGiven } from './rules.ts';
+import { exitAsGiven, TURNAROUND_MS } from './rules.ts';
 import { useKit } from './whos-in-test-fixtures.ts';
 
 const fixture = scanningSessionsFixture();
@@ -244,6 +244,7 @@ describe('mark-out keeps the pass in the event totals', () => {
       actions: [{ ...CHECK_IN, repeat: 'always' }],
     });
     const a = await arrived({ template: repeat, inOut: true });
+    kit().clock.advance(TURNAROUND_MS + 1);
     const exit = await checkIn(a);
     expect(exit.kind).toBe('ok');
     const res = await undo(a.scanner.headers, exit.scanId);
