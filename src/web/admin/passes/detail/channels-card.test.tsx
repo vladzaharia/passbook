@@ -32,6 +32,22 @@ const effective = (over: Record<string, unknown> = {}) => ({
   nfc: on,
   ...over,
 });
+/** The chain a pass read answers with: ok down to the level the status names. */
+const chainOf = (status: { on: boolean; source: string; reason?: string }) =>
+  ['passbook', 'plan', 'org', 'template', 'pass'].map((level) => {
+    const at = status.source === 'platform' ? 'passbook' : status.source;
+    const stops = !status.on && level === at;
+    return {
+      level,
+      state: stops ? (level === 'passbook' ? 'locked' : 'off') : 'ok',
+      canChange: level !== 'passbook' && level !== 'plan',
+      ...(stops ? { reason: status.reason } : {}),
+    };
+  });
+const levelsOf = (eff: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.entries(eff).map(([c, s]) => [c, chainOf(s as Parameters<typeof chainOf>[0])]),
+  );
 const handlers = (
   eff: Record<string, unknown>,
   overrides = {},
@@ -44,7 +60,12 @@ const handlers = (
   },
 ) => ({
   '/api/v1/passes/p1/channels': (_u: URL, init?: RequestInit) =>
-    json({ effective: eff, overrides: init?.method === 'PUT' ? {} : overrides, replace }),
+    json({
+      effective: eff,
+      levels: levelsOf(eff),
+      overrides: init?.method === 'PUT' ? {} : overrides,
+      replace,
+    }),
   '/api/v1/passes/p1/prints': () => json({ prints: [] }),
 });
 const row = (name: string) => screen.getByRole('switch', { name }).closest('li') as HTMLElement;
@@ -56,7 +77,7 @@ describe('Channels card', () => {
     renderTags(<ChannelsCard pass={pass()} readOnly={false} />, handlers(effective()));
     await screen.findByRole('switch', { name: 'Apple Wallet' });
     expect(row('Apple Wallet')).toHaveTextContent('On');
-    expect(row('Apple Wallet')).not.toHaveTextContent('Template');
+    expect(row('Apple Wallet')).not.toHaveTextContent(CHANNEL_COPY.useTemplate);
     expect(screen.queryByRole('switch', { name: 'Google Wallet' })).toBeNull();
     expect(
       screen.getByLabelText(
@@ -65,6 +86,20 @@ describe('Channels card', () => {
     ).toHaveTextContent('Not available');
     expect(screen.getByRole('switch', { name: 'Paper' })).toBeEnabled();
     expect(screen.queryByText(CHANNEL_COPY.nothingOn)).toBeNull();
+  });
+
+  it('draws the chain of each channel, ringing the level that stops it', async () => {
+    renderTags(<ChannelsCard pass={pass()} readOnly={false} />, handlers(effective()));
+    await screen.findByRole('switch', { name: 'Apple Wallet' });
+    const apple = within(row('Apple Wallet')).getByRole('list', { name: 'Chain' });
+    expect(
+      within(apple)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['PassBook', 'Plan', 'Organization', 'Template', 'This pass']);
+    expect(apple.querySelector('[data-stop]')).toBeNull();
+    const paper = within(row('Paper')).getByRole('list', { name: 'Chain' });
+    expect(paper.querySelector('[data-stop]')).toHaveAttribute('data-level', 'template');
   });
 
   it('says a channel the plan does not include is not available, with the reason in its tooltip', async () => {
@@ -173,7 +208,7 @@ describe('Channels card', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'Apple Wallet' }));
     await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(1));
     await userEvent.click(
-      within(row('Paper')).getByRole('button', { name: CHANNEL_COPY.templateDefault }),
+      within(row('Paper')).getByRole('button', { name: CHANNEL_COPY.useTemplate }),
     );
     await waitFor(() => expect(calls(fetchMock, 'PUT', '/channels')).toHaveLength(2));
     const [, init] = calls(fetchMock, 'PUT', '/channels')[1] ?? [];

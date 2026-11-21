@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
+import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
 import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
 import { previewSource } from '../../channel-previews/source.ts';
 import { useMode } from '../../lib/mode.ts';
@@ -90,7 +91,6 @@ export function TemplateDetailContent({
     scope.orgId,
     candidate?.version,
   );
-  // The Channels tab's own data: each preview tab follows it.
   const channels = useTemplateChannels(t.id, scope.orgId ?? '', Boolean(scope.orgId));
   const source = useMemo(
     () => previewSource(preview.data, t, { version: candidate?.version }),
@@ -146,6 +146,7 @@ export function TemplateDetailContent({
         orgId={scope.orgId}
         channels={channels.data?.effective}
         channelsTab="channels"
+        orgName={scope.membership?.orgName}
         apple={
           <PassPreviewPanel
             passJson={preview.data.passJson}
@@ -248,7 +249,7 @@ export function TemplateDetailContent({
           <TabsList aria-label="Template sections">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="versions">Releases</TabsTrigger>
-            <TabsTrigger value="channels">Channels</TabsTrigger>
+            <TabsTrigger value="channels">{TEMPLATE_BRAND_COPY.tab}</TabsTrigger>
             <TabsTrigger value="manifest">Manifest</TabsTrigger>
             <TabsTrigger value="inputs">Inputs</TabsTrigger>
           </TabsList>
@@ -290,6 +291,7 @@ export function TemplateDetailContent({
                 templateId={t.id}
                 orgId={scope.orgId}
                 canPublish={canPublish && !archived}
+                canEdit={canEdit && !archived}
               />
             ) : null}
           </TabsContent>

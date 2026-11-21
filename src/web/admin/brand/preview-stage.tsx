@@ -5,11 +5,11 @@ import { CHANNELS, type EffectiveChannels } from '@/shared/contracts/channels.ts
 import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
 import { channelStatusLine, PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
-import { scanLine } from '@/shared/copy/scan.ts';
 import type { SetupFacts } from '@/shared/org-setup-checks.ts';
 import { normalize } from '@/shared/pass-view/index.ts';
 import { ChannelPreviews } from '@/web/channel-previews/channel-previews.tsx';
 import { PaperChannel } from '@/web/channel-previews/channel-stage.tsx';
+import { LockedPreview } from '@/web/channel-previews/locked-preview.tsx';
 import type { PreviewSource } from '@/web/channel-previews/types.ts';
 import { PassCardStage } from '@/web/pass-card/index.tsx';
 import { Card, CardBody, SegmentedControl } from '@/web/ui/index.ts';
@@ -63,7 +63,7 @@ export function useSample(
   return { passJson, source, passView, mint: `${v.background}${v.foreground}${v.label}` };
 }
 
-/** A channel a level stops: the card greyed under the level, why, and where to ask for it. */
+/** A channel a level stops: the card greyed under the reason, the stopping level, and where to ask. */
 function LockedPane({
   channel,
   row,
@@ -77,24 +77,13 @@ function LockedPane({
 }) {
   const stop = stoppingLevel(row.levels);
   return (
-    <div className="relative mx-auto flex w-full max-w-60 flex-col items-center">
-      <div aria-hidden className="pointer-events-none w-full opacity-40 grayscale">
-        {card}
-      </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-raised/85 p-4 text-center backdrop-blur-sm">
-        <Lock aria-hidden className="size-5 text-fg-muted" />
-        <p className="text-sm font-medium text-fg-strong">
-          {CHANNEL_LABEL[channel]}:{' '}
-          {channelStatusLine({ levels: row.levels, templates: row.templates })}
-        </p>
-        {stop ? (
-          <p className="text-xs text-fg-muted">
-            {scanLine(COPY.lockedBy, { level: PASS_SETUP_COPY.levels[stop.level] })}
-          </p>
-        ) : null}
-        {stop?.level === 'plan' ? <AskPassbook channel={channel} orgName={orgName} /> : null}
-      </div>
-    </div>
+    <LockedPreview
+      title={`${CHANNEL_LABEL[channel]}: ${channelStatusLine({ levels: row.levels, templates: row.templates })}`}
+      level={stop?.level ?? 'org'}
+      card={card}
+    >
+      {stop?.level === 'plan' ? <AskPassbook channel={channel} orgName={orgName} /> : null}
+    </LockedPreview>
   );
 }
 

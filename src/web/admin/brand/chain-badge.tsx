@@ -93,15 +93,16 @@ export function ChainBadge({
   templates,
 }: {
   levels: readonly ChannelLevel[];
-  templates: { on: number; total: number };
+  /** The org page's Templates n/m aggregate; absent on a template or pass, where the level is its own. */
+  templates?: { on: number; total: number } | undefined;
 }) {
   const stop = stoppingLevel(levels);
   const at = stop ? levels.indexOf(stop) : -1;
   return (
     <ol aria-label="Chain" className="wl-stagger flex flex-wrap items-center gap-y-2">
       {levels.map((level, i) => {
-        const isTemplate = level.level === 'template';
-        const label = isTemplate
+        const aggregate = level.level === 'template' && templates !== undefined;
+        const label = aggregate
           ? scanLine(PASS_SETUP_COPY.templatesLevel, templates)
           : WORDS[level.level];
         return (
@@ -117,7 +118,7 @@ export function ChainBadge({
               stop={i === at}
               dim={at !== -1 && i > at}
               label={label}
-              {...(isTemplate && templates.total > 0
+              {...(aggregate && templates.total > 0
                 ? { share: templates.on / templates.total }
                 : {})}
             />

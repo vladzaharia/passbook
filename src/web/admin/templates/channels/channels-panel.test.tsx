@@ -23,6 +23,17 @@ const defaults = {
   paper: 'off',
   nfc: 'on',
 };
+const chain = (stop?: { level: string; state: string; reason?: string }) =>
+  ['passbook', 'plan', 'org', 'template'].map((level) => ({
+    level,
+    state: 'ok',
+    canChange: level === 'template',
+    ...(stop?.level === level ? stop : {}),
+  }));
+const levels = Object.fromEntries(Object.keys(effective).map((c) => [c, chain()]));
+const noOverrides = Object.fromEntries(Object.keys(effective).map((c) => [c, 0]));
+/** What every GET adds: the chain of each channel and the passes with their own choice. */
+const extras = { levels, overrides: noOverrides, overridePasses: 0 };
 const impact = (passes: number, cleared = 0) => [
   { channel: 'apple', passes, rotated: 0, clearedOverrides: cleared },
 ];
@@ -58,6 +69,7 @@ const handlers = (
           revision: 1,
           effective,
           defaults,
+          ...extras,
           impact: [
             {
               channel: 'apple',
@@ -72,7 +84,7 @@ const handlers = (
           blocked: extra.blocked ?? null,
           allOff: extra.allOff ?? false,
         })
-      : json({ channels: null, revision: 0, effective, defaults });
+      : json({ channels: null, revision: 0, effective, defaults, ...extras });
   },
 });
 const group = (name: string) => screen.getByRole('radiogroup', { name });
@@ -85,7 +97,10 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('Template channels', () => {
   it('disables a channel the template cannot offer and says why', async () => {
-    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, handlers(0));
+    renderTags(
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />,
+      handlers(0),
+    );
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
     expect(screen.getAllByText('Not available')).toHaveLength(2);
     expect(screen.getAllByLabelText(/No design in this template/)).toHaveLength(2);
@@ -94,12 +109,13 @@ describe('Template channels', () => {
   });
 
   it('says an org block leaves copies alone, a platform switch does not claim it', async () => {
-    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, {
+    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />, {
       '/api/v1/templates/t1/channels': () =>
         json({
           channels: null,
           revision: 0,
           defaults,
+          ...extras,
           effective: {
             ...effective,
             apple: { on: false, source: 'org', reason: 'blocked' },
@@ -121,7 +137,7 @@ describe('Template channels', () => {
 
   it('shows the effect before saving, then saves with the revision', async () => {
     const { fetchMock } = renderTags(
-      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />,
       handlers(412),
     );
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
@@ -143,7 +159,10 @@ describe('Template channels', () => {
   });
 
   it('names the overrides a Never clears', async () => {
-    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, handlers(0, 37));
+    renderTags(
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />,
+      handlers(0, 37),
+    );
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
     await choose('Apple Wallet', 'Never');
     await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
@@ -152,7 +171,7 @@ describe('Template channels', () => {
 
   it('is read-only without templates:publish', async () => {
     renderTags(
-      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish={false} />,
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish={false} canEdit />,
       handlers(0),
     );
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
@@ -163,10 +182,10 @@ describe('Template channels', () => {
   it('re-runs the dry run and shows the new numbers when the cleared count drifted', async () => {
     let dryCleared = 3;
     let puts = 0;
-    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />, {
+    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />, {
       '/api/v1/templates/t1/channels': (_u: URL, init?: RequestInit) => {
         if (init?.method !== 'PUT')
-          return json({ channels: null, revision: 0, effective, defaults });
+          return json({ channels: null, revision: 0, effective, defaults, ...extras });
         const body = JSON.parse(String(init.body));
         if (body.dryRun)
           return json({
@@ -174,6 +193,7 @@ describe('Template channels', () => {
             revision: 0,
             effective,
             defaults,
+            ...extras,
             impact: impact(0, dryCleared),
             workflowInstanceId: null,
             replaceSupported: false,
@@ -207,7 +227,7 @@ describe('Template channels', () => {
 
   const openReplace = async (extra: Parameters<typeof handlers>[2]) => {
     const view = renderTags(
-      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />,
       handlers(412, 0, extra),
     );
     await screen.findByRole('radiogroup', { name: 'Apple Wallet' });
@@ -263,7 +283,7 @@ describe('Template channels', () => {
       waiting: null as { name: string; until: number | null } | null,
     });
     renderTags(
-      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />,
       handlers(0, 0, {
         runs: [
           { ...run('r1', 'running'), waiting: { name: 'Gala', until: 1_800_003_600_000 } },
@@ -299,24 +319,76 @@ describe('Template channels', () => {
     expect(dialog).toHaveTextContent('issues new codes');
   });
 
-  it('applies the template to existing passes in bulk', async () => {
+  it('shows the chain of each channel, ringing the level that stops it', async () => {
+    renderTags(<TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />, {
+      '/api/v1/templates/t1/channels/runs': () => json([]),
+      '/api/v1/templates/t1/channels': () =>
+        json({
+          channels: null,
+          revision: 0,
+          effective: { ...effective, apple: { on: false, source: 'org', reason: 'blocked' } },
+          defaults,
+          levels: { ...levels, apple: chain({ level: 'org', state: 'off', reason: 'blocked' }) },
+          overrides: noOverrides,
+          overridePasses: 0,
+        }),
+    });
+    await screen.findByRole('radiogroup', { name: 'Mobile' });
+    // Apple is blocked by the org: no control, and its chain rings Organization.
+    const apple = screen
+      .getAllByRole('list', { name: 'Chain' })
+      .find((l) => l.querySelector('[data-stop]'));
+    expect(apple?.querySelector('[data-stop]')).toHaveAttribute('data-level', 'org');
+    expect(within(apple as HTMLElement).getAllByRole('listitem')).toHaveLength(4);
+    expect(screen.getAllByRole('list', { name: 'Chain' })).toHaveLength(6);
+  });
+
+  it('says when no pass has its own choice', async () => {
+    renderTags(
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />,
+      handlers(0),
+    );
+    expect(await screen.findByText('No pass has its own choice')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reset/ })).toBeNull();
+  });
+
+  it('resets the passes with their own choice on the server, a page at a time', async () => {
+    let pages = 0;
     const { fetchMock } = renderTags(
-      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish />,
+      <TemplateChannelsPanel templateId="t1" orgId="o1" canPublish canEdit />,
       {
-        ...handlers(0),
-        '/api/v1/passes': () => json({ items: [{ id: 'p1' }, { id: 'p2' }], nextCursor: null }),
-        '/api/v1/passes/bulk/channels': () => json({ done: 2, skipped: [] }),
+        '/api/v1/templates/t1/channels/runs': () => json([]),
+        '/api/v1/templates/t1/channels/reset-passes': () => {
+          pages += 1;
+          return json({
+            overrides: { ...noOverrides, apple: 3 },
+            passes: 3,
+            done: pages === 1 ? 2 : 1,
+            skipped: 0,
+            remaining: pages === 1 ? 1 : 0,
+          });
+        },
+        '/api/v1/templates/t1/channels': () =>
+          json({
+            channels: null,
+            revision: 0,
+            effective,
+            defaults,
+            levels,
+            overrides: { ...noOverrides, apple: 3 },
+            overridePasses: 3,
+          }),
       },
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'Apply to existing passes' }));
+    expect(await screen.findByText('3 passes have their own choice')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Reset 3 passes' }));
     const dialog = await screen.findByRole('dialog');
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(calls(fetchMock, 'POST', '/bulk/channels')).toHaveLength(1));
-    const [, init] = calls(fetchMock, 'POST', '/bulk/channels')[0] ?? [];
-    expect(JSON.parse(String(init?.body))).toMatchObject({
-      action: 'reset',
-      ids: ['p1', 'p2'],
+    expect(dialog).toHaveTextContent('Apple Wallet: 3');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Reset' }));
+    await waitFor(() => expect(calls(fetchMock, 'POST', '/reset-passes')).toHaveLength(2));
+    expect(JSON.parse(String(calls(fetchMock, 'POST', '/reset-passes')[0]?.[1]?.body))).toEqual({
       orgId: 'o1',
     });
+    expect(calls(fetchMock, 'POST', '/bulk/channels')).toHaveLength(0);
   });
 });

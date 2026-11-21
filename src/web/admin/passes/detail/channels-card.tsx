@@ -20,6 +20,7 @@ import {
   Switch,
   toast,
 } from '../../../ui/index.ts';
+import { ChainBadge } from '../../brand/chain-badge.tsx';
 import { ChannelList, ChannelRow } from '../../channels/channel-row.tsx';
 import { ReplaceOption } from '../../templates/channels/replace-option.tsx';
 import { ReviewDialog } from '../../templates/channels/review-dialog.tsx';
@@ -86,6 +87,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
                     key={channel}
                     channel={channel}
                     status={status}
+                    chain={<ChainBadge levels={data.levels[channel]} />}
                     locked={!canSwitch(status)}
                     extra={
                       overridden ? (
@@ -96,7 +98,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
                           disabled={busy}
                           onClick={() => void save({ [channel]: null })}
                         >
-                          {CHANNEL_COPY.templateDefault}
+                          {CHANNEL_COPY.useTemplate}
                         </Button>
                       ) : null
                     }

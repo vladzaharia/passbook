@@ -22,6 +22,8 @@ export interface ChannelRowProps {
   label?: string;
   /** Replaces the generic reason, e.g. "Waiting for Apple approval". */
   reasonText?: string;
+  /** The chain of levels (ChainBadge) between the name and the control. */
+  chain?: ReactNode;
 }
 
 /** A left tooltip stays inside a narrow screen: the label sits at the right edge. */
@@ -43,6 +45,7 @@ export function ChannelRow({
   extra,
   label,
   reasonText,
+  chain,
 }: ChannelRowProps) {
   const why =
     !status.on && status.reason ? channelWhy(channel, status.reason, status.source) : null;
@@ -60,13 +63,16 @@ export function ChannelRow({
     .join('. ')
     .replace(/\.\./g, '.');
   return (
-    <li className="flex min-h-14 items-center justify-between gap-4 py-2">
+    <li
+      className={`flex min-h-14 items-center justify-between gap-4 py-2 ${chain ? 'flex-wrap gap-y-2' : ''}`}
+    >
       <p className="flex min-w-0 items-center gap-2 text-sm font-medium text-fg-strong">
         {label ?? CHANNEL_LABEL[channel]}
         <StatusPill status={state} tone={status.on ? 'success' : 'neutral'}>
           {status.on ? 'On' : 'Off'}
         </StatusPill>
       </p>
+      {chain ? <div className="min-w-0 flex-1">{chain}</div> : null}
       <div className="flex shrink-0 items-center gap-3">
         {locked ? (
           <Tooltip content={detail} side="left" className={TIP_WIDTH}>
