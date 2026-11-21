@@ -3961,6 +3961,15 @@
       ]
     },
     {
+      "code": "TAG_ID_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
       "code": "TAG_INVALID",
       "statuses": [
         400
