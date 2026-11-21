@@ -30,7 +30,7 @@ function PlatformRetention() {
     (item) => item.key === 'sandbox.purgeDays',
   )?.value;
   return typeof kept === 'number' ? (
-    <> Normally kept {kept} days; unresolved sends may be retained longer.</>
+    <>Normally kept {kept} days; unresolved sends may be retained longer.</>
   ) : null;
 }
 
@@ -73,8 +73,6 @@ export function InboxPage({
       authority.requests.clear();
     };
   }, [authority]);
-  const orgName = (id: string) =>
-    scope.membership && id === scope.membership.orgId ? scope.membership.orgName : id;
   const list = useCapturedEmails(orgId);
   const rows = canRead && mode === 'test' ? (list.data?.pages.flatMap((p) => p.items) ?? []) : [];
   const now = useNow();
@@ -84,20 +82,13 @@ export function InboxPage({
       <PageHeader
         title="Test inbox"
         description={
-          <>
-            Test emails land here, not in recipients' inboxes.
-            {canOperate ? ' You can send a copy to your verified account email.' : ''}
-            {session.isAdmin && !session.isError && !session.isFetching ? (
-              <PlatformRetention />
-            ) : null}
-          </>
+          session.isAdmin && !session.isError && !session.isFetching ? <PlatformRetention /> : null
         }
       />
       {mode !== 'test' ? (
         <EmptyState
           art="envelope"
           title="Test mode is off"
-          description="Turn it on to see mail from test passes."
           action={
             <Button
               variant="outline"
@@ -109,11 +100,7 @@ export function InboxPage({
           }
         />
       ) : !orgId ? (
-        <EmptyState
-          art="envelope"
-          title="Choose an organization"
-          description="Select an organization to view its test emails."
-        />
+        <EmptyState art="envelope" title="Choose an organization" />
       ) : !canRead ? (
         <SkeletonRows label="Loading test inbox" />
       ) : list.isError ? (
@@ -162,7 +149,7 @@ export function InboxPage({
                     trailing={<ChevronRight aria-hidden className="size-4 text-fg-subtle" />}
                     meta={
                       <>
-                        {m.kind === 'bundle' ? 'Bundle' : 'Pass'} · To {m.to} · {orgName(m.orgId)} ·{' '}
+                        {m.kind === 'bundle' ? 'Bundle' : 'Pass'} · To {m.to} ·{' '}
                         <RelTime at={m.createdAt} now={now} />
                       </>
                     }
@@ -183,7 +170,6 @@ export function InboxPage({
           mode={mode}
           canOperate={canOperate}
           sendScope={authority}
-          orgName={(id) => orgName(id)}
           onClose={() => onSearch({})}
         />
       ) : null}

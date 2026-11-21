@@ -32,12 +32,12 @@ export interface ModeCapabilities {
   snapshot: boolean;
 }
 
-const MODE: Record<Lifecycle['mode'], { icon: LucideIcon; description: string }> = {
-  poll: { icon: CalendarClock, description: 'Checks the source on a schedule.' },
-  webhook: { icon: Radio, description: 'The source sends changes as they happen.' },
-  hybrid: { icon: Combine, description: 'Webhooks, plus a scheduled check.' },
-  manual: { icon: Hand, description: 'Runs only on Sync now.' },
-  snapshot: { icon: Layers, description: 'Reads the full list each run.' },
+const MODE: Record<Lifecycle['mode'], { icon: LucideIcon }> = {
+  poll: { icon: CalendarClock },
+  webhook: { icon: Radio },
+  hybrid: { icon: Combine },
+  manual: { icon: Hand },
+  snapshot: { icon: Layers },
 };
 
 /** Modes the connector can run; always includes the current one. */
@@ -131,7 +131,6 @@ export function LifecycleFields({
               name="connection-mode"
               value={m}
               label={MODE_LABEL[m]}
-              description={MODE[m].description}
               icon={MODE[m].icon}
               checked={value.mode === m}
               disabled={disabled}

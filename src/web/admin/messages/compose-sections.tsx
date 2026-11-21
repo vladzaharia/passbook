@@ -62,7 +62,6 @@ export function MessageSection({
       <DependentSettings open={!state.clearing}>
         <SwitchRow
           label="Notify holders"
-          help="Wallet can show it on the lock screen."
           checked={state.notify}
           onCheckedChange={(notify) => onChange({ notify })}
         />
@@ -138,7 +137,6 @@ export function ChangeSection({
       ) : null}
       <SwitchRow
         label="Notify holders"
-        help="Wallet can show it on the lock screen."
         checked={state.notify}
         onCheckedChange={(notify) => onChange({ notify })}
       />
@@ -184,9 +182,6 @@ export function WhenSection({
             />
           )}
         </FormField>
-      ) : null}
-      {state.when === 'later' && at === undefined && !error ? (
-        <p className="text-xs text-fg-muted">Pick a date and time.</p>
       ) : null}
     </div>
   );

@@ -86,7 +86,6 @@ export function ConnectorStep({
                   name="connector"
                   value={c.type}
                   label={c.displayName}
-                  description={c.description}
                   checked={picked}
                   onSelect={onType}
                   onCommit={() => {

@@ -77,7 +77,6 @@ export function AudienceSection({
       />
       <SwitchRow
         label="On a device only"
-        help="Only passes with a device registration are included."
         checked={state.onDevice}
         onCheckedChange={(onDevice) => onChange({ onDevice })}
       />

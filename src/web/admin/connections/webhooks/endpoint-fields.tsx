@@ -21,7 +21,6 @@ export function EndpointFields({
   masked,
   onUrlBlur,
   urlHelp,
-  eventsHelp,
   checking,
   orgId,
 }: {
@@ -33,8 +32,6 @@ export function EndpointFields({
   masked?: WebhookEndpointDto['urlMasked'];
   onUrlBlur?: () => void;
   urlHelp?: string;
-  /** Under the Events legend: what the pre-selection means. */
-  eventsHelp?: string;
   checking?: boolean;
   orgId: string | undefined;
 }) {
@@ -50,9 +47,7 @@ export function EndpointFields({
         label="URL"
         required={!disabled}
         error={errors.url}
-        help={
-          errors.url ? undefined : (urlHelp ?? 'https only. PassBook posts signed events here.')
-        }
+        help={errors.url ? undefined : (urlHelp ?? 'https only.')}
       >
         {(f) => (
           <Input
@@ -71,7 +66,7 @@ export function EndpointFields({
           />
         )}
       </FormField>
-      <FormField label="Description" help="Optional. Shown in lists and audit.">
+      <FormField label="Description">
         {(f) => (
           <Input
             {...f}
@@ -88,7 +83,6 @@ export function EndpointFields({
         aria-describedby={errors.eventTypes ? 'events-error' : undefined}
       >
         <legend className="text-sm font-medium text-fg-strong">Events</legend>
-        <p className="mb-2 text-xs text-fg-muted empty:hidden">{eventsHelp}</p>
         <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           {EVENT_GROUPS.map((group) => (
             <fieldset key={group} className="flex min-w-0 flex-col">

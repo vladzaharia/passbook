@@ -223,7 +223,6 @@ export function LoadedPassDetail({
           />
           <TechnicalDetails
             items={[
-              { label: 'Version', value: `v${p.version}` },
               { label: 'Serial number', value: p.serial, copy: true },
               { label: 'Template revision', value: p.templateVersion, copy: true },
             ]}

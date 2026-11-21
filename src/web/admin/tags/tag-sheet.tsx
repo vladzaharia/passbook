@@ -52,12 +52,9 @@ export function TagSheet({
               <ErrorState inline error={query.error} onRetry={() => void query.refetch()} />
             ) : tag ? (
               <>
-                <div className="flex flex-col gap-2">
-                  <h2 className="text-lg font-semibold text-fg-strong">{tagName(tag)}</h2>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <KindPill assurance={tag.assurance} />
-                    <StateBadge state={tag.state} />
-                  </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <KindPill assurance={tag.assurance} />
+                  <StateBadge state={tag.state} />
                 </div>
                 <KeyValue
                   items={[

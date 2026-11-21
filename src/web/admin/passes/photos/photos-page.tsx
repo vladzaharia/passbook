@@ -123,8 +123,7 @@ export function PhotosPage() {
                 onCheckedChange={(checked) => setInclude(checked === true)}
               />
               <p className="text-sm text-fg-muted">
-                Photos are cropped to a square. Passes that cannot carry a Wallet photo keep it for
-                scanners only.
+                Passes that cannot carry a Wallet photo keep it for scanners only.
               </p>
             </CardBody>
           </Card>

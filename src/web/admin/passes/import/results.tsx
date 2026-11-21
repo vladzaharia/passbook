@@ -10,7 +10,6 @@ import {
   Callout,
   Card,
   CardBody,
-  CardHeader,
   Celebrate,
   ConfirmDialog,
   toast,
@@ -19,12 +18,11 @@ import { handOffToConnection } from '../../connections/import-handoff.ts';
 import { downloadImportFile, emailTheRest, removeCreated, useFailedRows } from './api.ts';
 import { ProblemsTable } from './problems.tsx';
 
-function Stat({ label, value, hint }: { label: string; value: number; hint?: string }) {
+function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col gap-1">
       <dt className="text-xs text-fg-muted">{label}</dt>
       <dd className="text-2xl font-semibold tabular-nums text-fg-strong">{value}</dd>
-      {hint && value > 0 ? <dd className="text-xs text-fg-muted">{hint}</dd> : null}
     </div>
   );
 }
@@ -110,10 +108,9 @@ export function ImportResults({
 
   return (
     <Card>
-      <CardHeader title={C.results.title} />
       <CardBody className="relative flex flex-col gap-4">
         <Celebrate when={clean} />
-        <div className="flex items-center gap-4 pt-4">
+        <div className="flex items-center gap-4">
           <Buddy
             scene={clean ? 'cheer' : 'sorry'}
             mood={clean ? 'happy' : 'sad'}
@@ -132,7 +129,7 @@ export function ImportResults({
           <Stat label={C.results.updated} value={p.updated} />
           <Stat label={C.results.unchanged} value={p.unchanged} />
           <Stat label={C.results.failed} value={p.failed} />
-          <Stat label={C.results.notEmailed} value={p.notEmailed} hint={C.results.notEmailedHelp} />
+          <Stat label={C.results.notEmailed} value={p.notEmailed} />
           <Stat label={C.results.removed} value={p.removed} />
         </dl>
         <FailedRows imp={imp} orgId={orgId} />

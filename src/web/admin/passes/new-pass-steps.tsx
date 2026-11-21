@@ -198,7 +198,6 @@ export function TemplateStep({
               ? 'No eligible templates on this page'
               : 'No eligible templates for this organization and mode'
           }
-          description="Make one from a blueprint, or release one in this mode."
           action={browse}
         />
       </div>
@@ -245,8 +244,7 @@ export function TemplateStep({
           </div>
         </fieldset>
       ))}
-      <p className="text-sm text-fg-muted">
-        {NO_RELEASE_COPY.onlyReleased} Need another design?{' '}
+      <p className="text-sm">
         <Link to="/admin/blueprints" className="text-accent-fg underline-offset-2 hover:underline">
           Browse blueprints
         </Link>

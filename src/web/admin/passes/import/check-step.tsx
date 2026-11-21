@@ -4,7 +4,7 @@ import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { useSession } from '../../../lib/session.ts';
-import { Buddy, Button, Callout, Card, CardBody, CardHeader, toast } from '../../../ui/index.ts';
+import { Buddy, Button, Callout, Card, CardBody, toast } from '../../../ui/index.ts';
 import { downloadImportFile, useCheckImport, useDiscardImport } from './api.ts';
 import { CommitSheet } from './commit-sheet.tsx';
 import { Previews } from './previews.tsx';
@@ -34,9 +34,8 @@ export function CheckStep({
   const nothing = counts.create + counts.update === 0;
   return (
     <Card>
-      <CardHeader title={C.check.title} />
       <CardBody className="flex flex-col gap-4">
-        <div className="flex items-center gap-4 pt-4">
+        <div className="flex items-center gap-4">
           <Buddy
             scene="sweep"
             mood={counts.errors > 0 ? 'curious' : 'happy'}

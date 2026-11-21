@@ -243,9 +243,6 @@ export function HolderTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: b
         />
         {pass.blockedUsers.length > 0 ? (
           <div className="flex flex-col gap-2 border-t border-border pt-4">
-            <p className="text-sm text-fg-muted">
-              This is separate from removing the pass from Wallet.
-            </p>
             <p className="text-sm font-medium text-fg-strong">Removed from their account</p>
             <ListRows label="Blocked users">
               {pass.blockedUsers.map((u) => (

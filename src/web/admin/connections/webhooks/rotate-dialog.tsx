@@ -53,7 +53,6 @@ export function RotateDialog({
     <Dialog open={open} onOpenChange={(next) => (secret && !next ? undefined : close(next))}>
       <DialogContent
         title={secret ? 'New signing secret' : 'Rotate secret'}
-        description={secret ? undefined : 'Requests are signed with the new secret from now on.'}
         closeButton={!secret}
         size="md"
         footer={
