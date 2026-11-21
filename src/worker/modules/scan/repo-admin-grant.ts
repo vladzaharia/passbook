@@ -1,9 +1,5 @@
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
-import {
-  type Check,
-  epochIs,
-  templateUsableSql,
-} from '../../platform/authority-checks.ts';
+import { type Check, epochIs, templateUsableSql } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
