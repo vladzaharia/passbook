@@ -15,6 +15,7 @@ import { developerFailures, type Guide } from './lib/developers-check.ts';
 import { outputFailures } from './lib/developers-output-check.ts';
 import { buildErrorCatalogFile, buildEventCatalog } from './lib/error-catalog-files.ts';
 import { guideFailures } from './lib/guides-check.ts';
+import { knownCodes, opCodesFile } from './lib/op-codes.ts';
 import type { Doc } from './lib/openapi-diff.ts';
 import { buildWebhookVectors } from './lib/webhook-vectors.ts';
 
@@ -29,6 +30,10 @@ const failures = developerFailures({
   guide: JSON.parse(read('docs/api/error-guide.json')) as Guide,
   generated: {
     'docs/api/errors.json': { on: read('docs/api/errors.json'), fresh: buildErrorCatalogFile() },
+    'docs/api/operation-codes.json': {
+      on: read('docs/api/operation-codes.json'),
+      fresh: opCodesFile(knownCodes()),
+    },
     'docs/api/webhook-events.json': {
       on: read('docs/api/webhook-events.json'),
       fresh: buildEventCatalog(),
