@@ -765,51 +765,6 @@ export type MessageRulesUpdateParams = {
   version: number;
 };
 
-export type NativeScannerCapabilities = {
-  platform: "ios" | "android";
-  appVersion: string;
-  camera: {
-    available: boolean;
-    permission: "unknown" | "prompt" | "granted" | "denied" | "restricted" | "unavailable";
-  };
-  keyboard: {
-    supported: boolean;
-    connected: boolean | null;
-    connectionObservable: boolean;
-  };
-  nfc: {
-    available: boolean;
-    reading: boolean;
-    continuous?: boolean;
-    formats: Array<"ndef" | "wallet-vas" | "tag-uid" | "tag-sun">;
-  };
-  haptics?: boolean;
-  vas: {
-    deviceSupported: boolean;
-    available: boolean;
-    reader: "proximityReader" | "android-native" | "none";
-    reason: string;
-  };
-  externalReader: {
-    mode: "keyboard" | "unknown";
-    connected: boolean | null;
-  };
-  customerDisplay: {
-    supported: boolean;
-    available: boolean;
-    active: boolean;
-  };
-  layout?: {
-    posture: "unknown" | "folded" | "unfolded" | "half-folded";
-    division: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    } | null;
-  };
-};
-
 export type NfcBindingsUpdateParams = {
   binding: "pass" | "user";
   passId?: string;
@@ -896,6 +851,7 @@ export type Org = {
   slug: string;
   name: string;
   status: "active" | "suspended" | "deleted";
+  personal?: boolean;
   defaultIdentityId: string | null;
   branding: OrgBranding;
   createdAt: number;
@@ -937,6 +893,7 @@ export type OrgSummary = {
   slug: string;
   name: string;
   status: "active" | "suspended" | "deleted";
+  personal?: boolean;
   defaultIdentityId: string | null;
   branding: OrgBranding;
   createdAt: number;
@@ -951,6 +908,10 @@ export type OrgSummary = {
     members?: number;
   };
   countsCapped: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
 };
 
 export type OrgsCloseParams = {
@@ -2046,7 +2007,57 @@ export type ScanDeviceCapabilities = {
   camera: "unknown" | "available" | "unavailable";
   keyboard: boolean;
   nativeBarcode: boolean;
-  native?: NativeScannerCapabilities;
+  native?: {
+    platform: "ios" | "android";
+    appVersion: string;
+    camera: {
+      available: boolean;
+      permission: "unknown" | "prompt" | "granted" | "denied" | "restricted" | "unavailable";
+    };
+    keyboard: {
+      supported: boolean;
+      connected: boolean | null;
+      connectionObservable: boolean;
+    };
+    nfc: {
+      available: boolean;
+      reading: boolean;
+      continuous?: boolean;
+      formats: Array<"ndef" | "wallet-vas" | "tag-uid" | "tag-sun">;
+    };
+    haptics?: boolean;
+    vas: {
+      deviceSupported: boolean;
+      available: boolean;
+      reader: "proximityReader" | "android-native" | "none";
+      reason: string;
+    };
+    externalReader: {
+      mode: "keyboard" | "unknown";
+      connected: boolean | null;
+    };
+    customerDisplay: {
+      supported: boolean;
+      available: boolean;
+      active: boolean;
+    };
+    layout?: {
+      posture: "unknown" | "folded" | "unfolded" | "half-folded";
+      division: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      } | null;
+    };
+  };
+  hardware?: Array<{
+    kind: "camera" | "barcode" | "nfc" | "keyboard" | "usb" | "hid" | "serial" | "bluetooth" | "display";
+    count: number;
+    builtIn: boolean;
+    connected: boolean | null;
+    state: "ready" | "active" | "off" | "needs-permission" | "unavailable" | "error";
+  }>;
   surfaces: Array<"phone" | "operator" | "desk" | "customer">;
   preferred: "phone" | "operator" | "desk" | "customer";
 } | null;

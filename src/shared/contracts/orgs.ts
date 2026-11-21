@@ -40,6 +40,8 @@ export const OrgSchema = z.object({
   slug: z.string(),
   name: z.string(),
   status: z.enum(['active', 'suspended', 'deleted']),
+  /** A personal org: it belongs to one platform admin. The owner is shown to platform admins only. */
+  personal: z.boolean().default(false),
   defaultIdentityId: IdSchema.nullable(),
   branding: OrgBrandingSchema,
   createdAt: TimestampSchema,
@@ -62,6 +64,8 @@ export const OrgSummarySchema = OrgSchema.extend({
   }),
   /** Counts stop at 100000 so a large org never costs a scan. */
   countsCapped: z.boolean(),
+  /** Platform views only: who a personal org belongs to. */
+  personalOwner: z.object({ id: IdSchema, name: z.string().nullable() }).nullable().optional(),
 });
 
 export const OrgListQuerySchema = PageQuerySchema.extend({

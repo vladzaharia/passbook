@@ -7,6 +7,7 @@ import type {
 import { ForbiddenError } from '../../platform/errors.ts';
 import { ORG_CAPABILITIES, ROLE_GRANTS } from '../../platform/org-role-grants.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { viewerOrgName } from './personal-names.ts';
 import { activeMembership, type MembershipRow, myMemberships } from './repo-members.ts';
 
 export { rolesGranting } from '../../platform/org-role-grants.ts';
@@ -32,13 +33,17 @@ export function parseRoles(json: string): OrgRole[] {
 export function memberDto(row: MembershipRow): OrgMember {
   return { ...membershipDto(row), userName: row.user_name, userEmail: row.user_email };
 }
-export function membershipDto(row: MembershipRow): OrgMembership {
+/** `own`: the viewer's own membership list, where their personal org is called "Personal". */
+export function membershipDto(row: MembershipRow, own = false): OrgMembership {
   const roles = parseRoles(row.roles);
   const allowed = new Set(roles.flatMap((role) => ROLE_GRANTS[role]));
   return {
     id: row.id,
     orgId: row.org_id,
-    orgName: row.org_name,
+    orgName: own
+      ? viewerOrgName({ name: row.org_name, personal_user_id: row.personal_user_id }, row.user_id)
+      : row.org_name,
+    personal: row.personal_user_id !== null,
     orgSlug: row.org_slug,
     userId: row.user_id,
     roles,
@@ -53,7 +58,7 @@ export async function getOrgAccess(
   orgId: string,
 ): Promise<OrgMembership | null> {
   const row = await activeMembership(ctx.env.DB, userId, orgId);
-  return row ? membershipDto(row) : null;
+  return row ? membershipDto(row, true) : null;
 }
 export async function requireOrgCapability(
   ctx: ServiceContext,
@@ -70,5 +75,5 @@ export async function listMyOrgMemberships(
   ctx: ServiceContext,
   userId: string,
 ): Promise<OrgMembership[]> {
-  return (await myMemberships(ctx.env.DB, userId)).map(membershipDto);
+  return (await myMemberships(ctx.env.DB, userId)).map((row) => membershipDto(row, true));
 }

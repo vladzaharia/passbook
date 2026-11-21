@@ -18,11 +18,13 @@ export const PlatformOrgSchema = OrgSchema.pick({
   slug: true,
   name: true,
   status: true,
+  personal: true,
   createdAt: true,
 });
 export const PlatformOrgSummarySchema = PlatformOrgSchema.extend({
   counts: OrgSummarySchema.shape.counts,
   countsCapped: OrgSummarySchema.shape.countsCapped,
+  personalOwner: OrgSummarySchema.shape.personalOwner,
 });
 export const PlatformOrgListSchema = OrgListSchema.extend({
   items: z.array(PlatformOrgSummarySchema),

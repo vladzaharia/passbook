@@ -133,9 +133,11 @@ export async function createRuntime(
     ids: { id: scanId },
     origins: [location.origin],
   });
+  // The hardware panel's Test: every source's reads go nowhere while it is open.
+  let held = false;
   const emit = (read: RawRead) => {
     const current = store.getSnapshot().state;
-    if (!current.started || current.block || document.hidden) return null;
+    if (held || !current.started || current.block || document.hidden) return null;
     const input = bus.emit(read);
     const loop = store.getSnapshot().state.loop;
     return 'input' in loop && loop.input.id === input.id ? input.id : null;
@@ -284,6 +286,9 @@ export async function createRuntime(
       native?.tagCancel();
     },
     announce: notice,
+    hold(on: boolean) {
+      held = on;
+    },
     webNfc,
     onTagEnded(listener: (why: 'cancelled' | 'timeout') => void) {
       tagEnded.add(listener);

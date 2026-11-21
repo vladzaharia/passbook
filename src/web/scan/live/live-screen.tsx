@@ -10,6 +10,7 @@ import { ScanOrgLogo, scanBrandLogoUrl, scanBrandStyle } from '../platform/scan-
 import './live-screen.css';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
+import { MonitorHardware } from '../hardware/hardware-control.tsx';
 import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
 import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
@@ -205,6 +206,7 @@ export function LiveScreen({
         <span role="status" className="sr-only">
           {setup ? 'Setup options shown' : ''}
         </span>
+        <MonitorHardware online={connected} />
         <span role="status" className="scan-live-status" data-connected={connected}>
           {connected ? 'Live' : 'Reconnecting…'}
         </span>

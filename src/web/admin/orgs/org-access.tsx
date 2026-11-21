@@ -24,7 +24,7 @@ interface Revoking {
   self: boolean;
 }
 
-export function AccessCard({ org }: { org: { id: string; name: string } }) {
+export function AccessCard({ org }: { org: { id: string; name: string; personal?: boolean } }) {
   const path = `/api/v1/orgs/${encodeURIComponent(org.id)}`;
   const key = ['org-access', org.id];
   const client = useQueryClient();
@@ -124,16 +124,18 @@ export function AccessCard({ org }: { org: { id: string; name: string } }) {
                           {member.roles.map((role) => ROLE_LABELS[role]).join(', ')}
                         </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        aria-label={`Revoke membership for ${label}`}
-                        onClick={() =>
-                          setRevoking({ kind: 'memberships', id: member.id, label, self })
-                        }
-                      >
-                        Revoke
-                      </Button>
+                      {org.personal ? null : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label={`Revoke membership for ${label}`}
+                          onClick={() =>
+                            setRevoking({ kind: 'memberships', id: member.id, label, self })
+                          }
+                        >
+                          Revoke
+                        </Button>
+                      )}
                     </li>
                   );
                 })}
@@ -203,7 +205,7 @@ export function AccessCard({ org }: { org: { id: string; name: string } }) {
               })}
             </ul>
           )}
-          <InviteForm pending={invite.isPending} onInvite={sendInvite} />
+          {org.personal ? null : <InviteForm pending={invite.isPending} onInvite={sendInvite} />}
         </section>
         <ConfirmDialog
           open={revoking !== null}

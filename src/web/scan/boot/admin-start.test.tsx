@@ -24,6 +24,7 @@ function membership(orgId: string, orgName: string, manage = true): OrgMembershi
     orgId,
     orgName,
     orgSlug: orgName.toLowerCase(),
+    personal: false,
     userId: 'u1',
     roles: [manage ? 'org_admin' : 'read_only'],
     capabilities: manage ? ['scanning:read', 'scanning:manage'] : ['scanning:read'],

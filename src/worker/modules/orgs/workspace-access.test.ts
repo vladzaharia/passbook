@@ -40,6 +40,8 @@ const platformOrg = OrgSummarySchema.pick({
   slug: true,
   name: true,
   status: true,
+  personal: true,
+  personalOwner: true,
   createdAt: true,
   counts: true,
   countsCapped: true,

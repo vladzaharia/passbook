@@ -6,6 +6,7 @@ import { PHONE, useMediaQuery } from '../lib/media.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
 import { CustomerDisplayPage } from './customer-display.tsx';
+import { HardwareVisual } from './hardware/visual-hardware.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
 import { FIXTURE_NOW, fixtureOutcome } from './machine/fixture-data.test-support.ts';
 import type { ScanOutcome } from './machine/types.ts';
@@ -255,6 +256,7 @@ export function ScanVisualGallery() {
       <OperatorVisual scenario={OPERATOR_CASES.find((c) => c === params.get('case')) ?? 'idle'} />
     );
   if (surface === 'photo') return <PhotoVisual />;
+  if (surface === 'hardware') return <HardwareVisual />;
   if (surface === 'closed') return <ClosedVisual who={params.get('who') ?? 'manager'} />;
   if (surface === 'monitor' && params.has('desk'))
     return (
