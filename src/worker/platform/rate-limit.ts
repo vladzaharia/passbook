@@ -145,6 +145,16 @@ export async function tokenBucket(token: string): Promise<string> {
   return (await sha256Hex(token)).slice(0, 32);
 }
 
+/** The asset limiter's key: the token (as a digest) and the network prefix; a malformed token shares its prefix's bucket. */
+export async function assetBucket(
+  c: Context,
+  isTokenShape: (token: string) => boolean,
+): Promise<string> {
+  const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
+  const token = c.req.param('token') ?? '';
+  return isTokenShape(token) ? `${await tokenBucket(token)}:${prefix}` : `prefix:${prefix}`;
+}
+
 /** The default key: the IPv4 address or IPv6 /64, so one subscriber does not hold 2^64 buckets. */
 export const clientBucket = (c: Context): string => ipBucket(clientIp(c)) ?? 'unknown';
 

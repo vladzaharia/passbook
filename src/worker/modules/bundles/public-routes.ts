@@ -10,14 +10,12 @@ import { distinguishingLine, normalize } from '../../../shared/pass-view/index.t
 import { stateWordOption } from '../../../shared/state-word.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
-import { ipRatePrefix } from '../../platform/ip.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import {
   ASSET_MISSES_PER_MINUTE,
-  clientIp,
+  assetBucket,
   gateMisses,
   rateLimit,
-  tokenBucket,
 } from '../../platform/rate-limit.ts';
 import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
@@ -50,11 +48,7 @@ export const bundlePublicRoutes = createRouter();
 bundlePublicRoutes.use('/:token/:passId/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 bundlePublicRoutes.use(
   '/:token/:passId/assets/*',
-  rateLimit('RL_PUBLIC_ASSET', async (c) => {
-    const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
-    const token = c.req.param('token') ?? '';
-    return isTokenShape(token) ? `${await tokenBucket(token)}:${prefix}` : `prefix:${prefix}`;
-  }),
+  rateLimit('RL_PUBLIC_ASSET', (c) => assetBucket(c, isTokenShape)),
 );
 bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/passes.pkpasses', rateLimit('RL_PUBLIC'));
