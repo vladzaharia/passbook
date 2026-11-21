@@ -31,6 +31,30 @@ export const CHANNEL_REASONS = [
 export const ChannelReasonSchema = z.enum(CHANNEL_REASONS);
 export type ChannelReason = z.infer<typeof ChannelReasonSchema>;
 
+/**
+ * The chain an admin sees, top to bottom: PassBook › Plan › Organization › Template › This pass.
+ * `plan` tells entitlement refusals apart from PassBook's own switches; both keep `source: platform`.
+ */
+export const CHAIN_LEVELS = ['passbook', 'plan', 'org', 'template', 'pass'] as const;
+export const ChainLevelSchema = z.enum(CHAIN_LEVELS);
+export type ChainLevel = z.infer<typeof ChainLevelSchema>;
+
+/**
+ * `ok` lets it through; `partial` is a templates aggregate with some on; `off` stops it at a level the
+ * org controls; `needs` stops it until a wallet account is set up; `locked` stops it above the org.
+ */
+export const ChannelLevelStateSchema = z.enum(['ok', 'partial', 'off', 'needs', 'locked']);
+export type ChannelLevelState = z.infer<typeof ChannelLevelStateSchema>;
+
+/** One level of a channel's chain. The first level not `ok` or `partial` stops the channel. */
+export const ChannelLevelSchema = z.object({
+  level: ChainLevelSchema,
+  state: ChannelLevelStateSchema,
+  reason: ChannelReasonSchema.optional().describe('Why this level stops the channel.'),
+  canChange: z.boolean().describe('The caller may change this level.'),
+});
+export type ChannelLevel = z.infer<typeof ChannelLevelSchema>;
+
 /** Why a provider offer is withheld while its channel is on, after a channel-off retirement. */
 export const OFFER_HOLDS = ['provider_retiring', 'provider_epoch_limit'] as const;
 export const OfferHoldSchema = z.enum(OFFER_HOLDS);

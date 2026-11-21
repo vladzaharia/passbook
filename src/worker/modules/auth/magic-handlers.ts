@@ -158,7 +158,10 @@ async function consumeErrorPage(
   const opts =
     code === 'SESSION_REQUIRED' && token
       ? { action: signInToConfirm(token) }
-      : { next: trace?.next ?? null };
+      : {
+          next: trace?.next ?? null,
+          ...(code === 'IDP_EMAIL_NOT_PRIMARY' ? { message: error.message } : {}),
+        };
   const page = signInErrorPage(nonce, code, opts, theme);
   return c.html(page.html, page.status);
 }

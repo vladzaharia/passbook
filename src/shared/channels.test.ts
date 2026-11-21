@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   type ChannelInputs,
+  chainLevelOf,
   channelTransition,
   effectiveChannels,
+  levelState,
   nothingOn,
+  stoppingLevel,
   templateDefault,
 } from './channels.ts';
 import type { EffectiveChannels } from './contracts/channels.ts';
@@ -244,5 +247,37 @@ describe('offer holds', () => {
       'Google Wallet: the old copy is being removed. Try again shortly.',
     );
     expect(offerHold('samsung', 'provider_epoch_limit')).toContain('Samsung Wallet');
+  });
+});
+
+describe('the chain', () => {
+  it('names an entitlement refusal Plan while its source stays platform', () => {
+    const e = eff({ entitlement: { paper: 'not_included' }, platform: { nfc: 'tags_off' } });
+    expect(e.paper.source).toBe('platform');
+    expect(chainLevelOf(e.paper.source, e.paper.reason)).toBe('plan');
+    expect(chainLevelOf(e.nfc.source, e.nfc.reason)).toBe('passbook');
+    expect(chainLevelOf('org', 'blocked')).toBe('org');
+    expect(chainLevelOf('pass', 'pass_off')).toBe('pass');
+  });
+
+  it.each([
+    ['passbook', 'not_released', 'locked'],
+    ['plan', 'not_included', 'locked'],
+    ['org', 'not_enrolled', 'needs'],
+    ['org', 'blocked', 'off'],
+    ['template', 'never', 'off'],
+    ['pass', 'pass_off', 'off'],
+    ['org', undefined, 'ok'],
+  ] as const)('%s %s reads %s', (level, reason, state) => {
+    expect(levelState(level, reason)).toBe(state);
+  });
+
+  it('stops at the first level that is not ok or partial', () => {
+    const at = (
+      level: 'passbook' | 'org' | 'template',
+      state: 'ok' | 'partial' | 'off' | 'locked',
+    ) => ({ level, state, canChange: false }) as const;
+    expect(stoppingLevel([at('passbook', 'ok'), at('template', 'partial')])).toBeNull();
+    expect(stoppingLevel([at('passbook', 'locked'), at('org', 'off')])?.level).toBe('passbook');
   });
 });
