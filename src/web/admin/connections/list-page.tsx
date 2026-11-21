@@ -29,6 +29,7 @@ import { HealthPill } from './health.tsx';
 import { healthLine } from './health-text.ts';
 import { HEALTH_FILTERS, sourceLine } from './labels.ts';
 import { showLive, TestModeNote } from './test-mode-note.tsx';
+import { useWebhookEndpoints } from './webhooks/api.ts';
 import { AddEndpointButton, WebhooksTab } from './webhooks/webhooks-tab.tsx';
 
 type Connection = z.infer<typeof ConnectionSummarySchema>;
@@ -161,6 +162,11 @@ export function ConnectionsListPage({
   );
 
   const hooks = search.tab === 'webhooks';
+  const hookEndpoints = useWebhookEndpoints(
+    orgId,
+    hooks && Boolean(membership?.capabilities.includes('integrations:read')),
+  );
+  const hooksEmpty = hookEndpoints.isSuccess && hookEndpoints.data.items.length === 0;
   return (
     <>
       <PageHeader
@@ -168,9 +174,11 @@ export function ConnectionsListPage({
         actions={
           canManage ? (
             hooks ? (
-              <AddEndpointButton />
-            ) : (
-              create(empty ? 'outline' : 'primary')
+              hooksEmpty ? null : (
+                <AddEndpointButton />
+              )
+            ) : empty ? null : (
+              create('primary')
             )
           ) : undefined
         }

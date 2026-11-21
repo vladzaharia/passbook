@@ -59,17 +59,19 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
   const more = revokedList.hasNextPage ? '+' : '';
   return (
     <>
-      <p className="mb-3 text-sm text-fg-muted">
-        Add devices from a{' '}
-        <Link
-          className="text-accent-fg underline-offset-2 hover:underline"
-          to="."
-          search={(prev) => withTab(prev as ScanningSearch, 'sessions')}
-        >
-          session
-        </Link>
-        .
-      </p>
+      {rows.length === 0 && !live.isPending ? null : (
+        <p className="mb-3 text-sm text-fg-muted">
+          Add devices from a{' '}
+          <Link
+            className="text-accent-fg underline-offset-2 hover:underline"
+            to="."
+            search={(prev) => withTab(prev as ScanningSearch, 'sessions')}
+          >
+            session
+          </Link>
+          .
+        </p>
+      )}
       <DataTable
         caption="Scanners"
         loading={live.isPending}

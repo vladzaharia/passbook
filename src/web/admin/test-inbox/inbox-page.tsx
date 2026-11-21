@@ -79,13 +79,14 @@ export function InboxPage({
   const rows = canRead && mode === 'test' ? (list.data?.pages.flatMap((p) => p.items) ?? []) : [];
   const now = useNow();
   const platformAdmin = session.isAdmin && !session.isError && !session.isFetching;
+  const showNote = mode === 'test' && (platformAdmin || canOperate);
 
   return (
     <>
       <PageHeader
         title="Test inbox"
         description={
-          platformAdmin || canOperate ? (
+          showNote ? (
             <>
               {canOperate ? 'You can send a copy to your verified account email.' : ''}
               {platformAdmin ? <PlatformRetention /> : null}

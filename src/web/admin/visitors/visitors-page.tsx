@@ -187,7 +187,10 @@ function ScopedVisitors({
 
   return (
     <>
-      <PageHeader title={VISITOR_COPY.title} actions={add} />
+      <PageHeader
+        title={VISITOR_COPY.title}
+        actions={!list.isPending && !list.isError && rows.length === 0 ? null : add}
+      />
       <div className="mb-4">
         <SegmentedControl label="Visitors" options={TABS} value={tab} onValueChange={onTab} />
       </div>

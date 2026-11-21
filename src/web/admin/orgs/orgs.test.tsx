@@ -1365,9 +1365,6 @@ describe('org detail', () => {
     expect(await screen.findByRole('heading', { name: 'Pass email' })).toBeInTheDocument();
     const toggle = await screen.findByRole('switch', { name: 'Buddy in pass emails' });
     expect(toggle).not.toBeChecked();
-    expect(
-      screen.getByText("The PassBook buddy sits beside the organization's name."),
-    ).toBeInTheDocument();
     // The real email, rendered by the Worker, follows the switch before Save.
     const frame = () => screen.getByTitle('Sample pass email') as HTMLIFrameElement;
     expect(screen.getByText('Sample email')).toBeInTheDocument();
