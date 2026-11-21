@@ -90,6 +90,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   scanner_setups: BOOKKEEPING,
   scanning_devices: BOOKKEEPING,
   settings: 'org settings, some of them secret: set again in the console',
+  identity_certificates: 'certificate history links to stored credentials: upload the certificate again',
   signing_identities: 'certificate and push key links: upload the certificate again',
   tag_enrollments: BOOKKEEPING,
   template_approvals: DERIVED,
