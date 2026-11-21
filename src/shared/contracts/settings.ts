@@ -40,6 +40,8 @@ export const PUSH_BUDGET_DEFAULT = 3;
 export const PlatformSettingsSchema = z.object({
   'oidc.trustEmail': z.boolean().default(false),
   'auth.magicLinkEnabled': z.boolean().default(true),
+  /** When email-link sign-in stops opening the console for members who had it (ms); null: it never does. */
+  'auth.consoleEmailUntil': z.number().int().positive().nullable().default(null),
   'email.senderName': PlainLineSchema(80).default('PassBook'),
   /** The most any org may set its daily pass-email cap to; an org's own value is clamped to it. */
   'email.orgCapPerDayMax': z.number().int().min(10).max(5000).default(EMAIL_ORG_DAILY_CAP),

@@ -21,14 +21,18 @@ beforeEach(async () => {
 });
 afterEach(() => h.restore());
 
-async function open(roles: ('admin' | 'user')[], disabled = false) {
+async function open(
+  roles: ('admin' | 'user')[],
+  disabled = false,
+  amr: 'oidc' | 'magic_link' = 'oidc',
+) {
   const user = await makeUser(fixtures(h.env));
   if (disabled) await run(h.env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [user.id]);
   const ctx = createServiceContext(h.env, { clock });
   const session = await createSession(ctx, {
     userId: user.id,
     roles,
-    amr: 'oidc',
+    amr,
     ipPrefix: null,
     userAgent: null,
   });
@@ -65,8 +69,8 @@ describe('session store', () => {
   });
 
   describe('timeouts', () => {
-    it('user sessions: 30 day idle window slides, 90 day absolute limit holds', async () => {
-      const { session, store } = await open(['user']);
+    it('email sessions: 30 day idle window slides, 90 day absolute limit holds', async () => {
+      const { session, store } = await open(['user'], false, 'magic_link');
       clock.advance(29 * DAY);
       expect(await store.resolve(session.cookieValue)).not.toBeNull();
       clock.advance(29 * DAY);
@@ -77,9 +81,25 @@ describe('session store', () => {
       expect(await store.resolve(session.cookieValue)).toBeNull();
     });
 
-    it('user sessions expire after 30 idle days', async () => {
-      const { session, store } = await open(['user']);
+    it('email sessions expire after 30 idle days', async () => {
+      const { session, store } = await open(['user'], false, 'magic_link');
       clock.advance(30 * DAY + 1);
+      expect(await store.resolve(session.cookieValue)).toBeNull();
+    });
+
+    it('Polaris ID sessions of non-admins: 7 day idle window slides, 30 day absolute limit holds', async () => {
+      const { session, store } = await open(['user']);
+      for (let i = 0; i < 4; i++) {
+        clock.advance(6 * DAY);
+        expect(await store.resolve(session.cookieValue)).not.toBeNull();
+      }
+      clock.advance(7 * DAY);
+      expect(await store.resolve(session.cookieValue)).toBeNull();
+    });
+
+    it('Polaris ID sessions expire after 7 idle days', async () => {
+      const { session, store } = await open(['user']);
+      clock.advance(7 * DAY + 1);
       expect(await store.resolve(session.cookieValue)).toBeNull();
     });
 

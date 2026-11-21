@@ -20,8 +20,10 @@ export interface SessionLifetime {
 export function lifetimeFor(roles: readonly Role[], amr?: Amr): SessionLifetime {
   if (amr === 'breakglass')
     return { idleMs: 30 * MINUTE, absoluteMs: 4 * HOUR, touchEveryMs: MINUTE };
-  return roles.includes('admin')
-    ? { idleMs: HOUR, absoluteMs: 12 * HOUR, touchEveryMs: MINUTE }
+  if (roles.includes('admin')) return { idleMs: HOUR, absoluteMs: 12 * HOUR, touchEveryMs: MINUTE };
+  // A Polaris ID session now carries console power, so it ends sooner than an email session.
+  return amr === 'oidc'
+    ? { idleMs: 7 * DAY, absoluteMs: 30 * DAY, touchEveryMs: 5 * MINUTE }
     : { idleMs: 30 * DAY, absoluteMs: 90 * DAY, touchEveryMs: 5 * MINUTE };
 }
 
@@ -43,6 +45,8 @@ export async function createSession(
     amr: Amr;
     ipPrefix: string | null;
     userAgent: string | null;
+    /** When the identity provider last authenticated the person (ms); the session's start when absent. */
+    authTime?: number;
   },
 ): Promise<NewSession> {
   const now = ctx.clock.now();
@@ -54,6 +58,7 @@ export async function createSession(
     idHash,
     userId: input.userId,
     amr: input.amr,
+    authTime: input.authTime ?? now,
     roles: input.roles,
     csrfSecret,
     now,
@@ -93,6 +98,7 @@ export async function resolveSession(
     roles,
     csrfSecret: row.csrf_secret,
     amr: row.amr,
+    consoleUntil: row.amr === 'magic_link' ? await repo.consoleGraceEnd(env.DB, row.user_id) : null,
     mode: 'live',
     expiresAt: Math.min(row.expires_at, row.idle_expires_at),
   };

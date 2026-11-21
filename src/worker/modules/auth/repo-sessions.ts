@@ -7,6 +7,7 @@ export interface SessionRow {
   id_hash: string;
   user_id: string;
   amr: Amr;
+  auth_time: number | null;
   roles: string;
   csrf_secret: string;
   created_at: number;
@@ -33,6 +34,7 @@ export async function insertSession(
     idHash: string;
     userId: string;
     amr: Amr;
+    authTime?: number;
     roles: string[];
     csrfSecret: string;
     now: number;
@@ -44,13 +46,14 @@ export async function insertSession(
 ): Promise<void> {
   await run(
     db,
-    `INSERT INTO sessions (id_hash, user_id, amr, roles, csrf_secret, created_at, last_seen_at,
+    `INSERT INTO sessions (id_hash, user_id, amr, auth_time, roles, csrf_secret, created_at, last_seen_at,
        idle_expires_at, expires_at, ip_prefix, user_agent)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       s.idHash,
       s.userId,
       s.amr,
+      s.authTime ?? null,
       JSON.stringify(s.roles),
       s.csrfSecret,
       s.now,
@@ -118,3 +121,17 @@ export const listRecentSessions = (db: Db, userId: string, limit = 20) =>
      ORDER BY s.created_at DESC LIMIT ?`,
     [userId, limit],
   );
+
+/**
+ * When an email session of this user keeps the console: `auth.consoleEmailUntil`, while the user is in
+ * `console_email_grace`. Null for everyone else. The caller compares it with the time.
+ */
+export async function consoleGraceEnd(db: Db, userId: string): Promise<number | null> {
+  const row = await first<{ until: number | null }>(
+    db,
+    `SELECT json_extract(st.value, '$') AS until FROM console_email_grace g, settings st
+     WHERE g.user_id = ? AND st.scope = 'platform' AND st.key = 'auth.consoleEmailUntil'`,
+    [userId],
+  );
+  return typeof row?.until === 'number' ? row.until : null;
+}
