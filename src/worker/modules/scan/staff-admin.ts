@@ -34,6 +34,7 @@ import {
 import { newCapture } from './setup-capture.ts';
 import { staffViews } from './staff-admin-views.ts';
 import { hashPin } from './staff-pin.ts';
+import { pinTag } from './staff-pin-hash.ts';
 import { newUniquePin } from './staff-pin-unique.ts';
 import {
   type CreateStaff,
@@ -241,7 +242,7 @@ export async function resetStaffPin(
     STAFF_CODES,
     id,
   );
-  addStaffPinRotate(g, id, pinHash, macKeyVersion(ctx.env), now);
+  addStaffPinRotate(g, id, pinHash, await pinTag(ctx.env, orgId, pin), macKeyVersion(ctx.env), now);
   addUnbindStaffEverywhere(g, id, now);
   g.add(
     audited(g, ctx, {

@@ -8,6 +8,7 @@ import { getStaff } from './repo-staff.ts';
 import { createStaff, resetStaffPin } from './staff-admin.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
 import { hashPin } from './staff-pin.ts';
+import { pinTag } from './staff-pin-hash.ts';
 
 const staffAdmin = setupStaffAdminTestKit();
 const {
@@ -310,5 +311,27 @@ describe('staff records and credentials', () => {
         expect(detail).not.toContain(secret);
       }
     }
+  });
+});
+
+describe('staff PIN tag', () => {
+  const state = (id: string) =>
+    first<{ pin_tag: string | null; pin_reset_required: number }>(
+      env.DB,
+      'SELECT pin_tag, pin_reset_required FROM scan_staff WHERE id = ?',
+      [id],
+    );
+
+  it('is set with a new PIN, and a reset sets it again and clears the reset flag', async () => {
+    const created = await create('Tagged', 'door');
+    const id = created.staff.id;
+    expect((await state(id))?.pin_tag).toBe(await pinTag(env, orgId, created.pin));
+    await run(env.DB, 'UPDATE scan_staff SET pin_reset_required = 1 WHERE id = ?', [id]);
+    const res = await send('POST', resetPath(id), undefined, admin('test'));
+    const { pin } = StaffPinSchema.parse(await res.json());
+    expect(await state(id)).toEqual({
+      pin_tag: await pinTag(env, orgId, pin),
+      pin_reset_required: 0,
+    });
   });
 });

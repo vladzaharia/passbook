@@ -46,3 +46,14 @@ export async function pinMatcher(env: object): Promise<PinMatches> {
     return now || before;
   };
 }
+
+/**
+ * HMAC(K_pin_tag, org:pin), hex. Same strength as the PIN hash (a 10^6 search with the key, none
+ * without it) but equal PINs in one org give equal tags, so the database can hold one active person per
+ * PIN and find a PIN without hashing the roster. The label is not rotatable: a tag outlives a MAC root change.
+ */
+export async function pinTag(env: object, orgId: string, pin: string): Promise<string> {
+  const key = await derivedHmacKey(env, 'scan-pin-tag');
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${orgId}:${pin}`));
+  return toHex(new Uint8Array(mac));
+}

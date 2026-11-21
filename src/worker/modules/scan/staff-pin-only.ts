@@ -2,6 +2,8 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
+import { mailPinOnlyOff } from './pin-only-notice.ts';
+import type { ScannerRow } from './repo-device.ts';
 import {
   budgetStatements,
   pinOnlyGateStatements,
@@ -9,16 +11,16 @@ import {
   pinOnlyLockoutStatement,
   spentDays,
 } from './repo-pin-only.ts';
-import { activeRosterStatement } from './repo-staff.ts';
+import { flagPinReset, pinStateGrant } from './repo-pin-tag.ts';
+import { pinOnlyCandidatesStatement } from './repo-staff.ts';
 import {
   ANY_STAFF,
-  type PinSubject,
   pinStaffListFromResult,
   preparePinReservation,
   type VerifiedPinSnapshot,
 } from './staff-pin.ts';
 import { pinOnlyDecision } from './staff-pin-decide.ts';
-import { pinMatcher } from './staff-pin-hash.ts';
+import { pinMatcher, pinTag } from './staff-pin-hash.ts';
 
 /** Past this many active staff a PIN alone is not accepted: a name is asked for. */
 export const PIN_ONLY_MAX_STAFF = 100;
@@ -45,13 +47,14 @@ const countOf = (result: D1Result | undefined) =>
 /** Audit rows, logs and the lockout for a wrong PIN, written once the miss is known. */
 async function recordMiss(
   ctx: ServiceContext,
-  scope: { orgId: string; scannerId: string },
+  scanner: ScannerRow,
   counts: { hour: number | undefined; day: number | undefined },
   caps: { hour: number; day: number },
   matched: readonly { id: string; role: string }[],
 ) {
   const db = ctx.env.DB;
-  const { orgId, scannerId } = scope;
+  const { orgId } = scanner;
+  const scannerId = scanner.id;
   const entry = (action: string, targetType: string, targetId: string) =>
     auditStmt(db, ctx, {
       orgId,
@@ -79,6 +82,12 @@ async function recordMiss(
     ctx.log.error('scan.pin_only_daily_limit', { orgId, scannerId, code: 'PIN_ONLY_DAILY_LIMIT' });
   }
   if (!audits.length) return;
+  if (matched.length > 1) {
+    // Both people sign in only after an admin resets their PINs.
+    const g = pinStateGrant(ctx, scanner);
+    for (const person of matched) flagPinReset(g, person.id);
+    await g.commit();
+  }
   await db.batch(audits);
   if (!daySpent) return;
   const now = ctx.clock.now();
@@ -89,6 +98,7 @@ async function recordMiss(
     entry('scan.pin_only_off', 'org', orgId),
   ]);
   ctx.log.error('scan.pin_only_off', { orgId, scannerId, code: 'PIN_ONLY_OFF' });
+  await mailPinOnlyOff(ctx, orgId);
 }
 
 /**
@@ -98,11 +108,12 @@ async function recordMiss(
  */
 export async function checkPinOnly(
   ctx: ServiceContext,
-  subject: Pick<PinSubject, 'scannerId' | 'orgId'>,
+  scanner: ScannerRow,
   pin: string,
 ): Promise<VerifiedPinSnapshot> {
   const db = ctx.env.DB;
-  const { orgId, scannerId } = subject;
+  const { orgId } = scanner;
+  const scannerId = scanner.id;
   const [lock, setting, total] = await db.batch(pinOnlyGateStatements(db, orgId));
   const staff = countOf(total) ?? 0;
   if ((lock && setting && pinOnlyIsOff(lock, setting)) || staff > PIN_ONLY_MAX_STAFF)
@@ -123,7 +134,11 @@ export async function checkPinOnly(
   const refundBudget = () => db.batch(budget.refund());
   const reservation = preparePinReservation(ctx, { scannerId, orgId, staffId: ANY_STAFF });
   try {
-    const results = await db.batch([activeRosterStatement(db, orgId), ...reservation.stmts]);
+    const tag = await pinTag(ctx.env, orgId, pin);
+    const results = await db.batch([
+      pinOnlyCandidatesStatement(db, orgId, tag),
+      ...reservation.stmts,
+    ]);
     const keyEnv = captureCredentialKeyEnv(ctx.env);
     const only = pinOnlyDecision(
       { pinEnv: keyEnv, orgId, staffId: ANY_STAFF },
@@ -142,7 +157,7 @@ export async function checkPinOnly(
         ctx.waitUntil(
           recordMiss(
             ctx,
-            { orgId, scannerId },
+            scanner,
             counts as { hour: number; day: number },
             { hour: budget.hour.cap, day: budget.day.cap },
             only.matched(),

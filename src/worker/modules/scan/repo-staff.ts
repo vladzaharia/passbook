@@ -61,12 +61,20 @@ export const managerRosterStatement = (
     [orgId],
   );
 
-/** Every active person of an org, for sign-in by PIN alone (the caller has checked the count). */
-export const activeRosterStatement = (db: Db, orgId: string): D1PreparedStatement =>
+/**
+ * Who a PIN alone can be: the one active person with its tag, and everyone whose tag is not set yet
+ * (those from before tags, until their next sign-in), so a PIN shared with one of them is still seen.
+ */
+export const pinOnlyCandidatesStatement = (
+  db: Db,
+  orgId: string,
+  tag: string,
+): D1PreparedStatement =>
   stmt(
     db,
-    `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND disabled_at IS NULL ORDER BY id`,
-    [orgId],
+    `SELECT ${COLUMNS} FROM scan_staff
+     WHERE org_id = ? AND disabled_at IS NULL AND (pin_tag = ? OR pin_tag IS NULL) ORDER BY id`,
+    [orgId, tag],
   );
 
 /** Everyone ever added, disabled included: a new PIN must not equal one that re-enabling would bring back. */
@@ -92,6 +100,7 @@ export interface NewStaff {
   name: string;
   role: ScanRole;
   pinHash: string;
+  pinTag: string;
   /** The MAC root the hash was made under. */
   pinMacVersion: number;
   createdBy: string | null;
@@ -107,6 +116,7 @@ export const addStaffInsert = (g: Grant, row: NewStaff): GrantedStatement =>
       'name',
       'role',
       'pin_hash',
+      'pin_tag',
       'pin_mac_version',
       'pin_set_at',
       'created_by',
@@ -118,6 +128,7 @@ export const addStaffInsert = (g: Grant, row: NewStaff): GrantedStatement =>
       row.name,
       row.role,
       row.pinHash,
+      row.pinTag,
       row.pinMacVersion,
       row.now,
       row.createdBy,
@@ -145,12 +156,15 @@ export const addStaffPinRotate = (
   g: Grant,
   id: string,
   pinHash: string,
+  pinTag: string,
   pinMacVersion: number,
   now: number,
 ): GrantedStatement =>
   g.update('scan_staff', {
     set: {
       pin_hash: pinHash,
+      pin_tag: pinTag,
+      pin_reset_required: 0,
       pin_mac_version: pinMacVersion,
       pin_set_at: now,
       updated_at: maxNow(now),
