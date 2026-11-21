@@ -30,7 +30,7 @@ export interface Inputs {
   reference: Record<string, ReferenceEntry>;
   changelog: RawChangeFile[];
   versions: ApiVersion[];
-  /** docs/api/errors.json (PX4): `[{code,status}]` or `{code: {status}}`. Absent until PX4. */
+  /** docs/api/errors.json (PX4): `{codes: [{code,statuses}]}`, `[{code,status}]` or `{code: {status}}`. Absent until PX4. */
   errors?: unknown;
   /** docs/api/error-guide.json (PX4): `{code: {title,when,fix,retryable}}`. */
   guide?: Record<string, Dict>;
@@ -55,14 +55,21 @@ const isConsoleOnly = (op: RawOp) =>
   op['x-sdk'].sdk !== false &&
   !op['x-sdk'].resource.startsWith('platform');
 
+const asNumbers = (v: unknown): number[] =>
+  Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : [];
+
 /** Status and code rows from the PX4 catalog, whichever of the two shapes it takes. */
 function statusByCode(errors: unknown): Map<string, number> {
   const out = new Map<string, number>();
-  const rows: Dict[] = Array.isArray(errors)
-    ? errors.map((e) => asDict(e))
+  const list = Array.isArray(errors) ? errors : asDict(errors).codes;
+  const rows: Dict[] = Array.isArray(list)
+    ? list.map((e) => asDict(e))
     : Object.entries(asDict(errors)).map(([code, e]) => ({ code, ...asDict(e) }));
-  for (const r of rows)
-    if (typeof r.code === 'string' && typeof r.status === 'number') out.set(r.code, r.status);
+  for (const r of rows) {
+    // A code raised with several statuses shows the first; the catalog lists them sorted.
+    const status = typeof r.status === 'number' ? r.status : asNumbers(r.statuses)[0];
+    if (typeof r.code === 'string' && status !== undefined) out.set(r.code, status);
+  }
   return out;
 }
 

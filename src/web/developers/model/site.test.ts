@@ -22,6 +22,13 @@ describe('portal model', () => {
     expect(new Set(site.pages.map((p) => p.slug)).size).toBe(site.pages.length);
   });
 
+  it('gives every error code and every operation error row an HTTP status', () => {
+    expect(site.errors.length).toBeGreaterThan(100);
+    expect(site.errors.filter((e) => e.status === null).map((e) => e.code)).toEqual([]);
+    const rows = site.pages.flatMap((p) => p.ops.flatMap((o) => o.errors));
+    expect(rows.filter((e) => e.status === null).map((e) => e.code)).toEqual([]);
+  });
+
   it('anchors each operation by its SDK method, unique within the page', () => {
     const passes = site.pages.find((p) => p.key === 'passes');
     const anchors = passes?.ops.map((o) => o.anchor) ?? [];
