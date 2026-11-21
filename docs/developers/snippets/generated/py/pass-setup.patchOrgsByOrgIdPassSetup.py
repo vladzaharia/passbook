@@ -17,12 +17,6 @@ result = pb.orgs.update_pass_setup(
                 "foreground": "#ffffff",
                 "label": "#fbbf24",
             },
-            "support": {
-                "email": "help@acme.test",
-            },
-        },
-        "channels": {
-            "mobile": "blocked",
         },
     },
 )

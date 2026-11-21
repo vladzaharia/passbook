@@ -12,12 +12,6 @@ curl -X PATCH "https://passbook.mobile/api/v1/orgs/0193a1b2-7c00-7000-8000-00000
       "background": "#0f172a",
       "foreground": "#ffffff",
       "label": "#fbbf24"
-    },
-    "support": {
-      "email": "help@acme.test"
     }
-  },
-  "channels": {
-    "mobile": "blocked"
   }
 }'

@@ -412,13 +412,7 @@
           "background": "#0f172a",
           "foreground": "#ffffff",
           "label": "#fbbf24"
-        },
-        "support": {
-          "email": "help@acme.test"
         }
-      },
-      "channels": {
-        "mobile": "blocked"
       }
     },
     "response": {
@@ -855,6 +849,7 @@
     "response": {
       "slot": "logo",
       "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "w": 480,
       "h": 150,
       "expiresAt": 1764086400000

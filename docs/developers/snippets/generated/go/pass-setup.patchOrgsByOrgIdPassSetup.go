@@ -27,13 +27,7 @@ func main() {
       "background": "#0f172a",
       "foreground": "#ffffff",
       "label": "#fbbf24"
-    },
-    "support": {
-      "email": "help@acme.test"
     }
-  },
-  "channels": {
-    "mobile": "blocked"
   }
 }`), &body); err != nil {
 		panic(err)
