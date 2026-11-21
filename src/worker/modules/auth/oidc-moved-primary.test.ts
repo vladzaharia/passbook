@@ -36,7 +36,7 @@ const person = (email: string) => ({
   sub: `sub-${uniq()}`,
   email,
   name: 'Someone',
-  groups: ['wallet-users'],
+  groups: ['wallet_users'],
 });
 const identityOf = (sub: string) =>
   first<{ user_id: string }>(h.env.DB, 'SELECT user_id FROM auth_identities WHERE subject = ?', [
@@ -93,6 +93,107 @@ describe.each([true, false])('member whose primary an email session moved (trust
     expect(res.status).toBe(403);
     if (!trust) expect((await consume(h.mail.at(-1)?.text ?? '', jar)).status).toBe(403);
     expect(await identityOf(user.sub)).toBeNull();
+  });
+});
+
+const codeConsume = (email: string, code: string, cookies: Jar) =>
+  h.call('/auth/magic/consume', { method: 'POST', json: { email, code }, cookies });
+const identityCount = async (userId: string) =>
+  (await all(h.env.DB, 'SELECT 1 FROM auth_identities WHERE user_id = ?', [userId])).length;
+
+describe.each([true, false])(
+  'the lift needs the invited address and no identity (trust %s)',
+  (trust) => {
+    beforeEach(() => setOidcTrust(h.env.DB, trust));
+
+    it('a primary moved to an address other than the invitation is refused after proof', async () => {
+      const member = await stuckMember();
+      const moved = `moved-${uniq()}@example.test`;
+      await run(
+        h.env.DB,
+        'INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES (?, ?, ?, 0)',
+        [moved, member.id, 'magic_link'],
+      );
+      await run(h.env.DB, 'UPDATE users SET primary_email = ? WHERE id = ?', [moved, member.id]);
+      const user = person(moved);
+      const jar: Jar = new Map();
+      const { res } = await oidcSignIn(h, jar, user);
+      expect(res.status).toBe(403);
+      if (!trust) expect((await consume(h.mail.at(-1)?.text ?? '', jar)).status).toBe(403);
+      expect(await identityOf(user.sub)).toBeNull();
+    });
+
+    it('a break-glass identity disqualifies the account', async () => {
+      const member = await stuckMember();
+      await run(
+        h.env.DB,
+        `INSERT INTO auth_identities (provider, subject, user_id, email_claim, email_verified, groups, created_at, last_used_at)
+       VALUES ('breakglass', ?, ?, NULL, 0, '[]', 0, 0)`,
+        [`bg-${uniq()}`, member.id],
+      );
+      const user = person(member.primaryEmail);
+      const jar: Jar = new Map();
+      const { res } = await oidcSignIn(h, jar, user);
+      expect(res.status).toBe(403);
+      if (!trust) expect((await consume(h.mail.at(-1)?.text ?? '', jar)).status).toBe(403);
+      expect(await identityOf(user.sub)).toBeNull();
+    });
+  },
+);
+
+describe('lift under trust off', () => {
+  beforeEach(() => setOidcTrust(h.env.DB, false));
+
+  it('the code from another browser links nothing; the proof mail warns and keeps the code', async () => {
+    const member = await stuckMember();
+    const user = person(member.primaryEmail);
+    const jar: Jar = new Map();
+    await oidcSignIn(h, jar, user);
+    const text = h.mail.at(-1)?.text ?? '';
+    expect(text).toContain('A Polaris ID account is being linked to your PassBook account.');
+    expect(text).toContain('Never share this code.');
+    const code = /Code: (\d{6})/.exec(text)?.[1] ?? '';
+    expect(code).not.toBe('');
+    expect((await codeConsume(member.primaryEmail, code, new Map())).status).toBe(400);
+    expect(await identityOf(user.sub)).toBeNull();
+  });
+
+  it('two proofs consumed at once link exactly one identity', async () => {
+    const member = await stuckMember();
+    const a = person(member.primaryEmail);
+    const b = person(member.primaryEmail);
+    const jarA: Jar = new Map();
+    const jarB: Jar = new Map();
+    await oidcSignIn(h, jarA, a);
+    const mailA = h.mail.at(-1)?.text ?? '';
+    await oidcSignIn(h, jarB, b);
+    const mailB = h.mail.at(-1)?.text ?? '';
+    await Promise.all([consume(mailA, jarA), consume(mailB, jarB)]);
+    expect(await identityCount(member.id)).toBe(1);
+  });
+
+  it('writes the audit with the subject and tells the other verified addresses', async () => {
+    const member = await stuckMember();
+    const other = `other-${uniq()}@example.test`;
+    await run(
+      h.env.DB,
+      'INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES (?, ?, ?, 0)',
+      [other, member.id, 'magic_link'],
+    );
+    const user = person(member.primaryEmail);
+    const jar: Jar = new Map();
+    await oidcSignIn(h, jar, user);
+    await consume(h.mail.at(-1)?.text ?? '', jar);
+    const row = await first<{ actor_type: string; detail: string }>(
+      h.env.DB,
+      "SELECT actor_type, detail FROM audit_log WHERE action = 'auth.identity_linked_moved_primary' AND target_id = ?",
+      [member.id],
+    );
+    expect(row?.actor_type).toBe('system');
+    expect(JSON.parse(row?.detail ?? '{}')).toEqual({ provider: 'pocketid', subject: user.sub });
+    expect(h.mail.some((m) => m.to === other && m.text.includes('Polaris ID was linked'))).toBe(
+      true,
+    );
   });
 });
 

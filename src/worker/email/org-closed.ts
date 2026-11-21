@@ -8,7 +8,7 @@ interface Rendered {
   text: string;
 }
 
-function notice(base: string, subject: string, body: string): Rendered {
+export function notice(base: string, subject: string, body: string): Rendered {
   const html = `${titleHtml(escapeHtml(subject), '0 0 16px')}
 <p style="margin:0;${type('sm')};color:${c.text}" class="e-text">${escapeHtml(body)}</p>`;
   const images = safeUrl(base) !== null;

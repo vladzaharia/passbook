@@ -43,7 +43,7 @@ export const findUserByPrimaryEmail = (db: Db, email: string) =>
 export const unverifiedPrimaryEmail = (userId: string) => `${userId}${UNVERIFIED_EMAIL_SUFFIX}`;
 
 /** The account signs in through an identity provider (anything but the break-glass token). */
-export const hasExternalIdentity = async (db: Db, userId: string) =>
+const hasExternalIdentity = async (db: Db, userId: string) =>
   (await first(db, "SELECT 1 FROM auth_identities WHERE user_id = ? AND provider <> 'breakglass'", [
     userId,
   ])) !== null;
@@ -181,12 +181,15 @@ export async function insertIdentity(
     groups: string[];
     now: number;
   },
+  /** Link only while the account has no identity at all (one statement, so concurrent links race safely). */
+  onlyIfNone = false,
 ): Promise<boolean> {
   const { changes } = await run(
     db,
     `INSERT OR IGNORE INTO auth_identities
        (provider, subject, user_id, email_claim, email_verified, groups, created_at, last_used_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?
+     WHERE ? = 0 OR NOT EXISTS (SELECT 1 FROM auth_identities WHERE user_id = ?)`,
     [
       row.provider,
       row.subject,
@@ -196,6 +199,8 @@ export async function insertIdentity(
       JSON.stringify(row.groups),
       row.now,
       row.now,
+      onlyIfNone ? 1 : 0,
+      row.userId,
     ],
   );
   return changes > 0;

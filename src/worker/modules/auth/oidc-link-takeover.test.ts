@@ -86,6 +86,13 @@ describe('Polaris ID email that is only a secondary address', () => {
     expect(html).not.toContain(maskEmail(victim.primaryEmail));
     expect(h.mail.at(-1)?.to).toBe(added);
     await noTrace(subject.sub, added);
+    const audit = await first<{ detail: string; actor_type: string }>(
+      h.env.DB,
+      "SELECT detail, actor_type FROM audit_log WHERE action = 'auth.oidc_email_not_primary' AND target_id = ?",
+      [victim.id],
+    );
+    expect(audit?.actor_type).toBe('system');
+    expect(JSON.parse(audit?.detail ?? '{}')).toMatchObject({ proven: false });
   });
 
   it('the mail-proof link path refuses too', async () => {
@@ -108,7 +115,7 @@ describe('Polaris ID email that is only a secondary address', () => {
     await noTrace(subject, added);
   });
 
-  it('a member whose primary an email session moved is not linked by it', async () => {
+  it('a member whose primary an email session moved is only mailed a proof, never linked by the claim', async () => {
     const victim = await makeUser(fixtures(h.env));
     const org = await makeOrg(fixtures(h.env));
     await grantScanMembership(fixtures(h.env), org.id, victim.id, ['pass_operator']);
@@ -117,6 +124,7 @@ describe('Polaris ID email that is only a secondary address', () => {
     ]);
     const { res, subject } = await refusedFor(true, victim.primaryEmail);
     expect(res.status).toBe(403);
+    expect(await res.text()).toContain('Check your email');
     expect(await linkedUser(subject.sub)).toBeNull();
   });
 

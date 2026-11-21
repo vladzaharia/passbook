@@ -9,6 +9,7 @@ import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import {
   accountProvenByMail,
+  announceLiftedLink,
   checkPrimaryOwner,
   createUser,
   releaseClaimOtherThan,
@@ -188,24 +189,18 @@ export async function linkIdentityByMail(
   pending: PendingIdentity,
   sign: SignInContext,
 ): Promise<void> {
-  const check = await checkPrimaryOwner(ctx, email, { trust: false, mailProven: true });
-  const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: check !== 'lifted' });
-  const linked = await repo.insertIdentity(ctx.env.DB, {
-    ...pending,
-    userId: user.id,
-    now: ctx.clock.now(),
-  });
+  const { kind } = await checkPrimaryOwner(ctx, email, { trust: false, mailProven: true });
+  const lifted = kind === 'lifted';
+  const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: !lifted });
+  const linked = await repo.insertIdentity(
+    ctx.env.DB,
+    { ...pending, userId: user.id, now: ctx.clock.now() },
+    lifted,
+  );
+  if (lifted && !linked) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   if (linked) {
     await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
-    if (check === 'lifted') {
-      await recordAudit(ctx, {
-        actorType: 'user',
-        actorId: user.id,
-        action: 'auth.identity_linked_moved_primary',
-        targetType: 'user',
-        targetId: user.id,
-      });
-    }
+    if (lifted) await announceLiftedLink(ctx, user.id, email, pending);
   }
   await attachWaitingPassesForEmail(ctx, user.id, email);
 }
