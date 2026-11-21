@@ -1,6 +1,11 @@
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import { ConflictError, ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import {
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  UnauthenticatedError,
+} from '../../platform/errors.ts';
 import { safeEqualBytes } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
@@ -97,10 +102,13 @@ export async function searchStaff(ctx: ServiceContext, actor: ScanActor, q: stri
 export async function signInStaff(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: { staffId: string; pin: string },
+  input: { staffId?: string | undefined; pin: string },
 ): Promise<ScanSession> {
   const scanner = requireSignIn(actor);
   const { staffId, pin } = input;
+  // Sign-in with a PIN alone arrives with S7's feature PR; until then a name is required.
+  if (!staffId)
+    throw new AppError('STAFF_NAME_REQUIRED', 409, 'Pick your name, then enter your PIN.');
   const staff = await getStaff(ctx.env.DB, actor.orgId, staffId);
   await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin });
   const bound = actor.scanningSession;

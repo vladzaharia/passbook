@@ -6,6 +6,7 @@ export const DEV_COPY = {
     { key: 'guides', label: 'Guides' },
     { key: 'reference', label: 'Reference' },
     { key: 'playground', label: 'Playground' },
+    { key: 'console', label: 'Console' },
     { key: 'webhooks', label: 'Webhooks' },
     { key: 'logs', label: 'Logs' },
   ],

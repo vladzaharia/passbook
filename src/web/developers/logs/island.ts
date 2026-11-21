@@ -83,7 +83,7 @@ function rowView(row: RequestLogEntry, ops: Promise<OpIndex>): HTMLElement {
   const detail = h('div', { class: 'logs-detail' });
   const el = h(
     'details',
-    { class: 'logs-row', 'data-id': row.id },
+    { class: 'logs-row', 'data-id': row.id, 'data-request-id': row.requestId.toLowerCase() },
     h(
       'summary',
       { class: 'lrow logs-sum' },
@@ -232,9 +232,14 @@ export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise
       code.value = hash.slice('code='.length).toUpperCase();
       return refresh();
     }
+    if (hash.startsWith('path=')) {
+      path.value = hash.slice('path='.length);
+      return refresh();
+    }
     if (!hash) return;
+    const wanted = hash.toLowerCase();
     let row = [...list.querySelectorAll<HTMLDetailsElement>('details[data-id]')].find(
-      (r) => r.dataset.id === hash,
+      (r) => r.dataset.id === hash || r.dataset.requestId === wanted,
     );
     if (!row) {
       const { body } = await getJson<RequestLogEntry>(`${API}/${encodeURIComponent(hash)}`);

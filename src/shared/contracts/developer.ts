@@ -131,7 +131,7 @@ export const ResolveQuerySchema = z.object({
 });
 export const ResolvedSchema = z.object({
   kind: z.enum(['request', 'pass', 'template', 'org']),
-  /** Where it opens: the request log row, or the sandbox's admin page. */
+  /** Where it opens, always inside the portal: the request's log row, the log filtered to the object, or the console. */
   href: z.string(),
   /** `GET /passes` for a request; the object's name otherwise. */
   label: z.string(),

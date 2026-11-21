@@ -428,6 +428,9 @@ __all__ = [
     "NfcTagTypesUpdateBody",
     "NfcTagTypesUpdateParams",
     "NfcTagTypesUpdateResult",
+    "NfcTagsAssignParams",
+    "NfcTagsAssignParams1",
+    "NfcTagsAssignParams2",
     "NfcTagsRebindParams",
     "NfcTagsUpdateParams",
     "Org",
@@ -3893,6 +3896,16 @@ class NfcTagTypesUpdateResult(_Model):
     createdAt: int
     updatedAt: int
     archivedAt: int | None
+
+class NfcTagsAssignParams1(_Model):
+    id: str
+    format: _Literal["hex", "reversed", "decimal"] | str | None = None
+    binding: _Literal["pass", "user"] | str
+    label: str | None = None
+
+class NfcTagsAssignParams2(_Model):
+    tagId: str
+    binding: _Literal["pass", "user"] | str
 
 class NfcTagsRebindParams(_Model):
     tagId: str
@@ -8314,6 +8327,8 @@ NfcTagTypesArchiveBody = NfcTagTypesArchiveParams
 NfcTagTypesCreateBody = NfcTagTypesCreateParams
 
 NfcTagTypesUpdateBody = NfcTagTypesUpdateParams
+
+NfcTagsAssignParams = NfcTagsAssignParams1 | NfcTagsAssignParams2
 
 PassImportsCheckBody = PassImportsCheckParams
 

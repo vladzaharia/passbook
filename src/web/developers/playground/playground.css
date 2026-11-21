@@ -192,3 +192,26 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.pg-static {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.pg-static img {
+  max-width: 100%;
+  height: auto;
+}
+.pg-fields {
+  display: grid;
+  gap: 0.5rem 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  margin: 0;
+}
+.pg-fields dt {
+  color: var(--pk-text-muted);
+  font-size: 0.8em;
+}
+.pg-fields dd {
+  margin: 0;
+}

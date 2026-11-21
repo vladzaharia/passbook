@@ -45,7 +45,7 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
           return (
             <Fragment key={d.id}>
               {i === firstDanger && i > 0 ? <DropdownMenuSeparator /> : null}
-              {d.id === 'download' && runner.links ? (
+              {d.id === 'download' && runner.links && !d.disabled ? (
                 <DropdownMenuItem asChild>
                   <a href={runner.links.downloadUrl} download>
                     <Icon aria-hidden />
@@ -56,10 +56,12 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
                 <DropdownMenuItem
                   destructive={d.destructive}
                   disabled={d.disabled}
+                  title={d.reason}
                   onSelect={() => runner.run(d.id)}
                 >
                   <Icon aria-hidden />
                   {d.label}
+                  {d.reason ? <span className="text-fg-muted text-xs">{d.reason}</span> : null}
                 </DropdownMenuItem>
               )}
             </Fragment>

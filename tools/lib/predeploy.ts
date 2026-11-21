@@ -77,8 +77,9 @@ function cimdProblems(vars: Record<string, unknown>): string[] {
 }
 
 /**
- * Every custom domain is either PUBLIC_BASE_URL's host or a REDIRECT_HOSTS host; the Worker refuses
- * any other (src/worker/platform/host-policy.ts). The sender must be one the binding allows.
+ * Every custom domain is PUBLIC_BASE_URL's host, a REDIRECT_HOSTS host or a DEVELOPERS_HOSTS host;
+ * the Worker refuses any other (src/worker/platform/host-policy.ts). The sender must be one the
+ * binding allows.
  */
 function domainProblems(config: WranglerConfig): string[] {
   const vars = config.vars ?? {};
@@ -91,10 +92,13 @@ function domainProblems(config: WranglerConfig): string[] {
   } catch {
     problems.push('vars.PUBLIC_BASE_URL is not a URL.');
   }
-  const redirects = String(vars.REDIRECT_HOSTS ?? '')
-    .split(',')
-    .map((h) => h.trim().toLowerCase())
-    .filter(Boolean);
+  const list = (v: unknown) =>
+    String(v ?? '')
+      .split(',')
+      .map((h) => h.trim().toLowerCase())
+      .filter(Boolean);
+  const redirects = list(vars.REDIRECT_HOSTS);
+  const developers = list(vars.DEVELOPERS_HOSTS);
   const routes = config.routes ?? [];
   const hosts = routes.map((r) => r.pattern.toLowerCase());
   for (const r of routes)
@@ -103,10 +107,12 @@ function domainProblems(config: WranglerConfig): string[] {
     problems.push(`routes has no custom domain for ${canonical} (vars.PUBLIC_BASE_URL).`);
   for (const host of redirects)
     if (!hosts.includes(host)) problems.push(`vars.REDIRECT_HOSTS: ${host} has no route.`);
+  for (const host of developers)
+    if (!hosts.includes(host)) problems.push(`vars.DEVELOPERS_HOSTS: ${host} has no route.`);
   for (const host of hosts)
-    if (host !== canonical && !redirects.includes(host))
+    if (host !== canonical && !redirects.includes(host) && !developers.includes(host))
       problems.push(
-        `routes ${host} is not PUBLIC_BASE_URL or in REDIRECT_HOSTS: it would be refused.`,
+        `routes ${host} is not PUBLIC_BASE_URL or in REDIRECT_HOSTS or DEVELOPERS_HOSTS: it would be refused.`,
       );
   if (strictEmail(vars.SUPPORT_EMAIL) === null)
     problems.push('vars.SUPPORT_EMAIL must be a valid email address (PassBook support).');

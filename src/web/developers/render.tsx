@@ -34,6 +34,7 @@ import {
 } from './pages/more.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
+import type { BlueprintPreviews } from './playground/model.ts';
 import { PlaygroundPage } from './playground/page.tsx';
 import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
 
@@ -83,6 +84,7 @@ export function renderSite(
   origin: string,
   assets: string,
   guideInputs: GuideInputs = { docs: [], examples: [] },
+  previews?: BlueprintPreviews,
 ): OutFile[] {
   const out: OutFile[] = [];
   const base = `${DEV_COPY.brand} · PassBook`;
@@ -225,9 +227,9 @@ export function renderSite(
     url: PATHS.playground,
     title: `${DEV_COPY.slots.playground.title} · ${base}`,
     description: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
-    body: html(<PlaygroundPage site={site} />),
+    body: html(<PlaygroundPage site={site} previews={previews} />),
   });
-  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'reference', <ConsoleView />);
+  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'console', <ConsoleView />);
   // What the Run island reads: per page the operations it can run, and one index for the console.
   for (const p of site.pages)
     out.push({
