@@ -74,9 +74,6 @@ export function SetupFields({ draft, onChange, errors }: SetupFieldsProps) {
       {draft.deviceRole !== 'scan' && watchKind(draft.watch) === 'scanners' ? (
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-medium">Follow scanners</legend>
-          <p className="text-xs text-fg-muted">
-            This display shows results from the selected scanners.
-          </p>
           {draft.deviceRole === 'monitor' ? (
             <CheckboxField
               label="All scanners in this organization"

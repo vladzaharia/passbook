@@ -37,9 +37,6 @@ describe('webhooks tab', () => {
     const calls: Calls[] = [];
     await open('/admin/connections?tab=webhooks', calls, hooks(calls, { endpoints: [] }));
     expect(await screen.findByText('No webhooks')).toBeVisible();
-    expect(
-      screen.getByText('PassBook posts pass, device and scan events to your URL.'),
-    ).toBeVisible();
     expect(screen.getAllByRole('link', { name: 'Add endpoint' }).length).toBeGreaterThan(0);
   });
 

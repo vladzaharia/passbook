@@ -257,7 +257,7 @@ function Palette({ editor: e, initial = false }: { editor: Editor; initial?: boo
             Choose a starting panel
           </legend>
           <p className="text-xs text-fg-muted">
-            Presets add ordinary editable rows. An empty panel needs a row before it can be saved.
+            An empty panel needs a row before it can be saved.
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
             {PRESET_ORDER.map((id) => (

@@ -116,7 +116,6 @@ export function UseBlueprintDialog({
     >
       <DialogContent
         title="Use blueprint"
-        description={`${blueprint.name} becomes a template of your own.`}
         footer={
           <>
             <Button variant="outline" onClick={() => onOpenChange(false)}>

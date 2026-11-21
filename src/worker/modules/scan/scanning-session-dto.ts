@@ -7,12 +7,12 @@ import {
 } from '../../../shared/contracts/scanners.ts';
 import type { SessionCustomerSettings as SessionCustomer } from '../../../shared/contracts/scanning-sessions.ts';
 import {
-  ScanDeviceCapabilitiesSchema,
   ScanDeviceOverridesSchema,
   ScanningDeviceSchema,
   ScanningSessionSchema,
   SessionCustomerSettingsSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
+import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -203,9 +203,7 @@ export const deviceDto = (row: ScanningDeviceRow, now: number, settings?: Scanne
     effectiveSurface: row.effective_surface,
     overrides: JSON.parse(row.overrides),
     settings: settings ?? parseSettings(row.settings),
-    capabilities: row.capabilities
-      ? ScanDeviceCapabilitiesSchema.parse(JSON.parse(row.capabilities))
-      : null,
+    capabilities: readStoredCapabilities(row.capabilities),
     reportedAt: row.reported_at,
     paired: !!row.token_hash || !!row.admin_user_id,
     online:

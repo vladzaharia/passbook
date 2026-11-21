@@ -61,9 +61,7 @@ export function EventsTab() {
           <EmptyState
             art="passes"
             title="No events yet"
-            description={
-              orgId ? 'Count arrivals at the door.' : 'Choose an organization to create an event.'
-            }
+            description={orgId ? undefined : 'Choose an organization to create an event.'}
             action={action}
           />
         }

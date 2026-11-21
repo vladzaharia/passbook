@@ -21,7 +21,6 @@ export function WalletChoices({
       return (
         <section className="wl-presentation" aria-label={HOLDER_COPY.browserTitle}>
           <h2>{HOLDER_COPY.browserTitle}</h2>
-          <p>{HOLDER_COPY.browserLine}</p>
           <a className={OUTLINE_ACTION_CLASS} href={choice.href ?? undefined}>
             {HOLDER_COPY.showBarcode}
           </a>

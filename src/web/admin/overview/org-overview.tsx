@@ -141,7 +141,6 @@ export function OrgOverviewPage({
       <PageHeader
         title="Overview"
         breadcrumbs={[{ label: membership?.orgName ?? 'Organization' }, { label: 'Overview' }]}
-        meta={`${mode === 'test' ? 'Test' : 'Live'} mode`}
         actions={empty ? undefined : picker}
       />
       <div className="flex flex-col gap-6">
@@ -153,11 +152,7 @@ export function OrgOverviewPage({
         ) : empty ? (
           // The checklist is the page's empty state while it is up; the box returns once it is gone.
           checklist && !dismissed && setup.data ? (
-            <GetStarted
-              setup={setup.data.setup}
-              organization={membership?.orgName}
-              onDismiss={dismiss}
-            />
+            <GetStarted setup={setup.data.setup} onDismiss={dismiss} />
           ) : (
             <EmptyState
               art="passes"

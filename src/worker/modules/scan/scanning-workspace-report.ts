@@ -22,6 +22,16 @@ const REPORT_CODES = {
   lineage: 'SCANNING_DEVICE_CHANGED',
 } as const;
 
+/** The hardware summary is stored only once DEVICE_REPORT_HARDWARE is on (wrangler.jsonc). */
+export function storedReport(
+  env: Pick<Env, 'DEVICE_REPORT_HARDWARE'>,
+  capabilities: ScanDeviceCapabilities,
+): ScanDeviceCapabilities {
+  if (env.DEVICE_REPORT_HARDWARE === '1') return capabilities;
+  const { hardware: _hardware, ...rest } = capabilities;
+  return rest;
+}
+
 const changed = () =>
   new ConflictError('This device changed. Reload and try again.', 'SCANNING_DEVICE_CHANGED');
 
@@ -59,7 +69,7 @@ export async function commitReportedDevice(
     target: device.scanner_id,
     codes: REPORT_CODES,
   });
-  reportedCapabilitiesStmt(g, device.scanner_id, capabilities, now);
+  reportedCapabilitiesStmt(g, device.scanner_id, storedReport(ctx.env, capabilities), now);
   if (surfaceChanged) {
     addScanningDeviceUpdate(
       g,

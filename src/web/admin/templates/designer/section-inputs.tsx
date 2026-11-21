@@ -223,11 +223,7 @@ export function InputsSection() {
           </li>
         ))}
       </ul>
-      {specs.length === 0 ? (
-        <p className="text-sm text-fg-muted">
-          No inputs. Passes from this template have nothing to fill in.
-        </p>
-      ) : null}
+      {specs.length === 0 ? <p className="text-sm text-fg-muted">No inputs.</p> : null}
       <Button
         variant="outline"
         size="sm"

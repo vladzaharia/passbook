@@ -34,7 +34,6 @@ export function BlueprintsPage() {
     <>
       <PageHeader
         title="Blueprints"
-        description="Designs to start from. Use one to make a template, then issue passes from it."
         actions={
           canUpload ? (
             <Button asChild variant="outline" iconStart={<Upload aria-hidden />}>

@@ -1,5 +1,5 @@
 /** The operator workspace of the visual gallery (`?visual=1&surface=operator&case=idle|search|record|problems|empty|refusal`). */
-import { useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { sessionFixture } from './boot/session.test-support.ts';
@@ -207,7 +207,13 @@ const setNative = (input: HTMLInputElement, value: string) => {
   input.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
-export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
+export function OperatorVisual({
+  scenario,
+  menu = null,
+}: {
+  scenario: OperatorCase;
+  menu?: ReactNode;
+}) {
   const session = useMemo(() => recordSession(sessionOf(), scenario), [scenario]);
   const api = useMemo(() => apiFor(scenario === 'empty' ? [] : ROWS, scenario), [scenario]);
   const store = useMemo(
@@ -278,7 +284,7 @@ export function OperatorVisual({ scenario }: { scenario: OperatorCase }) {
           modeLabel="Operator"
           chips={<ReaderChip state="ready" />}
           testing={null}
-          menu={null}
+          menu={menu}
           scanCard={null}
           announcement={null}
           onTitle={() => undefined}

@@ -279,7 +279,6 @@ export function StaffPinDialog({
     <Dialog open onOpenChange={() => undefined}>
       <DialogContent
         title={`${name}'s PIN`}
-        description="Share this PIN securely with the staff member."
         closeButton={false}
         onInteractOutside={(event) => event.preventDefault()}
         onEscapeKeyDown={(event) => event.preventDefault()}

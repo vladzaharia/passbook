@@ -63,13 +63,7 @@ export function AddDeviceDialog({
       <DialogContent
         title={made ? `Pair ${made.name}` : setup ? 'Pair a scanner' : 'Add device'}
         size="lg"
-        description={
-          made
-            ? undefined
-            : setup
-              ? `Name the device that will scan at ${session.name}.`
-              : `Add a scanner, operator or display to ${session.name}.`
-        }
+        description={made ? undefined : session.name}
         footer={
           made ? undefined : (
             <>

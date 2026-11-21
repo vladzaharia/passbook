@@ -128,11 +128,9 @@ export function CountersSection() {
   };
   return (
     <div className="grid gap-4">
-      {counters.length === 0 ? (
-        <p className="text-sm text-fg-muted">Count what is left: visits, uses, credits.</p>
-      ) : (
-        counters.map((c) => <CounterCard key={c.id} view={c} />)
-      )}
+      {counters.map((c) => (
+        <CounterCard key={c.id} view={c} />
+      ))}
       {counters.length < COUNTER_MAX ? (
         <form
           className="flex items-end gap-2"

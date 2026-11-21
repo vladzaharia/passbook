@@ -8,19 +8,17 @@ export function ConsoleView() {
   const c = DEV_COPY.console;
   return (
     <>
-      <Head eyebrow="Tools" title={c.title} line={c.line} />
+      <Head title={c.title} line={c.line} />
       <div className="console-slot try" data-island="run" data-mode="console">
         <Ticket
           stub={
             <div className="start">
-              <h3 className="h2">{c.signIn}</h3>
-              <p className="muted sm">{c.placeholder}</p>
               <a className="btn" href={SIGN_IN}>
                 {c.signIn}
               </a>
             </div>
           }
-          body={<p className="muted sm resp-hint">{DEV_COPY.reference.tryLine}</p>}
+          body={<p className="muted sm resp-hint">{c.placeholder}</p>}
         />
       </div>
     </>

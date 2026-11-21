@@ -1,10 +1,106 @@
 [
   {
-    "key": "GET /api/v1/developer/resolve new operation",
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
-    "operationId": "developer.getResolve",
-    "op": "GET /api/v1/developer/resolve",
-    "change": "new operation",
-    "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.hardware: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.hardware: optional input field added",
+    "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   }
 ]

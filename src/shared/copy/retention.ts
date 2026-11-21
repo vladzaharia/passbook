@@ -17,7 +17,6 @@ export const RETENTION_COPY = {
   placePass: 'Hold one pass',
   release: 'Release',
   receiptsTitle: 'Retention receipts',
-  receiptsLede: 'Proof that a deletion ran: when, which policy, how many. Never what was deleted.',
   noReceipts: 'No receipts yet',
   download: 'Download',
   verified: 'Verified',

@@ -2,7 +2,7 @@
 export const LOGS_COPY = {
   nav: 'Logs',
   title: 'Request log',
-  lede: 'Your sandbox key’s calls. Metadata for 7 days; bodies for 24 hours.',
+  lede: 'Metadata kept 7 days, bodies 24 hours.',
   signedOut: 'Sign in to see your requests.',
   noSandbox: 'No sandbox yet. Make one in the quickstart.',
   empty: 'No requests yet. Make a call with your sandbox key and it shows here.',

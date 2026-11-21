@@ -139,7 +139,6 @@ export function Footer({ site }: { site: Site }) {
   const latest = site.changelog[0];
   return (
     <footer className="foot">
-      <span className="muted">{DEV_COPY.footer.note}</span>
       <span className="foot-links">
         <a href={PATHS.changelog}>
           {DEV_COPY.footer.changelog}

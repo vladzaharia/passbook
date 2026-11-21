@@ -7061,7 +7061,297 @@
             "type": "boolean"
           },
           "native": {
-            "$ref": "#/components/schemas/NativeScannerCapabilities"
+            "type": "object",
+            "properties": {
+              "platform": {
+                "type": "string",
+                "enum": [
+                  "ios",
+                  "android"
+                ]
+              },
+              "appVersion": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "camera": {
+                "type": "object",
+                "properties": {
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "enum": [
+                      "unknown",
+                      "prompt",
+                      "granted",
+                      "denied",
+                      "restricted",
+                      "unavailable"
+                    ]
+                  }
+                },
+                "required": [
+                  "available",
+                  "permission"
+                ],
+                "additionalProperties": false
+              },
+              "keyboard": {
+                "type": "object",
+                "properties": {
+                  "supported": {
+                    "type": "boolean"
+                  },
+                  "connected": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "connectionObservable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "supported",
+                  "connected",
+                  "connectionObservable"
+                ],
+                "additionalProperties": false
+              },
+              "nfc": {
+                "type": "object",
+                "properties": {
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "reading": {
+                    "type": "boolean"
+                  },
+                  "continuous": {
+                    "type": "boolean"
+                  },
+                  "formats": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "ndef",
+                        "wallet-vas",
+                        "tag-uid",
+                        "tag-sun"
+                      ]
+                    },
+                    "maxItems": 4
+                  }
+                },
+                "required": [
+                  "available",
+                  "reading",
+                  "formats"
+                ],
+                "additionalProperties": false
+              },
+              "haptics": {
+                "type": "boolean"
+              },
+              "vas": {
+                "type": "object",
+                "properties": {
+                  "deviceSupported": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "reader": {
+                    "type": "string",
+                    "enum": [
+                      "proximityReader",
+                      "android-native",
+                      "none"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 240
+                  }
+                },
+                "required": [
+                  "deviceSupported",
+                  "available",
+                  "reader",
+                  "reason"
+                ],
+                "additionalProperties": false
+              },
+              "externalReader": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "keyboard",
+                      "unknown"
+                    ]
+                  },
+                  "connected": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode",
+                  "connected"
+                ],
+                "additionalProperties": false
+              },
+              "customerDisplay": {
+                "type": "object",
+                "properties": {
+                  "supported": {
+                    "type": "boolean"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "supported",
+                  "available",
+                  "active"
+                ],
+                "additionalProperties": false
+              },
+              "layout": {
+                "type": "object",
+                "properties": {
+                  "posture": {
+                    "type": "string",
+                    "enum": [
+                      "unknown",
+                      "folded",
+                      "unfolded",
+                      "half-folded"
+                    ]
+                  },
+                  "division": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 32768
+                      },
+                      "y": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 32768
+                      },
+                      "width": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 32768
+                      },
+                      "height": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 32768
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "posture",
+                  "division"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "platform",
+              "appVersion",
+              "camera",
+              "keyboard",
+              "nfc",
+              "vas",
+              "externalReader",
+              "customerDisplay"
+            ],
+            "additionalProperties": false
+          },
+          "hardware": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "camera",
+                    "barcode",
+                    "nfc",
+                    "keyboard",
+                    "usb",
+                    "hid",
+                    "serial",
+                    "bluetooth",
+                    "display"
+                  ]
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16
+                },
+                "builtIn": {
+                  "type": "boolean"
+                },
+                "connected": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "ready",
+                    "active",
+                    "off",
+                    "needs-permission",
+                    "unavailable",
+                    "error"
+                  ]
+                }
+              },
+              "required": [
+                "kind",
+                "count",
+                "builtIn",
+                "connected",
+                "state"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 16
           },
           "surfaces": {
             "type": "array",
@@ -7096,243 +7386,6 @@
           "nativeBarcode",
           "surfaces",
           "preferred"
-        ],
-        "additionalProperties": false
-      },
-      "NativeScannerCapabilities": {
-        "type": "object",
-        "properties": {
-          "platform": {
-            "type": "string",
-            "enum": [
-              "ios",
-              "android"
-            ]
-          },
-          "appVersion": {
-            "type": "string",
-            "maxLength": 32
-          },
-          "camera": {
-            "type": "object",
-            "properties": {
-              "available": {
-                "type": "boolean"
-              },
-              "permission": {
-                "type": "string",
-                "enum": [
-                  "unknown",
-                  "prompt",
-                  "granted",
-                  "denied",
-                  "restricted",
-                  "unavailable"
-                ]
-              }
-            },
-            "required": [
-              "available",
-              "permission"
-            ],
-            "additionalProperties": false
-          },
-          "keyboard": {
-            "type": "object",
-            "properties": {
-              "supported": {
-                "type": "boolean"
-              },
-              "connected": {
-                "type": [
-                  "boolean",
-                  "null"
-                ]
-              },
-              "connectionObservable": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "supported",
-              "connected",
-              "connectionObservable"
-            ],
-            "additionalProperties": false
-          },
-          "nfc": {
-            "type": "object",
-            "properties": {
-              "available": {
-                "type": "boolean"
-              },
-              "reading": {
-                "type": "boolean"
-              },
-              "continuous": {
-                "type": "boolean"
-              },
-              "formats": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "ndef",
-                    "wallet-vas",
-                    "tag-uid",
-                    "tag-sun"
-                  ]
-                },
-                "maxItems": 4
-              }
-            },
-            "required": [
-              "available",
-              "reading",
-              "formats"
-            ],
-            "additionalProperties": false
-          },
-          "haptics": {
-            "type": "boolean"
-          },
-          "vas": {
-            "type": "object",
-            "properties": {
-              "deviceSupported": {
-                "type": "boolean"
-              },
-              "available": {
-                "type": "boolean"
-              },
-              "reader": {
-                "type": "string",
-                "enum": [
-                  "proximityReader",
-                  "android-native",
-                  "none"
-                ]
-              },
-              "reason": {
-                "type": "string",
-                "maxLength": 240
-              }
-            },
-            "required": [
-              "deviceSupported",
-              "available",
-              "reader",
-              "reason"
-            ],
-            "additionalProperties": false
-          },
-          "externalReader": {
-            "type": "object",
-            "properties": {
-              "mode": {
-                "type": "string",
-                "enum": [
-                  "keyboard",
-                  "unknown"
-                ]
-              },
-              "connected": {
-                "type": [
-                  "boolean",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "mode",
-              "connected"
-            ],
-            "additionalProperties": false
-          },
-          "customerDisplay": {
-            "type": "object",
-            "properties": {
-              "supported": {
-                "type": "boolean"
-              },
-              "available": {
-                "type": "boolean"
-              },
-              "active": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "supported",
-              "available",
-              "active"
-            ],
-            "additionalProperties": false
-          },
-          "layout": {
-            "type": "object",
-            "properties": {
-              "posture": {
-                "type": "string",
-                "enum": [
-                  "unknown",
-                  "folded",
-                  "unfolded",
-                  "half-folded"
-                ]
-              },
-              "division": {
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "x": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 32768
-                  },
-                  "y": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 32768
-                  },
-                  "width": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 32768
-                  },
-                  "height": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 32768
-                  }
-                },
-                "required": [
-                  "x",
-                  "y",
-                  "width",
-                  "height"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "posture",
-              "division"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "platform",
-          "appVersion",
-          "camera",
-          "keyboard",
-          "nfc",
-          "vas",
-          "externalReader",
-          "customerDisplay"
         ],
         "additionalProperties": false
       },
@@ -86643,6 +86696,21 @@
                         "scanners"
                       ]
                     },
+                    "directory": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "integer"
+                        },
+                        "walletAccounts": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "users",
+                        "walletAccounts"
+                      ]
+                    },
                     "live": {
                       "type": "array",
                       "items": {
@@ -87211,6 +87279,21 @@
                         "passEmailsSent",
                         "latestPassId",
                         "scanners"
+                      ]
+                    },
+                    "directory": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "integer"
+                        },
+                        "walletAccounts": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "users",
+                        "walletAccounts"
                       ]
                     },
                     "live": {

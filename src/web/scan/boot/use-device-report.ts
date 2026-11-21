@@ -6,6 +6,7 @@ import type {
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { reportedCapabilities } from '../../../shared/scan-surfaces.ts';
 import type { ScanApi } from '../api/scan-api.ts';
+import { HARDWARE_EVENT, reportedHardware, withoutNativeHardware } from '../hardware/report.ts';
 import {
   getNativeCapabilities,
   NATIVE_CAPABILITIES_EVENT,
@@ -19,7 +20,9 @@ export function deviceCapabilities(native?: NativeScannerCapabilities): ScanDevi
     camera: typeof navigator.mediaDevices?.getUserMedia === 'function' ? 'unknown' : 'unavailable',
     keyboard: true,
     nativeBarcode: native?.platform === 'android',
-    ...(native ? { native } : {}),
+    // Kinds and counts only: the shell's names and ids stay on the device.
+    ...(native ? { native: withoutNativeHardware(native) } : {}),
+    ...(reportedHardware()?.length ? { hardware: reportedHardware() ?? [] } : {}),
     surfaces: ['phone', 'customer'],
     preferred: 'phone',
   });
@@ -78,6 +81,7 @@ export function useDeviceReport(
     window.addEventListener('resize', schedule);
     window.addEventListener('online', schedule);
     window.addEventListener(NATIVE_CAPABILITIES_EVENT, onNativeCapabilities);
+    window.addEventListener(HARDWARE_EVENT, schedule);
     window.addEventListener('focus', schedule);
     return () => {
       disposed = true;
@@ -86,6 +90,7 @@ export function useDeviceReport(
       window.removeEventListener('resize', schedule);
       window.removeEventListener('online', schedule);
       window.removeEventListener('focus', schedule);
+      window.removeEventListener(HARDWARE_EVENT, schedule);
       window.removeEventListener(NATIVE_CAPABILITIES_EVENT, onNativeCapabilities);
     };
   }, [api, scannerId, refetch]);

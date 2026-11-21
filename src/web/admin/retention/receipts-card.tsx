@@ -57,7 +57,6 @@ export function ReceiptsCard({
     <Card id="receipts">
       <CardHeader title={RETENTION_COPY.receiptsTitle} />
       <CardBody className="flex flex-col gap-4">
-        <p className="text-sm text-fg-muted">{RETENTION_COPY.receiptsLede}</p>
         {query.isPending ? (
           <SkeletonRows rows={3} label="Loading receipts" />
         ) : query.isError ? (
