@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { resetPairLink, takePairCode } from './pair-link.ts';
+import { resetPairLink, takePairCode, watchPairLink } from './pair-link.ts';
 
 afterEach(resetPairLink);
 
@@ -30,5 +30,29 @@ describe('takePairCode', () => {
     const replaceState = vi.fn();
     expect(takePairCode({ hash: `#pair=${'x'.repeat(200)}` }, { replaceState })).toBeNull();
     expect(replaceState).toHaveBeenCalledWith(null, '', '/scan');
+  });
+});
+
+describe('watchPairLink', () => {
+  it('picks up a #pair= set on an open page, clears it and stops on cleanup', () => {
+    const replaceState = vi.fn();
+    const target = new EventTarget();
+    const win = {
+      addEventListener: target.addEventListener.bind(target),
+      removeEventListener: target.removeEventListener.bind(target),
+      location: { hash: '' },
+      history: { replaceState },
+    } as unknown as Parameters<typeof watchPairLink>[1];
+    const seen: string[] = [];
+    takePairCode(win.location, win.history);
+    const stop = watchPairLink((code) => seen.push(code), win);
+    win.location.hash = '#pair=NEWCODE1';
+    target.dispatchEvent(new Event('hashchange'));
+    expect(seen).toEqual(['NEWCODE1']);
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/scan');
+    stop();
+    win.location.hash = '#pair=LATER';
+    target.dispatchEvent(new Event('hashchange'));
+    expect(seen).toEqual(['NEWCODE1']);
   });
 });
