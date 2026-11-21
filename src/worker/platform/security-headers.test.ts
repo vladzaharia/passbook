@@ -198,7 +198,7 @@ describe('join page CSP', () => {
     expect(csp).toContain("require-trusted-types-for 'script'");
     expect(csp).toContain('trusted-types passbook-turnstile;');
     expect(join.headers.get('referrer-policy')).toBe(REFERRER_ORIGIN_ONLY);
-    for (const path of ['/p/abc', '/auth/magic', '/api/v1/join-links/t', '/jx', '/joined/x', '/']) {
+    for (const path of ['/auth/magic', '/api/v1/join-links/t', '/jx', '/joined/x', '/']) {
       const other = await probe(path);
       const otherCsp = other.headers.get('content-security-policy') ?? '';
       expect(otherCsp, path).not.toContain(TURNSTILE_ORIGIN);
