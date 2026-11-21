@@ -4,7 +4,7 @@ import { PATHS } from '../../../shared/developers.ts';
 import { cliSample } from '../model/cli.ts';
 import { opPath } from '../model/markdown.ts';
 import { exampleSamples, samplesFor } from '../model/samples.ts';
-import type { Field, OpView, ResourcePage, Site } from '../model/types.ts';
+import type { ErrorRow, Field, OpView, ResourcePage, Site } from '../model/types.ts';
 import { CopyButton, JsonBlock, SampleTabs } from '../ui/code.tsx';
 import { EnvChip } from '../ui/env-chip.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
@@ -47,10 +47,55 @@ function Params({ fields }: { fields: Field[] }) {
   );
 }
 
-/** The operation's own codes, each with its status and fix; the full catalog is one link away. */
+/** Shown first: what the request's shape decides, before the codes of the resource's module. */
+const COMMON = [
+  'UNAUTHENTICATED',
+  'INVALID_API_KEY',
+  'MISSING_SCOPE',
+  'FORBIDDEN',
+  'VALIDATION',
+  'NOT_FOUND',
+  'VERSION_CONFLICT',
+  'IDEMPOTENCY_IN_PROGRESS',
+  'IDEMPOTENCY_KEY_INVALID',
+  'IDEMPOTENCY_KEY_REUSED',
+  'RATE_LIMITED',
+];
+const SHOWN = 8;
+
+function ErrorTable({ rows, known }: { rows: ErrorRow[]; known: Set<string> }) {
+  return (
+    <div className="table-wrap mt4">
+      <table className="errs">
+        <thead>
+          <tr>
+            <th scope="col">Code</th>
+            <th scope="col">Status</th>
+            <th scope="col">Fix</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((e) => (
+            <tr key={e.code}>
+              <td className="mono">
+                {known.has(e.code) ? <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a> : e.code}
+              </td>
+              <td className="mono">{e.status ?? ''}</td>
+              <td>{e.fix}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** The operation's codes with their status and fix, the common ones first; the full catalog is one link away. */
 function OpErrors({ op, site }: { op: OpView; site: Site }) {
   if (op.errors.length === 0) return null;
   const known = new Set(site.errors.map((e) => e.code));
+  const rank = (c: string) => (COMMON.includes(c) ? COMMON.indexOf(c) : COMMON.length);
+  const rows = [...op.errors].sort((a, b) => rank(a.code) - rank(b.code));
   return (
     <section className="page-errors" id="errors">
       <div className="row g3 wrap-row">
@@ -59,28 +104,13 @@ function OpErrors({ op, site }: { op: OpView; site: Site }) {
           {DEV_COPY.reference.allCodes(site.errors.length)}
         </a>
       </div>
-      <div className="table-wrap mt4">
-        <table className="errs">
-          <thead>
-            <tr>
-              <th scope="col">Code</th>
-              <th scope="col">Status</th>
-              <th scope="col">Fix</th>
-            </tr>
-          </thead>
-          <tbody>
-            {op.errors.map((e) => (
-              <tr key={e.code}>
-                <td className="mono">
-                  {known.has(e.code) ? <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a> : e.code}
-                </td>
-                <td className="mono">{e.status ?? ''}</td>
-                <td>{e.fix}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ErrorTable rows={rows.slice(0, SHOWN)} known={known} />
+      {rows.length > SHOWN ? (
+        <details className="op-errors mt4">
+          <summary>{rows.length - SHOWN} more</summary>
+          <ErrorTable rows={rows.slice(SHOWN)} known={known} />
+        </details>
+      ) : null}
     </section>
   );
 }
@@ -163,15 +193,7 @@ function Neighbours({ page, op }: { page: ResourcePage; op: OpView }) {
   );
 }
 
-export function OperationView({
-  page,
-  op,
-  site,
-}: {
-  page: ResourcePage;
-  op: OpView;
-  site: Site;
-}) {
+export function OperationView({ page, op, site }: { page: ResourcePage; op: OpView; site: Site }) {
   const groups = WHERE_ORDER.map((w) => ({
     w,
     fields: op.fields.filter((f) => f.where === w),
@@ -252,7 +274,7 @@ export function OperationView({
       <div className="trybar" data-island="try-bar">
         <span className="trybar-op mono">
           <MethodPill method={op.method} />
-          <span>{op.path.replace(/^\/api\/v1/, '')}</span>
+          <span className="trybar-path">{op.path.replace(/^\/api\/v1/, '')}</span>
         </span>
         <a className="btn" href={`#try-${op.anchor}`} data-try-bar>
           {DEV_COPY.reference.tryIt}

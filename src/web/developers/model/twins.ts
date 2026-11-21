@@ -59,8 +59,7 @@ export function errorMarkdown(e: ErrorEntry): string {
   if (e.when) out.push('## When', '', e.when, '');
   if (e.usedBy.length > 0) {
     out.push('## Returned by', '');
-    for (const u of e.usedBy)
-      out.push(`- [${u.title}](${twin(opUrl(u.slug, u.anchor))})`);
+    for (const u of e.usedBy) out.push(`- [${u.title}](${twin(opUrl(u.slug, u.anchor))})`);
   }
   return end(out);
 }

@@ -45,7 +45,7 @@ export async function openSheet(slot: HTMLElement): Promise<void> {
   if (!slug || !op) return;
   dialog ??= build();
   if (dialog.open) return;
-  const name = slot.closest('.op')?.querySelector('h2')?.textContent;
+  const name = slot.closest('.op')?.querySelector('h1, h2')?.textContent;
   if (heading) heading.textContent = name ? `Try it: ${name}` : 'Try it';
   document.documentElement.dataset.sheet = 'open';
   dialog.showModal();

@@ -64,6 +64,12 @@ test.describe('portal routes', () => {
   });
 });
 
+test('an old operation anchor lands on the operation page', async ({ page }) => {
+  await page.goto('/developers/reference/passes#create');
+  await page.waitForURL('**/developers/reference/passes/create');
+  await expect(page.getByRole('heading', { level: 1, name: 'Create a pass' })).toBeVisible();
+});
+
 test.describe('reference pages at phone width', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
@@ -72,7 +78,14 @@ test.describe('reference pages at phone width', () => {
     const hrefs = await page
       .locator('main a[href^="/developers/reference/"]')
       .evaluateAll((links) => links.map((a) => a.getAttribute('href') ?? ''));
-    const paths = [...new Set([...hrefs, '/developers/reference/protocols'])];
+    const paths = [
+      ...new Set([
+        ...hrefs,
+        '/developers/reference/protocols',
+        '/developers/reference/passes/create',
+        '/developers/reference/templates/retrieveinputschema',
+      ]),
+    ];
     expect(paths.length).toBeGreaterThan(10);
     const wide: string[] = [];
     for (const path of paths) {

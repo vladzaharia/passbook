@@ -72,9 +72,11 @@ export function renderSite(
     out.push({ file: fileOf(doc.url, dir), body: document(doc, origin, assets), url: doc.url });
     if (doc.twin !== undefined) out.push({ file: twin(doc.url), body: doc.twin });
   };
-  const side = (current?: Site['pages'][number], ops = false, op?: Site['pages'][number]['ops'][number]) => (
-    <SideNav site={site} current={current} ops={ops} op={op} />
-  );
+  const side = (
+    current?: Site['pages'][number],
+    ops = false,
+    op?: Site['pages'][number]['ops'][number],
+  ) => <SideNav site={site} current={current} ops={ops} op={op} />;
   const page = (
     url: string,
     title: string,
@@ -163,7 +165,8 @@ export function renderSite(
           {
             url: opUrl,
             title: `${op.title} · ${p.label} · API reference · ${base}`,
-            description: `${op.method.toUpperCase()} ${op.path}. ${op.description.split('\n')[0] ?? ''}`.trim(),
+            description:
+              `${op.method.toUpperCase()} ${op.path}. ${op.description.split('\n')[0] ?? ''}`.trim(),
             body: html(
               <Shell site={site} active="reference" side={side(p, true, op)}>
                 <OperationView page={p} op={op} site={site} />

@@ -23,7 +23,14 @@ const LITERALS: Record<Lang, string[]> = {
   py: ['True', 'False', 'None'],
   go: ['true', 'false'],
 };
-const COMMENT: Record<Lang, string | null> = { json: null, curl: '#', cli: '#', ts: '//', py: '#', go: '//' };
+const COMMENT: Record<Lang, string | null> = {
+  json: null,
+  curl: '#',
+  cli: '#',
+  ts: '//',
+  py: '#',
+  go: '//',
+};
 
 /** A run of text and its token class; no class is plain text. */
 export interface Tok {
@@ -78,7 +85,8 @@ function line(text: string, lang: Lang, state: State): Tok[] {
     if (ch === '"' || ch === "'") {
       const m = new RegExp(`^${ch}(?:\\\\.|[^${ch}\\\\])*${ch}?`).exec(rest);
       const str = m ? m[0] : ch;
-      if ((lang === 'curl' || lang === 'cli') && (str.length < 2 || !str.endsWith(ch))) state.quote = ch;
+      if ((lang === 'curl' || lang === 'cli') && (str.length < 2 || !str.endsWith(ch)))
+        state.quote = ch;
       const colon = /^\s*:/.test(text.slice(i + str.length));
       out.push(span(lang === 'json' && colon ? 'k' : colon && lang === 'ts' ? 'k' : 's', str));
       i += str.length;
@@ -121,7 +129,9 @@ export function highlightTokens(code: string, lang: Lang): Tok[][] {
   const state: State = { quote: null };
   return code
     .split('\n')
-    .map((text) => (lang === 'curl' || lang === 'cli' ? curlLine(text, state) : line(text, lang, state)));
+    .map((text) =>
+      lang === 'curl' || lang === 'cli' ? curlLine(text, state) : line(text, lang, state),
+    );
 }
 
 /** Highlighted lines, each `<span class="ln">`; `mark` lines (1-based) get the highlight bar. */

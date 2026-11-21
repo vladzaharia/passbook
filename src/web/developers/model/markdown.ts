@@ -21,7 +21,11 @@ function fieldRows(fields: Field[], depth = 0): string[] {
 }
 
 function opMarkdown(op: OpView, base: string, level = 2): string {
-  const out = [`${'#'.repeat(level)} ${op.title} {#${op.anchor}}`, '', `\`${op.method.toUpperCase()} ${op.path}\``];
+  const out = [
+    `${'#'.repeat(level)} ${op.title} {#${op.anchor}}`,
+    '',
+    `\`${op.method.toUpperCase()} ${op.path}\``,
+  ];
   if (op.description) out.push('', op.description);
   const facts = [
     ...(op.scopes.length > 0 ? [`Scopes: ${op.scopes.map((s) => `\`${s}\``).join(', ')}`] : []),

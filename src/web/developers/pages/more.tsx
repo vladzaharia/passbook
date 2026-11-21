@@ -114,11 +114,7 @@ export function ErrorEntryView({ entry }: { entry: ErrorEntry }) {
           <h2 className="h2 mt8">Returned by</h2>
           <div className="list card mt4">
             {entry.usedBy.map((u) => (
-              <a
-                key={`${u.slug}${u.anchor}`}
-                className="lrow"
-                href={opUrl(u.slug, u.anchor)}
-              >
+              <a key={`${u.slug}${u.anchor}`} className="lrow" href={opUrl(u.slug, u.anchor)}>
                 {u.title}
               </a>
             ))}

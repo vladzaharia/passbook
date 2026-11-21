@@ -117,7 +117,10 @@ export function SideNav({
           <h4>{g.label}</h4>
           {g.pages.map((p) => (
             <div key={p.slug} className="stack">
-              <a href={pagePath(p)} aria-current={p === current && !(ops && op) ? 'page' : undefined}>
+              <a
+                href={pagePath(p)}
+                aria-current={p === current && !(ops && op) ? 'page' : undefined}
+              >
                 {p.label}
               </a>
               {p === current && ops ? (

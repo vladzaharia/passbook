@@ -72,6 +72,26 @@
   }
 }
 @media (max-width: 720px) {
+  .tab {
+    padding: 0 7px;
+  }
+  .tab[aria-current]::after,
+  .tab-radio:checked + .tab::after {
+    left: 7px;
+    right: 7px;
+  }
+  .oprow {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 2px 12px;
+    align-items: center;
+  }
+  .oprow code {
+    grid-column: 2;
+    margin: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
   /* An email session's Polaris ID button leaves the bar for the menu sheet. */
   [data-menubar] .dev-polaris {
     display: none;

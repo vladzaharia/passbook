@@ -37,7 +37,13 @@ function ConsoleOnly({ ops }: { ops: ConsoleOp[] }) {
  */
 function OpRow({ page, op }: { page: ResourcePage; op: OpView }) {
   return (
-    <a className="lrow oprow" id={op.anchor} data-moved data-alias={op.operationId} href={opPath(page, op)}>
+    <a
+      className="lrow oprow"
+      id={op.anchor}
+      data-moved
+      data-alias={op.operationId}
+      href={opPath(page, op)}
+    >
       <MethodPill method={op.method} />
       <span className="oprow-t">{op.title}</span>
       <code className="mono sm push">{op.path.replace(/^\/api\/v1/, '')}</code>
@@ -62,9 +68,7 @@ export function ResourceView({ page }: { page: ResourcePage }) {
       </div>
       {/* Carries an old `#anchor` to the operation's own page. */}
       <i data-island="moved" aria-hidden="true" />
-      <h1 className="h1 page-h">
-        {page.label}
-      </h1>
+      <h1 className="h1 page-h">{page.label}</h1>
       <p className="muted mt2">
         {anySdk() ? null : <span className="pill neutral">{DEV_COPY.reference.sdkSoon}</span>}{' '}
         {operations(page.ops.length)}. <a href={`${PATHS.reference}/${page.slug}.md`}>Markdown</a>

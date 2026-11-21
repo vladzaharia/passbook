@@ -93,9 +93,23 @@
   min-width: 0;
   flex: 1;
   font-size: 13px;
+}
+.trybar-path {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.trybar .method {
+  flex: none;
+}
+.oprow > .method {
+  display: inline-flex;
+  min-width: 52px;
+  justify-content: center;
+}
+.oprow code {
+  color: var(--pk-text-muted);
 }
 .oprow-t {
   font-weight: 500;
