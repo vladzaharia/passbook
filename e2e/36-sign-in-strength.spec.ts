@@ -27,7 +27,7 @@ test('an email-link session keeps holder features and meets the Polaris ID card 
   expect(refused.body.code).toBe('IDP_SIGN_IN_REQUIRED');
 
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Sign in with Polaris ID' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Admin needs Polaris ID.' })).toBeVisible();
   const button = page.getByRole('link', { name: 'Sign in with Polaris ID' });
   await expect(button).toHaveAttribute('href', /^\/auth\/oidc\/start\?next=%2Fadmin/);
 });
