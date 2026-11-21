@@ -94,7 +94,8 @@ export const ScanPairPreviewSchema = z.object({
   mode: ModeSchema,
 });
 export const ScanStaffSignInSchema = z.object({
-  staffId: IdSchema,
+  /** Omitted: the PIN is matched among the org's active Door and Desk staff. `STAFF_NAME_REQUIRED` says to send the name. */
+  staffId: IdSchema.optional(),
   pin: z.string().regex(/^\d{6}$/),
 });
 export const ScanLookupRequestSchema = z.object({
