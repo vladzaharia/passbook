@@ -54,12 +54,17 @@ export function PassTile({
     // The tile's corner is the 18 px card radius: the pass inside draws ~14 px, never more.
     <Card className="row-span-2 grid grid-rows-subgrid gap-y-3 rounded-xl p-4">
       {buddy}
-      <h2 className="sr-only">{name}</h2>
-      <Link
-        {...link}
-        aria-label={name}
-        className="flex items-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
-      >
+      {/* The name is read, not shown: the card says it. Its link shows itself when focused. */}
+      <h2 className="absolute top-1 left-4 z-10 text-sm font-semibold text-fg-strong">
+        <Link
+          {...link}
+          className="sr-only rounded-sm focus-visible:not-sr-only focus-visible:inline-block focus-visible:bg-surface-raised focus-visible:px-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          {name}
+        </Link>
+      </h2>
+      {/* The card is a second way in for the pointer; the name's link is the one in the tab order. */}
+      <Link {...link} tabIndex={-1} aria-hidden className="flex items-center">
         <PassCardStage
           view={toView(pass)}
           mint={voided ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
