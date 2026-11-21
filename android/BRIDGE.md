@@ -54,6 +54,24 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | `externalReader.mode`, `externalReader.connected` | `"keyboard"` and `null`; this does not claim a connected scanner or generic USB/Bluetooth serial support. |
 | `haptics` | `true`: the app plays the `haptic` op. |
 | `customerDisplay.supported`, `customerDisplay.available`, `customerDisplay.active` | All `false`; no customer-display integration is implemented. |
+| `hardware` | Optional array, at most 16 entries: `{kind, id, name?, builtIn, connected, state, facing?, trigger?, reason?}`. `kind` is `camera`, `barcode`, `nfc`, `keyboard`, `usb`, `bluetooth`, `display`, `haptics` or `speaker`; `state` is `ready`, `active`, `off`, `needs-permission`, `unavailable` or `error`; `connected` is `true`, `false` or `null` (unknown). `id` is at most 64 characters and never a serial or MAC. `name` is the OS name, at most 80 characters; the web keeps it on the device. `reason` is at most 120 characters. Existing fields above are unchanged. See the per-kind table below. |
+
+`hardware` entries on Android and iOS:
+
+| Kind | Android | iOS |
+| --- | --- | --- |
+| `camera` | One per `CameraManager` camera, `facing` from `LENS_FACING` (`front`, `back`, `external`). `state`: `ready` when permission is granted, `needs-permission` otherwise, `unavailable` when restricted. | One per `AVCaptureDevice.DiscoverySession` video device, `facing` from `position`; `external` for external cameras. Same states from authorization. |
+| `barcode` | Built-in reader, `builtIn:true`. A non-external, non-virtual keyboard-source `InputDevice` whose name or descriptor matches a scanner word (scanner, barcode, scan, honeywell, zebra, symbol, datalogic, urovo, newland, sunmi, chainway), or an installed vendor scanner service (Zebra DataWedge, Sunmi, Honeywell, Urovo, Newland) with `state:'ready'`. Listed once. `trigger:'unknown'`. | Not reported. |
+| `nfc` | Present when the device has an adapter: `ready`, `active` while reading, or `off` with reason "NFC is off in Settings". | Present when `NFCReaderSession.readingAvailable`: `ready`, or `active` while reading. |
+| `keyboard` | External, non-virtual keyboard-source `InputDevice` (a wedge scanner looks like one), `connected:true`. Below API 34 a device with a vendor id counts as external. | `GCKeyboard.coalesced` when a hardware keyboard or wedge scanner is connected, `connected:true`. |
+| `usb` | `UsbManager` devices except hubs, `name` is the product name, `connected:true`. | Not reported. |
+| `bluetooth` | Bonded HID peripherals, `connected:null`, only when `BLUETOOTH_CONNECT` is already granted (for example by device policy). The app never requests it. | Not reported. |
+| `haptics`, `speaker` | Vibrator present; audio output feature present. | Haptics engine support; always a speaker. |
+| `display` | Not reported. | Not reported. |
+
+Android re-sends `capabilities` on input-device changes, USB attach and detach, NFC adapter changes and resume (debounced 200 ms). iOS re-sends it on keyboard connect and disconnect, and on the other changes above.
+
+Vendor scan broadcasts: when a vendor scanner service is installed the app also listens for its scan intent and delivers reads as `{event:'scan', source:'barcode', value}` through the same bounds and duplicate suppression as keyboard input. Defaults: Sunmi `com.sunmi.scanner.ACTION_DATA_CODE_RECEIVED` (`data`), Honeywell `com.honeywell.sample.action.BARCODE_DATA` (`data`), Urovo `android.intent.ACTION_DECODE_DATA` (`barcode_string`), Newland `nlscan.action.SCANNER_RESULT` (`SCAN_BARCODE1`). Zebra DataWedge has no fixed action: set the profile's intent output to broadcast with action `im.plrs.passbook.reader.action.SCAN` (the string extra is `com.symbol.datawedge.data_string`). The manual action and extra in Settings still work. Keyboard output keeps working through the input field.
 
 Snapshots are sent at handshake, when NFC is started/stopped or its adapter changes, on activity pause/resume, and after camera permission results or camera availability callbacks. A new page must handshake again. The supplied `ReaderClient` keeps the legacy ready envelope in `reader.capabilities`; on an update it replaces `reader.capabilities.capabilities`, refreshes the legacy `nfc` boolean, and dispatches a `capabilities` event whose `detail` is the nested snapshot.
 

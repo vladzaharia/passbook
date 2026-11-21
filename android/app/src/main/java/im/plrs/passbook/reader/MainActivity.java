@@ -8,8 +8,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.hardware.input.InputManager;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+import android.os.Build;
+import android.view.InputDevice;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,7 +42,11 @@ import im.plrs.passbook.reader.protocol.VasReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,6 +58,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private WebSurface web;
     private NfcController nfc;
     private CameraManager cameraManager;
+    private InputManager inputManager;
     private TextView status;
     private Button scan;
     private boolean foreground;
@@ -58,11 +72,25 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private final CameraPermissions cameraPermissions = new CameraPermissions();
     private final BroadcastReceiver barcodeReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
-            if (foreground && config.barcodeAction().equals(intent.getAction())) {
+            if (!foreground || intent.getAction() == null) return;
+            if (intent.getAction().equals(config.barcodeAction())) {
                 barcode(intent.getStringExtra(config.barcodeExtra()));
+                return;
+            }
+            for (Hardware.Vendor vendor : vendorsPresent()) {
+                if (vendor.action().equals(intent.getAction())) barcode(intent.getStringExtra(vendor.extra()));
             }
         }
     };
+    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) { hardwareChanged(); }
+    };
+    private final InputManager.InputDeviceListener inputListener = new InputManager.InputDeviceListener() {
+        @Override public void onInputDeviceAdded(int deviceId) { hardwareChanged(); }
+        @Override public void onInputDeviceRemoved(int deviceId) { hardwareChanged(); }
+        @Override public void onInputDeviceChanged(int deviceId) { hardwareChanged(); }
+    };
+    private final Runnable hardwareReport = () -> { if (foreground) reportCapabilities(); };
     private final BroadcastReceiver nfcReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (!foreground || !NfcAdapter.ACTION_ADAPTER_STATE_CHANGED.equals(intent.getAction())) return;
@@ -100,6 +128,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         config = ReaderConfig.load(this);
         cameraManager = getSystemService(CameraManager.class);
+        inputManager = getSystemService(InputManager.class);
         nfc = new NfcController(this, this);
         buildUi();
         web.load(config);
@@ -176,12 +205,18 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         ContextCompat.registerReceiver(this, nfcReceiver, new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
             ContextCompat.RECEIVER_EXPORTED);
         if (cameraManager != null) cameraManager.registerAvailabilityCallback(cameraAvailability, handler);
+        if (inputManager != null) inputManager.registerInputDeviceListener(inputListener, handler);
+        IntentFilter usb = new IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+        usb.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        ContextCompat.registerReceiver(this, usbReceiver, usb, ContextCompat.RECEIVER_NOT_EXPORTED);
         resumeReader(); cameraPermissions.resume(); reportCapabilities();
     }
     @Override protected void onPause() {
         web.send(message("cancelled"));
         foreground = false; endOneShot(); nfc.stop(); gate.reset(); unregisterBarcode(); unregisterReceiver(nfcReceiver);
         if (cameraManager != null) cameraManager.unregisterAvailabilityCallback(cameraAvailability);
+        if (inputManager != null) inputManager.unregisterInputDeviceListener(inputListener);
+        unregisterReceiver(usbReceiver); handler.removeCallbacks(hardwareReport);
         cameraPermissions.pause(); reportCapabilities();
         web.view.onPause(); super.onPause();
     }
@@ -342,8 +377,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     private void registerBarcode() {
-        if (registered || config.barcodeAction().isEmpty() || !foreground) return;
-        ContextCompat.registerReceiver(this, barcodeReceiver, new IntentFilter(config.barcodeAction()), ContextCompat.RECEIVER_EXPORTED);
+        List<Hardware.Vendor> vendors = vendorsPresent();
+        if (registered || !foreground || (config.barcodeAction().isEmpty() && vendors.isEmpty())) return;
+        IntentFilter filter = new IntentFilter();
+        if (!config.barcodeAction().isEmpty()) filter.addAction(config.barcodeAction());
+        for (Hardware.Vendor vendor : vendors) filter.addAction(vendor.action());
+        ContextCompat.registerReceiver(this, barcodeReceiver, filter, ContextCompat.RECEIVER_EXPORTED);
         registered = true;
     }
     private void unregisterBarcode() {
@@ -398,8 +437,105 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED,
             shouldShowRequestPermissionRationale(Manifest.permission.CAMERA),
             getSharedPreferences("camera-permission", MODE_PRIVATE).getBoolean("denied", false));
-        return capabilitySnapshot(BuildConfig.VERSION_NAME, cameraAvailable, permission,
+        JSONObject snapshot = capabilitySnapshot(BuildConfig.VERSION_NAME, cameraAvailable, permission,
             nfc.supported(), nfc.available(), nfc.isReading(), web != null && web.version() == 2);
+        put(snapshot, "hardware", hardware(permission));
+        return snapshot;
+    }
+
+    private void hardwareChanged() {
+        handler.removeCallbacks(hardwareReport);
+        handler.postDelayed(hardwareReport, 200);
+    }
+
+    private List<Hardware.Vendor> vendorsPresent() { return Hardware.present(installedVendorPackages()); }
+
+    private Set<String> installedVendorPackages() {
+        Set<String> found = new HashSet<>();
+        PackageManager packages = getPackageManager();
+        for (Hardware.Vendor vendor : Hardware.VENDORS) {
+            for (String name : vendor.packages()) {
+                try { packages.getPackageInfo(name, 0); found.add(name); }
+                catch (PackageManager.NameNotFoundException ignored) { /* not installed */ }
+            }
+        }
+        return found;
+    }
+
+    private JSONArray hardware(String cameraPermission) {
+        List<String> facings = new ArrayList<>();
+        try {
+            if (cameraManager != null) {
+                for (String id : cameraManager.getCameraIdList()) {
+                    Integer lens = cameraManager.getCameraCharacteristics(id).get(CameraCharacteristics.LENS_FACING);
+                    facings.add(lens == null ? "external" : lens == CameraCharacteristics.LENS_FACING_FRONT ? "front"
+                        : lens == CameraCharacteristics.LENS_FACING_BACK ? "back" : "external");
+                }
+            }
+        } catch (CameraAccessException | SecurityException | IllegalArgumentException ignored) {
+            // Report the cameras read so far; the camera field already covers a failed enumeration.
+        }
+        List<Hardware.Input> inputs = new ArrayList<>();
+        for (int id : InputDevice.getDeviceIds()) {
+            InputDevice device = InputDevice.getDevice(id);
+            if (device == null || (device.getSources() & InputDevice.SOURCE_KEYBOARD) != InputDevice.SOURCE_KEYBOARD
+                || (device.getSources() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) continue;
+            // isExternal is API 34. Earlier, a USB or Bluetooth device carries a vendor id; built-in keys usually do not.
+            boolean external = Build.VERSION.SDK_INT >= 34 ? device.isExternal() : device.getVendorId() != 0;
+            inputs.add(new Hardware.Input(id, device.getName(), device.getDescriptor(), true, external, device.isVirtual()));
+        }
+        List<String> usb = new ArrayList<>();
+        UsbManager usbManager = getSystemService(UsbManager.class);
+        if (usbManager != null) {
+            for (UsbDevice device : usbManager.getDeviceList().values()) {
+                if (device.getDeviceClass() == 9) continue; // hubs
+                String product = device.getProductName();
+                usb.add(product == null ? "USB device" : product);
+            }
+        }
+        PackageManager packages = getPackageManager();
+        Vibrator vibrator = getSystemService(Vibrator.class);
+        return toJson(Hardware.build(new Hardware.Snapshot(facings, cameraPermission, nfc.supported(), nfc.available(),
+            nfc.isReading(), inputs, installedVendorPackages(), usb, bluetoothInputs(),
+            vibrator != null && vibrator.hasVibrator(), packages.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT))));
+    }
+
+    /** Bonded Bluetooth keyboards and HID peripherals. Never asks for BLUETOOTH_CONNECT; empty when it is not granted. */
+    private List<String> bluetoothInputs() {
+        List<String> names = new ArrayList<>();
+        if (Build.VERSION.SDK_INT < 31
+            || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return names;
+        try {
+            BluetoothManager manager = getSystemService(BluetoothManager.class);
+            if (manager == null || manager.getAdapter() == null) return names;
+            for (BluetoothDevice device : manager.getAdapter().getBondedDevices()) {
+                BluetoothClass type = device.getBluetoothClass();
+                if (type != null && type.getMajorDeviceClass() == BluetoothClass.Device.Major.PERIPHERAL) {
+                    String name = device.getName();
+                    names.add(name == null ? "Bluetooth device" : name);
+                }
+            }
+        } catch (SecurityException ignored) {
+            // Permission revoked between the check and the call: list nothing.
+        }
+        return names;
+    }
+
+    static JSONArray toJson(List<Hardware.Entry> entries) {
+        JSONArray array = new JSONArray();
+        for (Hardware.Entry entry : entries) {
+            JSONObject item = new JSONObject();
+            put(item, "kind", entry.kind()); put(item, "id", entry.id());
+            if (entry.name() != null) put(item, "name", entry.name());
+            put(item, "builtIn", entry.builtIn());
+            put(item, "connected", entry.connected() == null ? JSONObject.NULL : entry.connected());
+            put(item, "state", entry.state());
+            if (entry.facing() != null) put(item, "facing", entry.facing());
+            if (entry.trigger() != null) put(item, "trigger", entry.trigger());
+            if (entry.reason() != null) put(item, "reason", entry.reason());
+            array.put(item);
+        }
+        return array;
     }
 
     static JSONObject capabilitySnapshot(String version, boolean cameraAvailable, String cameraPermission,
