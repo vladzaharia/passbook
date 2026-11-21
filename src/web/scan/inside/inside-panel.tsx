@@ -52,7 +52,6 @@ export function InsidePanel({
 }) {
   const { state } = inside;
   const now = useNow(active);
-  const place = state.places.find((p) => p.place === state.place) ?? state.places[0];
   const total = state.places.reduce((n, p) => n + p.inNow, 0);
   const searching = state.q.trim().length > 0;
   const stale = !online || state.error;
