@@ -8,7 +8,7 @@ import { ValidationError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { isPlatformAdmin, requireOrgAccess } from './access.ts';
-import { listAppleCalls } from './apple-calls.ts';
+import { listAppleCalls } from './asc-client.ts';
 import { listWalletIdentities } from './wallet-list.ts';
 
 /** Mount at /api/v1/wallet-identities. */
@@ -49,5 +49,5 @@ register(
     response: AppleCallListSchema,
     auth: { platform: 'platform:identities' },
   },
-  async (c) => c.json(await listAppleCalls(serviceContext(c), c.req.valid('query').since)),
+  async (c) => c.json(await listAppleCalls(serviceContext(c).env, c.req.valid('query').since)),
 );

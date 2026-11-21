@@ -12,7 +12,7 @@ import {
 } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
-import { all, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -164,7 +164,7 @@ describe('POST /orgs/{orgId}/identities/apple', () => {
     });
 
   it('starts a run for an admin or the org owner, and refuses other organizations', async () => {
-    const res = await start(orgA, member, { handle: 'acme' });
+    const res = await start(orgA, member);
     expect(res.status).toBe(202);
     expect(await res.json()).toMatchObject({ kind: 'provision', targetId: orgA, state: 'queued' });
     expect(created).toHaveLength(1);
@@ -182,6 +182,16 @@ describe('POST /orgs/{orgId}/identities/apple', () => {
   it('is gated by the identity.managed entitlement, for an admin too', async () => {
     await expectProblem(await start(trialOrg, admin), 403, 'FEATURE_NOT_INCLUDED');
     expect(created).toHaveLength(0);
+  });
+
+  it('lets only a platform admin choose the handle', async () => {
+    await expectProblem(
+      await start(orgA, member, { handle: 'nike' }),
+      403,
+      'IDENTITY_HANDLE_ADMIN_ONLY',
+    );
+    expect(created).toHaveLength(0);
+    expect((await start(orgA, member, {})).status).toBe(202);
   });
 
   it('refuses a reserved or invalid handle', async () => {
@@ -226,7 +236,11 @@ describe('identity runs', () => {
     expect(await items(await call(`/api/v1/identity-runs?orgId=${orgA}`, member))).toEqual([id]);
     expect((await call(`/api/v1/identity-runs/${id}`, member)).status).toBe(200);
     expect((await call(`/api/v1/identity-runs/${id}`, admin)).status).toBe(200);
-    await expectProblem(await call(`/api/v1/identity-runs/${id}`, other), 403, 'FORBIDDEN');
+    await expectProblem(
+      await call(`/api/v1/identity-runs/${id}`, other),
+      404,
+      'IDENTITY_RUN_NOT_FOUND',
+    );
     await expectProblem(await call(`/api/v1/identity-runs?orgId=${orgA}`, other), 403, 'FORBIDDEN');
     await expectProblem(await call('/api/v1/identity-runs', member), 422, 'ORG_REQUIRED');
     await expectProblem(
@@ -249,8 +263,18 @@ describe('identity runs', () => {
     );
     await expectProblem(
       await call(`/api/v1/identity-runs/${id}/retry`, other, { method: 'POST' }),
+      404,
+      'IDENTITY_RUN_NOT_FOUND',
+    );
+  });
+
+  it('refuses a retry after the organization lost the feature', async () => {
+    const id = await failedRun();
+    await run(env.DB, "UPDATE org_entitlements SET preset = 'trial' WHERE org_id = ?", [orgA]);
+    await expectProblem(
+      await call(`/api/v1/identity-runs/${id}/retry`, member, { method: 'POST' }),
       403,
-      'FORBIDDEN',
+      'FEATURE_NOT_INCLUDED',
     );
   });
 
@@ -287,8 +311,8 @@ describe('identity actions', () => {
     expect((await call('/api/v1/identities/wi-a/certificates', admin)).status).toBe(200);
     await expectProblem(
       await call('/api/v1/identities/wi-b/certificates', member),
-      403,
-      'FORBIDDEN',
+      404,
+      'IDENTITY_NOT_FOUND',
     );
     await expectProblem(
       await call('/api/v1/identities/nope/certificates', admin),
@@ -314,7 +338,18 @@ describe('identity actions', () => {
     );
   });
 
-  it('pauses auto-renew and stops new passes, and only a managed identity resumes', async () => {
+  it('pauses auto-renew and stops new passes, and resumes a managed or platform identity', async () => {
+    await run(
+      env.DB,
+      `INSERT INTO signing_identities
+         (id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, is_default, created_at, provenance, rotation, cert_pem)
+       VALUES ('wi-plat', NULL, 'Plat', 'pass.test.plat', 'TEAM123456', 'env', 'WIPLAT', 0, 1, 'platform', 'manual', 'PEM')`,
+    );
+    const resumed = await call('/api/v1/identities/wi-plat', admin, {
+      method: 'PATCH',
+      body: { rotation: 'auto' },
+    });
+    expect(await resumed.json()).toMatchObject({ rotation: 'auto' });
     const paused = await call('/api/v1/identities/wi-b', admin, {
       method: 'PATCH',
       body: { rotation: 'manual', issuing: false },
@@ -331,37 +366,70 @@ describe('identity actions', () => {
     );
   });
 
-  it('revokes only a superseded certificate, after the typed confirmation', async () => {
-    let revoked: string | null = null;
-    bindApple({
-      revokeCertificate: async (id: string) => {
-        revoked = id;
-      },
+  describe('revoke-certificate', () => {
+    const HOUR = 3_600_000;
+    let oidcAdmin: SessionFixture;
+    beforeEach(async () => {
+      oidcAdmin = admin;
+      const now = fx.clock.now();
+      await run(
+        env.DB,
+        `INSERT INTO identity_certificates (id, identity_id, origin, state, asc_certificate_id, created_at, ended_at)
+         VALUES ('wc-old', 'wi-b', 'asc', 'superseded', 'asc-1', 5, ?),
+                ('wc-up', 'wi-b', 'upload', 'superseded', NULL, 5, ?),
+                ('wc-new', 'wi-b', 'asc', 'active', 'asc-2', 6, NULL)`,
+        [now - 100 * HOUR, now - 100 * HOUR],
+      );
     });
-    await run(
-      env.DB,
-      `INSERT INTO identity_certificates (id, identity_id, origin, state, asc_certificate_id, created_at)
-       VALUES ('wc-old', 'wi-b', 'asc', 'superseded', 'asc-1', 5), ('wc-new', 'wi-b', 'asc', 'active', 'asc-2', 6)`,
-    );
-    const revoke = (certificateId: string, confirm: string) =>
-      call('/api/v1/identities/wi-b/revoke-certificate', admin, {
+    const revoke = (
+      certificateId: string,
+      confirm = 'pass.test.wi-b',
+      who = oidcAdmin,
+      id = 'wi-b',
+    ) =>
+      call(`/api/v1/identities/${id}/revoke-certificate`, who, {
         method: 'POST',
         body: { certificateId, reason: 'compromised', confirm },
       });
-    await expectProblem(await revoke('wc-old', 'nope'), 422, 'IDENTITY_CONFIRM_MISMATCH');
-    await expectProblem(
-      await revoke('wc-new', 'pass.test.wi-b'),
-      409,
-      'IDENTITY_CERT_NOT_REVOCABLE',
-    );
-    const ok = await revoke('wc-old', 'pass.test.wi-b');
-    expect(await ok.json()).toMatchObject({ id: 'wc-old', state: 'revoked' });
-    expect(revoked).toBe('asc-1');
-    const states = await all<{ state: string }>(
-      env.DB,
-      "SELECT state FROM identity_certificates WHERE id IN ('wc-old','wc-new') ORDER BY id",
-    );
-    expect(states.map((s) => s.state)).toEqual(['active', 'revoked']);
+
+    it('starts a revoke run after the wait, and refuses each unsafe case', async () => {
+      await expectProblem(await revoke('wc-old', 'nope'), 422, 'IDENTITY_CONFIRM_MISMATCH');
+      await expectProblem(await revoke('wc-new'), 409, 'IDENTITY_CERT_NOT_REVOCABLE');
+      await expectProblem(await revoke('wc-up'), 409, 'IDENTITY_CERT_NOT_REVOCABLE');
+      const ok = await revoke('wc-old');
+      expect(ok.status).toBe(202);
+      expect(await ok.json()).toMatchObject({ kind: 'revoke', targetId: 'wi-b', state: 'queued' });
+      expect(created).toHaveLength(1);
+    });
+
+    it('waits for the reissue or 72 hours', async () => {
+      await run(env.DB, "UPDATE identity_certificates SET ended_at = ? WHERE id = 'wc-old'", [
+        fx.clock.now() - HOUR,
+      ]);
+      await expectProblem(await revoke('wc-old'), 409, 'IDENTITY_REISSUE_PENDING');
+      await run(
+        env.DB,
+        `INSERT INTO workflow_runs (instance_id, kind, target_id, status, started_at, finished_at)
+         VALUES ('wf-1', 'bulk_reissue', 'wi-b', 'complete', ?, ?)`,
+        [fx.clock.now() - 30 * 60_000, fx.clock.now()],
+      );
+      expect((await revoke('wc-old')).status).toBe(202);
+    });
+
+    it('never touches a platform identity', async () => {
+      await run(env.DB, "UPDATE signing_identities SET provenance = 'platform' WHERE id = 'wi-b'");
+      await expectProblem(await revoke('wc-old'), 409, 'IDENTITY_PROTECTED');
+    });
+
+    it('needs a Pocket ID sign-in', async () => {
+      const magic = await makeSession(fx, {
+        userId: (await makeUser(fx)).id,
+        roles: ['admin', 'user'],
+        amr: 'magic_link',
+      });
+      await expectProblem(await revoke('wc-old', 'pass.test.wi-b', magic), 403, 'OIDC_REQUIRED');
+      await expectProblem(await revoke('wc-old', 'pass.test.wi-b', member), 403, 'FORBIDDEN');
+    });
   });
 });
 

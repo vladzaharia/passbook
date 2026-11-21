@@ -1,4 +1,4 @@
-import type { AppleRpc } from '../../../../workers/apple-provisioner/src/types.ts';
+import type { AppleRpc, CallRow } from '../../../../workers/apple-provisioner/src/types.ts';
 import {
   AppError,
   ConflictError,
@@ -54,4 +54,19 @@ export function ascClient(env: { APPLE?: unknown }): AppleRpc {
     findPassType: (identifier, runId) => call((r) => r.findPassType(identifier, runId)),
     calls: (since) => call((r) => r.calls(since)),
   };
+}
+
+/** The provisioner's call ledger since `since` (ms), without Apple's request ids. `available: false` when it is not bound. */
+export async function listAppleCalls(
+  env: object,
+  since: number,
+): Promise<{ available: boolean; items: Omit<CallRow, 'appleRequestId'>[] }> {
+  try {
+    const calls = await ascClient(env as { APPLE?: unknown }).calls(since);
+    return { available: true, items: calls.map(({ appleRequestId: _id, ...c }) => c) };
+  } catch (error) {
+    if (error instanceof UnavailableError && error.code === 'ASC_UNAVAILABLE')
+      return { available: false, items: [] };
+    throw error;
+  }
 }
