@@ -4202,6 +4202,24 @@
       ]
     },
     {
+      "code": "STAFF_PIN_RESET_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "STAFF_REQUIRED",
       "statuses": [
         403
