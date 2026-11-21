@@ -8,8 +8,8 @@ import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import {
   accountProvenByMail,
+  checkPrimaryOwner,
   createUser,
-  refuseNonPrimaryOwner,
   releaseClaimOtherThan,
 } from './account-claims.ts';
 import * as repo from './repo.ts';
@@ -165,14 +165,25 @@ export async function linkIdentityByMail(
   pending: PendingIdentity,
   sign: SignInContext,
 ): Promise<void> {
-  await refuseNonPrimaryOwner(ctx, email);
-  const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: true });
+  const check = await checkPrimaryOwner(ctx, email, { trust: false, mailProven: true });
+  const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: check !== 'lifted' });
   const linked = await repo.insertIdentity(ctx.env.DB, {
     ...pending,
     userId: user.id,
     now: ctx.clock.now(),
   });
-  if (linked) await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
+  if (linked) {
+    await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
+    if (check === 'lifted') {
+      await recordAudit(ctx, {
+        actorType: 'user',
+        actorId: user.id,
+        action: 'auth.identity_linked_moved_primary',
+        targetType: 'user',
+        targetId: user.id,
+      });
+    }
+  }
   await attachWaitingPassesForEmail(ctx, user.id, email);
 }
 

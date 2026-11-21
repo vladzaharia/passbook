@@ -59,25 +59,34 @@ const noTrace = async (subject: string, email: string) => {
 };
 
 describe('Polaris ID email that is only a secondary address', () => {
-  it.each([true, false])(
-    'trust %s: refused with IDP_EMAIL_NOT_PRIMARY, nothing created or bound',
-    async (trust) => {
-      const { victim, added } = await victimWithAddedAddress();
-      const { res, subject } = await refusedFor(trust, added);
-      expect(res.status).toBe(403);
-      const html = await res.text();
-      expect(html).toContain('Wrong email');
-      expect(html).toContain('main email');
-      expect(html).toContain(maskEmail(victim.primaryEmail));
-      await noTrace(subject.sub, added);
-      const audit = await first(
-        h.env.DB,
-        "SELECT 1 FROM audit_log WHERE action = 'auth.oidc_email_not_primary' AND target_id = ?",
-        [victim.id],
-      );
-      expect(audit).not.toBeNull();
-    },
-  );
+  it('trust on: refused with IDP_EMAIL_NOT_PRIMARY, nothing created or bound', async () => {
+    const { victim, added } = await victimWithAddedAddress();
+    const { res, subject } = await refusedFor(true, added);
+    expect(res.status).toBe(403);
+    const html = await res.text();
+    expect(html).toContain('Wrong email');
+    expect(html).toContain(maskEmail(victim.primaryEmail));
+    await noTrace(subject.sub, added);
+    const audit = await first(
+      h.env.DB,
+      "SELECT 1 FROM audit_log WHERE action = 'auth.oidc_email_not_primary' AND target_id = ?",
+      [victim.id],
+    );
+    expect(audit).not.toBeNull();
+  });
+
+  // Before: the page named the masked primary for an unproven claim. Now an unproven claim learns
+  // nothing about the account; the mask comes only after the address proves itself by mail.
+  it('trust off: an unproven claim gets the mail proof, not the masked primary', async () => {
+    const { victim, added } = await victimWithAddedAddress();
+    const { res, subject } = await refusedFor(false, added);
+    expect(res.status).toBe(403);
+    const html = await res.text();
+    expect(html).toContain('Check your email');
+    expect(html).not.toContain(maskEmail(victim.primaryEmail));
+    expect(h.mail.at(-1)?.to).toBe(added);
+    await noTrace(subject.sub, added);
+  });
 
   it('the mail-proof link path refuses too', async () => {
     const { added } = await victimWithAddedAddress();

@@ -1,4 +1,4 @@
-import { knownEmail, maskEmail } from '../../../shared/email.ts';
+import { knownEmail, maskEmail, normalizeEmail } from '../../../shared/email.ts';
 import { ConflictError, ForbiddenError, IdpEmailNotPrimaryError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -14,15 +14,35 @@ export async function createUser(ctx: ServiceContext, email: string, name: strin
   return user;
 }
 
+/** What a Polaris ID email that names an account without auto-linking needs next. */
+export type PrimaryCheck = 'ok' | 'prove' | 'lifted';
+
 /**
  * A Polaris ID email that matches an account only through a secondary address (or a primary an email
- * session moved) creates and binds nothing: the person fixes the email in Polaris ID.
+ * session moved) creates and binds nothing. Unproven (no mail proof, provider not trusted), nothing
+ * is said about the account: the address is mailed. Then:
+ * - the address is the member's own primary, moved by an email session, and the account has no
+ *   Polaris ID yet: the mail proof lifts the fence (`lifted`) and the subject links;
+ * - otherwise the person is told the main email, masked.
  */
-export async function refuseNonPrimaryOwner(ctx: ServiceContext, email: string): Promise<void> {
+export async function checkPrimaryOwner(
+  ctx: ServiceContext,
+  email: string,
+  state: { trust: boolean; mailProven: boolean },
+): Promise<PrimaryCheck> {
   const db = ctx.env.DB;
-  if (await repo.findUserByProvenEmail(db, email, { primaryOnly: true })) return;
+  if (await repo.findUserByProvenEmail(db, email, { primaryOnly: true })) return 'ok';
   const owner = await repo.findUserByEmail(db, email);
-  if (!owner) return;
+  if (!owner) return 'ok';
+  const movedPrimary =
+    owner.status === 'active' &&
+    normalizeEmail(owner.primary_email) === normalizeEmail(email) &&
+    owner.primary_set_amr === 'magic_link' &&
+    !(await repo.hasExternalIdentity(db, owner.id));
+  if (movedPrimary) {
+    return state.mailProven ? 'lifted' : 'prove';
+  }
+  if (!state.trust && !state.mailProven) return 'prove';
   ctx.log.warn('auth.oidc_email_not_primary', { code: 'IDP_EMAIL_NOT_PRIMARY', userId: owner.id });
   await recordAudit(ctx, {
     actorType: 'system',

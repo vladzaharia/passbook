@@ -43,10 +43,10 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason:
       'sign-in finds or creates the user, stamps last login and settles an unproven primary address (#73) before any principal exists',
     writes: [
-      'users:16004e2ec149',
+      'users:60e8f7814206',
       'users:21bde5076000',
       'users:c3b10ce30da0',
-      'users:6cc984774c7b',
+      'users:ab5c6955ad57',
     ],
   },
   'src/worker/modules/me/repo.ts': {

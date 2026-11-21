@@ -30,7 +30,7 @@ export const findUserByEmail = (db: Db, email: string) =>
   first<UserRow>(
     db,
     'SELECT u.* FROM user_emails e JOIN users u ON u.id = e.user_id WHERE e.email = ?',
-    [email],
+    [normalizeEmail(email)],
   );
 
 export const findUserByPrimaryEmail = (db: Db, email: string) =>
@@ -43,7 +43,7 @@ export const findUserByPrimaryEmail = (db: Db, email: string) =>
 export const unverifiedPrimaryEmail = (userId: string) => `${userId}${UNVERIFIED_EMAIL_SUFFIX}`;
 
 /** The account signs in through an identity provider (anything but the break-glass token). */
-const hasExternalIdentity = async (db: Db, userId: string) =>
+export const hasExternalIdentity = async (db: Db, userId: string) =>
   (await first(db, "SELECT 1 FROM auth_identities WHERE user_id = ? AND provider <> 'breakglass'", [
     userId,
   ])) !== null;
@@ -102,10 +102,10 @@ export async function releaseUnprovenPrimary(
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?
+    `UPDATE users SET primary_email = ? WHERE id = ? AND lower(primary_email) = ?
        AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = users.id AND a.provider <> 'breakglass')
        AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = ?)`,
-    [unverifiedPrimaryEmail(holderId), holderId, email, email],
+    [unverifiedPrimaryEmail(holderId), holderId, normalizeEmail(email), normalizeEmail(email)],
   );
   return changes > 0;
 }
@@ -121,9 +121,9 @@ export async function adoptPrimaryEmail(
   await run(
     db,
     `UPDATE users SET primary_email = ?, primary_set_amr = ? WHERE id = ? AND primary_email = ?
-       AND NOT EXISTS (SELECT 1 FROM users WHERE primary_email = ?)
+       AND NOT EXISTS (SELECT 1 FROM users WHERE lower(primary_email) = ?)
        AND (? = 'oidc' OR NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.user_id = users.id AND m.revoked_at IS NULL))`,
-    [email, amr, userId, unverifiedPrimaryEmail(userId), email, amr],
+    [email, amr, userId, unverifiedPrimaryEmail(userId), normalizeEmail(email), amr],
   );
 }
 

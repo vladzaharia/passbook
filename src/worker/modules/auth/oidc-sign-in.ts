@@ -5,8 +5,8 @@ import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import { ensurePersonalOrg } from '../orgs/personal.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import {
+  checkPrimaryOwner,
   createUserForProvenEmail,
-  refuseNonPrimaryOwner,
   releaseClaimOtherThan,
 } from './account-claims.ts';
 import { withinCaps, withinDailyCap, withinIpCap, withinSubjectCap } from './magic-caps.ts';
@@ -89,14 +89,15 @@ export async function signInOidc(
     // Only a proven address names an owner: a primary email on an account that signs in through a
     // provider may be an unverified claim.
     const owner = await repo.findUserByProvenEmail(db, email, { primaryOnly: true });
-    if (!owner) await refuseNonPrimaryOwner(ctx, email);
+    const check = owner ? 'ok' : await checkPrimaryOwner(ctx, email, { trust, mailProven: false });
     if (owner && owner.status !== 'active') {
       throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
     }
     // Without trust (setting off, or the provider did not verify the address) nothing is linked or
     // created from the claim: the mail round trip proves the address first, and the account is
     // made or found then.
-    if (!trust) await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign);
+    if (!trust || check === 'prove')
+      await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign);
     user = owner ?? (await createUserForProvenEmail(ctx, email, claims.name ?? null, sign));
     linkVia = owner ? 'trusted_email' : 'new_user';
   }
