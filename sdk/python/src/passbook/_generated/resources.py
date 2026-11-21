@@ -1423,6 +1423,15 @@ class ScanEventsResource:
         """Archive a scan event (its scanners are detached) `POST /api/v1/scan-events/{id}/archive`"""
         return self._core.request("POST", f"/api/v1/scan-events/{_p(id)}/archive", result=m.ScanEventsArchiveResult, **opts)
 
+    def attach_scanners(
+        self,
+        id: str,
+        body: m.ScanEventsAttachScannersBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsAttachScannersResult:
+        """Move scanners onto a scan event `POST /api/v1/scan-events/{id}/scanners`"""
+        return self._core.request("POST", f"/api/v1/scan-events/{_p(id)}/scanners", body=body, result=m.ScanEventsAttachScannersResult, **opts)
+
     def create(
         self,
         body: m.ScanEventsCreateBody | _Dict[str, _Any],
@@ -1517,6 +1526,14 @@ class ScanZonesResource:
     ) -> Page[m.ScanZonesListItem]:
         """List zones `GET /api/v1/scan-zones`"""
         return self._core.paginate("GET", "/api/v1/scan-zones", query={"cursor": cursor, "limit": limit, "archived": archived}, result=m.ScanZonesListResult, cursor_param="cursor", **opts)
+
+    def reset_visits(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesResetVisitsResult:
+        """Reset a pass’s visits `POST /api/v1/scan-zones/visits/{id}/reset`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/visits/{_p(id)}/reset", result=m.ScanZonesResetVisitsResult, **opts)
 
     def restore(
         self,

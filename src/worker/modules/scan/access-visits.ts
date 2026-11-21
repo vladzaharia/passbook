@@ -4,7 +4,7 @@ import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { ACCESS_GATE, passTarget } from './repo-access.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited } from './repo-admin-grant.ts';
 
 const CODES = { config: 'SCAN_PASS_CHANGED', lineage: 'SCAN_PASS_CHANGED' } as const;
 
@@ -18,7 +18,10 @@ export async function resetVisits(
   passId: string,
   authority: TenantPassWrite,
 ): Promise<ScanVisitsReset> {
-  if (authority.kind !== 'session' || authority.capability !== 'scanning:manage')
+  if (
+    (authority.kind === 'session' && authority.capability !== 'scanning:manage') ||
+    (authority.kind === 'api_key' && authority.scope !== 'scanning:write')
+  )
     throw new ForbiddenError();
   const pass = await passTarget(ctx.env.DB, passId);
   if (!pass || pass.orgId !== authority.orgId || pass.mode !== authority.mode)
@@ -40,8 +43,7 @@ export async function resetVisits(
   g.add(
     audited(g, ctx, {
       orgId: pass.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'pass.access_visits_reset',
       targetType: 'pass',
       targetId: passId,

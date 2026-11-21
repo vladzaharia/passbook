@@ -5644,6 +5644,54 @@
   }
  },
  {
+  "id": "scan-events.postScanEventsByIdScanners",
+  "call": "scan_events.attach_scanners",
+  "http": "POST",
+  "path": "/api/v1/scan-events/{id}/scanners",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "scannerIds": [
+    "x"
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
   "id": "scanners.getScanSetups",
   "call": "scan_setups.list",
   "http": "GET",
@@ -5864,6 +5912,28 @@
    ],
    "inNow": 0,
    "archivedAt": 0
+  }
+ },
+ {
+  "id": "scan-zones.postScanZonesVisitsByIdReset",
+  "call": "scan_zones.reset_visits",
+  "http": "POST",
+  "path": "/api/v1/scan-zones/visits/{id}/reset",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "visits": 0
   }
  },
  {

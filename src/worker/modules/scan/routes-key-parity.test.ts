@@ -6,6 +6,7 @@ import { first } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createScannerStore } from './auth-store.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
+import { eventTemplate } from './template-setup-test-fixtures.ts';
 
 const fixture = scanningSessionsFixture();
 let app: ReturnType<typeof createApp>;
@@ -96,13 +97,12 @@ describe('scan events by scanning:write key', () => {
     const res = await send('POST', '/scan-events', k.headers, {
       orgId: orgId(),
       name: 'Key gala',
-      templateIds: [],
+      templateIds: [await eventTemplate(fixture.kit, 'Key gala ticket')],
       opensAt: 1_795_129_200_000,
       closesAt: 1_795_212_000_000,
       timeZone: 'UTC',
     });
-    expect([201, 422]).toContain(res.status);
-    if (res.status !== 201) return;
+    expect(res.status).toBe(201);
     const event = (await res.json()) as { id: string };
     expect((await send('POST', `/scan-events/${event.id}/archive`, k.headers)).status).toBe(200);
     expect(await audit('scan_event.archive', event.id)).toEqual({ t: 'api_key', a: k.id });
@@ -185,5 +185,37 @@ describe('session and device writes by scanning:write key', () => {
       scopes: ['scanning:write'],
     }).catch(() => null);
     if (other) expect((await send('PATCH', path, other.headers, body)).status).toBe(404);
+  });
+});
+
+describe('event assign and visits reset by scanning:write key', () => {
+  it('assigns no scanners to an event as the key, and refuses a read-only key', async () => {
+    const k = await keyOf(['scanning:write']);
+    const made = await send('POST', '/scan-events', k.headers, {
+      orgId: orgId(),
+      name: 'Assign gala',
+      templateIds: [await eventTemplate(fixture.kit, 'Assign ticket')],
+      opensAt: 1_795_129_200_000,
+      closesAt: 1_795_212_000_000,
+      timeZone: 'UTC',
+    });
+    expect(made.status).toBe(201);
+    const event = (await made.json()) as { id: string };
+    const body = { scannerIds: [] };
+    expect((await send('POST', `/scan-events/${event.id}/scanners`, k.headers, body)).status).toBe(
+      200,
+    );
+    const read = await keyOf(['scan-setup:read']);
+    expect(
+      (await send('POST', `/scan-events/${event.id}/scanners`, read.headers, body)).status,
+    ).toBe(403);
+  });
+
+  it('answers a visits reset for an unknown pass with 404 and a read-only key with 403', async () => {
+    const id = '0193a1b2-7c00-7000-8000-00000000fffe';
+    const k = await keyOf(['scanning:write']);
+    expect((await send('POST', `/scan-zones/visits/${id}/reset`, k.headers)).status).toBe(404);
+    const read = await keyOf(['scan-setup:read']);
+    expect((await send('POST', `/scan-zones/visits/${id}/reset`, read.headers)).status).toBe(403);
   });
 });

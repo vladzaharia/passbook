@@ -5612,9 +5612,13 @@ type ScanEvent struct {
 
 type ScanEventsArchiveResult = ScanEvent
 
+type ScanEventsAttachScannersBody = ScanEventsAttachScannersParams
+
 type ScanEventsAttachScannersParams struct {
 	ScannerIds []string `json:"scannerIds"`
 }
+
+type ScanEventsAttachScannersResult = ScanEvent
 
 type ScanEventsCreateBody = ScanEventsCreateParams
 
@@ -6551,6 +6555,11 @@ type ScanZonesListQuery struct {
 type ScanZonesMarkOutParams struct {
 	PassID string `json:"passId"`
 	Place  string `json:"place"`
+}
+
+type ScanZonesResetVisitsResult struct {
+	PassID string `json:"passId"`
+	Visits int64  `json:"visits"`
 }
 
 type ScanZonesRestoreResult struct {

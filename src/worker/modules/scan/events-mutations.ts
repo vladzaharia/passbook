@@ -27,7 +27,6 @@ import {
   scannersAssignable,
 } from './repo-admin-grant.ts';
 import { attachedTemplateChecks } from './repo-event-authority.ts';
-import type { EventAuthority } from './repo-event-keyset.ts';
 import {
   addEventArchive,
   addEventAssign,
@@ -215,7 +214,7 @@ export async function assignScanners(
   userId: string,
   id: string,
   input: z.infer<typeof ScanEventAssignSchema>,
-  authority: EventAuthority,
+  authority: TenantPassWrite,
 ) {
   const db = ctx.env.DB;
   const row = await loadManageEvent(ctx, id, userId, authority);
@@ -261,8 +260,7 @@ export async function assignScanners(
     g.add(
       audited(g, ctx, {
         orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
+        ...adminActorOf(authority, userId),
         action: 'scan_event.assign',
         targetType: 'scan_event',
         targetId: id,

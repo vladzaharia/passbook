@@ -815,7 +815,9 @@ __all__ = [
     "ScanDeviceCapabilities",
     "ScanEvent",
     "ScanEventsArchiveResult",
+    "ScanEventsAttachScannersBody",
     "ScanEventsAttachScannersParams",
+    "ScanEventsAttachScannersResult",
     "ScanEventsCreateBody",
     "ScanEventsCreateParams",
     "ScanEventsCreateResult",
@@ -933,6 +935,7 @@ __all__ = [
     "ScanZonesListResultItemsItemCheckedAtItem",
     "ScanZonesListResultItemsItemPlansItem",
     "ScanZonesMarkOutParams",
+    "ScanZonesResetVisitsResult",
     "ScanZonesRestoreResult",
     "ScanZonesRestoreResultCheckedAtItem",
     "ScanZonesRestoreResultPlansItem",
@@ -7307,6 +7310,10 @@ class ScanZonesMarkOutParams(_Model):
     passId: str
     place: str
 
+class ScanZonesResetVisitsResult(_Model):
+    passId: str
+    visits: _Literal[0]
+
 class ScanZonesRestoreResult(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str
     capacity: int | None
@@ -9425,6 +9432,10 @@ ScanCard = _Dict[str, _Any] | None
 ScanDeviceCapabilities = _Dict[str, _Any] | None
 
 ScanEventsArchiveResult = ScanEvent
+
+ScanEventsAttachScannersBody = ScanEventsAttachScannersParams
+
+ScanEventsAttachScannersResult = ScanEvent
 
 ScanEventsCreateBody = ScanEventsCreateParams
 

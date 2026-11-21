@@ -1539,6 +1539,15 @@ func (r *ScanEventsResource) Archive(ctx context.Context, id string, opts ...Req
 	return &out, nil
 }
 
+// AttachScanners Move scanners onto a scan event `POST /api/v1/scan-events/{id}/scanners`
+func (r *ScanEventsResource) AttachScanners(ctx context.Context, id string, body *ScanEventsAttachScannersBody, opts ...RequestOption) (*ScanEventsAttachScannersResult, error) {
+	var out ScanEventsAttachScannersResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-events/" + pathEscape(id) + "/scanners", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Create Create a scan event `POST /api/v1/scan-events`
 func (r *ScanEventsResource) Create(ctx context.Context, body *ScanEventsCreateBody, opts ...RequestOption) (*ScanEventsCreateResult, error) {
 	var out ScanEventsCreateResult
@@ -1626,6 +1635,15 @@ func (r *ScanZonesResource) Create(ctx context.Context, body *ScanZonesCreateBod
 // List List zones `GET /api/v1/scan-zones`
 func (r *ScanZonesResource) List(ctx context.Context, query *ScanZonesListQuery, opts ...RequestOption) *Pager[ScanZonesListItem] {
 	return newPager[ScanZonesListItem](r.c, call{method: "GET", path: "/api/v1/scan-zones", query: queryValues(query)}, "cursor", opts)
+}
+
+// ResetVisits Reset a pass’s visits `POST /api/v1/scan-zones/visits/{id}/reset`
+func (r *ScanZonesResource) ResetVisits(ctx context.Context, id string, opts ...RequestOption) (*ScanZonesResetVisitsResult, error) {
+	var out ScanZonesResetVisitsResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones/visits/" + pathEscape(id) + "/reset"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // Restore Restore a zone and the zones below it `POST /api/v1/scan-zones/{id}/restore`

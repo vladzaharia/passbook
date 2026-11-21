@@ -2,6 +2,7 @@ import {
   CreateScanEventSchema,
   IdParamSchema,
   pageOf,
+  ScanEventAssignSchema,
   ScanEventListQuerySchema,
   ScanEventSchema,
   UpdateScanEventSchema,
@@ -14,7 +15,7 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
 import { captureEventAuthority, eventTarget, eventView, listEvents } from './events.ts';
-import { archiveEvent, createEvent, updateEvent } from './events-mutations.ts';
+import { archiveEvent, assignScanners, createEvent, updateEvent } from './events-mutations.ts';
 
 type Router = ReturnType<typeof createRouter>;
 const TAG = 'scan-events';
@@ -168,6 +169,24 @@ export function registerEventWrites(router: Router): void {
       const id = c.req.valid('param').id;
       const w = await byId(c, id);
       return c.json(await archiveEvent(w.ctx, w.actorId, id, w.authority));
+    },
+  );
+  register(
+    router,
+    TAG,
+    {
+      method: 'post',
+      path: '/{id}/scanners',
+      summary: 'Move scanners onto a scan event',
+      auth: AUTH,
+      params: IdParamSchema,
+      body: ScanEventAssignSchema,
+      response: ScanEventSchema,
+    },
+    async (c) => {
+      const id = c.req.valid('param').id;
+      const w = await byId(c, id);
+      return c.json(await assignScanners(w.ctx, w.actorId, id, c.req.valid('json'), w.authority));
     },
   );
 }

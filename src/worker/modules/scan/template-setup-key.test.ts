@@ -170,7 +170,7 @@ describe('which scan admin grants a key may hold', () => {
       'org.scan.staff.pin',
       'org_mode.scan.scanner.revoke',
       'org_mode.scan.zone.create',
-      'org_mode.scan.event.assign',
+      'org_mode.scan.pairing.token',
     ])
       expect(() => grantAuthorityOf(key('scanning:write'), 'k1', 'o1', purpose), purpose).toThrow();
   });

@@ -1,6 +1,7 @@
 import { IdParamSchema } from '../../../shared/contracts/common.ts';
 import {
   CreateScanZoneSchema,
+  ScanVisitsResetSchema,
   ScanZoneListQuerySchema,
   ScanZoneListSchema,
   ScanZoneSchema,
@@ -13,6 +14,8 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
+import { resetVisits } from './access-visits.ts';
+import { passTarget } from './repo-access.ts';
 import { zoneTarget } from './repo-zones.ts';
 import { archiveZone, createZone, listZones, updateZone } from './zones.ts';
 
@@ -162,4 +165,24 @@ export function registerZoneRoutes(router: Router): void {
         );
       },
     );
+  register(
+    router,
+    TAG,
+    {
+      method: 'post',
+      path: '/visits/{id}/reset',
+      summary: 'Reset a pass’s visits',
+      auth: WRITE,
+      params: IdParamSchema,
+      response: ScanVisitsResetSchema,
+    },
+    async (c) => {
+      const passId = c.req.valid('param').id;
+      const pass = await passTarget(serviceContext(c).env.DB, passId);
+      const missing = () => new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+      if (!pass) throw missing();
+      const w = await caller(c, pass.orgId, 'scanning:manage', missing);
+      return c.json(await resetVisits(w.ctx, w.actorId, passId, w.authority));
+    },
+  );
 }
