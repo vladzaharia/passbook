@@ -195,13 +195,7 @@ function Inventory({
         footer={
           <LoadMore query={query} shown={rows.length || undefined} noun={['tag', 'tags']} scoped />
         }
-        empty={
-          <EmptyState
-            art="badge"
-            title={TAG_COPY.inventory.empty.headline}
-            description={TAG_COPY.inventory.empty.sub}
-          />
-        }
+        empty={<EmptyState art="badge" title={TAG_COPY.inventory.empty.headline} />}
       />
       {search.tag ? (
         <TagSheet id={search.tag} readOnly={readOnly} onClose={() => set({ tag: undefined })} />

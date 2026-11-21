@@ -41,7 +41,7 @@ describe('import page', () => {
     const user = userEvent.setup();
     const t = setup();
     const { container, router } = await t.render();
-    await screen.findByText('Spreadsheet');
+    await screen.findByRole('button', { name: 'Check file' });
     const input = container.querySelector('input[type=file]') as HTMLInputElement;
     await user.upload(input, new File(['Name,Id\nMaya,A1'], 'people.csv', { type: 'text/csv' }));
     await user.click(await screen.findByRole('button', { name: 'Check file' }));
@@ -59,7 +59,7 @@ describe('import page', () => {
     const user = userEvent.setup();
     const t = setup();
     const { container } = await t.render();
-    await screen.findByText('Spreadsheet');
+    await screen.findByRole('button', { name: 'Check file' });
     const input = container.querySelector('input[type=file]') as HTMLInputElement;
     await user.upload(input, new File(['x'], 'people.xlsx'));
     expect(await screen.findByText('Save the sheet as CSV first.')).toBeTruthy();
@@ -82,7 +82,7 @@ describe('import page', () => {
     const user = userEvent.setup();
     const t = setup();
     const { container } = await t.render();
-    await screen.findByText('Spreadsheet');
+    await screen.findByRole('button', { name: 'Check file' });
     const input = container.querySelector('input[type=file]') as HTMLInputElement;
     await user.upload(input, new File([new Uint8Array([0x4e, 0xe9, 0x0a])], 'latin.csv'));
     expect(await screen.findByText('The file is not UTF-8. Save it as CSV UTF-8.')).toBeTruthy();
@@ -171,6 +171,6 @@ describe('import page', () => {
     const t = setup({}, [membershipFixture(ORG.id, { capabilities: ['passes:read'] })]);
     await t.render();
     expect(await screen.findByText(/operator or admin role/)).toBeTruthy();
-    expect(screen.queryByText('Spreadsheet')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Check file' })).toBeNull();
   });
 });

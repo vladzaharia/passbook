@@ -79,7 +79,6 @@ export function Rules({
       </FormField>
       <SwitchRow
         label="Wait between entries"
-        help="Hold a second tap that comes too soon."
         checked={waiting}
         onCheckedChange={(on) => setRules({ ...rules, reentryMinutes: on ? WAIT_DEFAULT : null })}
       />

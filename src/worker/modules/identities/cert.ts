@@ -13,7 +13,7 @@ const NAME_OIDS: Record<string, string> = {
   [UID_OID]: 'UID',
 };
 
-const engine = new pki.CryptoEngine({
+export const engine = new pki.CryptoEngine({
   name: 'WebCrypto',
   crypto,
   subtle: crypto.subtle,

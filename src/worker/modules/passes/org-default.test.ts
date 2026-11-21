@@ -78,6 +78,8 @@ const ROUTES: Route[] = [
     path: `/passes/bulk-print/${ID}/pdf`,
     scope: 'passes:read',
   },
+  { op: 'holders.getHolders', method: 'GET', path: '/holders', scope: 'passes:read' },
+  { op: 'broadcasts.getBroadcasts', method: 'GET', path: '/broadcasts', scope: 'messages:write' },
   { op: 'sandbox.getTestInbox', method: 'GET', path: '/test-inbox', scope: 'passes:read' },
   {
     op: 'sandbox.getTestInboxById',
@@ -190,5 +192,31 @@ describe.each(ROUTES)('$op', (r) => {
   it('still asks a platform key for an org', async () => {
     const res = await send(r, keyOf(null));
     expect(res.status).toBe(r.missing ?? 422);
+  });
+});
+
+describe('passes.postPassesPhotosMatch (orgId in the body)', () => {
+  const post = (orgId: string | null, body: object) =>
+    app.request(
+      'https://wallet.test/api/v1/passes/photos/match',
+      {
+        method: 'POST',
+        headers: {
+          ...auth.apiKey({ orgId, scopes: ['passes:write'], mode: 'test' }),
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+      env,
+    );
+
+  it('lets an org key leave orgId out', async () => {
+    expect((await post(org.id, { keys: ['a'] })).status).toBe(200);
+  });
+
+  it('still asks a platform key for an org', async () => {
+    const res = await post(null, { keys: ['a'] });
+    expect(res.status).toBe(422);
+    expect(((await res.json()) as { code?: string }).code).toBe('ORG_REQUIRED');
   });
 });

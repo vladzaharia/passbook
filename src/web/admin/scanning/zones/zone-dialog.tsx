@@ -12,6 +12,7 @@ import {
   Select,
   toast,
 } from '@/web/ui/index.ts';
+import { useSettings } from '../../settings/queries.ts';
 import { OccupancyFields } from './occupancy-fields.tsx';
 import {
   createBody,
@@ -71,8 +72,11 @@ export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
   const [shown, setShown] = useState(false);
   const parent = zones.find((z) => z.id === draft.parentId);
   const root = draft.parentId === ROOT;
+  const orgZone = useSettings(`org:${orgId}`).data?.items.find(
+    (i) => i.key === 'org.timeZone',
+  )?.value;
   const clock = root
-    ? draft.timeZone !== SESSION_CLOCK
+    ? draft.timeZone !== SESSION_CLOCK || Boolean(orgZone)
     : Boolean(parent?.effectiveTimeZone ?? parent?.timeZone);
   const errors = zoneErrors(draft, !zone, clock);
   const invalid = Object.keys(errors).length > 0;
@@ -139,7 +143,7 @@ export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
             label="Key"
             required={!zone}
             error={shownErrors.key}
-            help={zone ? 'Plans use it. It cannot change.' : 'Plans grant zones by this key.'}
+            help={zone ? 'Cannot change.' : undefined}
           >
             {(p) => (
               <Input
@@ -164,13 +168,16 @@ export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
             )}
           </FormField>
           {root ? (
-            <FormField label="Time zone" help="Hours at this site use this clock.">
+            <FormField label="Time zone">
               {(p) => (
                 <Select
                   {...p}
                   value={draft.timeZone}
                   options={[
-                    { value: SESSION_CLOCK, label: 'Each session’s clock' },
+                    {
+                      value: SESSION_CLOCK,
+                      label: orgZone ? 'Organization’s clock' : 'Each session’s clock',
+                    },
                     ...zoneOptions(),
                   ]}
                   onValueChange={(timeZone) => setDraft({ ...draft, timeZone })}

@@ -74,9 +74,7 @@ export function renderSignInEmail(input: SignInEmailInput): RenderedEmail {
     ? input.requester
       ? `Adds this address to the account of ${input.requester}.`
       : ''
-    : input.to
-      ? `For ${input.to}.`
-      : '';
+    : '';
 
   const lines = codeFirst
     ? [title, input.code, `Or open this link: ${input.link}`, expiry]

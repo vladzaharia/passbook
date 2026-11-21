@@ -97,7 +97,7 @@ function ScopedApiKeys({
         ...flat(revokedList).filter((key) => key.orgId === orgId && !justRevoked.has(key.id)),
       ]
     : liveRows;
-  const empty = !live.isPending && !live.isError && liveRows.length === 0 && revokedCount === 0;
+  const empty = !live.isPending && !live.isError && rows.length === 0;
   const paging = showRevoked && !live.hasNextPage ? revokedList : live;
   const columns = useMemo(
     () =>
@@ -123,13 +123,12 @@ function ScopedApiKeys({
       <PageHeader
         title="API keys"
         meta={orgId === null ? undefined : 'All modes'}
-        actions={create(empty ? 'outline' : 'primary')}
+        actions={empty ? undefined : create('primary')}
       />
       {live.isError && liveRows.length === 0 ? (
         <ErrorState error={live.error} onRetry={() => live.refetch()} />
       ) : (
         <div className="wl-keys">
-          <h2 className="mb-3 text-lg font-semibold text-fg-strong">Credentials</h2>
           <DataTable
             caption="API keys"
             loading={

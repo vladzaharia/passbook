@@ -23,6 +23,7 @@ import { qrDataUri } from '../../../web/portal/holder-qr.tsx';
 import { createApp } from '../../app.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import { run } from '../../platform/db.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { fakeLimiter, harness, ORIGIN, type TestHarness } from '../auth/test-support.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
@@ -83,7 +84,7 @@ async function passWith(
     title?: string;
   } = {},
 ): Promise<Pass> {
-  await ensurePlatformIdentity(f.env, f.clock.now());
+  await ensurePlatformIdentity(f.env, f.clock.now(), nullLogger);
   await persistTemplate(f, template, { registry: templateRegistry });
   const id = f.ids.id();
   const objectKey = `passes/${id}/v1-${f.ids.token(4)}.pkpass`;

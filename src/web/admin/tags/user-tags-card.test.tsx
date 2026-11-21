@@ -59,7 +59,6 @@ describe('User tags card', () => {
     });
     await user.click(await screen.findByRole('button', { name: TAG_COPY.assign }));
     const dialog = await screen.findByRole('dialog', { name: TAG_COPY.dialog.title });
-    expect(dialog).toHaveAccessibleDescription('To Maya Okafor');
     // The choice is fixed to the person: there is no Works with group.
     expect(within(dialog).queryByRole('radio', { name: /This pass/ })).toBeNull();
   });

@@ -100,7 +100,6 @@ export function WatchFields({
         <ZonePicker
           orgId={draft.orgId}
           label="Zones"
-          help="Every scan in these zones, at any door that checks them."
           value={draft.watch.zoneIds ?? []}
           onChange={(zoneIds) => onChange({ watch: { ...draft.watch, zoneIds } })}
         />

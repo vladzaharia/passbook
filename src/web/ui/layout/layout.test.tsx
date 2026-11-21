@@ -225,7 +225,7 @@ describe('route guards in the app', () => {
           }),
       },
     });
-    expect(await screen.findByText('1 pass in Henrys')).toBeInTheDocument();
+    expect(await screen.findByText('1 pass')).toBeInTheDocument();
   });
 
   it('denies API key pages and actions to a tenant member who cannot read integrations', async () => {

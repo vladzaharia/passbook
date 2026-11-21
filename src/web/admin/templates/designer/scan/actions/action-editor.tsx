@@ -48,7 +48,6 @@ export function ActionEditor({
         label="Label"
         value={action.label}
         merge={merge('label')}
-        help="The button staff tap."
         error={at(issues, 'label')}
         inputProps={{ maxLength: 40 }}
         op={(v) => ({ op: 'scan-action-set', id: action.id, patch: { label: v } })}
@@ -131,7 +130,6 @@ export function ActionEditor({
       />
       <SwitchRow
         label="Ask to confirm"
-        help="Staff tap twice."
         checked={resolved.confirm}
         disabled={readOnly}
         onCheckedChange={(confirm) => set({ confirm })}

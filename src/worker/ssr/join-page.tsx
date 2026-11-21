@@ -163,7 +163,6 @@ function JoinForm(page: Extract<JoinPage, { kind: 'form' }>) {
                   type="email"
                   value={values.email}
                   auto="email"
-                  help={JOIN_COPY.page.emailHelp}
                   invalid={Boolean(page.error) && Boolean(values.email)}
                 />
               ) : null}

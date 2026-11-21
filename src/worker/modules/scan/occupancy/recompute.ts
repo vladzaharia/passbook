@@ -17,6 +17,7 @@ export async function addDueRecompute(
   zones: readonly OccZone[],
   zoneIds: readonly string[],
   now: number,
+  orgTimeZone: string | null,
 ): Promise<number> {
   const places = zoneIds.map(zonePlace);
   const rows = await movableRows(db, orgId, places, now, CANDIDATES);
@@ -26,7 +27,7 @@ export async function addDueRecompute(
     if (n >= RECOMPUTE_BATCH) break;
     const zone = zones.find((z) => zonePlace(z.id) === row.scope);
     if (!zone) continue;
-    const due = dueAt(zone, row.entered_at, effectiveTimeZone(index, zone.id));
+    const due = dueAt(zone, row.entered_at, effectiveTimeZone(index, zone.id, orgTimeZone));
     if (due === row.due_at) continue;
     setDue(g, { passId: row.pass_id, place: row.scope, lastScanId: row.last_scan_id }, due);
     n++;

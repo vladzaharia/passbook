@@ -106,6 +106,7 @@ describe('Visitors page', () => {
           ? json(visitor({ name: 'Leo Park' }), 201)
           : json({ items: [], nextCursor: null }),
     });
+    await screen.findByText('No visitors today');
     await user.click(await screen.findByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
     await user.click(within(dialog).getByRole('button', { name: 'Invite' }));
@@ -135,6 +136,7 @@ describe('Visitors page', () => {
           ? problem(409, 'VISITOR_TEMPLATE_MISSING', 'Make a guest pass template first.')
           : json({ items: [], nextCursor: null }),
     });
+    await screen.findByText('No visitors today');
     await user.click(await screen.findByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
     await user.type(within(dialog).getByLabelText(/^Name/), 'Leo Park');
@@ -157,6 +159,7 @@ describe('Visitors page', () => {
       '/api/v1/visitors': (_url, init) =>
         init?.method === 'POST' ? json(visitor({}), 201) : json({ items: [], nextCursor: null }),
     });
+    await screen.findByText('No visitors today');
     await user.click(await screen.findByRole('button', { name: 'New visitor' }));
     const dialog = await screen.findByRole('dialog', { name: 'New visitor' });
     await user.type(within(dialog).getByLabelText(/^Name/), 'Leo Park');

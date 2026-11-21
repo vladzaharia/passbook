@@ -216,7 +216,7 @@ describe('identities list', () => {
     expect(await screen.findByText('No identities')).toBeInTheDocument();
     expect(container.querySelector('[data-art="certificate"]')).not.toBeNull();
     const ui = userEvent.setup();
-    await ui.click(screen.getAllByRole('button', { name: 'Upload' })[1] as HTMLElement);
+    await ui.click(screen.getByRole('button', { name: 'Upload' }));
     const dialog = await screen.findByRole('dialog');
     await ui.click(within(dialog).getByLabelText('.p12 file'));
     expect(dialog.querySelector('[data-art="certificate"]')).not.toBeNull();
@@ -247,7 +247,8 @@ describe('identities list', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click((await screen.findAllByRole('button', { name: 'Upload' }))[0]!);
+    await screen.findByText('No identities');
+    await ui.click(screen.getByRole('button', { name: 'Upload' }));
     const dialog = await screen.findByRole('dialog');
     await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
     expect(await within(dialog).findByText('Choose a .p12 file.')).toBeInTheDocument();
@@ -486,7 +487,8 @@ describe('identity detail', () => {
       },
     });
     const ui = userEvent.setup();
-    await ui.click((await screen.findAllByRole('button', { name: 'Upload' }))[0]!);
+    await screen.findByText('No identities');
+    await ui.click(screen.getByRole('button', { name: 'Upload' }));
     const dialog = await screen.findByRole('dialog');
     await ui.click(within(dialog).getByRole('radio', { name: 'PEM certificate and key' }));
     await ui.type(within(dialog).getByLabelText(/Label/), 'Acme');

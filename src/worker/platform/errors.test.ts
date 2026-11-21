@@ -54,6 +54,14 @@ describe('problem mapping', () => {
     expect(problem.detail).not.toContain('SELECT');
   });
 
+  it('answers INTERNAL with the request id for an internal code', () => {
+    for (const code of ['GRANT_NO_EDGE', 'WALLET_OP_STALE', 'STALE_CONTEXT', 'SQL_SIZE_BUDGET']) {
+      const problem = toProblem(new ConflictError('internal detail', code), 'req-1');
+      expect(problem).toMatchObject({ status: 500, code: 'INTERNAL', requestId: 'req-1' });
+      expect(problem.detail).not.toContain('internal');
+    }
+  });
+
   it("points type at the code's catalog page", () => {
     expect(toProblem(new ConflictError('x', 'PASS_CONFLICT')).type).toBe(
       'https://passbook.mobile/developers/errors/PASS_CONFLICT',

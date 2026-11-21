@@ -221,7 +221,6 @@ export function LoadedPassDetail({
           />
           <TechnicalDetails
             items={[
-              { label: 'Version', value: `v${p.version}` },
               { label: 'Serial number', value: p.serial, copy: true },
               { label: 'Template revision', value: p.templateVersion, copy: true },
             ]}
@@ -281,14 +280,6 @@ export function LoadedPassDetail({
             still
             dim={voided}
             removed={removed}
-          />
-        }
-        summary={
-          <KeyValue
-            items={[
-              { label: 'Holder', value: p.holderEmail },
-              { label: 'Devices', value: devices(p.deviceCount) },
-            ]}
           />
         }
       >

@@ -1,6 +1,7 @@
 import { type ReactNode, useId } from 'react';
 import { cn } from '@/web/lib/cn.ts';
-import { Button, Input, Label, NumberField, SwitchRow } from '@/web/ui/index.ts';
+import { localZone, zoneOptions } from '@/web/lib/timezones.ts';
+import { Button, Combobox, Input, Label, NumberField, SwitchRow } from '@/web/ui/index.ts';
 import type { SettingField } from './fields.ts';
 
 export interface SettingRowProps {
@@ -21,6 +22,7 @@ export interface SettingRowProps {
   onChange: (v: string | boolean) => void;
 }
 
+const UNSET = '__unset';
 const ROW = 'px-4 py-4';
 const SPLIT = 'grid gap-x-8 gap-y-2 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-center';
 /** Number fields stay beside their label on phones too, like switches. */
@@ -60,6 +62,21 @@ function Control({
       />
     );
   }
+  if (field.kind === 'zone')
+    return (
+      <Combobox
+        id={id}
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
+        disabled={disabled}
+        className="w-full"
+        placeholder="Not set (UTC)"
+        searchPlaceholder="Search time zones"
+        options={[{ value: UNSET, label: 'Not set (UTC)' }, ...zoneOptions()]}
+        value={String(value) || undefined}
+        onValueChange={(zone) => onChange(zone === UNSET ? '' : zone)}
+      />
+    );
   const input = (
     <Input
       {...aria}
@@ -103,10 +120,17 @@ export function SettingRow({
 }: SettingRowProps) {
   const id = useId();
   const description = helpText ?? field.help;
+  // The browser's zone is offered, never saved on its own.
+  const browserZone = field.kind === 'zone' && value === '' && !disabled ? localZone() : null;
   const details =
-    meta || onReset ? (
+    meta || onReset || browserZone ? (
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
         {meta}
+        {browserZone ? (
+          <Button type="button" variant="ghost" size="sm" onClick={() => onChange(browserZone)}>
+            Use {browserZone}
+          </Button>
+        ) : null}
         {onReset ? (
           <Button
             type="button"

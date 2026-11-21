@@ -8,7 +8,6 @@ import type { ScanState } from './machine/types.ts';
 import { saveDevicePref } from './platform/device-prefs.ts';
 import { canBuzz } from './platform/haptics.ts';
 import type { ScanRuntime } from './platform/runtime.ts';
-import { modeLabel } from './ui/mode-label.ts';
 import { type CameraChoice, ScanMenu } from './ui/scan-menu.tsx';
 import type { ScanPanel } from './ui/scan-overlays.tsx';
 
@@ -59,9 +58,7 @@ export function LoopMenu(p: {
       onSwitchStaff={() =>
         void api.staffSignOut().then(refetch, (error) => p.setCameraError(errorMessage(error)))
       }
-      flip={
-        session.scanner?.kind === 'device' ? { api, refetch, mode: modeLabel(session) } : undefined
-      }
+      flip={session.scanner?.kind === 'device' ? { api, refetch } : undefined}
       hasWide={runtime.camera.hasWide()}
       onCamera={(choice) => {
         p.setCameraChoice(choice);

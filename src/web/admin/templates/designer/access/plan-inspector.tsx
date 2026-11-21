@@ -9,14 +9,9 @@ import type { PlanPatch } from './ops.ts';
 import { ZoneGrants } from './zone-grants.tsx';
 
 const KINDS = [
-  { value: 'always', label: '24/7', description: 'Any time.', icon: InfinityIcon },
-  { value: 'timed', label: 'Timed', description: 'Set weekly hours.', icon: Clock },
-  {
-    value: 'guest',
-    label: 'Guest',
-    description: 'A few days, optional visit limit.',
-    icon: Ticket,
-  },
+  { value: 'always', label: '24/7', icon: InfinityIcon },
+  { value: 'timed', label: 'Timed', icon: Clock },
+  { value: 'guest', label: 'Guest', icon: Ticket },
 ] as const;
 
 function Heading({ children }: { children: string }) {
@@ -59,7 +54,6 @@ export function PlanInspector({
               name={`kind-${plan.id}`}
               value={k.value}
               label={k.label}
-              description={k.description}
               icon={k.icon}
               checked={plan.kind === k.value}
               onSelect={(v) =>

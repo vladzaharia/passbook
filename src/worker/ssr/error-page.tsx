@@ -58,7 +58,6 @@ function defaults(input: ErrorPageInput): {
   if (input.status === 404) {
     return {
       title: STATE_COPY.pageNotFound,
-      line: STATE_COPY.notFoundLine,
       art: 'lost',
       action: GO_TO_MY_PASSES,
     };
@@ -66,7 +65,6 @@ function defaults(input: ErrorPageInput): {
   if (input.status === 403) {
     return {
       title: STATE_COPY.forbidden,
-      line: STATE_COPY.forbiddenLine,
       art: 'no-access',
       action: GO_TO_MY_PASSES,
     };
@@ -75,7 +73,7 @@ function defaults(input: ErrorPageInput): {
     const line = waitLine(input.retryAfter);
     return { title: STATE_COPY.rateLimited, line, art: 'throttled', action: RETRY };
   }
-  return { title: STATE_COPY.errorTitle, line: STATE_COPY.tryAgain, art: 'broken', action: RETRY };
+  return { title: STATE_COPY.errorTitle, art: 'broken', action: RETRY };
 }
 
 export function renderErrorPage(input: ErrorPageInput): string {

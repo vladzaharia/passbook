@@ -49,9 +49,17 @@ export async function finishRun(
   const done = status === 'complete' || status === 'errored' || status === 'terminated';
   await run(
     db,
-    `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ?, target_id = COALESCE(?, target_id)
+    `UPDATE workflow_runs SET status = ?, finished_at = ?, error_code = ?, target_id = COALESCE(?, target_id),
+       run_guard = CASE WHEN ? THEN NULL ELSE run_guard END
      WHERE instance_id = ?`,
-    [status, done ? now : null, extra.errorCode ?? null, extra.targetId ?? null, instanceId],
+    [
+      status,
+      done ? now : null,
+      extra.errorCode ?? null,
+      extra.targetId ?? null,
+      done ? 1 : 0,
+      instanceId,
+    ],
   );
 }
 
