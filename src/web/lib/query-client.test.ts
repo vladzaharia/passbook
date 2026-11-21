@@ -48,6 +48,7 @@ describe('mode changes', () => {
           orgId: 'org-a',
           orgName: 'Organization A',
           orgSlug: 'org-a',
+          personal: false,
           userId: 'u1',
           roles: ['pass_operator'],
           capabilities: ['org:read', 'passes:read', 'passes:operate'],

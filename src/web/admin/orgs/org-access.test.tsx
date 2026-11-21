@@ -40,6 +40,7 @@ const membership = (overrides: Partial<OrgMember> = {}): OrgMember => ({
   orgId: 'o1',
   orgName: 'Acme Gym',
   orgSlug: 'acme',
+  personal: false,
   userId: 'user-ada',
   userName: 'Ada Lovelace',
   userEmail: 'ada@example.test',

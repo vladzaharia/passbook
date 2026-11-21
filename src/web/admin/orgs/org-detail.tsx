@@ -1,12 +1,14 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
+import { PERSONAL_ORG_COPY } from '@/shared/copy/personal-org.ts';
 import { ACTION_ICON } from '@/web/lib/action-icons.ts';
 import { deleteConfirm } from '@/web/lib/confirms.ts';
 import { ENTITY } from '@/web/lib/entities.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import {
+  Badge,
   Button,
   Callout,
   Card,
@@ -116,6 +118,7 @@ export function OrgDetailPage({
         meta={
           <>
             <OrgStatus status={org.status} />
+            {org.personal ? <Badge>{PERSONAL_ORG_COPY.label}</Badge> : null}
             <span className="font-mono text-xs">{org.slug}</span>
             <MetaLink to="/admin/audit" search={{ filterOrgId: org.id }} icon={ENTITY.audit.icon}>
               Audit log
@@ -182,6 +185,14 @@ export function OrgDetailPage({
                     <KeyValue
                       items={[
                         { label: 'Slug', value: org.slug, mono: true },
+                        ...(org.personalOwner
+                          ? [
+                              {
+                                label: 'Owner',
+                                value: org.personalOwner.name ?? org.personalOwner.id,
+                              },
+                            ]
+                          : []),
                         { label: 'Created', value: formatDateTime(org.createdAt) },
                       ]}
                     />

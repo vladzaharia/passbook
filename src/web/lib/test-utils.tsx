@@ -69,6 +69,7 @@ export function membershipFixture(
     orgId,
     orgName: orgId,
     orgSlug: orgId,
+    personal: false,
     userId: 'u1',
     roles: ['org_admin'],
     capabilities: [...OrgCapabilitySchema.options],
