@@ -31058,6 +31058,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -31253,6 +31254,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -31419,6 +31421,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -31515,6 +31518,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -31596,6 +31600,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -32374,6 +32379,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -32569,6 +32575,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -32696,6 +32703,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -32807,6 +32815,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -32909,7 +32918,10 @@
                       ]
                     },
                     "key": {
-                      "type": "object",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "properties": {
                         "id": {
                           "type": "string",
@@ -32955,17 +32967,26 @@
                         "calls": {
                           "type": "integer",
                           "minimum": 0
+                        },
+                        "other": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Bundles, captured emails, imports, broadcasts, rules and idempotency records."
                         }
                       },
                       "required": [
                         "passes",
                         "captures",
-                        "calls"
+                        "calls",
+                        "other"
                       ]
                     },
                     "kept": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "more": {
+                      "type": "boolean"
                     },
                     "resetsLeft": {
                       "type": "integer",
@@ -32978,6 +32999,7 @@
                     "key",
                     "deleted",
                     "kept",
+                    "more",
                     "resetsLeft"
                   ]
                 }
@@ -33002,6 +33024,10 @@
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -33016,8 +33042,10 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
+          "STEP_UP_REQUIRED",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
@@ -33174,6 +33202,10 @@
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -33188,8 +33220,10 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
+          "STEP_UP_REQUIRED",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
@@ -33265,6 +33299,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
@@ -33338,6 +33373,7 @@
           "SANDBOX_KEY_MISSING",
           "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_ADMIN",
           "SANDBOX_REOPEN_WINDOW",
           "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
