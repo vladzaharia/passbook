@@ -1,6 +1,8 @@
+import { Link } from '@tanstack/react-router';
 import { Eye } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
+import { CHANNEL_COPY } from '@/shared/copy/channels.ts';
 import { PREVIEW_COPY } from '@/shared/copy/previews.ts';
 import { PaperPreview } from '../admin/templates/designer/paper-preview.tsx';
 import { Button, Dialog, DialogContent, Skeleton } from '../ui/index.ts';
@@ -48,6 +50,7 @@ export function ChannelStage({
   templateId,
   orgId,
   channels,
+  channelsTab,
 }: {
   size: 'column' | 'card' | 'sheet';
   source: PreviewSource | null;
@@ -56,6 +59,8 @@ export function ChannelStage({
   templateId?: string | undefined;
   orgId?: string | undefined;
   channels?: EffectiveChannels | undefined;
+  /** The page's tab that changes channels: the empty state links to it. */
+  channelsTab?: string | undefined;
 }) {
   const [open, setOpen] = useState(false);
   const all = (
@@ -63,6 +68,19 @@ export function ChannelStage({
       source={source}
       apple={apple}
       channels={channels}
+      emptyAction={
+        channelsTab ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link
+              to="."
+              search={(prev) => ({ ...prev, tab: channelsTab })}
+              onClick={() => setOpen(false)}
+            >
+              {CHANNEL_COPY.card}
+            </Link>
+          </Button>
+        ) : undefined
+      }
       paper={<PaperChannel source={source} templateId={templateId} orgId={orgId} />}
     />
   );

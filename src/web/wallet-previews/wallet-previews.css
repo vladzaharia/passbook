@@ -80,11 +80,6 @@
   background: var(--pk-surface-page);
 }
 
-/* Five channel names in one row: the kit's segment padding, tightened. */
-.wl-seg.wp-switch > [role="radio"] {
-  padding-inline: 0.5rem;
-}
-
 /* A preview is for the ticket: it leads, where the iPhone's page puts the badge first. */
 .wp-phone-page .wl-holder[data-lead] {
   grid-template-areas: "pass" "add" "more" "details" "help";
