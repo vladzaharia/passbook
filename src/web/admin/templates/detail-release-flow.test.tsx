@@ -145,11 +145,12 @@ it('previews the draft, with a Live and Draft toggle once a newer draft exists',
       },
     },
   });
-  const draft = await screen.findByRole('radio', { name: 'Draft' });
+  const preview = await screen.findByRole('radiogroup', { name: 'Preview' });
+  const draft = within(preview).getByRole('radio', { name: 'Draft' });
   expect(draft).toBeChecked();
   await waitFor(() =>
     expect(requested).toContainEqual(expect.objectContaining({ version: DRAFT })),
   );
-  await user.click(screen.getByRole('radio', { name: 'Live' }));
-  expect(screen.getByRole('radio', { name: 'Live' })).toBeChecked();
+  await user.click(within(preview).getByRole('radio', { name: 'Live' }));
+  expect(within(preview).getByRole('radio', { name: 'Live' })).toBeChecked();
 });
