@@ -73,7 +73,7 @@ describe("/p's details are the back of the pass, never its face", () => {
     expect(text).not.toContain('Passenger');
   });
 
-  it('shows no state: no Status label, no back field of that label', () => {
+  it('shows no state of its own, but every back field, a status one included', () => {
     const passJson = starter('starter-boarding-pass');
     const block = passJson.boardingPass as { backFields?: unknown[] };
     block.backFields = [
@@ -81,8 +81,9 @@ describe("/p's details are the back of the pass, never its face", () => {
       { key: 'status', label: 'Status', value: 'On time' },
     ];
     const text = detailsOf(passJson);
-    expect(text).not.toMatch(/Status/);
-    expect(text).not.toContain('On time');
+    // The back says it, as the card's back does; the page adds no pill.
+    expect(text).toContain('Status');
+    expect(text).toContain('On time');
     expect(text).not.toContain('Active');
   });
 

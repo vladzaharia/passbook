@@ -22,18 +22,24 @@ export function AddBlock(p: AddAreaProps & { buddy: RenderBuddy }) {
   const added = p.mode === 'added';
   const url = p.device.device === 'iphone' ? null : p.publicUrl;
   const badge = url ? p.badge : null;
+  // On /p and /b a Mac agent may be an iPad: the badge waits for the Mac check.
+  const unsure = p.macUnsure === true && p.device.device === 'mac';
   const seat = added ? undefined : p.buddy;
   const ask = url ? (
     <div className="wl-hero wl-hero-scan">
       {seat?.({ size: 'sm', scene: 'nudge', at: 'end', className: 'wl-hero-buddy' })}
       <Scan url={url} label={p.qrLabel}>
         {badge ? (
-          <div className="wl-way wl-way-here">
+          <div
+            className="wl-way wl-way-here"
+            hidden={unsure || undefined}
+            data-mac-only={unsure ? '' : undefined}
+          >
             {p.device.device === 'mac' ? <span>{HOLDER_COPY.onThisMac}</span> : null}
             {badge}
+            {p.line ? <p className="wl-hero-note">{p.line}</p> : null}
           </div>
         ) : null}
-        {badge && p.line ? <p className="wl-hero-note">{p.line}</p> : null}
       </Scan>
     </div>
   ) : (

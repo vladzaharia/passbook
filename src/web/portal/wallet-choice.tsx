@@ -34,15 +34,17 @@ export function WalletLead({
   /** Paper only: Print leads. */
   printHref?: string | undefined;
 }) {
-  if (choice?.id === 'apple') return apple;
-  if (!choice && !printHref) return null;
+  if (choice?.id === 'apple' && apple) return apple;
+  // Apple without its block (no area) cannot lead: Print does, when it is there.
+  const way = choice?.id === 'apple' ? undefined : choice;
+  if (!way && !printHref) return null;
   return (
     <div className="wl-hero wl-hero-phone">
       {buddy({ size: 'sm', scene: 'nudge', at: 'end', className: 'wl-hero-buddy' })}
-      {choice && isNative(choice) ? (
-        <NativeBadge choice={choice} />
-      ) : choice ? (
-        <a className="wl-hero-action" href={choice.href ?? undefined}>
+      {way && isNative(way) ? (
+        <NativeBadge choice={way} />
+      ) : way ? (
+        <a className="wl-hero-action" href={way.href ?? undefined}>
           <ScanLine aria-hidden />
           {HOLDER_COPY.showBarcode}
         </a>

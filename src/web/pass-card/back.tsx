@@ -7,7 +7,12 @@ import type {
 } from '../../shared/pass-view/index.ts';
 import { Rich } from './parts.tsx';
 
-function Group({ title, fields }: { title?: string; fields: FieldView[] }) {
+/** A field with no value (an empty message) says nothing. */
+const shown = (fields: FieldView[]) =>
+  fields.filter((f) => f.text.trim() || f.segments.some((s) => s.text.trim()));
+
+function Group({ title, fields: all }: { title?: string; fields: FieldView[] }) {
+  const fields = shown(all);
   if (!fields.length) return null;
   return (
     <section className="pc-group">
@@ -63,17 +68,23 @@ export function Upcoming({ events }: { events: UpcomingView[] }) {
   );
 }
 
-export function Back({ view, layout }: { view: PassView; layout: LayoutView }) {
+/**
+ * Everything the face does not show, in Wallet's back order: the featured actions, upcoming
+ * events, additional info, the back fields, then the front fields past the face's limits. The
+ * card's back and the pass page's details render the same sections.
+ */
+export function BackSections({
+  view,
+  layout,
+  extra = [],
+}: {
+  view: PassView;
+  layout: LayoutView;
+  /** Rows the caller adds after the back fields (the pass page's Expires). */
+  extra?: FieldView[];
+}) {
   return (
-    // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region must be keyboard reachable
-    // biome-ignore lint/a11y/useSemanticElements: a landmark per card is noise on list pages
-    <div className="pc-back-body" role="region" aria-label="Pass details" tabIndex={0}>
-      <div className="pc-back-head">
-        <h2 className="pc-title">{view.organizationName}</h2>
-        {view.description && view.description !== view.organizationName ? (
-          <p className="pc-sub">{view.description}</p>
-        ) : null}
-      </div>
+    <>
       {layout.actions.length ? (
         <ul className="pc-actions">
           {layout.actions.map((a) => (
@@ -98,8 +109,33 @@ export function Back({ view, layout }: { view: PassView; layout: LayoutView }) {
       ) : null}
       <Upcoming events={view.upcoming} />
       <Group title="Additional info" fields={layout.additionalInfo} />
-      <Group fields={layout.back} />
+      <Group fields={[...layout.back, ...extra]} />
       <Group title="More" fields={layout.overflow} />
+    </>
+  );
+}
+
+/** Whether BackSections draws anything. */
+export const hasBack = (view: PassView, layout: LayoutView): boolean =>
+  layout.actions.length +
+    view.upcoming.length +
+    shown(layout.additionalInfo).length +
+    shown(layout.back).length +
+    shown(layout.overflow).length >
+  0;
+
+export function Back({ view, layout }: { view: PassView; layout: LayoutView }) {
+  return (
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region must be keyboard reachable
+    // biome-ignore lint/a11y/useSemanticElements: a landmark per card is noise on list pages
+    <div className="pc-back-body" role="region" aria-label="Pass details" tabIndex={0}>
+      <div className="pc-back-head">
+        <h2 className="pc-title">{view.organizationName}</h2>
+        {view.description && view.description !== view.organizationName ? (
+          <p className="pc-sub">{view.description}</p>
+        ) : null}
+      </div>
+      <BackSections view={view} layout={layout} />
     </div>
   );
 }

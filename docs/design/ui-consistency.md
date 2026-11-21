@@ -524,9 +524,11 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   `/p` page, so the iPhone that scans it opens the page in Safari and adds with the badge there (a
   Mac's own add needs Safari and iCloud's Wallet sync; the scan needs neither). A Mac gets the
   badge beside the QR; elsewhere (iPad, Android, Windows) the scan is the only way, so the pass
-  page and the tiles show no badge and no line (tiles lead with Show QR). The bundle page's Add all
-  and the email keep the badge everywhere, with `Open this page on your phone to add the pass to
-  your wallet.` where it cannot add; an in-app web view on a device that can, `Open in Safari…`.
+  page, the bundle's lead and the tiles show no badge and no line (tiles lead with Show QR). The
+  email keeps the badge everywhere, with `Open this page on your phone to add the pass to your
+  wallet.` where it cannot add; an in-app web view on a device that can, `Open in Safari…`.
+- **Bundle page** (`/b`): the pass page's lead (`AddBlock`, no heading over it), then each pass's
+  card (no flip) with its way to add and a native `Details` disclosure holding `PassDetails`.
 - **Portal tiles**: two rows of the list grid (subgrid): the pass (stage, the link into it, named
   by it), then one action row, so a row of tiles lines them up. The tile repeats nothing the card
   says (name, org, fields, Active, its Voided stamp); it keeps what the card does not: `Test`,
@@ -556,7 +558,9 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
     device (`shared/wallet-choice.ts`), the buddy (S) on its top edge at the end on a short foil
     ledge, clear of any code, looking at the badge or button when it is pointed at. Off the phone
     (Mac, Windows, iPad) the QR on a white tile, one hairline, no frame, and one line beside it:
-    `Scan with your iPhone camera.`; a Mac adds `Or on this Mac` and the badge under a hairline,
+    `Scan with your iPhone camera.`; a Mac adds `Or on this Mac` and the badge under a hairline
+    (on `/p` and `/b` the server cannot tell a Mac from an iPad: that row starts hidden and a
+    nonced script, `MAC_REVEAL_SCRIPT` from `shared/device.ts` `isDesktopMac`, shows it on a Mac),
     elsewhere no badge (it would download a file nothing opens). A phone's lead is one control with
     no card: the iPhone's badge, on Android Google or Samsung's badge, else `Show barcode`
     (primary), paper only `Print`; the buddy stands beside it. In Apple Wallet
@@ -567,9 +571,11 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
     by side, Apple's line on Android (`For Apple Wallet, open this page on an iPhone.`), `Print`,
     and on `/p` `Email me this pass again` (the portal has it in More). Rows rise one after
     another after the card.
-  - Details: one card, no title, only what the face does not show: the org's notes above a
-    hairline, the back fields (terms, contact, links), Expires, upcoming events; none when the back
-    is empty. No status pill: the card stamps Voided and Expired, the notice says it.
+  - Details: one card (`portal/pass-details.tsx`) drawing the card's own back sections
+    (`pass-card/back.tsx` BackSections): featured actions, upcoming events, additional info, the
+    back fields with their links, the face's overflow; then Expires. Nothing the face shows, none
+    when the back is empty, an sr-only `Details` h2 for the outline. No status pill: the card stamps
+    Voided and Expired, the notice says it.
   - The badge has no padding of its own: the gaps are its clear space. No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.

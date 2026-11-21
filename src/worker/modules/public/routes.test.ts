@@ -6,6 +6,7 @@ import {
   makeTemplate,
   persistTemplate,
 } from '../../../../test/helpers/index.ts';
+import { MAC_REVEAL_SCRIPT } from '../../../shared/device.ts';
 import { createApp } from '../../app.ts';
 import { run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
@@ -34,7 +35,7 @@ const get = (path: string, headers: Record<string, string> = {}) =>
 const actor = { type: 'user', id: 'admin-1' } as const;
 
 describe('GET /p/:token', () => {
-  it('renders the pass without script, with a no-JS back toggle and a download link', async () => {
+  it('renders the pass with one nonced inline script, no card flip and a download link', async () => {
     const pass = await kit.pass();
     // A Mac: the badge sits beside the QR.
     const res = await get(`/p/${await linkToken(kit.env, pass)}`, {
@@ -55,7 +56,10 @@ describe('GET /p/:token', () => {
     expect(html).not.toContain('pc-flip-toggle');
     expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);
     expect(html).toContain('alt="Add to Apple Wallet"');
-    expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
+    // The one inline script: a Mac agent may be an iPad, the browser shows the Mac's badge.
+    const inline = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)];
+    expect(inline.map((m) => m[1])).toEqual([MAC_REVEAL_SCRIPT]);
+    expect(html).toMatch(/<script nonce="[^"]+">if\(/);
   });
 
   it('does not advertise native wallets without approved projections and accounts', async () => {

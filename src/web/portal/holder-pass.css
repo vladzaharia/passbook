@@ -203,6 +203,58 @@
 .pc-flat .pc-group-title {
   color: var(--pk-text-muted);
 }
+/* The card's back on the page (pass-details.tsx): no grey well inside the card, hairlines between
+   rows, the label beside the value from 640, links in the page's accent. */
+.pc-flat .pc-list {
+  border-radius: 0;
+  background: none;
+}
+.pc-flat .pc-item {
+  display: grid;
+  gap: 0.125rem 1.5rem;
+  padding: 0.625rem 0;
+  font-size: 0.875rem;
+}
+.pc-flat .pc-group:first-child .pc-item:first-child,
+.pc-flat .pc-group .pc-group-title + .pc-list .pc-item:first-child {
+  padding-top: 0.25rem;
+}
+.pc-flat .pc-item + .pc-item {
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.pc-flat .pc-label {
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.pc-flat .pc-value {
+  color: var(--pk-text-default);
+  font-size: 0.875rem;
+  white-space: pre-line;
+}
+.pc-flat .pc-value a {
+  color: var(--pk-accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pc-flat .pc-action {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  color: var(--pk-text-default);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+}
+@media (min-width: 640px) {
+  .pc-flat .pc-item {
+    grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+  }
+}
 
 /* base.css gives the app's text links a 44 px touch height; /p has no base.css. */
 @media (pointer: coarse) {

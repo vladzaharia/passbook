@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHANNEL_COPY } from '../../shared/copy/channels.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import { MAC_REVEAL_SCRIPT } from '../../shared/device.ts';
 import { assets, fixtures } from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
 import { REPLAY_SCRIPT } from './hosted.ts';
@@ -86,6 +87,16 @@ describe('/p renders the portal HolderPassView', () => {
     expect(b).toMatch(/class="wl-holder-help [^"]*"><p class="[^"]*">Help:/);
     // A click replays the scene, as on the hosted pages.
     expect(page()).toContain(REPLAY_SCRIPT);
+  });
+
+  it('cannot tell a Mac from an iPad: the badge starts hidden and a nonced script shows it on a Mac', () => {
+    const html = page({ device: { device: 'mac', inApp: false } });
+    expect(body(html)).toMatch(/<div class="wl-way wl-way-here" hidden="" data-mac-only="">/);
+    expect(html).toContain(`<script nonce="n0nce">${MAC_REVEAL_SCRIPT}</script>`);
+    // No Mac agent, no script and nothing hidden.
+    const phone = page({ device: { device: 'iphone', inApp: false } });
+    expect(phone).not.toContain('data-mac-only');
+    expect(phone).not.toContain(MAC_REVEAL_SCRIPT);
   });
 
   it('puts the Apple badge under the scan line on a Mac, as the quiet second way', () => {

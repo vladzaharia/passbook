@@ -191,6 +191,12 @@
   color: var(--pk-text-muted);
   font-size: 0.875rem;
 }
+.wl-way-here[hidden] {
+  display: none;
+}
+.wl-way-here > .wl-hero-note {
+  flex-basis: 100%;
+}
 .wl-way-here [data-awb] {
   margin-top: 0;
 }

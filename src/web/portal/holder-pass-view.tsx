@@ -64,6 +64,8 @@ export interface HolderPassViewProps {
   resend?: { action: string; again: 'sent' | 'wait' | null };
   /** The app's Buddy (its scene in view, click replay); /p's plays once on load. */
   buddy?: RenderBuddy;
+  /** /p: the server cannot tell a Mac from an iPad (MAC_REVEAL_SCRIPT shows the Mac's parts). */
+  macUnsure?: boolean;
 }
 
 const ssrBuddy: RenderBuddy = (p) => <BuddyArt {...p} playOnLoad />;
@@ -95,6 +97,7 @@ export function HolderPassView(props: HolderPassViewProps) {
             ) : null,
           // Apple's guidance accompanies the badge on every device.
           line: addLine(device),
+          ...(props.macUnsure ? { macUnsure: true } : {}),
         };
   const choices = walletChoices({
     device,
@@ -161,7 +164,7 @@ export function HolderPassView(props: HolderPassViewProps) {
           <OtherWays
             choices={rest}
             apple={apple}
-            printHref={first ? printable : undefined}
+            printHref={first && (first.id !== 'apple' || apple) ? printable : undefined}
             extra={
               props.resend ? (
                 <SendAgain action={props.resend.action} again={props.resend.again} />

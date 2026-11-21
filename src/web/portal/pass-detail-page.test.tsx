@@ -179,7 +179,8 @@ describe('pass detail', () => {
     expect(container.querySelector('a[download]')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull();
 
-    expect(screen.queryByRole('heading', { name: 'Details' })).toBeNull();
+    // An sr-only h2 keeps the outline; nothing visible says Details.
+    expect(screen.getByRole('heading', { name: 'Details', level: 2 })).toHaveClass('sr-only');
     const details = container.querySelector('.wl-holder-details') as HTMLElement;
     expect(within(details).queryAllByRole('button')).toHaveLength(0);
     // Only what the face does not show: the back, no state, no front field.

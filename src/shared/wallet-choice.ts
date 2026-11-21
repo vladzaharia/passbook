@@ -47,9 +47,9 @@ export const NATIVE_WALLET_BADGES: Record<
 };
 
 /**
- * What leads per device: the wallet that adds here; on a computer (Windows, Linux, an old iPad
- * agent) Apple's QR, since a barcode on a computer's screen never reaches the door; else the
- * browser barcode.
+ * What leads per device: the wallet that adds here; on a computer or an iPad (`other`, or `mac`
+ * on the server, which cannot tell them apart) Apple's QR, since a barcode on that screen never
+ * reaches the door; else the browser barcode.
  */
 const LEAD: Record<PassDevice, readonly WalletChoiceId[]> = {
   iphone: ['apple'],
