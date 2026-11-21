@@ -946,7 +946,7 @@ describe('designer', () => {
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
   });
 
-  it('waits for the latest dry run rather than saving against an older result', async () => {
+  it('saves with one click once the latest dry run settles', async () => {
     const user = userEvent.setup();
     const gate = deferred();
     let started = false;
@@ -965,10 +965,8 @@ describe('designer', () => {
     await waitFor(() => expect(started).toBe(true));
     await user.click(screen.getByRole('button', { name: 'Save version' }));
     expect(s.posts.every((p) => p.dryRun)).toBe(true);
-    expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+    expect(screen.queryByText(/Save again/)).toBeNull();
     gate.resolve();
-    await readyToSave();
-    await user.click(screen.getByRole('button', { name: 'Save version' }));
     expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
   });
 
