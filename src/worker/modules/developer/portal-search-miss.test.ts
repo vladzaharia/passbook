@@ -117,9 +117,16 @@ describe('POST /developers/search-miss', () => {
 
   it('limits a network, counting an IPv6 /64 as one, and leaves another network alone', async () => {
     const from = (ip: string) => post({ term: 'refund' }, { 'cf-connecting-ip': ip });
-    const burst: Response[] = [];
-    for (let i = 0; i < 130; i++) burst.push(await from(`2001:db8:aaaa:bbbb:${i}::1`));
-    expect(burst.filter((r) => r.status === 429).length).toBeGreaterThan(0);
+    // The limit is 120 per 60 s window. Send until the first 429, in quick batches, so a slow run
+    // that crosses a window boundary still reaches the limit instead of counting 130 across two windows.
+    let limited = false;
+    for (let sent = 0; sent < 600 && !limited; sent += 20) {
+      const batch = await Promise.all(
+        Array.from({ length: 20 }, (_, i) => from(`2001:db8:aaaa:bbbb:${sent + i}::1`)),
+      );
+      limited = batch.some((r) => r.status === 429);
+    }
+    expect(limited).toBe(true);
     expect((await from('2001:db8:aaaa:bbbb:ffff::9')).status).toBe(429);
     expect((await from('2001:db8:cccc:dddd::1')).status).toBe(204);
   });

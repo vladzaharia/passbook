@@ -191,18 +191,30 @@ beforeAll(async () => {
     query: '?url&inline',
     import: 'default',
   });
-  const bytesFor = (slug: string, name: string) => {
-    const data = bakedFiles[`../../../../templates/${slug}/${name}`];
+  // The stamp-card strips are composed by `npm run gen` into public/. Without them a baked sync
+  // never settles, so every shared-template request re-syncs all baked templates.
+  const stripFiles = import.meta.glob<string>(
+    '../../../../public/templates/*/*/stamps/strips/*/*.png',
+    {
+      eager: true,
+      query: '?url&inline',
+      import: 'default',
+    },
+  );
+  const decode = (data: string | undefined, label: string) => {
     if (!data?.startsWith('data:') || !data.includes(';base64,'))
-      throw new Error(`Missing baked fixture bytes: ${slug}/${name}`);
+      throw new Error(`Missing baked fixture bytes: ${label}`);
     return Uint8Array.from(atob(data.slice(data.indexOf(',') + 1)), (c) => c.charCodeAt(0));
   };
+  const bytesFor = (slug: string, name: string) =>
+    decode(bakedFiles[`../../../../templates/${slug}/${name}`], `${slug}/${name}`);
   const assets = fakeAssets();
   for (const t of generatedSource.templates) {
     for (const asset of t.assets) {
-      // Generated stamp strips have no source file; nothing here opens them.
-      if (asset.stamps !== undefined) continue;
-      const bytes = bytesFor(t.slug, asset.name);
+      const bytes =
+        asset.stamps !== undefined
+          ? decode(stripFiles[`../../../../public${asset.source.path}`], asset.source.path)
+          : bytesFor(t.slug, asset.name);
       if (
         bytes.length !== asset.size ||
         (await sha1Hex(bytes)) !== asset.sha1 ||
