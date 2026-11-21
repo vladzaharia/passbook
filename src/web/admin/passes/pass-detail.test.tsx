@@ -1345,7 +1345,7 @@ describe('pass detail: tabs', () => {
       ...orgScope,
       handlers: handlers(newServer()),
     });
-    expect(await screen.findByText('On 2 devices')).toBeInTheDocument();
+    expect(await screen.findByText(/ · On 2 devices/)).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Devices' })).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Devices' })).toBeNull();
   });
