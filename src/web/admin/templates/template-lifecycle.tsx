@@ -149,13 +149,11 @@ export function TemplateCreatedCallout({
       onDismiss={onDismiss}
       actions={
         how === 'fromBlueprint' ? (
-          <>
-            {onScanPasses ? (
-              <Button size="sm" variant="outline" loading={scanPending} onClick={onScanPasses}>
-                Scan passes
-              </Button>
-            ) : null}
-          </>
+          onScanPasses ? (
+            <Button size="sm" variant="outline" loading={scanPending} onClick={onScanPasses}>
+              Scan passes
+            </Button>
+          ) : null
         ) : how === 'duplicated' ? (
           <Button
             size="sm"
