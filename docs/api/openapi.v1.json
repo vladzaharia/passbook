@@ -1525,6 +1525,13 @@
             "type": "boolean",
             "default": false
           },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "developer"
+            ]
+          },
           "defaultIdentityId": {
             "type": [
               "string",
@@ -1703,6 +1710,13 @@
           "personal": {
             "type": "boolean",
             "default": false
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "developer"
+            ]
           },
           "defaultIdentityId": {
             "type": [
@@ -29007,6 +29021,9 @@
                       "type": "boolean",
                       "default": false
                     },
+                    "testOnly": {
+                      "type": "boolean"
+                    },
                     "userId": {
                       "type": "string",
                       "minLength": 1,
@@ -29275,6 +29292,9 @@
                             "type": "boolean",
                             "default": false
                           },
+                          "testOnly": {
+                            "type": "boolean"
+                          },
                           "userId": {
                             "type": "string",
                             "minLength": 1,
@@ -29473,6 +29493,9 @@
                           "personal": {
                             "type": "boolean",
                             "default": false
+                          },
+                          "testOnly": {
+                            "type": "boolean"
                           },
                           "userId": {
                             "type": "string",

@@ -72,6 +72,10 @@ export interface DenialOptions {
   codes?: Partial<Record<DenyReason, string>>;
 }
 
+/** 409 `ORG_TEST_ONLY`: a Live request on a developer sandbox, which never holds Live. */
+export const orgTestOnly = (): ConflictError =>
+  new ConflictError('This organization is test-only.', 'ORG_TEST_ONLY');
+
 /** Maps a classified grant refusal to the HTTP error. Unknown reasons are a plain 403. */
 export function authorityDenied(
   reason: DenyReason | string,
@@ -129,6 +133,9 @@ export function authorityDenied(
         500,
         'The record could not be signed. Try again.',
       );
+    // Not a DenyReason: only the Live-on-a-developer-org refusal (authority-granted.ts) raises it.
+    case 'testonly':
+      return orgTestOnly();
     default:
       return new ForbiddenError('You do not have access.', code ?? 'AUTHORITY_DENIED');
   }

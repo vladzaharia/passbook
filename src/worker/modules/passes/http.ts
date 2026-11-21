@@ -15,13 +15,22 @@ import {
   verifiedScopeOf,
 } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
-import { ForbiddenError, UnauthenticatedError, ValidationError } from '../../platform/errors.ts';
+import {
+  ForbiddenError,
+  orgTestOnly,
+  UnauthenticatedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import { enforceFeatures } from '../../platform/feature-guard.ts';
 import { declareKeyAccess, keyAccessOf } from '../../platform/openapi-security.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
 import { loadUserAccessRevision } from './repo-access-revision.ts';
-import { tenantOrgAccessRevision, tenantPassAuthorityValid } from './repo-authority.ts';
+import {
+  isDeveloperOrg,
+  tenantOrgAccessRevision,
+  tenantPassAuthorityValid,
+} from './repo-authority.ts';
 import type { PassScope } from './scope.ts';
 import type { Actor } from './service.ts';
 
@@ -126,8 +135,11 @@ export async function tenantAuthorityOf(
   } else {
     throw new ForbiddenError();
   }
-  if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))
+  if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now()))) {
+    // The caller is a member by now: a Live request on a developer org is a 409, not a lost-access 403.
+    if (authority.mode === 'live' && (await isDeveloperOrg(ctx.env.DB, orgId))) throw orgTestOnly();
     throw new ForbiddenError();
+  }
   // The org's entitlements, for a feature the route declared and for a key's `api` level. After the
   // principal's own authority, so a non-member learns nothing about the org's features.
   await enforceFeatures(ctx, auth, orgId);

@@ -2514,6 +2514,15 @@
       ]
     },
     {
+      "code": "ORG_TEST_ONLY",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "PAIRING_INVALID",
       "statuses": [
         400

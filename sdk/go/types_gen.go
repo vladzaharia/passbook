@@ -2935,6 +2935,7 @@ type Org struct {
 	Name              string      `json:"name"`
 	Status            string      `json:"status"`
 	Personal          *bool       `json:"personal,omitempty"`
+	Kind              *string     `json:"kind,omitempty"`
 	DefaultIdentityID *string     `json:"defaultIdentityId"`
 	Branding          OrgBranding `json:"branding"`
 	CreatedAt         int64       `json:"createdAt"`
@@ -2985,6 +2986,7 @@ type OrgSummary struct {
 	Name              string           `json:"name"`
 	Status            string           `json:"status"`
 	Personal          *bool            `json:"personal,omitempty"`
+	Kind              *string          `json:"kind,omitempty"`
 	DefaultIdentityID *string          `json:"defaultIdentityId"`
 	Branding          OrgBranding      `json:"branding"`
 	CreatedAt         int64            `json:"createdAt"`

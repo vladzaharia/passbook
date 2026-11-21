@@ -23,7 +23,7 @@ const onPlatform = () => parseAdminPath(currentPath() ?? '').scope?.kind === 'pl
 
 /** Developer sandboxes never hold Live: they open, and stay, in Test whatever the browser chose. */
 let testOnlyOrgs: ReadonlySet<string> = new Set();
-const inTestOnlyOrg = () => {
+export const inTestOnlyOrg = () => {
   const scope = parseAdminPath(currentPath() ?? '').scope;
   return scope?.kind === 'org' && testOnlyOrgs.has(scope.orgId);
 };
@@ -69,6 +69,11 @@ if (typeof window !== 'undefined') {
 
 export function useMode(): Mode {
   return useSyncExternalStore(onModeChange, getMode, () => 'live');
+}
+
+/** True on a developer org's pages: the switch is locked on Test. */
+export function useTestOnlyScope(): boolean {
+  return useSyncExternalStore(onModeChange, inTestOnlyOrg, () => false);
 }
 
 /** The header every admin API request carries while Test mode is on. */

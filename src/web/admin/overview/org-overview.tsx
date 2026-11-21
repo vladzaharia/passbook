@@ -21,7 +21,7 @@ import {
   useDelayed,
 } from '@/web/ui/index.ts';
 import { LineChart } from './chart.tsx';
-import { GetStarted, setupDone, useGetStartedDismissed } from './get-started.tsx';
+import { GetStarted, SandboxCard, setupDone, useGetStartedDismissed } from './get-started.tsx';
 import { RANGE_LABEL } from './kpis.tsx';
 import { OrgCounts } from './org-overview-counts.tsx';
 import { useOrgActivity, useOrgSetup } from './org-overview-queries.ts';
@@ -121,8 +121,9 @@ export function OrgOverviewPage({
   const arrived = useArrival(activity.isPending);
   const busy = useDelayed(activity.isPlaceholderData && activity.isFetching, 150);
   const empty = data !== undefined && data.templates.length === 0;
+  const sandbox = membership?.testOnly === true;
   const [dismissed, dismiss] = useGetStartedDismissed();
-  const setup = useOrgSetup(orgId, principal, empty && !dismissed);
+  const setup = useOrgSetup(orgId, principal, empty && !dismissed && !sandbox);
   const shownRange = activity.isPlaceholderData ? (data?.range ?? range) : range;
   const countScope = JSON.stringify(['org', principal ?? null, orgId ?? null, mode]);
   const canOperate = caps.includes('passes:operate');
@@ -146,6 +147,7 @@ export function OrgOverviewPage({
         actions={empty ? undefined : picker}
       />
       <div className="flex flex-col gap-6">
+        {sandbox ? <SandboxCard /> : null}
         {orgId ? <OrgCounts orgId={orgId} caps={caps} /> : null}
         {activity.isPending ? (
           <OrgSkeleton />
