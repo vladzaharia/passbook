@@ -119,11 +119,13 @@ describe('personal snippets', () => {
   const load = async (response: Response | Error) => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => {
+      vi.fn(async (url: string) => {
+        if (url.endsWith('/session')) return json({ authenticated: true, csrfToken: 'c' });
         if (response instanceof Error) throw response;
-        return response;
+        return response.clone();
       }),
     );
+    vi.resetModules();
     document.body.innerHTML = `<div data-samples><code id="in">org ${EXAMPLE_IDS.orgId} tpl ${EXAMPLE_IDS.templateId}</code></div><p id="out">${EXAMPLE_IDS.orgId}</p>`;
     const { mount } = await import('./personal.ts');
     await mount();
@@ -150,5 +152,14 @@ describe('personal snippets', () => {
   ])('leaves the examples as written when %s', async (_name, response) => {
     const text = await load(response);
     expect(text).toBe(`org ${EXAMPLE_IDS.orgId} tpl ${EXAMPLE_IDS.templateId}`);
+  });
+
+  it('asks nothing of the sandbox endpoint when there is no session', async () => {
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL) => json({ authenticated: false }));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
+    document.body.innerHTML = '<div data-samples><code>org</code></div>';
+    await (await import('./personal.ts')).mount();
+    expect(fetchMock.mock.calls.map((c) => String(c[0]))).toEqual(['/api/v1/session']);
   });
 });

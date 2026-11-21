@@ -18,6 +18,7 @@ export const NAV_PATH: Record<NavKey, string> = {
   guides: PATHS.guides,
   reference: PATHS.reference,
   playground: PATHS.playground,
+  console: PATHS.console,
   webhooks: PATHS.webhooks,
   logs: PATHS.logs,
 };
