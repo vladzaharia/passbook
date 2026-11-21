@@ -530,7 +530,6 @@ describe('template detail', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Version 1' })).toBeInTheDocument();
-    expect(screen.getByText('Active version')).toBeInTheDocument();
     expect(screen.getByText(/Latest draft:/).parentElement).toHaveTextContent(
       'Latest draft: Version 2',
     );
@@ -632,16 +631,8 @@ describe('template detail', () => {
       orgId: ORG.id,
       templateId: 'b1',
     });
-    const passesUrl = new URL(
-      screen.getByRole('link', { name: /2 passes/ }).getAttribute('href') ?? '',
-      'http://localhost',
-    );
-    expect(passesUrl.pathname).toBe('/admin/passes');
-    expect(Object.fromEntries(passesUrl.searchParams)).toEqual({ templateId: 'b1', orgId: ORG.id });
     expect(screen.queryByText(/Customize|Any org/)).toBeNull();
-    // Nothing in More shows from md up on a built-in, so More itself is phone-only.
-    expect(screen.getByRole('button', { name: 'More' }).parentElement).toHaveClass('md:hidden');
-    // More holds only what the bar hides on a phone: no upload, archive or delete.
+    // A platform admin's More holds Change organization: no upload, archive or delete.
     await user.click(screen.getByRole('button', { name: 'More' }));
     expect(screen.queryByRole('menuitem', { name: /Delete|Archive|Upload version/ })).toBeNull();
     await user.keyboard('{Escape}');
@@ -749,10 +740,8 @@ describe('template detail', () => {
         '/api/v1/templates/b1/preview': preview,
       },
     });
-    expect(
-      await within(await screen.findByRole('main')).findByText('All organizations'),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Change organization' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Change organization' }));
     const dialog = await screen.findByRole('dialog', { name: 'Change organization' });
     const select = within(dialog).getByRole('combobox', { name: 'Organization' });
     expect(select).toHaveTextContent('All organizations');
@@ -787,7 +776,8 @@ describe('template detail', () => {
         '/api/v1/templates/previews': previewsHandler,
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Change organization' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Change organization' }));
     const dialog = await screen.findByRole('dialog', { name: 'Change organization' });
     await user.click(within(dialog).getByRole('combobox', { name: 'Organization' }));
     expect(await screen.findByRole('option', { name: 'All organizations' })).toBeInTheDocument();

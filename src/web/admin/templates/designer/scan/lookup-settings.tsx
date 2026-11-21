@@ -9,7 +9,7 @@ export function LookupSettings() {
       label="Lookup ID"
       value={lookupInput(doc.manifest) || '__none'}
       options={[{ value: '__none', label: 'None' }, ...lookupInputs(doc.manifest)]}
-      help="An extra identifier for scanning or lookup. It can differ from the barcode and stay off the pass. Use text to preserve leading zeros."
+      help="Extra identifier for scanning, apart from the barcode. Use text to keep leading zeros."
       onPick={(input) => edit({ op: 'scan-lookup', input: input === '__none' ? '' : input })}
     />
   );
