@@ -211,12 +211,6 @@
     align-self: start;
   }
 }
-/* Beside My passes' stack (master-detail): the stack holds the card, so one column at any width. */
-.wl-holder[data-panel] {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: none;
-  grid-template-areas: "add" "more" "details" "help";
-}
 
 /* The header's mark: the pass's icon, a 29 pt square drawn for notifications. An app icon's
    corner and a hairline keep a light icon off a light page. */
