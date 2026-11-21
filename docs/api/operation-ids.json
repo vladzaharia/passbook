@@ -155,6 +155,7 @@
   "nfc-tags.patchNfcTagsById",
   "nfc-tags.postNfcPassesByPassIdEnrollments",
   "nfc-tags.postNfcPassesByPassIdTags",
+  "nfc-tags.postNfcPassesByPassIdTagsAssign",
   "nfc-tags.postNfcTagTypes",
   "nfc-tags.postNfcTagTypesByIdArchive",
   "nfc-tags.postNfcTagsByIdLost",

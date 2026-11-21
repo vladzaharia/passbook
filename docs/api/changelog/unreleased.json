@@ -120,6 +120,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",
+    "class": "additive",
+    "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
+    "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
+    "change": "new operation",
+    "note": "Assign a typed tag ID or a spare tag to a pass without a scanner."
+  },
+  {
     "key": "POST /api/v1/orgs 201.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgs",
