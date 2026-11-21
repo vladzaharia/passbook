@@ -5,6 +5,7 @@ import type { OccupancyRow } from './occupancy/repo.ts';
 import { groupRowsRead } from './occupancy/repo-reads.ts';
 import { addUndo } from './occupancy/service.ts';
 import { occZonesOf, orgZonesStmt } from './repo-access.ts';
+import { orgTimeZoneOf, orgTimeZoneStmt } from './repo-org-clock.ts';
 import type { OccupancyUndo, UndoCommit } from './repo-undo-types.ts';
 
 /** A scan's group: itself, and every scan that shares its `group_id` (an override's forced exit). */
@@ -27,21 +28,23 @@ export async function readOccupancyUndo(
 ): Promise<OccupancyUndo> {
   const ids = group.map((m) => m.id);
   const read = groupRowsRead(orgId, passId, ids);
-  const [rows, zones] = await db.batch([
+  const [rows, zones, clock] = await db.batch([
     stmt(db, read.sql, [...read.params]),
     orgZonesStmt(db, orgId),
+    orgTimeZoneStmt(db, orgId),
   ]);
   return {
     group: ids,
     scannedAt: Math.max(...group.map((m) => m.at)),
     rows: (rows?.results ?? []) as unknown as OccupancyRow[],
     zones: occZonesOf(zones),
+    orgTimeZone: orgTimeZoneOf(clock),
   };
 }
 
 /**
  * The group's rows back (`addUndo`: all or nothing, revisions up), and the group's other scans undone
- * with the target. Clear at falls back to no clock: the platform has no org time zone (C5).
+ * with the target. Clear at runs on the zone's clock, else the org's.
  */
 export function addOccupancyUndo(g: Grant, c: UndoCommit, o: OccupancyUndo): void {
   const now = c.ctx.clock.now();
@@ -53,5 +56,5 @@ export function addOccupancyUndo(g: Grant, c: UndoCommit, o: OccupancyUndo): voi
         require: 'one',
         returning: ['id'],
       });
-  addUndo(g, { passId: c.target.passId, ...o, orgTimeZone: null });
+  addUndo(g, { passId: c.target.passId, ...o });
 }

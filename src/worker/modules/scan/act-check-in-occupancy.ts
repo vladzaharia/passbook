@@ -90,7 +90,7 @@ export function planOccupancyCommit(
   // A Hard limit is never waived, whatever the override and its approver said.
   const waivers =
     waived.cap && hardLimited(o.zones, o.zone.id) ? { ...waived, cap: false } : waived;
-  const entry = entryPlan(o.zones, o.zone.id, now, null, waivers);
+  const entry = entryPlan(o.zones, o.zone.id, now, o.orgTimeZone, waivers);
   if (!entry) return null;
   const waive = waiveOf(i.override);
   const wait = waive.wait ? null : access.waitMs;
