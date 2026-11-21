@@ -42,7 +42,7 @@ describe('watchPairLink', () => {
       removeEventListener: target.removeEventListener.bind(target),
       location: { hash: '' },
       history: { replaceState },
-    } as unknown as Parameters<typeof watchPairLink>[1];
+    } as unknown as NonNullable<Parameters<typeof watchPairLink>[1]>;
     const seen: string[] = [];
     takePairCode(win.location, win.history);
     const stop = watchPairLink((code) => seen.push(code), win);
