@@ -69,3 +69,8 @@ WHEN NEW.rotation = 'auto' AND NEW.not_after IS NOT NULL AND NEW.cert_sha256 IS 
 BEGIN
   UPDATE signing_identities SET next_rotation_at = NEW.not_after - 5184000000 WHERE id = NEW.id;
 END;
+
+-- A developer org holds no Live row, whoever writes it (0156).
+CREATE TRIGGER identity_runs_developer_no_live BEFORE INSERT ON identity_runs
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live identity run'); END;

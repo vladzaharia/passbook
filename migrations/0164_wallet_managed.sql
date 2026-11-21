@@ -59,3 +59,8 @@ END;
 
 -- A run is claimed by one job at a time: the lease expires, so a crashed holder's run is picked up again.
 ALTER TABLE identity_runs ADD COLUMN lease_until INTEGER;
+
+-- A developer org holds no Live row, whoever writes it (0156).
+CREATE TRIGGER wallet_org_cards_developer_no_live BEFORE INSERT ON wallet_org_cards
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live data'); END;
