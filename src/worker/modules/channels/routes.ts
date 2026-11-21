@@ -7,11 +7,14 @@ import {
   PutPassChannelsSchema,
   PutTemplateChannelsResponseSchema,
   PutTemplateChannelsSchema,
+  ResetTemplatePassesResponseSchema,
+  ResetTemplatePassesSchema,
   TemplateChannelsResponseSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { setupCan } from '../orgs/pass-setup.ts';
 import { activeMembership } from '../orgs/repo-members.ts';
 import {
   actorFor,
@@ -27,6 +30,7 @@ import { assertWritableMode } from '../passes/scope.ts';
 import * as repo from './repo.ts';
 import { registerChannelRunRoutes } from './runs-routes.ts';
 import { passChannels, templateChannels } from './service.ts';
+import { resetTemplatePasses } from './service-reset.ts';
 import { putTemplateChannels } from './service-template.ts';
 import { bulkPassChannels, putPassChannels } from './service-write.ts';
 
@@ -80,7 +84,8 @@ export function registerPassChannelRoutes(passesRoutes: Router): void {
     async (c) => {
       const { id } = c.req.valid('param');
       const { pass } = await tenantPassForRead(svc(c), authOf(c), id, passScopeOf(c));
-      return c.json(await passChannels(svc(c), pass));
+      const can = await setupCan(svc(c), authOf(c), pass.orgId);
+      return c.json(await passChannels(svc(c), pass, can));
     },
   );
 
@@ -155,7 +160,8 @@ export function registerTemplateChannelRoutes(templatesRoutes: Router): void {
     },
     async (c) => {
       const { template } = await templateFor(c, 'templates:read', c.req.valid('query').orgId);
-      return c.json(await templateChannels(svc(c), template, modeOf(authOf(c))));
+      const can = await setupCan(svc(c), authOf(c), template.orgId);
+      return c.json(await templateChannels(svc(c), template, modeOf(authOf(c)), can));
     },
   );
 
@@ -175,8 +181,45 @@ export function registerTemplateChannelRoutes(templatesRoutes: Router): void {
     async (c) => {
       const body = c.req.valid('json');
       const { template, authority } = await templateFor(c, 'templates:publish', body.orgId);
+      const can = await setupCan(svc(c), authOf(c), template.orgId);
       return c.json(
         await putTemplateChannels(
+          svc(c),
+          actorFor(c),
+          authority,
+          template,
+          modeOf(authOf(c)),
+          can,
+          body,
+        ),
+      );
+    },
+  );
+
+  register(
+    templatesRoutes,
+    'templates',
+    {
+      method: 'post',
+      path: '/{id}/channels/reset-passes',
+      summary:
+        'Passes with their own channel choice follow the template again; repeat while remaining is above 0',
+      params: IdParamSchema,
+      body: ResetTemplatePassesSchema,
+      response: ResetTemplatePassesResponseSchema,
+    },
+    async (c) => {
+      const body = c.req.valid('json');
+      const { template } = await templateFor(c, 'templates:publish', body.orgId);
+      // Clearing a pass override is a pass operation: the caller needs that right as well.
+      const authority = await tenantAuthorityOf(
+        svc(c),
+        authOf(c),
+        template.orgId,
+        'passes:operate',
+      );
+      return c.json(
+        await resetTemplatePasses(
           svc(c),
           actorFor(c),
           authority,

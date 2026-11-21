@@ -1,11 +1,7 @@
 import type { z } from 'zod';
-import { effectiveChannels, levelState } from '../../../shared/channels.ts';
-import {
-  CHANNELS,
-  type Channel,
-  type ChannelLevel,
-  type ChannelReason,
-} from '../../../shared/contracts/channels.ts';
+import { ownBrandParts } from '../../../passkit/template/brand.ts';
+import { effectiveChannels } from '../../../shared/channels.ts';
+import { CHANNELS, type Channel, type ChannelLevel } from '../../../shared/contracts/channels.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import type {
@@ -21,6 +17,7 @@ import type { SetupFacts } from '../../../shared/org-setup-checks.ts';
 import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { upperLevels } from '../channels/chain.ts';
 import * as channelsRepo from '../channels/repo.ts';
 import { levels } from '../channels/service.ts';
 import { latestRun } from '../identities/repo-runs.ts';
@@ -95,6 +92,9 @@ const by = <T>(value: T | null | undefined, source: 'org' | 'passbook' = 'org') 
   source: value === null || value === undefined ? ('passbook' as const) : source,
 });
 
+const ownCount = (templates: readonly SetupTemplate[], part: BrandPart) =>
+  templates.filter((t) => t.ownBrand.includes(part)).length;
+
 /** Templates with their own channel view, and the per-channel template counts. */
 async function loadTemplates(
   ctx: ServiceContext,
@@ -140,8 +140,7 @@ async function loadTemplates(
       return {
         id: row.id,
         name: row.name,
-        // The manifest's `brand` block arrives with the template work; until then none opts out.
-        ownBrand: [] as BrandPart[],
+        ownBrand: ownBrandParts({ brand: row.brand ? JSON.parse(row.brand) : undefined }),
         placeholders: placeholders.filter(
           (s): s is 'logo' | 'icon' => s === 'logo' || s === 'icon',
         ),
@@ -159,25 +158,16 @@ function chainOf(
   tplState: SetupChannel['templates'],
   can: SetupCan,
 ): ChannelLevel[] {
-  const reasons: [ChannelLevel['level'], ChannelReason | undefined][] = [
-    ['passbook', upper.platform[c] ?? (held ? 'not_enrolled' : undefined)],
-    ['plan', upper.entitlement?.[c]],
-    ['org', upper.org[c]],
-  ];
-  const allowed = { passbook: can.platform, plan: can.platform, org: can.org } as const;
-  const stops = reasons.map(([level, reason]) => ({
-    level,
-    state: levelState(level, reason),
-    ...(reason ? { reason } : {}),
-    canChange: allowed[level as 'passbook' | 'plan' | 'org'],
-  }));
   const state =
     tplState.total === 0 || tplState.on === tplState.total
       ? 'ok'
       : tplState.on > 0
         ? 'partial'
         : 'off';
-  return [...stops, { level: 'template', state, canChange: can.template }];
+  return [
+    ...upperLevels(c, upper, held, can),
+    { level: 'template', state, canChange: can.template },
+  ];
 }
 
 async function loadApple(ctx: ServiceContext, orgId: string, mode: Mode, managed: boolean) {
@@ -280,13 +270,13 @@ export async function loadSetupFacts(
     passCount,
     brand: {
       name: { value: row.name, source: 'org' },
-      logo: { ...by(shown(stored.logo)), templatesOwn: 0 },
-      icon: { ...by(shown(stored.icon)), templatesOwn: 0 },
+      logo: { ...by(shown(stored.logo)), templatesOwn: ownCount(templates, 'logo') },
+      icon: { ...by(shown(stored.icon)), templatesOwn: ownCount(templates, 'icon') },
       webLogo: {
         ...by(shown(stored.web)),
         sameAsLogo: webSameAsLogo(settings['branding.webLogoSameAsLogo'], stored),
       },
-      passColors: { ...by(stored.passColors), templatesOwn: 0 },
+      passColors: { ...by(stored.passColors), templatesOwn: ownCount(templates, 'colors') },
       logoHasName: by(stored.logoHasName),
       accent: by(accent),
       mark: {

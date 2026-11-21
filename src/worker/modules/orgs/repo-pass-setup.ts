@@ -10,13 +10,17 @@ export interface SetupTemplateRow {
   active_version: string | null;
   /** The active version's stored asset list (JSON), when it has one. */
   assets: string | null;
+  /** The active version's manifest `brand` block (JSON object text), when it has one. */
+  brand: string | null;
 }
 
 /** The org's own live templates for the page: no blueprints, archived or deleted ones. */
 export function setupTemplateRows(db: D1Database, orgId: string): Promise<SetupTemplateRow[]> {
   return all<SetupTemplateRow>(
     db,
-    `SELECT t.id, t.name, t.active_version, v.assets
+    `SELECT t.id, t.name, t.active_version, v.assets,
+       CASE WHEN json_type(v.manifest, '$.brand') = 'object'
+         THEN json_extract(v.manifest, '$.brand') END AS brand
      FROM templates t LEFT JOIN template_versions v
        ON v.template_id = t.id AND v.version = t.active_version
      WHERE t.org_id = ? AND t.status = 'active' AND t.blueprint = 0

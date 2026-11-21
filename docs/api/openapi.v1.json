@@ -21907,6 +21907,36 @@
           "revision"
         ]
       },
+      "TemplatesChannelsResetPassesParams": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mobile",
+                "apple",
+                "google",
+                "samsung",
+                "paper",
+                "nfc"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 6
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": false
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
       "TemplatesVersionsCreateParams": {
         "type": "object",
         "properties": {
@@ -52670,6 +52700,362 @@
                         }
                       }
                     },
+                    "levels": {
+                      "type": "object",
+                      "properties": {
+                        "mobile": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "apple": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "google": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "samsung": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "paper": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "nfc": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "overrides": {
+                      "type": "object",
+                      "properties": {
+                        "mobile": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "apple": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "google": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "samsung": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "paper": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "nfc": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "overridePasses": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
                     "defaults": {
                       "type": "object",
                       "properties": {
@@ -52722,6 +53108,9 @@
                     "channels",
                     "revision",
                     "effective",
+                    "levels",
+                    "overrides",
+                    "overridePasses",
                     "defaults"
                   ]
                 }
@@ -53200,6 +53589,362 @@
                         }
                       }
                     },
+                    "levels": {
+                      "type": "object",
+                      "properties": {
+                        "mobile": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "apple": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "google": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "samsung": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "paper": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "nfc": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "overrides": {
+                      "type": "object",
+                      "properties": {
+                        "mobile": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "apple": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "google": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "samsung": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "paper": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "nfc": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "overridePasses": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
                     "defaults": {
                       "type": "object",
                       "properties": {
@@ -53375,6 +54120,9 @@
                     "channels",
                     "revision",
                     "effective",
+                    "levels",
+                    "overrides",
+                    "overridePasses",
                     "defaults",
                     "impact",
                     "workflowInstanceId",
@@ -53631,6 +54379,184 @@
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_REVIEW_SUPERSEDED",
+          "TEMPLATE_SELF_APPROVAL",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/templates/{id}/channels/reset-passes": {
+      "post": {
+        "summary": "Passes with their own channel choice follow the template again; repeat while remaining is above 0",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplatesChannelsResetPassesParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "overrides": {
+                      "type": "object",
+                      "properties": {
+                        "mobile": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "apple": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "google": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "samsung": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "paper": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "nfc": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "passes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "done": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "skipped": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "remaining": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "overrides",
+                    "passes",
+                    "done",
+                    "skipped",
+                    "remaining"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.postTemplatesByIdChannelsResetPasses",
+        "x-sdk": {
+          "resource": "templates.channels",
+          "method": "resetPasses"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
           "KEY_CREATOR_GONE",
@@ -64795,6 +65721,329 @@
                         }
                       }
                     },
+                    "levels": {
+                      "type": "object",
+                      "properties": {
+                        "mobile": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "apple": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "google": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "samsung": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "paper": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "nfc": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        }
+                      }
+                    },
                     "overrides": {
                       "type": "object",
                       "properties": {
@@ -64951,6 +66200,7 @@
                   },
                   "required": [
                     "effective",
+                    "levels",
                     "overrides",
                     "replace"
                   ]
@@ -65402,6 +66652,329 @@
                         }
                       }
                     },
+                    "levels": {
+                      "type": "object",
+                      "properties": {
+                        "mobile": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "apple": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "google": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "samsung": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "paper": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        },
+                        "nfc": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "level": {
+                                "type": "string",
+                                "enum": [
+                                  "passbook",
+                                  "plan",
+                                  "org",
+                                  "template",
+                                  "pass"
+                                ]
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "partial",
+                                  "off",
+                                  "needs",
+                                  "locked"
+                                ]
+                              },
+                              "reason": {
+                                "type": "string",
+                                "enum": [
+                                  "not_released",
+                                  "not_enrolled",
+                                  "no_design",
+                                  "tags_off",
+                                  "printing_off",
+                                  "not_included",
+                                  "blocked",
+                                  "never",
+                                  "template_off",
+                                  "pass_off"
+                                ],
+                                "description": "Why this level stops the channel."
+                              },
+                              "canChange": {
+                                "type": "boolean",
+                                "description": "The caller may change this level."
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "state",
+                              "canChange"
+                            ]
+                          }
+                        }
+                      }
+                    },
                     "overrides": {
                       "type": "object",
                       "properties": {
@@ -65558,6 +67131,7 @@
                   },
                   "required": [
                     "effective",
+                    "levels",
                     "overrides",
                     "replace"
                   ]

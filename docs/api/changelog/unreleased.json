@@ -480,6 +480,14 @@
     "note": "Lists a template's saved column mappings."
   },
   {
+    "key": "GET /api/v1/passes/{id}/channels 200.levels: field added",
+    "class": "additive",
+    "operationId": "passes.getPassesByIdChannels",
+    "op": "GET /api/v1/passes/{id}/channels",
+    "change": "200.levels: field added",
+    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
     "key": "GET /api/v1/platform/apple-calls new operation",
     "class": "additive",
     "operationId": "wallet-identities.getPlatformAppleCalls",
@@ -622,6 +630,30 @@
     "op": "GET /api/v1/templates/{id}",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/channels 200.levels: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdChannels",
+    "op": "GET /api/v1/templates/{id}/channels",
+    "change": "200.levels: field added",
+    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/channels 200.overridePasses: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdChannels",
+    "op": "GET /api/v1/templates/{id}/channels",
+    "change": "200.overridePasses: field added",
+    "note": "overridePasses counts the passes with at least one choice of their own."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/channels 200.overrides: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdChannels",
+    "op": "GET /api/v1/templates/{id}/channels",
+    "change": "200.overrides: field added",
+    "note": "overrides counts the template's passes with their own choice, per channel."
   },
   {
     "key": "GET /api/v1/templates/{id}/sample.csv new operation",
@@ -1336,6 +1368,14 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "POST /api/v1/templates/{id}/channels/reset-passes new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdChannelsResetPasses",
+    "op": "POST /api/v1/templates/{id}/channels/reset-passes",
+    "change": "new operation",
+    "note": "Resets passes with their own channel choice to the template, a page per call; repeat while remaining is above 0."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/clone 201.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdClone",
@@ -1568,6 +1608,14 @@
     "note": "Saves a named column mapping for a template; the same name replaces it."
   },
   {
+    "key": "PUT /api/v1/passes/{id}/channels 200.levels: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdChannels",
+    "op": "PUT /api/v1/passes/{id}/channels",
+    "change": "200.levels: field added",
+    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
     "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
     "class": "notable",
     "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
@@ -1606,6 +1654,30 @@
     "op": "PUT /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdChannels",
+    "op": "PUT /api/v1/templates/{id}/channels",
+    "change": "200.levels: field added",
+    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/channels 200.overridePasses: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdChannels",
+    "op": "PUT /api/v1/templates/{id}/channels",
+    "change": "200.overridePasses: field added",
+    "note": "overridePasses counts the passes with at least one choice of their own."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/channels 200.overrides: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdChannels",
+    "op": "PUT /api/v1/templates/{id}/channels",
+    "change": "200.overrides: field added",
+    "note": "overrides counts the template's passes with their own choice, per channel."
   },
   {
     "key": "PUT /api/v1/templates/{id}/manifest 200.release: field added",

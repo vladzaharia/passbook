@@ -55,6 +55,12 @@ export const ChannelLevelSchema = z.object({
 });
 export type ChannelLevel = z.infer<typeof ChannelLevelSchema>;
 
+/** The chain of every channel, top to bottom, for the template or pass asked about. */
+export const ChannelLevelsSchema = z.record(
+  ChannelSchema,
+  z.array(ChannelLevelSchema),
+) as z.ZodType<Record<Channel, ChannelLevel[]>>;
+
 /** Why a provider offer is withheld while its channel is on, after a channel-off retirement. */
 export const OFFER_HOLDS = ['provider_retiring', 'provider_epoch_limit'] as const;
 export const OfferHoldSchema = z.enum(OFFER_HOLDS);
@@ -114,6 +120,8 @@ export type ChannelReplaceBlock = z.infer<typeof ChannelReplaceBlockSchema>;
 /** GET /api/v1/passes/{id}/channels */
 export const PassChannelsResponseSchema = z.object({
   effective: EffectiveChannelsSchema,
+  /** PassBook › Plan › Organization › Template › This pass for each channel. */
+  levels: ChannelLevelsSchema,
   /** Per-pass overrides only; a channel absent here follows its template. */
   overrides: PassChannelOverridesSchema,
   /** "Turn off and replace codes": whether this pass's barcode allows it, and the windows within 48 hours. */
@@ -203,6 +211,14 @@ export const TemplateChannelsResponseSchema = z.object({
   revision: z.number().int().nonnegative(),
   /** The template's own view: platform, org and capability, before any pass override. */
   effective: EffectiveChannelsSchema,
+  /** PassBook › Plan › Organization › Template for each channel. */
+  levels: ChannelLevelsSchema,
+  /** Passes of this template (in this mode) that carry their own choice, per channel. */
+  overrides: z.record(ChannelSchema, z.number().int().nonnegative()) as z.ZodType<
+    Record<Channel, number>
+  >,
+  /** Passes with at least one override of their own. */
+  overridePasses: z.number().int().nonnegative(),
   /** What each channel is when the policy is silent: the manifest default, else the global one. */
   defaults: z.record(ChannelSchema, z.enum(['on', 'off'])),
 });
@@ -232,6 +248,29 @@ export const PutTemplateChannelsResponseSchema = TemplateChannelsResponseSchema.
   blocked: ChannelBlockSchema.nullable(),
   /** No digital channel would stay on: no new code is possible. */
   allOff: z.boolean(),
+});
+
+/** POST /api/v1/templates/{id}/channels/reset-passes: passes with their own choice follow the template again. */
+export const ResetTemplatePassesSchema = z.object({
+  /** Only these channels; absent: every channel with an override. */
+  channels: z.array(ChannelSchema).min(1).max(CHANNELS.length).optional(),
+  /** Answer with the counts and change nothing. */
+  dryRun: z.boolean().default(false),
+  orgId: OrgIdSchema.optional(),
+});
+export const ResetTemplatePassesResponseSchema = z.object({
+  /** Overrides left to reset (before this call on a dry run), per channel. */
+  overrides: z.record(ChannelSchema, z.number().int().nonnegative()) as z.ZodType<
+    Record<Channel, number>
+  >,
+  /** Passes with at least one override in the chosen channels. */
+  passes: z.number().int().nonnegative(),
+  /** Passes this call reset; one call resets at most a page, so repeat while `remaining` is above 0. */
+  done: z.number().int().nonnegative(),
+  /** Passes the hourly override limit held back: they stay in `remaining`. */
+  skipped: z.number().int().nonnegative(),
+  /** Overrides still to reset after this call. */
+  remaining: z.number().int().nonnegative(),
 });
 
 export const ChannelApplyRunSchema = z.object({

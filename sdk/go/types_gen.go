@@ -4891,6 +4891,7 @@ type PassesBulkUpdateChannelsResultSkippedItem struct {
 
 type PassesChannelsRetrieveResult struct {
 	Effective PassesChannelsRetrieveResultEffective `json:"effective"`
+	Levels    PassesChannelsRetrieveResultLevels    `json:"levels"`
 	Overrides PassesChannelsRetrieveResultOverrides `json:"overrides"`
 	Replace   PassesChannelsRetrieveResultReplace   `json:"replace"`
 }
@@ -4952,6 +4953,57 @@ type PassesChannelsRetrieveResultEffectiveSamsung struct {
 	RetiredCause *string `json:"retiredCause,omitempty"`
 }
 
+type PassesChannelsRetrieveResultLevels struct {
+	Mobile  []PassesChannelsRetrieveResultLevelsMobileItem  `json:"mobile,omitempty"`
+	Apple   []PassesChannelsRetrieveResultLevelsAppleItem   `json:"apple,omitempty"`
+	Google  []PassesChannelsRetrieveResultLevelsGoogleItem  `json:"google,omitempty"`
+	Samsung []PassesChannelsRetrieveResultLevelsSamsungItem `json:"samsung,omitempty"`
+	Paper   []PassesChannelsRetrieveResultLevelsPaperItem   `json:"paper,omitempty"`
+	NFC     []PassesChannelsRetrieveResultLevelsNfcItem     `json:"nfc,omitempty"`
+}
+
+type PassesChannelsRetrieveResultLevelsAppleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsGoogleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsMobileItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsNfcItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsPaperItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsSamsungItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
 type PassesChannelsRetrieveResultOverrides struct {
 	Mobile  *string `json:"mobile,omitempty"`
 	Apple   *string `json:"apple,omitempty"`
@@ -4999,6 +5051,7 @@ type PassesChannelsUpdateParamsChannels struct {
 
 type PassesChannelsUpdateResult struct {
 	Effective PassesChannelsUpdateResultEffective `json:"effective"`
+	Levels    PassesChannelsUpdateResultLevels    `json:"levels"`
 	Overrides PassesChannelsUpdateResultOverrides `json:"overrides"`
 	Replace   PassesChannelsUpdateResultReplace   `json:"replace"`
 }
@@ -5058,6 +5111,57 @@ type PassesChannelsUpdateResultEffectiveSamsung struct {
 	Reason       *string `json:"reason,omitempty"`
 	RetiredAt    *int64  `json:"retiredAt,omitempty"`
 	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type PassesChannelsUpdateResultLevels struct {
+	Mobile  []PassesChannelsUpdateResultLevelsMobileItem  `json:"mobile,omitempty"`
+	Apple   []PassesChannelsUpdateResultLevelsAppleItem   `json:"apple,omitempty"`
+	Google  []PassesChannelsUpdateResultLevelsGoogleItem  `json:"google,omitempty"`
+	Samsung []PassesChannelsUpdateResultLevelsSamsungItem `json:"samsung,omitempty"`
+	Paper   []PassesChannelsUpdateResultLevelsPaperItem   `json:"paper,omitempty"`
+	NFC     []PassesChannelsUpdateResultLevelsNfcItem     `json:"nfc,omitempty"`
+}
+
+type PassesChannelsUpdateResultLevelsAppleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsGoogleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsMobileItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsNfcItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsPaperItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsSamsungItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
 }
 
 type PassesChannelsUpdateResultOverrides struct {
@@ -8120,11 +8224,20 @@ type TemplatesChannelsListRunsResultItem struct {
 	Waiting    map[string]any     `json:"waiting"`
 }
 
+type TemplatesChannelsResetPassesParams struct {
+	Channels []string `json:"channels,omitempty"`
+	DryRun   *bool    `json:"dryRun,omitempty"`
+	OrgID    *string  `json:"orgId,omitempty"`
+}
+
 type TemplatesChannelsRetrieveResult struct {
-	Channels  map[string]any                           `json:"channels"`
-	Revision  int64                                    `json:"revision"`
-	Effective TemplatesChannelsRetrieveResultEffective `json:"effective"`
-	Defaults  TemplatesChannelsRetrieveResultDefaults  `json:"defaults"`
+	Channels       map[string]any                           `json:"channels"`
+	Revision       int64                                    `json:"revision"`
+	Effective      TemplatesChannelsRetrieveResultEffective `json:"effective"`
+	Levels         TemplatesChannelsRetrieveResultLevels    `json:"levels"`
+	Overrides      TemplatesChannelsRetrieveResultOverrides `json:"overrides"`
+	OverridePasses int64                                    `json:"overridePasses"`
+	Defaults       TemplatesChannelsRetrieveResultDefaults  `json:"defaults"`
 }
 
 type TemplatesChannelsRetrieveResultDefaults struct {
@@ -8191,6 +8304,66 @@ type TemplatesChannelsRetrieveResultEffectiveSamsung struct {
 	Reason       *string `json:"reason,omitempty"`
 	RetiredAt    *int64  `json:"retiredAt,omitempty"`
 	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type TemplatesChannelsRetrieveResultLevels struct {
+	Mobile  []TemplatesChannelsRetrieveResultLevelsMobileItem  `json:"mobile,omitempty"`
+	Apple   []TemplatesChannelsRetrieveResultLevelsAppleItem   `json:"apple,omitempty"`
+	Google  []TemplatesChannelsRetrieveResultLevelsGoogleItem  `json:"google,omitempty"`
+	Samsung []TemplatesChannelsRetrieveResultLevelsSamsungItem `json:"samsung,omitempty"`
+	Paper   []TemplatesChannelsRetrieveResultLevelsPaperItem   `json:"paper,omitempty"`
+	NFC     []TemplatesChannelsRetrieveResultLevelsNfcItem     `json:"nfc,omitempty"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsAppleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsGoogleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsMobileItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsNfcItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsPaperItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsSamsungItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultOverrides struct {
+	Mobile  *int64 `json:"mobile,omitempty"`
+	Apple   *int64 `json:"apple,omitempty"`
+	Google  *int64 `json:"google,omitempty"`
+	Samsung *int64 `json:"samsung,omitempty"`
+	Paper   *int64 `json:"paper,omitempty"`
+	NFC     *int64 `json:"nfc,omitempty"`
 }
 
 type TemplatesChannelsUpdateParams struct {

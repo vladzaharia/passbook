@@ -896,14 +896,14 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.channels.retrieve", "GET", "/api/v1/passes/id1/channels", false,
-		"", `{"effective":{},"overrides":{},"replace":{"supported":false,"windows":[{"kind":"event","id":"x","name":"x","opensAt":0,"closesAt":0,"open":false,"scheduled":false}],"owed":false,"blocked":{"name":"x","closesAt":0},"lastDigital":["mobile"]}}`,
+		"", `{"effective":{},"levels":{},"overrides":{},"replace":{"supported":false,"windows":[{"kind":"event","id":"x","name":"x","opensAt":0,"closesAt":0,"open":false,"scheduled":false}],"owed":false,"blocked":{"name":"x","closesAt":0},"lastDigital":["mobile"]}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Passes.Channels.Retrieve(ctx, "id1")
 		},
 	},
 	{
 		"passes.channels.update", "PUT", "/api/v1/passes/id1/channels", false,
-		`{"channels":{}}`, `{"effective":{},"overrides":{},"replace":{"supported":false,"windows":[{"kind":"event","id":"x","name":"x","opensAt":0,"closesAt":0,"open":false,"scheduled":false}],"owed":false,"blocked":{"name":"x","closesAt":0},"lastDigital":["mobile"]}}`,
+		`{"channels":{}}`, `{"effective":{},"levels":{},"overrides":{},"replace":{"supported":false,"windows":[{"kind":"event","id":"x","name":"x","opensAt":0,"closesAt":0,"open":false,"scheduled":false}],"owed":false,"blocked":{"name":"x","closesAt":0},"lastDigital":["mobile"]}}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassesChannelsUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -1324,7 +1324,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"templates.channels.retrieve", "GET", "/api/v1/templates/id1/channels", false,
-		"", `{"channels":{},"revision":0,"effective":{},"defaults":{}}`,
+		"", `{"channels":{},"revision":0,"effective":{},"levels":{},"overrides":{},"overridePasses":0,"defaults":{}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Templates.Channels.Retrieve(ctx, "id1")
 		},

@@ -712,6 +712,13 @@ __all__ = [
     "PassesChannelsRetrieveResultEffectiveNfc",
     "PassesChannelsRetrieveResultEffectivePaper",
     "PassesChannelsRetrieveResultEffectiveSamsung",
+    "PassesChannelsRetrieveResultLevels",
+    "PassesChannelsRetrieveResultLevelsAppleItem",
+    "PassesChannelsRetrieveResultLevelsGoogleItem",
+    "PassesChannelsRetrieveResultLevelsMobileItem",
+    "PassesChannelsRetrieveResultLevelsNfcItem",
+    "PassesChannelsRetrieveResultLevelsPaperItem",
+    "PassesChannelsRetrieveResultLevelsSamsungItem",
     "PassesChannelsRetrieveResultOverrides",
     "PassesChannelsRetrieveResultReplace",
     "PassesChannelsRetrieveResultReplaceWindowsItem",
@@ -726,6 +733,13 @@ __all__ = [
     "PassesChannelsUpdateResultEffectiveNfc",
     "PassesChannelsUpdateResultEffectivePaper",
     "PassesChannelsUpdateResultEffectiveSamsung",
+    "PassesChannelsUpdateResultLevels",
+    "PassesChannelsUpdateResultLevelsAppleItem",
+    "PassesChannelsUpdateResultLevelsGoogleItem",
+    "PassesChannelsUpdateResultLevelsMobileItem",
+    "PassesChannelsUpdateResultLevelsNfcItem",
+    "PassesChannelsUpdateResultLevelsPaperItem",
+    "PassesChannelsUpdateResultLevelsSamsungItem",
     "PassesChannelsUpdateResultOverrides",
     "PassesChannelsUpdateResultReplace",
     "PassesChannelsUpdateResultReplaceWindowsItem",
@@ -1124,6 +1138,7 @@ __all__ = [
     "TemplatesCandidatesPromoteParams",
     "TemplatesChannelsListRunsResult",
     "TemplatesChannelsListRunsResultItem",
+    "TemplatesChannelsResetPassesParams",
     "TemplatesChannelsRetrieveResult",
     "TemplatesChannelsRetrieveResultDefaults",
     "TemplatesChannelsRetrieveResultEffective",
@@ -1133,6 +1148,14 @@ __all__ = [
     "TemplatesChannelsRetrieveResultEffectiveNfc",
     "TemplatesChannelsRetrieveResultEffectivePaper",
     "TemplatesChannelsRetrieveResultEffectiveSamsung",
+    "TemplatesChannelsRetrieveResultLevels",
+    "TemplatesChannelsRetrieveResultLevelsAppleItem",
+    "TemplatesChannelsRetrieveResultLevelsGoogleItem",
+    "TemplatesChannelsRetrieveResultLevelsMobileItem",
+    "TemplatesChannelsRetrieveResultLevelsNfcItem",
+    "TemplatesChannelsRetrieveResultLevelsPaperItem",
+    "TemplatesChannelsRetrieveResultLevelsSamsungItem",
+    "TemplatesChannelsRetrieveResultOverrides",
     "TemplatesChannelsUpdateParams",
     "TemplatesChannelsUpdateParamsChannels",
     "TemplatesCloneParams",
@@ -5927,6 +5950,7 @@ class PassesBulkUpdateChannelsResultSkippedItem(_Model):
 
 class PassesChannelsRetrieveResult(_Model):
     effective: PassesChannelsRetrieveResultEffective
+    levels: PassesChannelsRetrieveResultLevels
     overrides: PassesChannelsRetrieveResultOverrides
     replace: PassesChannelsRetrieveResultReplace
 
@@ -5980,6 +6004,50 @@ class PassesChannelsRetrieveResultEffectiveSamsung(_Model):
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
+class PassesChannelsRetrieveResultLevels(_Model):
+    mobile: _List[PassesChannelsRetrieveResultLevelsMobileItem] | None = None
+    apple: _List[PassesChannelsRetrieveResultLevelsAppleItem] | None = None
+    google: _List[PassesChannelsRetrieveResultLevelsGoogleItem] | None = None
+    samsung: _List[PassesChannelsRetrieveResultLevelsSamsungItem] | None = None
+    paper: _List[PassesChannelsRetrieveResultLevelsPaperItem] | None = None
+    nfc: _List[PassesChannelsRetrieveResultLevelsNfcItem] | None = None
+
+class PassesChannelsRetrieveResultLevelsAppleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsGoogleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsMobileItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsNfcItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsPaperItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsSamsungItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
 class PassesChannelsRetrieveResultOverrides(_Model):
     mobile: _Literal["on", "off"] | str | None = None
     apple: _Literal["on", "off"] | str | None = None
@@ -6020,6 +6088,7 @@ class PassesChannelsUpdateParamsChannels(_Model):
 
 class PassesChannelsUpdateResult(_Model):
     effective: PassesChannelsUpdateResultEffective
+    levels: PassesChannelsUpdateResultLevels
     overrides: PassesChannelsUpdateResultOverrides
     replace: PassesChannelsUpdateResultReplace
 
@@ -6072,6 +6141,50 @@ class PassesChannelsUpdateResultEffectiveSamsung(_Model):
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
+
+class PassesChannelsUpdateResultLevels(_Model):
+    mobile: _List[PassesChannelsUpdateResultLevelsMobileItem] | None = None
+    apple: _List[PassesChannelsUpdateResultLevelsAppleItem] | None = None
+    google: _List[PassesChannelsUpdateResultLevelsGoogleItem] | None = None
+    samsung: _List[PassesChannelsUpdateResultLevelsSamsungItem] | None = None
+    paper: _List[PassesChannelsUpdateResultLevelsPaperItem] | None = None
+    nfc: _List[PassesChannelsUpdateResultLevelsNfcItem] | None = None
+
+class PassesChannelsUpdateResultLevelsAppleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsGoogleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsMobileItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsNfcItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsPaperItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsSamsungItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
 
 class PassesChannelsUpdateResultOverrides(_Model):
     mobile: _Literal["on", "off"] | str | None = None
@@ -8729,10 +8842,18 @@ class TemplatesChannelsListRunsResultItem(_Model):
     errorCode: str | None
     waiting: _Dict[str, _Any] | None
 
+class TemplatesChannelsResetPassesParams(_Model):
+    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str] | None = None
+    dryRun: bool | None = None
+    orgId: str | None = None
+
 class TemplatesChannelsRetrieveResult(_Model):
     channels: _Dict[str, _Any] | None
     revision: int
     effective: TemplatesChannelsRetrieveResultEffective
+    levels: TemplatesChannelsRetrieveResultLevels
+    overrides: TemplatesChannelsRetrieveResultOverrides
+    overridePasses: int
     defaults: TemplatesChannelsRetrieveResultDefaults
 
 class TemplatesChannelsRetrieveResultDefaults(_Model):
@@ -8792,6 +8913,58 @@ class TemplatesChannelsRetrieveResultEffectiveSamsung(_Model):
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsRetrieveResultLevels(_Model):
+    mobile: _List[TemplatesChannelsRetrieveResultLevelsMobileItem] | None = None
+    apple: _List[TemplatesChannelsRetrieveResultLevelsAppleItem] | None = None
+    google: _List[TemplatesChannelsRetrieveResultLevelsGoogleItem] | None = None
+    samsung: _List[TemplatesChannelsRetrieveResultLevelsSamsungItem] | None = None
+    paper: _List[TemplatesChannelsRetrieveResultLevelsPaperItem] | None = None
+    nfc: _List[TemplatesChannelsRetrieveResultLevelsNfcItem] | None = None
+
+class TemplatesChannelsRetrieveResultLevelsAppleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsGoogleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsMobileItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsNfcItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsPaperItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsSamsungItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultOverrides(_Model):
+    mobile: int | None = None
+    apple: int | None = None
+    google: int | None = None
+    samsung: int | None = None
+    paper: int | None = None
+    nfc: int | None = None
 
 class TemplatesChannelsUpdateParams(_Model):
     channels: TemplatesChannelsUpdateParamsChannels
