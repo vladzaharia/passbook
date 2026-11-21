@@ -25,7 +25,7 @@ afterEach(() => {
 
 describe('the session lookup', () => {
   const load = async () => (await import('./session.ts')).loadSession();
-  const authed = { authenticated: true, csrfToken: 'csrf-1' };
+  const authed = { authenticated: true, csrfToken: 'csrf-1', roles: ['developer'] };
 
   it('is signed out without a session, and when the lookup fails', async () => {
     route({ '/api/v1/session': json({ authenticated: false }) });
@@ -132,7 +132,7 @@ describe('the top bar chip', () => {
     await mountOrgChip(host);
     return host;
   };
-  const authed = () => json({ authenticated: true, csrfToken: 'c' });
+  const authed = () => json({ authenticated: true, csrfToken: 'c', roles: ['developer'] });
 
   it('leaves the sign-in button for a signed-out visitor', async () => {
     const host = await mountWith({ '/api/v1/session': json({ authenticated: false }) });
