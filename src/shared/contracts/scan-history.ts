@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, PlainLineSchema, TimestampSchema } from './common.ts';
-import { ScanReasonSchema } from './scan.ts';
+import { ScanAdminScopeSchema, ScanReasonSchema } from './scan.ts';
 
 /** How far back a person's history reads. */
 export const HISTORY_DAYS = 30;
@@ -71,8 +71,11 @@ export const PassNoteRequestSchema = z.strictObject({
   idempotencyKey: IdSchema,
 });
 
-/** `PATCH /scan/passes/{id}/notes/{noteId}`. */
-export const PassNoteEditSchema = z.strictObject({ body: NoteSchema });
+/** `PATCH /scan/passes/{id}/notes/{noteId}`. An admin names the org in `scope`; a scanner never sends it. */
+export const PassNoteEditSchema = z.strictObject({
+  body: NoteSchema,
+  scope: ScanAdminScopeSchema.optional(),
+});
 
 export const PassNoteSchema = z.object({
   id: IdSchema,
