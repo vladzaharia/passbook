@@ -151,7 +151,7 @@ describe('the top bar chip', () => {
       '/api/v1/developer/sandbox': json({ sandbox: { id: 's', closedAt: 1 } }),
     });
     expect(closed.textContent).toBe('Sandbox closed');
-    expect(closed.querySelector('a')?.getAttribute('href')).toBe('/developers/console');
+    expect(closed.querySelector('a')?.getAttribute('href')).toBe('/developers/reference');
   });
 
   it('shows the sandbox org and the runs left, repainting as runs are spent', async () => {
