@@ -57,7 +57,7 @@ test('scanner and operator pass layouts stay readable at phone, tablet and desk 
         await page.emulateMedia({ colorScheme: viewport.scheme, reducedMotion: 'no-preference' });
         await page.goto(`/scan?visual=1&surface=${surface}&pass=${pass}`);
         const card = page.getByTestId('scan-result');
-        // The gallery loads every lazy chunk of the scanner first; that outlasts 5 s on a busy machine.
+        // Machine load only: the gallery fetches ~150 chunks cold (none is the on-demand schema import), which outlasts 5 s on a busy runner.
         await expect(card).toBeVisible({ timeout: 20_000 });
         await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
         // A verdict keeps the buddy; the card stops above its seat so they never overlap.
