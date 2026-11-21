@@ -29,15 +29,23 @@ export type TemplateAuthority =
   | PlatformSessionAuthority
   | KeyTemplateAuthority;
 
-/** Authorize the actual destination organization, never a caller-supplied replacement for it. */
+export const keyTestOnly = () =>
+  new ForbiddenError('Only a Test key can do this. Use a person for Live.', 'KEY_TEST_ONLY');
+
+/**
+ * Authorize the actual destination organization, never a caller-supplied replacement for it.
+ * `liveRequest` lets a Live key act as an author, to request review only (D3).
+ */
 export async function authorizeTemplateWrite(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   orgId: string | null,
   capability: TemplateCapability,
+  options: { liveRequest?: boolean } = {},
 ): Promise<TemplateAuthority> {
   if (!auth) throw new UnauthenticatedError();
-  if (auth.kind === 'api_key') return keyTemplateAuthority(ctx, auth, orgId, capability);
+  if (auth.kind === 'api_key')
+    return keyTemplateAuthority(ctx, auth, orgId, capability, options.liveRequest === true);
   if (auth.kind !== 'session') throw new ForbiddenError();
   if (orgId !== null) {
     const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
@@ -66,12 +74,13 @@ async function keyTemplateAuthority(
   auth: ApiKeyAuth,
   orgId: string | null,
   capability: TemplateCapability,
+  liveRequest: boolean,
 ): Promise<KeyTemplateAuthority> {
-  if (orgId === null || auth.mode !== 'test')
-    throw new ForbiddenError(
-      'Only a Test key can do this. Use a person for Live.',
-      'KEY_TEST_ONLY',
-    );
+  if (
+    orgId === null ||
+    (auth.mode !== 'test' && !(liveRequest && capability === 'templates:author'))
+  )
+    throw keyTestOnly();
   const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
   if (authority.kind !== 'api_key') throw new ForbiddenError();
   const { userId, membershipId: named } = await keyActor(ctx.env.DB, auth.keyId);

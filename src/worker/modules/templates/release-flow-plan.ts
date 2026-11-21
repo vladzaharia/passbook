@@ -7,30 +7,30 @@ import type {
 import { isAlone } from '../../../shared/template-release-state.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { verifiedScopes } from '../../platform/auth-capability.ts';
-import { ForbiddenError, NotFoundError, orgTestOnly } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  orgTestOnly,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/repo-fence.ts';
 import {
   authorizeTemplateWrite,
+  keyTestOnly,
   type TemplateAuthority,
   type TemplateCapability,
 } from './access.ts';
 import { groupedDiff } from './release-flow-diff.ts';
+import { type Prepared, pickCandidate } from './release-flow-pick.ts';
 import { COUNT_CAP } from './release-impact.ts';
-import { actorFor, loadReleaseState } from './release-state-facts.ts';
-import { approvalMatches, sealedDigest } from './releases-candidate.ts';
-import { reusable } from './releases-create.ts';
+import { loadReleaseState } from './release-state-facts.ts';
+import { sealedDigest } from './releases-candidate.ts';
 import { changed, scopedTemplate, writable } from './releases-domain.ts';
-import { getVersion, listVersions, type VersionRow } from './repo.ts';
+import { getVersion, listVersions } from './repo.ts';
 import { countDevicesNotOnVersion, countPassesNotOnVersion } from './repo-release-impact.ts';
 import { isActiveReviewer } from './repo-release-state.ts';
-import {
-  type ApprovalRow,
-  type CandidateRow,
-  getActiveRelease,
-  listApprovals,
-  type ReleaseRow,
-} from './repo-releases.ts';
+import { getActiveRelease, type ReleaseRow } from './repo-releases.ts';
 import { countEligibleReviewers, lastReviewerRemoval } from './repo-sole-reviewer.ts';
 
 /** The scope each step's grant is checked under: a key acts with exactly the scope of that step. */
@@ -42,11 +42,7 @@ export type StepScope = 'templates:write' | 'templates:review' | 'templates:publ
  */
 export function stepAuth(auth: AuthContext, mode: Mode, scope: StepScope): AuthContext {
   if (auth.kind === 'api_key') {
-    if (auth.mode !== mode)
-      throw new ForbiddenError(
-        'Only a Test key can do this. Use a person for Live.',
-        'KEY_TEST_ONLY',
-      );
+    if (auth.mode !== mode) throw keyTestOnly();
     if (!auth.scopes.includes(scope))
       throw new ForbiddenError(`The API key lacks the ${scope} scope.`, 'MISSING_SCOPE');
     const step = { ...auth };
@@ -54,21 +50,6 @@ export function stepAuth(auth: AuthContext, mode: Mode, scope: StepScope): AuthC
     return step;
   }
   return auth.kind === 'session' && auth.mode !== mode ? { ...auth, mode } : auth;
-}
-
-export interface Prepared {
-  auth: AuthContext;
-  orgId: string;
-  templateId: string;
-  version: VersionRow;
-  contentHash: string;
-  /** Test first, then Live. */
-  modes: Mode[];
-  request: boolean;
-  expected: NonNullable<ReleaseTemplate['expected']>;
-  userId: string;
-  alone: boolean;
-  canReview: boolean;
 }
 
 async function holder(
@@ -79,10 +60,15 @@ async function holder(
   capability: TemplateCapability,
 ): Promise<string | null> {
   try {
-    return await actorFor(ctx, stepAuth(auth, 'test', scope), orgId, capability);
+    return (await authorizeTemplateWrite(ctx, stepAuth(auth, 'test', scope), orgId, capability))
+      .userId;
   } catch (error) {
-    // Why: a key without the step's scope cannot do the step; the answer is "can't", not a failure.
-    if (error instanceof ForbiddenError) return null;
+    // Why: a missing role or key scope is the answer "can't"; any other refusal is a real failure.
+    if (
+      error instanceof ForbiddenError &&
+      ['FORBIDDEN', 'MISSING_SCOPE', 'KEY_TEST_ONLY'].includes(error.code)
+    )
+      return null;
     throw error;
   }
 }
@@ -99,20 +85,29 @@ export async function prepare(
   body: ReleaseTemplate,
   route: { scope: StepScope; capability: TemplateCapability; request: boolean },
 ): Promise<Prepared> {
+  const liveKey = auth.kind === 'api_key' && auth.mode === 'live';
+  // Why: a Live key may only request review (D3); every other call needs a Test key.
+  if (liveKey && !route.request) throw keyTestOnly();
   const authority: TemplateAuthority = await authorizeTemplateWrite(
     ctx,
     auth,
     orgId,
     route.capability,
+    { liveRequest: route.request },
   );
+  if (auth.kind === 'api_key') {
+    const needed: StepScope[] = route.request
+      ? ['templates:write']
+      : ['templates:write', 'templates:review', 'templates:publish'];
+    const lacking = needed.find((scope) => !auth.scopes.includes(scope));
+    if (lacking)
+      throw new ForbiddenError(`The API key lacks the ${lacking} scope.`, 'MISSING_SCOPE');
+  }
   const sandbox = await isPreviewOnlyOrg(ctx.env.DB, orgId);
-  const testOnly = auth.kind === 'api_key' || sandbox;
-  const wanted = body.modes ?? (testOnly ? (['test'] as Mode[]) : (['live', 'test'] as Mode[]));
-  if (wanted.includes('live') && auth.kind === 'api_key')
-    throw new ForbiddenError(
-      'Only a Test key can do this. Use a person for Live.',
-      'KEY_TEST_ONLY',
-    );
+  const keyMode: Mode[] | null = auth.kind === 'api_key' ? [auth.mode] : null;
+  const wanted =
+    body.modes ?? keyMode ?? (sandbox ? (['test'] as Mode[]) : (['live', 'test'] as Mode[]));
+  if (keyMode && wanted.some((m) => !keyMode.includes(m))) throw keyTestOnly();
   if (wanted.includes('live') && sandbox) throw orgTestOnly();
   const modes = (['test', 'live'] as const).filter((m) => wanted.includes(m));
   const scope = { orgId, mode: modes[0] ?? 'test', provider: 'apple' } as const;
@@ -126,8 +121,12 @@ export async function prepare(
   const version = await getVersion(ctx.env.DB, templateId, body.version);
   if (!version)
     throw new NotFoundError('Template version not found.', 'TEMPLATE_VERSION_NOT_FOUND');
+  if (!version.report.ok)
+    throw new ConflictError('The template version is invalid.', 'VERSION_INVALID');
   const [author, review, publish, count, lastRemovedAt] = await Promise.all([
-    holder(ctx, auth, orgId, 'templates:write', 'templates:author'),
+    route.request && liveKey
+      ? Promise.resolve(authority.userId)
+      : holder(ctx, auth, orgId, 'templates:write', 'templates:author'),
     holder(ctx, auth, orgId, 'templates:review', 'templates:review'),
     holder(ctx, auth, orgId, 'templates:publish', 'templates:publish'),
     countEligibleReviewers(ctx.env.DB, orgId),
@@ -157,25 +156,6 @@ export async function prepare(
       reviewers: { count, includesCaller, lastRemovedAt },
     }),
   };
-}
-
-/** An approval of this candidate the caller may publish with in `mode`, or null. */
-export function reusableApproval(
-  p: Prepared,
-  mode: Mode,
-  candidate: CandidateRow,
-  approvals: readonly ApprovalRow[],
-): ApprovalRow | null {
-  return (
-    approvals.find(
-      (a) =>
-        approvalMatches(a, candidate) &&
-        (a.kind === 'peer' ||
-          (a.reviewerId === p.userId &&
-            ((a.kind === 'sole' && mode === 'live' && p.alone) ||
-              (a.kind === 'test' && mode === 'test')))),
-    ) ?? null
-  );
 }
 
 export function scopeOf(p: Prepared, mode: Mode) {
@@ -213,30 +193,21 @@ export async function planMode(ctx: ServiceContext, p: Prepared, mode: Mode): Pr
   ) as Record<Mode, ReleaseRow | null>;
   const head = heads[mode];
   const generation = head?.generation ?? 0;
-  const expected = p.expected[mode];
-  if (expected !== undefined && expected !== generation) throw changed();
   const { version } = p.version;
-  const following =
-    mode !== 'test' ||
-    p.request ||
-    !p.modes.includes('live') ||
-    head === null ||
-    head.version === heads.live?.version;
-  const scope = scopeOf(p, mode);
-  const found = await reusable(
-    ctx,
-    p.templateId,
-    { ...scope, version },
-    {
-      version,
-      contentHash: p.contentHash,
-      authorId: p.userId,
-      versionAuthorId: p.version.createdBy,
-    },
-  );
-  const approval = found
-    ? reusableApproval(p, mode, found, await listApprovals(db, found.id))
-    : null;
+  const current = head?.version === version;
+  const expected = p.expected[mode];
+  // Why: a mode already at this version is a resumed call; its earlier `expected` no longer applies.
+  if (!current && expected !== undefined && expected !== generation) throw changed();
+  const headVersion =
+    mode === 'test' && head && !current ? await getVersion(db, p.templateId, head.version) : null;
+  const ahead =
+    !p.request &&
+    p.modes.includes('live') &&
+    headVersion !== null &&
+    headVersion.createdAt > p.version.createdAt;
+  const following = !ahead;
+  const picked = await pickCandidate(ctx, p, mode);
+  const approval = picked?.approval ?? null;
   const write: ReleaseModePlan['approval'] =
     mode === 'test'
       ? p.canReview
@@ -245,23 +216,22 @@ export async function planMode(ctx: ServiceContext, p: Prepared, mode: Mode): Pr
       : p.alone
         ? { action: 'write', kind: 'sole' }
         : { action: 'needed', kind: null };
-  const settled = head?.version === version || !following;
+  const settled = current || !following;
   return {
     head,
     plan: {
-      outcome:
-        head?.version === version
-          ? 'current'
-          : !following
-            ? 'kept'
-            : p.request || write.action === 'needed'
-              ? approval
-                ? 'release'
-                : 'review_required'
+      outcome: current
+        ? 'current'
+        : !following
+          ? 'kept'
+          : p.request
+            ? 'review_requested'
+            : write.action === 'needed' && !approval
+              ? 'review_required'
               : 'release',
       from: head?.version ?? null,
       expectedGeneration: generation,
-      candidate: { action: found ? 'reuse' : 'create', id: found?.id ?? null },
+      candidate: { action: picked ? 'reuse' : 'create', id: picked?.candidate.id ?? null },
       approval: approval ? { action: 'reuse', kind: approval.kind } : write,
       impact: settled
         ? { passes: { count: 0, capped: false }, devices: { count: 0, capped: false } }

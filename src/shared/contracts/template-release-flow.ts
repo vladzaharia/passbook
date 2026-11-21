@@ -97,7 +97,7 @@ export type ReleaseDiffGroup = z.infer<typeof ReleaseDiffGroupSchema>;
 
 /** One mode's steps. `kept`: a newer Test head stays. `current`: the head is already `version`. */
 export const ReleaseModePlanSchema = z.object({
-  outcome: z.enum(['release', 'kept', 'current', 'review_required']),
+  outcome: z.enum(['release', 'kept', 'current', 'review_required', 'review_requested']),
   from: z.string().nullable(),
   expectedGeneration: z.number().int().nonnegative(),
   candidate: z.object({ action: z.enum(['reuse', 'create']), id: IdSchema.nullable() }),

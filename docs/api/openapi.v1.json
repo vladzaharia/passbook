@@ -2730,7 +2730,8 @@
                           "release",
                           "kept",
                           "current",
-                          "review_required"
+                          "review_required",
+                          "review_requested"
                         ]
                       },
                       "from": {
@@ -2854,7 +2855,8 @@
                           "release",
                           "kept",
                           "current",
-                          "review_required"
+                          "review_required",
+                          "review_requested"
                         ]
                       },
                       "from": {

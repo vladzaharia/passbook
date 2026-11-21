@@ -5930,7 +5930,7 @@ class ReleaseResponse2Modes(_Model):
     live: ReleaseResponse2ModesLive | None = None
 
 class ReleaseResponse2ModesLive(_Model):
-    outcome: _Literal["release", "kept", "current", "review_required"] | str
+    outcome: _Literal["release", "kept", "current", "review_required", "review_requested"] | str
     from_: str | None = _Field(alias="from")
     expectedGeneration: int
     candidate: ReleaseResponse2ModesLiveCandidate
@@ -5958,7 +5958,7 @@ class ReleaseResponse2ModesLiveImpactPasses(_Model):
     capped: bool
 
 class ReleaseResponse2ModesTest(_Model):
-    outcome: _Literal["release", "kept", "current", "review_required"] | str
+    outcome: _Literal["release", "kept", "current", "review_required", "review_requested"] | str
     from_: str | None = _Field(alias="from")
     expectedGeneration: int
     candidate: ReleaseResponse2ModesTestCandidate

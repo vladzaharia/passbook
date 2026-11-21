@@ -21,16 +21,13 @@ import { releasedCandidateIds } from './repo-release-state.ts';
 import { writeCandidate } from './repo-release-write.ts';
 import { type CandidateRow, listApprovals, listCandidates } from './repo-releases.ts';
 
-export type Envelope = Pick<
-  CandidateRow,
-  'version' | 'contentHash' | 'authorId' | 'versionAuthorId'
->;
+type Envelope = Pick<CandidateRow, 'version' | 'contentHash' | 'authorId' | 'versionAuthorId'>;
 
 /**
  * An unreleased candidate this one would duplicate: the same sealed envelope but for its creation
  * time, so the same author, version author, content and release policy.
  */
-export async function reusable(
+async function reusable(
   ctx: ServiceContext,
   templateId: string,
   scope: CreateTemplateCandidate,
@@ -60,6 +57,7 @@ export async function createCandidate(
   auth: AuthContext | undefined,
   templateId: string,
   body: CreateTemplateCandidate,
+  options: { liveRequest?: boolean } = {},
 ): Promise<TemplateCandidate> {
   keysApplyOnly(auth, body.provider);
   if (body.provider !== 'apple') return createProjectionCandidate(ctx, auth, templateId, body);
@@ -67,7 +65,13 @@ export async function createCandidate(
     throw new ValidationError('Apple candidates cannot contain projection fields.');
   const template = await scopedTemplate(ctx, auth, templateId, body);
   writable(template, body);
-  const authority = await authorizeTemplateWrite(ctx, auth, body.orgId, 'templates:author');
+  const authority = await authorizeTemplateWrite(
+    ctx,
+    auth,
+    body.orgId,
+    'templates:author',
+    options,
+  );
   const version = await getVersion(ctx.env.DB, templateId, body.version);
   if (!version)
     throw new NotFoundError('Template version not found.', 'TEMPLATE_VERSION_NOT_FOUND');

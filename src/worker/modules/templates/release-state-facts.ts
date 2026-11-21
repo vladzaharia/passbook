@@ -30,7 +30,7 @@ import { countEligibleReviewers, lastReviewerRemoval } from './repo-sole-reviewe
 import { isPlatformAdmin } from './service-access.ts';
 
 /** The member acting for `capability` here, or null when the caller lacks it. */
-export async function actorFor(
+async function actorFor(
   ctx: ServiceContext,
   auth: AuthContext | undefined,
   orgId: string,

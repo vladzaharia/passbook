@@ -65,11 +65,21 @@ async function member(orgId: string, roles: OrgRole[]): Promise<Actor> {
 }
 
 /** A Test (or Live) service key acting as `createdBy`, with every template scope. */
-async function key(orgId: string, createdBy: string, mode: Mode = 'test'): Promise<Actor> {
+async function key(
+  orgId: string,
+  createdBy: string,
+  mode: Mode = 'test',
+  without: string[] = [],
+): Promise<Actor> {
   const id = f.ids.id();
   const prefix = f.ids.token(6);
   const secret = `wlt_${prefix}_${f.ids.token()}`;
-  const scopes = ['templates:read', 'templates:write', 'templates:review', 'templates:publish'];
+  const scopes = [
+    'templates:read',
+    'templates:write',
+    'templates:review',
+    'templates:publish',
+  ].filter((scope) => !without.includes(scope));
   await run(
     env.DB,
     `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_by, created_at, kind)
@@ -314,36 +324,46 @@ describe('release in one call', () => {
     );
   });
 
-  it('keeps a newer Test head and follows when Test trails', async () => {
+  it('keeps a Test head newer than the released version', async () => {
     const org = await makeOrg(f);
     const owner = await member(org.id, ['org_admin']);
     const v1 = await uploaded('Ahead Flow', org, owner, 90);
     await ok(await release(v1.templateId, org, v1.version, owner));
     clock.advance(1000);
     const v2 = await uploaded('Ahead Flow', org, owner, 96);
-    expect(v2.templateId).toBe(v1.templateId);
-    const tried = await ok(
-      await release(v1.templateId, org, v2.version, owner, { modes: ['test'] }),
-    );
-    expect(tried.state.test).toMatchObject({ version: v2.version, state: 'ahead' });
     clock.advance(1000);
     const v3 = await uploaded('Ahead Flow', org, owner, 98);
-    expect(v3.templateId).toBe(v1.templateId);
-    const kept = await ok(await release(v1.templateId, org, v3.version, owner));
-    expect(kept.modes).toMatchObject({
-      test: { outcome: 'kept' },
-      live: { outcome: 'released' },
-    });
-    expect(kept.state.test?.version).toBe(v2.version);
+    const tried = await ok(
+      await release(v1.templateId, org, v3.version, owner, { modes: ['test'] }),
+    );
+    expect(tried.state.test).toMatchObject({ version: v3.version, state: 'ahead' });
+    const kept = await ok(await release(v1.templateId, org, v2.version, owner));
+    expect(kept.modes).toMatchObject({ test: { outcome: 'kept' }, live: { outcome: 'released' } });
+    expect(kept.state.test?.version).toBe(v3.version);
     const rows = await heads(v1.templateId);
     expect(rows.filter((r) => r.mode === 'test').map((r) => r.version)).toEqual([
       v1.version,
-      v2.version,
+      v3.version,
     ]);
     expect(rows.filter((r) => r.mode === 'live').map((r) => r.version)).toEqual([
       v1.version,
-      v3.version,
+      v2.version,
     ]);
+  });
+
+  it('follows after a Try of an older version with no Live head', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const v1 = await uploaded('Try Flow', org, owner, 90);
+    await ok(await release(v1.templateId, org, v1.version, owner, { modes: ['test'] }));
+    clock.advance(1000);
+    const v2 = await uploaded('Try Flow', org, owner, 96);
+    const result = await ok(await release(v1.templateId, org, v2.version, owner));
+    expect(result.modes).toMatchObject({
+      test: { outcome: 'released', generation: 2 },
+      live: { outcome: 'released', generation: 1 },
+    });
+    expect(result.state.test).toMatchObject({ version: v2.version, state: 'following' });
   });
 
   it('moves Test with Live when Test trails Live by exactly the previous release', async () => {
@@ -365,14 +385,43 @@ describe('release in one call', () => {
     const owner = await member(org.id, ['org_admin']);
     await member(org.id, ['template_reviewer']);
     const t = await uploaded('Once Flow', org, owner);
-    await ok(await release(t.templateId, org, t.version, owner, { request: true }));
+    await Promise.all(
+      [1, 2].map(async () =>
+        ok(await release(t.templateId, org, t.version, owner, { request: true })),
+      ),
+    );
+    const settled = await candidates(t.templateId);
     const again = await release(t.templateId, org, t.version, owner, { request: true });
     expect((await ok(again)).modes).toMatchObject({
       test: { outcome: 'review_requested' },
       live: { outcome: 'review_requested' },
     });
-    expect(await candidates(t.templateId)).toBe(2);
+    expect(await candidates(t.templateId)).toBe(settled);
     expect(await heads(t.templateId)).toEqual([]);
+  });
+
+  it("releases another author's approved candidate and resumes with the same body", async () => {
+    const org = await makeOrg(f);
+    const author = await member(org.id, ['template_author']);
+    const reviewer = await member(org.id, ['template_reviewer']);
+    const publisher = await member(org.id, ['template_publisher']);
+    const t = await uploaded('Other Flow', org, author);
+    const body = { orgId: org.id, version: t.version, modes: ['live'], expected: { live: 0 } };
+    await ok(await send(`/${t.templateId}/review-requests`, body, author));
+    const live = await first<{ id: string; candidate_hash: string }>(
+      env.DB,
+      "SELECT id, candidate_hash FROM template_candidates WHERE template_id = ? AND mode = 'live'",
+      [t.templateId],
+    );
+    const approved = await send(
+      `/${t.templateId}/candidates/${live?.id}/approve`,
+      { orgId: org.id, mode: 'live', provider: 'apple', candidateHash: live?.candidate_hash },
+      reviewer,
+    );
+    expect(approved.status).toBe(201);
+    const result = await ok(await send(`/${t.templateId}/release`, body, publisher));
+    expect(result.modes.live).toMatchObject({ outcome: 'released', approvalKind: 'peer' });
+    expect(await candidates(t.templateId)).toBe(1);
   });
 
   it('a dry run lists what apply then does', async () => {
@@ -481,6 +530,42 @@ describe('modes by key and sandbox', () => {
     await expectProblem(await inTest({ modes: ['live'] }), 409, 'ORG_TEST_ONLY');
     const result = await ok(await inTest({}));
     expect(Object.keys(result.modes)).toEqual(['test']);
+  });
+});
+
+describe('key scopes and Live review requests', () => {
+  it('answers a key without a step scope the same way in a dry run and in apply', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const t = await uploaded('Scope Flow', org, owner);
+    const thin = await key(org.id, owner.userId, 'test', ['templates:review']);
+    const body = { version: t.version };
+    await expectProblem(
+      await send(`/${t.templateId}/release`, body, thin, { key: null, query: '?dryRun=true' }),
+      403,
+      'MISSING_SCOPE',
+    );
+    await expectProblem(await send(`/${t.templateId}/release`, body, thin), 403, 'MISSING_SCOPE');
+  });
+
+  it('lets a Live key request review only', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const t = await uploaded('Live Request Flow', org, owner);
+    const live = await key(org.id, owner.userId, 'live');
+    const result = await ok(
+      await send(`/${t.templateId}/review-requests`, { version: t.version }, live),
+    );
+    expect(result.modes).toMatchObject({ live: { outcome: 'review_requested' } });
+    expect(Object.keys(result.modes)).toEqual(['live']);
+    await expectProblem(
+      await send(`/${t.templateId}/release`, { version: t.version }, live),
+      403,
+      'KEY_TEST_ONLY',
+    );
+    expect(await approvals(t.templateId)).toEqual([]);
+    expect(await heads(t.templateId)).toEqual([]);
+    expect(await candidates(t.templateId)).toBe(1);
   });
 });
 

@@ -8,12 +8,11 @@ import type { AuthContext } from '../../platform/auth.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TemplateCapability } from './access.ts';
+import { type Prepared, pickCandidate } from './release-flow-pick.ts';
 import {
   buildPlan,
-  type Prepared,
   planMode,
   prepare,
-  reusableApproval,
   type StepScope,
   scopeOf,
   stepAuth,
@@ -21,16 +20,15 @@ import {
 import { loadReleaseState } from './release-state-facts.ts';
 import { approveCandidate, createCandidate, publishRelease } from './releases.ts';
 import { listVersions } from './repo.ts';
-import { getCandidate, listApprovals } from './repo-releases.ts';
 
 type ModeResult = NonNullable<ReleaseResult['modes'][Mode]>;
 
 /** 409 `TEMPLATE_REVIEW_REQUIRED`: the caller cannot approve this version alone. The route adds `plan`. */
 export class ReviewRequiredError extends ConflictError {
   readonly plan: ReleasePlan;
-  constructor(plan: ReleasePlan) {
+  constructor(plan: ReleasePlan, mode: Mode) {
     super(
-      'Another reviewer must approve this version before it is released in Live.',
+      `Another reviewer must approve this version before it is released in ${mode === 'live' ? 'Live' : 'Test'}.`,
       'TEMPLATE_REVIEW_REQUIRED',
     );
     this.plan = plan;
@@ -52,8 +50,12 @@ export interface ReleaseFlowOptions {
   onReviewRequested?: ReviewRequested;
 }
 
-async function reviewRequired(ctx: ServiceContext, p: Prepared): Promise<ReviewRequiredError> {
-  return new ReviewRequiredError(await buildPlan(ctx, p));
+async function reviewRequired(
+  ctx: ServiceContext,
+  p: Prepared,
+  mode: Mode,
+): Promise<ReviewRequiredError> {
+  return new ReviewRequiredError(await buildPlan(ctx, p), mode);
 }
 
 /** One mode: candidate, approval, release. Each step is its own grant, so a refusal leaves the earlier steps. */
@@ -72,17 +74,26 @@ async function runMode(
       approvalKind: null,
     };
   const scope = scopeOf(p, mode);
-  const candidate = await createCandidate(
-    ctx,
-    stepAuth(p.auth, mode, 'templates:write'),
-    p.templateId,
-    {
-      ...scope,
-      version: p.version.version,
-    },
-  );
+  let picked = await pickCandidate(ctx, p, mode);
+  if (!picked) {
+    await createCandidate(
+      ctx,
+      stepAuth(p.auth, mode, 'templates:write'),
+      p.templateId,
+      { ...scope, version: p.version.version },
+      { liveRequest: p.request },
+    );
+    // Why: a racing call may have made one too; both settle on the oldest, or on one already approved.
+    picked = await pickCandidate(ctx, p, mode);
+  }
+  if (!picked)
+    throw new ConflictError(
+      'The template release changed. Reload and retry.',
+      'TEMPLATE_RELEASE_CONFLICT',
+    );
+  const row = picked.candidate;
   if (p.request) {
-    requested.push(candidate.id);
+    requested.push(row.id);
     return {
       outcome: 'review_requested',
       releaseId: null,
@@ -90,15 +101,9 @@ async function runMode(
       approvalKind: null,
     };
   }
-  const row = await getCandidate(ctx.env.DB, candidate.id);
-  if (!row)
-    throw new ConflictError(
-      'The template release changed. Reload and retry.',
-      'TEMPLATE_RELEASE_CONFLICT',
-    );
-  let approval = reusableApproval(p, mode, row, await listApprovals(ctx.env.DB, row.id));
+  let approval = picked.approval;
   if (!approval) {
-    if (plan.approval.action === 'needed') throw await reviewRequired(ctx, p);
+    if (plan.approval.action === 'needed') throw await reviewRequired(ctx, p, mode);
     try {
       const written = await approveCandidate(
         ctx,
@@ -109,9 +114,13 @@ async function runMode(
       );
       approval = { ...written, kind: written.kind ?? 'peer' };
     } catch (error) {
-      // Why: a reviewer added since the plan was made takes the sole rule away; the caller needs a review.
-      if (error instanceof ForbiddenError && error.code === 'TEMPLATE_SELF_APPROVAL')
-        throw await reviewRequired(ctx, p);
+      // Why: a reviewer added since the plan was made takes the sole rule away (the grant refuses it
+      // as a conflict); the caller needs a review.
+      const lostSole =
+        mode === 'live' &&
+        ((error instanceof ForbiddenError && error.code === 'TEMPLATE_SELF_APPROVAL') ||
+          (error instanceof ConflictError && error.code === 'TEMPLATE_RELEASE_CONFLICT'));
+      if (lostSole) throw await reviewRequired(ctx, p, mode);
       throw error;
     }
   }

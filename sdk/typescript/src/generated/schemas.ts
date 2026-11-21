@@ -1741,7 +1741,7 @@ export type ReleaseResponse = {
   version: string;
   modes: {
     test?: {
-      outcome: "release" | "kept" | "current" | "review_required";
+      outcome: "release" | "kept" | "current" | "review_required" | "review_requested";
       from: string | null;
       expectedGeneration: number;
       candidate: {
@@ -1764,7 +1764,7 @@ export type ReleaseResponse = {
       };
     };
     live?: {
-      outcome: "release" | "kept" | "current" | "review_required";
+      outcome: "release" | "kept" | "current" | "review_required" | "review_requested";
       from: string | null;
       expectedGeneration: number;
       candidate: {

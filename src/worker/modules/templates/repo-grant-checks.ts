@@ -17,7 +17,9 @@ const check = (reason: DenyReason, sql: (bind: (v: string | number | null) => st
 
 /** A key's write lands only in Test: the actor row's mode, from the key itself, must be `test`. */
 const keyWritesTestOnly: Check = check('lineage', () => `a.mode = 'test'`);
-export const keyChecks = (kind: string): Check[] => (kind === 'api_key' ? [keyWritesTestOnly] : []);
+/** `liveOk`: a Live key opening a candidate to request review (D3); it never approves or releases. */
+export const keyChecks = (kind: string, liveOk = false): Check[] =>
+  kind === 'api_key' && !liveOk ? [keyWritesTestOnly] : [];
 
 /**
  * Deferred platform work (an import by an administrator) stops when the user is disabled (even if

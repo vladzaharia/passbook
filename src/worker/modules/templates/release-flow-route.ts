@@ -81,7 +81,9 @@ export function registerTemplateReleaseFlow(router: Router): void {
       };
       // Why: a replay returns the stored answer, so the template and the caller are proven before any of it.
       await scopedTemplate(ctx, auth, id, { orgId, mode: modeOf(auth), provider: 'apple' });
-      await authorizeTemplateWrite(ctx, auth, orgId, options.capability);
+      await authorizeTemplateWrite(ctx, auth, orgId, options.capability, {
+        liveRequest: request,
+      });
       try {
         if (c.req.valid('query').dryRun)
           return c.json(
@@ -93,7 +95,7 @@ export function registerTemplateReleaseFlow(router: Router): void {
           idempotentJson(
             c,
             ctx,
-            { orgId, mode: modeOf(auth), principal: principalOf(auth), body },
+            { orgId, mode: 'release', principal: principalOf(auth), body },
             200,
             () => releaseTemplate(ctx, auth, id, orgId, body, { ...options, dryRun: false }),
           ),
