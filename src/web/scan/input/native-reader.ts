@@ -183,7 +183,14 @@ export function connectNativeReader(
     else track(inputId, scan.id);
   };
   bridge.onmessage = onMessage;
-  bridge.postMessage(JSON.stringify({ version: 2, op: 'hello', versions: [...BRIDGE_VERSIONS], features: [...BRIDGE_FEATURES] }));
+  bridge.postMessage(
+    JSON.stringify({
+      version: 2,
+      op: 'hello',
+      versions: [...BRIDGE_VERSIONS],
+      features: [...BRIDGE_FEATURES],
+    }),
+  );
   send({ op: 'stop' });
   const formats = () => (version >= 2 && tagFormats ? { formats: ['wallet-vas', 'tag'] } : {});
   return {

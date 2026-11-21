@@ -135,9 +135,9 @@ export async function createRuntime(
   });
   // The hardware panel's Test: every source's reads go nowhere while it is open.
   let held = false;
+  const idle = ({ state: s } = store.getSnapshot()) => !s.started || s.block || document.hidden;
   const emit = (read: RawRead) => {
-    const current = store.getSnapshot().state;
-    if (held || !current.started || current.block || document.hidden) return null;
+    if (held || idle()) return null;
     const input = bus.emit(read);
     const loop = store.getSnapshot().state.loop;
     return 'input' in loop && loop.input.id === input.id ? input.id : null;
@@ -155,12 +155,8 @@ export async function createRuntime(
     }
   };
   native = connectNativeReader({
-    // The app has the read (scanAck) before this runs. The loop handles one that lands during
-    // review or a result (held, queued or chipped); a read it cannot take says so here.
     read(read) {
-      const current = store.getSnapshot().state;
-      if (!held && (!current.started || current.block || document.hidden))
-        notice('Not scanning right now. Resume, then scan again.', false);
+      if (!held && idle()) notice('Not scanning right now. Resume, then scan again.', false);
       return emit(read);
     },
     cancelled(id) {
@@ -253,7 +249,6 @@ export async function createRuntime(
           : s.loop.outcome.kind === 'refused'
             ? 'rejected'
             : 'error';
-
       native?.result(s.loop.input.id, outcome);
       const displayStatus =
         outcome === 'error'
