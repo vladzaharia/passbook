@@ -16,13 +16,18 @@ import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { updatePass } from '../passes/service.ts';
 import { ensurePlatformIdentity } from './repo.ts';
+import { createIdentityResolver } from './resolver.ts';
 
 const KEK_V1 = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
 const fake = fakeAuth();
 const TYPE = 'pass.im.plrs.wallet';
 
-async function sharedIdentity(kit: Kit, passTypeIdentifier: string) {
-  const f = await createFixtureIdentity({ passTypeIdentifier, teamIdentifier: 'ACME123456' });
+async function sharedIdentity(
+  kit: Kit,
+  passTypeIdentifier: string,
+  f?: Awaited<ReturnType<typeof createFixtureIdentity>>,
+) {
+  f ??= await createFixtureIdentity({ passTypeIdentifier, teamIdentifier: 'ACME123456' });
   const env = { ...kit.env, SIGNER_PLATFORM_INTERMEDIATE: f.intermediate, KEK_V1 };
   const res = await createApp({ stores: fake.stores }).request(
     '/api/v1/identities',
@@ -164,6 +169,126 @@ describe('signing identity guards', () => {
   });
 });
 
+describe('identity guards, hardened', () => {
+  it('refuses INSERT OR REPLACE that changes or takes over a pass type, and keeps registrations', async () => {
+    const kit = await setupKit({ clockStart: Date.now() });
+    const pass = await kit.pass();
+    await kit.device(pass, 'dev-r', 'b'.repeat(64));
+    const other = await sharedIdentity(kit, 'pass.com.acme.other');
+    const replace = (id: string, type: string, team = '48H7CLBV8Y') =>
+      run(
+        kit.env.DB,
+        `INSERT OR REPLACE INTO signing_identities (id, label, pass_type_identifier, team_identifier, source, env_prefix, created_at)
+         VALUES (?, 'x', ?, ?, 'env', 'PLATFORM', 1)`,
+        [id, type, team],
+      );
+    await expect(replace('platform', 'pass.new.type')).rejects.toThrow(/IDENTITY_PTI_IMMUTABLE/);
+    await expect(replace('platform', TYPE, 'OTHER12345')).rejects.toThrow(/IDENTITY_PTI_IMMUTABLE/);
+    await expect(replace('platform', 'pass.com.acme.other')).rejects.toThrow(
+      /IDENTITY_PTI_IMMUTABLE/,
+    );
+    await expect(replace(other.id, TYPE)).rejects.toThrow(/IDENTITY_PTI_IMMUTABLE/);
+    expect(
+      await first(kit.env.DB, 'SELECT 1 FROM registrations WHERE pass_id = ?', [pass.id]),
+    ).not.toBeNull();
+    await ensurePlatformIdentity(kit.env, kit.clock.now(), nullLogger);
+  });
+
+  it('refuses to sign for the platform row when the env pass type differs', async () => {
+    const kit = await setupKit({ clockStart: Date.now() });
+    const pass = await kit.pass();
+    const changed = { ...kit.env, PLATFORM_PASS_TYPE_ID: 'pass.mobile.passbook.wallet' };
+    const resolver = createIdentityResolver(changed);
+    await expect(resolver.byId(pass.identityId)).rejects.toMatchObject({
+      code: 'IDENTITY_PLATFORM_ENV_MISMATCH',
+      status: 503,
+    });
+    await expect(resolver.platform()).rejects.toMatchObject({
+      code: 'IDENTITY_PLATFORM_ENV_MISMATCH',
+    });
+    await expect(resolver.forOrg(kit.org.id, null, kit.clock.now())).rejects.toMatchObject({
+      code: 'IDENTITY_PLATFORM_ENV_MISMATCH',
+    });
+    await ensurePlatformIdentity(changed, kit.clock.now(), nullLogger);
+    expect(
+      (
+        await first<{ p: string }>(
+          kit.env.DB,
+          "SELECT pass_type_identifier AS p FROM signing_identities WHERE id = 'platform'",
+        )
+      )?.p,
+    ).toBe(TYPE);
+  });
+
+  it('keeps the certificate history current across upload and rotation', async () => {
+    const kit = await setupKit({ clockStart: Date.now() });
+    const type = 'pass.com.acme.history';
+    const first1 = await createFixtureIdentity({
+      passTypeIdentifier: type,
+      teamIdentifier: 'ACME123456',
+    });
+    const shared = await sharedIdentity(kit, type, first1);
+    const history = () =>
+      all<{ cert_sha256: string; state: string; origin: string }>(
+        kit.env.DB,
+        'SELECT cert_sha256, state, origin FROM identity_certificates WHERE identity_id = ? ORDER BY created_at, rowid',
+        [shared.id],
+      );
+    const current = async () =>
+      (
+        await first<{ cert_sha256: string }>(
+          kit.env.DB,
+          'SELECT cert_sha256 FROM signing_identities WHERE id = ?',
+          [shared.id],
+        )
+      )?.cert_sha256;
+    const uploaded = await current();
+    expect(await history()).toEqual([{ cert_sha256: uploaded, state: 'active', origin: 'upload' }]);
+
+    const next = await createFixtureIdentity({
+      passTypeIdentifier: type,
+      teamIdentifier: 'ACME123456',
+    });
+    const res = await createApp({ stores: fake.stores }).request(
+      `/api/v1/identities/${shared.id}/rotate`,
+      {
+        method: 'POST',
+        headers: { ...fake.admin(), 'content-type': 'application/json' },
+        body: JSON.stringify({ certificatePem: next.certificate, privateKeyPem: next.privateKey }),
+      },
+      { ...shared.env, SIGNER_PLATFORM_INTERMEDIATE: next.intermediate },
+    );
+    expect(res.status).toBe(200);
+    const rotated = await current();
+    expect(rotated).not.toBe(uploaded);
+    expect(await history()).toEqual([
+      { cert_sha256: uploaded, state: 'superseded', origin: 'upload' },
+      { cert_sha256: rotated, state: 'active', origin: 'upload' },
+    ]);
+  });
+
+  it('falls through a retired org default to the next issuing identity, but refuses a named one', async () => {
+    const kit = await setupKit({ clockStart: Date.now() });
+    const retired = await sharedIdentity(kit, 'pass.com.acme.retired');
+    const resolver = createIdentityResolver(kit.env);
+    await run(kit.env.DB, 'UPDATE signing_identities SET issuing = 0 WHERE id = ?', [retired.id]);
+    await run(kit.env.DB, 'UPDATE orgs SET default_identity_id = ? WHERE id = ?', [
+      retired.id,
+      kit.org.id,
+    ]);
+    try {
+      expect((await resolver.forOrg(kit.org.id, null, kit.clock.now())).id).not.toBe(retired.id);
+      await expect(resolver.forOrg(kit.org.id, retired.id, kit.clock.now())).rejects.toMatchObject({
+        code: 'IDENTITY_RETIRED',
+      });
+    } finally {
+      await run(kit.env.DB, 'UPDATE orgs SET default_identity_id = NULL WHERE id = ?', [
+        kit.org.id,
+      ]);
+    }
+  });
+});
+
 describe('certificate history backfill', () => {
   it('records each current certificate once, as active, with its origin and provenance', async () => {
     const kit = await setupKit({ clockStart: Date.now() });
@@ -172,7 +297,8 @@ describe('certificate history backfill', () => {
     await run(kit.env.DB, 'DELETE FROM identity_certificates');
     await run(kit.env.DB, "UPDATE signing_identities SET provenance = 'own'");
     // The statements a deploy runs over rows that predate the table.
-    const sql = migration.slice(migration.indexOf('INSERT INTO identity_certificates'));
+    const start = migration.indexOf('INSERT INTO identity_certificates');
+    const sql = migration.slice(start, migration.indexOf(';', start) + 1);
     await run(kit.env.DB, sql);
     await run(
       kit.env.DB,
@@ -192,6 +318,14 @@ describe('certificate history backfill', () => {
       kit.env.DB,
       'SELECT id, cert_sha256 FROM signing_identities WHERE cert_sha256 IS NOT NULL ORDER BY id',
     );
+    expect(
+      (
+        await all<{ id: string; provenance: string }>(
+          kit.env.DB,
+          'SELECT id, provenance FROM signing_identities WHERE org_id IS NULL',
+        )
+      ).every((r) => r.provenance === 'platform'),
+    ).toBe(true);
     expect(rows.map((r) => r.identity_id)).toEqual(identities.map((i) => i.id));
     expect(rows.every((r) => r.state === 'active')).toBe(true);
     expect(rows.find((r) => r.identity_id === 'platform')?.origin).toBe('env');

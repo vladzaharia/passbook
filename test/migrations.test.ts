@@ -478,7 +478,9 @@ describe('constraints and cascades', () => {
         env.DB,
         "INSERT INTO signing_identities (id, label, pass_type_identifier, team_identifier, source, env_prefix, created_at) VALUES ('c', 'C', 'pass.im.plrs.wallet', 'T', 'env', 'C', 1)",
       ),
-    ).rejects.toThrow(/UNIQUE constraint failed: signing_identities\.pass_type_identifier/);
+    ).rejects.toThrow(
+      /IDENTITY_PTI_IMMUTABLE|UNIQUE constraint failed: signing_identities\.pass_type_identifier/,
+    );
   });
 });
 
