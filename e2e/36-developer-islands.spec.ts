@@ -59,10 +59,13 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
 
   // Sign in and make sure there is a sandbox.
   await page.goto('/developers/quickstart');
-  await page.locator('main').getByRole('link', { name: 'Sign in' }).click();
-  await page.getByRole('link', { name: 'Sign in with Polaris ID' }).click();
+  await page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click();
   await page.waitForURL((u) => u.pathname === '/developers/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
+  // Polaris ID lands straight on the page, so wait for the island to pick a state.
+  await create
+    .or(page.getByRole('button', { name: 'Run', exact: true }).and(page.locator(':enabled')))
+    .waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
     await expect(page.getByText(/^PASSBOOK_KEY=pbp_test_/)).toBeVisible();
