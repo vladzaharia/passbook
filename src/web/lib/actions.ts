@@ -31,6 +31,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { ACTION_ICON } from './action-icons.ts';
+import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -281,14 +282,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'join_link.rotate': a('Join link replaced', I.rotate, 'info'),
   'join_link.update': a('Join link changed', I.edit, 'info'),
   'identity.expired': a('Identity expired', Clock, 'danger'),
-  'identity.provision_requested': a('Identity requested', I.rotate, 'info'),
-  'identity.pass_type_created': a('Pass type ready', I.rotate, 'success'),
-  'identity.certificate_issued': a('Certificate issued', I.rotate, 'success'),
-  'identity.provisioned': a('Identity ready', I.rotate, 'success'),
-  'identity.rotated': a('Certificate renewed', I.rotate, 'success'),
-  'identity.rotation_failed': a('Renewal failed', Clock, 'danger'),
-  'identity.rotation_overdue': a('Renewal overdue', Clock, 'danger'),
-  'identity.provision_failed': a('Identity setup failed', Clock, 'danger'),
+  ...IDENTITY_RUN_ACTIONS,
   'identity.expiring': a('Identity expiring', Clock, 'warning'),
   'identity.push_key_remove': a('Push key removed', I.pushKey, 'warning'),
   'identity.push_key_rotate': a('Push key rotated', I.rotate, 'info'),
