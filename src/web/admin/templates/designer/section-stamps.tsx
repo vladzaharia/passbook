@@ -191,7 +191,6 @@ export function StampsSection() {
       </div>
       <SwitchRow
         label="Tilt stamps"
-        help="Each position keeps its own angle."
         checked={view.tilt}
         onCheckedChange={(tilt) => edit({ op: 'stamps-set', patch: { tilt } })}
       />

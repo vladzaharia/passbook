@@ -42,7 +42,6 @@ export function AccessSection() {
       <div className="grid gap-3">
         <SwitchRow
           label="Use as an access card"
-          help="Plans decide who is let in, where and when."
           checked={false}
           onCheckedChange={(on) => on && edit({ op: 'access-enable' })}
         />

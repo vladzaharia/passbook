@@ -5,7 +5,6 @@ export const JOIN_COPY = {
   card: {
     title: 'Join link',
     open: 'Open to everyone',
-    openHelp: 'People can get a card without staff.',
     askFor: 'Ask visitors for',
     name: 'Name',
     fills: 'Saved in {label}',

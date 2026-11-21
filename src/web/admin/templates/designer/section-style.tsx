@@ -59,7 +59,7 @@ export function StyleSection() {
           value={text('logoText')}
           merge="logoText"
           op={(v) => ({ op: 'pass-prop', key: 'logoText', value: v })}
-          help="Shown beside the logo. Leave empty for none."
+          help="Empty for none."
         />
         {style === 'eventTicket' && hasPoster(doc.passJson) ? (
           <TextEdit

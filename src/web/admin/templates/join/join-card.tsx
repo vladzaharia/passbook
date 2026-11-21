@@ -85,7 +85,6 @@ export function JoinCard(props: JoinCardProps) {
       <CardBody className="flex flex-col gap-4">
         <SwitchRow
           label={JOIN_COPY.card.open}
-          help={JOIN_COPY.card.openHelp}
           checked={enabled}
           disabled={switchOff}
           onCheckedChange={toggle}

@@ -81,7 +81,6 @@ function CounterCard({ view }: { view: CounterView }) {
         value={view.label}
         merge={`counter-label:${view.id}`}
         op={(label) => ({ op: 'counter-set', id: view.id, patch: { label } })}
-        help="Shown on the pass beside the count."
       />
       {fixed === undefined ? (
         <p className="text-xs text-fg-muted">
@@ -100,7 +99,6 @@ function CounterCard({ view }: { view: CounterView }) {
       />
       <SwitchRow
         label="Use one at the scanner"
-        help="Takes one off."
         checked={hasScan(doc, view, 'use')}
         disabled={fixed === undefined}
         onCheckedChange={(on) => edit({ op: 'counter-scan', id: view.id, kind: 'use', on })}

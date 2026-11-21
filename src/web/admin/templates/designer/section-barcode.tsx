@@ -59,7 +59,7 @@ export function BarcodeSection() {
               label="Alt text"
               value={s.staticAlt}
               merge="bc-alt"
-              help="Printed under the code. Leave empty for none."
+              help="Empty for none."
               op={(v) => ({ op: 'barcode', settings: { ...s, staticAlt: v } })}
             />
           ) : null}
