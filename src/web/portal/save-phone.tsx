@@ -104,13 +104,11 @@ export function SaveSheet() {
   );
 }
 
-/** save.js is a static script of the app's page (index.html); this wires the page it is on. */
+/** In the app, loads the save logic only now, for a page that offers Save or drops a copy. */
 export function SaveMount({ door }: { door: string | null }) {
   useEffect(() => {
     if (!door) return;
-    const saver = (globalThis as unknown as { PassSave?: { mount: (root: unknown) => void } })
-      .PassSave;
-    saver?.mount((globalThis as unknown as { document: unknown }).document);
+    void import('./save-client.ts').then((m) => m.mount());
   }, [door]);
   return null;
 }
