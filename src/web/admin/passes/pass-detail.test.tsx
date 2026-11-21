@@ -114,7 +114,10 @@ function handlers(
 
 const channelsWith = (apple: Record<string, unknown>) => ({
   ...Object.fromEntries(
-    ['mobile', 'google', 'samsung', 'paper', 'nfc'].map((c) => [c, { on: true, source: 'template' }]),
+    ['mobile', 'google', 'samsung', 'paper', 'nfc'].map((c) => [
+      c,
+      { on: true, source: 'template' },
+    ]),
   ),
   apple,
 });

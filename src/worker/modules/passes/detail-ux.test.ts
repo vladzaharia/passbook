@@ -409,9 +409,6 @@ describe('download link and the Apple channel', () => {
     const off = await detail(pass.id);
     expect(off.channels?.apple.on).toBe(false);
     expect(off.testPreview).toBe(false);
-    await expectProblem(await app.request(off.downloadUrl, {}, kit.env), {
-      status: 404,
-      code: 'CHANNEL_OFF',
-    });
+    await expectProblem(await app.request(off.downloadUrl, {}, kit.env), 404, 'CHANNEL_OFF');
   });
 });

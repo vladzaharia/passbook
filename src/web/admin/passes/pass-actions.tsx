@@ -245,7 +245,8 @@ export function usePassActionRunner(
     else if (id === 'restore') void restore();
     else if (id === 'copy') void copy();
     else if (id === 'open' && links) window.open(links.publicUrl, '_blank', 'noopener,noreferrer');
-    else if (id === 'download' && links && !defs.find((d) => d.id === id)?.disabled) window.location.assign(links.downloadUrl);
+    else if (id === 'download' && links && !defs.find((d) => d.id === id)?.disabled)
+      window.location.assign(links.downloadUrl);
     else if (
       id === 'void' ||
       id === 'remove' ||
