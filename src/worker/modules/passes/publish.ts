@@ -71,6 +71,8 @@ export interface PublishOptions {
    * changeMessage. Omit for syncs and upgrades (the template's messages stay).
    */
   notify?: boolean;
+  /** With `notify`: this text replaces the template's change messages, on the first changed field only. */
+  changeText?: string;
   /**
    * Read after `mutate`: true sends the update's message even at the daily limit. Only for a
    * message that would otherwise be lost for good (the stamp that fills a card).

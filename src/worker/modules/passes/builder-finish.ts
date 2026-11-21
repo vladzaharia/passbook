@@ -53,8 +53,8 @@ export function editPass(req: BuildRequest, passJson: PassJson): boolean {
     resign = true;
   }
   if (req.changeMessages) {
-    const { previous, notify } = req.changeMessages;
-    resign = applyChangeMessages(passJson, previous, notify) || resign;
+    const { previous, notify, text } = req.changeMessages;
+    resign = applyChangeMessages(passJson, previous, notify, text) || resign;
   }
   if (req.silent) resign = stripChangeMessages(passJson) || resign;
   if (req.removal) {

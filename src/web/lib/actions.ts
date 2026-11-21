@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { ACTION_ICON } from './action-icons.ts';
 import { AUTH_ACTIONS } from './actions-auth.ts';
+import { BROADCAST_RUN_ACTIONS } from './actions-broadcast.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
 import { ENTITY } from './entities.ts';
@@ -270,6 +271,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.rollback': a('Template rolled back', I.restore, 'warning'),
   'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
   ...AUTH_ACTIONS,
+  ...BROADCAST_RUN_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),
   'bundle.rotate_link': a('Bundle link rotated', I.rotate, 'info'),

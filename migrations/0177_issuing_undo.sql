@@ -19,3 +19,10 @@ ALTER TABLE pass_imports ADD COLUMN undo_starter TEXT;
 ALTER TABLE pass_imports ADD COLUMN undo_instance TEXT;
 ALTER TABLE pass_imports ADD COLUMN undo_at INTEGER;
 ALTER TABLE pass_import_rows ADD COLUMN mail_pending_at INTEGER;
+-- Change runs: a stop asked for while a run sends (the run ends itself after its chunk), the run's own
+-- workflow instance (an undo that died restarts under a new one), and the plan's daily cap, seeded like
+-- `messages.perDay` and held equal by the entitlements registry.
+ALTER TABLE broadcasts ADD COLUMN stop_at INTEGER;
+ALTER TABLE broadcasts ADD COLUMN instance TEXT;
+INSERT OR IGNORE INTO entitlement_presets (preset, key, value)
+  SELECT preset, 'passes.changesPerDay', value FROM entitlement_presets WHERE key = 'messages.perDay';
