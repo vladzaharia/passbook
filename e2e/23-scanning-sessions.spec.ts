@@ -220,9 +220,14 @@ test('two devices pair from one rolling sheet', async ({ browser }) => {
     await join(await codeOf());
     await expect(sheet.getByText('2 paired', { exact: true })).toBeVisible();
     await sheet.getByRole('button', { name: 'Done', exact: true }).click();
-    const detail = await api.get(`/api/v1/scanning-sessions/${session.id}`);
-    expect(detail.devices.filter((d: { paired: boolean }) => d.paired)).toHaveLength(2);
-    expect(detail.devices.filter((d: { revoked: boolean }) => !d.revoked)).toHaveLength(2);
+    const devices = async () =>
+      (await api.get(`/api/v1/scanning-sessions/${session.id}`)).devices as {
+        paired: boolean;
+        revoked: boolean;
+      }[];
+    expect((await devices()).filter((d) => d.paired)).toHaveLength(2);
+    // Closing revokes the unpaired row; the request settles after the dialog closes.
+    await expect.poll(async () => (await devices()).filter((d) => !d.revoked).length).toBe(2);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
     await api.dispose();
