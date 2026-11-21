@@ -35,7 +35,7 @@ describe('instructions on each way to scan', () => {
   it('says what to do instead when a way cannot read', () => {
     expect(how(rows('denied'))[0]).toEqual(['Camera 1', C.how.allowCamera]);
     expect(rows('denied').some((i) => i.best)).toBe(false);
-    expect(rows('nfc-off').find((i) => i.kind === 'nfc')?.how).toBe(C.how.nfcOn);
+    expect(rows('nfc-off').find((i) => i.kind === 'nfc')?.how).toBeUndefined();
     const lost = panelRows(
       hardwareItems(probeFixture(), liveFixture({ camera: 'unavailable', activeCameraId: null })),
       { reads: true, camera: true },

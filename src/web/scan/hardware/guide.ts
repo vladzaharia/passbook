@@ -42,8 +42,7 @@ export function howOf(i: HardwareItem, camera: boolean): string | undefined {
       if (!usable(i)) return undefined;
       return i.trigger === 'pistol' ? G.trigger : G.reader;
     case 'nfc':
-      if (i.state === 'off' || i.state === 'missing')
-        return i.builtIn === false ? undefined : G.nfcOn;
+      if (i.state === 'off' || i.state === 'missing') return i.detail ? undefined : G.nfcOn; // A shell reason already says it.
       if (i.state === 'attention') return G.allowNfc;
       if (!usable(i)) return undefined;
       if (i.action?.kind === 'nfc') return G.startNfc;
