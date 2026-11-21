@@ -68,7 +68,8 @@ describe('GET /b/:token', () => {
     const html = await res.text();
     expect(html).toContain('<meta name="robots" content="noindex, nofollow, noarchive">');
     expect(html).toContain('<meta name="referrer" content="no-referrer">');
-    expect(html).toContain('Add all to Apple Wallet');
+    // The pass page's lead, no heading over it: the badge says it.
+    expect(html).toContain('aria-label="Add to Apple Wallet"');
     expect(html).toContain(`href="/b/${token}/passes.pkpasses"`);
     for (const p of passes) expect(html).toContain(`href="/b/${token}/${p.id}/pass.pkpass"`);
     expect(html).toContain('3 passes');
@@ -99,9 +100,9 @@ describe('GET /b/:token', () => {
       expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
     }
     expect(html.match(/Show barcode/g)).toHaveLength(2);
-    expect(html).not.toContain('Add all to Apple Wallet');
+    expect(html).not.toContain('aria-label="Add to Apple Wallet"');
     expect(html).not.toContain('data-awb=');
-    expect(html).toContain('Open this page on your phone to add the pass to your wallet.');
+    expect(html).toContain('For Apple Wallet, open this page on an iPhone.');
   });
 
   it('serves a member barcode page under the bundle token, with nothing to save', async () => {

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { WalletOffer } from '@/shared/contracts/me.ts';
+import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 import { passFixture } from './fixtures.ts';
 import { publicUrlOf } from './wallet-actions.tsx';
@@ -51,7 +52,7 @@ describe('pass detail', () => {
     ['Mac', MAC],
     ['iPad', 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1'],
     ['Windows', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36'],
-  ])('shows every available wallet on %s', async (_name, ua) => {
+  ])('shows every available wallet on %s', async (name, ua) => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(ua);
     await renderApp('/passes/p1', {
       handlers: {
@@ -59,10 +60,16 @@ describe('pass detail', () => {
       },
     });
     await screen.findByRole('heading', { name: 'Membership', level: 1 });
-    expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toHaveAttribute(
-      'href',
-      '/p/abcdefghijklmnopqrst/pass.pkpass',
-    );
+    if (name === 'iPad' || name === 'Windows') {
+      // Apple is the QR here; its badge would download a file nothing opens.
+      expect(await screen.findByAltText(HOLDER_COPY.qrAlt('Gym membership'))).toBeVisible();
+      expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    } else {
+      expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toHaveAttribute(
+        'href',
+        '/p/abcdefghijklmnopqrst/pass.pkpass',
+      );
+    }
     for (const [name, provider, asset] of [
       ['Google', 'google', 'svg'],
       ['Samsung', 'samsung', 'png'],
@@ -91,9 +98,7 @@ describe('pass detail', () => {
     await screen.findByRole('heading', { name: 'Membership', level: 1 });
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Add to Google Wallet' })).toBeVisible();
-    expect(
-      screen.getByText('Open this page on your phone to add the pass to your wallet.'),
-    ).toBeVisible();
+    expect(screen.getByText(HOLDER_COPY.appleElsewhere)).toBeVisible();
   });
 
   it('does not mistake an Apple registration for a native-wallet installation', async () => {
@@ -105,7 +110,6 @@ describe('pass detail', () => {
       },
     });
     await screen.findByRole('region', { name: 'In Apple Wallet' });
-    expect(screen.getByText('If it is missing, add it again.')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Add to Google Wallet' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Add to Samsung Wallet' })).toBeVisible();
     expect(screen.queryByText(/(?:Google|Samsung) Wallet (?:installed|removed)/i)).toBeNull();
@@ -144,8 +148,15 @@ describe('pass detail', () => {
 
   it('shows the card, the badge and a details card without buttons', async () => {
     onMac();
+    const back = {
+      ...passFixture().passJson,
+      generic: {
+        primaryFields: [{ key: 'name', label: 'Member', value: 'Sam Smith' }],
+        backFields: [{ key: 'terms', label: 'Terms', value: 'Bring a towel.' }],
+      },
+    };
     const { container } = await renderApp('/passes/p1', {
-      handlers: { '/api/v1/me/passes/p1': () => json(passFixture()) },
+      handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ passJson: back })) },
     });
     // What the pass is, under its org; the holder's name stays a field.
     expect(
@@ -158,19 +169,26 @@ describe('pass detail', () => {
       'href',
       '/api/v1/me/passes/p1/barcode',
     );
-    expect(screen.getByText('Best for this device')).toBeInTheDocument();
+    // One lead, then the other ways, neither labelled.
+    expect(screen.queryByText('Best for this device')).toBeNull();
+    expect(screen.getByRole('list', { name: HOLDER_COPY.otherWays })).toContainElement(
+      screen.getByRole('link', { name: 'Show barcode' }),
+    );
     expect(screen.queryByText(/NFC/)).toBeNull();
     expect(screen.queryByText(/\.pkpass/)).toBeNull();
     expect(container.querySelector('a[download]')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull();
 
-    const details = screen.getByRole('heading', { name: 'Details' }).parentElement
-      ?.parentElement as HTMLElement;
+    // An sr-only h2 keeps the outline; nothing visible says Details.
+    expect(screen.getByRole('heading', { name: 'Details', level: 2 })).toHaveClass('sr-only');
+    const details = container.querySelector('.wl-holder-details') as HTMLElement;
     expect(within(details).queryAllByRole('button')).toHaveLength(0);
-    expect(within(details).getByText('Active')).toBeInTheDocument();
-    expect(within(details).getAllByText('Sam Smith').length).toBeGreaterThan(0);
+    // Only what the face does not show: the back, no state, no front field.
+    expect(within(details).getByText('Bring a towel.')).toBeInTheDocument();
+    expect(within(details).queryByText('Active')).toBeNull();
+    expect(within(details).queryByText('Sam Smith')).toBeNull();
 
-    // The Details card below is the one place for the fields: no Front / Details control.
+    // The details card is the one place for the back: no Front / Details control.
     expect(screen.queryByRole('radio', { name: 'Details' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -216,8 +234,8 @@ describe('pass detail', () => {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ inWallet: true })) },
     });
     const add = await screen.findByRole('region', { name: 'In Apple Wallet' });
+    // The region's one line, no restating subtitle.
     expect(screen.getAllByText('In Apple Wallet')).toHaveLength(1);
-    expect(within(add).getByText('If it is missing, add it again.')).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     // Happy, not nudging.
     expect(add.querySelector('[data-buddy]')?.getAttribute('data-scene')).toBe('count');
@@ -335,8 +353,8 @@ describe('pass detail', () => {
           ),
       },
     });
-    const details = (await screen.findByRole('heading', { name: 'Details' })).parentElement
-      ?.parentElement as HTMLElement;
+    await screen.findByText('Upcoming events');
+    const details = document.querySelector('.wl-holder-details') as HTMLElement;
     expect(within(details).getByText('Upcoming events')).toBeInTheDocument();
     expect(within(details).getByText('Opening night')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'More' }));

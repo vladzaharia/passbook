@@ -1,4 +1,4 @@
-import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
+import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { operations } from '../model/dates.ts';
 import { pagePath } from '../model/markdown.ts';
@@ -174,7 +174,7 @@ export function WebhooksView({ site }: { site: Site }) {
         </p>
         <div className="list card mt4">
           {site.webhookEvents.map((e) => (
-            <div key={e.type} className="lrow wrap-row">
+            <div key={e.type} id={e.type} className="lrow wrap-row">
               <code className="mono sm strong">{e.type}</code>
               <span className="push muted sm">{e.summary}</span>
             </div>
@@ -186,29 +186,5 @@ export function WebhooksView({ site }: { site: Site }) {
         </p>
       </section>
     </div>
-  );
-}
-
-export function SlotView({ which }: { which: 'quickstart' | 'guides' }) {
-  const s = DEV_COPY.slots[which];
-  return (
-    <>
-      <Head title={s.title} line={s.line} />
-      {which === 'guides' ? (
-        <div className="recipes mt8">
-          {DEV_GUIDES.map((g) => (
-            <div key={g.id} id={g.id} className="row g3 card tile-row">
-              <span className={`sw ${g.tone}`} />
-              <span className="strong">{g.title}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-      <p className="mt8">
-        <a className="btn outline" href={PATHS.reference}>
-          {DEV_COPY.home.reference}
-        </a>
-      </p>
-    </>
   );
 }

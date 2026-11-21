@@ -40,6 +40,13 @@ oidc.addUser({
   name: 'E2E Loner',
   groups: ['wallet-users'],
 });
+// The developer quickstart's builder: makes the one sandbox a person gets, so no other spec signs in as them.
+oidc.addUser({
+  sub: 'e2e-builder',
+  email: 'builder@example.test',
+  name: 'E2E Builder',
+  groups: ['wallet-users'],
+});
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 
 createServer(async (req, res) => {

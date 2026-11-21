@@ -1,9 +1,13 @@
 import os
-import httpx
 
-res = httpx.get(
-    "https://passbook.mobile/api/v1/templates/0193a1b2-7c00-7000-8000-0000000000b1/releases/impact?mode=test&provider=apple&version=Example",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.templates.releases.retrieve_impact(
+    "0193a1b2-7c00-7000-8000-0000000000b1",
+    mode="test",
+    provider="apple",
+    version="Example",
 )
-res.raise_for_status()
-print(res.json())
+print(result)

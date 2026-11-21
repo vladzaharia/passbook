@@ -36,8 +36,7 @@ export function WindowsCard({ orgId, canManage }: { orgId: string; canManage: bo
       <CardHeader title={RETENTION_COPY.windowsTitle} />
       <CardBody className="flex flex-col gap-4">
         <p className="text-sm text-fg-muted">
-          {canManage ? RETENTION_COPY.windowsNote : RETENTION_COPY.readOnlyWindows}{' '}
-          {RETENTION_COPY.holdNote}
+          {canManage ? RETENTION_COPY.windowsNote : RETENTION_COPY.readOnlyWindows}
         </p>
         {canManage ? (
           <SettingsForm scope={`org:${orgId}`} fields={FIELDS} />

@@ -50,7 +50,7 @@ describe('holder help copy', () => {
         ],
         "lost": [
           "I lost my phone",
-          "Done. The old copies stop working and your other devices are signed out. Check your email for the new pass.",
+          "The old copies stop working and your other devices are signed out. Check your email for the new pass.",
         ],
       }
     `);

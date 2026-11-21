@@ -76,7 +76,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
       'Admin scan',
     );
     await page.getByRole('button', { name: 'Undo check-in', exact: true }).click();
-    await expect(page.getByRole('alertdialog')).toContainText('The pass can be checked in again.');
+    await expect(page.getByRole('alertdialog')).toContainText('Undo check-in?');
     await page
       .getByRole('alertdialog')
       .getByRole('button', { name: 'Undo check-in', exact: true })

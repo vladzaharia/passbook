@@ -31,7 +31,7 @@ public final class SettingsDialog {
         dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button -> {
             try {
                 ReaderConfig next = new ReaderConfig(url.getText().toString(), ReaderConfig.parseIds(ids.getText().toString()),
-                    action.getText().toString().trim(), extra.getText().toString().trim());
+                    action.getText().toString().trim(), extra.getText().toString().trim(), config.unverifiedScanners());
                 next.save(activity);
                 saved.accept(next);
                 dialog.dismiss();

@@ -12,7 +12,8 @@ export type Session =
   | { kind: 'out' }
   | { kind: 'none'; csrf: string; siteKey: string }
   | { kind: 'closed'; csrf: string }
-  | { kind: 'ready'; csrf: string; sandbox: Sandbox };
+  /** `siteKey`: the check that finishes a sandbox's setup again (the quickstart's repair). */
+  | { kind: 'ready'; csrf: string; sandbox: Sandbox; siteKey: string };
 
 const API = '/api/v1';
 let pending: Promise<Session> | undefined;
@@ -45,12 +46,26 @@ async function read(): Promise<Session> {
   return {
     kind: 'ready',
     csrf,
+    siteKey: typeof body.turnstileSiteKey === 'string' ? body.turnstileSiteKey : '',
     sandbox: {
       id: String(box.id),
       orgSlug: String(box.orgSlug),
       templateId: typeof box.templateId === 'string' ? box.templateId : null,
     },
   };
+}
+
+const listeners = new Set<(s: Session) => void>();
+
+/** Tells everything that read the session that it changed: the quickstart made the sandbox, so the org chip follows. */
+export function updateSession(next: Session): void {
+  pending = Promise.resolve(next);
+  for (const fn of listeners) fn(next);
+}
+
+export function onSession(fn: (s: Session) => void): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
 }
 
 /** One lookup per page, shared by the org chip, every Run slot and the sheet. */

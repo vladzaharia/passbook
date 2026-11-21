@@ -40,19 +40,21 @@ afterEach(() => {
 
 describe('device rule (shared/device.ts)', () => {
   it.each([
-    ['iPhone', IPHONE, 0, false, false],
+    ['iPhone', IPHONE, 0, true, false],
     // A Mac adds with the badge; its QR waits in More (the pass page shows it).
-    ['Mac', MAC, 0, false, false],
-    ['iPad', MAC, 5, true, true],
-    ['Chrome on Windows', WINDOWS, 0, true, true],
+    ['Mac', MAC, 0, true, false],
+    // A computer cannot add: Show QR leads, no badge to download a file nothing opens.
+    ['iPad', MAC, 5, false, true],
+    ['Chrome on Windows', WINDOWS, 0, false, true],
   ])(
-    '%s: badge always; Show QR and the line where it cannot add',
-    async (_n, ua, touch, qr, line) => {
+    '%s: the tile leads with the badge where it adds, else Show QR',
+    async (_n, ua, touch, badge, qr) => {
       as(ua, touch);
       await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(passFixture()) } });
-      expect(await screen.findByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
+      await screen.findByRole('heading', { name: 'Gym membership', level: 2 });
+      expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' }) !== null).toBe(badge);
       expect(screen.queryByRole('button', { name: 'Show QR' }) !== null).toBe(qr);
-      expect(screen.queryAllByText(HOLDER_COPY.openOnApple)).toHaveLength(line ? 1 : 0);
+      expect(screen.queryByText(HOLDER_COPY.openOnApple)).toBeNull();
     },
   );
 
@@ -72,7 +74,7 @@ describe('device rule (shared/device.ts)', () => {
     expect(screen.queryByText(HOLDER_COPY.scanLine)).not.toBeInTheDocument();
   });
 
-  it('leads with the QR off Apple devices and keeps the Apple badge available', async () => {
+  it('leads with the QR on a computer, with no badge that would download a dead file', async () => {
     as(WINDOWS);
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ id: 'p1' })) },
@@ -80,13 +82,14 @@ describe('device rule (shared/device.ts)', () => {
     // The image, not the encoder's placeholder it replaces.
     expect(await screen.findByAltText(HOLDER_COPY.qrAlt('Gym membership'))).toBeVisible();
     expect(screen.getByText(HOLDER_COPY.scanLine)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeVisible();
-    expect(screen.getByText(HOLDER_COPY.openOnApple)).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(screen.queryByText(HOLDER_COPY.openOnApple)).toBeNull();
   });
 });
 
 describe('in Wallet', () => {
   it('shows the pill instead of the badge and leaves the bundle', async () => {
+    as(MAC);
     await renderApp('/', {
       handlers: {
         '/api/v1/me/passes': () =>

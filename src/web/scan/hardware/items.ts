@@ -102,7 +102,7 @@ export function wedgeItem(live: LiveHardware): HardwareItem {
     live.native?.externalReader.connected ||
     nativeEntries(live.native, 'keyboard').some((e) => !e.builtIn && e.connected);
   if (seen || attached) return item('wedge', 'ready', { detail: read ?? C.connected, ...test });
-  return item('wedge', 'missing', { detail: C.scanToDetect, ...test });
+  return item('wedge', 'missing', test);
 }
 
 export function readerItems(live: LiveHardware): HardwareItem[] {
@@ -110,7 +110,10 @@ export function readerItems(live: LiveHardware): HardwareItem[] {
   const using = live.started && live.readerKind === 'barcode';
   const rows = nativeRows(n, 'reader');
   if (rows) return rows.map((r) => (using && r.state === 'ready' ? { ...r, state: 'active' } : r));
-  if (!n) return [item('reader', 'unsupported', { detail: C.needsApp })];
+  if (!n)
+    return live.readerUsable
+      ? [item('reader', using ? 'active' : 'ready', { detail: C.barcode, builtIn: true })]
+      : [item('reader', 'unsupported', { detail: C.needsApp })];
   if (n.platform === 'android')
     return [item('reader', using ? 'active' : 'ready', { detail: C.barcode, builtIn: true })];
   return [item('reader', 'missing')];
@@ -262,7 +265,16 @@ export function hardwareItems(browser: Probe, live: LiveHardware): HardwareItem[
     networkItem(live),
     ...feedbackItems(probe, live),
   ];
-  return [...all.filter((i) => FOUND(i.state)), ...all.filter((i) => !FOUND(i.state))];
+  const rows = all.map((i) => pausedOf(i, live));
+  return [...rows.filter((i) => FOUND(i.state)), ...rows.filter((i) => !FOUND(i.state))];
+}
+
+/** Readers that type into the page get nothing while it has no focus: the old Reader paused chip. */
+const TYPES_IN: readonly HardwareKind[] = ['reader', 'wedge', 'keyboard'];
+function pausedOf(i: HardwareItem, live: LiveHardware): HardwareItem {
+  if (!live.reads || !live.started || live.focused) return i;
+  if (!TYPES_IN.includes(i.kind) || (i.state !== 'active' && i.state !== 'ready')) return i;
+  return { ...i, state: 'attention', status: C.paused };
 }
 
 export const isFound = (i: HardwareItem) => FOUND(i.state);

@@ -53,7 +53,7 @@ export function AddLine({ className }: { className?: string }) {
 }
 
 /**
- * The pass page's scan in a dialog: the buddy on the QR's sign, On your iPhone beside it, stacked
+ * The pass page's scan in a dialog: the buddy on the QR's tile, the scan line beside it, stacked
  * in the bottom sheet. The page's buddy steps aside while it is open (art-wallet.css).
  */
 export function QrDialog({
@@ -151,6 +151,8 @@ export interface PassMenuProps {
   help?: boolean;
   /** Tiles: Refresh is also here, the only one when the tile is too narrow for its icon. */
   refresh?: Refresh;
+  /** Tiles: false where Show QR is already the tile's lead. */
+  showQr?: boolean;
 }
 
 /**
@@ -166,13 +168,14 @@ export function PassMoreMenu({
   onRemoved,
   help = false,
   refresh,
+  showQr = true,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const mutation = useRemovePass(passId, onRemoved);
   const { resend, lost } = useHolderHelp(passId);
-  const qr = !page && publicUrl && showsAddQr(browserDevice().device);
+  const qr = showQr && !page && publicUrl && showsAddQr(browserDevice().device);
   return (
     <>
       <DropdownMenu>

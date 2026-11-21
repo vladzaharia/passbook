@@ -31,3 +31,8 @@ e2e/.auth/
 
 # iOS build output
 ios/build/
+
+# Python SDK
+__pycache__/
+.pytest_cache/
+*.egg-info/

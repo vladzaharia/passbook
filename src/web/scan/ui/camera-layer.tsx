@@ -68,9 +68,9 @@ export function CameraLayer({
             <i />
             <i />
           </div>
-          <p className="scan-live-pill">
-            {checking ? 'Checking…' : out ? SCAN_HANDHELD_COPY.aimOut : 'Scan anywhere in view'}
-          </p>
+          {checking || out ? (
+            <p className="scan-live-pill">{checking ? 'Checking…' : SCAN_HANDHELD_COPY.aimOut}</p>
+          ) : null}
         </div>
       ) : (
         <div
@@ -99,7 +99,7 @@ export function CameraLayer({
                 : status === 'unavailable'
                   ? 'Could not open the camera. Close other camera apps and try again.'
                   : reader
-                    ? 'Scan a pass, or look someone up.'
+                    ? null
                     : 'Start scanning to open the camera.'}
           </span>
           {onRetry &&

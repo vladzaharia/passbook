@@ -56,8 +56,9 @@ export const kit = () => {
   return shared;
 };
 
-export async function snippetWorld(kit: BlueprintKit) {
-  const org = await makeOrg(kit.f);
+/** `kind: 'developer'` makes the organization a portal sandbox, which the capture endpoint needs. */
+export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'developer' } = {}) {
+  const org = await makeOrg(kit.f, options);
   const owner = await kit.member(org.id, ['org_admin']);
   const id = kit.f.ids.id();
   const prefix = kit.f.ids.token(6);

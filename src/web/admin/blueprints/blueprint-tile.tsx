@@ -80,7 +80,7 @@ export function BlueprintTile({
       </div>
       <div
         className={cn(
-          'flex min-w-0 items-center gap-3 border-t border-border px-4 py-3',
+          'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-4 py-3',
           rise && 'wl-rise [animation-delay:calc(min(var(--i),6)*60ms+160ms)]',
         )}
       >
@@ -93,18 +93,6 @@ export function BlueprintTile({
           >
             {b.name}
           </Link>
-          {b.description ? (
-            <p className="line-clamp-2 text-xs text-fg-muted">{b.description}</p>
-          ) : null}
-          {choices ? (
-            <SegmentedControl
-              label={`${entry.variants[0]?.blueprint.name} for`}
-              className="relative z-10 mt-2"
-              value={String(pick)}
-              onValueChange={(v) => setPick(Number(v))}
-              options={entry.variants.map((v, i) => ({ value: String(i), label: v.label }))}
-            />
-          ) : null}
         </div>
         <Button
           size="sm"
@@ -115,6 +103,16 @@ export function BlueprintTile({
         >
           Use
         </Button>
+        {choices ? (
+          <div className="relative z-10 basis-full">
+            <SegmentedControl
+              label={`${entry.variants[0]?.blueprint.name} for`}
+              value={String(pick)}
+              onValueChange={(v) => setPick(Number(v))}
+              options={entry.variants.map((v, i) => ({ value: String(i), label: v.label }))}
+            />
+          </div>
+        ) : null}
       </div>
     </li>
   );

@@ -17,6 +17,8 @@ import { getPass } from './repo-read-pass.ts';
 
 let kit: MemberPhotoFixture['kit'];
 let get: MemberPhotoFixture['get'];
+/** A Mac: the page carries the badge, so its download link. */
+const MAC = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15' };
 let files: MemberPhotoFixture['files'];
 beforeAll(async () => {
   ({ kit, get, files } = await setupPhotoTestKit());
@@ -94,7 +96,7 @@ describe('member photo lineage', () => {
       const download = await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
       expect(download.status).toBe(200);
       expectValidZip(new Uint8Array(await download.arrayBuffer()));
-      const page = await get(`/p/${await linkToken(kit.env, pass)}`);
+      const page = await get(`/p/${await linkToken(kit.env, pass)}`, MAC);
       expect(page.status).toBe(200);
       expect(await page.text()).toContain(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
       const contents = await files(pass.id);
@@ -159,7 +161,7 @@ describe('member photo lineage', () => {
     for (const snapshot of snapshots)
       await expect(assertPassSnapshot(kit.ctx, snapshot)).rejects.toMatchObject({ status: 404 });
 
-    const page = await get(`/p/${await linkToken(kit.env, pass)}`);
+    const page = await get(`/p/${await linkToken(kit.env, pass)}`, MAC);
     expect(page.status).toBe(200);
     expect(await page.text()).toContain(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);
     const download = await get(`/p/${await linkToken(kit.env, pass)}/pass.pkpass`);

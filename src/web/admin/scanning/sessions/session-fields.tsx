@@ -133,7 +133,7 @@ function SessionStaff({
       </div>
       <SwitchRow
         label="Require staff sign-in"
-        help="Applies only to paired, staff-operated scanner devices. Bearer-token terminals do not use staff PINs and always use the access level below. With several managers, turn it on: a manager PIN is then checked against the manager chosen, not all of them."
+        help="Paired scanners only. Tills have no staff PINs and use the access level below. With several managers, turn it on so a PIN is checked against the manager chosen."
         checked={draft.staffSignIn}
         onCheckedChange={(staffSignIn) => set({ staffSignIn })}
       />

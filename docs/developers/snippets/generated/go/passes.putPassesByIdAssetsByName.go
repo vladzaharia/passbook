@@ -1,28 +1,28 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
+
+	passbook "github.com/vladzaharia/passbook/sdk/go"
 )
 
 func main() {
-	body, err := os.Open("image.png")
+	ctx := context.Background()
+	pb, err := passbook.NewClient(os.Getenv("PASSBOOK_KEY"))
 	if err != nil {
 		panic(err)
 	}
-	req, err := http.NewRequest("PUT", "https://passbook.mobile/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/assets/icon.png", body)
+
+	body, err := os.ReadFile("image.png")
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("PASSBOOK_KEY"))
-	req.Header.Set("Content-Type", "image/png")
-	res, err := http.DefaultClient.Do(req)
+
+	result, err := pb.Passes.Assets.Upload(ctx, "0193a1b2-7c00-7000-8000-0000000000c1", "icon.png", body)
 	if err != nil {
 		panic(err)
 	}
-	defer res.Body.Close()
-	out, _ := io.ReadAll(res.Body)
-	fmt.Println(res.Status, string(out))
+	fmt.Printf("%+v\n", result)
 }

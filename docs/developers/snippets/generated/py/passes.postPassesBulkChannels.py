@@ -1,10 +1,11 @@
 import os
-import httpx
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/passes/bulk/channels",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-    json={
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.passes.bulk_update_channels(
+    {
         "action": "on",
         "channels": [
             "mobile",
@@ -14,5 +15,4 @@ res = httpx.post(
         ],
     },
 )
-res.raise_for_status()
-print(res.json())
+print(result)

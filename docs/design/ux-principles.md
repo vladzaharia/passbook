@@ -63,7 +63,7 @@ Apple requires something (badge artwork, Wallet messaging, pass design).
    - Next and Save stay on screen (sticky bars).
 7. **The holder is a person with an email.**
    - `/login` leads with the email path; Polaris ID is the alternative.
-   - Off iPhone the QR leads ("On your iPhone: Scan with the camera.").
+   - Off iPhone the QR leads ("Scan with your iPhone camera.").
    - In an installed app the sign-in code leads: an email link would open Safari.
    - Emails show what the pass is before the badge.
    - Account email flows never dead-end: a pending address shows with Resend and Cancel.

@@ -21,7 +21,7 @@ import { useVerdictHaptic } from './platform/use-verdict-haptic.ts';
 import { deskOf, resultOf, useApprovedBy } from './result/desk.ts';
 import type { PassInspection } from './result/pass-inspector.tsx';
 import { CameraLayer } from './ui/camera-layer.tsx';
-import { ReaderChip, SyncChip, syncChipOf, TestChip } from './ui/chips.tsx';
+import { SyncChip, syncChipOf, TestChip } from './ui/chips.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
 import type { Announcement } from './ui/live-announcer.tsx';
 import { modeLabel } from './ui/mode-label.ts';
@@ -168,7 +168,6 @@ export function ScanLoop({
   const testChip = <TestChip mode={scanner?.mode ?? getMode()} />;
   const chipsNode = (
     <>
-      {readerUsable ? <ReaderChip state={s.focused ? 'ready' : 'paused'} /> : null}
       {sync ? <SyncChip state={sync} /> : null}
       {access.chips}
       {tags.chip}
@@ -189,7 +188,7 @@ export function ScanLoop({
         name: scanner?.name ?? 'Scan as admin',
         staff: session.staff?.name,
         mode: modeLabel(session),
-        ...(handheld && access.direction
+        ...(handheld && access.direction && !access.direction.onCycle
           ? { direction: SCAN_COPY.direction[access.direction.value] }
           : {}),
         state: capsuleStateOf(s.online, l.s),

@@ -30,4 +30,6 @@ export interface AddAreaProps {
   badge: ReactNode;
   /** Apple's line where this browser cannot add (shared/device.ts addLine). */
   line: string | null;
+  /** SSR: a Mac agent may be an iPad, so the Mac-only parts start hidden (MAC_REVEAL_SCRIPT). */
+  macUnsure?: boolean;
 }

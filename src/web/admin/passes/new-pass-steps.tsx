@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router';
 import { type CSSProperties, type ReactNode, useId } from 'react';
-import { NO_RELEASE_COPY } from '@/shared/copy/new-pass.ts';
 import { cn } from '../../lib/cn.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { useMediaQuery } from '../../lib/media.ts';
@@ -198,18 +197,25 @@ export function TemplateStep({
               ? 'No eligible templates on this page'
               : 'No eligible templates for this organization and mode'
           }
-          description="Make one from a blueprint, or release one in this mode."
           action={browse}
         />
       </div>
     );
   let i = 0;
+  const groups = groupTemplates(templates, orgName);
   return (
     <ChoiceGroup label="Template" error={choiceError} className="flex flex-col gap-6">
       <LinkedBlueprint orgId={orgId} listed={templates} />
-      {groupTemplates(templates, orgName).map((g) => (
+      {groups.map((g) => (
         <fieldset key={g.key} className="min-w-0">
-          <legend className="mb-3 text-xs font-medium text-fg-muted">{g.label}</legend>
+          <legend
+            className={cn(
+              'text-xs font-medium text-fg-muted',
+              groups.length === 1 ? 'sr-only' : 'mb-3',
+            )}
+          >
+            {g.label}
+          </legend>
           <div className={cn(staged ? NAME_GRID : TILE_GRID, arrived && 'wl-stagger')}>
             {g.items.map(({ template: t, name }) => (
               <div key={t.id} style={{ '--i': i++ } as CSSProperties}>
@@ -245,8 +251,7 @@ export function TemplateStep({
           </div>
         </fieldset>
       ))}
-      <p className="text-sm text-fg-muted">
-        {NO_RELEASE_COPY.onlyReleased} Need another design?{' '}
+      <p className="text-sm">
         <Link to="/admin/blueprints" className="text-accent-fg underline-offset-2 hover:underline">
           Browse blueprints
         </Link>

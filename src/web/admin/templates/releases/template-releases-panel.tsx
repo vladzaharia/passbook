@@ -152,9 +152,6 @@ function ScopedPanel({
         : `No active release for this organization and mode, so issuing passes is blocked. ${nextStep}`;
   return (
     <div className="grid gap-4">
-      <p className="text-sm text-fg-muted">
-        {mode === 'live' ? 'Live' : 'Test'} mode · {PROVIDER[provider]}
-      </p>
       <WalletRows
         templateId={templateId}
         orgId={orgId}
@@ -229,9 +226,7 @@ export function TemplateReleasesPanel(props: TemplateReleasesPanelProps) {
       <div className="grid gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-fg-muted">
-              Select an organization to view and manage its template releases.
-            </p>
+            <p className="text-sm text-fg-muted">Select an organization.</p>
           </CardBody>
         </Card>
       </div>
@@ -241,9 +236,7 @@ export function TemplateReleasesPanel(props: TemplateReleasesPanelProps) {
       <div className="grid gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-fg-muted">
-              Select the template’s owning organization to manage its releases.
-            </p>
+            <p className="text-sm text-fg-muted">Select the owning organization.</p>
           </CardBody>
         </Card>
       </div>

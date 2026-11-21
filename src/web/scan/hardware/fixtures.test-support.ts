@@ -30,6 +30,8 @@ export function probeFixture(over: Partial<Probe> = {}): Probe {
 export function liveFixture(over: Partial<LiveHardware> = {}): LiveHardware {
   return {
     reads: true,
+    focused: true,
+    readerUsable: false,
     camera: 'live',
     cameraChoice: 'back',
     activeCameraId: 'cam-back',
@@ -104,6 +106,8 @@ export const HARDWARE_CASES = [
   'nfc-off',
   'offline',
   'android',
+  'reader',
+  'paused',
 ] as const;
 export type HardwareCase = (typeof HARDWARE_CASES)[number];
 
@@ -160,6 +164,16 @@ export function hardwareCase(c: HardwareCase): { probe: Probe; live: LiveHardwar
           readerKind: 'barcode',
           activeCameraId: null,
         }),
+      };
+    case 'reader':
+      return {
+        probe: probeFixture(),
+        live: liveFixture({ readerUsable: true, readerKind: 'barcode' }),
+      };
+    case 'paused':
+      return {
+        probe: probeFixture(),
+        live: liveFixture({ readerUsable: true, readerKind: 'barcode', focused: false }),
       };
     default:
       return { probe: probeFixture(), live: liveFixture() };

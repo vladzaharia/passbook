@@ -41,7 +41,7 @@ async function open(path: string, imp?: Record<string, unknown>) {
 describe('import screens pass axe at 1440, 820 and 390, in both themes', () => {
   it('source', async () => {
     const { container } = await open('/admin/passes/import');
-    await screen.findByText('Spreadsheet');
+    await screen.findByRole('button', { name: 'Check file' });
     await axeEverywhere(container);
   });
 
@@ -86,7 +86,7 @@ describe('import screens pass axe at 1440, 820 and 390, in both themes', () => {
 
   it('results', async () => {
     const { container } = await open('/admin/passes/import/imp1', finished());
-    await screen.findByText('Results');
+    await screen.findByText('Created');
     await axeEverywhere(container);
   });
 

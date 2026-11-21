@@ -85,7 +85,6 @@ export function PaperEditor({
       </div>
       <SwitchRow
         label={PRINT_COPY.buddyLabel}
-        help={PRINT_COPY.buddyHelp}
         checked={design.buddy}
         onCheckedChange={(on) => onEdit({ buddy: on })}
       />
