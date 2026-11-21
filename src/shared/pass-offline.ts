@@ -84,6 +84,15 @@ export const OFFLINE_SCRIPT = `${HELPERS}(async () => {
   if (!box || !('serviceWorker' in navigator) || !('caches' in window)) return;
   const path = location.pathname;
   const name = 'barcode:' + (await hashOf(path.split('/')[2]));
+  // The page's CSP requires Trusted Types: one policy that admits only the worker's address.
+  const swUrl = window.trustedTypes
+    ? window.trustedTypes.createPolicy('passbook-worker', {
+        createScriptURL: (u) => {
+          if (u !== '${PASS_SW_PATH}') throw new TypeError('Unexpected script address.');
+          return u;
+        },
+      }).createScriptURL('${PASS_SW_PATH}')
+    : '${PASS_SW_PATH}';
   const [save, drop, state, fail] = ['save', 'drop', 'state', 'fail'].map((k) => box.querySelector('[data-' + k + ']'));
   const show = (on) => {
     save.hidden = on;
@@ -101,7 +110,7 @@ export const OFFLINE_SCRIPT = `${HELPERS}(async () => {
     save.disabled = true;
     fail.hidden = true;
     try {
-      await navigator.serviceWorker.register('${PASS_SW_PATH}', { scope: path });
+      await navigator.serviceWorker.register(swUrl, { scope: path });
       await navigator.serviceWorker.ready;
       const res = await fetch(path, { cache: 'no-store' });
       if (!res.ok || res.redirected) throw new Error('save');

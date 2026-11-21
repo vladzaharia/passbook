@@ -44,8 +44,10 @@ export const HOLDER_COPY = {
   contact: (org: string) => `Contact ${org}`,
   /** The org's support contacts under the add block. */
   help: 'Help',
-  /** /p: the holder's own page in the portal (Refresh, Remove), through sign-in. */
+  /** /b's quiet way to the holder's page (H7 moves it): through sign-in. */
   openInPortal: 'Open in My passes',
+  /** /p's other ways, a pass with a holder email: the holder's page in the portal, through sign-in. */
+  myPassesRow: 'My passes',
   /** The wallet choice: the way that fits this device, then the rest (a list's accessible name). */
   otherWays: 'Other ways',
   showBarcode: 'Show barcode',
@@ -87,8 +89,12 @@ export const HOLDER_COPY = {
   emailMyPasses: 'Email me my passes',
   /** The ended card's disclosure for the pass's fields. */
   details: 'Details',
-  /** My passes: the group of voided and removed ones, under the live ones. */
-  endedTitle: 'Voided and removed',
+  /** My passes: the closed group of voided, removed and expired passes, under the rest. */
+  endedTitle: 'Voided and expired',
+  /** My passes: the group of test passes, its pill. */
+  testTitle: 'Test',
+  /** My passes: the stack's accessible names. */
+  stackLabel: 'Passes',
   addAllTitle: 'Add all to Apple Wallet',
   addAllOne: 'Add to Apple Wallet',
   addAllCount: (n: number) => `Add ${n} passes`,

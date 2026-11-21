@@ -68,8 +68,19 @@
     if (siteKey) {
       window.__joinTurnstile = renderWidget;
       const api = document.createElement('script');
-      api.src =
+      const apiUrl =
         'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__joinTurnstile';
+      // The page's CSP requires Trusted Types: one named policy that admits this one address.
+      api.src = window.trustedTypes
+        ? window.trustedTypes
+            .createPolicy('passbook-turnstile', {
+              createScriptURL: (u) => {
+                if (u !== apiUrl) throw new TypeError('Unexpected script address.');
+                return u;
+              },
+            })
+            .createScriptURL(apiUrl)
+        : apiUrl;
       api.async = true;
       document.head.appendChild(api);
     }

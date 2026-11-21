@@ -60,6 +60,7 @@ import { scanZonesRoutes } from './modules/scan/routes-zones.ts';
 import { settingsRoutes } from './modules/settings/routes.ts';
 import { statusRoutes } from './modules/status/routes.ts';
 import { templatesRoutes } from './modules/templates/routes.ts';
+import { templateReviewsRoutes } from './modules/templates/routes-reviews.ts';
 import { usersRoutes } from './modules/users/routes.ts';
 import { offboardRoutes, visitorsRoutes } from './modules/visitors/routes.ts';
 import { walletProviderAccountRoutes } from './modules/wallet-providers/routes-accounts.ts';
@@ -172,6 +173,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', retentionPlatformRoutes);
   app.route('/api/v1/platform', orgClosedRoutes);
   app.route('/api/v1/templates', templatesRoutes);
+  app.route('/api/v1/template-reviews', templateReviewsRoutes);
   app.route('/api/v1/passes', passesRoutes);
   app.route('/api/v1/pass-imports', passImportRoutes);
   app.route('/api/v1/bundles', bundlesRoutes);

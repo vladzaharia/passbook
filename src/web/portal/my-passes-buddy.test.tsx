@@ -27,21 +27,21 @@ describe('my passes buddy', () => {
     expect(listAct([voided('a')])).toEqual({ mood: 'sad', scene: 'beat' });
   });
 
-  it('sits on the first tile only, S at its start, hidden from assistive tech', async () => {
+  it('sits on the front card only, S at its end, hidden from assistive tech', async () => {
     await renderApp('/', {
       handlers: { '/api/v1/me/passes': () => list(added('a'), out('b'), out('c')) },
     });
-    await screen.findByRole('heading', { name: 'c', level: 2 });
+    // The newest pass is in front; the rest are peeks.
+    await screen.findByRole('heading', { name: 'a', level: 2 });
     const buddies = document.querySelectorAll('[data-buddy]');
     expect(buddies).toHaveLength(1);
-    const [first] = screen.getAllByRole('listitem');
-    const buddy = first?.querySelector('[data-buddy]');
+    const buddy = document.querySelector('.wl-stack-front [data-buddy]');
     expect(buddy).toHaveAttribute('data-scene', 'nudge');
-    expect(buddy).toHaveAttribute('data-at', 'start');
+    expect(buddy).toHaveAttribute('data-at', 'end');
     expect(buddy).toHaveAttribute('aria-hidden', 'true');
     expect(buddy?.querySelector('svg')).toHaveAttribute('data-size', 'sm');
-    // Seated on the tile's own frame, never over the pass art.
-    expect(buddy?.parentElement).toHaveClass('rounded-xl');
+    // Seated on the card's own box, so its feet meet the card's top edge.
+    expect(buddy?.parentElement?.querySelector(':scope > a .pc-stage')).not.toBeNull();
   });
 
   it('is a page buddy: success toasts show a check while it is mounted', async () => {
@@ -67,7 +67,7 @@ describe('my passes buddy', () => {
     }
   });
 
-  it('keeps its room above the grid from the skeleton on, with no empty row above it', async () => {
+  it('keeps its room above the stack from the skeleton on, with no empty row above it', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(MAC);
     let release = () => {};
     const gate = new Promise<void>((resolve) => {
@@ -83,11 +83,10 @@ describe('my passes buddy', () => {
     expect(document.querySelector('[aria-busy="true"]')?.parentElement).toHaveClass('flex');
     release();
     await screen.findByRole('heading', { name: 'a', level: 2 });
-    expect(screen.getByRole('list')).toHaveClass('wl-buddy-room');
-    expect(document.querySelector('.wl-passes')).toHaveClass('flex');
-    // One pass to add on a Mac: no bundle and no line, so nothing sits between header and grid.
-    expect(document.querySelector('.wl-passes')?.firstElementChild).toContainElement(
-      screen.getByRole('list'),
-    );
+    const stack = screen.getByRole('list', { name: 'Passes' });
+    expect(stack).toHaveClass('wl-buddy-room');
+    // One pass to add on a Mac: no bundle and no line, so nothing sits between header and stack.
+    const side = document.querySelector('.wl-mp-side');
+    expect(side?.firstElementChild).toContainElement(stack);
   });
 });

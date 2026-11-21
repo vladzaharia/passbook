@@ -20,11 +20,12 @@ import { authOf, orgIdOf } from '../passes/http.ts';
 import { authorizeTemplateWrite } from './access.ts';
 import { ReviewRequiredError, releaseTemplate } from './release-flow.ts';
 import { scopedTemplate } from './releases-domain.ts';
+import { notifyReviewers } from './review-notify.ts';
 
 type Router = OpenAPIHono<AppBindings>;
 
 /** The 409 body: the problem document with the plan that stopped it. */
-function reviewRequiredResponse(error: ReviewRequiredError, requestId: string): Response {
+export function reviewRequiredResponse(error: ReviewRequiredError, requestId: string): Response {
   const { headers, ...problem } = toProblem(error, requestId);
   return new Response(JSON.stringify({ ...problem, plan: error.plan }), {
     status: 409,
@@ -78,6 +79,7 @@ export function registerTemplateReleaseFlow(router: Router): void {
         scope: request ? ('templates:write' as const) : ('templates:publish' as const),
         capability: request ? ('templates:author' as const) : ('templates:publish' as const),
         request,
+        onReviewRequested: notifyReviewers,
       };
       // Why: a replay returns the stored answer, so the template and the caller are proven before any of it.
       await scopedTemplate(ctx, auth, id, { orgId, mode: modeOf(auth), provider: 'apple' });

@@ -21,6 +21,8 @@ export const CHUNK_ROWS = 5;
 export interface CommitStart {
   checkId: string;
   email: boolean;
+  /** Held mail waits this long after the import ends; null mails as each pass is made. */
+  holdMs?: number | null;
   skipInvalid: boolean;
   starter: DeferredStarter;
   emailBudget: number;
@@ -40,13 +42,14 @@ export async function beginCommit(
   s: CommitStart,
 ): Promise<void> {
   const now = ctx.clock.now();
-  const g = importGrant(ctx, authority, id, { state: 'ready', check_id: s.checkId });
+  const g = importGrant(ctx, authority, id, { state: 'ready', check_id: s.checkId, reverted: 0 });
   g.update('pass_imports', {
     where: { id },
     require: 'one',
     set: {
       state: 'committing',
       email: s.email ? 1 : 0,
+      email_hold_ms: s.holdMs ?? null,
       skip_invalid: s.skipInvalid ? 1 : 0,
       starter: JSON.stringify(s.starter),
       email_budget: s.emailBudget,
@@ -70,6 +73,7 @@ export async function beginCommit(
       create: s.counts.create,
       update: s.counts.update,
       email: s.email,
+      hold: (s.holdMs ?? null) !== null,
       skipInvalid: s.skipInvalid,
     }),
   });
@@ -147,13 +151,20 @@ export interface RowResult {
   state: 'done' | 'failed' | 'skipped';
   result: 'created' | 'updated' | 'unchanged' | null;
   code: string | null;
+  /** An update's earlier inputs and the version it wrote: what an undo restores, and its guard. */
+  undo?: { before: string; version: number };
 }
 
 export async function writeRowResult(ctx: ServiceContext, s: Scope, r: RowResult): Promise<void> {
   const g = runGrant(ctx, s.orgId, s.mode, s.importId);
   g.joined('pass_import_rows', {
     where: { import_id: s.importId, row_no: r.row, state: 'planned' },
-    set: { state: r.state, result: r.result, code: r.code },
+    set: {
+      state: r.state,
+      result: r.result,
+      code: r.code,
+      ...(r.undo ? { before: r.undo.before, written_version: r.undo.version } : {}),
+    },
   });
   await g.commit();
 }
@@ -225,7 +236,13 @@ export async function writeProgress(ctx: ServiceContext, s: Scope, p: Progress):
 export async function finishImport(
   ctx: ServiceContext,
   s: Scope,
-  end: { state: 'done' | 'failed' | 'stale'; code: string | null; progress: Progress },
+  end: {
+    state: 'done' | 'failed' | 'stale';
+    code: string | null;
+    progress: Progress;
+    /** When held mail goes out; set only by an import that ended `done`. */
+    holdUntil?: number | null;
+  },
   /** The import's email reservation: given back in the same batch as the state change. */
   hold?: EmailHold,
 ): Promise<void> {
@@ -253,6 +270,7 @@ export async function finishImport(
       state: end.state,
       error_code: end.code,
       finished_at: now,
+      ...(end.holdUntil ? { email_hold_until: end.holdUntil } : {}),
       done: p.done,
       created: p.created,
       updated: p.updated,

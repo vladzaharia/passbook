@@ -4,7 +4,8 @@ import {
   type ReissueParams,
   reissuePage,
 } from '../modules/passes/bulk-reissue-page.ts';
-import { failBulkRun, runBulkChunk } from '../modules/passes/bulk-run.ts';
+import { failBulkRun } from '../modules/passes/bulk-run.ts';
+import { runBulkChunk } from '../modules/passes/bulk-run-chunk.ts';
 import { setWorkflowStatus } from '../modules/passes/repo.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { createJobContext } from '../platform/service-context.ts';

@@ -45,7 +45,7 @@ const EXEMPT: Record<string, string> = {
   'modules/passes/package-objects.ts': 'the shared archive writer; callers gate',
   'modules/passes/detail.ts': 'admin links (passes:operate)',
   'modules/passes/import-results.ts': 'admin import report (passes:operate)',
-  'modules/passes/import-service.ts': 'admin import (passes:operate)',
+  'modules/passes/import-check-run.ts': 'admin import (passes:operate)',
   'modules/passes/import-read.ts': 'admin import (passes:operate)',
   'modules/orgs/email-preview.ts': 'sample email for admins',
   'modules/templates/import-pipeline.ts': 'template import, not a holder surface',

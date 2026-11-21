@@ -917,6 +917,12 @@
     "fix": "Check the import again with POST /api/v1/pass-imports/{id}/check, then commit.",
     "retryable": false
   },
+  "IMPORT_MAPPINGS_FULL": {
+    "title": "Too many saved mappings",
+    "when": "The template already has 20 saved import mappings and the request names a new one.",
+    "fix": "Delete a saved mapping with DELETE /api/v1/pass-imports/mappings, or reuse an existing name to replace it.",
+    "retryable": false
+  },
   "IMPORT_NOT_FOUND": {
     "title": "Import not found",
     "when": "No import with this id exists in this mode and organization.",
@@ -927,6 +933,12 @@
     "title": "Imported pass edited",
     "when": "The pass was edited after the import, so it cannot be removed with it.",
     "fix": "Remove the pass on its own with POST /api/v1/passes/{id}/remove.",
+    "retryable": false
+  },
+  "IMPORT_PASS_GONE": {
+    "title": "Pass already gone",
+    "when": "An undo found a pass the import made that was removed or deleted since.",
+    "fix": "Nothing to do; the pass is already out of Wallet.",
     "retryable": false
   },
   "IMPORT_PLAN_INVALID": {
@@ -951,6 +963,30 @@
     "title": "Tag file too large",
     "when": "The CSV has more rows than one import takes.",
     "fix": "Split the file and import it in parts.",
+    "retryable": false
+  },
+  "IMPORT_UNDONE": {
+    "title": "Import was undone",
+    "when": "The import was undone or is being undone, so it can no longer be checked, committed or discarded.",
+    "fix": "Upload the file again as a new import.",
+    "retryable": false
+  },
+  "IMPORT_UNDO_EXPIRED": {
+    "title": "Undo window has passed",
+    "when": "The import ended more than 24 hours ago, so it can no longer be undone.",
+    "fix": "Remove or change the passes one by one, or run a change that sets the earlier values.",
+    "retryable": false
+  },
+  "IMPORT_UNDO_NO_BEFORE": {
+    "title": "Earlier values not kept",
+    "when": "An undo found an updated row from an import that ran before undo kept earlier values.",
+    "fix": "Change the pass by hand or import the earlier values again.",
+    "retryable": false
+  },
+  "IMPORT_UNDO_RUNNING": {
+    "title": "Undo is running",
+    "when": "The import is being undone, so its held mail cannot be sent now.",
+    "fix": "Wait for the undo to finish, then read the result from GET /api/v1/pass-imports/{id}.",
     "retryable": false
   },
   "INVALID_API_KEY": {
@@ -2567,6 +2603,12 @@
     "fix": "Approve a release with POST /api/v1/templates/{id}/candidates/{candidateId}/approve.",
     "retryable": false
   },
+  "TEMPLATE_REVIEW_NOT_FOUND": {
+    "title": "No review requested",
+    "when": "No review was requested for this version, or it was released already.",
+    "fix": "Ask the author to request review of this version, then review it again.",
+    "retryable": false
+  },
   "TEMPLATE_REVIEW_REQUIRED": {
     "title": "Review required",
     "when": "Another reviewer must approve this version before it is released in Live.",
@@ -3189,6 +3231,12 @@
     "title": "Views changed",
     "when": "The saved views changed since the revision you sent.",
     "fix": "Read the views again and save with the new revision.",
+    "retryable": false
+  },
+  "PASS_CHANGED": {
+    "title": "Pass changed",
+    "when": "A pass moved since the bulk run's snapshot; the run skips it and counts it under PASS_CHANGED.",
+    "fix": "Start a new run for the passes that are left.",
     "retryable": false
   }
 }

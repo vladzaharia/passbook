@@ -17,8 +17,6 @@ export const NAV_PATH: Record<NavKey, string> = {
   quickstart: PATHS.quickstart,
   guides: PATHS.guides,
   reference: PATHS.reference,
-  playground: PATHS.playground,
-  console: PATHS.console,
   webhooks: PATHS.webhooks,
   logs: PATHS.logs,
 };
@@ -31,7 +29,7 @@ export function TopBar({ active }: { active?: NavKey }) {
         <IconButton
           label={DEV_COPY.menu}
           icon={<Menu aria-hidden="true" />}
-          className="min-[901px]:hidden"
+          className="dev-menu-btn"
           data-menu-button
           aria-expanded="false"
           aria-controls="dev-menu"
@@ -39,14 +37,17 @@ export function TopBar({ active }: { active?: NavKey }) {
       }
       brand={<Wordmark to={PATHS.home} reload hello={false} sub={DEV_COPY.brand} />}
       nav={
-        <MenubarNav
-          label="Sections"
-          items={DEV_COPY.nav.map((n) => ({
-            label: n.label,
-            href: NAV_PATH[n.key],
-            current: n.key === active,
-          }))}
-        />
+        // The wrapper keeps the nav out of the flex row (display: contents); it shows from 1180 px (dev-layout.css).
+        <div className="dev-nav">
+          <MenubarNav
+            label="Sections"
+            items={DEV_COPY.nav.map((n) => ({
+              label: n.label,
+              href: NAV_PATH[n.key],
+              current: n.key === active,
+            }))}
+          />
+        </div>
       }
       search={
         <MenubarSearch
@@ -69,6 +70,28 @@ export function TopBar({ active }: { active?: NavKey }) {
   );
 }
 
+/**
+ * The menu sheet's top: the sections, then Sandbox and Spaces. Both are empty in the prerender and
+ * filled for a signed-in reader (shell/menu-sheet.ts); signed out, the sheet ends in Sign in.
+ */
+export function MenuSections() {
+  return (
+    <div className="menu-only stack">
+      <h4>{DEV_COPY.brand}</h4>
+      {DEV_COPY.nav.map((n) => (
+        <a key={n.key} href={NAV_PATH[n.key]}>
+          {n.label}
+        </a>
+      ))}
+      <div className="menu-sandbox stack" data-menu-sandbox hidden />
+      <div className="menu-spaces stack" data-menu-spaces hidden />
+      <a className="menu-signin" href={SIGN_IN} data-menu-signin>
+        {DEV_COPY.sheet.signIn}
+      </a>
+    </div>
+  );
+}
+
 /** Reference nav: groups by job; the open resource lists its operations. */
 export function SideNav({
   site,
@@ -85,14 +108,7 @@ export function SideNav({
       id="dev-menu"
       aria-label={site ? 'Reference' : 'Menu'}
     >
-      <div className="menu-only stack">
-        <h4>Developers</h4>
-        {DEV_COPY.nav.map((n) => (
-          <a key={n.key} href={NAV_PATH[n.key]}>
-            {n.label}
-          </a>
-        ))}
-      </div>
+      <MenuSections />
       {site?.groups.map((g) => (
         <div key={g.label} className="stack">
           <h4>{g.label}</h4>
@@ -120,6 +136,8 @@ export function SideNav({
           <h4>More</h4>
           <a href={PATHS.errors}>Errors</a>
           <a href={PATHS.protocols}>Protocols</a>
+          <a href={PATHS.playground}>Playground</a>
+          <a href={PATHS.console}>Console</a>
         </div>
       ) : null}
     </nav>

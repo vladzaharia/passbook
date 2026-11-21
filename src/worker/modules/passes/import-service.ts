@@ -1,5 +1,7 @@
 import type { TemplateManifest } from '../../../passkit/types.ts';
+import type { MappingSuggestion } from '../../../shared/contracts/issuing.ts';
 import type { PassImportDto } from '../../../shared/contracts/pass-imports.ts';
+import { planOfSuggestion } from '../../../shared/issuing/matcher.ts';
 import { bump } from '../../platform/counters.ts';
 import {
   AppError,
@@ -9,17 +11,13 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { orgEmailBudget } from '../delivery/repo-email-budget.ts';
-import { resolveTemplate } from './builder.ts';
-import { effectiveApiRelease } from './create-release.ts';
 import type { TenantPassWrite } from './http.ts';
-import { checkRows, rowChecker } from './import-check.ts';
-import { planRows, summarize } from './import-match.ts';
+import { assertPlan, runCheck, suggestOf, template } from './import-check-run.ts';
+import { pickSaved, readMappings, who } from './import-mappings.ts';
 import {
   type ImportPlan,
   missingColumns,
   missingKeyColumn,
-  parsePlan,
   planProblems,
   withoutColumns,
 } from './import-plan.ts';
@@ -32,14 +30,9 @@ import {
   sourceBytes,
   sourceName,
 } from './import-source.ts';
-import { activeZoneKeys } from './repo-access-zones.ts';
-import { savedPlan, savePlan } from './repo-import-mappings.ts';
-import { createdRowNumbers, insertRows } from './repo-import-rows.ts';
 import {
-  beginCheck,
   discardDraft,
   failCheck,
-  finishCheck,
   getImport,
   type ImportRow,
   insertImport,
@@ -53,8 +46,6 @@ const CREATES_PER_HOUR = 30;
 const CHECKS_PER_HOUR = 120;
 const OPEN = ['mapping', 'checking', 'ready', 'stale'];
 
-const who = (a: TenantPassWrite) => (a.kind === 'session' ? a.userId : a.keyId);
-
 async function enforceRate(
   ctx: ServiceContext,
   a: TenantPassWrite,
@@ -64,12 +55,6 @@ async function enforceRate(
   const now = ctx.clock.now();
   const n = await bump(ctx.env.DB, `${kind}:${a.mode}:org:${a.orgId}`, now - (now % HOUR));
   if (n > cap) throw new RateLimitedError(3600, 'Too many imports. Try again later.');
-}
-
-async function loadFile(ctx: ServiceContext, imp: ImportRow) {
-  const object = imp.object_key ? await ctx.env.BUCKET.get(imp.object_key) : null;
-  if (!object) throw new AppError('IMPORT_FILE_GONE', 410, 'The file is gone. Upload it again.');
-  return parseImport(new Uint8Array(await object.arrayBuffer()));
 }
 
 /** The draft of this org and mode, or 404. Nothing else of the draft is read before this. */
@@ -83,89 +68,37 @@ export async function requireImport(
   return row;
 }
 
-async function template(ctx: ServiceContext, a: TenantPassWrite, templateId: string) {
-  const release = await effectiveApiRelease(ctx, { orgId: a.orgId, templateId, mode: a.mode });
-  return { release, template: await resolveTemplate(ctx, a.orgId, templateId, release.version) };
-}
-
-function assertPlan(plan: ImportPlan, manifest: TemplateManifest, header: readonly string[]): void {
-  const problems = planProblems(plan, manifest);
-  if (problems.length > 0)
-    throw new ValidationError(
-      'The column mapping is not valid.',
-      problems.map((message) => ({ path: 'plan', message })),
-      'IMPORT_PLAN_INVALID',
-    );
-  const missing = missingColumns(plan, header);
-  if (missing.length > 0)
-    throw new ValidationError(
-      `The file has no "${missing[0]}" column.`,
-      [],
-      'IMPORT_COLUMN_MISSING',
-    );
-}
-
-/** Checks the file against the plan and writes only the draft's own rows (design D2). */
-async function runCheck(
+/** The plan `mapping: 'auto'` stands for: a saved mapping of the same columns, else the template's own suggestion. */
+async function autoPlan(
   ctx: ServiceContext,
   a: TenantPassWrite,
-  imp: ImportRow,
-  plan: ImportPlan,
-): Promise<void> {
-  const parsed = await loadFile(ctx, imp);
-  const { release, template: tpl } = await template(ctx, a, imp.template_id);
-  assertPlan(plan, tpl.manifest, parsed.header);
-  const zones = tpl.manifest.scan?.access?.input.zones;
-  const zoneKeys = new Set(zones === undefined ? [] : await activeZoneKeys(ctx.env.DB, a.orgId));
-  const rc = { manifest: tpl.manifest, plan, header: parsed.header, zoneKeys };
-  const checkInputs = rowChecker(rc);
-  const planAll = await planRows(
-    ctx.env.DB,
-    { orgId: a.orgId, mode: a.mode, templateId: imp.template_id },
-    plan,
-    tpl.manifest,
-    checkRows(parsed.rows, rc),
-    (row, input) => checkInputs(row, input, 'full'),
-    ctx.log,
-  );
-  // Rows an interrupted commit already created are not planned again.
-  const made = new Set(await createdRowNumbers(ctx.env.DB, imp.id));
-  const planned = planAll.filter((r) => !made.has(r.row));
-  const checkId = ctx.ids.id();
-  const summary = summarize(planned);
-  await beginCheck(ctx, a, imp.id, {
-    checkId,
-    plan: JSON.stringify(plan),
-    templateVersion: release.version,
-    releaseId: release.id,
-    releaseGeneration: release.generation,
-    emailBudget: await orgEmailBudget(ctx.env.DB, a.mode, a.orgId, ctx.clock.now()),
-  });
-  await insertRows(
-    ctx,
-    a,
-    imp.id,
-    checkId,
-    planned.map((r) => ({
-      row: r.row,
-      action: r.action,
-      passId: r.passId,
-      expectedVersion: r.expectedVersion,
-      externalId: r.externalId,
-      holderEmail: r.holderEmail,
-      input: r.input ? JSON.stringify(r.input) : null,
-      problems: r.problems.length > 0 ? JSON.stringify(r.problems) : null,
-    })),
-  );
-  await finishCheck(ctx, a, imp.id, checkId, summary);
-  if (plan.save) await savePlan(ctx, a, imp.template_id, JSON.stringify(plan), who(a));
-  ctx.log.info('pass_import.checked', { orgId: a.orgId, importId: imp.id, ...summary });
+  templateId: string,
+  manifest: TemplateManifest,
+  parsed: ReturnType<typeof parseImport>,
+): Promise<{ plan: ImportPlan | null; suggestion: MappingSuggestion }> {
+  const suggestion = suggestOf(manifest, parsed);
+  const saved = pickSaved((await readMappings(ctx, a.orgId, templateId)).saved, parsed.header);
+  if (
+    saved &&
+    planProblems(saved.plan, manifest).length === 0 &&
+    missingColumns(saved.plan, parsed.header).length === 0
+  )
+    return { plan: saved.plan, suggestion };
+  const base = planOfSuggestion(suggestion);
+  const plan: ImportPlan = { ...base, keepManual: false, save: true };
+  const usable = Object.keys(plan.mapping).length > 0 && planProblems(plan, manifest).length === 0;
+  return { plan: usable ? plan : null, suggestion };
 }
 
 export async function createImport(
   ctx: ServiceContext,
   a: TenantPassWrite,
-  body: { templateId: string; source: ImportSource; plan?: ImportPlan | undefined },
+  body: {
+    templateId: string;
+    source: ImportSource;
+    plan?: ImportPlan | undefined;
+    mapping?: 'auto' | undefined;
+  },
 ): Promise<PassImportDto> {
   await enforceRate(ctx, a, 'pass-import', CREATES_PER_HOUR);
   const { release, template: tpl } = await template(ctx, a, body.templateId);
@@ -173,8 +106,13 @@ export async function createImport(
   const parsed = parseImport(bytes);
   let plan: ImportPlan | null = body.plan ?? null;
   let runnable = plan !== null;
-  if (plan === null) {
-    const saved = parsePlan(await savedPlan(ctx.env.DB, a.orgId, body.templateId), ctx.log);
+  let suggestion: MappingSuggestion | undefined;
+  if (plan === null && body.mapping === 'auto') {
+    const auto = await autoPlan(ctx, a, body.templateId, tpl.manifest, parsed);
+    ({ plan, suggestion } = auto);
+    runnable = plan !== null;
+  } else if (plan === null) {
+    const saved = (await readMappings(ctx, a.orgId, body.templateId)).last;
     if (saved && planProblems(saved, tpl.manifest).length === 0) {
       const key = missingKeyColumn(saved, parsed.header);
       if (key !== null)
@@ -231,7 +169,13 @@ export async function createImport(
       );
     }
   }
-  return importDto(ctx, await requireImport(ctx, a, id));
+  return importDto(ctx, await requireImport(ctx, a, id), suggestion ? { mapping: suggestion } : {});
+}
+
+/** An import is terminal once an undo was asked for: it can be read, not checked, committed or discarded. */
+export function assertNotUndone(imp: ImportRow): void {
+  if (imp.reverted !== 0)
+    throw new ConflictError('This import was undone. Upload the file again.', 'IMPORT_UNDONE');
 }
 
 export async function checkImport(
@@ -241,6 +185,7 @@ export async function checkImport(
   plan: ImportPlan,
 ): Promise<PassImportDto> {
   const imp = await requireImport(ctx, a, id);
+  assertNotUndone(imp);
   if (!OPEN.includes(imp.state) || imp.expires_at <= ctx.clock.now())
     throw new ConflictError(
       imp.state === 'committing' || imp.state === 'done'
@@ -259,6 +204,7 @@ export async function discardImport(
   id: string,
 ): Promise<void> {
   const imp = await requireImport(ctx, a, id);
+  assertNotUndone(imp);
   if (imp.state === 'committing') throw new ConflictError('This import is running.', 'IMPORT_BUSY');
   await discardDraft(ctx, a, id);
   if (imp.object_key) await ctx.env.BUCKET.delete(imp.object_key);

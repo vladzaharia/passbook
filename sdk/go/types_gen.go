@@ -3301,6 +3301,52 @@ type PassFilterScan2 struct {
 	NoScanDays int64 `json:"noScanDays"`
 }
 
+type PassImportMappings struct {
+	Saved []PassImportMappingsSavedItem `json:"saved"`
+}
+
+type PassImportMappingsSavedItem struct {
+	Name    string                          `json:"name"`
+	Columns []string                        `json:"columns"`
+	Plan    PassImportMappingsSavedItemPlan `json:"plan"`
+	SavedAt int64                           `json:"savedAt"`
+}
+
+type PassImportMappingsSavedItemPlan struct {
+	Mapping     map[string]PassImportMappingsSavedItemPlanMappingValue `json:"mapping"`
+	HolderEmail map[string]any                                         `json:"holderEmail"`
+	ExternalID  map[string]any                                         `json:"externalId"`
+	Match       string                                                 `json:"match"`
+	KeepManual  *bool                                                  `json:"keepManual,omitempty"`
+	Save        *bool                                                  `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                           `json:"overrides,omitempty"`
+}
+
+type PassImportMappingsSavedItemPlanMappingValue struct {
+	From      string                                                `json:"from"`
+	Transform *PassImportMappingsSavedItemPlanMappingValueTransform `json:"transform,omitempty"`
+}
+
+type PassImportMappingsSavedItemPlanMappingValueTransform struct {
+	Kind    string         `json:"kind"`
+	Options map[string]any `json:"options,omitempty"`
+}
+
+type PassImportUndo struct {
+	State           string                   `json:"state"`
+	Removed         int64                    `json:"removed"`
+	Restored        int64                    `json:"restored"`
+	KeptTotal       int64                    `json:"keptTotal"`
+	Kept            []PassImportUndoKeptItem `json:"kept"`
+	EmailsCancelled int64                    `json:"emailsCancelled"`
+	Unrevertable    *int64                   `json:"unrevertable,omitempty"`
+}
+
+type PassImportUndoKeptItem struct {
+	PassID string `json:"passId"`
+	Code   string `json:"code"`
+}
+
 type PassImportsCheckBody = PassImportsCheckParams
 
 type PassImportsCheckParams struct {
@@ -3314,6 +3360,7 @@ type PassImportsCheckParamsPlan struct {
 	Match       string                                            `json:"match"`
 	KeepManual  *bool                                             `json:"keepManual,omitempty"`
 	Save        *bool                                             `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                      `json:"overrides,omitempty"`
 }
 
 type PassImportsCheckParamsPlanMappingValue struct {
@@ -3352,6 +3399,8 @@ type PassImportsCheckResult struct {
 	ExpiresAt         int64                                `json:"expiresAt"`
 	Mapping           *PassImportsCheckResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                               `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                      `json:"undo,omitempty"`
+	Unrevertable      *int64                               `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCheckResultColumnsItem struct {
@@ -3407,6 +3456,8 @@ type PassImportsCheckResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3421,7 +3472,16 @@ type PassImportsCommitBody = PassImportsCommitParams
 
 type PassImportsCommitParams struct {
 	SkipInvalid *bool `json:"skipInvalid,omitempty"`
-	Email       *bool `json:"email,omitempty"`
+	Email       any   `json:"email,omitempty"`
+}
+
+type PassImportsCommitParamsEmail2 struct {
+	Send string `json:"send"`
+}
+
+type PassImportsCommitParamsEmail3 struct {
+	Send   string `json:"send"`
+	HoldMs *int64 `json:"holdMs,omitempty"`
 }
 
 type PassImportsCommitResult struct {
@@ -3450,6 +3510,8 @@ type PassImportsCommitResult struct {
 	ExpiresAt         int64                                 `json:"expiresAt"`
 	Mapping           *PassImportsCommitResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                       `json:"undo,omitempty"`
+	Unrevertable      *int64                                `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCommitResultColumnsItem struct {
@@ -3505,6 +3567,8 @@ type PassImportsCommitResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3521,6 +3585,7 @@ type PassImportsCreateParams struct {
 	TemplateID string                       `json:"templateId"`
 	Source     any                          `json:"source"`
 	Plan       *PassImportsCreateParamsPlan `json:"plan,omitempty"`
+	Mapping    *string                      `json:"mapping,omitempty"`
 }
 
 type PassImportsCreateParamsPlan struct {
@@ -3530,6 +3595,7 @@ type PassImportsCreateParamsPlan struct {
 	Match       string                                             `json:"match"`
 	KeepManual  *bool                                              `json:"keepManual,omitempty"`
 	Save        *bool                                              `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                       `json:"overrides,omitempty"`
 }
 
 type PassImportsCreateParamsPlanMappingValue struct {
@@ -3579,6 +3645,8 @@ type PassImportsCreateResult struct {
 	ExpiresAt         int64                                 `json:"expiresAt"`
 	Mapping           *PassImportsCreateResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                       `json:"undo,omitempty"`
+	Unrevertable      *int64                                `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCreateResultColumnsItem struct {
@@ -3634,6 +3702,8 @@ type PassImportsCreateResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3674,6 +3744,8 @@ type PassImportsListItem struct {
 	ExpiresAt         int64                             `json:"expiresAt"`
 	Mapping           *PassImportsListItemMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                            `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                   `json:"undo,omitempty"`
+	Unrevertable      *int64                            `json:"unrevertable,omitempty"`
 }
 
 type PassImportsListItemColumnsItem struct {
@@ -3729,6 +3801,8 @@ type PassImportsListItemProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3743,6 +3817,50 @@ type PassImportsListQuery struct {
 	Cursor *string `json:"cursor,omitempty"`
 	Limit  *int64  `json:"limit,omitempty"`
 }
+
+type PassImportsMappingsDeleteQuery struct {
+	TemplateID string `json:"templateId"`
+	Name       string `json:"name"`
+}
+
+type PassImportsMappingsDeleteResult = PassImportMappings
+
+type PassImportsMappingsListQuery struct {
+	TemplateID string `json:"templateId"`
+}
+
+type PassImportsMappingsListResult = PassImportMappings
+
+type PassImportsMappingsSaveBody = PassImportsMappingsSaveParams
+
+type PassImportsMappingsSaveParams struct {
+	Name       string                            `json:"name"`
+	Columns    []string                          `json:"columns"`
+	Plan       PassImportsMappingsSaveParamsPlan `json:"plan"`
+	TemplateID string                            `json:"templateId"`
+}
+
+type PassImportsMappingsSaveParamsPlan struct {
+	Mapping     map[string]PassImportsMappingsSaveParamsPlanMappingValue `json:"mapping"`
+	HolderEmail map[string]any                                           `json:"holderEmail"`
+	ExternalID  map[string]any                                           `json:"externalId"`
+	Match       string                                                   `json:"match"`
+	KeepManual  *bool                                                    `json:"keepManual,omitempty"`
+	Save        *bool                                                    `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                             `json:"overrides,omitempty"`
+}
+
+type PassImportsMappingsSaveParamsPlanMappingValue struct {
+	From      string                                                  `json:"from"`
+	Transform *PassImportsMappingsSaveParamsPlanMappingValueTransform `json:"transform,omitempty"`
+}
+
+type PassImportsMappingsSaveParamsPlanMappingValueTransform struct {
+	Kind    string         `json:"kind"`
+	Options map[string]any `json:"options,omitempty"`
+}
+
+type PassImportsMappingsSaveResult = PassImportMappings
 
 type PassImportsRemoveCreatedParams struct {
 	Cursor *string `json:"cursor"`
@@ -3774,6 +3892,8 @@ type PassImportsRetrieveResult struct {
 	ExpiresAt         int64                                   `json:"expiresAt"`
 	Mapping           *PassImportsRetrieveResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                  `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                         `json:"undo,omitempty"`
+	Unrevertable      *int64                                  `json:"unrevertable,omitempty"`
 }
 
 type PassImportsRetrieveResultColumnsItem struct {
@@ -3829,6 +3949,8 @@ type PassImportsRetrieveResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3872,10 +3994,17 @@ type PassImportsSendEmailsParams struct {
 }
 
 type PassImportsSendEmailsResult struct {
-	Sent       int64   `json:"sent"`
-	Skipped    int64   `json:"skipped"`
-	NextCursor *string `json:"nextCursor"`
+	Sent          int64   `json:"sent"`
+	Skipped       int64   `json:"skipped"`
+	AlreadyQueued *int64  `json:"alreadyQueued,omitempty"`
+	NextCursor    *string `json:"nextCursor"`
 }
+
+type PassImportsUndoBody = PassImportsUndoParams
+
+type PassImportsUndoParams struct{}
+
+type PassImportsUndoResult = PassImportUndo
 
 type PassInstalledEvent struct {
 	ID         string                 `json:"id"`
@@ -4940,6 +5069,7 @@ type PlatformOrgsCreateParams struct {
 	DefaultIdentityID *string      `json:"defaultIdentityId,omitempty"`
 	Branding          *OrgBranding `json:"branding,omitempty"`
 	Preset            *string      `json:"preset,omitempty"`
+	AddMe             *bool        `json:"addMe,omitempty"`
 }
 
 type PlatformOrgsEntitlementsUpdateParams struct {
@@ -5315,6 +5445,19 @@ type ReleaseTemplate struct {
 type ReleaseTemplateExpected struct {
 	Live *int64 `json:"live,omitempty"`
 	Test *int64 `json:"test,omitempty"`
+}
+
+type ReviewResult struct {
+	Version  string         `json:"version"`
+	Approved []string       `json:"approved"`
+	Release  map[string]any `json:"release"`
+}
+
+type ReviewTemplate struct {
+	OrgID   *string `json:"orgId,omitempty"`
+	Version string  `json:"version"`
+	Release *bool   `json:"release,omitempty"`
+	Note    *string `json:"note,omitempty"`
 }
 
 type RollCallsCreateQuery struct {
@@ -7368,6 +7511,20 @@ type TemplatePage struct {
 	NextCursor *string           `json:"nextCursor"`
 }
 
+type TemplateReviewList struct {
+	Items      []TemplateReviewListItemsItem `json:"items"`
+	NextCursor *string                       `json:"nextCursor"`
+}
+
+type TemplateReviewListItemsItem struct {
+	TemplateID   string  `json:"templateId"`
+	TemplateName string  `json:"templateName"`
+	OrgID        string  `json:"orgId"`
+	Version      string  `json:"version"`
+	RequestedBy  *string `json:"requestedBy"`
+	RequestedAt  int64   `json:"requestedAt"`
+}
+
 type TemplateSummary struct {
 	ID            string         `json:"id"`
 	OrgID         *string        `json:"orgId"`
@@ -7858,6 +8015,25 @@ type TemplatesRetrieveStampsImpactResult struct {
 	NewlyReady  int64 `json:"newlyReady"`
 	Highest     int64 `json:"highest"`
 	HighestKept int64 `json:"highestKept"`
+}
+
+type TemplatesReviewsApproveBody = ReviewTemplate
+
+type TemplatesReviewsApproveResult = ReviewResult
+
+type TemplatesReviewsListItem struct {
+	TemplateID   string  `json:"templateId"`
+	TemplateName string  `json:"templateName"`
+	OrgID        string  `json:"orgId"`
+	Version      string  `json:"version"`
+	RequestedBy  *string `json:"requestedBy"`
+	RequestedAt  int64   `json:"requestedAt"`
+}
+
+type TemplatesReviewsListQuery struct {
+	State  *string `json:"state,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
 }
 
 type TemplatesReviewsRequestBody = ReleaseTemplate

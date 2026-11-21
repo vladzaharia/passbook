@@ -83,6 +83,8 @@ export interface LoginCardProps {
   next: string | null;
   /** One line from ?reason= above the form. */
   notice: string | null;
+  /** The next path opens Admin or Developers: Polaris ID leads, email is for pass holders. */
+  operator?: boolean;
   /** Null while the session loads. */
   methods: { oidc: boolean; magic: boolean; siteKey: string } | null;
   /** Replaces the front body (load error, nothing enabled). */
@@ -96,7 +98,14 @@ export interface LoginCardProps {
  * one (640 ms spring) to the code face, the far face inert. Under reduced motion the faces
  * crossfade.
  */
-export function LoginCard({ next, notice, methods, front, scene }: LoginCardProps) {
+export function LoginCard({
+  next,
+  notice,
+  operator = false,
+  methods,
+  front,
+  scene,
+}: LoginCardProps) {
   const request = useMagicRequest(next);
   // The challenge slot stays collapsed unless Turnstile needs the visitor (managed fallback).
   const [challengeShown, setChallengeShown] = useState(false);
@@ -137,6 +146,7 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
                 magic={methods.magic}
                 next={next}
                 notice={notice}
+                operator={operator}
                 request={request}
                 scene={scene}
                 emailRef={emailRef}

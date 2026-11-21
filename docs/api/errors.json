@@ -1774,6 +1774,15 @@
       ]
     },
     {
+      "code": "IMPORT_MAPPINGS_FULL",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IMPORT_NOT_FOUND",
       "statuses": [
         404
@@ -1784,6 +1793,15 @@
     },
     {
       "code": "IMPORT_PASS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_PASS_GONE",
       "statuses": [
         409
       ],
@@ -1825,6 +1843,42 @@
       ],
       "modules": [
         "nfc"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_NO_BEFORE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_RUNNING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -4977,6 +5031,15 @@
       "modules": [
         "connections",
         "passes",
+        "templates"
+      ]
+    },
+    {
+      "code": "TEMPLATE_REVIEW_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
         "templates"
       ]
     },

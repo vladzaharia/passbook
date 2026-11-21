@@ -618,7 +618,7 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"passImports.create", "POST", "/api/v1/pass-imports", false,
+		"passImports.create", "POST", "/api/v1/pass-imports", true,
 		`{"templateId":"x","source":{"kind":"file","name":"x","csv":"x"}}`, `{"id":"x","templateId":"x","templateVersion":"x","mode":"live","state":"mapping","source":{"kind":"file","name":"x"},"columns":[{"pointer":"x","label":"x","samples":["x"]}],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"counts":{"rows":0,"create":0,"update":0,"unchanged":0,"errors":0,"warnings":0,"emailable":0},"previews":[{"row":0,"action":"create","input":{}}],"problems":[{"row":0,"column":"x","field":"x","code":"x","message":"x","severity":"error"}],"problemTotals":{"errors":0,"warnings":0},"problemsTruncated":false,"emailBudget":0,"email":false,"progress":{"done":0,"created":0,"updated":0,"unchanged":0,"failed":0,"notEmailed":0,"removed":0},"errorCode":"x","errorFile":false,"createdAt":0,"checkedAt":0,"committedAt":0,"finishedAt":0,"expiresAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassImportsCreateBody
@@ -626,6 +626,31 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.PassImports.Create(ctx, &b)
+		},
+	},
+	{
+		"passImports.mappings.list", "GET", "/api/v1/pass-imports/mappings", false,
+		"", `{"saved":[{"name":"x","columns":["x"],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"savedAt":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.PassImports.Mappings.List(ctx, nil)
+		},
+	},
+	{
+		"passImports.mappings.save", "PUT", "/api/v1/pass-imports/mappings", false,
+		`{"name":"x","columns":["x"],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"templateId":"x"}`, `{"saved":[{"name":"x","columns":["x"],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"savedAt":0}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassImportsMappingsSaveBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.PassImports.Mappings.Save(ctx, &b)
+		},
+	},
+	{
+		"passImports.mappings.delete", "DELETE", "/api/v1/pass-imports/mappings", false,
+		"", `{"saved":[{"name":"x","columns":["x"],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"savedAt":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.PassImports.Mappings.Delete(ctx, nil)
 		},
 	},
 	{
@@ -654,7 +679,7 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"passImports.commit", "POST", "/api/v1/pass-imports/id1/commit", false,
+		"passImports.commit", "POST", "/api/v1/pass-imports/id1/commit", true,
 		`{}`, `{"id":"x","templateId":"x","templateVersion":"x","mode":"live","state":"mapping","source":{"kind":"file","name":"x"},"columns":[{"pointer":"x","label":"x","samples":["x"]}],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"counts":{"rows":0,"create":0,"update":0,"unchanged":0,"errors":0,"warnings":0,"emailable":0},"previews":[{"row":0,"action":"create","input":{}}],"problems":[{"row":0,"column":"x","field":"x","code":"x","message":"x","severity":"error"}],"problemTotals":{"errors":0,"warnings":0},"problemsTruncated":false,"emailBudget":0,"email":false,"progress":{"done":0,"created":0,"updated":0,"unchanged":0,"failed":0,"notEmailed":0,"removed":0},"errorCode":"x","errorFile":false,"createdAt":0,"checkedAt":0,"committedAt":0,"finishedAt":0,"expiresAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassImportsCommitBody
@@ -694,6 +719,17 @@ var generatedOps = []opCase{
 		"", `{"items":[{"row":0,"action":"create","state":"planned","result":"created","passId":"x","externalId":"x","code":"x","message":"x","emailed":false}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.PassImports.Rows.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"passImports.undo", "POST", "/api/v1/pass-imports/id1/undo", false,
+		`{}`, `{"state":"running","removed":0,"restored":0,"keptTotal":0,"kept":[{"passId":"x","code":"x"}],"emailsCancelled":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassImportsUndoBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.PassImports.Undo(ctx, "id1", &b)
 		},
 	},
 	{
@@ -1230,6 +1266,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.reviews.list", "GET", "/api/v1/template-reviews", false,
+		"", `{"items":[{"templateId":"x","templateName":"x","orgId":"x","version":"x","requestedBy":"x","requestedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Templates.Reviews.List(ctx, nil).All(ctx)
+		},
+	},
+	{
 		"templates.list", "GET", "/api/v1/templates", false,
 		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","slug":"x","name":"x","description":"x","origin":"baked","status":"active","activeVersion":"x","styles":["generic"],"passCount":0,"createdAt":0,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1376,6 +1419,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.reviews.approve", "POST", "/api/v1/templates/id1/review", false,
+		`{"version":"x"}`, `{"version":"x","approved":["live"],"release":{"version":"x","modes":{},"state":{"live":{"version":"x","at":0,"by":"x"},"test":{"version":"x","at":0,"state":"following"},"draft":{"version":"x","at":0},"review":{"state":"none"},"alone":false,"next":"design"}}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b TemplatesReviewsApproveBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Templates.Reviews.Approve(ctx, "id1", &b)
+		},
+	},
+	{
 		"templates.reviews.request", "POST", "/api/v1/templates/id1/review-requests", true,
 		`{"version":"x"}`, `{"version":"x","modes":{},"state":{"live":{"version":"x","at":0,"by":"x"},"test":{"version":"x","at":0,"state":"following"},"draft":{"version":"x","at":0},"review":{"state":"none"},"alone":false,"next":"design"}}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1384,6 +1438,13 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Templates.Reviews.Request(ctx, "id1", &b, nil)
+		},
+	},
+	{
+		"templates.downloadSample", "GET", "/api/v1/templates/id1/sample.csv", false,
+		"", "",
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return downloaded(c.Templates.DownloadSample(ctx, "id1"))
 		},
 	},
 	{

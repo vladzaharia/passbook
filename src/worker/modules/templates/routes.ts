@@ -47,6 +47,8 @@ import {
   registerVersions,
 } from './routes-more.ts';
 import { registerTemplateReleases } from './routes-releases.ts';
+import { registerTemplateReview } from './routes-reviews.ts';
+import { registerTemplateSample } from './routes-sample.ts';
 import { registerVersionReads } from './routes-version-reads.ts';
 import { detail, importStatus, list, preview } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
@@ -57,7 +59,7 @@ export const templatesRoutes = createRouter({ bodyLimit: false });
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
 /** Writes that declare their own `auth` (keys included): the router guard leaves them to it. */
 const OWN_AUTH_WRITES =
-  /^\/api\/v1\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|release|review-requests|preview)\/?$/;
+  /^\/api\/v1\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|release|review|review-requests|preview)\/?$/;
 
 // Template reads allow scoped API keys; mutations require a session and are authorized per org.
 // The scan setup route declares its own `auth` (a session or a `scanning:write` key).
@@ -313,6 +315,7 @@ register(
 );
 
 registerInputSchema(templatesRoutes);
+registerTemplateSample(templatesRoutes);
 registerVersionReads(templatesRoutes);
 registerTemplateChannelRoutes(templatesRoutes);
 
@@ -323,3 +326,4 @@ registerTemplateScanSetup(templatesRoutes);
 registerLifecycle(templatesRoutes);
 registerTemplateReleases(templatesRoutes);
 registerTemplateReleaseFlow(templatesRoutes);
+registerTemplateReview(templatesRoutes);

@@ -6,6 +6,7 @@ import { Button } from '../../ui/button.tsx';
 import '../../styles/kit-controls.css';
 import '../../styles/kit-motion.css';
 import { AccountMenu, type SpaceEntry } from '../../ui/layout/account-menu.tsx';
+import { POLARIS_START } from './menu-sheet.ts';
 
 export interface MountedUser {
   id: string;
@@ -50,10 +51,8 @@ export function mountMenu(
     <ThemeProvider>
       <div className="flex items-center gap-2">
         {props.polarisId ? (
-          <Button asChild variant="outline" size="sm">
-            <a href={`/auth/oidc/start?next=${encodeURIComponent('/developers')}`}>
-              {POLARIS_ID_COPY.signIn}
-            </a>
+          <Button asChild variant="outline" size="sm" className="dev-polaris">
+            <a href={POLARIS_START}>{POLARIS_ID_COPY.signIn}</a>
           </Button>
         ) : null}
         <AccountMenu

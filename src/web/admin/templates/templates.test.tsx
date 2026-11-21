@@ -414,8 +414,8 @@ describe('template detail', () => {
     expect(screen.queryByRole('button', { name: 'Duplicate' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'More' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Change organization' })).toBeNull();
-    await user.click(screen.getByRole('tab', { name: 'Versions' }));
-    expect(await screen.findByRole('button', { name: 'Report for Version 2' })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Releases' }));
+    expect(await screen.findByRole('button', { name: 'Report for v2' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Activate Version 2' })).toBeNull();
     await user.click(screen.getByRole('tab', { name: 'Manifest' }));
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
@@ -440,7 +440,7 @@ describe('template detail', () => {
     await user.click(screen.getByRole('button', { name: 'More' }));
     expect(await screen.findByRole('menuitem', { name: 'Archive' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
-    await user.click(screen.getByRole('tab', { name: 'Versions' }));
+    await user.click(screen.getByRole('tab', { name: 'Releases' }));
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
     expect(screen.queryByText('Requires an approved release.')).toBeNull();
   });
@@ -465,7 +465,7 @@ describe('template detail', () => {
     });
     expect(await screen.findByText('Template not found')).toBeInTheDocument();
     expect(screen.queryByText('Private template')).toBeNull();
-    expect(screen.queryByRole('tab', { name: 'Versions' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'Releases' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'New pass' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Duplicate' })).toBeNull();
     expect(previews).toBe(0);
@@ -489,7 +489,7 @@ describe('template detail', () => {
     });
     expect(await screen.findByText('Template not found')).toBeInTheDocument();
     expect(screen.queryByText('Copper card')).toBeNull();
-    expect(screen.queryByRole('tab', { name: 'Versions' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'Releases' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'New pass' })).toBeNull();
   });
 
@@ -517,7 +517,7 @@ describe('template detail', () => {
     expect(screen.getByRole('heading', { name: 'Shared card' })).toBeInTheDocument();
   });
 
-  it('labels the active version and the newest draft apart, and the import by its own version', async () => {
+  it('names the import by its own version', async () => {
     markCreated('template:tpl1', 'version');
     markCreated('template:tpl1:version', 'ffeeddccbbaa9988');
     await renderApp('/admin/templates/tpl1', {
@@ -529,10 +529,6 @@ describe('template detail', () => {
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
-    expect(await screen.findByRole('heading', { name: 'Version 1' })).toBeInTheDocument();
-    expect(screen.getByText(/Latest draft:/).parentElement).toHaveTextContent(
-      'Latest draft: Version 2',
-    );
     // The upload made version 2 while version 1 is live: the callout names version 2.
     expect(await screen.findByText('Version 2 imported')).toBeInTheDocument();
   });
@@ -553,8 +549,6 @@ describe('template detail', () => {
       },
     });
     expect((await screen.findAllByText('Latest draft')).length).toBeGreaterThan(0);
-    expect(screen.getByRole('heading', { name: 'No active version' })).toBeInTheDocument();
-    expect(screen.getByText('Version 1')).toBeInTheDocument();
     await waitFor(() =>
       expect(requests).toMatchObject([{ version: first.version, orgId: ORG.id }]),
     );
@@ -572,10 +566,10 @@ describe('template detail', () => {
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
-    await user.click(await screen.findByRole('tab', { name: 'Versions' }));
+    await user.click(await screen.findByRole('tab', { name: 'Releases' }));
     expect(await screen.findByText('Missing @3x icon.')).toBeInTheDocument();
     expect(screen.queryByText('Legacy active version')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Report for Version 2' }));
+    await user.click(screen.getByRole('button', { name: 'Report for v2' }));
     expect(await screen.findByText('Duplicate key.')).toBeInTheDocument();
     expect(screen.getByText('generic.primaryFields')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
@@ -598,8 +592,8 @@ describe('template detail', () => {
         '/api/v1/templates/tpl1/preview': preview,
       },
     });
-    await user.click(await screen.findByRole('tab', { name: 'Versions' }));
-    await screen.findByRole('button', { name: 'Report for Version 2' });
+    await user.click(await screen.findByRole('tab', { name: 'Releases' }));
+    await screen.findByRole('button', { name: 'Report for v2' });
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
     expect(screen.queryByText(/Requires an approved release/)).toBeNull();
   });
@@ -637,7 +631,8 @@ describe('template detail', () => {
     expect(screen.queryByRole('menuitem', { name: /Delete|Archive|Upload version/ })).toBeNull();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('button', { name: /^Activate/ })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Duplicate' }));
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Duplicate' }));
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate template' });
     await user.click(within(dialog).getByRole('button', { name: 'Duplicate' }));
     expect(await within(dialog).findByText('Choose an organization.')).toBeInTheDocument();
@@ -674,7 +669,8 @@ describe('template detail', () => {
         '/api/v1/templates/previews': previewsHandler,
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Duplicate' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Duplicate' }));
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate template' });
     await user.click(within(dialog).getByRole('combobox', { name: 'Organization' }));
     await user.click(await screen.findByRole('option', { name: 'Harbor' }));
@@ -802,7 +798,9 @@ describe('template detail', () => {
       },
     });
     await screen.findByRole('heading', { name: 'Shared card' });
-    expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
     expect(screen.queryByRole('button', { name: 'Change organization' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Upload version' })).toBeNull();
     await user.click(screen.getByRole('tab', { name: 'Manifest' }));

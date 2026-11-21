@@ -203,7 +203,7 @@ describe('quick setup', () => {
     expect(body?.version.passJson.foregroundColor).toBe('rgb(255,255,255)');
     expect('blueprint' in (body?.version.manifest ?? {})).toBe(false);
     expect(body?.version.assets.some((a) => a.name.startsWith('logo') && a.upload)).toBe(true);
-    expect(await screen.findByText(/Template created · Version 1/)).toBeInTheDocument();
+    expect(await screen.findByText('Template created')).toBeInTheDocument();
   });
 
   it('offers the stamps goal and the currency, and sends the choices', async () => {

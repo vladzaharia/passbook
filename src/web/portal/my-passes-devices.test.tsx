@@ -100,8 +100,9 @@ describe('in Wallet', () => {
           ),
       },
     });
+    // The newest is in front: in a Wallet, so its pill and no badge; the peeks carry none.
     expect(await screen.findByText('In Wallet')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Add to Apple Wallet' })).toHaveLength(2);
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     expect(screen.getByRole('link', { name: /Add 2 passes/ })).toBeInTheDocument();
   });
 });

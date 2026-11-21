@@ -4,6 +4,8 @@ import {
   type ChunkResult,
   type ImportRunParams,
 } from '../modules/passes/import-apply.ts';
+import { releaseHeldPage } from '../modules/passes/import-held.ts';
+import { undoChunk } from '../modules/passes/import-undo-run.ts';
 import { setWorkflowStatus } from '../modules/passes/repo.ts';
 import {
   finishImport,
@@ -11,6 +13,7 @@ import {
   type Scope,
   skipErrorRows,
 } from '../modules/passes/repo-import-commit.ts';
+import { finishUndo } from '../modules/passes/repo-import-undo.ts';
 import { getImport } from '../modules/passes/repo-imports.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { AppError } from '../platform/errors.ts';
@@ -22,7 +25,7 @@ export type PassImportParams = ImportRunParams;
 const MAX_CHUNKS = 410;
 const STEP_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
 
-type StepLike = Pick<WorkflowStep, 'do'>;
+type StepLike = Pick<WorkflowStep, 'do'> & Partial<Pick<WorkflowStep, 'sleep'>>;
 type End = { state: 'done' | 'failed' | 'stale'; code: string | null };
 
 /** Applies a checked import in chunks of 5 rows, each pass its own grant. Owner: passes module (imports). */
@@ -39,6 +42,7 @@ export async function runPassImport(
   });
   const s: Scope = params;
   let end: End = { state: 'done', code: null };
+  if (params.undo) return runUndo(ctx, instanceId, params, step);
   try {
     await step.do('start', async () => {
       await setWorkflowStatus(env.DB, instanceId, 'running', ctx.clock.now());
@@ -57,7 +61,13 @@ export async function runPassImport(
     await step.do('finish', async () => {
       const imp = await getImport(env.DB, params.orgId, params.mode, params.importId);
       const progress = await progressOf(env.DB, params.importId);
-      await finishImport(ctx, s, { ...end, progress }, imp ?? undefined);
+      const holdMs = end.state === 'done' ? (imp?.email_hold_ms ?? null) : null;
+      await finishImport(
+        ctx,
+        s,
+        { ...end, progress, ...(holdMs ? { holdUntil: ctx.clock.now() + holdMs } : {}) },
+        imp ?? undefined,
+      );
       await setWorkflowStatus(
         env.DB,
         instanceId,
@@ -71,6 +81,7 @@ export async function runPassImport(
         ...progress,
       });
     });
+    await releaseHeld(ctx, params, step, end);
   } catch (error) {
     await step.do('fail', async () => {
       try {
@@ -94,6 +105,67 @@ export async function runPassImport(
     });
     throw error;
   }
+  return end;
+}
+
+/** Held mail: wait out the undo window, then mail the created passes nobody undid, a page a step. */
+async function releaseHeld(
+  ctx: ReturnType<typeof createJobContext>,
+  params: PassImportParams,
+  step: StepLike,
+  end: End,
+): Promise<void> {
+  const imp = await getImport(ctx.env.DB, params.orgId, params.mode, params.importId);
+  if (end.state !== 'done' || !imp?.email_hold_ms || !step.sleep) return;
+  await step.sleep('hold', imp.email_hold_ms);
+  let after = 0;
+  for (let n = 0; n < MAX_CHUNKS; n++) {
+    const page = await step.do(`release-${n}`, STEP_RETRY, () =>
+      releaseHeldPage(ctx, params, after),
+    );
+    if (page.next === null) break;
+    after = page.next;
+  }
+}
+
+/** An undo run: chunks of rows, then the finish. */
+async function runUndo(
+  ctx: ReturnType<typeof createJobContext>,
+  instanceId: string,
+  params: PassImportParams,
+  step: StepLike,
+): Promise<End> {
+  let end: End = { state: 'done', code: null };
+  await step.do('start', () =>
+    setWorkflowStatus(ctx.env.DB, instanceId, 'running', ctx.clock.now()),
+  );
+  try {
+    for (let n = 0; n < MAX_CHUNKS; n++) {
+      const result = await step.do(`undo-${n}`, STEP_RETRY, () => undoChunk(ctx, params));
+      if (result.revoked) end = { state: 'failed', code: 'IMPORT_STARTER_REVOKED' };
+      if (!result.more) break;
+    }
+  } catch (error) {
+    // A suspended org, or a write that keeps failing: end the undo as failed so it can be asked for again.
+    ctx.log.warn('pass_import.undo_failed', {
+      importId: params.importId,
+      code: 'IMPORT_UNDO_FAILED',
+      error,
+    });
+    end = { state: 'failed', code: 'IMPORT_UNDO_FAILED' };
+  }
+  await step.do('undo-finish', () =>
+    finishUndo(ctx, params, end.state === 'done' ? undefined : (end.code ?? 'IMPORT_UNDO_FAILED')),
+  );
+  await step.do('close', () =>
+    setWorkflowStatus(
+      ctx.env.DB,
+      instanceId,
+      end.state === 'done' ? 'complete' : 'errored',
+      ctx.clock.now(),
+      end.code,
+    ),
+  );
   return end;
 }
 

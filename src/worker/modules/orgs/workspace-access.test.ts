@@ -406,6 +406,7 @@ describe('organization workspace authorization', () => {
     const created = await call('POST', '', headers, {
       slug: `workspace-${fx.ids.id().slice(-8)}`,
       name: 'Lifecycle Org',
+      addMe: false,
     });
     expect(created.status).toBe(201);
     const { id } = OrgSchema.parse(await created.json());

@@ -1183,38 +1183,92 @@ export type PassFilter = {
   }>;
 };
 
+export type PassImportMappings = {
+  saved: Array<{
+    name: string;
+    columns: Array<string>;
+    plan: {
+      mapping: Record<string, {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      }>;
+      holderEmail: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      externalId: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      match: "externalId" | "email" | "none";
+      keepManual?: boolean;
+      save?: boolean;
+      overrides?: Record<string, Record<string, string>>;
+    };
+    savedAt: number;
+  }>;
+};
+
+export type PassImportUndo = {
+  state: "running" | "done" | "failed";
+  removed: number;
+  restored: number;
+  keptTotal: number;
+  kept: Array<{
+    passId: string;
+    code: string;
+  }>;
+  emailsCancelled: number;
+  unrevertable?: number;
+};
+
 export type PassImportsCheckParams = {
   plan: {
     mapping: Record<string, {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     }>;
     holderEmail: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     externalId: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     match: "externalId" | "email" | "none";
     keepManual?: boolean;
     save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
   };
 };
 
 export type PassImportsCommitParams = {
   skipInvalid?: boolean;
-  email?: boolean;
+  email?: boolean | {
+    send: "now";
+  } | {
+    send: "held";
+    holdMs?: number;
+  };
 };
 
 export type PassImportsCreateParams = {
@@ -1231,28 +1285,63 @@ export type PassImportsCreateParams = {
     mapping: Record<string, {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     }>;
     holderEmail: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     externalId: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     match: "externalId" | "email" | "none";
     keepManual?: boolean;
     save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
   };
+  mapping?: "auto";
+};
+
+export type PassImportsMappingsSaveParams = {
+  name: string;
+  columns: Array<string>;
+  plan: {
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }>;
+    holderEmail: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    externalId: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    match: "externalId" | "email" | "none";
+    keepManual?: boolean;
+    save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
+  };
+  templateId: string;
 };
 
 export type PassImportsRemoveCreatedParams = {
@@ -1262,6 +1351,8 @@ export type PassImportsRemoveCreatedParams = {
 export type PassImportsSendEmailsParams = {
   cursor: string | null;
 };
+
+export type PassImportsUndoParams = Record<string, unknown>;
 
 export type PassInstalledEvent = {
   id: string;
@@ -1668,6 +1759,7 @@ export type PlatformOrgsCreateParams = {
   defaultIdentityId?: string | null;
   branding?: OrgBranding;
   preset?: "legacy" | "trial" | "standard";
+  addMe?: boolean;
 };
 
 export type PlatformOrgsEntitlementsUpdateParams = {
@@ -1959,6 +2051,61 @@ export type ReleaseTemplate = {
     test?: number;
   };
   request?: boolean;
+};
+
+export type ReviewResult = {
+  version: string;
+  approved: Array<"live" | "test">;
+  release: {
+    version: string;
+    modes: {
+      test?: {
+        outcome: "released" | "kept" | "current" | "review_requested";
+        releaseId: string | null;
+        generation: number;
+        approvalKind: "peer" | "sole" | "test" | null;
+      };
+      live?: {
+        outcome: "released" | "kept" | "current" | "review_requested";
+        releaseId: string | null;
+        generation: number;
+        approvalKind: "peer" | "sole" | "test" | null;
+      };
+    };
+    state: {
+      live: {
+        version: string;
+        at: number;
+        by: string | null;
+      } | null;
+      test: {
+        version: string;
+        at: number;
+        state: "following" | "ahead";
+      } | null;
+      draft: {
+        version: string;
+        at: number;
+      } | null;
+      review: {
+        state: "none";
+      } | {
+        state: "open" | "approved";
+        version: string;
+        by: string | null;
+        at: number;
+      };
+      alone: boolean;
+      next: "design" | "try" | "release" | "request_review" | "review" | "wait" | null;
+    };
+  } | null;
+};
+
+export type ReviewTemplate = {
+  orgId?: string;
+  version: string;
+  release?: boolean;
+  note?: string;
 };
 
 export type RollCallsMarkParams = {
@@ -4126,6 +4273,18 @@ export type TemplateInputSchema = Record<string, unknown>;
 
 export type TemplatePage = {
   items: Array<TemplateSummary>;
+  nextCursor: string | null;
+};
+
+export type TemplateReviewList = {
+  items: Array<{
+    templateId: string;
+    templateName: string;
+    orgId: string;
+    version: string;
+    requestedBy: string | null;
+    requestedAt: number;
+  }>;
   nextCursor: string | null;
 };
 

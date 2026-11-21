@@ -799,6 +799,43 @@ func newOrgsResource(c *core) *OrgsResource {
 	}
 }
 
+type PassImportsMappingsResource struct {
+	c *core
+}
+
+func newPassImportsMappingsResource(c *core) *PassImportsMappingsResource {
+	return &PassImportsMappingsResource{
+		c: c,
+	}
+}
+
+// Delete Delete a saved column mapping by name `DELETE /api/v1/pass-imports/mappings`
+func (r *PassImportsMappingsResource) Delete(ctx context.Context, query *PassImportsMappingsDeleteQuery, opts ...RequestOption) (*PassImportsMappingsDeleteResult, error) {
+	var out PassImportsMappingsDeleteResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/pass-imports/mappings", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List A template's saved column mappings `GET /api/v1/pass-imports/mappings`
+func (r *PassImportsMappingsResource) List(ctx context.Context, query *PassImportsMappingsListQuery, opts ...RequestOption) (*PassImportsMappingsListResult, error) {
+	var out PassImportsMappingsListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/pass-imports/mappings", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Save Save a named column mapping for a template; the same name replaces it `PUT /api/v1/pass-imports/mappings`
+func (r *PassImportsMappingsResource) Save(ctx context.Context, body *PassImportsMappingsSaveBody, opts ...RequestOption) (*PassImportsMappingsSaveResult, error) {
+	var out PassImportsMappingsSaveResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/pass-imports/mappings", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassImportsRowsResource struct {
 	c *core
 }
@@ -815,14 +852,16 @@ func (r *PassImportsRowsResource) List(ctx context.Context, id string, query *Pa
 }
 
 type PassImportsResource struct {
-	c    *core
-	Rows *PassImportsRowsResource
+	c        *core
+	Mappings *PassImportsMappingsResource
+	Rows     *PassImportsRowsResource
 }
 
 func newPassImportsResource(c *core) *PassImportsResource {
 	return &PassImportsResource{
-		c:    c,
-		Rows: newPassImportsRowsResource(c),
+		c:        c,
+		Mappings: newPassImportsMappingsResource(c),
+		Rows:     newPassImportsRowsResource(c),
 	}
 }
 
@@ -838,7 +877,7 @@ func (r *PassImportsResource) Check(ctx context.Context, id string, body *PassIm
 // Commit Apply the checked rows: create the new passes and update the matched ones `POST /api/v1/pass-imports/{id}/commit`
 func (r *PassImportsResource) Commit(ctx context.Context, id string, body *PassImportsCommitBody, opts ...RequestOption) (*PassImportsCommitResult, error) {
 	var out PassImportsCommitResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/commit", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/commit", body: body, idempotent: true}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -847,7 +886,7 @@ func (r *PassImportsResource) Commit(ctx context.Context, id string, body *PassI
 // Create Start an import from a file or a sheet link; checks it when a plan is known `POST /api/v1/pass-imports`
 func (r *PassImportsResource) Create(ctx context.Context, body *PassImportsCreateBody, opts ...RequestOption) (*PassImportsCreateResult, error) {
 	var out PassImportsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports", body: body, idempotent: true}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -886,10 +925,19 @@ func (r *PassImportsResource) Retrieve(ctx context.Context, id string, opts ...R
 	return &out, nil
 }
 
-// SendEmails Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`
+// SendEmails Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`
 func (r *PassImportsResource) SendEmails(ctx context.Context, id string, body *PassImportsSendEmailsBody, opts ...RequestOption) (*PassImportsSendEmailsResult, error) {
 	var out PassImportsSendEmailsResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/email-rest", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Undo Undo an ended import: remove the passes it made and restore the ones it changed, unless edited since `POST /api/v1/pass-imports/{id}/undo`
+func (r *PassImportsResource) Undo(ctx context.Context, id string, body *PassImportsUndoBody, opts ...RequestOption) (*PassImportsUndoResult, error) {
+	var out PassImportsUndoResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/undo", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -1651,6 +1699,37 @@ func (r *ScansResource) List(ctx context.Context, query *ScansListQuery, opts ..
 	return newPager[any](r.c, call{method: "GET", path: "/api/v1/scans", query: queryValues(query)}, "cursor", opts)
 }
 
+type TemplatesReviewsResource struct {
+	c *core
+}
+
+func newTemplatesReviewsResource(c *core) *TemplatesReviewsResource {
+	return &TemplatesReviewsResource{
+		c: c,
+	}
+}
+
+// Approve Approve a requested template version in Test and Live, and release it when asked `POST /api/v1/templates/{id}/review`
+func (r *TemplatesReviewsResource) Approve(ctx context.Context, id string, body *TemplatesReviewsApproveBody, opts ...RequestOption) (*TemplatesReviewsApproveResult, error) {
+	var out TemplatesReviewsApproveResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/review", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List template versions waiting for review `GET /api/v1/template-reviews`
+func (r *TemplatesReviewsResource) List(ctx context.Context, query *TemplatesReviewsListQuery, opts ...RequestOption) *Pager[TemplatesReviewsListItem] {
+	return newPager[TemplatesReviewsListItem](r.c, call{method: "GET", path: "/api/v1/template-reviews", query: queryValues(query)}, "cursor", opts)
+}
+
+// Request Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`
+func (r *TemplatesReviewsResource) Request(ctx context.Context, id string, body *TemplatesReviewsRequestBody, query *TemplatesReviewsRequestQuery, opts ...RequestOption) (TemplatesReviewsRequestResult, error) {
+	var out TemplatesReviewsRequestResult
+	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/review-requests", query: queryValues(query), body: body, idempotent: true}, &out, opts)
+	return out, err
+}
+
 type TemplatesCandidatesResource struct {
 	c *core
 }
@@ -1750,23 +1829,6 @@ func (r *TemplatesReleasesResource) RetrieveImpact(ctx context.Context, id strin
 	return &out, nil
 }
 
-type TemplatesReviewsResource struct {
-	c *core
-}
-
-func newTemplatesReviewsResource(c *core) *TemplatesReviewsResource {
-	return &TemplatesReviewsResource{
-		c: c,
-	}
-}
-
-// Request Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`
-func (r *TemplatesReviewsResource) Request(ctx context.Context, id string, body *TemplatesReviewsRequestBody, query *TemplatesReviewsRequestQuery, opts ...RequestOption) (TemplatesReviewsRequestResult, error) {
-	var out TemplatesReviewsRequestResult
-	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/review-requests", query: queryValues(query), body: body, idempotent: true}, &out, opts)
-	return out, err
-}
-
 type TemplatesVersionsResource struct {
 	c *core
 }
@@ -1793,20 +1855,20 @@ func (r *TemplatesVersionsResource) Retrieve(ctx context.Context, id string, ver
 
 type TemplatesResource struct {
 	c          *core
+	Reviews    *TemplatesReviewsResource
 	Candidates *TemplatesCandidatesResource
 	Channels   *TemplatesChannelsResource
 	Releases   *TemplatesReleasesResource
-	Reviews    *TemplatesReviewsResource
 	Versions   *TemplatesVersionsResource
 }
 
 func newTemplatesResource(c *core) *TemplatesResource {
 	return &TemplatesResource{
 		c:          c,
+		Reviews:    newTemplatesReviewsResource(c),
 		Candidates: newTemplatesCandidatesResource(c),
 		Channels:   newTemplatesChannelsResource(c),
 		Releases:   newTemplatesReleasesResource(c),
-		Reviews:    newTemplatesReviewsResource(c),
 		Versions:   newTemplatesVersionsResource(c),
 	}
 }
@@ -1814,6 +1876,11 @@ func newTemplatesResource(c *core) *TemplatesResource {
 // DownloadPackage The active version or unpublished draft as an uploadable zip `GET /api/v1/templates/{id}/package`
 func (r *TemplatesResource) DownloadPackage(ctx context.Context, id string, opts ...RequestOption) (*http.Response, error) {
 	return r.c.download(ctx, call{method: "GET", path: "/api/v1/templates/" + pathEscape(id) + "/package"}, opts)
+}
+
+// DownloadSample A sample import file: the template field labels and one valid row `GET /api/v1/templates/{id}/sample.csv`
+func (r *TemplatesResource) DownloadSample(ctx context.Context, id string, opts ...RequestOption) (*http.Response, error) {
+	return r.c.download(ctx, call{method: "GET", path: "/api/v1/templates/" + pathEscape(id) + "/sample.csv"}, opts)
 }
 
 // List List templates `GET /api/v1/templates`
