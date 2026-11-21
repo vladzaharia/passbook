@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first, run } from '../../platform/db.ts';
 import { expectAdmitted, expectBlocked, raceGate } from './act-authority-test-fixtures.ts';
 import { act, kit, out, rows, tpl } from './act-test-fixtures.ts';
@@ -146,15 +147,19 @@ export function registerAuthorityHistory() {
       codeOf(pass),
       async (db) => {
         try {
-          await run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
-            `${identity.team_identifier}-changed`,
-            pass.identityId,
-          ]);
+          await withoutTrigger(db, 'signing_identities_pti_immutable', () =>
+            run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
+              `${identity.team_identifier}-changed`,
+              pass.identityId,
+            ]),
+          );
         } finally {
-          await run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
-            identity.team_identifier,
-            pass.identityId,
-          ]);
+          await withoutTrigger(db, 'signing_identities_pti_immutable', () =>
+            run(db, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
+              identity.team_identifier,
+              pass.identityId,
+            ]),
+          );
         }
       },
       { idempotencyKey },

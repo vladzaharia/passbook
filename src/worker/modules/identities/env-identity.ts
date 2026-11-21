@@ -16,8 +16,16 @@ export interface ResolvedIdentity extends PassIdentity {
 }
 
 export interface IdentityResolver {
-  /** Identity for a new pass: explicit id, else the org default, else the platform identity. */
-  forOrg(orgId: string, identityId?: string | null): Promise<ResolvedIdentity>;
+  /**
+   * Identity for a new pass: explicit id, else the org default, else the platform identity.
+   * Refuses one that has stopped issuing (`IDENTITY_RETIRED`) or whose certificate has expired
+   * (`IDENTITY_EXPIRED`); `byId` still serves passes already issued on it.
+   */
+  forOrg(
+    orgId: string,
+    identityId: string | null | undefined,
+    now: number,
+  ): Promise<ResolvedIdentity>;
   byId(identityId: string): Promise<ResolvedIdentity>;
   /** `byId` for a row the caller already read in a batch. */
   byRow?(row: IdentityRow): Promise<ResolvedIdentity>;

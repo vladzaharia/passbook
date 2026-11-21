@@ -479,7 +479,7 @@ effective approved release is used (see Changes for existing clients).
   manifest sets `"externalId": { "unique": true }` allows one pass per value, per org and mode: a
   create or update that repeats it is `409 EXTERNAL_ID_TAKEN`. Deleted passes release their value;
   voided and removed ones keep it.
-- `serial` is honored only for passes on the org's own Apple identity (409 `SERIAL_TAKEN` on a repeat). On the shared platform identity the server generates the serial and ignores the field; use `externalId` for your own key.
+- `serial` is honored only for passes on the org's own Apple identity (409 `SERIAL_TAKEN` on a repeat). On an identity shared by orgs the server generates the serial and ignores the field; use `externalId` for your own key.
 - The response carries the pass id, the download link and the current `version`.
 
 An authorized pass detail or retained-version read returns `409 PASS_TRANSFER_PENDING` while

@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
@@ -209,15 +210,19 @@ export function registerReplayFingerprint() {
     );
     if (!identity) throw new Error('Missing signing identity');
     try {
-      await run(kit.env.DB, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
-        `${identity.team_identifier}-changed`,
-        pass.identityId,
-      ]);
+      await withoutTrigger(kit.env.DB, 'signing_identities_pti_immutable', () =>
+        run(kit.env.DB, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
+          `${identity.team_identifier}-changed`,
+          pass.identityId,
+        ]),
+      );
     } finally {
-      await run(kit.env.DB, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
-        identity.team_identifier,
-        pass.identityId,
-      ]);
+      await withoutTrigger(kit.env.DB, 'signing_identities_pti_immutable', () =>
+        run(kit.env.DB, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
+          identity.team_identifier,
+          pass.identityId,
+        ]),
+      );
     }
     const current = await first<{ team_identifier: string; revision: number }>(
       kit.env.DB,

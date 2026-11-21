@@ -1,11 +1,24 @@
+import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { lastIdentityCheck } from '../identities/check.ts';
-import { apnsBindingPresent } from '../identities/db-resolver.ts';
+import { apnsBindingPresent, platformEnvMismatch } from '../identities/db-resolver.ts';
+import { readEnvIdentity } from '../identities/env-identity.ts';
 import { pushMethodOf } from '../identities/push-method.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { type Draft, type State, worst } from './checks.ts';
 
 const DAY = 86_400_000;
+
+/** Live, not from the daily check: a bad deploy refuses signing at once. */
+function envMismatchOf(ctx: ServiceContext, row: IdentityRow): boolean {
+  if (row.source !== 'env') return false;
+  try {
+    return platformEnvMismatch(readEnvIdentity(ctx.env), row);
+  } catch (error) {
+    if (error instanceof NotFoundError) return false;
+    throw error;
+  }
+}
 
 export function identityComponent(
   ctx: ServiceContext,
@@ -24,6 +37,8 @@ export function identityComponent(
     state = worst([state, to]);
     notes.push(note);
   };
+  if (envMismatchOf(ctx, row))
+    lower('failing', 'Configured pass type differs from the installed one. Signing is refused.');
   if (row.not_before !== null && row.not_before > now)
     lower('failing', 'Certificate not valid yet.');
   if (days !== null && days < 0) lower('failing', 'Certificate expired.');
