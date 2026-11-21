@@ -84,7 +84,16 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
   sticky block and pushes the page down; then `main`. `width`: `holder` `max-w-5xl`, `console`
   `max-w-7xl`. Admin adds the sidebar, 15rem at ≥1024 (sheet below); its background and border
   belong to the grid column, so they span the full page height.
-- The portal bar: wordmark, My passes, Account, Admin (admins, from 640), account menu.
+- One `Menubar` (`ui/layout/menubar.tsx`) in admin, portal and the developer site (rendered at
+  build time there; `generated/menubar-kit.css` carries its classes). Left: the mark and the
+  space's own nav (the developer sections; the console's sidebar carries the mark from lg). Right:
+  search, the space's controls (Test mode only in an organization's console), then the account
+  menu. Never a link to another space in the bar: the account menu switches.
+- The account menu (`ui/layout/account-menu.tsx`): name and email; the spaces the session can use,
+  current one checked (My passes, Account, Admin, Developers); Theme; Sign out. Signed out: Sign
+  in in its place. `shared/spaces.ts` `canUseSpace` is the one rule: Admin and Developers need a
+  Polaris ID sign-in; an email link opens only My passes and Account, and Admin shows it
+  `Sign in with Polaris ID`. Developers is another document: a full page load.
 - **Every admin page uses the full main width.** Width is capped per block (form grids, prose,
   dialogs), never per page: no page-level `max-w-*`. Header actions end at the main content's
   right edge on every page.
@@ -499,7 +508,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 
 - Both themes from the same tokens; dark is the default. Check every page in both.
 - One theme setting for every page. The account menu (the same on every page) offers System /
-  Light / Dark, with the current face of the app (My passes, Account, Admin) checked above it.
+  Light / Dark, below the spaces (My passes, Account, Admin, Developers), the current one checked.
   The choice is saved in the `wallet-theme` cookie (`system|light|dark`, 1 year, read by
   `/theme-init.js` before first paint). SSR pages (`/p`, auth, error) read the cookie, stamp
   `data-theme` and one matching `theme-color`; without a choice they follow the system
@@ -510,7 +519,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 
 | Width | Rules |
 | --- | --- |
-| <640 (phone, 390) | Sheet nav; Admin moves into the account menu on the portal; actions one row + `More`; stacked list rows; filter grid; bottom-sheet dialogs and menus; tabs >5 as a select; compact pass row |
+| <640 (phone, 390) | Sheet nav; actions one row + `More`; stacked list rows; filter grid; bottom-sheet dialogs and menus; tabs >5 as a select; compact pass row |
 | 640–1023 (tablet portrait, 768) | Sheet nav; search field `w-64`; tables show title + 2–3 key columns; horizontal pass summary card |
 | 1024–1279 (tablet landscape) | Sidebar visible; wizard and upload asides; two filters inline + `Filters (n)`; tables hide low-value columns |
 | ≥1280 | Full layouts: detail asides, pass preview column, three-column short fields |

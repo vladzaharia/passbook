@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 import { OrgCapabilitySchema, type OrgMembership } from '@/shared/contracts/org-membership.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
+import type { SignInMethod } from '@/shared/spaces.ts';
 import { createAppRouter } from '../router.tsx';
 import { AppProviders } from './providers.tsx';
 import { createQueryClient } from './query-client.ts';
@@ -39,9 +40,10 @@ export function installDomShims(): void {
 
 installDomShims();
 
-export type SessionKind = 'admin' | 'user' | 'anon';
+type AuthedRoles = Extract<SessionResponse, { authenticated: true }>['roles'];
+export type SessionKind = 'admin' | 'developer' | 'user' | 'anon';
 
-export function sessionFixture(kind: SessionKind): SessionResponse {
+export function sessionFixture(kind: SessionKind, amr: SignInMethod = 'oidc'): SessionResponse {
   if (kind === 'anon') {
     return {
       authenticated: false,
@@ -53,9 +55,14 @@ export function sessionFixture(kind: SessionKind): SessionResponse {
   return {
     authenticated: true,
     user: { id: 'u1', name: 'Test User', primaryEmail: 'test@example.com' },
-    roles: kind === 'admin' ? ['admin', 'user'] : ['user'],
+    // `developer` is not in the role enum until its package lands; the menu checks it by name.
+    roles: (kind === 'admin'
+      ? ['admin', 'user']
+      : kind === 'developer'
+        ? ['developer', 'user']
+        : ['user']) as AuthedRoles,
     csrfToken: 'csrf-test',
-    amr: 'oidc',
+    amr,
     expiresAt: 4_000_000_000_000,
   };
 }
@@ -111,6 +118,8 @@ export function stubFetch(handlers: Record<string, FetchHandler>) {
 
 export interface RenderAppOptions {
   session?: SessionKind;
+  /** How the session signed in; Pocket ID unless told. */
+  amr?: SignInMethod;
   handlers?: Record<string, FetchHandler>;
   memberships?: OrgMembership[];
   selectedOrg?: string;
@@ -121,7 +130,7 @@ export async function renderApp(path: string, options: RenderAppOptions = {}) {
   resetTabScope();
   const kind = options.session ?? 'user';
   const fetchMock = stubFetch({
-    '/api/v1/session': () => json(sessionFixture(kind)),
+    '/api/v1/session': () => json(sessionFixture(kind, options.amr)),
     '/api/v1/orgs/memberships/me': () =>
       json({ items: options.memberships ?? [], nextCursor: null }),
     '/api/v1/orgs': () => json({ items: [], nextCursor: null }),

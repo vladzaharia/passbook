@@ -7,6 +7,8 @@ export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
+  /** Tooltip, for a disabled option's why. */
+  title?: string;
 }
 
 export interface SelectProps {
@@ -89,6 +91,7 @@ export function Select({
                 key={o.value}
                 value={o.value}
                 disabled={o.disabled}
+                title={o.title}
                 className="relative flex min-h-8 cursor-pointer select-none items-center rounded-sm py-1.5 pr-3 pl-8 text-sm text-fg outline-hidden pointer-coarse:min-h-11 data-disabled:opacity-50 data-highlighted:bg-state-hover-tint data-highlighted:text-fg-strong"
               >
                 <SelectPrimitive.ItemIndicator className="absolute left-2">

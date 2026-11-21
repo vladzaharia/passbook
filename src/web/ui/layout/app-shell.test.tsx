@@ -52,30 +52,27 @@ describe('AppShell', () => {
     expect(header.firstElementChild).toHaveClass('h-[calc(3.5rem-1px)]', 'px-safe');
   });
 
-  it('keeps the account menu and nav on the forbidden page', async () => {
+  it('keeps the account menu on the forbidden page, with no space links in the bar', async () => {
     await renderApp('/admin', { session: 'user' });
     await screen.findByRole('heading', { name: 'You do not have access', level: 1 });
-    const nav = screen.getByRole('navigation', { name: 'Main' });
-    expect(
-      within(nav)
-        .getAllByRole('link')
-        .map((l) => l.textContent),
-    ).toEqual(['My passes', 'Account']);
+    expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Account menu' })).toBeInTheDocument();
   });
 
-  it('marks the current portal page, Admin included in the same nav', async () => {
-    await renderApp('/account', { session: 'admin' });
-    await screen.findByRole('heading', { name: 'Account', level: 1 });
-    const nav = screen.getByRole('navigation', { name: 'Main' });
-    const links = within(nav).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual(['My passes', 'Account', 'Admin']);
-    expect(within(nav).getByRole('link', { name: 'Account' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    // One link style, 36 px like the admin sidebar; only Admin hides on phones.
-    for (const link of links) expect(link).toHaveClass('min-h-9');
-    expect(links.filter((l) => l.classList.contains('max-sm:hidden'))).toEqual([links[2]]);
+  it('is the same bar in the portal and the console: the mark, then the account menu', async () => {
+    for (const [path, session] of [
+      ['/account', 'user'],
+      ['/admin', 'admin'],
+    ] as const) {
+      const { container, unmount } = await renderApp(path, { session });
+      await screen.findByRole('button', { name: 'Account menu' });
+      const bar = container.querySelector('[data-menubar]') as HTMLElement;
+      expect(within(bar).queryByRole('link', { name: 'Admin' })).toBeNull();
+      expect(within(bar).queryByRole('link', { name: 'My passes' })).toBeNull();
+      expect(within(bar).getAllByRole('link', { name: 'PassBook' }).length).toBeGreaterThan(0);
+      const buttons = within(bar).getAllByRole('button');
+      expect(buttons.at(-1)).toHaveAccessibleName('Account menu');
+      unmount();
+    }
   });
 });

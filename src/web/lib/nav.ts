@@ -120,19 +120,6 @@ export function sectionLabel(pathname: string): string | undefined {
     .find((item) => item.section === section)?.label;
 }
 
-export interface PortalNavItem {
-  label: string;
-  to: string;
-  /** Console access only; hidden on phones, where the account menu carries it. */
-  admin?: true;
-}
-
-export const PORTAL_NAV: readonly PortalNavItem[] = [
-  { label: 'My passes', to: '/' },
-  { label: 'Account', to: '/account' },
-  { label: 'Admin', to: '/admin', admin: true },
-];
-
 export function isActivePath(pathname: string, to: string): boolean {
   if (to === '/') return pathname === '/' || pathname.startsWith('/passes/');
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;

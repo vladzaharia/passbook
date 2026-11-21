@@ -28,8 +28,8 @@ export const PREVIEW_COPY = {
   mobileLine: 'The page a holder opens on their phone.',
   mobileFrame: 'Mobile ticket preview',
   allPreviews: 'All previews',
-  offTitle: 'Off for this pass',
-  nothing: 'No channel is on. This pass cannot be used.',
+  off: 'Off',
+  nothing: 'No channel is on',
 } as const;
 
 export const walletName = (target: 'google' | 'samsung'): string =>
