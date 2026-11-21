@@ -1,23 +1,71 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { rolesFromGroups } from './service.ts';
 
-const env = { OIDC_ADMIN_GROUP: 'wallet-admins', OIDC_USER_GROUP: 'wallet-users' };
+const env = {
+  OIDC_PLATFORM_ADMIN_GROUP: 'wallet_admins',
+  OIDC_ADMIN_GROUP: 'wallet_org_admins',
+  OIDC_DEVELOPER_GROUP: 'passbook_developers',
+  OIDC_USER_GROUP: 'wallet_users',
+};
 
 describe('rolesFromGroups', () => {
-  it('maps the configured groups', () => {
-    expect(rolesFromGroups(env, ['wallet-admins'])).toEqual(['admin', 'user']);
-    expect(rolesFromGroups(env, ['wallet-users'])).toEqual(['user']);
-  });
-
-  it("accepts the names Pocket ID generates from a group's display name", () => {
-    expect(rolesFromGroups(env, ['wallet_admins'])).toEqual(['admin', 'user']);
+  it('maps each configured group to its roles', () => {
+    expect(rolesFromGroups(env, ['wallet_admins'])).toEqual([
+      'admin',
+      'user',
+      'developer',
+      'console',
+    ]);
+    expect(rolesFromGroups(env, ['wallet_org_admins'])).toEqual(['user', 'console']);
+    expect(rolesFromGroups(env, ['passbook_developers'])).toEqual(['user', 'developer']);
     expect(rolesFromGroups(env, ['wallet_users'])).toEqual(['user']);
-    expect(rolesFromGroups(env, ['Wallet Admins'])).toEqual(['admin', 'user']);
   });
 
-  it('grants nothing for other groups or unset variables', () => {
-    expect(rolesFromGroups(env, ['wallet-admin', 'admins', 'walletadmins'])).toEqual([]);
-    expect(rolesFromGroups({}, ['wallet-admins'])).toEqual([]);
-    expect(rolesFromGroups({ OIDC_ADMIN_GROUP: '' }, [''])).toEqual([]);
+  it('combines groups, platform admin implying developer and console', () => {
+    expect(rolesFromGroups(env, ['wallet_users', 'passbook_developers'])).toEqual([
+      'user',
+      'developer',
+    ]);
+    expect(rolesFromGroups(env, ['passbook_developers', 'wallet_org_admins'])).toEqual([
+      'user',
+      'developer',
+      'console',
+    ]);
+  });
+
+  it('matches names exactly: no case folding, no hyphen form, no trimming', () => {
+    expect(rolesFromGroups(env, ['passbook-developers', 'wallet-admins', 'wallet-users'])).toEqual(
+      [],
+    );
+    expect(rolesFromGroups(env, ['Wallet_Admins', 'PASSBOOK_DEVELOPERS', 'Wallet Admins'])).toEqual(
+      [],
+    );
+    expect(rolesFromGroups(env, ['passbook_developers ', ' wallet_admins'])).toEqual([]);
+    expect(rolesFromGroups(env, ['wallet_admin', 'walletadmins', 'passbook_developer'])).toEqual(
+      [],
+    );
+  });
+
+  it('grants nothing for unset variables', () => {
+    expect(rolesFromGroups({}, ['wallet_admins', 'passbook_developers'])).toEqual([]);
+    expect(rolesFromGroups({ OIDC_DEVELOPER_GROUP: '' }, [''])).toEqual([]);
+  });
+
+  it('grants nothing for a near miss and logs the group names only', () => {
+    const warn = vi.fn();
+    expect(rolesFromGroups(env, ['wallet-admins', 'Passbook_Developers'], { warn })).toEqual([]);
+    expect(warn).toHaveBeenCalledWith('auth.oidc_group_near_miss', {
+      code: 'GROUP_NEAR_MISS',
+      received: 'wallet-admins',
+      configured: 'wallet_admins',
+    });
+    expect(warn).toHaveBeenCalledWith('auth.oidc_group_near_miss', {
+      code: 'GROUP_NEAR_MISS',
+      received: 'Passbook_Developers',
+      configured: 'passbook_developers',
+    });
+    warn.mockClear();
+    expect(rolesFromGroups(env, ['wallet_admins'], { warn })).toHaveLength(4);
+    expect(warn).not.toHaveBeenCalled();
   });
 });

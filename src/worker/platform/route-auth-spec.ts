@@ -1,3 +1,4 @@
+import type { Context } from 'hono';
 import type { z } from 'zod';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
@@ -13,6 +14,11 @@ export type ScopeRule = ApiScope | readonly ApiScope[] | { read: ApiScope; write
  * Who may call a route. Declared once per route (`RouteSpec.auth`); `requireCaller` enforces it and
  * `openapi-security.ts` writes it into the document, so the two cannot disagree.
  */
+/** A session must have signed in within `maxAgeSec`, else 403 STEP_UP_REQUIRED. Keys are never asked. */
+export interface StepUp {
+  maxAgeSec: number;
+}
+
 export type RouteAuth =
   /**
    * A bearer API key holding the scope, or else a tenant cookie session. `capability` is what the
@@ -33,6 +39,7 @@ export type RouteAuth =
        * Set it per route, never on a router guard, and only where every read and write goes through those two.
        */
       templateScoped?: true;
+      stepUp?: StepUp;
     }
   /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
   | {
@@ -44,6 +51,35 @@ export type RouteAuth =
        * grace. `any` admits an email link (holder features); `strict` takes no grace.
        */
       signIn?: 'any' | 'strict';
+      stepUp?: StepUp;
+      /** Needs developer access (the `developer` role, or a platform admin): else 403 DEVELOPER_ACCESS_REQUIRED. */
+      developer?: true;
     }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
-  | { platform: PlatformScope };
+  | { platform: PlatformScope; stepUp?: StepUp };
+
+/** Reads (GET, HEAD) need `read`, everything else `write`. */
+export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeRule {
+  return scopes;
+}
+
+export const isRead = (c: Context) => c.req.method === 'GET' || c.req.method === 'HEAD';
+
+/** The scope the key must hold, or null when none of several matches. Named scopes give a named refusal. */
+export function neededScope(
+  rule: ScopeRule,
+  c: Context,
+  held: readonly ApiScope[],
+): ApiScope | null {
+  if (typeof rule === 'string') return rule;
+  if (Array.isArray(rule)) return rule.find((candidate) => held.includes(candidate)) ?? null;
+  const split = rule as { read: ApiScope; write: ApiScope };
+  return isRead(c) ? split.read : split.write;
+}
+
+/** Which kind of cookie session a route takes once no key decided it. */
+export function sessionKindOf(auth: RouteAuth): 'plain' | 'tenant' | 'admin' {
+  if ('platform' in auth) return 'admin';
+  if ('human' in auth) return auth.requestMode ? 'tenant' : 'plain';
+  return auth.session === 'admin' ? 'admin' : 'tenant';
+}

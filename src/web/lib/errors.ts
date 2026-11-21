@@ -8,6 +8,7 @@ export interface ApiErrorInit {
   detail?: string;
   requestId?: string;
   fields?: Record<string, string>;
+  signInUrl?: string;
 }
 
 export class ApiError extends Error {
@@ -17,6 +18,8 @@ export class ApiError extends Error {
   readonly requestId: string | undefined;
   /** Field path to message, from problem `issues`. */
   readonly fields: Record<string, string>;
+  /** STEP_UP_REQUIRED and IDP_SIGN_IN_REQUIRED: where Polaris ID signs the person in. */
+  readonly signInUrl: string | undefined;
 
   constructor(init: ApiErrorInit) {
     super(init.detail ?? init.title ?? init.code);
@@ -26,6 +29,7 @@ export class ApiError extends Error {
     this.title = init.title ?? init.code;
     this.requestId = init.requestId;
     this.fields = init.fields ?? {};
+    this.signInUrl = init.signInUrl;
   }
 
   get isForbidden(): boolean {
@@ -73,6 +77,7 @@ export function problemToError(status: number, body: unknown): ApiError {
       detail: p.detail,
       requestId: p.requestId,
       fields,
+      signInUrl: p.signInUrl,
     });
   }
   return new ApiError({

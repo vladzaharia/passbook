@@ -28,14 +28,17 @@ export function lifetimeFor(roles: readonly Role[], amr?: Amr): SessionLifetime 
 }
 
 const AUTH_TIME_SKEW_MS = 5 * MINUTE;
+const AUTH_TIME_WARN_MS = MINUTE;
 
-/** Break-glass proves itself now; Polaris ID's claim is kept only when positive and not in the future. */
+/**
+ * Break-glass proves itself now; Polaris ID's claim is kept only when positive and within the skew of
+ * now, and never later than now, so a provider clock running ahead cannot stretch the step-up window.
+ */
 function authTimeFor(amr: Amr, claimed: number | undefined, now: number): number | null {
   if (amr === 'breakglass') return now;
   if (amr !== 'oidc' || claimed === undefined) return null;
-  return Number.isFinite(claimed) && claimed > 0 && claimed <= now + AUTH_TIME_SKEW_MS
-    ? claimed
-    : null;
+  if (!Number.isFinite(claimed) || claimed <= 0 || claimed > now + AUTH_TIME_SKEW_MS) return null;
+  return Math.min(claimed, now);
 }
 
 export const hashSessionCookie = (cookieValue: string) => sha256Hex(cookieValue);
@@ -62,6 +65,12 @@ export async function createSession(
 ): Promise<NewSession> {
   const now = ctx.clock.now();
   const life = lifetimeFor(input.roles, input.amr);
+  const authTime = authTimeFor(input.amr, input.authTime, now);
+  if (input.authTime !== undefined && Math.abs(input.authTime - now) > AUTH_TIME_WARN_MS)
+    ctx.log.warn('auth.auth_time_skew', {
+      code: 'AUTH_TIME_SKEW',
+      skewMs: Math.round(input.authTime - now),
+    });
   const cookieValue = ctx.ids.token(32);
   const idHash = await hashSessionCookie(cookieValue);
   const csrfSecret = ctx.ids.token(32);
@@ -69,7 +78,7 @@ export async function createSession(
     idHash,
     userId: input.userId,
     amr: input.amr,
-    authTime: authTimeFor(input.amr, input.authTime, now),
+    authTime,
     roles: input.roles,
     csrfSecret,
     now,
@@ -110,6 +119,7 @@ export async function resolveSession(
     csrfSecret: row.csrf_secret,
     amr: row.amr,
     consoleUntil: row.console_until,
+    authTime: row.auth_time,
     mode: 'live',
     expiresAt: Math.min(row.expires_at, row.idle_expires_at),
   };
