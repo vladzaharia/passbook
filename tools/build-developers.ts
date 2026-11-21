@@ -1,7 +1,6 @@
 // Part of `npm run build`, after `vite build`: prerenders the developer portal into
 // dist/client/developers/ from docs/api/openapi.v1.json, sdk-names.json and docs/api/reference/*.json.
-// - one HTML page per page of the portal, a markdown twin for each reference page and the home
-//   page, llms.txt, sitemap.xml and manifest.json (the Worker serves only what the manifest lists);
+// - one HTML page per page of the portal and a markdown twin for each (check-developers fails without one), llms.txt, sitemap.xml and manifest.json (the Worker serves only what the manifest lists);
 // - the pages link the hashed script and stylesheet Vite built from developers.html.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -65,7 +64,7 @@ export function headTags(viteHtml: string): string {
 
 export async function buildDevelopers(
   options: BuildOptions,
-): Promise<{ files: string[]; manifest: Manifest }> {
+): Promise<{ files: string[]; manifest: Manifest; built: OutFile[] }> {
   const origin = options.origin ?? publicBaseUrl(join(root, 'wrangler.jsonc'));
   const inputs = loadInputs(root, options.apiDir);
   const site = buildSite(inputs);
@@ -106,7 +105,7 @@ export async function buildDevelopers(
     writeFileSync(target, f.body);
   }
   writeFileSync(join(options.out, 'developers/manifest.json'), JSON.stringify(manifest));
-  return { files: rendered.map((f) => f.file), manifest };
+  return { files: rendered.map((f) => f.file), manifest, built: rendered };
 }
 
 if (import.meta.main) {

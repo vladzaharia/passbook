@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
 import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
-import { DEVELOPERS_INDEXABLE, PATHS, twin } from '../../shared/developers.ts';
+import { DEVELOPERS_INDEXABLE, NOT_FOUND_FILE, PATHS, twin } from '../../shared/developers.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import { HEAD_HTML } from '../../worker/ssr/head.ts';
 import { runFile, runFileUrl, runIndex } from './console/run-spec.ts';
@@ -18,7 +18,23 @@ import { resolveGuide } from './guide/model.ts';
 import { GuidesIndex, GuideView } from './guide/view.tsx';
 import { atomFeed } from './model/changelog.ts';
 import { operations } from './model/dates.ts';
-import { homeMarkdown, llmsTxt, pageMarkdown, pagePath } from './model/markdown.ts';
+import {
+  guidesIndexMarkdown,
+  homeMarkdown,
+  llmsTxt,
+  pageMarkdown,
+  pagePath,
+} from './model/markdown.ts';
+import {
+  appTwins,
+  changelogMarkdown,
+  errorMarkdown,
+  errorsIndexMarkdown,
+  protocolsMarkdown,
+  quickstartMarkdown,
+  referenceIndexMarkdown,
+  webhooksMarkdown,
+} from './model/twins.ts';
 import type { OutFile, Site } from './model/types.ts';
 import { ChangelogView } from './pages/changelog.tsx';
 import { ConsoleView } from './pages/console.tsx';
@@ -32,6 +48,7 @@ import {
   ReferenceIndex,
   WebhooksView,
 } from './pages/more.tsx';
+import { NotFoundView } from './pages/not-found.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
 import { PlaygroundPage } from './playground/page.tsx';
@@ -42,8 +59,10 @@ interface Doc {
   title: string;
   description: string;
   body: string;
-  /** Pages with a twin name it; others have none. */
+  /** Pages with a twin name it. */
   md?: boolean;
+  /** The twin's text: written next to the page as its `.md`. */
+  twin?: string;
   /** Extra `<link>`s for the head. */
   head?: string;
 }
@@ -52,7 +71,10 @@ const ROBOTS = DEVELOPERS_INDEXABLE ? '' : '<meta name="robots" content="noindex
 
 function document(doc: Doc, origin: string, assets: string): string {
   const url = `${origin}${doc.url}`;
-  const md = doc.md ? `<link rel="alternate" type="text/markdown" href="${twin(doc.url)}">` : '';
+  const md =
+    doc.md || doc.twin !== undefined
+      ? `<link rel="alternate" type="text/markdown" href="${twin(doc.url)}">`
+      : '';
   return (
     '<!doctype html><html lang="en" data-theme-pref="system"><head>' +
     `${HEAD_HTML}${ROBOTS}<title>${escapeHtml(doc.title)}</title>` +
@@ -86,8 +108,10 @@ export function renderSite(
 ): OutFile[] {
   const out: OutFile[] = [];
   const base = `${DEV_COPY.brand} · PassBook`;
-  const add = (doc: Doc, dir = false) =>
+  const add = (doc: Doc, dir = false) => {
     out.push({ file: fileOf(doc.url, dir), body: document(doc, origin, assets), url: doc.url });
+    if (doc.twin !== undefined) out.push({ file: twin(doc.url), body: doc.twin });
+  };
   const side = (current?: Site['pages'][number], ops = false) => (
     <SideNav site={site} current={current} ops={ops} />
   );
@@ -100,6 +124,7 @@ export function renderSite(
     withSide?: ReactElement,
     dir = false,
     head?: string,
+    markdown?: string,
   ) =>
     add(
       {
@@ -107,6 +132,7 @@ export function renderSite(
         title: `${title} · ${base}`,
         description,
         head,
+        twin: markdown,
         body: html(
           <Shell site={site} active={active} side={withSide}>
             {child}
@@ -146,6 +172,8 @@ export function renderSite(
     <ReferenceIndex site={site} />,
     side(),
     true,
+    undefined,
+    referenceIndexMarkdown(site),
   );
   for (const p of site.pages) {
     const url = pagePath(p);
@@ -180,6 +208,9 @@ export function renderSite(
     'reference',
     <ProtocolsView site={site} />,
     side(),
+    false,
+    undefined,
+    protocolsMarkdown(site),
   );
   page(
     PATHS.errors,
@@ -189,6 +220,8 @@ export function renderSite(
     <ErrorsIndex site={site} />,
     side(),
     true,
+    undefined,
+    errorsIndexMarkdown(site),
   );
   for (const e of site.errors)
     page(
@@ -198,12 +231,16 @@ export function renderSite(
       'reference',
       <ErrorEntryView entry={e} />,
       side(),
+      false,
+      undefined,
+      errorMarkdown(e),
     );
   // Wide, no docs grid: the tester needs two columns.
   add({
     url: PATHS.webhooks,
     title: `Webhooks · ${base}`,
     description: 'Capture signed webhooks in your sandbox, verify them and replay them.',
+    twin: webhooksMarkdown(site),
     body: html(
       <Shell site={site} active="webhooks" bare>
         <WebhooksView site={site} />
@@ -219,15 +256,27 @@ export function renderSite(
     undefined,
     false,
     `<link rel="alternate" type="application/atom+xml" title="PassBook API changelog" href="${PATHS.changelogFeed}">`,
+    changelogMarkdown(site),
   );
   out.push({ file: PATHS.changelogFeed, body: atomFeed(site, origin) });
   add({
     url: PATHS.playground,
     title: `${DEV_COPY.slots.playground.title} · ${base}`,
     description: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
+    twin: appTwins.playground(),
     body: html(<PlaygroundPage site={site} />),
   });
-  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'reference', <ConsoleView />);
+  page(
+    PATHS.console,
+    DEV_COPY.console.title,
+    DEV_COPY.console.line,
+    'reference',
+    <ConsoleView />,
+    undefined,
+    false,
+    undefined,
+    appTwins.console(),
+  );
   // What the Run island reads: per page the operations it can run, and one index for the console.
   for (const p of site.pages)
     out.push({
@@ -240,8 +289,28 @@ export function renderSite(
       ),
     });
   out.push({ file: runFileUrl('index'), body: JSON.stringify(runIndex(site)) });
-  page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'logs', <LogsView />);
-  page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />);
+  page(
+    PATHS.logs,
+    LOGS_COPY.title,
+    LOGS_COPY.lede,
+    'logs',
+    <LogsView />,
+    undefined,
+    false,
+    undefined,
+    appTwins.logs(),
+  );
+  page(
+    PATHS.status,
+    STATUS_COPY.title,
+    STATUS_COPY.lede,
+    undefined,
+    <StatusView />,
+    undefined,
+    false,
+    undefined,
+    appTwins.status(),
+  );
   out.push({ file: PATHS.logsOps, body: JSON.stringify(opIndex(site)) });
   page(
     PATHS.quickstart,
@@ -250,6 +319,9 @@ export function renderSite(
     'quickstart',
     <QuickstartView />,
     <QuickstartSide />,
+    false,
+    undefined,
+    quickstartMarkdown(),
   );
   const guides = guideInputs.docs.map(({ doc }) => resolveGuide(doc, site, guideInputs.examples));
   page(
@@ -260,6 +332,8 @@ export function renderSite(
     <GuidesIndex guides={guides} />,
     undefined,
     true,
+    undefined,
+    guidesIndexMarkdown(guides),
   );
   for (const g of guides) {
     const markdown = guideMarkdown(g, guideInputs.examples, site.baseUrl || origin);
@@ -277,7 +351,25 @@ export function renderSite(
     out.push({ file: twin(g.url), body: markdown });
   }
 
-  out.push({ file: PATHS.llms, body: llmsTxt(site) });
+  out.push({ file: PATHS.llms, body: llmsTxt(site, guides) });
+  // Not a route: the Worker serves it, with a 404, for a page that does not exist.
+  out.push({
+    file: NOT_FOUND_FILE,
+    body: document(
+      {
+        url: PATHS.home,
+        title: `${DEV_COPY.notFound.title} · ${base}`,
+        description: DEV_COPY.notFound.line,
+        body: html(
+          <Shell site={site}>
+            <NotFoundView />
+          </Shell>,
+        ),
+      },
+      origin,
+      assets,
+    ).replace(/<link rel="canonical"[^>]*>/, ''),
+  });
   return out;
 }
 

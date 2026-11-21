@@ -1,14 +1,17 @@
 // Fails when a key-reachable error code has no guide entry, an operation has no x-codes, or a generated
 // catalog file is stale, a changelog entry has no note, versions.json is incomplete, or a guide breaks
 // its rules (tools/lib/guides-check.ts). Run in `npm run check:rules`.
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { readGuideFiles } from '../src/web/developers/guide/load.ts';
 import { guideExamples, loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
+import { buildDevelopers } from './build-developers.ts';
 import { changelogFailures, versionFailures } from './lib/changelog.ts';
 import { baseVersions, diffAgainstBase, readPending, readVersions } from './lib/changelog-files.ts';
 import { developerFailures, type Guide } from './lib/developers-check.ts';
+import { outputFailures } from './lib/developers-output-check.ts';
 import { buildErrorCatalogFile, buildEventCatalog } from './lib/error-catalog-files.ts';
 import { guideFailures } from './lib/guides-check.ts';
 import type { Doc } from './lib/openapi-diff.ts';
@@ -42,6 +45,13 @@ failures.push(
     buildSite(loadInputs(root)),
   ),
 );
+// The prerendered portal: a twin for every page, a size budget for each, llms.txt that lists only what exists.
+const scratch = mkdtempSync(join(tmpdir(), 'check-developers-'));
+try {
+  failures.push(...outputFailures((await buildDevelopers({ out: scratch, head: '' })).built));
+} finally {
+  rmSync(scratch, { recursive: true, force: true });
+}
 const changed = diffAgainstBase(root);
 failures.push(...changelogFailures(readPending(root), changed ?? []));
 failures.push(...versionFailures(readVersions(root), baseVersions(root)));

@@ -4,7 +4,7 @@ import { PATHS } from '../../../shared/developers.ts';
 import { anySdk } from '../../../shared/developers-sdk.ts';
 import { operations } from '../model/dates.ts';
 import { exampleSamples, samplesFor } from '../model/samples.ts';
-import type { ConsoleOp, Field, OpView, ResourcePage, Site } from '../model/types.ts';
+import type { ConsoleOp, ErrorRow, Field, OpView, ResourcePage, Site } from '../model/types.ts';
 import { CopyButton, JsonBlock, SampleTabs } from '../ui/code.tsx';
 import { EnvChip } from '../ui/env-chip.tsx';
 import { MethodPill } from '../ui/method-pill.tsx';
@@ -53,12 +53,32 @@ function Params({ fields }: { fields: Field[] }) {
   );
 }
 
-function ErrorsTable({ op, known }: { op: OpView; known: Set<string> }) {
+/** One row per code on the page; an operation lists only the names, so a code's text is sent once. */
+function pageErrors(page: ResourcePage): ErrorRow[] {
+  const rows = new Map<string, ErrorRow>();
+  for (const op of page.ops) for (const e of op.errors) if (!rows.has(e.code)) rows.set(e.code, e);
+  return [...rows.values()].sort((x, y) => x.code.localeCompare(y.code));
+}
+
+function OpErrors({ op }: { op: OpView }) {
   if (op.errors.length === 0) return null;
   return (
-    <>
-      <h3 className="h2 mt8">{DEV_COPY.reference.errors}</h3>
-      <div className="table-wrap">
+    <details className="op-errors mt8">
+      <summary>
+        {DEV_COPY.reference.errors} ({op.errors.length})
+      </summary>
+      <p className="mono sm mt2 wrap-any">{op.errors.map((e) => e.code).join(', ')}</p>
+    </details>
+  );
+}
+
+function PageErrors({ rows, known }: { rows: ErrorRow[]; known: Set<string> }) {
+  if (rows.length === 0) return null;
+  return (
+    <section className="page-errors" id="errors">
+      <h2 className="h2">{DEV_COPY.reference.errors}</h2>
+      <p className="muted sm mt2">{DEV_COPY.reference.errorsLine}</p>
+      <div className="table-wrap mt4">
         <table className="errs">
           <thead>
             <tr>
@@ -68,7 +88,7 @@ function ErrorsTable({ op, known }: { op: OpView; known: Set<string> }) {
             </tr>
           </thead>
           <tbody>
-            {op.errors.map((e) => (
+            {rows.map((e) => (
               <tr key={e.code}>
                 <td className="mono">
                   {known.has(e.code) ? <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a> : e.code}
@@ -80,7 +100,7 @@ function ErrorsTable({ op, known }: { op: OpView; known: Set<string> }) {
           </tbody>
         </table>
       </div>
-    </>
+    </section>
   );
 }
 
@@ -132,17 +152,7 @@ function Rail({ op, site, slot, slug }: { op: OpView; site: Site; slot: string; 
   );
 }
 
-function Operation({
-  op,
-  site,
-  known,
-  slug,
-}: {
-  op: OpView;
-  site: Site;
-  known: Set<string>;
-  slug: string;
-}) {
+function Operation({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
   const groups = WHERE_ORDER.map((w) => ({
     w,
     fields: op.fields.filter((f) => f.where === w),
@@ -203,7 +213,7 @@ function Operation({
             </p>
           </>
         ) : null}
-        <ErrorsTable op={op} known={known} />
+        <OpErrors op={op} />
       </div>
       <Rail op={op} site={site} slot={`try-${op.anchor}`} slug={slug} />
     </section>
@@ -255,10 +265,11 @@ export function ResourceView({ page, site }: { page: ResourcePage; site: Site })
         return (
           <div key={op.anchor}>
             {heading ? <h2 className="sub-h">{heading}</h2> : null}
-            <Operation op={op} site={site} known={known} slug={page.slug} />
+            <Operation op={op} site={site} slug={page.slug} />
           </div>
         );
       })}
+      <PageErrors rows={pageErrors(page)} known={known} />
       <ConsoleOnly ops={page.consoleOnly} />
       {first ? (
         <div className="trybar" data-island="try-bar">
