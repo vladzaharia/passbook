@@ -17,8 +17,9 @@ import type { Logger } from '../../platform/log.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { signInOidc } from '../auth/oidc-sign-in.ts';
 import { createSessionStore } from '../auth/sessions.ts';
-import { listMyOrgMemberships } from './access.ts';
+import { listMyOrgMemberships, membershipDto } from './access.ts';
 import { ensurePersonalOrg } from './personal.ts';
+import { type MembershipRow, myMemberships } from './repo-members.ts';
 
 const clock = new ManualClock();
 const app = createApp({
@@ -122,6 +123,24 @@ describe('ensurePersonalOrg', () => {
     await ensurePersonalOrg(ctx(), b);
     expect((await orgsOf(a.userId))[0]?.slug).toBe('personal-sam-twin');
     expect((await orgsOf(b.userId))[0]?.slug).toBe('personal-sam-twin-2');
+  });
+
+  it('still finds a slug when every numbered one is taken by other users', async () => {
+    const who = await adminUser('Crowded Name');
+    for (const slug of [
+      'personal-crowded-name',
+      ...[2, 3, 4, 5, 6, 7].map((n) => `personal-crowded-name-${n}`),
+    ]) {
+      const id = f.ids.id();
+      await run(
+        appEnv.DB,
+        'INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, 1, 1)',
+        [id, slug, slug],
+      );
+    }
+    await ensurePersonalOrg(ctx(), who);
+    const [org] = await orgsOf(who.userId);
+    expect(org?.slug).toBe(`personal-crowded-name-${who.userId.slice(-12)}`);
   });
 
   it('falls back to the email local part, then to the id prefix', async () => {
@@ -236,7 +255,6 @@ describe('membership list', () => {
   it('labels the owner their own org "Personal" and shows anyone else the stored name', async () => {
     const owner = await adminUser('Maya Chen');
     await ensurePersonalOrg(ctx(), owner);
-    const [org] = await orgsOf(owner.userId);
     const own = await listMyOrgMemberships(ctx(), owner.userId);
     expect(own).toHaveLength(1);
     expect(own[0]).toMatchObject({
@@ -244,19 +262,9 @@ describe('membership list', () => {
       orgSlug: 'personal-maya-chen',
       personal: true,
     });
-    const guest = await makeUser(f);
-    const invitation = f.ids.id();
-    await run(
-      appEnv.DB,
-      "INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at) VALUES (?, ?, 'g@example.com', '[\"read_only\"]', ?, 1, 2, 1)",
-      [invitation, org?.id, f.ids.token()],
-    );
-    await run(
-      appEnv.DB,
-      'INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at) VALUES (?, ?, ?, ?, \'["read_only"]\', 1)',
-      [f.ids.id(), org?.id, guest.id, invitation],
-    );
-    const other = await listMyOrgMemberships(ctx(), guest.id);
+    // Anyone else who is shown the membership sees the stored name.
+    const [row] = await myMemberships(appEnv.DB, owner.userId);
+    const other = [membershipDto(row as MembershipRow)];
     expect(other[0]).toMatchObject({ orgName: 'Maya Chen', personal: true });
   });
 });
@@ -280,7 +288,7 @@ describe('guard rails', () => {
     const ok = await call('POST', '', { slug: 'regular-org', name: 'Regular' });
     const { id } = (await ok.json()) as { id: string };
     const rename = await call('PATCH', `/${id}`, { slug: 'personal-regular' });
-    expect([400, 403]).toContain(rename.status);
+    expect(rename.status).toBe(403);
     expect(
       await first(appEnv.DB, "SELECT id FROM orgs WHERE slug = 'personal-regular'"),
     ).toBeNull();
@@ -309,5 +317,88 @@ describe('guard rails', () => {
       personal: true,
       personalOwner: { id: owner.userId, name: 'Visible Owner' },
     });
+  });
+});
+
+describe('one member, forever', () => {
+  async function ownerWithOrg() {
+    const user = await makeUser(f);
+    const session = await makeSession(f, { userId: user.id, roles: ['admin', 'user'] });
+    const who = { userId: user.id, sessionId: await sha256Hex(session.cookieValue) };
+    await ensurePersonalOrg(ctx(), who);
+    const [org] = await orgsOf(user.id);
+    return { user, session, org: org as { id: string } };
+  }
+  const send = (session: SessionFixture, method: string, path: string, body?: unknown) =>
+    app.request(
+      `/api/v1/orgs${path}`,
+      {
+        method,
+        headers: { ...session.headers, 'content-type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+      },
+      appEnv,
+    );
+
+  it('blocks a second member and any other invitation in SQL, and allows an ordinary org', async () => {
+    const { org } = await ownerWithOrg();
+    const guest = await makeUser(f);
+    const insertInvitation = (id: string, orgId: string, email: string, accepted: number | null) =>
+      run(
+        appEnv.DB,
+        `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
+         VALUES (?, ?, ?, '["read_only"]', ?, 1, 2, ?)`,
+        [id, orgId, email, `${id}-hash`, accepted],
+      );
+    await expect(insertInvitation('open-1', org.id, 'x@example.com', null)).rejects.toThrow(
+      /one member/,
+    );
+    await expect(insertInvitation('acc-1', org.id, guest.primaryEmail, 1)).rejects.toThrow(
+      /one member/,
+    );
+    const direct = f.ids.id();
+    await expect(
+      run(
+        appEnv.DB,
+        'INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at) VALUES (?, ?, ?, ?, \'["read_only"]\', 1)',
+        [f.ids.id(), org.id, guest.id, direct],
+      ),
+    ).rejects.toThrow();
+    // An ordinary org is unaffected.
+    const ordinary = f.ids.id();
+    await run(
+      appEnv.DB,
+      'INSERT INTO orgs (id, slug, name, created_at, updated_at) VALUES (?, ?, ?, 1, 1)',
+      [ordinary, `ord-${ordinary.slice(-6)}`, 'Ordinary'],
+    );
+    await insertInvitation('ord-1', ordinary, 'x@example.com', null);
+    await run(
+      appEnv.DB,
+      "INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at) VALUES (?, ?, ?, 'ord-1', '[\"read_only\"]', 1)",
+      [f.ids.id(), ordinary, guest.id],
+    );
+  });
+
+  it('refuses invitations through the API with a stable code, and refuses revoking the owner', async () => {
+    const { session, org, user } = await ownerWithOrg();
+    const invite = await send(session, 'POST', `/${org.id}/invitations`, {
+      email: 'new@example.com',
+      roles: ['read_only'],
+    });
+    expect(invite.status).toBe(409);
+    expect(((await invite.json()) as { code: string }).code).toBe('ORG_PERSONAL_SINGLE_MEMBER');
+    const member = await first<{ id: string }>(
+      appEnv.DB,
+      'SELECT id FROM org_memberships WHERE org_id = ? AND user_id = ?',
+      [org.id, user.id],
+    );
+    const revoke = await send(session, 'DELETE', `/${org.id}/memberships/${member?.id}`);
+    expect(revoke.status).toBe(409);
+    expect(((await revoke.json()) as { code: string }).code).toBe('ORG_PERSONAL_SINGLE_MEMBER');
+    expect(
+      await first(appEnv.DB, 'SELECT 1 FROM org_memberships WHERE id = ? AND revoked_at IS NULL', [
+        member?.id,
+      ]),
+    ).not.toBeNull();
   });
 });

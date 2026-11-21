@@ -21,7 +21,7 @@ export async function ensurePersonalOrg(ctx: ServiceContext, admin: OrgAdmin): P
     if (user?.status !== 'active') return;
     const name = personalOrgName(user);
     for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-      const slug = personalOrgSlug(name, user.id, attempt);
+      const slug = personalOrgSlug(name, user.id, attempt, attempt === ATTEMPTS);
       if (await slugTaken(db, slug)) continue;
       try {
         await insertPersonalOrg(

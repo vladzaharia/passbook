@@ -33,10 +33,14 @@ function slugBody(value: string): string {
     .replace(/-+$/, '');
 }
 
-/** `personal-<name>`, with `-2`, `-3`, ... from the second attempt on a collision. */
-export function personalOrgSlug(name: string, userId: string, attempt = 1): string {
+/**
+ * `personal-<name>`, with `-2`, `-3`, ... from the second attempt on a collision. The `last` attempt
+ * ends in the user's id instead, which no other user shares.
+ */
+export function personalOrgSlug(name: string, userId: string, attempt = 1, last = false): string {
   const body = slugBody(name) || slugBody(userId).slice(0, 8);
   const base = `${PERSONAL_ORG_COPY.slugPrefix}${body}`;
+  if (last) return `${base.slice(0, 42).replace(/-+$/, '')}-${slugBody(userId).slice(-12)}`;
   return attempt <= 1 ? base : `${base}-${attempt}`;
 }
 

@@ -28,6 +28,11 @@ describe('personalOrgSlug', () => {
     expect(personalOrgSlug('Ada', id, 1)).toBe('personal-ada');
     expect(personalOrgSlug('Ada', id, 3)).toBe('personal-ada-3');
   });
+  it('ends in the user id on the last attempt, within the limit', () => {
+    const slug = personalOrgSlug('a '.repeat(100), id, 8, true);
+    expect(slug.length).toBeLessThanOrEqual(64);
+    expect(slug.endsWith('0c1d2e3f4a5b')).toBe(true);
+  });
   it('falls back to the id prefix when the body is empty', () => {
     expect(personalOrgSlug('日本語', id)).toBe('personal-0191a2b3');
   });
