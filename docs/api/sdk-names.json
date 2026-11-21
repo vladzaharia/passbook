@@ -361,6 +361,18 @@
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
+  "developer.postSandboxReopen": {
+    "resource": "developer.sandbox",
+    "method": "reopen",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.postSandboxReset": {
+    "resource": "developer.sandbox",
+    "method": "reset",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
   "developer.postTryToken": {
     "resource": "developer.tryTokens",
     "method": "create",

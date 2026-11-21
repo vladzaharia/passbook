@@ -11,6 +11,7 @@ export interface LogRow {
   org_id: string;
   key_id: string | null;
   via: 'try' | null;
+  client: string | null;
   mode: 'live' | 'test';
   request_id: string;
   method: string;
@@ -31,6 +32,8 @@ export interface NewLog {
   orgId: string;
   keyId: string;
   via: 'try' | null;
+  /** `clientOf` of the User-Agent: a short name, never the header. */
+  client?: string | null;
   mode: 'live' | 'test';
   requestId: string;
   method: string;
@@ -60,11 +63,11 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
     await run(
       db,
       `INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code,
-         duration_ms, at, has_bodies, request_body, response_body)
+         duration_ms, at, has_bodies, request_body, response_body, client)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
          CASE WHEN ?5 = 'test' AND (?15 IS NOT NULL OR ?16 IS NOT NULL) THEN 1 ELSE 0 END,
          CASE WHEN ?5 = 'test' THEN ?15 END,
-         CASE WHEN ?5 = 'test' THEN ?16 END
+         CASE WHEN ?5 = 'test' THEN ?16 END, ?17
        FROM orgs o WHERE o.id = ?2 AND o.kind = 'developer'
          AND COALESCE((SELECT CASE WHEN b.hour = CAST(?14 AS INTEGER) / 3600000 THEN b.hour_rows ELSE 0 END
                        FROM request_log_budget b WHERE b.org_id = ?2), 0) < ${HOUR_ROWS_CAP}
@@ -86,6 +89,7 @@ export const insertLog = async (db: D1Database, l: NewLog) =>
         l.at,
         l.requestBody,
         l.responseBody,
+        l.client ?? null,
       ],
     )
   ).changes > 0;
@@ -144,7 +148,7 @@ function where(orgId: string, f: LogFilter, now: number, cursor?: string) {
 const readable = (now: number) => `(has_bodies = 1 AND at >= ${now - LOG_BODY_MS})`;
 
 const LIST_COLUMNS = (now: number) =>
-  `id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code, duration_ms, at,
+  `id, org_id, key_id, via, client, mode, request_id, method, route, path, query, status, code, duration_ms, at,
    CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies`;
 
 export const listLogs = (
@@ -166,7 +170,7 @@ export const listLogs = (
 export const getLog = (db: D1Database, orgId: string, id: string, now: number) =>
   first<LogRow>(
     db,
-    `SELECT id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code, duration_ms, at,
+    `SELECT id, org_id, key_id, via, client, mode, request_id, method, route, path, query, status, code, duration_ms, at,
        CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies,
        CASE WHEN ${readable(now)} THEN request_body END AS request_body,
        CASE WHEN ${readable(now)} THEN response_body END AS response_body

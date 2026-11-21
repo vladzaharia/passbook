@@ -696,6 +696,22 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/developer/sandbox/reopen new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxReopen",
+    "op": "POST /api/v1/developer/sandbox/reopen",
+    "change": "new operation",
+    "note": "Reopen your closed developer sandbox inside its 30 days; returns a new key, shown once."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "new operation",
+    "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
+  },
+  {
     "key": "POST /api/v1/identities 201.handle: field added",
     "class": "additive",
     "operationId": "identities.postIdentities",

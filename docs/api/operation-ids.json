@@ -77,6 +77,8 @@
   "developer.getResolve",
   "developer.getSandbox",
   "developer.postSandbox",
+  "developer.postSandboxReopen",
+  "developer.postSandboxReset",
   "developer.postTryToken",
   "entitlements.getOrgsByIdEntitlements",
   "entitlements.getPlatformOrgsByIdEntitlements",

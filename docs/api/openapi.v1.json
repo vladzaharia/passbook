@@ -30964,6 +30964,13 @@
                               "try"
                             ]
                           },
+                          "client": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 32
+                          },
                           "hasBodies": {
                             "type": "boolean"
                           }
@@ -30982,6 +30989,7 @@
                           "keyId",
                           "mode",
                           "via",
+                          "client",
                           "hasBodies"
                         ]
                       }
@@ -31040,13 +31048,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
@@ -31148,6 +31161,13 @@
                         "try"
                       ]
                     },
+                    "client": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 32
+                    },
                     "hasBodies": {
                       "type": "boolean"
                     },
@@ -31185,6 +31205,7 @@
                     "keyId",
                     "mode",
                     "via",
+                    "client",
                     "hasBodies",
                     "requestBody",
                     "responseBody",
@@ -31222,13 +31243,18 @@
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "NOT_FOUND",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
@@ -31383,13 +31409,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
@@ -31474,13 +31505,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
@@ -31550,13 +31586,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
@@ -32073,6 +32114,13 @@
                               "try"
                             ]
                           },
+                          "client": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 32
+                          },
                           "hasBodies": {
                             "type": "boolean"
                           }
@@ -32091,6 +32139,7 @@
                           "keyId",
                           "mode",
                           "via",
+                          "client",
                           "hasBodies"
                         ]
                       },
@@ -32315,13 +32364,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
@@ -32505,13 +32559,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
@@ -32627,13 +32686,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
@@ -32733,13 +32797,387 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/developer/sandbox/reset": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Start over: delete your sandbox test passes, captured webhooks and request log, restart the quickstart and replace the key",
+        "operationId": "developer.postSandboxReset",
+        "tags": [
+          "developer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "turnstileToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "turnstileToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sandbox": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgSlug": {
+                          "type": "string"
+                        },
+                        "templateId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "previewOnly": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "closedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "orgId",
+                        "orgSlug",
+                        "templateId",
+                        "previewOnly",
+                        "createdAt",
+                        "closedAt"
+                      ]
+                    },
+                    "key": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "secret": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "test"
+                          ]
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "secret",
+                        "mode",
+                        "expiresAt"
+                      ]
+                    },
+                    "deleted": {
+                      "type": "object",
+                      "properties": {
+                        "passes": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "captures": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "calls": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "passes",
+                        "captures",
+                        "calls"
+                      ]
+                    },
+                    "kept": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "resetsLeft": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 3
+                    }
+                  },
+                  "required": [
+                    "sandbox",
+                    "key",
+                    "deleted",
+                    "kept",
+                    "resetsLeft"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "ORG_HELD",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
+          "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/developer/sandbox/reopen": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Reopen your closed sandbox inside its 30 days, with a new key",
+        "operationId": "developer.postSandboxReopen",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgSlug": {
+                      "type": "string"
+                    },
+                    "templateId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "previewOnly": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "closedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "key": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "secret": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "test"
+                          ]
+                        },
+                        "expiresAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "secret",
+                        "mode",
+                        "expiresAt"
+                      ]
+                    },
+                    "previousKey": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "orgSlug",
+                    "templateId",
+                    "previewOnly",
+                    "createdAt",
+                    "closedAt",
+                    "key",
+                    "previousKey"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "ORG_HELD",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
+          "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
@@ -32805,13 +33243,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
@@ -32873,13 +33316,18 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "ORG_HELD",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
           "RESOLVE_NOT_FOUND",
+          "SANDBOX_CLOSED",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_CLOSED",
           "SANDBOX_NOT_FOUND",
+          "SANDBOX_REOPEN_WINDOW",
+          "SANDBOX_RESET_LIMIT",
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
