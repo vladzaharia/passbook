@@ -393,3 +393,22 @@ describe('tenant identity', () => {
     );
   });
 });
+
+describe('download link and the Apple channel', () => {
+  it('reports the channel the link is gated on, and the link answers CHANNEL_OFF when it is off', async () => {
+    const pass = await kit.pass();
+    const on = await detail(pass.id);
+    expect(on.channels?.apple.on).toBe(true);
+
+    const put = await api(`/passes/${pass.id}/channels`, {
+      method: 'PUT',
+      headers: { ...auth.admin(), 'content-type': 'application/json' },
+      body: JSON.stringify({ channels: { apple: 'off' } }),
+    });
+    expect(put.status).toBe(200);
+    const off = await detail(pass.id);
+    expect(off.channels?.apple.on).toBe(false);
+    expect(off.testPreview).toBe(false);
+    await expectProblem(await app.request(off.downloadUrl, {}, kit.env), 404, 'CHANNEL_OFF');
+  });
+});
