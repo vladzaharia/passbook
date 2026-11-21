@@ -53,7 +53,7 @@ export function ChangeRunPage({ runId }: { runId: string }) {
           <Badge
             tone={b.state === 'sent' ? 'success' : b.state === 'failed' ? 'danger' : 'neutral'}
           >
-            {b.state}
+            {C.run.states[b.state] ?? b.state}
           </Badge>
         ) : undefined
       }
