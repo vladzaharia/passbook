@@ -5,6 +5,7 @@ import {
   IDP_SIGN_IN_REQUIRED_MESSAGE,
   idpEmailNotPrimaryLine,
   PASSKEY_REQUIRED_MESSAGE,
+  STEP_UP_REQUIRED_MESSAGE,
 } from '../../shared/copy/sign-in.ts';
 import { AppError, ConflictError, ForbiddenError, UnauthenticatedError } from './errors-core.ts';
 
@@ -145,6 +146,13 @@ export function authorityDenied(
 export class IdpSignInRequiredError extends ForbiddenError {
   constructor(signInUrl: string) {
     super(IDP_SIGN_IN_REQUIRED_MESSAGE, 'IDP_SIGN_IN_REQUIRED', { signInUrl });
+  }
+}
+
+/** 403 `STEP_UP_REQUIRED`: the session's sign-in is too old for this action; `signInUrl` asks Polaris ID again. */
+export class StepUpRequiredError extends ForbiddenError {
+  constructor(signInUrl: string) {
+    super(STEP_UP_REQUIRED_MESSAGE, 'STEP_UP_REQUIRED', { signInUrl });
   }
 }
 

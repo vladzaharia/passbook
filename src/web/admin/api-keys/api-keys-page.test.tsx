@@ -356,7 +356,7 @@ describe('api keys page', () => {
     const user = userEvent.setup();
     // Existing Test keys stay listed, and no mode switch sits on the page.
     expect(await screen.findByText('Old test')).toBeInTheDocument();
-    expect(screen.queryByRole('switch', { name: /Test mode/ })).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'P');

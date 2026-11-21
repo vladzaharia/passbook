@@ -4,9 +4,11 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import { ensurePersonalOrg } from '../orgs/personal.ts';
 import { getPlatformSettings } from '../settings/service.ts';
+import type { PrimaryCheck } from './account-claims.ts';
 import {
+  auditEmailNotPrimary,
+  checkPrimaryOwner,
   createUserForProvenEmail,
-  refuseNonPrimaryOwner,
   releaseClaimOtherThan,
 } from './account-claims.ts';
 import { withinCaps, withinDailyCap, withinIpCap, withinSubjectCap } from './magic-caps.ts';
@@ -32,6 +34,7 @@ async function sendIdentityProof(
   email: string,
   claims: OidcClaims,
   sign: SignInContext,
+  probedOwnerId?: string,
 ): Promise<never> {
   const conflict = () => new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   if (!sign.bindingHash) throw conflict();
@@ -46,6 +49,7 @@ async function sendIdentityProof(
     ctx.log.warn('auth.magic_throttled', { code: 'MAGIC_THROTTLED', userId: ownerId });
     throw conflict();
   }
+  if (probedOwnerId) await auditEmailNotPrimary(ctx, probedOwnerId, false);
   await issueMagicLink(ctx, {
     email,
     purpose: 'sign_in',
@@ -70,7 +74,7 @@ export async function signInOidc(
   sign: SignInContext,
 ): Promise<SignInResult> {
   const db = ctx.env.DB;
-  const roles = rolesFromGroups(ctx.env, claims.groups);
+  const roles = rolesFromGroups(ctx.env, claims.groups, ctx.log);
   if (roles.length === 0) {
     // Group names, not people: what arrived is what an operator needs to fix the mapping.
     ctx.log.warn('auth.oidc_no_access', { code: 'NO_ACCESS', groups: claims.groups.slice(0, 20) });
@@ -89,14 +93,17 @@ export async function signInOidc(
     // Only a proven address names an owner: a primary email on an account that signs in through a
     // provider may be an unverified claim.
     const owner = await repo.findUserByProvenEmail(db, email, { primaryOnly: true });
-    if (!owner) await refuseNonPrimaryOwner(ctx, email);
+    const check: PrimaryCheck = owner
+      ? { kind: 'ok' }
+      : await checkPrimaryOwner(ctx, email, { trust, mailProven: false });
     if (owner && owner.status !== 'active') {
       throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
     }
     // Without trust (setting off, or the provider did not verify the address) nothing is linked or
     // created from the claim: the mail round trip proves the address first, and the account is
     // made or found then.
-    if (!trust) await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign);
+    if (!trust || check.kind === 'prove')
+      await sendIdentityProof(ctx, owner?.id ?? null, email, claims, sign, check.probedOwnerId);
     user = owner ?? (await createUserForProvenEmail(ctx, email, claims.name ?? null, sign));
     linkVia = owner ? 'trusted_email' : 'new_user';
   }

@@ -284,10 +284,12 @@ describe('connection detail', () => {
     });
     await screen.findByRole('radio', { name: /Poll/ });
     await waitFor(() =>
-      expect(screen.getAllByRole('radio').map((r) => (r as HTMLInputElement).value)).toEqual([
-        'poll',
-        'manual',
-      ]),
+      expect(
+        screen
+          .getAllByRole('radio')
+          .filter((r) => r instanceof HTMLInputElement)
+          .map((r) => (r as HTMLInputElement).value),
+      ).toEqual(['poll', 'manual']),
     );
     expect(screen.queryByRole('tab', { name: 'Webhook' })).not.toBeInTheDocument();
   });

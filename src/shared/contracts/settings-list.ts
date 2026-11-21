@@ -30,8 +30,12 @@ export const SettingsListSchema = z.object({
   /** Read-only: managed in Polaris ID. */
   oidc: z.object({
     issuer: z.string(),
+    platformAdminGroup: z.string().nullable(),
     adminGroup: z.string().nullable(),
+    developerGroup: z.string().nullable(),
     userGroup: z.string().nullable(),
+    /** Whether org console access needs the admin group. */
+    consoleGroupRequired: z.boolean(),
   }),
   /** Platform scope, read-only: whether each wallet provider is released in any mode. */
   released: z.object({ google: z.boolean(), samsung: z.boolean() }).optional(),

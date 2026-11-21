@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 import { e2eOrigin } from '../../tools/lib/e2e-ports.ts';
 
-export type Role = 'admin' | 'user' | 'reviewer' | 'nobody' | 'loner' | 'builder';
+export type Role = 'admin' | 'user' | 'reviewer' | 'nobody' | 'loner' | 'builder' | 'developer';
 
 /** Mock Pocket ID subjects (see test/mock-oidc/server.ts). */
 const SUBJECT: Record<Role, string> = {
@@ -13,6 +13,7 @@ const SUBJECT: Record<Role, string> = {
   nobody: 'e2e-nobody',
   loner: 'e2e-loner',
   builder: 'e2e-builder',
+  developer: 'e2e-developer',
 };
 
 export const stateFile = (role: Role) => `e2e/.auth/${role}.json`;
