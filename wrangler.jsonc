@@ -56,6 +56,8 @@
     "OIDC_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
     "OIDC_ADMIN_GROUP": "wallet-admins",
     "OIDC_USER_GROUP": "wallet-users",
+    // The ID token's `amr` must contain this (a passkey). Empty turns the check off, for a mock provider.
+    "OIDC_REQUIRE_AMR": "phr",
     "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
     "PLATFORM_TEAM_ID": "48H7CLBV8Y",
     "TURNSTILE_SITE_KEY": "0x4AAAAAAFujM8ev6K0ns9wy",

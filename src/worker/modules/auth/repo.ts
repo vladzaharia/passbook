@@ -246,6 +246,8 @@ export interface FlowRow {
   nonce: string;
   code_verifier: string;
   redirect_path: string | null;
+  /** 1: this flow already restarted once with prompt=login because the first came back without a passkey. */
+  retried: number;
 }
 
 export async function insertFlow(
@@ -257,12 +259,13 @@ export async function insertFlow(
     redirectPath: string | null;
     bindingHash: string;
     expiresAt: number;
+    retried?: boolean;
   },
 ): Promise<void> {
   await run(
     db,
-    `INSERT INTO oidc_flows (state_hash, nonce, code_verifier, redirect_path, browser_binding_hash, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO oidc_flows (state_hash, nonce, code_verifier, redirect_path, browser_binding_hash, expires_at, retried)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       flow.stateHash,
       flow.nonce,
@@ -270,6 +273,7 @@ export async function insertFlow(
       flow.redirectPath,
       flow.bindingHash,
       flow.expiresAt,
+      flow.retried ? 1 : 0,
     ],
   );
 }
@@ -279,6 +283,6 @@ export const consumeFlow = (db: Db, stateHash: string, bindingHash: string, now:
   first<FlowRow>(
     db,
     `DELETE FROM oidc_flows WHERE state_hash = ? AND browser_binding_hash = ? AND expires_at > ?
-     RETURNING nonce, code_verifier, redirect_path`,
+     RETURNING nonce, code_verifier, redirect_path, retried`,
     [stateHash, bindingHash, now],
   );

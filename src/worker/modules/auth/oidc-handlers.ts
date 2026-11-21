@@ -71,27 +71,26 @@ export function noAccess(c: Context<AppBindings>) {
   return c.html(noAccessPage(c.var.nonce, safeNext(c.req.query('next')), requestTheme(c)));
 }
 
-export async function startOidc(c: Context<AppBindings>) {
-  await enforceRateLimit(c.env, 'RL_LOGIN', `oidc:${clientRatePrefix(c)}`);
-  const rp = oidcConfig(c.env);
-  if (!rp) throw new UnavailableError('Sign-in is not configured.', 'OIDC_UNCONFIGURED');
+type Discovered = Awaited<ReturnType<typeof discover>>;
+
+/** Saves a flow and sends the browser to the provider. `retried` marks the one restart for a missing passkey. */
+async function beginFlow(
+  c: Context<AppBindings>,
+  rp: RelyingParty,
+  discovered: Discovered,
+  input: { next: string | null; prompt?: 'login'; retried?: boolean },
+) {
   const ctx = serviceContext(c);
-  let discovered: Awaited<ReturnType<typeof discover>>;
-  try {
-    discovered = await discover(rp, { nowMs: ctx.clock.now(), log: ctx.log });
-  } catch (error) {
-    ctx.log.error('auth.oidc_discovery_failed', { error });
-    throw new UpstreamError('Sign-in provider is unreachable.', 'OIDC_UNREACHABLE');
-  }
   const secrets = await newFlowSecrets();
   const binding = ctx.ids.token(32);
   await saveOidcFlow(ctx, {
     stateHash: await sha256Hex(secrets.state),
     nonce: secrets.nonce,
     verifier: secrets.verifier,
-    redirectPath: safeNext(c.req.query('next')),
+    redirectPath: input.next,
     bindingHash: await sha256Hex(binding),
     expiresAt: ctx.clock.now() + FLOW_TTL_MS,
+    ...(input.retried ? { retried: true } : {}),
   });
   setBindingCookie(c, OIDC_COOKIE, binding, FLOW_TTL_MS / 1000);
   return c.redirect(
@@ -101,11 +100,29 @@ export async function startOidc(c: Context<AppBindings>) {
       state: secrets.state,
       nonce: secrets.nonce,
       codeChallenge: secrets.challenge,
-      // "Use another Polaris ID" (/auth/no-access) asks the provider to sign in again.
-      ...(c.req.query('prompt') === 'login' ? { prompt: 'login' as const } : {}),
+      ...(input.prompt ? { prompt: input.prompt } : {}),
     }),
     302,
   );
+}
+
+export async function startOidc(c: Context<AppBindings>) {
+  await enforceRateLimit(c.env, 'RL_LOGIN', `oidc:${clientRatePrefix(c)}`);
+  const rp = oidcConfig(c.env);
+  if (!rp) throw new UnavailableError('Sign-in is not configured.', 'OIDC_UNCONFIGURED');
+  const ctx = serviceContext(c);
+  let discovered: Discovered;
+  try {
+    discovered = await discover(rp, { nowMs: ctx.clock.now(), log: ctx.log });
+  } catch (error) {
+    ctx.log.error('auth.oidc_discovery_failed', { error });
+    throw new UpstreamError('Sign-in provider is unreachable.', 'OIDC_UNREACHABLE');
+  }
+  // "Use another Polaris ID" (/auth/no-access) asks the provider to sign in again.
+  return beginFlow(c, rp, discovered, {
+    next: safeNext(c.req.query('next')),
+    ...(c.req.query('prompt') === 'login' ? { prompt: 'login' as const } : {}),
+  });
 }
 
 export async function callbackOidc(c: Context<AppBindings>) {
@@ -124,8 +141,9 @@ export async function callbackOidc(c: Context<AppBindings>) {
   if (error || !code) return errorPage(c, 'cancelled', 400, next);
 
   let claims: Record<string, unknown>;
+  let discovered: Discovered;
   try {
-    ({ claims } = await redeemAuthorizationCode(
+    ({ claims, discovered } = await redeemAuthorizationCode(
       rp,
       {
         code,
@@ -148,6 +166,20 @@ export async function callbackOidc(c: Context<AppBindings>) {
     throw cause;
   }
 
+  // A Polaris ID session made with an emailed login code (`otp`) is email strength in disguise. The
+  // first time, ask again with prompt=login so the person can use their passkey; the second, refuse.
+  const needed = envString(c.env, 'OIDC_REQUIRE_AMR');
+  const methods = Array.isArray(claims.amr) ? claims.amr : [];
+  if (needed && !methods.includes(needed)) {
+    ctx.log.info('auth.oidc_passkey_missing', {
+      code: 'PASSKEY_REQUIRED',
+      retried: flow.retried === 1,
+    });
+    if (flow.retried !== 1)
+      return beginFlow(c, rp, discovered, { next, prompt: 'login', retried: true });
+    const page = signInErrorPage(c.var.nonce, 'PASSKEY_REQUIRED', { next }, requestTheme(c));
+    return c.html(page.html, page.status);
+  }
   const groups = Array.isArray(claims.groups)
     ? claims.groups.filter((g): g is string => typeof g === 'string')
     : [];
@@ -168,6 +200,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
         previousCookie: readCookie(c, SESSION_COOKIE),
         bindingHash: await sha256Hex(proofBinding),
         next,
+        ...(typeof claims.auth_time === 'number' ? { authTime: claims.auth_time * 1000 } : {}),
       },
     );
     setSessionCookie(c, result.session.cookieValue, result.session.maxAgeSeconds);

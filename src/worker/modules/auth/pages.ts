@@ -215,6 +215,7 @@ const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedA
   LINK_INVALID: { status: 400, art: 'expired' },
   EMAIL_TAKEN: { status: 403, art: 'no-access' },
   MAGIC_LINK_DISABLED: { status: 503, art: 'broken' },
+  PASSKEY_REQUIRED: { status: 403, art: 'login' },
   RATE_LIMITED: { status: 429, art: 'throttled' },
   VALIDATION: { status: 422, art: 'broken' },
 };
