@@ -1,4 +1,16 @@
-# PassBook Reader 0.2.3
+# PassBook Reader 0.2.4
+
+- A scan no longer blocks the next one while staff review the first: the page acknowledges receipt (`scanAck`, additive, still bridge v2) and the reader frees its gate on that. An older page keeps the old behaviour. Update the reader and the web together.
+- Links off PassBook hosts open in the browser; the reader stays on the verifier.
+- Settings open on press and hold. Switching to another verifier asks first, naming it, and clears this device's sign-in and pairing.
+- Scan broadcasts are rate limited. Zebra profile version 2 turns keystroke output off so a scan is not delivered twice.
+- Rotating the device or attaching a keyboard scanner no longer reloads the scanner.
+- A crashed WebView renderer rebuilds the verifier instead of closing the app; repeated crashes show Reload.
+- Android below 14 no longer reports built-in keys and scan engines as an attached keyboard. Hardware ids stay stable across reconnects.
+- Saved settings a newer rule rejects reset to defaults instead of crashing on launch.
+- Release builds are shrunk with R8.
+
+## 0.2.3
 
 - Shared scanning sessions pair multiple scanners and displays under one admission policy.
 - Scanner, camera-free Operator, Desk and Customer layouts adapt to phones, tablets and computers.

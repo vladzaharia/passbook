@@ -159,9 +159,7 @@ describe('Scanning staff', () => {
     confirm = screen.getByRole('alertdialog', { name: "Reset Sam K.'s PIN?" });
     await user.click(within(confirm).getByRole('button', { name: 'Reset PIN' }));
     let reveal = await screen.findByRole('dialog', { name: "Sam K.'s PIN" });
-    await user.click(within(reveal).getByRole('button', { name: 'Show PIN' }));
     expect(within(reveal).getByText('123456')).toBeInTheDocument();
-    await user.click(within(reveal).getByRole('checkbox', { name: 'I saved the PIN' }));
     await user.click(within(reveal).getByRole('button', { name: 'Done' }));
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: "Sam K.'s PIN" })).not.toBeInTheDocument(),
@@ -172,7 +170,6 @@ describe('Scanning staff', () => {
     confirm = screen.getByRole('alertdialog', { name: "Reset Sam K.'s PIN?" });
     await user.click(within(confirm).getByRole('button', { name: 'Reset PIN' }));
     reveal = await screen.findByRole('dialog', { name: "Sam K.'s PIN" });
-    await user.click(within(reveal).getByRole('button', { name: 'Show PIN' }));
     expect(within(reveal).getByText('654321')).toBeInTheDocument();
     expect(within(reveal).queryByText('123456')).not.toBeInTheDocument();
     expect(

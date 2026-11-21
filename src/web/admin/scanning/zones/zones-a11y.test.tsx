@@ -65,7 +65,7 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
       handlers,
     });
     const user = userEvent.setup();
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     await user.click(await within(dialog).findByRole('tab', { name: 'Access' }));
     await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
     await user.click(await screen.findByRole('checkbox', { name: 'Pool' }));

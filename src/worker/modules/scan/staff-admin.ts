@@ -1,18 +1,12 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import type {
-  CreateScanStaffSchema,
-  ScanStaffSchema,
-  UpdateScanStaffSchema,
-} from '../../../shared/contracts/scanners.ts';
+import type { ScanStaffSchema, UpdateScanStaffSchema } from '../../../shared/contracts/scanners.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
 import { bump } from '../../platform/counters.ts';
 import { macKeyVersion } from '../../platform/crypto.ts';
-import { classifyD1Error } from '../../platform/db.ts';
 import {
   AppError,
-  ConflictError,
   ForbiddenError,
   NotFoundError,
   RateLimitedError,
@@ -23,7 +17,6 @@ import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
 import {
-  addStaffInsert,
   addStaffPinRotate,
   addStaffUpdate,
   addUnbindStaffEverywhere,
@@ -38,8 +31,16 @@ import {
   STAFF_PAGE_MAX,
   type StaffPage,
 } from './repo-staff-page.ts';
+import { newCapture } from './setup-capture.ts';
 import { staffViews } from './staff-admin-views.ts';
 import { hashPin, pinMatches } from './staff-pin.ts';
+import {
+  type CreateStaff,
+  planStaff,
+  STAFF_CODES,
+  staffMutationError,
+  staffStatements,
+} from './staff-statements.ts';
 
 /** One minute window per user: 60 writes or 240 reads. */
 export async function staffRateLimit(ctx: ServiceContext, userId: string, write: boolean) {
@@ -54,13 +55,9 @@ export async function staffRateLimit(ctx: ServiceContext, userId: string, write:
 export const staffTarget = (ctx: ServiceContext, orgId: string, id: string) =>
   getStaff(ctx.env.DB, orgId, id);
 
-type CreateStaff = z.infer<typeof CreateScanStaffSchema>;
 type UpdateStaff = z.infer<typeof UpdateScanStaffSchema>;
 type StaffDto = z.infer<typeof ScanStaffSchema>;
 export type StaffAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
-
-/** Staff writes answer a conflict on the same code the console already handles. */
-const STAFF_CODES = { config: 'SCAN_STAFF_CHANGED', lineage: 'SCAN_STAFF_CHANGED' } as const;
 
 function assertAuthority(
   authority: StaffAuthority,
@@ -85,19 +82,9 @@ function assertAuthority(
     throw new ForbiddenError();
 }
 
-async function assertOrg(ctx: ServiceContext, orgId: string): Promise<void> {
+async function _assertOrg(ctx: ServiceContext, orgId: string): Promise<void> {
   if (!(await orgIsActive(ctx.env.DB, orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-}
-
-function staffMutationError(error: unknown): never {
-  const info = classifyD1Error(error);
-  if (info?.kind === 'unique' && /scan_staff\.org_id|scan_staff_org_name/.test(info.detail))
-    throw new ConflictError(
-      'Another active staff member already has that name.',
-      'STAFF_NAME_TAKEN',
-    );
-  throw error;
 }
 
 /**
@@ -162,41 +149,19 @@ export async function createStaff(
   input: CreateStaff,
 ) {
   assertAuthority(authority, session, input.orgId, mode, 'scanning:manage');
-  await assertOrg(ctx, input.orgId);
-  const userId = authority.userId;
-  const id = ctx.ids.id();
-  const pin = ctx.ids.code(6);
-  const pinHash = await hashPin(ctx.env, id, pin);
-  const now = ctx.clock.now();
+  const capture = newCapture({ userId: authority.userId, authority, orgId: input.orgId, mode });
+  const plan = await planStaff(ctx, input);
   const g = adminGrant(
     ctx,
     'org.scan.staff.create',
-    userId,
+    authority.userId,
     authority,
     input.orgId,
     [],
     STAFF_CODES,
-    id,
+    plan.id,
   );
-  addStaffInsert(g, {
-    id,
-    name: input.name,
-    role: input.role,
-    pinHash,
-    pinMacVersion: macKeyVersion(ctx.env),
-    createdBy: userId,
-    now,
-  });
-  g.add(
-    audited(g, ctx, {
-      orgId: input.orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: 'scan_staff.create',
-      targetType: 'scan_staff',
-      targetId: id,
-    }),
-  );
+  const { id, pin } = staffStatements(g, ctx, plan, capture);
   try {
     await g.commit();
   } catch (error) {

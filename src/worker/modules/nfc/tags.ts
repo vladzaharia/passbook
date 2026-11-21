@@ -3,8 +3,10 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { ensureCredentialRefKeyset } from '../passes/credential-keyset.ts';
-import { assertPassTakesTag } from './pass-state.ts';
+import { ownerActiveCheck } from '../scan/repo-tags-bind.ts';
+import { assertBindableIfScannable, assertPassTakesTag } from './pass-state.ts';
 import { bindPolicy, tagsRefusal } from './policy.ts';
+import { ownerIsActive } from './repo-enrollments.ts';
 import { activeBinding, type BindingRow, type PassFacts, passFacts } from './repo-tag-bindings.ts';
 import { orgTagCount, type TagRow, tagByRef, tagView } from './repo-tags.ts';
 import {
@@ -141,12 +143,13 @@ export async function bindTag(
     const pass = await passFacts(ctx.env.DB, req.passId);
     if (!pass || pass.orgId !== orgId || pass.mode !== mode || pass.deletedAt !== null)
       throw notFound();
-    if (req.scope === 'user' && !pass.ownerUserId)
+    if (req.scope === 'user' && !(await ownerIsActive(ctx.env.DB, pass.ownerUserId)))
       throw new ValidationError(
         'This person has no account yet. Assign the tag to the pass instead.',
         [],
         'TAG_NO_ACCOUNT',
       );
+    await assertBindableIfScannable(ctx, orgId, pass.id);
     const candidate = await assertPassTakesTag(ctx, orgId, pass.id);
     const tag = await tagByRef(ctx.env.DB, orgId, mode, ref);
     // A typed ID is a UID, and a Secure tag is never its UID: it must be tapped.
@@ -190,7 +193,10 @@ export async function bindTag(
       orgId,
       mode,
     };
-    const g = tagGrant(ctx, 'org_mode.nfc.tag.bind', authority, bindChecks(plan));
+    const g = tagGrant(ctx, 'org_mode.nfc.tag.bind', authority, [
+      ...bindChecks(plan),
+      ...(plan.userId ? [ownerActiveCheck(plan.userId)] : []),
+    ]);
     const insert = addBind(g, ctx, plan);
     try {
       const results = await g.commit();

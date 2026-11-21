@@ -118,6 +118,16 @@ describe('predeployProblems for domains', () => {
     expect(missing).toMatch(/gone.example has no route/);
   });
 
+  it('serves a DEVELOPERS_HOSTS route, and wants a route for each developers host', () => {
+    const served = problems({
+      routes: [...ready.routes, { pattern: 'developers.example', custom_domain: true }],
+      vars: { ...ready.vars, DEVELOPERS_HOSTS: 'developers.example' },
+    });
+    expect(served).not.toMatch(/developers.example/);
+    const missing = problems({ vars: { ...ready.vars, DEVELOPERS_HOSTS: 'developers.example' } });
+    expect(missing).toMatch(/DEVELOPERS_HOSTS: developers.example has no route/);
+  });
+
   it('wants https, custom domains and an allowed sender', () => {
     expect(
       problems({ vars: { ...ready.vars, PUBLIC_BASE_URL: 'http://passbook.example' } }),

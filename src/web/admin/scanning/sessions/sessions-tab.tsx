@@ -94,7 +94,7 @@ export function SessionsTab({
               <div className="grid grid-cols-3 gap-3">
                 <Metric value={s.today} label="Today" />
                 <Metric value={s.deviceCount} label="Devices" />
-                <Metric value={s.onlineCount} label="Online" />
+                <Metric value={s.status === 'ended' ? 0 : s.onlineCount} label="Online" />
               </div>
               <p className="text-sm text-fg-muted">
                 {sessionAccepts(

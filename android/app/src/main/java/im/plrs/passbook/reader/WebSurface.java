@@ -26,6 +26,10 @@ public final class WebSurface {
         void command(JSONObject message);
         void notice(String message);
         void camera(PermissionRequest request);
+        /** A link tap to somewhere other than PassBook: hand it to the browser. */
+        default void external(Uri url) {}
+        /** The WebView's renderer process died. The surface is unusable: build a new one. */
+        default void rendererGone(boolean crashed) {}
         default void cameraCancelled(PermissionRequest request) {}
     }
     public final WebView view;
@@ -35,6 +39,7 @@ public final class WebSurface {
     private JavaScriptReplyProxy reply;
     private boolean ready;
     private int version = 1;
+    private Set<String> features = Set.of();
 
     @SuppressLint("SetJavaScriptEnabled")
     public WebSurface(Activity activity, Listener listener) {
@@ -60,11 +65,19 @@ public final class WebSurface {
                 invalidate();
             }
             @Override public boolean shouldOverrideUrlLoading(WebView web, WebResourceRequest request) {
-                // HTTPS identity-provider redirects may complete in the same cookie jar; only
-                // the configured verifier origin gets a native bridge or camera access.
-                boolean allowed = !ReaderConfig.originOf(request.getUrl().toString()).isEmpty();
-                if (!allowed && request.isForMainFrame()) listener.notice("Only HTTPS navigation is supported.");
-                return !allowed;
+                // Only the configured origin and PassBook hosts load here, and only the configured origin gets
+                // the native bridge or camera. A link elsewhere opens in the browser; blocked frames just stop.
+                if (ReaderConfig.allowsNavigation(request.getUrl().toString(), config == null ? "" : config.origin())) return false;
+                if (request.isForMainFrame()) {
+                    String scheme = request.getUrl().getScheme();
+                    if ("https".equalsIgnoreCase(scheme)) listener.external(request.getUrl());
+                    else listener.notice("Only HTTPS navigation is supported.");
+                }
+                return true;
+            }
+            @Override public boolean onRenderProcessGone(WebView web, android.webkit.RenderProcessGoneDetail detail) {
+                listener.rendererGone(detail.didCrash());
+                return true;
             }
             @Override public void onReceivedError(WebView web, WebResourceRequest request,
                                                    android.webkit.WebResourceError error) {
@@ -109,6 +122,7 @@ public final class WebSurface {
                         reply = proxy;
                         ready = true;
                         version = negotiate(sent, json.optJSONArray("versions"));
+                        features = features(json.optJSONArray("features"));
                     } else if (sent != version && !(sent == 1 && json.optString("op").equals("stop"))) return;
                     if (ready) listener.command(json);
                 } catch (JSONException exception) {
@@ -135,11 +149,34 @@ public final class WebSurface {
         return 1;
     }
 
+    /** Additive hello features, for example scanAck. Unknown names are kept and ignored; at most eight, 32 characters each. */
+    static Set<String> features(JSONArray offered) {
+        if (offered == null) return Set.of();
+        java.util.HashSet<String> names = new java.util.HashSet<>();
+        for (int index = 0; index < offered.length() && index < 8; index++) {
+            String name = offered.optString(index);
+            if (!name.isEmpty() && name.length() <= 32) names.add(name);
+        }
+        return Set.copyOf(names);
+    }
+
+    /** Forget this device's session with the old origin: cookies, local storage and cache. */
+    public void clearSiteData() {
+        invalidate();
+        android.webkit.CookieManager.getInstance().removeAllCookies(null);
+        android.webkit.CookieManager.getInstance().flush();
+        android.webkit.WebStorage.getInstance().deleteAllData();
+        view.clearCache(true);
+        view.clearHistory();
+    }
+
     public int version() { return version; }
+    public boolean feature(String name) { return features.contains(name); }
 
     public void invalidate() {
         ready = false;
         version = 1;
+        features = Set.of();
         reply = null;
         listener.reset();
     }

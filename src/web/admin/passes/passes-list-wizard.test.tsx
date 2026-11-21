@@ -10,7 +10,7 @@ import {
   renderApp,
 } from '../../lib/test-utils.tsx';
 import { ReviewStep } from './new-pass-review.tsx';
-import { actionsFor } from './pass-actions.tsx';
+import { actionsFor } from './pass-action-defs.ts';
 import {
   eligibleTemplate,
   ORG,

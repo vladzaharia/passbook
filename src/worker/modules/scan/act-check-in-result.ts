@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { completedAdmission } from './admission.ts';
 import { safeAdmitAccess } from './admit.ts';
 import type { CountsRead } from './counts.ts';
+import { directedLabel } from './direction-label.ts';
 import type { ScanActor } from './guard.ts';
 import { recordResult } from './ledger.ts';
 import { type PreparedPhotoGrant, photoGrantUrl } from './member-photo.ts';
@@ -58,6 +59,12 @@ export function finishCheckInResult(input: CheckInResult): ScanOutcome {
     ...blankOutcome('ok', read),
     scanId,
     ...details,
+    action:
+      details.action &&
+      ({
+        ...details.action,
+        label: directedLabel(details.action.kind, details.action.label, checkIn?.direction),
+      } as typeof details.action),
     at: now,
     milestone:
       read.counts.event && expected > 0 && arrived === expected

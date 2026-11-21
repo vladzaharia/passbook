@@ -3,9 +3,9 @@ import { LOG_META_MS } from './repo-request-log.ts';
 
 /** The sandbox's own request, by the id the response carried in `x-request-id` (a ray's region letters may be any case). Newest first if the id repeats. */
 export const requestByRequestId = (db: D1Database, orgId: string, requestId: string, now: number) =>
-  first<{ id: string; method: string; path: string; status: number }>(
+  first<{ id: string; request_id: string; method: string; path: string; status: number }>(
     db,
-    `SELECT id, method, path, status FROM request_log
+    `SELECT id, request_id, method, path, status FROM request_log
      WHERE org_id = ? AND request_id = ? COLLATE NOCASE AND at >= ? ORDER BY id DESC LIMIT 1`,
     [orgId, requestId, now - LOG_META_MS],
   );

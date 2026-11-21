@@ -1,12 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import type { LucideIcon } from 'lucide-react';
-import { Copy, UserMinus } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import type { Mode } from '@/shared/contracts/common.ts';
-import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
-import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { copyText } from '../../lib/clipboard.ts';
 import {
   clearHolderConfirm,
@@ -21,117 +16,14 @@ import { usePassActions } from './api.ts';
 import { usePassRemoval } from './api-removal.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { absoluteUrl } from './format.ts';
+import {
+  type ActionPass,
+  actionsFor,
+  type PassActionDef,
+  type PassActionId,
+  READ_ONLY,
+} from './pass-action-defs.ts';
 import { RotateLink } from './rotated-link-dialog.tsx';
-
-export type PassActionId =
-  | 'update'
-  | 'pull'
-  | 'void'
-  | 'unvoid'
-  | 'remove'
-  | 'restore'
-  | 'open'
-  | 'rotate'
-  | 'newcode'
-  | 'download'
-  | 'copy'
-  | 'clear'
-  | 'delete';
-
-type ActionPass = Pick<
-  PassSummaryDto,
-  | 'id'
-  | 'orgId'
-  | 'title'
-  | 'serial'
-  | 'status'
-  | 'connectionId'
-  | 'holderState'
-  | 'holderEmail'
-  | 'deviceCount'
-> & { removedAt?: number | null | undefined; mode?: Mode | undefined };
-
-const LABEL: Record<PassActionId, string> = {
-  update: 'Update devices',
-  pull: 'Pull from source',
-  void: 'Void',
-  unvoid: 'Unvoid',
-  remove: 'Remove from Wallet',
-  restore: 'Restore',
-  open: 'Open public page',
-  rotate: 'Rotate link',
-  newcode: 'New code',
-  download: 'Download .pkpass',
-  copy: 'Copy link',
-  clear: 'Clear holder',
-  delete: 'Delete',
-};
-const ICON: Record<PassActionId, LucideIcon> = {
-  update: ACTION_ICON.updateDevices,
-  pull: ACTION_ICON.refresh,
-  void: ACTION_ICON.void,
-  unvoid: ACTION_ICON.unvoid,
-  remove: ACTION_ICON.removeFromWallet,
-  restore: ACTION_ICON.restoreToWallet,
-  open: ACTION_ICON.openPublic,
-  rotate: ACTION_ICON.rotate,
-  newcode: ACTION_ICON.refresh,
-  download: ACTION_ICON.download,
-  copy: Copy,
-  clear: UserMinus,
-  delete: ACTION_ICON.delete,
-};
-const DANGER = new Set<PassActionId>(['remove', 'clear', 'delete']);
-export interface PassActionDef {
-  id: PassActionId;
-  label: string;
-  icon: LucideIcon;
-  destructive: boolean;
-  /** Shown as a header button; the rest go in More. */
-  bar: boolean;
-  /** Only reading actions stay on when changes are unavailable. */
-  disabled: boolean;
-}
-
-const READ_ONLY = new Set<PassActionId>(['open', 'download', 'copy']);
-
-/**
- * Every action a pass offers, in order. The header and the row menu both read this, so they always
- * offer the same set. A voided pass shows only Unvoid in the bar and never Update or Pull. A
- * removed pass shows only Restore: it stays removed until restored, so Void and Update would lie,
- * and its link and download are gone with it. `readOnly` greys out changes.
- */
-export function actionsFor(pass: ActionPass, readOnly = false): PassActionDef[] {
-  const removed = pass.removedAt != null;
-  const voided = pass.status === 'voided';
-  const ids: PassActionId[] = removed
-    ? ['restore', 'open', 'copy']
-    : voided
-      ? ['unvoid', 'open', 'rotate', 'download', 'copy', 'remove']
-      : [
-          pass.connectionId ? 'pull' : 'update',
-          'void',
-          'open',
-          'rotate',
-          'newcode',
-          'download',
-          'copy',
-          'remove',
-        ];
-  if (pass.holderState !== 'unassigned') ids.push('clear');
-  ids.push('delete');
-  const bar = new Set<PassActionId>(
-    removed ? ['restore'] : voided ? ['unvoid'] : ['update', 'pull', 'void', 'open'],
-  );
-  return ids.map((id) => ({
-    id,
-    label: LABEL[id],
-    icon: ICON[id],
-    destructive: DANGER.has(id),
-    bar: bar.has(id),
-    disabled: readOnly && !READ_ONLY.has(id),
-  }));
-}
 
 export interface PassLinks {
   publicUrl: string;
@@ -162,6 +54,7 @@ export function usePassActionRunner(
   const mode = useMode();
   const foreign = pass.mode !== undefined && pass.mode !== mode;
   const canChange = options.canOperate && !foreign;
+  const defs = actionsFor(pass, !canChange);
   const [ask, setAsk] = useState<
     'void' | 'clear' | 'delete' | 'rotate' | 'newcode' | 'remove' | null
   >(null);
@@ -222,7 +115,8 @@ export function usePassActionRunner(
     else if (id === 'restore') void restore();
     else if (id === 'copy') void copy();
     else if (id === 'open' && links) window.open(links.publicUrl, '_blank', 'noopener,noreferrer');
-    else if (id === 'download' && links) window.location.assign(links.downloadUrl);
+    else if (id === 'download' && links && !defs.find((d) => d.id === id)?.disabled)
+      window.location.assign(links.downloadUrl);
     else if (
       id === 'void' ||
       id === 'remove' ||
@@ -315,7 +209,7 @@ export function usePassActionRunner(
   ) : null;
 
   return {
-    defs: actionsFor(pass, !canChange),
+    defs,
     run,
     links,
     pending: {

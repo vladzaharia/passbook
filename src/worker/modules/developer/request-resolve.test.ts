@@ -33,13 +33,16 @@ describe('GET /developer/resolve', () => {
     // The ray is found whatever case the browser sends (the search lower-cases what it classifies).
     for (const sent of [ray, ray.toLowerCase()]) {
       const found = ResolvedSchema.parse(await (await resolve(a.browser, sent)).json());
-      expect(found).toMatchObject({ kind: 'request', href: `/developers/logs#${row?.id}` });
+      expect(found).toMatchObject({ kind: 'request', href: `/developers/logs#${ray}` });
       expect(found.label).toBe('GET /passes, 200');
     }
+    // The log detail opens by the request id too, so the link carries the id that was pasted.
+    const detail = await t.call(`/developer/logs/${ray}`, { headers: a.browser });
+    expect(((await detail.json()) as { id: string }).id).toBe(row?.id);
     const asPass = ResolvedSchema.parse(await (await resolve(a.browser, pass.id)).json());
     expect(asPass).toEqual({
       kind: 'pass',
-      href: `/admin/o/${a.made.orgId}/passes/${pass.id}`,
+      href: `/developers/logs#path=${encodeURIComponent(`/passes/${pass.id}`)}`,
       label: pass.serial,
     });
     const asTemplate = ResolvedSchema.parse(
@@ -47,7 +50,7 @@ describe('GET /developer/resolve', () => {
     );
     expect(asTemplate.kind).toBe('template');
     const asOrg = ResolvedSchema.parse(await (await resolve(a.browser, a.made.orgId)).json());
-    expect(asOrg).toMatchObject({ kind: 'org', href: `/admin/o/${a.made.orgId}` });
+    expect(asOrg).toMatchObject({ kind: 'org', href: '/developers/console' });
 
     // Another sandbox sees none of it, by session or by try token.
     const { token } = await t.mint(b.browser);

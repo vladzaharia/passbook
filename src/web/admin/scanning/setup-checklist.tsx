@@ -19,8 +19,8 @@ export interface SetupCounts {
 
 const STEPS: { id: keyof SetupCounts; label: string; tab?: ScanningTab; cta: string }[] = [
   { id: 'sessions', label: 'Create a session', cta: 'New session' },
-  { id: 'zones', label: 'Add a zone', tab: 'zones', cta: 'Add zone' },
-  { id: 'paired', label: 'Pair a scanner', tab: 'scanners', cta: 'Pair' },
+  { id: 'zones', label: 'Add a zone', tab: 'zones', cta: 'New zone' },
+  { id: 'paired', label: 'Pair a scanner', tab: 'devices', cta: 'Pair' },
   { id: 'staff', label: 'Add staff', tab: 'staff', cta: 'Add staff' },
 ];
 

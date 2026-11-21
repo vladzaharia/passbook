@@ -131,3 +131,14 @@ export const sessionRuleLabel = (s: ScanningSession) =>
         in_out: 'In / out',
       }[s.settings.checkIn.mode]
     : 'Pass or template rules';
+
+/** Direction Both or Out and an event's re-entry only act while the session tracks in / out. */
+export function trackingGap(
+  d: Pick<SessionDraft, 'direction' | 'checkIn' | 'eventIds'>,
+  events: readonly { id: string; reentry: boolean }[],
+) {
+  if (d.checkIn.mode === 'in_out') return null;
+  if (d.direction === 'both' || d.direction === 'out')
+    return `Direction ${d.direction === 'both' ? 'Both' : 'Out'}`;
+  return events.some((e) => e.reentry && d.eventIds.includes(e.id)) ? 'Re-entry' : null;
+}

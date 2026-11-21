@@ -84,7 +84,7 @@ describe('Scanning page', () => {
     localStorage.removeItem('wallet-org-filter');
     try {
       const seen: (string | null)[] = [];
-      const { fetchMock } = await renderApp('/admin/scanning?tab=scans', {
+      const { fetchMock } = await renderApp('/admin/scanning?tab=activity', {
         session: 'admin',
         memberships: [readOnly],
         handlers: {
@@ -121,14 +121,14 @@ describe('Scanning page', () => {
       },
     });
     expect(await screen.findByRole('link', { name: 'Membership desk' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New session' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Scan as Admin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('dialog', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'New session' })).not.toBeInTheDocument();
   });
 
   it('keeps scanner and event lists readable without management controls', async () => {
-    const { router } = await renderApp('/admin/scanning?tab=scanners', {
+    const { router } = await renderApp('/admin/scanning?tab=devices', {
       session: 'admin',
       memberships: [readOnly],
       selectedOrg: 'o1',
@@ -142,12 +142,40 @@ describe('Scanning page', () => {
     expect(within(table).getByText('Front door')).toBeInTheDocument();
     expect(within(table).queryByRole('button', { name: 'Pair' })).not.toBeInTheDocument();
     expect(within(table).queryByRole('button', { name: /Actions for/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New session' })).not.toBeInTheDocument();
     await act(async () => {
       await router.navigate({ to: '/admin/scanning', search: { orgId: 'o1', tab: 'events' } });
     });
     expect(await screen.findByText('No events yet')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New event' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['scanners', 'devices'],
+    ['scans', 'activity'],
+  ])('keeps the old ?tab=%s link working and rewrites it to %s', async (old, slug) => {
+    const { router } = await renderApp(`/admin/scanning?tab=${old}`, {
+      session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
+      handlers,
+    });
+    await waitFor(() => expect(router.state.location.searchStr).toContain(`tab=${slug}`));
+    expect(router.state.location.searchStr).not.toContain(`tab=${old}`);
+  });
+
+  it('falls back to Sessions on an unknown ?tab= and drops it from the URL', async () => {
+    const { router } = await renderApp('/admin/scanning?tab=nope', {
+      session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
+      handlers,
+    });
+    expect(await screen.findByRole('tab', { name: 'Sessions' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await waitFor(() => expect(router.state.location.searchStr).not.toContain('tab='));
   });
 
   it('closes an event creation draft when the console mode changes', async () => {
@@ -166,7 +194,7 @@ describe('Scanning page', () => {
   });
 
   it('keeps scan details read-only and closes them when the organization changes', async () => {
-    const { router } = await renderApp('/admin/scanning?tab=scans', {
+    const { router } = await renderApp('/admin/scanning?tab=activity', {
       session: 'admin',
       memberships: [
         readOnly,
@@ -189,7 +217,7 @@ describe('Scanning page', () => {
     expect(within(sheet).getByRole('heading', { name: 'Anna' })).toBeInTheDocument();
     expect(within(sheet).queryByRole('button', { name: 'Undo check-in' })).not.toBeInTheDocument();
     await act(async () => {
-      await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2', tab: 'scans' } });
+      await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2', tab: 'activity' } });
     });
     expect(await screen.findByText('No scans yet')).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'Scan' })).not.toBeInTheDocument();
@@ -197,7 +225,7 @@ describe('Scanning page', () => {
   });
 
   it('allows a pass operator to undo without scanning management permission', async () => {
-    await renderApp('/admin/scanning?tab=scans', {
+    await renderApp('/admin/scanning?tab=activity', {
       session: 'user',
       memberships: [
         membershipFixture('o1', {
@@ -216,7 +244,7 @@ describe('Scanning page', () => {
     await userEvent.setup().click(within(row as HTMLElement).getByRole('button'));
     const sheet = await screen.findByRole('dialog', { name: 'Scan' });
     expect(within(sheet).getByRole('button', { name: 'Undo check-in' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New session' })).not.toBeInTheDocument();
   });
 
   it('shows the empty sessions tab without a header action', async () => {
@@ -229,7 +257,7 @@ describe('Scanning page', () => {
     expect(await screen.findByRole('heading', { name: 'Scanning', level: 1 })).toBeInTheDocument();
     expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'New session' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -250,7 +278,7 @@ describe('Scanning page', () => {
 
   it('keeps the filters in the URL when the tab changes', async () => {
     const { router } = await renderApp(
-      '/admin/scanning?tab=scans&scannerId=s1&outcome=refused&orgId=o1',
+      '/admin/scanning?tab=activity&scannerId=s1&outcome=refused&orgId=o1',
       { session: 'admin', memberships: [northwind], selectedOrg: 'o1', handlers },
     );
     await screen.findByText('No scans yet');

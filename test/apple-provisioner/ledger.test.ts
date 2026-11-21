@@ -8,6 +8,7 @@ import {
   P8_BODY,
   provisionerEnv,
   resetLedger,
+  seedCertificate,
   seedPassType,
   stubApple,
 } from './harness.ts';
@@ -132,6 +133,7 @@ describe('apple-provisioner revoke', () => {
 
   it('revokes with reason compromised, for an allowlisted pass type, once an hour', async () => {
     await seedPassType('pass.mobile.passbook.henrys', 'PT1');
+    await seedCertificate('C2', 'PT1', 25 * 3_600_000, true);
     const { api, seen, clock } = stubApple(apple('PT1'));
     await api.revokeCertificate('C1', 'compromised');
     expect(seen.map((s) => `${s.method} ${s.path}`)).toEqual([
@@ -141,7 +143,7 @@ describe('apple-provisioner revoke', () => {
     ]);
     await expect(api.revokeCertificate('C1', 'compromised')).rejects.toThrow(/^ASC_BUDGET/);
     clock.now += 3_600_001;
-    await api.revokeCertificate('C1', 'compromised');
+    await expect(api.revokeCertificate('C1', 'compromised')).rejects.toThrow(/^ASC_REFUSED/);
   });
 
   it('refuses another reason, a bad id and a certificate of an unlisted pass type', async () => {
@@ -157,6 +159,7 @@ describe('apple-provisioner revoke', () => {
 
   it('keeps the hourly slot after a refused lookup', async () => {
     await seedPassType('pass.mobile.passbook.henrys', 'PT1');
+    await seedCertificate('C2', 'PT1', 25 * 3_600_000, true);
     let ownerId = 'OTHER';
     const { api } = stubApple((seen) => apple(ownerId)(seen));
     await expect(api.revokeCertificate('C1', 'compromised')).rejects.toThrow(/^ASC_REFUSED/);

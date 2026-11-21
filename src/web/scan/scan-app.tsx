@@ -100,10 +100,10 @@ function ScanBoot() {
     },
     [api],
   );
-  const pairTaken = useRef(false);
+  const pairTaken = useRef<string | null>(null);
   useEffect(() => {
-    if (session.pairCode && !pairTaken.current) {
-      pairTaken.current = true;
+    if (session.pairCode && pairTaken.current !== session.pairCode) {
+      pairTaken.current = session.pairCode;
       previewPair(session.pairCode);
     }
   }, [session.pairCode, previewPair]);

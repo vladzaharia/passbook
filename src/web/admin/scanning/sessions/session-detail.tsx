@@ -90,8 +90,8 @@ export function SessionDetail({
             <SessionStatePill session={s} />
             <ModePill mode={s.mode} />
             <span>
-              {s.onlineCount} online · {s.deviceCount} {s.deviceCount === 1 ? 'device' : 'devices'}{' '}
-              · {s.today} done today
+              {s.status === 'ended' ? 'Stopped' : `${s.onlineCount} online`} · {s.deviceCount}{' '}
+              {s.deviceCount === 1 ? 'device' : 'devices'} · {s.today} done today
             </span>
           </>
         }
@@ -191,6 +191,7 @@ export function SessionDetail({
                 <DeviceCard
                   key={d.id}
                   device={d}
+                  stopped={s.status === 'ended'}
                   canManage={canManage}
                   onConfigure={() => setSelected(d.id)}
                 />

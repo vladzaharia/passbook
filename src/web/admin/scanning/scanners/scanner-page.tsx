@@ -131,7 +131,7 @@ function ScannerDetail({ scanner: s, canManage }: { scanner: ScannerSetup; canMa
             </span>
             <MetaLink
               to="/admin/scanning"
-              search={{ tab: 'scans', scannerId: s.id }}
+              search={{ tab: 'activity', scannerId: s.id }}
               icon={ScanQrCode}
             >
               View scans
