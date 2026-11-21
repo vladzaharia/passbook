@@ -29,6 +29,7 @@ import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { PreviewToggle, type PreviewView } from './preview-toggle.tsx';
+import { stripAlt } from './releases/next-action.ts';
 import { ReleaseStrip } from './releases/release-strip.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
 import { useReleaseControls } from './releases/use-release-controls.tsx';
@@ -50,15 +51,18 @@ type Tab = NonNullable<z.infer<typeof templateDetailSearchSchema>['tab']>;
 export function TemplateDetailContent({
   template: t,
   tab,
+  review,
   crumbs,
 }: {
   template: Template;
   tab: Tab;
+  /** The version under review: the review dialog is open on it. */
+  review?: string | undefined;
   crumbs: Crumb[];
 }) {
   const navigate = useNavigate();
   const scope = useOrgScope();
-  const { isAdmin, authed } = useSession();
+  const { isAdmin } = useSession();
   const mode = useMode();
   const canAuthor = scope.membership?.capabilities.includes('templates:author') ?? false;
   const canEdit = canAuthor && (t.orgId !== null || isAdmin);
@@ -96,13 +100,13 @@ export function TemplateDetailContent({
   const state = t.release;
   const draftHash = state?.draft?.version ?? '';
   const draftName = draftHash ? vOf(t, draftHash) : '';
-  const controls = useReleaseControls(t.id, scope.orgId, (hash) => vOf(t, hash));
-  const alt =
-    state?.next === 'try'
-      ? 'release'
-      : state?.next === 'release' && state.test?.version !== draftHash
-        ? 'try'
-        : null;
+  const controls = useReleaseControls(t.id, scope.orgId, (hash) => vOf(t, hash), {
+    canPublish,
+    requestedBy: state?.review.state === 'open' ? state.review.by : null,
+    open: review && t.versions.some((v) => v.version === review) ? review : undefined,
+    onClose: () => void navigate({ to: '.', search: {}, replace: true }),
+  });
+  const alt = state ? stripAlt(state) : null;
   const scanning = useScanPasses(t);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
@@ -192,7 +196,7 @@ export function TemplateDetailContent({
         draftName={draftName}
         onTry={() => void controls.tryVersion(draftHash)}
         onRelease={() => controls.release(draftHash)}
-        onReview={() => void navigate({ to: '.', search: { tab: 'versions' }, replace: true })}
+        onReview={() => void navigate({ to: '.', search: { review: draftHash } })}
         tryPending={controls.trying}
       />
       {state && !archived ? (
@@ -200,7 +204,9 @@ export function TemplateDetailContent({
           state={state}
           name={(hash) => vOf(t, hash)}
           alt={alt}
-          releaseLabel={state.alone ? 'Release' : 'Request review'}
+          releaseLabel={
+            state.alone || state.review.state === 'approved' ? 'Release' : 'Request review'
+          }
           onTry={() => void controls.tryVersion(draftHash)}
           onRelease={() => controls.release(draftHash)}
         />
@@ -261,7 +267,6 @@ export function TemplateDetailContent({
                 mode={mode}
                 versions={t.versions}
                 capabilities={scope.membership.capabilities}
-                currentUserId={authed?.user.id ?? null}
                 release={state}
               />
             ) : null}

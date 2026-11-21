@@ -6,10 +6,12 @@ import {
   ReleaseTemplateSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
+import { proveCapability } from '../../platform/auth-capability.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import {
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   toProblem,
   ValidationError,
 } from '../../platform/errors.ts';
@@ -17,8 +19,9 @@ import { idempotencyKeyHeader, idempotentJson, principalOf } from '../../platfor
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, orgIdOf } from '../passes/http.ts';
-import { authorizeTemplateWrite } from './access.ts';
+import { authorizeTemplateWrite, type TemplateCapability } from './access.ts';
 import { ReviewRequiredError, releaseTemplate } from './release-flow.ts';
+import type { StepScope } from './release-flow-plan.ts';
 import { scopedTemplate } from './releases-domain.ts';
 import { notifyReviewers } from './review-notify.ts';
 
@@ -82,17 +85,32 @@ export function registerTemplateReleaseFlow(router: Router): void {
       const id = c.req.valid('param').id;
       const orgId = orgIdOf(auth, body.orgId);
       const ctx = serviceContext(c);
-      const options = {
-        scope: request ? ('templates:write' as const) : ('templates:publish' as const),
-        capability: request ? ('templates:author' as const) : ('templates:publish' as const),
-        request,
-        onReviewRequested: notifyReviewers,
+      const dryRun = c.req.valid('query').dryRun === true;
+      const publish = {
+        scope: 'templates:publish' as const,
+        capability: 'templates:publish' as const,
       };
+      let step: { scope: StepScope; capability: TemplateCapability } = request
+        ? { scope: 'templates:write', capability: 'templates:author' }
+        : publish;
       // Why: a replay returns the stored answer, so the template and the caller are proven before any of it.
       await scopedTemplate(ctx, auth, id, { orgId, mode: modeOf(auth), provider: 'apple' });
-      await authorizeTemplateWrite(ctx, auth, orgId, options.capability, {
-        liveRequest: request,
-      });
+      let previewOnly = false;
+      try {
+        await authorizeTemplateWrite(ctx, auth, orgId, step.capability, { liveRequest: request });
+      } catch (error) {
+        // Why: a dry run writes nothing, so a session that cannot publish but can review may read
+        // the plan it is asked to approve. Publish stays the path for everyone who has it.
+        if (!(dryRun && !request && auth.kind === 'session' && error instanceof ForbiddenError))
+          throw error;
+        step = { scope: 'templates:review', capability: 'templates:review' };
+        await authorizeTemplateWrite(ctx, auth, orgId, 'templates:review');
+        previewOnly = true;
+      }
+      // Dry run only: the route declares publish, and this proves review in its place. A real
+      // release never reaches here, because it needs the publish authorization above.
+      if (previewOnly && dryRun) proveCapability(auth, 'templates:publish');
+      const options = { ...step, request, onReviewRequested: notifyReviewers };
       try {
         if (c.req.valid('query').dryRun)
           return c.json(

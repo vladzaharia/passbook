@@ -15,7 +15,6 @@ vi.mock('./releases/template-releases-panel.tsx', () => ({
     mode: string;
     versions: readonly { version: string }[];
     capabilities: readonly string[];
-    currentUserId: string | null;
   }) => {
     releasePanel(props);
     return <div data-testid="release-panel">{`${props.orgId}:${props.mode}`}</div>;
@@ -66,7 +65,6 @@ it('mounts shared-template releases with the selected membership and current mod
       orgId: ORG.id,
       mode: 'live',
       capabilities: first.capabilities,
-      currentUserId: 'u1',
       versions: expect.arrayContaining([expect.objectContaining({ version: 'a1b2c3d4e5f6a7b8' })]),
     }),
   );
@@ -82,7 +80,6 @@ it('mounts shared-template releases with the selected membership and current mod
       orgId: 'org2',
       mode: 'test',
       capabilities: second.capabilities,
-      currentUserId: 'u1',
     }),
   );
 });

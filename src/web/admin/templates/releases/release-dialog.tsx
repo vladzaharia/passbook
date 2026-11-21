@@ -1,7 +1,5 @@
 import { useId, useState } from 'react';
 import type {
-  TemplateApproval,
-  TemplateCandidate,
   TemplateRelease,
   TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
@@ -22,14 +20,7 @@ import { useReleasePlan } from './flow-api.ts';
 import { PlanSummary } from './plan-summary.tsx';
 import { type ReleaseVersion, versionShort } from './types.ts';
 
-export type ReleaseOperation =
-  | {
-      kind: 'publish';
-      candidate: TemplateCandidate;
-      approval: TemplateApproval;
-      generation: number;
-    }
-  | { kind: 'rollback'; release: TemplateRelease; generation: number };
+export type ReleaseOperation = { kind: 'rollback'; release: TemplateRelease; generation: number };
 
 const UNKNOWN = 'Unknown user';
 
@@ -58,17 +49,9 @@ export function ReleaseDialog({
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string>();
   const stale = operation.generation !== currentGeneration;
-  const rollback = operation.kind === 'rollback';
-  const version = rollback ? operation.release.version : operation.candidate.version;
+  const version = operation.release.version;
   const plan = useReleasePlan(templateId, scope.orgId, version, [scope.mode]);
-  const hash = rollback ? operation.release.candidateHash : operation.candidate.candidateHash;
-  const id = rollback ? operation.release.id : operation.candidate.id;
-  const people = rollback
-    ? [{ label: 'Published by', value: operation.release.createdByName ?? UNKNOWN }]
-    : [
-        { label: 'Author', value: operation.candidate.authorName ?? UNKNOWN },
-        { label: 'Approved by', value: operation.approval.reviewerName ?? UNKNOWN },
-      ];
+  const people = [{ label: 'Published by', value: operation.release.createdByName ?? UNKNOWN }];
 
   async function submit() {
     setError(undefined);
@@ -83,13 +66,13 @@ export function ReleaseDialog({
   return (
     <Dialog
       open
-      dirty={rollback && Boolean(reason.trim())}
+      dirty={Boolean(reason.trim())}
       onOpenChange={(open) => {
         if (!open && !busy) onClose();
       }}
     >
       <DialogContent
-        title={rollback ? `Restore ${versionShort(versions, version)}` : 'Publish release'}
+        title={`Restore ${versionShort(versions, version)}`}
         footer={
           <>
             <Button variant="outline" disabled={busy} onClick={onClose}>
@@ -99,9 +82,9 @@ export function ReleaseDialog({
               type="submit"
               form={formId}
               loading={busy}
-              disabled={!available || stale || (rollback && !reason.trim())}
+              disabled={!available || stale || !reason.trim()}
             >
-              {rollback ? 'Restore' : 'Confirm publish'}
+              Restore
             </Button>
           </>
         }
@@ -111,7 +94,7 @@ export function ReleaseDialog({
           className="grid gap-4"
           onSubmit={(event) => {
             event.preventDefault();
-            if (available && !stale && !busy && (!rollback || reason.trim())) void submit();
+            if (available && !stale && !busy && reason.trim()) void submit();
           }}
         >
           <KeyValue
@@ -132,30 +115,28 @@ export function ReleaseDialog({
               <Skeleton className="h-16 w-full" />
             </div>
           )}
-          {rollback ? (
-            <FormField label="Reason" required help="Recorded in the audit log.">
-              {(control) => (
-                <Textarea
-                  {...control}
-                  required
-                  maxLength={500}
-                  value={reason}
-                  onChange={(event) => {
-                    setReason(event.target.value);
-                    setError(undefined);
-                  }}
-                />
-              )}
-            </FormField>
-          ) : null}
+
+          <FormField label="Reason" required help="Recorded in the audit log.">
+            {(control) => (
+              <Textarea
+                {...control}
+                required
+                maxLength={500}
+                value={reason}
+                onChange={(event) => {
+                  setReason(event.target.value);
+                  setError(undefined);
+                }}
+              />
+            )}
+          </FormField>
           <TechnicalDetails
             items={[
-              { label: rollback ? 'Target release ID' : 'Candidate ID', value: id },
+              { label: 'Target release ID', value: operation.release.id },
               { label: 'Version hash', value: version },
-              { label: 'Candidate hash', value: hash },
+              { label: 'Candidate hash', value: operation.release.candidateHash },
               { label: 'Expected generation', value: operation.generation },
               { label: 'New generation', value: operation.generation + 1 },
-              ...(rollback ? [] : [{ label: 'Approval ID', value: operation.approval.id }]),
             ]}
           />
           {stale ? (

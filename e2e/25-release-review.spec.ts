@@ -64,73 +64,44 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     if (!version) throw new Error('The cloned template has no saved version');
     const url = `/admin/templates/${encodeURIComponent(clone.id)}?orgId=${encodeURIComponent(org.id)}&tab=versions`;
 
-    // Author: create a candidate from the saved version.
+    // Author: requests review from the strip; the draft shows as in review.
     const authorPage = await adminCtx.newPage();
     await authorPage.goto(url);
-    await authorPage.getByRole('combobox', { name: 'Saved version' }).click();
-    await authorPage.getByRole('option', { name: 'Version 1', exact: true }).click();
-    await authorPage.getByRole('button', { name: 'Create candidate' }).click();
-    await expect(authorPage.getByText('Candidate created')).toBeVisible();
-    const candidates = authorPage.getByRole('list', { name: 'Release candidates' });
-    const card = candidates.getByRole('listitem').first();
-    await expect(card.getByRole('heading', { name: 'Version 1' })).toBeVisible();
-    await expect(card.getByText('Awaiting approval')).toBeVisible();
-    if (authorSession.user.name)
-      await expect(card.getByText(authorSession.user.name).first()).toBeVisible();
-    await expect(card).not.toHaveText(UUID, shown);
-    await expect(card).not.toHaveText(HASH, shown);
-
-    // The author cannot approve their own candidate.
-    await expect(
-      card.getByText(/^You wrote this version\. Another reviewer approves it/),
-    ).toBeVisible();
-    const selfApprove = card.getByRole('button', {
-      name: 'Approve candidate for Version 1',
-      exact: true,
-    });
-    if (await selfApprove.count()) await expect(selfApprove).toBeDisabled();
-    await expect(
-      card.getByRole('button', { name: 'Publish candidate for Version 1' }),
-    ).toBeDisabled();
-
-    // Reviewer: approves it, and cannot publish.
-    const reviewerPage = await reviewerCtx.newPage();
-    await reviewerPage.goto(url);
-    const reviewCard = reviewerPage
-      .getByRole('list', { name: 'Release candidates' })
-      .getByRole('listitem')
-      .first();
-    await expect(reviewCard.getByRole('heading', { name: 'Version 1' })).toBeVisible();
-    await expect(reviewCard).not.toHaveText(UUID, shown);
-    await expect(reviewCard.getByRole('button', { name: /^Publish candidate/ })).toHaveCount(0);
-    await reviewCard
-      .getByRole('button', { name: 'Approve candidate for Version 1', exact: true })
-      .click();
-    await expect(reviewerPage.getByText('Candidate approved')).toBeVisible();
-    await expect(reviewCard.getByText('Approved', { exact: true })).toBeVisible();
-    if (reviewerSession.user.name)
-      await expect(reviewCard.getByText(reviewerSession.user.name).first()).toBeVisible();
-
-    // Publisher: reviews the impact in the dialog, then publishes.
-    await authorPage.reload();
+    const strip = authorPage.getByRole('region', { name: 'Release' });
+    await expect(strip).toContainText('Draft');
+    await strip.getByRole('button', { name: 'Request review' }).click();
+    const request = authorPage.getByRole('dialog');
+    await expect(request).not.toHaveText(UUID, shown);
+    await request.getByRole('button', { name: 'Request review' }).click();
+    await expect(authorPage.getByText('Review requested')).toBeVisible();
+    await expect(strip).toContainText('In review');
+    await expect(authorPage.getByRole('button', { name: /^Review v/ })).toHaveCount(0);
     await expect(authorPage.locator('main')).not.toHaveText(HASH, shown);
-    await authorPage.getByRole('button', { name: 'Publish candidate for Version 1' }).click();
-    const dialog = authorPage.getByRole('dialog', { name: 'Publish release' });
-    await expect(dialog.getByText('Loading changes')).toHaveCount(0);
-    await expect(dialog.getByText(/passes? update|No passes yet/)).toBeVisible();
-    await expect(dialog.getByText('Approved by')).toBeVisible();
-    if (reviewerSession.user.name)
-      await expect(dialog.getByText(reviewerSession.user.name).first()).toBeVisible();
+
+    // Reviewer: the inbox lists it, the review shows the changes, and Approve does not release.
+    const reviewerPage = await reviewerCtx.newPage();
+    await reviewerPage.goto(`/admin/o/${encodeURIComponent(org.id)}/templates`);
+    const inbox = reviewerPage.getByRole('region', { name: /Needs your review/ });
+    await expect(inbox).toContainText(templateName);
+    await inbox.getByRole('link', { name: new RegExp(`Review.*${templateName}`) }).click();
+    const review = reviewerPage.getByRole('dialog', { name: 'Review v1' });
+    await expect(review).toBeVisible();
+    await expect(review).not.toHaveText(UUID, shown);
+    await expect(review).not.toHaveText(HASH, shown);
+    await expect(review.getByRole('button', { name: 'Approve and release' })).toHaveCount(0);
+    await review.getByRole('button', { name: 'Approve', exact: true }).click();
+    await expect(reviewerPage.getByText('Approved v1')).toBeVisible();
+    await expect(review).toBeHidden();
+
+    // Publisher: releases the approved version from the dialog.
+    await authorPage.reload();
+    await authorPage.getByRole('button', { name: 'Release v1' }).first().click();
+    const dialog = authorPage.getByRole('dialog');
     await expect(dialog).not.toHaveText(UUID, shown);
     await expect(dialog).not.toHaveText(HASH, shown);
-    const technical = dialog.locator('details', { hasText: 'Technical details' });
-    await expect(technical).not.toHaveAttribute('open', '');
-    await technical.getByText('Technical details').click();
-    await expect(technical.getByText(HASH).first()).toBeVisible();
-    await dialog.getByRole('button', { name: 'Confirm publish' }).click();
+    await dialog.getByRole('button', { name: 'Release', exact: true }).click();
+    await expect(authorPage.getByText('Released v1')).toBeVisible();
     await expect(dialog).toBeHidden();
-    await expect(authorPage.getByText('Release published')).toBeVisible();
-    await expect(authorPage.getByRole('list', { name: 'Releases' })).toContainText('v1');
 
     const release = await requireActiveTemplateRelease(author, org.id, clone.id, 'live');
     expect(release.version).toBe(version);

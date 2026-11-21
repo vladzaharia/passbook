@@ -94,19 +94,6 @@ export function clearHolderConfirm(owner: string | null): ConfirmCopy {
   };
 }
 
-/** The author approving their own version: Test mode (any org) or as the org's only reviewer. */
-export function selfApproveConfirm(mode: 'live' | 'test'): ConfirmCopy {
-  const test = mode === 'test';
-  return {
-    title: test ? 'Approve in Test?' : 'Approve as sole reviewer?',
-    confirmLabel: test ? 'Approve alone' : 'Approve as sole reviewer',
-    description: test
-      ? 'Test passes reach only the test inbox. Your approval is recorded.'
-      : 'No one else can review in this organization. Your approval is recorded.',
-    typed: false,
-  };
-}
-
 /** A new scan code: a copy of the old barcode stops working at every scanner. */
 export function newCodeConfirm(): ConfirmCopy {
   return {

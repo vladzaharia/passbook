@@ -1,19 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MODE_HEADER, type Mode } from '@/shared/contracts/common.ts';
 import {
-  type ApproveTemplateCandidate,
-  ApproveTemplateCandidateSchema,
-  type CreateTemplateCandidate,
-  CreateTemplateCandidateSchema,
-  type PromoteTemplate,
-  PromoteTemplateSchema,
-  type PublishTemplateRelease,
-  PublishTemplateReleaseSchema,
   type RollbackTemplateRelease,
   RollbackTemplateReleaseSchema,
-  TemplateApprovalSchema,
   TemplateCandidateListSchema,
-  TemplateCandidateSchema,
   TemplateReleaseListSchema,
   TemplateReleaseSchema,
   type TemplateReleaseScope,
@@ -63,50 +53,6 @@ export function useReleaseActions(templateId: string, scope: TemplateReleaseScop
   const onError = (error: unknown) => {
     if (isApiError(error) && error.isConflict) void refresh();
   };
-  const create = useMutation({
-    mutationFn: (body: CreateTemplateCandidate) =>
-      api.post(
-        `${base}/candidates`,
-        TemplateCandidateSchema,
-        CreateTemplateCandidateSchema.parse(body),
-        opts,
-      ),
-    onSuccess: refresh,
-    onError,
-  });
-  const promote = useMutation({
-    mutationFn: (body: PromoteTemplate) =>
-      api.post(
-        `${base}/candidates/promote`,
-        TemplateCandidateSchema,
-        PromoteTemplateSchema.parse(body),
-        opts,
-      ),
-    onSuccess: refresh,
-    onError,
-  });
-  const approve = useMutation({
-    mutationFn: ({ candidateId, body }: { candidateId: string; body: ApproveTemplateCandidate }) =>
-      api.post(
-        `${base}/candidates/${encodeURIComponent(candidateId)}/approve`,
-        TemplateApprovalSchema,
-        ApproveTemplateCandidateSchema.parse(body),
-        opts,
-      ),
-    onSuccess: refresh,
-    onError,
-  });
-  const publish = useMutation({
-    mutationFn: (body: PublishTemplateRelease) =>
-      api.post(
-        `${base}/releases`,
-        TemplateReleaseSchema,
-        PublishTemplateReleaseSchema.parse(body),
-        opts,
-      ),
-    onSuccess: refresh,
-    onError,
-  });
   const rollback = useMutation({
     mutationFn: (body: RollbackTemplateRelease) =>
       api.post(
@@ -118,7 +64,7 @@ export function useReleaseActions(templateId: string, scope: TemplateReleaseScop
     onSuccess: refresh,
     onError,
   });
-  return { create, promote, approve, publish, rollback };
+  return { rollback };
 }
 
 /** Google and Samsung enrolments of one organization in an explicit mode. */
