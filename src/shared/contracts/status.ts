@@ -56,3 +56,32 @@ export const WorkflowRunSchema = z.object({
   errorCode: z.string().nullable(),
 });
 export const WorkflowRunListSchema = pageOf(WorkflowRunSchema);
+
+/** What the public page shows of a component: a name and one of three states. Nothing about any organization. */
+export const PublicStateSchema = z.enum(['operational', 'degraded', 'outage', 'off']);
+export const PublicComponentIdSchema = z.enum([
+  'api',
+  'apple_push',
+  'email',
+  'webhooks',
+  'google',
+  'samsung',
+]);
+export const PublicIncidentSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  note: z.string(),
+  component: PublicComponentIdSchema.nullable(),
+  impact: z.enum(['notice', 'degraded', 'outage']),
+  startedAt: TimestampSchema,
+  resolvedAt: TimestampSchema.nullable(),
+});
+export const PublicStatusSchema = z.object({
+  overall: z.enum(['operational', 'degraded', 'outage']),
+  components: z.array(
+    z.object({ id: PublicComponentIdSchema, label: z.string(), state: PublicStateSchema }),
+  ),
+  incidents: z.array(PublicIncidentSchema),
+  checkedAt: TimestampSchema,
+});
+export type PublicStatus = z.infer<typeof PublicStatusSchema>;

@@ -5,6 +5,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { PayloadTooLargeError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { servePassFile } from '../passes/file.ts';
 import { svc } from '../passes/http.ts';
 import { recordPassFetch } from './log-events.ts';
@@ -125,6 +126,7 @@ register(
       p.serial,
       c.req.header('authorization'),
     );
+    await assertNotPreviewOnly(ctx.env.DB, pass.orgId);
     const variant = await appleVariant(ctx, pass);
     const response = await servePassFile(c.env.BUCKET, pass, c.req.raw, {}, variant ?? undefined);
     try {

@@ -64,6 +64,8 @@ export interface PassPreviewProps {
   dim?: boolean;
   /** Removed from Wallet: the card reads Expired, not Voided. */
   removed?: boolean;
+  /** A sandbox pass: the TEST PREVIEW band across the card. */
+  testBand?: boolean;
   /** Deal in on mount. */
   enter?: boolean;
   /** Off for thumbnails: no pointer tilt, no glow. */
@@ -84,6 +86,7 @@ export function PassPreview({
   settle,
   dim,
   removed = false,
+  testBand,
   enter,
   still = false,
   transitionName,
@@ -109,6 +112,7 @@ export function PassPreview({
       enter={enter}
       tilt={!still}
       glow={!still}
+      testBand={testBand}
       {...(transitionName ? { transitionName } : {})}
       className={cn('mx-auto w-full max-w-xs', className)}
     />

@@ -1,0 +1,12 @@
+import os
+import httpx
+
+res = httpx.post(
+    "https://passbook.mobile/api/v1/pass-imports/0193a1b2-7c00-7000-8000-0000000000e1/email-rest",
+    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
+    json={
+        "cursor": "Example",
+    },
+)
+res.raise_for_status()
+print(res.json())

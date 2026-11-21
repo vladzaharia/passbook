@@ -14,6 +14,7 @@ const sources = import.meta.glob('../**/*.ts', {
 // Every path that inserts an org, by file. Each must write the entitlements row in the same batch
 // (`addOrgEntitlements`); a new path fails this list until it does.
 const ORG_INSERTS = [
+  '../modules/developer/repo-grants.ts', // developer sandbox (preset developer)
   '../modules/orgs/repo-org-writes.ts', // platform create (preset chosen, default standard)
   '../modules/templates/repo-sync-writes.ts', // baked sync (legacy)
 ];

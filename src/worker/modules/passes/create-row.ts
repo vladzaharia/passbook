@@ -6,11 +6,13 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
 import type { TemplateRelease } from '../templates/releases.ts';
 import { assertAccessInput } from './access-input.ts';
 import { buildArtifact, resolveTemplate } from './builder.ts';
+import { objectFileOf } from './builder-finish.ts';
 import { assertTenantCreateAuthority } from './create-authority.ts';
 import { scheduleRequiredIssuanceDelivery } from './create-delivery.ts';
 import { createRefusal } from './create-grant.ts';
@@ -89,7 +91,11 @@ export async function createPassRowWithRelease(
       ? { ...p.input, [issueInput]: new Date(ctx.clock.now()).toISOString() }
       : p.input;
   await assertAccessInput(ctx, p.orgId, template, input);
-  const identity = await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
+  // A developer org's pass row names the platform identity (the foreign key needs one) but never loads it:
+  // nothing is signed for it, so no certificate or key is read.
+  const identity = (await isPreviewOnlyOrg(db, p.orgId))
+    ? { id: PLATFORM_IDENTITY_ID }
+    : await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId);
   if (identity.id === PLATFORM_IDENTITY_ID) await ensurePlatformIdentity(ctx.env, ctx.clock.now());
 
   const id = p.reservedPassId ?? p.passId ?? ctx.ids.id();
@@ -134,9 +140,10 @@ export async function createPassRowWithRelease(
   const credentialRefs = [...new Set(refs.map((entry) => entry.ref))];
   // Building may await external assets or signing. Recheck authoritative state before storing.
   await assertCreateAuthority(ctx, p, connectionGeneration, release);
-  const objectKey = `passes/${id}/v1-${ctx.ids.token(6)}.pkpass`;
+  const file = objectFileOf(artifact);
+  const objectKey = `passes/${id}/v1-${ctx.ids.token(6)}${file.ext}`;
   await ctx.env.BUCKET.put(objectKey, artifact.bytes, {
-    httpMetadata: { contentType: 'application/vnd.apple.pkpass' },
+    httpMetadata: { contentType: file.contentType },
   });
   let issuedOwnerUserId: string | null = null;
   let issuedRevision = 0;

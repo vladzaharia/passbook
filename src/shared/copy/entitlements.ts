@@ -51,6 +51,7 @@ export const PRESET_LABEL: Record<EntitlementPreset, string> = {
   legacy: 'Legacy',
   trial: 'Trial',
   standard: 'Standard',
+  developer: 'Developer sandbox',
 };
 
 export const featureNotIncluded = (key: EntitlementKey): string =>

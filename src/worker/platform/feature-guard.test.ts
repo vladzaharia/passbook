@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { originUnlessKey } from '../../../test/helpers/browser.ts';
 import { expectProblem } from '../../../test/helpers/denial.ts';
 import { makeApiKey, makeOrg } from '../../../test/helpers/index.ts';
 import {
@@ -117,7 +118,7 @@ beforeAll(async () => {
 const call = (path: string, headers: Headers, orgId: string, method = 'GET') =>
   app.request(
     `https://wallet.test${path}?org=${orgId}`,
-    { method, headers: { ...headers, origin: 'https://wallet.test' } },
+    { method, headers: { ...headers, ...originUnlessKey(headers, 'https://wallet.test') } },
     kit.env,
   );
 

@@ -23,6 +23,33 @@ export function scanContentSecurityPolicy(): string {
   return contentSecurityPolicy(undefined, { scan: true });
 }
 
+/**
+ * /developers: prerendered pages and one same-origin script, so no inline script or style and no
+ * nonce. Trusted Types closes the DOM's HTML sinks; the portal's own code uses text only. The
+ * console page alone admits the Turnstile widget, for "Create sandbox".
+ */
+export function developersContentSecurityPolicy(options: { turnstile?: boolean } = {}): string {
+  const turnstile = options.turnstile ? ` ${TURNSTILE_ORIGIN}` : '';
+  return [
+    "default-src 'none'",
+    `script-src 'self'${turnstile}`,
+    "style-src 'self'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "manifest-src 'self'",
+    "form-action 'self'",
+    "base-uri 'none'",
+    options.turnstile ? `frame-src ${TURNSTILE_ORIGIN}` : "frame-src 'none'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "require-trusted-types-for 'script'",
+    // The one policy the console page makes, for the Turnstile script address.
+    ...(options.turnstile ? ['trusted-types passbook-turnstile'] : []),
+    'upgrade-insecure-requests',
+  ].join('; ');
+}
+
 /** The Turnstile widget (join page only): its script and its challenge frame. */
 export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
 

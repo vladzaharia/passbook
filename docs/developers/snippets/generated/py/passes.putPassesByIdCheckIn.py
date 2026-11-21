@@ -1,0 +1,12 @@
+import os
+import httpx
+
+res = httpx.put(
+    "https://passbook.mobile/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/check-in",
+    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
+    json={
+        "rules": {},
+    },
+)
+res.raise_for_status()
+print(res.json())

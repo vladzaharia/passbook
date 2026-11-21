@@ -25,7 +25,9 @@ const files = import.meta.glob<Record<string, OpReference>>('../../../docs/api/r
 });
 
 /** Every reference entry by operationId; the tests check the keys against the document. */
-export const REFERENCE: Record<string, OpReference> = Object.assign({}, ...Object.values(files));
+export const REFERENCE: Record<string, OpReference> = {};
+for (const file of Object.values(files))
+  for (const [id, entry] of Object.entries(file)) REFERENCE[id] = { ...REFERENCE[id], ...entry };
 
 const JSON_TYPE = 'application/json';
 const pascal = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

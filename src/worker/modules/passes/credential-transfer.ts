@@ -6,6 +6,7 @@ import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { dropPrintPdfs } from '../prints/pdf-drop.ts';
+import { objectFileOf } from './builder-finish.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { assertCredentialTransferActor } from './credential-transfer-authority.ts';
 import {
@@ -271,9 +272,10 @@ export async function finishCredentialTransfer(
   if (await tombstoneExists(ctx.env.DB, source.pass.orgId, source.pass.mode, targetRefs))
     throw new CredentialTransferReissueRequired(credentialKeysetCommitment);
   const now = ctx.clock.now();
-  const objectKey = `passes/${source.pass.id}/v${source.pass.version + 1}-${ctx.ids.token(6)}.pkpass`;
+  const file = objectFileOf(build.artifact);
+  const objectKey = `passes/${source.pass.id}/v${source.pass.version + 1}-${ctx.ids.token(6)}${file.ext}`;
   const stored = await ctx.env.BUCKET.put(objectKey, build.artifact.bytes, {
-    httpMetadata: { contentType: 'application/vnd.apple.pkpass' },
+    httpMetadata: { contentType: file.contentType },
     onlyIf: new Headers({ 'If-None-Match': '*' }),
   });
   if (!stored) throw conflict();

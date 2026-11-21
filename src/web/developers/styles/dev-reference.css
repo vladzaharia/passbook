@@ -1,0 +1,86 @@
+/* Reference operations and the phone Try-it bar. */
+/* ---------- Reference ---------- */
+.sub-h {
+  margin: 48px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--pk-border-strong);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pk-text-subtle);
+}
+.op {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  gap: 40px;
+  padding-block: 40px 24px;
+  margin-top: 32px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.op:first-of-type {
+  margin-top: 24px;
+}
+.op-prose {
+  min-width: 0;
+  max-width: 720px;
+}
+.op-prose > * + .chips,
+.op-prose > .endpoint,
+.op-prose > .lede,
+.op-prose > .chips {
+  margin-top: 12px;
+}
+.op .h1 a.anchor {
+  color: inherit;
+}
+.op .h1 a.anchor:hover {
+  text-decoration: none;
+  color: var(--pk-accent-fg);
+}
+.alias {
+  position: absolute;
+}
+.endpoint {
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-sunken);
+}
+.endpoint code {
+  font-size: 13px;
+  color: var(--pk-text-strong);
+  overflow-wrap: anywhere;
+}
+.endpoint .copy {
+  margin-left: auto;
+}
+.chips {
+  gap: 8px;
+}
+.rail-pane {
+  min-width: 0;
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.rail-h {
+  padding-top: 4px;
+}
+.resp-h {
+  margin-bottom: 8px;
+}
+.resp-h .copy {
+  margin-left: auto;
+}
+.console-only {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--pk-border-strong);
+}
+.trybar {
+  display: none;
+}

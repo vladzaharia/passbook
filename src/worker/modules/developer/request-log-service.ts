@@ -1,0 +1,112 @@
+import type { z } from 'zod';
+import type {
+  ApiRailSchema,
+  RequestLogDetailSchema,
+  RequestLogEntrySchema,
+  RequestLogQuerySchema,
+} from '../../../shared/contracts/index.ts';
+import type { AuthContext } from '../../platform/auth.ts';
+import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
+import { apiRateTier, tierLimit } from '../../platform/rate-limit.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { getKey } from '../api-keys/repo.ts';
+import { parseScopes } from '../api-keys/service-dto.ts';
+import { sandboxOfUser } from './repo.ts';
+import {
+  callsSince,
+  getLog,
+  LOG_BODY_MS,
+  type LogRow,
+  listLogs,
+  logCap,
+} from './repo-request-log.ts';
+import { tryKeyOf } from './repo-try.ts';
+
+type Entry = z.infer<typeof RequestLogEntrySchema>;
+type Detail = z.infer<typeof RequestLogDetailSchema>;
+type Query = z.infer<typeof RequestLogQuerySchema>;
+type Rail = z.infer<typeof ApiRailSchema>;
+
+/**
+ * The organization whose log the caller reads: a try token's own, or the signed-in person's sandbox. Never one the
+ * caller names, so a log is only ever the caller's.
+ */
+async function orgOf(ctx: ServiceContext, auth: AuthContext | undefined): Promise<string> {
+  if (auth?.kind === 'api_key' && auth.via === 'try' && auth.orgId) return auth.orgId;
+  if (auth?.kind !== 'session') throw new UnauthenticatedError();
+  const sandbox = await sandboxOfUser(ctx.env.DB, auth.userId);
+  if (!sandbox) throw new NotFoundError('Sandbox not found.', 'SANDBOX_NOT_FOUND');
+  return sandbox.org_id;
+}
+
+const entryOf = (r: Omit<LogRow, 'request_body' | 'response_body'>): Entry => ({
+  id: r.id,
+  requestId: r.request_id,
+  at: r.at,
+  method: r.method,
+  route: r.route,
+  path: r.path,
+  query: r.query,
+  status: r.status,
+  code: r.code,
+  durationMs: r.duration_ms,
+  keyId: r.key_id,
+  mode: r.mode,
+  via: r.via,
+  hasBodies: r.has_bodies === 1,
+});
+
+export async function listRequestLog(
+  ctx: ServiceContext,
+  auth: AuthContext | undefined,
+  query: Query,
+): Promise<{ items: Entry[]; nextCursor: string | null; capped: 'hour' | 'total' | null }> {
+  const orgId = await orgOf(ctx, auth);
+  const { cursor, limit, ...filter } = query;
+  const rows = await listLogs(ctx.env.DB, orgId, filter, limit + 1, ctx.clock.now(), cursor);
+  const page = rows.slice(0, limit);
+  return {
+    items: page.map(entryOf),
+    nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
+    capped: await logCap(ctx.env.DB, orgId, ctx.clock.now()),
+  };
+}
+
+export async function getRequestLog(
+  ctx: ServiceContext,
+  auth: AuthContext | undefined,
+  id: string,
+): Promise<Detail> {
+  const orgId = await orgOf(ctx, auth);
+  const row = await getLog(ctx.env.DB, orgId, id, ctx.clock.now());
+  if (!row) throw new NotFoundError('Request not found.', 'REQUEST_LOG_NOT_FOUND');
+  return {
+    ...entryOf(row),
+    requestBody: row.request_body,
+    responseBody: row.response_body,
+    bodiesExpireAt: row.has_bodies === 1 ? row.at + LOG_BODY_MS : null,
+  };
+}
+
+const HOUR = 3_600_000;
+
+export async function apiRail(ctx: ServiceContext, auth: AuthContext | undefined): Promise<Rail> {
+  const orgId = await orgOf(ctx, auth);
+  const now = ctx.clock.now();
+  const keyId =
+    auth?.kind === 'api_key'
+      ? auth.keyId
+      : auth?.kind === 'session'
+        ? (await tryKeyOf(ctx.env.DB, auth.userId, now))?.key_id
+        : null;
+  const row = keyId ? await getKey(ctx.env.DB, keyId, orgId) : null;
+  const tier = apiRateTier(row?.rate_tier, ctx.env);
+  return {
+    mode: row?.mode ?? 'test',
+    scopes: row ? parseScopes(row.scopes) : [],
+    tier,
+    limitPerMinute: tierLimit(tier),
+    callsLastHour: await callsSince(ctx.env.DB, orgId, now - HOUR),
+    key: row ? { id: row.id, name: row.name, prefix: row.prefix } : null,
+  };
+}

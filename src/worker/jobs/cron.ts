@@ -5,6 +5,8 @@ import { failStuckBroadcasts, startDueBroadcasts } from '../modules/broadcasts/s
 import { dailyChannels, sweepChannelApply } from '../modules/channels/apply-start.ts';
 import { dailyConnections, reconcileConnections } from '../modules/connections/jobs.ts';
 import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
+import { dailyDeveloperSandbox } from '../modules/developer/jobs.ts';
+import { minutelyRequestLogPurge } from '../modules/developer/request-log-jobs.ts';
 import { dailyEvents } from '../modules/events/jobs.ts';
 import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
@@ -78,6 +80,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     },
     { name: 'passes.transfer_asset_gc', run: sweepTransferAssetGc },
     { name: 'passes.import_stuck', run: sweepStuckImports },
+    { name: 'developer.request_log_purge', run: minutelyRequestLogPurge },
     { name: 'nfc.binding_expiry', run: async (ctx) => void (await expireBindings(ctx)) },
   ],
   [DAILY_CRON]: [
@@ -106,6 +109,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'message_rules.retention', run: dailyMessageRules },
     { name: 'photos.retention', run: dailyPhotos },
     { name: 'org_lifecycle.sweep', run: dailyOrgLifecycle },
+    { name: 'developer.idle_close', run: dailyDeveloperSandbox },
     { name: 'retention.receipts', run: dailyReceipts },
     // Last: a backlog of test data must never starve the checks above.
     { name: 'sandbox.purge', run: dailySandbox },

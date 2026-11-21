@@ -1,0 +1,46 @@
+import { SANDBOX_PREVIEW_ONLY_COPY, TEST_PREVIEW_PATH } from '../../../shared/copy/developer.ts';
+import { AppError } from '../../platform/errors.ts';
+import { mintPreviewLink } from './preview-link.ts';
+import { isPreviewOnlyOrg } from './repo-fence.ts';
+
+export { isPreviewOnlyOrg };
+
+/**
+ * The owner's invariant (PX7): a developer org never issues a real wallet pass. No signed .pkpass, no Google or
+ * Samsung object, no add-to-wallet link, no APNs push, no real mail. Every place that signs, mints, pushes or
+ * sends for an org asks this first; `developer-fence.test.ts` finds those places in the code and fails when
+ * one has no fence.
+ */
+export class PreviewOnlyError extends AppError {
+  constructor() {
+    super('SANDBOX_PREVIEW_ONLY', 409, SANDBOX_PREVIEW_ONLY_COPY);
+  }
+}
+
+/** Refuses a developer org with 409 SANDBOX_PREVIEW_ONLY. */
+export async function assertNotPreviewOnly(db: D1Database, orgId: string): Promise<void> {
+  if (await isPreviewOnlyOrg(db, orgId)) throw new PreviewOnlyError();
+}
+
+/** The TEST preview page of a pass: a MAC'd link (preview-link.ts), public, never installable. */
+export const testPreviewUrl = async (
+  env: object,
+  base: string,
+  pass: { id: string; linkGeneration: number },
+  nowMs: number,
+): Promise<string> =>
+  `${base}${TEST_PREVIEW_PATH}${await mintPreviewLink(env, { passId: pass.id, linkGeneration: pass.linkGeneration }, nowMs)}`;
+
+/** The stored object of a preview-only pass: its JSON, never a package. */
+export const PREVIEW_OBJECT_SUFFIX = '.preview.json';
+export const PREVIEW_CONTENT_TYPE = 'application/json';
+/** Refuses a stored preview object where a signed package is wanted (serving, bundling, attaching). */
+export function assertSignedObject(objectKey: string): void {
+  if (objectKey.endsWith(PREVIEW_OBJECT_SUFFIX)) throw new PreviewOnlyError();
+}
+
+/** The identity a preview-only pass validates against. It names no certificate and signs nothing. */
+export const PREVIEW_PASS_IDENTITY = {
+  passTypeIdentifier: 'pass.test.preview',
+  teamIdentifier: 'TESTPREVIE',
+} as const;

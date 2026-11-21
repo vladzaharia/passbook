@@ -1,7 +1,12 @@
 import { PassBuildError } from '../../../passkit/build.ts';
-import { buildPass, crc32, packagePassBytes, signPass } from '../../../passkit/index.ts';
+import {
+  buildPass,
+  buildPassPreview,
+  crc32,
+  packagePassBytes,
+  signPass,
+} from '../../../passkit/index.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
-import { evaluate } from '../../../passkit/template/expr.ts';
 import type { ResolvedTemplate, TemplateRegistry } from '../../../passkit/template/registry.ts';
 import type {
   AssetEntry,
@@ -10,21 +15,22 @@ import type {
   ValidationIssue,
 } from '../../../passkit/types.ts';
 import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/errors.ts';
-import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { isPreviewOnlyOrg, PREVIEW_PASS_IDENTITY } from '../developer/fence.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
-import { brandingWarnings, readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
+import { readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
 import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
 import { type BuildInputs, readBuildInputs } from './build-reads.ts';
-import { applyChangeMessages, stripChangeMessages } from './change-messages.ts';
+import { artifactOf, editPass } from './builder-finish.ts';
 import { backContactsFor, withBackContacts } from './contacts.ts';
 import { depsOf } from './deps.ts';
-import { applyRemoval, type Removal } from './remove-build.ts';
+import type { Removal } from './remove-build.ts';
 import type { PassStatus } from './repo.ts';
 import type { AssetRow } from './repo-history-assets.ts';
-import { barcodeHashOf, lookupHashOf, lookupValueOf } from './scan-code.ts';
+
+export { displayOf } from './builder-finish.ts';
 
 export interface BuildRequest {
   orgId: string;
@@ -66,7 +72,10 @@ export interface BuildRequest {
 }
 
 export interface Artifact {
+  /** The signed .pkpass; for a developer org the pass JSON, which no wallet can open (`previewOnly`). */
   bytes: Uint8Array;
+  /** A developer org's pass: built and stored as a preview, never signed. */
+  previewOnly: boolean;
   sha256: string;
   passJson: PassJson;
   template: ResolvedTemplate;
@@ -156,24 +165,6 @@ async function legacyCrc(bucket: R2Bucket, a: AssetRow): Promise<number> {
   return crc32(new Uint8Array(await object.arrayBuffer()));
 }
 
-export function displayOf(
-  template: ResolvedTemplate,
-  input: Personalization,
-): { title: string | null; subtitle: string | null } {
-  const scope = { input, lookups: template.manifest.lookups ?? {} };
-  const text = (expr: Parameters<typeof evaluate>[0] | undefined): string | null => {
-    if (expr === undefined) return null;
-    const value = evaluate(expr, scope);
-    return value === undefined || value === null || value === ''
-      ? null
-      : String(value).slice(0, 200);
-  };
-  return {
-    title: text(template.manifest.display.title),
-    subtitle: text(template.manifest.display.subtitle),
-  };
-}
-
 /** The org's uploaded logo and icon as asset rows (digests read from the stored PNGs). */
 async function brandingRows(
   bucket: R2Bucket,
@@ -217,9 +208,11 @@ async function brandedOverrides(
 export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Promise<Artifact> {
   const deps = depsOf(ctx.env);
   const resolved = await resolveTemplate(ctx, req.orgId, req.templateId, req.templateVersion);
+  // A developer org's pass is never signed: its identity is a placeholder and no key is ever read.
   const row = req.prefetched?.identityRow;
-  const identity =
-    row && row.id === req.identityId && deps.identities.byRow
+  const identity = (await isPreviewOnlyOrg(ctx.env.DB, req.orgId))
+    ? null
+    : row && row.id === req.identityId && deps.identities.byRow
       ? await deps.identities.byRow(row)
       : await deps.identities.byId(req.identityId);
   const branding = readBranding(req.branding);
@@ -246,6 +239,37 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
   );
   const now = new Date(ctx.clock.now());
   try {
+    if (identity === null) {
+      // A developer org: the same build, stopped before the signature. The stored object is the pass JSON.
+      const built = await buildPassPreview({
+        template,
+        registry,
+        input: req.personalization,
+        server: {
+          serial: req.serial,
+          authToken,
+          webServiceURL: req.webServiceUrl,
+          organizationName: req.orgName,
+          identity: PREVIEW_PASS_IDENTITY,
+          ...(req.scanCode ? { scanCode: req.scanCode } : {}),
+        },
+        behaviors: deps.behaviors,
+        now,
+      });
+      editPass(req, built.passJson);
+      const { authenticationToken: _token, ...shown } = built.passJson;
+      return await artifactOf({
+        bytes: new TextEncoder().encode(JSON.stringify(shown)),
+        previewOnly: true,
+        built,
+        req,
+        resolved,
+        template,
+        branding,
+        passOverrides,
+        artHashes,
+      });
+    }
     const built = await buildPass({
       template,
       registry,
@@ -262,21 +286,8 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       behaviors: deps.behaviors,
       now,
     });
+    const resign = editPass(req, built.passJson);
     let { signed } = built;
-    let resign = false;
-    if (req.status === 'voided' && built.passJson.voided !== true) {
-      built.passJson.voided = true;
-      resign = true;
-    }
-    if (req.changeMessages) {
-      const { previous, notify } = req.changeMessages;
-      resign = applyChangeMessages(built.passJson, previous, notify) || resign;
-    }
-    if (req.silent) resign = stripChangeMessages(built.passJson) || resign;
-    if (req.removal) {
-      applyRemoval(built.passJson, req.removal);
-      resign = true;
-    }
     if (resign) {
       const {
         'pass.json': _pass,
@@ -286,32 +297,17 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
       } = signed.files;
       signed = await signPass(built.passJson, assets, identity.material, { now });
     }
-    const bytes = packagePassBytes(signed);
-    const display = displayOf(template, req.personalization);
-    const lookupInput = resolved.manifest.scan?.lookup?.input;
-    const lookupValue = lookupInput ? lookupValueOf(req.personalization, lookupInput) : null;
-    // The signed bytes carry the device token; the copy kept in the database never does.
-    const { authenticationToken: _token, ...storedPassJson } = built.passJson;
-    return {
-      bytes,
-      sha256: await sha256Hex(bytes),
-      passJson: storedPassJson,
-      template: resolved,
-      title: display.title,
-      subtitle: display.subtitle,
-      contentHash: built.contentHash,
-      barcodeHash: await barcodeHashOf(built.passJson),
-      lookupHash: lookupValue === null ? null : await lookupHashOf(lookupValue),
-      warnings: [
-        ...built.report.issues.filter((i) => i.severity !== 'error'),
-        ...brandingWarnings(
-          resolved,
-          branding,
-          passOverrides.map((a) => a.name),
-          artHashes,
-        ),
-      ],
-    };
+    return await artifactOf({
+      bytes: packagePassBytes(signed),
+      previewOnly: false,
+      built,
+      req,
+      resolved,
+      template,
+      branding,
+      passOverrides,
+      artHashes,
+    });
   } catch (error) {
     if (error instanceof PassBuildError) {
       const issues: FieldIssue[] = error.report.issues

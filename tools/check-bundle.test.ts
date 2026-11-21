@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkBundle,
+  DEV_BUDGET_BYTES,
+  DEV_FORBIDDEN,
+  DEV_ISLAND_BUDGET_BYTES,
   FORBIDDEN,
   initialAssets,
+  islandAssets,
+  PLAYGROUND_BUDGET_BYTES,
   SCAN_BUDGET_BYTES,
   SCAN_FORBIDDEN,
 } from './check-bundle.ts';
@@ -63,5 +68,70 @@ describe('check-bundle', () => {
   it('the scan run also forbids the e2e hook', () => {
     const { errors } = checkBundle(() => 'window.__passbookScan', html, 0, SCAN_FORBIDDEN);
     expect(errors).toContain('/assets/index.js contains __passbookScan');
+  });
+
+  it('the portal run counts stylesheets, holds 60 kB and refuses the router tree', () => {
+    expect(DEV_BUDGET_BYTES).toBe(60_000);
+    expect(initialAssets(html, true)).toEqual([
+      '/assets/index.js',
+      '/assets/ui.js',
+      '/assets/a.css',
+    ]);
+    const files: Record<string, string> = {
+      '/assets/index.js': 'ok',
+      '/assets/ui.js': 'ok',
+      '/assets/a.css': 'routeTree',
+    };
+    const { errors } = checkBundle(
+      (url) => files[url] ?? '',
+      html,
+      DEV_BUDGET_BYTES,
+      DEV_FORBIDDEN,
+      true,
+    );
+    expect(errors).toEqual(['/assets/a.css contains routeTree']);
+    const css = Array.from({ length: 80_000 }, () => Math.random().toString(36)).join('');
+    const over = checkBundle(() => css, html, DEV_BUDGET_BYTES, DEV_FORBIDDEN, true);
+    expect(over.errors.some((e) => e.includes('exceeds budget 60000 B'))).toBe(true);
+  });
+
+  it('finds the playground island from the portal script and keeps the initial load out of it', () => {
+    const files: Record<string, string> = {
+      '/assets/developers-a.js': 'import("./playground-Abc_12.js")',
+      '/assets/playground-Abc_12.js':
+        'const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/boot-x.js","assets/react-y.js","assets/boot-x.css","assets/developers-a.js"])))=>i',
+    };
+    const initial = ['/assets/developers-a.js', '/assets/developers-b.css'];
+    expect(islandAssets((url) => files[url] ?? '', initial, 'playground')).toEqual([
+      '/assets/playground-Abc_12.js',
+      '/assets/boot-x.js',
+      '/assets/react-y.js',
+      '/assets/boot-x.css',
+    ]);
+    // No island named in the scripts: nothing to measure, which the build reports as a failure.
+    expect(islandAssets(() => 'nothing', initial, 'playground')).toEqual([]);
+  });
+
+  it('the playground island has a budget of its own, above the portal’s and the console’s, below the SPA’s', () => {
+    expect(PLAYGROUND_BUDGET_BYTES).toBeGreaterThan(DEV_BUDGET_BYTES);
+    expect(PLAYGROUND_BUDGET_BYTES).toBeGreaterThan(DEV_ISLAND_BUDGET_BYTES);
+    expect(PLAYGROUND_BUDGET_BYTES).toBeLessThan(235_000);
+  });
+
+  it('finds the Try it island: its loader and the chunks Vite lists in it', () => {
+    const files: Record<string, string> = {
+      '/assets/developers-A.js': 'x(()=>import("./run-entry-B1.js"),__vite__mapDeps([0]))',
+      '/assets/run-entry-B1.js':
+        'const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/mount-C.js","assets/react-D.js","assets/mount-C.css"])))=>i.map(i=>d[i]);',
+    };
+    const read = (url: string) => files[url] ?? '';
+    expect(islandAssets(read, ['/assets/developers-A.js'], 'run-entry')).toEqual([
+      '/assets/run-entry-B1.js',
+      '/assets/mount-C.js',
+      '/assets/react-D.js',
+      '/assets/mount-C.css',
+    ]);
+    expect(islandAssets(read, ['/assets/developers-A.js'], 'missing')).toEqual([]);
+    expect(DEV_ISLAND_BUDGET_BYTES).toBe(95_000);
   });
 });

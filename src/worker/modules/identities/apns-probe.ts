@@ -4,6 +4,7 @@ import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { apnsMethod, createApnsTransport } from '../delivery/apns.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { apnsBindingPresent } from './db-resolver.ts';
 import { teamHasPushKey } from './push-key-store.ts';
 import { getIdentityRow, type IdentityRow, listIdentityRows, setProbeHealth } from './repo.ts';
@@ -35,6 +36,7 @@ export async function probeRow(
   row: IdentityRow,
   actor: Actor | null,
 ): Promise<ApnsProbeResult> {
+  if (row.org_id) await assertNotPreviewOnly(ctx.env.DB, row.org_id);
   const now = ctx.clock.now();
   const target = {
     passTypeIdentifier: row.pass_type_identifier,

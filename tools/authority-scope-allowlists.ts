@@ -193,9 +193,10 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/webhooks/repo-delivery-state.ts': {
     reason:
-      'lane claim, attempt, retry, finish and cancel bookkeeping for deliveries created by the pass_events trigger (the trigger and composite FKs are the authority), plus the endpoint health and status writes no trigger authorizes (consecutive_failures, failing_since, last_success_at, lane_token, status = disabled with its cancel and audit row); no tenant principal at send time. Only webhooks/{deliver,dispatch,jobs,kick}.ts may import it (check-sizes boundary)',
+      'the capture of a signed request on a capture endpoint (developer org, Test; the triggers hold it to its own org, 600 an hour and 200 per endpoint), lane claim, attempt, retry, finish and cancel bookkeeping for deliveries created by the pass_events trigger (the trigger and composite FKs are the authority), plus the endpoint health and status writes no trigger authorizes (consecutive_failures, failing_since, last_success_at, lane_token, status = disabled with its cancel and audit row); no tenant principal at send time. Only webhooks/{deliver,dispatch,jobs,kick}.ts may import it (check-sizes boundary)',
     writes: [
       'webhook_attempts:14e5061ed595',
+      'webhook_captures:394f11de3c79',
       'webhook_deliveries:32f816eb0de2',
       'webhook_deliveries:7aad02cd36d1',
       'webhook_deliveries:c4b8616238e6',
@@ -210,10 +211,12 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/webhooks/repo-retention.ts': {
     reason:
-      'daily purge of event_feed, deliveries and attempts per retention plan scope (held events excluded, receipt in the same batch) and expired secrets; platform job',
+      'daily purge of event_feed, deliveries and attempts per retention plan scope (held events excluded, receipt in the same batch), expired secrets, and test captures past 7 days with their hourly counters; platform job',
     writes: [
       'event_feed:346e3a1e203b',
       'webhook_attempts:728e5cf7cb30',
+      'webhook_capture_hours:1650ffd6f374',
+      'webhook_captures:b9e00555955d',
       'webhook_deliveries:1567275cd4be',
       'webhook_endpoint_secrets:98644d3fe974',
     ],
@@ -310,6 +313,8 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
  * uses `tenantCheck` with `{org}`. Each entry names what ties the row to the grant's tenant instead.
  */
 export const UNTENANTED_CHECK_ALLOWLIST: Record<string, string> = {
+  'src/worker/modules/developer/repo-grants.ts#developer_sandboxes':
+    "the owner's own close: the check asks that the person has a sandbox, and the grant's org write is pinned to the org id the service read for that person",
   'src/worker/modules/passes/repo-authority.ts#api_keys':
     "capabilityChecks: k.id is the grant's own API-key principal (the same authority object), which the actor row resolves in its tenant",
   'src/worker/modules/passes/repo-authority.ts#org_memberships':

@@ -31,10 +31,12 @@ export const CapturedEmailDetailSchema = CapturedEmailSchema.extend({
 export const CapturedEmailScopeQuerySchema = z.object({ orgId: OrgIdSchema });
 /** Detail may declare mode explicitly, or use the console's mode header. */
 export const CapturedEmailDetailQuerySchema = CapturedEmailScopeQuerySchema.extend({
+  orgId: OrgIdSchema.optional(),
   mode: ModeSchema.optional(),
 });
+/** A Test key leaves `orgId` out and reads its own org's inbox. */
 export const CapturedEmailListQuerySchema = PageQuerySchema.extend({
-  orgId: OrgIdSchema,
+  orgId: OrgIdSchema.optional(),
 });
 /** The iframe cannot send the console mode header, so it declares its Test mode explicitly. */
 export const CapturedEmailFrameQuerySchema = CapturedEmailScopeQuerySchema.extend({

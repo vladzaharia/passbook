@@ -130,3 +130,112 @@ export function breakingChanges(prev: Doc, next: Doc): string[] {
   }
   return out;
 }
+
+export interface Change {
+  operationId: string;
+  /** `GET /passes/{id}`. */
+  op: string;
+  /** `additive`: safe for old clients. `notable`: safe, but a client with a closed switch may care (new output enum value). */
+  class: 'additive' | 'notable' | 'breaking';
+  text: string;
+}
+
+/** What `next` adds for a client written against `prev`: the safe side of breakingChanges. */
+function added(
+  a: Doc,
+  b: Doc,
+  oldNode: unknown,
+  newNode: unknown,
+  side: Side,
+  where: string,
+  out: Omit<Change, 'op' | 'operationId'>[],
+  seen = new Set<string>(),
+): void {
+  const o = deref(a, oldNode);
+  const n = deref(b, newNode);
+  const ref = obj(oldNode).$ref;
+  if (typeof ref === 'string') {
+    const key = `${where}|${ref}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+  }
+  if (Array.isArray(o.enum) && Array.isArray(n.enum))
+    for (const v of n.enum as unknown[])
+      if (!(o.enum as unknown[]).includes(v))
+        out.push({
+          class: side === 'response' ? 'notable' : 'additive',
+          text: `${where}: enum value ${JSON.stringify(v)} added`,
+        });
+  const oProps = obj(o.properties);
+  const nProps = obj(n.properties);
+  for (const [name, schema] of Object.entries(nProps)) {
+    if (name in oProps) added(a, b, oProps[name], schema, side, `${where}.${name}`, out, seen);
+    else
+      out.push({
+        class: 'additive',
+        text: `${where}.${name}: ${side === 'response' ? 'field' : 'optional input field'} added`,
+      });
+  }
+  if (o.items && n.items) added(a, b, o.items, n.items, side, `${where}[]`, out, seen);
+  for (const key of ['anyOf', 'oneOf', 'allOf'] as const) {
+    const oList = o[key];
+    const nList = n[key];
+    if (Array.isArray(oList) && Array.isArray(nList) && oList.length === nList.length)
+      for (const [i, s] of oList.entries())
+        added(a, b, s, nList[i], side, `${where}|${i}`, out, seen);
+  }
+}
+
+function addedInOperation(a: Doc, b: Doc, oldOp: Json, newOp: Json) {
+  const out: Omit<Change, 'op' | 'operationId'>[] = [];
+  const oParams = paramMap(a, oldOp);
+  for (const [key, np] of paramMap(b, newOp)) {
+    const op = oParams.get(key);
+    if (!op) {
+      if (!np.required) out.push({ class: 'additive', text: `optional parameter ${key} added` });
+    } else added(a, b, op.schema, np.schema, 'request', `param ${key}`, out);
+  }
+  const oBody = obj(obj(obj(oldOp.requestBody).content)['application/json']).schema;
+  const nBody = obj(obj(obj(newOp.requestBody).content)['application/json']).schema;
+  if (oBody && nBody) added(a, b, oBody, nBody, 'request', 'body', out);
+  const nRes = obj(newOp.responses);
+  for (const [status, res] of Object.entries(obj(oldOp.responses))) {
+    if (!status.startsWith('2') || !(status in nRes)) continue;
+    const os = obj(obj(obj(res).content)['application/json']).schema;
+    const ns = obj(obj(obj(nRes[status]).content)['application/json']).schema;
+    if (os && ns) added(a, b, os, ns, 'response', status, out);
+  }
+  if (!oldOp.deprecated && newOp.deprecated) out.push({ class: 'notable', text: 'deprecated' });
+  return out;
+}
+
+/** Every change from `prev` to `next`, safe and breaking, each tied to an operation. */
+export function changes(prev: Doc, next: Doc): Change[] {
+  const out: Change[] = [];
+  const idOf = (doc: Doc, path: string, method: string) =>
+    String(obj(obj(doc.paths?.[path])[method]).operationId ?? '');
+  for (const [path, item] of Object.entries(next.paths ?? {}))
+    for (const method of METHODS) {
+      const newOp = obj(obj(item)[method]);
+      if (!Object.keys(newOp).length) continue;
+      const op = `${method.toUpperCase()} ${path}`;
+      const operationId = idOf(next, path, method);
+      const oldOp = obj(obj(prev.paths?.[path])[method]);
+      if (!Object.keys(oldOp).length)
+        out.push({ operationId, op, class: 'additive', text: 'new operation' });
+      else
+        for (const c of addedInOperation(prev, next, oldOp, newOp))
+          out.push({ operationId, op, ...c });
+    }
+  for (const text of breakingChanges(prev, next)) {
+    const op = /^([A-Z]+ \S+?)(?::| |$)/.exec(text)?.[1] ?? '';
+    const [method = '', path = ''] = op.split(' ');
+    out.push({
+      operationId: idOf(prev, path, method.toLowerCase()),
+      op,
+      class: 'breaking',
+      text: text.slice(op.length).replace(/^:? ?/, '') || 'changed',
+    });
+  }
+  return out;
+}

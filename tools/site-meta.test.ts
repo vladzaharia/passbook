@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { DEVELOPERS_INDEXABLE } from '../src/shared/developers.ts';
 import { APP_DESCRIPTION, HEAD_HTML } from '../src/worker/ssr/head.ts';
 import { decodeIco } from './lib/ico.ts';
 import { ICON_COLORS, tabIconSvg } from './lib/icon-art.ts';
@@ -229,6 +230,16 @@ describe('robots.txt', () => {
   it('keeps the callback closed to unrelated crawlers', () => {
     expect(crawlable(robots, '/wallet/v1/google/account-id', '*')).toBe(false);
   });
+
+  // The portal is crawlable so its noindex can be read; the sitemap joins when it is indexable.
+  it.each(['*', 'Googlebot'])(
+    'opens /developers to %s exactly as the portal indexes itself',
+    (agent) => {
+      expect(crawlable(robots, '/developers', agent)).toBe(true);
+      expect(crawlable(robots, '/developers/reference/passes', agent)).toBe(true);
+      expect(/^Sitemap:\s*\S+\/developers\/sitemap\.xml$/m.test(robots)).toBe(DEVELOPERS_INDEXABLE);
+    },
+  );
 
   it('names every file it allows', () => {
     for (const [, path] of robots.matchAll(/^Allow: (\/[\w.-]+\.\w+)$/gm))

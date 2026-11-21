@@ -1,3 +1,4 @@
+import type { MiddlewareHandler } from 'hono';
 import { z } from 'zod';
 import { IdParamSchema, IdSchema, OkSchema } from '../../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
@@ -17,14 +18,15 @@ import {
 } from '../../../shared/contracts/pass-imports.ts';
 import { methodScope } from '../../platform/auth.ts';
 import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
-import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import type { AppBindings } from '../../platform/context.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import {
   actorFor,
-  assertOrg,
   authOf,
   type C,
+  orgIdOf,
   requireTenantSessionOrApiKey,
   svc,
   tenantAuthorityOf,
@@ -48,13 +50,20 @@ export const passImportRoutes = createRouter({ bodyLimit: false });
 const CREATE_BODY_BYTES = 3_000_000;
 passImportRoutes.use('*', defaultBodyLimit(/\/pass-imports\/?$/));
 passImportRoutes.use('/', limitBody(CREATE_BODY_BYTES));
+const keyGuard = requireTenantSessionOrApiKey(
+  methodScope({ read: 'passes:read', write: 'passes:write' }),
+);
+// results.csv declares its own scope (passes:write), which the read scope of this guard would stack on.
+const importGuard: MiddlewareHandler<AppBindings> = (c, next) =>
+  c.req.path.endsWith('/results.csv') ? next() : keyGuard(c, next);
 guard(
   passImportRoutes,
   // Removing passes stays with a signed-in user (removeCreated), so the document does not offer it to keys.
-  declareKeyAccess(
-    requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
-    { read: ['passes:read'], write: ['passes:write'], only: /^(?!.*\/remove-created$)/ },
-  ),
+  declareKeyAccess(importGuard, {
+    read: ['passes:read'],
+    write: ['passes:write'],
+    only: /^(?!.*\/(?:remove-created|results\.csv)$)/,
+  }),
 );
 
 const TAG = 'pass-imports';
@@ -65,10 +74,7 @@ const RowsQuerySchema = PassImportRowsQuerySchema.extend({ orgId: IdSchema.optio
 
 async function authorityFor(c: C, orgId: string | undefined, capability: OrgCapability) {
   const auth = authOf(c);
-  const org = orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
-  if (!org) throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
-  assertOrg(c, org);
-  return tenantAuthorityOf(svc(c), auth, org, capability);
+  return tenantAuthorityOf(svc(c), auth, orgIdOf(auth, orgId), capability);
 }
 
 register(
@@ -217,6 +223,8 @@ register(
     method: 'get',
     path: '/{id}/results.csv',
     summary: 'What happened to each row, with the pass and its links',
+    // The links open the passes, so a key needs the write scope, as for creating them.
+    auth: { scope: 'passes:write', capability: 'passes:operate' },
     params: IdParamSchema,
     query: OrgQuerySchema,
   },

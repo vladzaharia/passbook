@@ -9,13 +9,19 @@
       "!**/dist",
       "!**/coverage",
       "!docs/api/openapi.v1.json",
+      "!docs/api/errors.json",
+      "!docs/api/webhook-events.json",
+      "!docs/api/webhook-vectors.json",
       "!**/playwright-report",
       "!**/test-results",
       "!src/generated",
+      "!sdk/typescript/src/generated",
+      "!sdk/typescript/dist",
       "!test/setup/schema-snapshot.generated.json",
       "!src/web/routeTree.gen.ts",
       "!worker-configuration.d.ts",
       "!docs/research",
+      "!docs/developers/snippets",
       "!docs/audits",
       "!docs/design/scanner/buddy-draft",
       "!templates",
@@ -68,7 +74,13 @@
       }
     },
     {
-      "includes": ["tools/**", "e2e/**", "test/mock-oidc/**", "*.config.ts"],
+      "includes": [
+        "tools/**",
+        "e2e/**",
+        "test/mock-oidc/**",
+        "*.config.ts",
+        "sdk/typescript/examples/**"
+      ],
       "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
     },
     // The Playwright rules also match vitest describe(name, opts, fn), jest-dom matchers and any

@@ -1,14 +1,14 @@
-import { type ReactNode, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
 import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { CHANNEL_COPY, channelReason } from '@/shared/copy/channels.ts';
 import { PREVIEW_COPY, PREVIEW_LABEL } from '@/shared/copy/previews.ts';
 import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
-import { Callout, SegmentedControl, Select, Skeleton } from '../ui/index.ts';
-import { MobilePreview } from './mobile-preview.tsx';
+import { Callout } from '../ui/callout.tsx';
+import { SegmentedControl } from '../ui/segmented-control.tsx';
+import { Skeleton } from '../ui/skeleton.tsx';
 import { PREVIEW_CHANNELS, type PreviewChannel, type PreviewSource } from './types.ts';
 import { useWalletPreviews } from './use-wallet-previews.ts';
-import { WalletChannel } from './wallet-channel.tsx';
 
 export interface ChannelPreviewsProps {
   /** The pass, its template and files; null until the built pass arrives. */
@@ -19,8 +19,21 @@ export interface ChannelPreviewsProps {
   paper: ReactNode;
   /** A pass's effective channels: only the ones on are shown, the rest are listed with why. */
   channels?: EffectiveChannels | undefined;
+  /** The page picks the channel (and draws its own switcher): only that channel's pane shows. */
+  value?: PreviewChannel | undefined;
   className?: string;
 }
+
+/** The narrow-column menu pulls Radix's popper and dialog; a wide column never needs it. */
+const Select = lazy(() => import('../ui/select.tsx').then((m) => ({ default: m.Select })));
+
+/** Both pull the router (and, for Mobile, the portal) with them: loaded only when their channel opens. */
+const WalletChannel = lazy(() =>
+  import('./wallet-channel.tsx').then((m) => ({ default: m.WalletChannel })),
+);
+const MobilePreview = lazy(() =>
+  import('./mobile-preview.tsx').then((m) => ({ default: m.MobilePreview })),
+);
 
 /**
  * One switcher for every way a pass reaches a holder: Apple, Google, Samsung, Mobile and Paper.
@@ -31,12 +44,13 @@ export function ChannelPreviews({
   apple,
   paper,
   channels,
+  value,
   className,
 }: ChannelPreviewsProps) {
   const shown = PREVIEW_CHANNELS.filter((c) => channels?.[c]?.on !== false);
   const off = PREVIEW_CHANNELS.filter((c) => channels?.[c]?.on === false);
   const [picked, setPicked] = useState<PreviewChannel>('apple');
-  const current = shown.includes(picked) ? picked : shown[0];
+  const current = value ?? (shown.includes(picked) ? picked : shown[0]);
   const [width, measure] = useContainerWidth();
   // Five segments need about 19 rem; a narrower column gets the same choice as a menu.
   const compact = width > 0 && width < 300;
@@ -45,14 +59,16 @@ export function ChannelPreviews({
   if (!current) return <Callout tone="warning">{CHANNEL_COPY.nothingOn}</Callout>;
   return (
     <div ref={measure} className={cn('flex w-full min-w-0 flex-col items-center gap-4', className)}>
-      {compact ? (
-        <Select
-          label={PREVIEW_COPY.switcher}
-          options={options}
-          value={current}
-          onValueChange={(v) => setPicked(v as PreviewChannel)}
-          className="w-full"
-        />
+      {value ? null : compact ? (
+        <Suspense fallback={<Skeleton className="h-9 w-full rounded-md" />}>
+          <Select
+            label={PREVIEW_COPY.switcher}
+            options={options}
+            value={current}
+            onValueChange={(v) => setPicked(v as PreviewChannel)}
+            className="w-full"
+          />
+        </Suspense>
       ) : (
         <SegmentedControl
           label={PREVIEW_COPY.switcher}
@@ -66,18 +82,30 @@ export function ChannelPreviews({
       <div className="w-full min-w-0" data-channel={current}>
         {current === 'apple' ? apple : null}
         {current === 'google' || current === 'samsung' ? (
-          <WalletChannel target={current} previews={source ? wallets : { state: 'loading' }} />
+          <Suspense
+            fallback={<Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />}
+          >
+            <WalletChannel
+              target={current}
+              previews={source ? wallets : { state: 'loading' }}
+              testBand={source?.testBand}
+            />
+          </Suspense>
         ) : null}
         {current === 'mobile' ? (
           source ? (
-            <MobilePreview source={source} channels={channels} />
+            <Suspense
+              fallback={<Skeleton className="mx-auto aspect-[9/16] w-full max-w-xs rounded-3xl" />}
+            >
+              <MobilePreview source={source} channels={channels} />
+            </Suspense>
           ) : (
             <Skeleton className="mx-auto aspect-[9/16] w-full max-w-xs rounded-3xl" />
           )
         ) : null}
         {current === 'paper' ? paper : null}
       </div>
-      {off.length > 0 ? (
+      {off.length > 0 && !value ? (
         <section className="w-full" aria-label={PREVIEW_COPY.offTitle}>
           <h4 className="mb-1 text-xs font-semibold text-fg-muted">{PREVIEW_COPY.offTitle}</h4>
           <ul className="flex flex-col gap-0.5 text-sm text-fg-muted">

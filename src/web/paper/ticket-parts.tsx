@@ -15,6 +15,8 @@ export interface TicketProps {
   issued?: Issued | undefined;
   /** `test` adds the dashed outline, the strip and the watermark around the door panel. */
   mode?: 'live' | 'test' | undefined;
+  /** A sandbox pass: the TEST PREVIEW band across the top of every page. */
+  testBand?: boolean | undefined;
   /** URLs of the template's logo and the art slot `content.art` names. */
   assets?: { logo?: string | undefined; art?: string | undefined } | undefined;
 }

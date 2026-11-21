@@ -3,6 +3,7 @@ import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { enqueuePassEmail } from '../delivery/issuance-intent.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { assertPassDetailReadable, linksOf } from './detail.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -66,7 +67,8 @@ export async function resendEmail(
   await enqueuePassEmail(ctx, {
     passId,
     to,
-    attach: input.attach ?? false,
+    // A developer org's mail carries no pass file, whatever the caller asks.
+    attach: (input.attach ?? false) && !(await isPreviewOnlyOrg(ctx.env.DB, pass.orgId)),
     expected: pass,
     auditEntry: {
       orgId: pass.orgId,

@@ -3,6 +3,7 @@ import { MY_PASSES_BUNDLE_SIZE } from '../../../shared/contracts/me.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { holderChannelsMany, recordCopy } from '../channels/gate.ts';
+import { assertSignedObject } from '../developer/fence.ts';
 import {
   type BundleRow,
   bundlePassIsCurrent,
@@ -12,6 +13,7 @@ import {
 
 /** Each object is checked again after its R2 read, before the archive emits its bytes. */
 function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly BundleRow[]) {
+  for (const row of rows) assertSignedObject(row.object_key);
   try {
     return packagePasses(
       rows.map((row) => ({

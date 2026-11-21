@@ -1,6 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all, run } from '../../platform/db.ts';
 import { HEAD, type ImportHarness, plan, setupImportHarness } from './import-test-fixtures.ts';
+import { makeTenantTestApiKey } from './repo-tenant-test-fixtures.ts';
 
 let h: ImportHarness;
 beforeAll(async () => {
@@ -80,11 +82,16 @@ describe('results.csv', () => {
     expect(row[5]).toBe('');
   });
 
-  it('needs the operate capability (links are capabilities) and hides another import id', async () => {
+  it('needs passes:write of a key (links are capabilities) and hides another import id', async () => {
     const d = await h.draft([HEAD, 'Key,1,,RK-1'].join('\n'), plan(), h.key);
     await h.commit(d.id, {}, h.key);
     await h.runWorkflow(d.id);
-    expect((await results(d.id, h.key)).status).toBe(403);
+    const reader = await makeTenantTestApiKey(h.kit.fx, {
+      orgId: h.kit.org.id,
+      scopes: ['passes:read'],
+    });
+    await expectProblem(await results(d.id, reader.headers), 403, 'MISSING_SCOPE');
+    expect((await results(d.id, h.key)).status).toBe(200);
     expect((await results('00000000-0000-7000-8000-000000000000')).status).toBe(404);
   });
 });

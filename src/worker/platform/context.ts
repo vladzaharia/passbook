@@ -70,6 +70,7 @@ export function requestContext(options: ContextOptions) {
         method: c.req.method,
         status,
         ms: clock.now() - started,
+        ...(c.var.auth?.kind === 'api_key' && c.var.auth.via ? { via: c.var.auth.via } : {}),
       });
   });
 }

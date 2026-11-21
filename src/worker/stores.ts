@@ -2,6 +2,7 @@ import { createApiKeyStore } from './modules/api-keys/service.ts';
 import { recordAudit } from './modules/audit/service.ts';
 import { bumpCounter } from './modules/auth/repo-magic.ts';
 import { createSessionStore } from './modules/auth/sessions.ts';
+import { withTryTokens } from './modules/developer/try-token.ts';
 import { createScannerStore } from './modules/scan/auth-store.ts';
 import type { AuthStores } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
@@ -15,7 +16,8 @@ const DENIED_ROWS_PER_HOUR = 500;
 export function createAuthStores(env: AppEnv, clock?: Clock): AuthStores {
   return {
     sessions: createSessionStore(env, clock),
-    apiKeys: createApiKeyStore(env, clock),
+    // A `pbtry_` developer try token resolves to its sandbox key while its session and sandbox hold.
+    apiKeys: withTryTokens(env, createApiKeyStore(env, clock), clock),
     scanners: createScannerStore(env, clock),
     async onDenied(event) {
       const ctx = createDetachedContext(env, { clock });
