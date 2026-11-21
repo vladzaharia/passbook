@@ -1,4 +1,5 @@
 import { grant } from '../../platform/authority.ts';
+import { exists } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { OrgWriteAuthority } from '../orgs/repo-org-writes.ts';
@@ -48,6 +49,12 @@ export async function closeOrgRow(
     where: by.kind === 'platform' ? { id: before.id, status: before.status } : { status: 'active' },
     returning: ['id'],
   });
+  // A developer sandbox records the close too; the statement runs only when the org moved above.
+  g.update('developer_sandboxes', {
+    set: { closed_at: now, close_reason: by.kind === 'platform' ? 'admin' : 'user' },
+    where: { org_id: before.id, closed_at: null },
+    when: [exists('orgs', { id: before.id, status: 'deleted' })],
+  });
   const [result] = await g.commit();
   return (result?.results.length ?? 0) > 0;
 }
@@ -80,6 +87,11 @@ export async function reopenOrgRow(
     },
     where: { id: before.id, status: 'deleted', purge_started_at: null },
     returning: ['id'],
+  });
+  g.update('developer_sandboxes', {
+    set: { closed_at: null, close_reason: null },
+    where: { org_id: before.id },
+    when: [exists('orgs', { id: before.id, status: 'active' })],
   });
   const [result] = await g.commit();
   return (result?.results.length ?? 0) > 0;
