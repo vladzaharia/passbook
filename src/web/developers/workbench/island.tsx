@@ -73,7 +73,7 @@ export function WorkbenchIsland({
     fetchHome(fetchFn).then(
       (home) => {
         setLoad({ kind: 'ready', home });
-        syncChip(home);
+        void syncChip(home);
       },
       () => undefined,
     );
