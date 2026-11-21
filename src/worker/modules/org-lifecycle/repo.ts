@@ -1,4 +1,5 @@
 import { all, first, type SqlValue, stmt } from '../../platform/db.ts';
+import { STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 import { platformAdminSessionParams, platformAdminSessionSql } from '../passes/repo-authority.ts';
 
 export interface LifecycleRow {
@@ -51,7 +52,7 @@ export type LifecycleActor =
 
 const liveSession = `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
   WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
-    AND s.expires_at > ? AND s.idle_expires_at > ?)`;
+    AND s.expires_at > ? AND s.idle_expires_at > ? AND s.amr IN ${STRONG_AMR_SQL})`;
 
 const orgAdminSql = `EXISTS (SELECT 1 FROM org_memberships m, json_each(m.roles) r
   WHERE m.org_id = ? AND m.user_id = ? AND m.revoked_at IS NULL AND r.value = 'org_admin')`;

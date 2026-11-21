@@ -6,6 +6,7 @@ type Op = {
   description?: string;
   summary?: string;
   security?: Record<string, unknown>[];
+  'x-sign-in'?: string;
   parameters?: Param[];
   requestBody?: unknown;
   'x-codes'?: string[];
@@ -45,6 +46,7 @@ const bySecurity = (op: Op): string[] => {
         'FORBIDDEN',
         'RATE_LIMITED',
         ...(keys ? ['INVALID_API_KEY', 'MISSING_SCOPE'] : []),
+        ...(op['x-sign-in'] === 'idp' ? ['IDP_SIGN_IN_REQUIRED'] : []),
       ]
     : ['RATE_LIMITED'];
 };

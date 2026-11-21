@@ -39,6 +39,7 @@ const row = (orgId: string | null, scopes: string[], id = f().ids.id()): ApiKeyR
   rotated_from: null,
   created_by_key: null,
   last_ip_prefix: null,
+  created_amr: null,
 });
 const entry = (action: string, targetId: string) => ({
   orgId: org.id,
@@ -165,7 +166,7 @@ describe('API key grants: safety', () => {
       createKey(
         ctx(),
         key,
-        { kind: 'platform', userId: m.user.id, sessionId: 'not-a-session' },
+        { kind: 'platform', userId: m.user.id, sessionId: 'not-a-session', amr: 'oidc' },
         entry('api_key.create', key.id),
       ),
     ).rejects.toMatchObject({ status: 403, code: 'ACTOR_CHANGED' });

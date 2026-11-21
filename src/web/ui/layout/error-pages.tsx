@@ -53,6 +53,26 @@ export function ForbiddenPage() {
   );
 }
 
+/** An email-link session on a console page: only Polaris ID opens it. */
+export function PolarisIdPage() {
+  const here = useRouterState({ select: (s) => s.location.href });
+  return (
+    <EmptyState
+      heading
+      art="lock"
+      title={AUTH_PAGE_COPY.signInPolarisId}
+      action={
+        <Button asChild>
+          <a href={`/auth/oidc/start?next=${encodeURIComponent(here)}`}>
+            <LogIn aria-hidden />
+            {AUTH_PAGE_COPY.signInPolarisId}
+          </a>
+        </Button>
+      }
+    />
+  );
+}
+
 /**
  * Signed in and in the organization, but the role does not cover this section: say which role
  * and organization, and offer the nearest section the membership does open.
@@ -167,6 +187,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
     window.addEventListener('online', retry);
     return () => window.removeEventListener('online', retry);
   }, [offlineFailure, chunk, reset, router]);
+  if (isApiError(error) && error.code === 'IDP_SIGN_IN_REQUIRED') return <PolarisIdPage />;
   if (isApiError(error) && error.isForbidden) return <ForbiddenPage />;
   if (chunk) {
     return (

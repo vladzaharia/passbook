@@ -85,7 +85,9 @@ export async function magicLinkTrace(
   const row = await repo.linkTrace(ctx.env.DB, await sha256Hex(token));
   if (!row) return null;
   let invitation: InvitationState | null = null;
-  if (row.invitation_id !== null) {
+  // A link voided by migration 0169 was invitation-bound, but a sign-in no longer joins an org.
+  const invitationId = row.voided === 1 ? null : row.invitation_id;
+  if (invitationId !== null) {
     if (row.inv_accepted_at !== null) invitation = 'accepted';
     else if (row.inv_revoked_at !== null || row.org_status !== 'active') invitation = 'revoked';
     else if ((row.inv_expires_at ?? 0) <= ctx.clock.now()) invitation = 'expired';
@@ -95,7 +97,7 @@ export async function magicLinkTrace(
     next: row.redirect_path,
     purpose: row.purpose,
     state: row.consumed_at === null ? 'expired' : 'used',
-    invited: row.invitation_id !== null,
+    invited: invitationId !== null,
     invitation,
     identity: row.has_identity === 1,
     email: row.email,

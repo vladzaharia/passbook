@@ -221,6 +221,7 @@ export async function createApiKey(
     rotated_from: null,
     created_by_key: authority.kind === 'api_key' ? authority.keyId : null,
     last_ip_prefix: null,
+    created_amr: authority.kind === 'api_key' ? null : authority.amr,
   };
   const audit: AuditEntry = {
     orgId,

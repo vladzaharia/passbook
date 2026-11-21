@@ -4,7 +4,11 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
 import { ensurePersonalOrg } from '../orgs/personal.ts';
 import { getPlatformSettings } from '../settings/service.ts';
-import { createUserForProvenEmail, releaseClaimOtherThan } from './account-claims.ts';
+import {
+  createUserForProvenEmail,
+  refuseNonPrimaryOwner,
+  releaseClaimOtherThan,
+} from './account-claims.ts';
 import { withinCaps, withinDailyCap, withinIpCap, withinSubjectCap } from './magic-caps.ts';
 import { issueMagicLink } from './magic-service.ts';
 import * as repo from './repo.ts';
@@ -84,7 +88,8 @@ export async function signInOidc(
   if (!user) {
     // Only a proven address names an owner: a primary email on an account that signs in through a
     // provider may be an unverified claim.
-    const owner = await repo.findUserByProvenEmail(db, email);
+    const owner = await repo.findUserByProvenEmail(db, email, { primaryOnly: true });
+    if (!owner) await refuseNonPrimaryOwner(ctx, email);
     if (owner && owner.status !== 'active') {
       throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
     }
@@ -116,7 +121,7 @@ export async function signInOidc(
     await releaseClaimOtherThan(ctx, user.id, email);
     const { ownerId } = await repo.addUserEmail(db, email, user.id, 'oidc', ctx.clock.now());
     verified = ownerId === user.id;
-    if (verified) await repo.adoptPrimaryEmail(db, user.id, email);
+    if (verified) await repo.adoptPrimaryEmail(db, user.id, email, 'oidc');
     else ctx.log.warn('auth.oidc_email_conflict', { code: 'OIDC_EMAIL_CONFLICT', userId: user.id });
   } else {
     verified = (await repo.emailsOf(db, user.id)).some((e) => e.email === email);

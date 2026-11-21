@@ -1,6 +1,7 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
+import { canUseConsole } from '../../../shared/sign-in.ts';
 import {
   modeFromRequest,
   SCANNER_COOKIE,
@@ -21,6 +22,7 @@ import {
 import { ipPrefix } from '../../platform/ip.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { assertSignIn } from '../../platform/sign-in-guard.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
@@ -95,6 +97,11 @@ async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   const sid = getCookie(c, SESSION_COOKIE);
   const session = sid ? await sessions.resolve(sid) : null;
   if (!session) throw unauthenticated();
+  // The console opens the scanner's admin views: an email link does not. Without that choice an email
+  // session is a holder's, not a scanner's, so it counts as no session and pairing still works.
+  if (!adminChosen && !canUseConsole(session, serviceContext(c).clock.now()))
+    throw unauthenticated();
+  assertSignIn(c, session, 'idp');
   return { admin: session };
 }
 

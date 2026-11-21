@@ -400,6 +400,14 @@ export async function makeSession(
       now + (options.lifetimeMs ?? 12 * 3600_000),
     ],
   );
+  // A Polaris ID session implies a linked identity, which a personal key needs to resolve (KEY_OWNER_NEEDS_IDP).
+  if ((options.amr ?? 'oidc') === 'oidc')
+    await run(
+      f.env.DB,
+      `INSERT OR IGNORE INTO auth_identities (provider, subject, user_id, created_at)
+       SELECT 'pocketid', 'test-' || ?1, ?1, ?2 WHERE EXISTS (SELECT 1 FROM users WHERE id = ?1)`,
+      [options.userId, now],
+    );
   // A sign-in records the roles it granted (`recordLogin`); deferred platform work re-reads them.
   await run(f.env.DB, 'UPDATE users SET last_roles = ? WHERE id = ?', [
     JSON.stringify(roles),

@@ -31,6 +31,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { ACTION_ICON } from './action-icons.ts';
+import { AUTH_ACTIONS } from './actions-auth.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
@@ -270,11 +271,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.restore': a('Template restored', I.restore, 'success'),
   'template.rollback': a('Template rolled back', I.restore, 'warning'),
   'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
-  'auth.breakglass_failed': a('Break-glass sign-in failed', ShieldAlert, 'danger'),
-  'auth.breakglass_used': a('Break-glass sign-in', ShieldAlert, 'warning'),
-  'auth.denied': a('Access denied', ShieldX, 'warning'),
-  'auth.identity_linked': a('Sign-in method linked', Link2, 'info'),
-  'auth.primary_email_unproven': a('Unproven email released', ShieldAlert, 'warning'),
+  ...AUTH_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),
   'bundle.rotate_link': a('Bundle link rotated', I.rotate, 'info'),

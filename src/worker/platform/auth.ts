@@ -8,8 +8,14 @@ import {
   type Mode,
   type RoleSchema,
 } from '../../shared/contracts/common.ts';
-import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
-import { scopeExercises } from './api-scopes.ts';
+import type { SignInAmr, SignInLevel } from '../../shared/sign-in.ts';
+import {
+  authorityUnproven,
+  capabilityState,
+  proveCapability,
+  verifiedScopeOf,
+  verifiedScopes,
+} from './auth-capability.ts';
 import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
@@ -17,14 +23,16 @@ import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
 import type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
+import type { ScannerAuth } from './scanner-auth.ts';
 import { serviceContext } from './service-context.ts';
+import { assertSignIn, declareSignIn } from './sign-in-guard.ts';
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
 export const isKnownGuard = (handler: object): boolean => knownGuards.has(handler);
 
 export type Role = z.infer<typeof RoleSchema>;
-export type Amr = 'oidc' | 'magic_link' | 'breakglass';
+export type Amr = SignInAmr;
 export const API_SCOPES = ApiScopeSchema.options;
 export type ApiScope = z.infer<typeof ApiScopeSchema>;
 
@@ -37,6 +45,8 @@ export interface SessionAuth {
   roles: Role[];
   csrfSecret: string;
   amr: Amr;
+  /** An email session still inside the console grace window: when it ends (ms). Null otherwise. */
+  consoleUntil?: number | null;
   /**
    * Stores resolve 'live'. Admin guards replace it from the x-passbook-mode header; holder routes
    * never read it (holders see all their passes).
@@ -60,23 +70,7 @@ export interface ApiKeyAuth {
   orgKind?: 'developer';
 }
 
-export const SCANNER_COOKIE = '__Host-wallet_scan';
-export const SCANNER_TOKEN = /^wls_[A-Za-z0-9]{8}_[A-Za-z0-9_-]{43}$/;
-
-/** A paired browser device (cookie) or terminal (bearer). Reaches /api/v1/scan/* only. */
-export interface ScannerAuth {
-  kind: 'scanner';
-  scannerId: string;
-  orgId: string;
-  mode: Mode;
-  transport: 'cookie' | 'bearer';
-  /** Cookie transport only. */
-  csrfSecret: string | null;
-  /** `scanners.kind`: a display never scans, a terminal always does. */
-  scannerKind: 'device' | 'terminal' | 'display';
-  /** `scanners.device_role`: what the device does now. Only `scan` reaches the scan routes. */
-  deviceRole: 'scan' | 'customer' | 'monitor';
-}
+export { SCANNER_COOKIE, SCANNER_TOKEN, type ScannerAuth } from './scanner-auth.ts';
 
 export type AuthContext = SessionAuth | ApiKeyAuth | ScannerAuth;
 
@@ -138,31 +132,46 @@ async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | nu
   return cookie ? c.var.stores.sessions.resolve(cookie) : null;
 }
 
-async function sessionOrThrow(c: Context<AppBindings>): Promise<SessionAuth> {
+async function sessionOrThrow(c: Context<AppBindings>, level: SignInLevel): Promise<SessionAuth> {
   const session = c.var.auth?.kind === 'session' ? c.var.auth : await resolveSession(c);
   if (!session) throw new UnauthenticatedError();
+  assertSignIn(c, session, level);
   c.set('auth', session);
   return session;
 }
 
-/** Cookie session (user or admin). State-changing requests also pass the CSRF check. */
-export const requireSession: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
-  const session = await sessionOrThrow(c);
-  await csrfGuard(c, session);
-  await next();
-});
+const sessionGuard = (level: SignInLevel): MiddlewareHandler<AppBindings> =>
+  declareSignIn(
+    createMiddleware<AppBindings>(async (c, next) => {
+      await csrfGuard(c, await sessionOrThrow(c, level));
+      await next();
+    }),
+    level,
+  );
+
+/** Cookie session with a strong sign-in (Polaris ID). State-changing requests also pass the CSRF check. */
+export const requireSession = sessionGuard('idp');
+
+/** A strong session with no grace for an email link: minting credentials, sandboxes, joining an org. */
+export const requireStrictSession = sessionGuard('strict');
+
+/** Any signed-in session, an email link included: holder features only (my passes, account). */
+export const requireHolderSession = sessionGuard('any');
 
 knownGuards.add(requireSession);
+knownGuards.add(requireStrictSession);
+knownGuards.add(requireHolderSession);
 
 /** Cookie session with the admin role. */
 export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
-  const session = await sessionOrThrow(c);
+  const session = await sessionOrThrow(c, 'idp');
   requireAdminRole(c, session);
   c.set('auth', { ...session, mode: modeFromRequest(c) });
   await csrfGuard(c, session);
   await next();
 });
 
+declareSignIn(requireAdmin, 'idp');
 knownGuards.add(requireAdmin);
 
 /** The mode an admin session works in. Only the exact value `test` selects test mode. */
@@ -187,33 +196,7 @@ export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeR
 }
 
 export type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
-
-// Only requireCaller tags the scope it verified, so a handler can trust it.
-const verifiedScopes = new WeakMap<AuthContext, ApiScope>();
-
-/** The scope `requireCaller` checked on this key principal; undefined for anything else. */
-export function verifiedScopeOf(auth: AuthContext): ApiScope | undefined {
-  return verifiedScopes.get(auth);
-}
-
-// A declared `capability` is a promise the handler proves with tenantAuthorityOf. The state hangs
-// on the principal object requireCaller puts in the context, which is fresh for every request.
-const capabilityState = new WeakMap<AuthContext, { capability: OrgCapability; proven: boolean }>();
-
-/** Called by tenantAuthorityOf once membership (or the key's scope) is proven for `capability`. */
-export function proveCapability(auth: AuthContext, capability: OrgCapability): void {
-  const state = capabilityState.get(auth);
-  if (!state) return;
-  const scope = verifiedScopes.get(auth);
-  if (state.capability === capability || (scope && scopeExercises(scope, capability)))
-    state.proven = true;
-}
-
-/** True when the route declared a capability and its handler never proved it. */
-export function authorityUnproven(auth: AuthContext | undefined): boolean {
-  const state = auth ? capabilityState.get(auth) : undefined;
-  return state !== undefined && !state.proven;
-}
+export { authorityUnproven, proveCapability, verifiedScopeOf };
 
 const isRead = (c: Context) => c.req.method === 'GET' || c.req.method === 'HEAD';
 
@@ -251,6 +234,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const tillKey = 'scope' in auth && auth.tillKey === true;
   const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
   const sessionKind = sessionKindOf(auth);
+  const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
     if (rule && token) {
@@ -284,7 +268,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       if (key.orgId !== null) await enforceFeatures(serviceContext(c), scoped, key.orgId);
       return next();
     }
-    const session = await sessionOrThrow(c);
+    const session = await sessionOrThrow(c, level);
     if (sessionKind === 'admin') requireAdminRole(c, session);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };
@@ -296,7 +280,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     return next();
   });
   knownGuards.add(guard);
-  return guard;
+  return declareSignIn(guard, level);
 }
 
 /** Machine API: a bearer API key with the scope, or an admin cookie session. */

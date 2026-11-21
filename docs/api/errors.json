@@ -1556,6 +1556,24 @@
       ]
     },
     {
+      "code": "IDP_EMAIL_NOT_PRIMARY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "sign-in"
+      ]
+    },
+    {
+      "code": "IDP_SIGN_IN_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "IF_MATCH_INVALID",
       "statuses": [
         400
@@ -1942,6 +1960,15 @@
       ],
       "modules": [
         "platform"
+      ]
+    },
+    {
+      "code": "KEY_OWNER_NEEDS_IDP",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
       ]
     },
     {
@@ -2493,6 +2520,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "PASSKEY_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "sign-in"
       ]
     },
     {

@@ -148,14 +148,28 @@ export async function removeEmail(db: Db, userId: string, email: string): Promis
 }
 
 /** Sign-in emails go to `email`, which must be one of the user's verified addresses. */
-export async function setPrimaryEmail(db: Db, userId: string, email: string): Promise<boolean> {
+export async function setPrimaryEmail(
+  db: Db,
+  userId: string,
+  email: string,
+  amr: string,
+): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE users SET primary_email = ?
+    `UPDATE users SET primary_email = ?, primary_set_amr = ?
      WHERE id = ? AND EXISTS (SELECT 1 FROM user_emails WHERE user_id = ? AND email = ?)`,
-    [email, userId, userId, email],
+    [email, amr, userId, userId, email],
   );
   return changes > 0;
+}
+
+/** The user belongs to an organization now: their primary email is what a Polaris ID sign-in links by. */
+export async function hasActiveMembership(db: Db, userId: string): Promise<boolean> {
+  return (
+    (await first(db, 'SELECT 1 FROM org_memberships WHERE user_id = ? AND revoked_at IS NULL', [
+      userId,
+    ])) !== null
+  );
 }
 
 // A pass already in someone's Wallet leaves the Add all bundle (re-adding stays per pass).

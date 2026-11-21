@@ -1,5 +1,6 @@
 import type { Mode } from '../../src/shared/contracts/common.ts';
 import type {
+  Amr,
   ApiKeyAuth,
   ApiKeyStore,
   ApiScope,
@@ -33,6 +34,10 @@ export interface FakeAuth {
     roles?: Role[];
     origin?: string;
     mode?: Mode;
+    /** How the session was made; `magic_link` is an email session (holder features only). */
+    amr?: Amr;
+    /** An email session's console grace end (ms). */
+    consoleUntil?: number | null;
   }): Record<string, string>;
   /** `mode: 'test'` sends x-passbook-mode: test, as the admin UI does. */
   admin(options?: { mode?: Mode }): Record<string, string>;
@@ -115,6 +120,13 @@ async function seedSession(
       `INSERT INTO users (id, primary_email, created_at, last_roles) VALUES (?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET last_roles = excluded.last_roles`,
       [session.userId, `${crypto.randomUUID()}@fake-auth.test`, now, JSON.stringify(session.roles)],
+    ),
+    stmt(
+      db,
+      // A Polaris ID session implies a linked identity, which a personal key needs (KEY_OWNER_NEEDS_IDP).
+      `INSERT OR IGNORE INTO auth_identities (provider, subject, user_id, created_at)
+       SELECT 'pocketid', 'fake-' || ?1, ?1, ?2 WHERE ?3 = 'oidc'`,
+      [session.userId, now, session.amr],
     ),
     stmt(
       db,
@@ -212,7 +224,14 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
         denied.push(event);
       },
     },
-    session({ userId = 'user-1', roles = ['user'] as Role[], origin: o = origin, mode } = {}) {
+    session({
+      userId = 'user-1',
+      roles = ['user'] as Role[],
+      origin: o = origin,
+      mode,
+      amr = 'oidc' as Amr,
+      consoleUntil = null as number | null,
+    } = {}) {
       const id = crypto.randomUUID();
       const csrfSecret = `fake-csrf-${++n}`;
       sessions.set(id, {
@@ -222,7 +241,8 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
           sessionId: id,
           roles,
           csrfSecret,
-          amr: 'oidc',
+          amr,
+          consoleUntil,
           mode: 'live',
         },
         seeded: new WeakMap(),

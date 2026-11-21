@@ -2,6 +2,7 @@ import { developerSandboxGrant } from '../../jobs/developer-sandbox.ts';
 import { rawCheck } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { addOrgEntitlements } from '../../platform/entitlements.ts';
+import { STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 
@@ -32,7 +33,7 @@ export async function insertSandbox(ctx: ServiceContext, s: NewSandbox): Promise
     'actor',
     `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
-        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+        AND s.expires_at > ? AND s.idle_expires_at > ? AND s.amr IN ${STRONG_AMR_SQL})`,
     [s.sessionIdHash, s.userId, s.now, s.now],
   );
   const none = rawCheck(
@@ -99,7 +100,7 @@ export async function closeSandbox(
           'actor',
           `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
             WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
-              AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+              AND s.expires_at > ? AND s.idle_expires_at > ? AND s.amr IN ${STRONG_AMR_SQL})`,
           [by.sessionIdHash, by.userId, now, now],
         ),
         rawCheck('config', 'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.user_id = ?)', [
@@ -154,7 +155,7 @@ export async function bumpTryGeneration(
     'actor',
     `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
-        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+        AND s.expires_at > ? AND s.idle_expires_at > ? AND s.amr IN ${STRONG_AMR_SQL})`,
     [by.sessionIdHash, by.userId, now, now],
   );
   const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.try_revoke', [live], orgId);
@@ -200,7 +201,7 @@ export async function stampFunnel(
     'actor',
     `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active' AND s.revoked_at IS NULL
-        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+        AND s.expires_at > ? AND s.idle_expires_at > ? AND s.amr IN ${STRONG_AMR_SQL})`,
     [by.sessionIdHash, by.userId, now, now],
   );
   const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.funnel', [live], orgId);

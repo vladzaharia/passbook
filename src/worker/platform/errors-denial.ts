@@ -1,6 +1,11 @@
 import type { EntitlementKey } from '../../shared/contracts/entitlements.ts';
 import { sandboxQuota } from '../../shared/copy/developer.ts';
 import { ENTITLEMENT_LABEL, limitRefusal } from '../../shared/copy/entitlements.ts';
+import {
+  IDP_SIGN_IN_REQUIRED_MESSAGE,
+  idpEmailNotPrimaryLine,
+  PASSKEY_REQUIRED_MESSAGE,
+} from '../../shared/copy/sign-in.ts';
 import { AppError, ConflictError, ForbiddenError, UnauthenticatedError } from './errors-core.ts';
 
 /** 403 `FEATURE_NOT_INCLUDED`: the organization's entitlements lack `feature` (the request guard's refusal). */
@@ -126,5 +131,26 @@ export function authorityDenied(
       );
     default:
       return new ForbiddenError('You do not have access.', code ?? 'AUTHORITY_DENIED');
+  }
+}
+
+/** 403 `IDP_SIGN_IN_REQUIRED`: the console and developer tools need a Polaris ID sign-in, not an email link. */
+export class IdpSignInRequiredError extends ForbiddenError {
+  constructor(signInUrl: string) {
+    super(IDP_SIGN_IN_REQUIRED_MESSAGE, 'IDP_SIGN_IN_REQUIRED', { signInUrl });
+  }
+}
+
+/** 403 `IDP_EMAIL_NOT_PRIMARY`: the Polaris ID email is a secondary address of an account; no account is made or bound. */
+export class IdpEmailNotPrimaryError extends ForbiddenError {
+  constructor(maskedPrimary: string) {
+    super(idpEmailNotPrimaryLine(maskedPrimary), 'IDP_EMAIL_NOT_PRIMARY');
+  }
+}
+
+/** The sign-in page's refusal of a Polaris ID session made with a code instead of a passkey. */
+export class PasskeyRequiredError extends ForbiddenError {
+  constructor() {
+    super(PASSKEY_REQUIRED_MESSAGE, 'PASSKEY_REQUIRED');
   }
 }

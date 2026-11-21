@@ -1673,6 +1673,7 @@ export type Problem = {
   feature?: string;
   limit?: number;
   used?: number;
+  signInUrl?: string;
 };
 
 export type PushFailedEvent = {

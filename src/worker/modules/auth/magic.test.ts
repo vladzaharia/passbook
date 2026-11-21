@@ -4,6 +4,7 @@ import {
   fixtures,
   makeOrg,
   makePass,
+  makeSession,
   makeTemplate,
   makeUser,
 } from '../../../../test/helpers/index.ts';
@@ -70,6 +71,46 @@ beforeEach(async () => {
   h = await harness();
 });
 afterEach(() => h.restore());
+
+describe('a strong session', () => {
+  async function linkFor(email: string, jar: Jar) {
+    await requestLink(email, jar);
+    return tokenOf(h.mail.at(-1));
+  }
+
+  it('is kept when the same person uses an email link in that browser', async () => {
+    const user = await makeUser(f());
+    const strong = await makeSession(fixtures(h.env, h.clock), { userId: user.id, amr: 'oidc' });
+    const jar: Jar = new Map([['__Host-wallet_sid', strong.cookieValue]]);
+    const res = await consumeForm(await linkFor(user.primaryEmail, jar), jar);
+    expect(res.status).toBe(303);
+    expect(jar.get('__Host-wallet_sid')).toBe(strong.cookieValue);
+    expect(await session(jar)).toMatchObject({ authenticated: true, amr: 'oidc' });
+    const rows = await all<{ amr: string }>(
+      h.env.DB,
+      'SELECT amr FROM sessions WHERE user_id = ? AND revoked_at IS NULL',
+      [user.id],
+    );
+    expect(rows).toEqual([{ amr: 'oidc' }]);
+  });
+
+  it('is replaced when another person signs in by email link in that browser', async () => {
+    const owner = await makeUser(f());
+    const other = await makeUser(f());
+    const strong = await makeSession(fixtures(h.env, h.clock), { userId: owner.id, amr: 'oidc' });
+    const jar: Jar = new Map([['__Host-wallet_sid', strong.cookieValue]]);
+    const res = await consumeForm(await linkFor(other.primaryEmail, jar), jar);
+    expect(res.status).toBe(303);
+    expect(await session(jar)).toMatchObject({ amr: 'magic_link', user: { id: other.id } });
+  });
+
+  it('is never made by an email link, which gives a session of email strength', async () => {
+    const user = await makeUser(f());
+    const jar: Jar = new Map();
+    await consumeForm(await linkFor(user.primaryEmail, jar), jar);
+    expect(await session(jar)).toMatchObject({ amr: 'magic_link', roles: ['user'] });
+  });
+});
 
 describe('request', () => {
   it('mails a link and code to a known address and binds the browser', async () => {

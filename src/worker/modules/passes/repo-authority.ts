@@ -3,6 +3,7 @@ import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import { developerTestOnly, type Principal } from '../../platform/authority-principal.ts';
 import { first, type SqlValue } from '../../platform/db.ts';
 import { keyHoldsScope, keyLive } from '../../platform/repo-api-key-sql.ts';
+import { consoleSessionSql, STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { TenantPassWrite } from './http.ts';
 
@@ -33,7 +34,8 @@ export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: 
         AND u.status = 'active' AND ${orgEpochMatchSql('o')}
         AND ${developerTestOnly('o', authority.mode === 'live' ? "'live'" : "'test'")}
         AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ?
-          AND s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > ? AND s.idle_expires_at > ?)
+          AND s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > ? AND s.idle_expires_at > ?
+          AND ${consoleSessionSql('s')})
         AND EXISTS (SELECT 1 FROM json_each(m.roles) r JOIN json_each(?) g ON g.value = r.value WHERE r.type = 'text')
     ))`;
   }
@@ -55,6 +57,7 @@ export function tenantPassAuthorityParams(authority: TenantPassWrite, now: numbe
       authority.userId,
       ...orgEpochParams(authority.orgAccessRevision),
       authority.sessionId,
+      now,
       now,
       now,
       JSON.stringify(rolesGranting(authority.capability)),
@@ -129,6 +132,7 @@ export const platformAdminSessionSql = `EXISTS (
   SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
   WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active'
     AND s.revoked_at IS NULL AND s.expires_at > ? AND s.idle_expires_at > ?
+    AND s.amr IN ${STRONG_AMR_SQL}
     AND json_type(s.roles) = 'array'
     AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin')
 )`;

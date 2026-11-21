@@ -202,6 +202,24 @@ export async function keyAuthOf(
   // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
   const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
   if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;
+  // After the address check, so a caller outside the list learns nothing about the owner.
+  // A personal key acts for a person, so it needs the person's strong sign-in to exist: a Polaris ID identity,
+  // or the console grace the member was given when this rule started.
+  if (
+    row.kind === 'personal' &&
+    row.owner_idp !== 1 &&
+    !(typeof row.owner_grace_until === 'number' && now < row.owner_grace_until)
+  ) {
+    createLogger().warn('api_key.owner_needs_idp', {
+      code: 'KEY_OWNER_NEEDS_IDP',
+      keyId: row.id,
+      orgId: row.org_id,
+    });
+    throw new ForbiddenError(
+      "This key's owner must sign in with Polaris ID once.",
+      'KEY_OWNER_NEEDS_IDP',
+    );
+  }
   const tier = await enforceApiKeyRate(env, { keyId: row.id, orgId: row.org_id }, row.rate_tier);
   // A key limited to templates or styles is for routes that enforce the limit (`templateScoped`); anywhere else
   // it is refused, so a route that reads or writes outside the grant builder never sees another template's data.
