@@ -15,6 +15,9 @@ export interface CredentialRow {
   provider: 'google' | 'samsung';
   identity_hash: string;
   identity_hint: string;
+  provenance: 'platform' | 'managed' | 'own';
+  signer_ref: string | null;
+  next_rotation_at: number | null;
   revision: number;
   current_version_id: string | null;
   verified_at: number | null;
@@ -24,7 +27,7 @@ export interface CredentialRow {
 }
 
 const COLUMNS =
-  'id, scope, org_id, mode, provider, identity_hash, identity_hint, revision, current_version_id, verified_at, revoked_at, created_at, updated_at';
+  'id, scope, org_id, mode, provider, identity_hash, identity_hint, provenance, signer_ref, next_rotation_at, revision, current_version_id, verified_at, revoked_at, created_at, updated_at';
 
 /** Credentials of one org and mode, or the platform's (`orgId` null, every mode), newest first. */
 export function listCredentials(
@@ -120,6 +123,10 @@ export interface SaveCredentialInput {
   eventId: string;
   cardMap: Record<string, string>;
   envelope: Envelope;
+  /** A new credential's provenance and key source; a rotation leaves both. */
+  origin?: { provenance: 'managed' | 'own'; signerRef: string | null };
+  /** Sets the next service-account key rotation of a platform credential. */
+  nextRotationAt?: number | null;
 }
 
 /** The statements of a save, for a grant that also writes the enrolment (the migration commits them as one batch). */
@@ -132,6 +139,7 @@ export function stageCredentialSave(
   const now = ctx.clock.now();
   const create = input.expectedRevision === 0;
   const revision = input.expectedRevision + 1;
+  const origin = input.origin ?? (w.platform ? { provenance: 'platform', signerRef: null } : null);
   if (create)
     g.insertSelect(
       'wallet_credentials',
@@ -142,6 +150,7 @@ export function stageCredentialSave(
         'provider',
         'identity_hash',
         'identity_hint',
+        ...(origin ? ['provenance', 'signer_ref'] : []),
         'created_at',
         'updated_at',
       ],
@@ -152,6 +161,7 @@ export function stageCredentialSave(
         input.provider,
         input.identityHash,
         input.identityHint,
+        ...(origin ? [origin.provenance, origin.signerRef] : []),
         now,
         now,
       ],
@@ -193,7 +203,12 @@ export function stageCredentialSave(
     ],
   });
   g.update('wallet_credentials', {
-    set: { revision, current_version_id: input.versionId, updated_at: now },
+    set: {
+      revision,
+      current_version_id: input.versionId,
+      updated_at: now,
+      ...(input.nextRotationAt === undefined ? {} : { next_rotation_at: input.nextRotationAt }),
+    },
     where: { id: input.credentialId, ...(w.platform ? { scope: 'platform' } : {}) },
   });
 }

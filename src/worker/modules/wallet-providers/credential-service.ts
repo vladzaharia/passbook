@@ -41,6 +41,7 @@ export function credentialDto(row: CredentialRow): WalletCredential {
     mode: row.mode,
     provider: row.provider,
     identityHint: row.identity_hint,
+    provenance: row.provenance,
     revision: row.revision,
     verifiedAt: row.verified_at,
     revokedAt: row.revoked_at,
@@ -58,7 +59,7 @@ function sessionOf(auth: SessionAuth): SessionAuth {
 }
 
 /** The org's member writer: `integrations:manage`, a live session, the session's mode. */
-async function orgWriter(
+export async function orgWriter(
   ctx: ServiceContext,
   auth: SessionAuth,
   orgId: string,
@@ -111,11 +112,12 @@ async function identityOf(input: SaveWalletCredential) {
 }
 
 /** Creates or rotates the scope's one active credential for (mode, provider), always as a new version. */
-async function save(
+export async function save(
   ctx: ServiceContext,
   w: CredentialWriter,
   scope: { orgId: string | null; mode: 'live' | 'test' },
   input: SaveWalletCredential,
+  origin?: { provenance: 'managed' | 'own'; signerRef: string | null },
 ): Promise<CredentialRow> {
   const parsed = SaveWalletCredentialSchema.safeParse(input);
   if (!parsed.success)
@@ -156,6 +158,7 @@ async function save(
     eventId: ctx.ids.id(),
     cardMap: { ...previous, ...identity.cards },
     envelope,
+    ...(origin ? { origin } : {}),
   });
   await enqueueVersionCheck(ctx, credentialId, versionId);
   const saved = await findCredential(ctx.env.DB, credentialId, scope.orgId);
