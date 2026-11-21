@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { SettingsListSchema } from '@/shared/contracts/settings.ts';
-import { PLATFORM_RETENTION_LINES as LINES, RETENTION_COPY } from '@/shared/copy/retention.ts';
+import { PLATFORM_RETENTION_LINES as LINES } from '@/shared/copy/retention.ts';
 import { Button, Card, CardBody, CardHeader } from '@/web/ui/index.ts';
 import { PLATFORM_FIELDS } from './fields-platform.ts';
 
