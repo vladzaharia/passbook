@@ -814,10 +814,15 @@ __all__ = [
     "ScanCountsByTypeItem",
     "ScanDeviceCapabilities",
     "ScanEvent",
+    "ScanEventsArchiveResult",
     "ScanEventsAttachScannersParams",
+    "ScanEventsCreateBody",
     "ScanEventsCreateParams",
+    "ScanEventsCreateResult",
     "ScanEventsMarkOutParams",
+    "ScanEventsUpdateBody",
     "ScanEventsUpdateParams",
+    "ScanEventsUpdateResult",
     "ScanFeedRow",
     "ScanLookupRow",
     "ScanOutcome",
@@ -9189,6 +9194,16 @@ RollCallsMarkBody = RollCallsMarkParams
 ScanCard = _Dict[str, _Any] | None
 
 ScanDeviceCapabilities = _Dict[str, _Any] | None
+
+ScanEventsArchiveResult = ScanEvent
+
+ScanEventsCreateBody = ScanEventsCreateParams
+
+ScanEventsCreateResult = ScanEvent
+
+ScanEventsUpdateBody = ScanEventsUpdateParams
+
+ScanEventsUpdateResult = ScanEvent
 
 ScanPrevious = _Dict[str, _Any] | None
 

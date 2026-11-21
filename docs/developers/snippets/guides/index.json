@@ -317,8 +317,10 @@
       "scanners.postScanningSessionsSetup"
     ],
     "files": {
-      "ts": "scan-setup-preview.ts"
-    }
+      "ts": "scan-setup-preview.ts",
+      "curl": "scan-setup-preview.sh"
+    },
+    "expect": "reached"
   },
   {
     "id": "scan-setup-apply",
@@ -329,6 +331,7 @@
     ],
     "files": {
       "ts": "scan-setup-apply.ts"
-    }
+    },
+    "expect": "reached"
   }
 ]

@@ -16,6 +16,7 @@ import { PassImportsResource } from './resources/pass-imports.ts';
 import { PassesResource } from './resources/passes.ts';
 import { PrintJobsResource } from './resources/print-jobs.ts';
 import { RollCallsResource } from './resources/roll-calls.ts';
+import { ScanEventsResource } from './resources/scan-events.ts';
 import { ScanSetupsResource } from './resources/scan-setups.ts';
 import { TerminalResource } from './resources/terminal.ts';
 import { ScanningSessionsResource } from './resources/scanning-sessions.ts';
@@ -45,6 +46,7 @@ export class Resources {
   readonly passes: PassesResource;
   readonly printJobs: PrintJobsResource;
   readonly rollCalls: RollCallsResource;
+  readonly scanEvents: ScanEventsResource;
   readonly scanSetups: ScanSetupsResource;
   readonly terminal: TerminalResource;
   readonly scanningSessions: ScanningSessionsResource;
@@ -72,6 +74,7 @@ export class Resources {
     this.passes = new PassesResource(core);
     this.printJobs = new PrintJobsResource(core);
     this.rollCalls = new RollCallsResource(core);
+    this.scanEvents = new ScanEventsResource(core);
     this.scanSetups = new ScanSetupsResource(core);
     this.terminal = new TerminalResource(core);
     this.scanningSessions = new ScanningSessionsResource(core);

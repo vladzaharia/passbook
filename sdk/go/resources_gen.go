@@ -1520,6 +1520,43 @@ func (r *RollCallsResource) RetrieveOpen(ctx context.Context, query *RollCallsRe
 	return &out, nil
 }
 
+type ScanEventsResource struct {
+	c *core
+}
+
+func newScanEventsResource(c *core) *ScanEventsResource {
+	return &ScanEventsResource{
+		c: c,
+	}
+}
+
+// Archive Archive a scan event (its scanners are detached) `POST /api/v1/scan-events/{id}/archive`
+func (r *ScanEventsResource) Archive(ctx context.Context, id string, opts ...RequestOption) (*ScanEventsArchiveResult, error) {
+	var out ScanEventsArchiveResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-events/" + pathEscape(id) + "/archive"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Create Create a scan event `POST /api/v1/scan-events`
+func (r *ScanEventsResource) Create(ctx context.Context, body *ScanEventsCreateBody, opts ...RequestOption) (*ScanEventsCreateResult, error) {
+	var out ScanEventsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-events", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Edit a scan event `PATCH /api/v1/scan-events/{id}`
+func (r *ScanEventsResource) Update(ctx context.Context, id string, body *ScanEventsUpdateBody, opts ...RequestOption) (*ScanEventsUpdateResult, error) {
+	var out ScanEventsUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scan-events/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ScanSetupsResource struct {
 	c *core
 }
@@ -2178,6 +2215,7 @@ type Resources struct {
 	Passes           *PassesResource
 	PrintJobs        *PrintJobsResource
 	RollCalls        *RollCallsResource
+	ScanEvents       *ScanEventsResource
 	ScanSetups       *ScanSetupsResource
 	Terminal         *TerminalResource
 	ScanningSessions *ScanningSessionsResource
@@ -2208,6 +2246,7 @@ func newResources(c *core) Resources {
 		Passes:           newPassesResource(c),
 		PrintJobs:        newPrintJobsResource(c),
 		RollCalls:        newRollCallsResource(c),
+		ScanEvents:       newScanEventsResource(c),
 		ScanSetups:       newScanSetupsResource(c),
 		Terminal:         newTerminalResource(c),
 		ScanningSessions: newScanningSessionsResource(c),

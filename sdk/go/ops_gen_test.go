@@ -1151,6 +1151,35 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanEvents.create", "POST", "/api/v1/scan-events", false,
+		`{"orgId":"x","name":"x","templateIds":["x"],"opensAt":0,"closesAt":0,"timeZone":"x"}`, `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanEventsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanEvents.Create(ctx, &b)
+		},
+	},
+	{
+		"scanEvents.update", "PATCH", "/api/v1/scan-events/id1", false,
+		`{}`, `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanEventsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanEvents.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanEvents.archive", "POST", "/api/v1/scan-events/id1/archive", false,
+		"", `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanEvents.Archive(ctx, "id1")
+		},
+	},
+	{
 		"scanSetups.list", "GET", "/api/v1/scan-setups", false,
 		"", `{"items":[{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0,"adminUser":{"id":"x","name":"x"},"watch":{}}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

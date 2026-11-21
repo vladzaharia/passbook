@@ -5610,9 +5610,13 @@ type ScanEvent struct {
 	Scanners    int64          `json:"scanners"`
 }
 
+type ScanEventsArchiveResult = ScanEvent
+
 type ScanEventsAttachScannersParams struct {
 	ScannerIds []string `json:"scannerIds"`
 }
+
+type ScanEventsCreateBody = ScanEventsCreateParams
 
 type ScanEventsCreateParams struct {
 	OrgID       string         `json:"orgId"`
@@ -5628,10 +5632,14 @@ type ScanEventsCreateParams struct {
 	Note        *string        `json:"note,omitempty"`
 }
 
+type ScanEventsCreateResult = ScanEvent
+
 type ScanEventsMarkOutParams struct {
 	PassID string `json:"passId"`
 	Place  string `json:"place"`
 }
+
+type ScanEventsUpdateBody = ScanEventsUpdateParams
 
 type ScanEventsUpdateParams struct {
 	Name        *string        `json:"name,omitempty"`
@@ -5646,6 +5654,8 @@ type ScanEventsUpdateParams struct {
 	Note        *string        `json:"note,omitempty"`
 	Archived    *bool          `json:"archived,omitempty"`
 }
+
+type ScanEventsUpdateResult = ScanEvent
 
 type ScanFeedRow struct {
 	ID          string   `json:"id"`

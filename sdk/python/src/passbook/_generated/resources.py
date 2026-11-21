@@ -1411,6 +1411,36 @@ class RollCallsResource:
         return self._core.request("GET", "/api/v1/roll-calls", query={"sessionId": session_id}, result=m.RollCallsRetrieveOpenResult, **opts)
 
 
+class ScanEventsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def archive(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsArchiveResult:
+        """Archive a scan event (its scanners are detached) `POST /api/v1/scan-events/{id}/archive`"""
+        return self._core.request("POST", f"/api/v1/scan-events/{_p(id)}/archive", result=m.ScanEventsArchiveResult, **opts)
+
+    def create(
+        self,
+        body: m.ScanEventsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsCreateResult:
+        """Create a scan event `POST /api/v1/scan-events`"""
+        return self._core.request("POST", "/api/v1/scan-events", body=body, result=m.ScanEventsCreateResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanEventsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsUpdateResult:
+        """Edit a scan event `PATCH /api/v1/scan-events/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-events/{_p(id)}", body=body, result=m.ScanEventsUpdateResult, **opts)
+
+
 class ScanSetupsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2096,6 +2126,7 @@ class Resources:
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)
         self.roll_calls = RollCallsResource(core)
+        self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)
         self.terminal = TerminalResource(core)
         self.scanning_sessions = ScanningSessionsResource(core)

@@ -5425,6 +5425,140 @@
   }
  },
  {
+  "id": "scan-events.postScanEvents",
+  "call": "scan_events.create",
+  "http": "POST",
+  "path": "/api/v1/scan-events",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
+  "id": "scan-events.patchScanEventsById",
+  "call": "scan_events.update",
+  "http": "PATCH",
+  "path": "/api/v1/scan-events/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
+  "id": "scan-events.postScanEventsByIdArchive",
+  "call": "scan_events.archive",
+  "http": "POST",
+  "path": "/api/v1/scan-events/{id}/archive",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
   "id": "scanners.getScanSetups",
   "call": "scan_setups.list",
   "http": "GET",

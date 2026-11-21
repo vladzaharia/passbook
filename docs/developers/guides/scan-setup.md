@@ -13,11 +13,15 @@ One request makes a door end to end: the places it counts, the events it admits,
 
 Without `scanning:admin` the answer has no PINs and no pairing codes. Pair devices from the console.
 
+{{run current-key}}
+
+`scopes` lists what the key may do. A sandbox has no Scanning devices: run the next calls with a key from your organization.
+
 ## Preview it
 
 `?dryRun=true` runs every rule and writes nothing. It needs no `Idempotency-Key`. Each `checks` entry has a `level`: any `error` fails the real call with `422 SCAN_SETUP_CHECKS_FAILED`.
 
-{{run scan-setup-preview}}
+{{show scan-setup-preview}}
 
 ## The three presets
 
