@@ -3,9 +3,11 @@ import { useNavigate } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
 import { Copy, UserMinus } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import type { ChannelReason, EffectiveChannels } from '@/shared/contracts/channels.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
+import { channelReason } from '@/shared/copy/channels.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { copyText } from '../../lib/clipboard.ts';
 import {
@@ -49,7 +51,14 @@ type ActionPass = Pick<
   | 'holderState'
   | 'holderEmail'
   | 'deviceCount'
-> & { removedAt?: number | null | undefined; mode?: Mode | undefined };
+> & {
+  removedAt?: number | null | undefined;
+  mode?: Mode | undefined;
+  /** The detail knows what the Apple channel allows; a row does not, and keeps the action. */
+  channels?: EffectiveChannels | undefined;
+  /** A developer sandbox pass is a preview only: it has no file to download. */
+  testPreview?: boolean | undefined;
+};
 
 const LABEL: Record<PassActionId, string> = {
   update: 'Update devices',
@@ -82,6 +91,9 @@ const ICON: Record<PassActionId, LucideIcon> = {
   delete: ACTION_ICON.delete,
 };
 const DANGER = new Set<PassActionId>(['remove', 'clear', 'delete']);
+const appleOffReason = (reason: ChannelReason | undefined): string =>
+  reason ? channelReason('apple', reason) : 'Apple Wallet: off';
+
 export interface PassActionDef {
   id: PassActionId;
   label: string;
@@ -91,6 +103,8 @@ export interface PassActionDef {
   bar: boolean;
   /** Only reading actions stay on when changes are unavailable. */
   disabled: boolean;
+  /** Why a disabled action is unavailable. */
+  reason?: string | undefined;
 }
 
 const READ_ONLY = new Set<PassActionId>(['open', 'download', 'copy']);
@@ -123,14 +137,22 @@ export function actionsFor(pass: ActionPass, readOnly = false): PassActionDef[] 
   const bar = new Set<PassActionId>(
     removed ? ['restore'] : voided ? ['unvoid'] : ['update', 'pull', 'void', 'open'],
   );
-  return ids.map((id) => ({
-    id,
-    label: LABEL[id],
-    icon: ICON[id],
-    destructive: DANGER.has(id),
-    bar: bar.has(id),
-    disabled: readOnly && !READ_ONLY.has(id),
-  }));
+  const apple = pass.channels?.apple;
+  return ids
+    .filter((id) => !(id === 'download' && pass.testPreview))
+    .map((id) => {
+      const reason =
+        id === 'download' && apple && !apple.on ? appleOffReason(apple.reason) : undefined;
+      return {
+        id,
+        label: LABEL[id],
+        icon: ICON[id],
+        destructive: DANGER.has(id),
+        bar: bar.has(id),
+        disabled: (readOnly && !READ_ONLY.has(id)) || reason !== undefined,
+        reason,
+      };
+    });
 }
 
 export interface PassLinks {
@@ -162,6 +184,7 @@ export function usePassActionRunner(
   const mode = useMode();
   const foreign = pass.mode !== undefined && pass.mode !== mode;
   const canChange = options.canOperate && !foreign;
+  const defs = actionsFor(pass, !canChange);
   const [ask, setAsk] = useState<
     'void' | 'clear' | 'delete' | 'rotate' | 'newcode' | 'remove' | null
   >(null);
@@ -222,7 +245,7 @@ export function usePassActionRunner(
     else if (id === 'restore') void restore();
     else if (id === 'copy') void copy();
     else if (id === 'open' && links) window.open(links.publicUrl, '_blank', 'noopener,noreferrer');
-    else if (id === 'download' && links) window.location.assign(links.downloadUrl);
+    else if (id === 'download' && links && !defs.find((d) => d.id === id)?.disabled) window.location.assign(links.downloadUrl);
     else if (
       id === 'void' ||
       id === 'remove' ||
@@ -315,7 +338,7 @@ export function usePassActionRunner(
   ) : null;
 
   return {
-    defs: actionsFor(pass, !canChange),
+    defs,
     run,
     links,
     pending: {
