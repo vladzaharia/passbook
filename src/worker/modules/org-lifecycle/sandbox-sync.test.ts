@@ -31,6 +31,6 @@ it("keeps a developer sandbox's closed_at in step with an org close and reopen",
   await closeOrg(kit.ctx, actor, dev.id, { kind: 'platform', ...(await rk.platform()) });
   expect(await sandbox()).toEqual({ closed_at: closedAt, close_reason: 'admin' });
 
-  await reopenOrg(kit.ctx, actor, dev.id, { kind: 'platform', ...(await rk.platform()) });
+  await reopenOrg(kit.ctx, actor, dev.id, await rk.platform());
   expect(await sandbox()).toEqual({ closed_at: null, close_reason: null });
 });
