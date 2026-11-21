@@ -5,10 +5,7 @@ import type {
   ScanZoneListQuerySchema,
   UpdateScanZoneSchema,
 } from '../../../shared/contracts/scan-access.ts';
-import { classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { orgIsActive } from '../orgs/repo.ts';
 import { addDueRecompute } from './occupancy/recompute.ts';
 import { addZoneTapOut } from './occupancy/service.ts';
 import { accessTemplates } from './repo-access.ts';
@@ -16,7 +13,6 @@ import { adminGrant, audited } from './repo-admin-grant.ts';
 import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
   addZoneArchive,
-  addZoneInsert,
   addZoneUpdate,
   checkedAtByZone,
   orgZoneRows,
@@ -25,22 +21,22 @@ import {
   zoneSubtreeIs,
   zonesOpen,
 } from './repo-zones.ts';
+import { newCapture } from './setup-capture.ts';
 import { type Authority, assertAuthority, committed, notFound, toDto } from './zones-dto.ts';
 import { plansByZone } from './zones-plans.ts';
 import {
-  assertPlacement,
-  effectiveTimeZone,
-  indexZones,
-  subtree,
-  treeOrder,
-} from './zones-tree.ts';
+  assertClocks,
+  invalid,
+  mutationError,
+  planZone,
+  ZONE_CODES,
+  zoneStatements,
+} from './zones-statements.ts';
+import { assertPlacement, indexZones, subtree, treeOrder } from './zones-tree.ts';
 
 type Query = z.infer<typeof ScanZoneListQuerySchema>;
 type Create = z.infer<typeof CreateScanZoneSchema>;
 type Update = z.infer<typeof UpdateScanZoneSchema>;
-
-const ZONE_CODES = { config: 'SCAN_ZONE_CHANGED', lineage: 'SCAN_ZONE_CHANGED' } as const;
-const invalid = (message: string, code: string) => new ValidationError(message, [], code);
 
 export async function listZones(
   ctx: ServiceContext,
@@ -67,27 +63,6 @@ export async function listZones(
   };
 }
 
-function mutationError(error: unknown): never {
-  const info = classifyD1Error(error);
-  if (info?.kind === 'unique')
-    throw /scan_zones\.org_id, scan_zones\.key|scan_zones_org_key/.test(info.detail)
-      ? new ConflictError('That key is already in use.', 'ZONE_KEY_TAKEN')
-      : new ConflictError('Another zone already has that name.', 'ZONE_NAME_TAKEN');
-  throw error;
-}
-
-/** Clear at needs a clock: a root zone's time zone, else the org's. Checked for the zone and every zone below it. */
-function assertClocks(rows: readonly ZoneRow[], id: string, orgTimeZone: string | null): void {
-  const index = indexZones(rows);
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  for (const node of subtree(index, id))
-    if (byId.get(node.id)?.clearAt && effectiveTimeZone(index, node.id, orgTimeZone) === null)
-      throw invalid(
-        'Set a time zone on the top zone or the organization.',
-        'ZONE_CLEAR_NEEDS_TIME_ZONE',
-      );
-}
-
 export async function createZone(
   ctx: ServiceContext,
   userId: string,
@@ -95,61 +70,19 @@ export async function createZone(
   authority: Authority,
   mode: Mode,
 ) {
-  assertAuthority(authority, input.orgId, 'scanning:manage');
-  if (!(await orgIsActive(ctx.env.DB, input.orgId)))
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  const rows = await orgZoneRows(ctx.env.DB, input.orgId);
-  const parentId = input.parentId ?? null;
-  const parent = parentId === null ? null : rows.find((r) => r.id === parentId);
-  if (parentId !== null && (!parent || parent.archivedAt !== null)) throw notFound();
-  const id = ctx.ids.id();
-  const timeZone = input.timeZone ?? null;
-  if (parentId !== null && timeZone !== null)
-    throw invalid('Only the top zone has a time zone.', 'ZONE_CHILD_TZ');
-  assertPlacement(indexZones(rows), id, parentId);
-  if (input.hardLimit && input.capacity == null)
-    throw invalid('Set a capacity first.', 'ZONE_NEEDS_CAPACITY');
-  const now = ctx.clock.now();
-  const values = {
-    id,
-    key: input.key,
-    name: input.name,
-    parentId,
-    timeZone,
-    sort: input.sort ?? 0,
-    occupancy: input.occupancy ?? ('off' as const),
-    capacity: input.capacity ?? null,
-    maxStayMinutes: input.maxStayMinutes ?? null,
-    clearAt: input.clearAt ?? null,
-    hardLimit: input.hardLimit ?? false,
-  };
-  assertClocks(
-    [...rows, { ...values, orgId: input.orgId, archivedAt: null, updatedAt: now, sessions: 0 }],
-    id,
-    await readOrgTimeZone(ctx.env.DB, input.orgId),
-  );
+  const capture = newCapture({ userId, authority, orgId: input.orgId, mode });
+  const plan = await planZone(ctx, input, capture);
   const g = adminGrant(
     ctx,
     'org.scan.zone.create',
     userId,
     authority,
     input.orgId,
-    parentId === null ? [] : [...zonesOpen([parentId]), zoneFitsUnder(id, parentId)],
+    plan.checks,
     ZONE_CODES,
-    id,
+    plan.values.id,
   );
-  addZoneInsert(g, values, userId, now);
-  g.add(
-    audited(g, ctx, {
-      orgId: input.orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: 'scan_zone.create',
-      targetType: 'scan_zone',
-      targetId: id,
-      detail: { parent: parentId !== null, occupancy: values.occupancy },
-    }),
-  );
+  const { id } = zoneStatements(g, ctx, plan, capture);
   try {
     await g.commit();
   } catch (error) {
