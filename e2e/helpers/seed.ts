@@ -113,13 +113,16 @@ export async function createOrgWithRoles(
   input: { slug: string; name: string },
   roles: OrgRole[] = ['org_admin'],
 ): Promise<Seed['org']> {
-  const identity = await verifiedIdentity(admin, admin);
+  // The creator's own org_admin comes from addMe in the create batch: inviting yourself into an
+  // administering role needs a fresh step-up, which a long e2e run's stored session no longer has.
+  const asAdmin = roles.length === 1 && roles[0] === 'org_admin';
+  const identity = asAdmin ? null : await verifiedIdentity(admin, admin);
   const org = await admin.send<Seed['org']>('POST', '/api/v1/orgs', {
     ...input,
     preset: 'legacy',
-    addMe: false,
+    addMe: asAdmin,
   });
-  await inviteVerifiedMember(admin, org.id, admin, identity, roles);
+  if (identity) await inviteVerifiedMember(admin, org.id, admin, identity, roles);
   return { id: org.id, slug: org.slug, name: org.name };
 }
 
