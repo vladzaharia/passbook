@@ -79,6 +79,22 @@ describe('session pickers', () => {
     });
   });
 
+  it('opens the zone dialog from an empty picker and keeps the session draft', async () => {
+    const { dialog, user } = await openNew({ '/api/v1/scan-zones': () => page([]) });
+    await user.type(
+      await within(dialog).findByRole('textbox', { name: 'Session name' }),
+      'Pool door',
+    );
+    await user.click(within(dialog).getByRole('tab', { name: 'Access' }));
+    await user.click(await within(dialog).findByRole('button', { name: 'Choose zones' }));
+    expect(await screen.findByText('No zones yet.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'New zone' }));
+    expect(await screen.findByRole('dialog', { name: 'New zone' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(within(dialog).getByRole('tab', { name: 'Passes' }));
+    expect(within(dialog).getByRole('textbox', { name: 'Session name' })).toHaveValue('Pool door');
+  });
+
   it('removes a chip, stops at 8 and disables Zones on an event session', async () => {
     const gala = {
       id: 'e1',
