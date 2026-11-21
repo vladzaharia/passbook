@@ -325,12 +325,6 @@
     "sdk": false,
     "reason": "Developer portal access: a signed-in person in a browser, not an integration."
   },
-  "developer.getHome": {
-    "resource": "developer.home",
-    "method": "retrieve",
-    "sdk": false,
-    "reason": "Developer portal workbench: a signed-in person in a browser, not an integration."
-  },
   "developer.getLog": {
     "resource": "developer.requestLogs",
     "method": "retrieve",
@@ -348,6 +342,12 @@
     "method": "retrieve",
     "sdk": false,
     "reason": "Developer portal rail: a signed-in person in a browser, not an integration."
+  },
+  "developer.getResolve": {
+    "resource": "developer.search",
+    "method": "resolve",
+    "sdk": false,
+    "reason": "Developer portal search: a signed-in person in a browser, not an integration."
   },
   "developer.getSandbox": {
     "resource": "developer.sandbox",
@@ -763,13 +763,13 @@
     "resource": "nfc.enrollments",
     "method": "create"
   },
-  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
-    "resource": "nfc.tags",
-    "method": "assign"
-  },
   "nfc-tags.postNfcPassesByPassIdTags": {
     "resource": "nfc.tags",
     "method": "rebind"
+  },
+  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
+    "resource": "nfc.tags",
+    "method": "assign"
   },
   "nfc-tags.postNfcTagTypes": {
     "resource": "nfc.tagTypes",
@@ -927,6 +927,10 @@
     "resource": "passImports",
     "method": "delete"
   },
+  "pass-imports.deletePassImportsMappings": {
+    "resource": "passImports.mappings",
+    "method": "delete"
+  },
   "pass-imports.getPassImports": {
     "resource": "passImports",
     "method": "list"
@@ -945,6 +949,10 @@
   },
   "pass-imports.getPassImportsByIdRows": {
     "resource": "passImports.rows",
+    "method": "list"
+  },
+  "pass-imports.getPassImportsMappings": {
+    "resource": "passImports.mappings",
     "method": "list"
   },
   "pass-imports.postPassImports": {
@@ -967,17 +975,13 @@
     "resource": "passImports",
     "method": "removeCreated"
   },
-  "pass-setup.getOrgsByOrgIdPassSetup": {
-    "resource": "orgs",
-    "method": "retrievePassSetup"
+  "pass-imports.postPassImportsByIdUndo": {
+    "resource": "passImports",
+    "method": "undo"
   },
-  "pass-setup.patchOrgsByOrgIdPassSetup": {
-    "resource": "orgs",
-    "method": "updatePassSetup"
-  },
-  "pass-setup.postOrgsByOrgIdBrandAssets": {
-    "resource": "orgs",
-    "method": "stageBrandAsset"
+  "pass-imports.putPassImportsMappings": {
+    "resource": "passImports.mappings",
+    "method": "save"
   },
   "passes.deletePassesById": {
     "resource": "passes",
@@ -1168,12 +1172,6 @@
   "public.getBByTokenByPassIdAssetsByName": {
     "resource": "public.bundles",
     "method": "downloadPassAsset",
-    "sdk": false,
-    "reason": "Public page or capability link; the token in the URL is the credential."
-  },
-  "public.getBByTokenByPassId": {
-    "resource": "public.bundles",
-    "method": "retrievePass",
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
   },
@@ -1412,14 +1410,6 @@
   "scan-staff.postScanStaffByIdResetPin": {
     "resource": "scanStaff",
     "method": "resetPin"
-  },
-  "scan-staff.postScanStaffByIdUnlockPin": {
-    "resource": "scanStaff",
-    "method": "unlockPin"
-  },
-  "scan-staff.postScanStaffResetUntagged": {
-    "resource": "scanStaff",
-    "method": "resetUntagged"
   },
   "scan-zones.getScanZones": {
     "resource": "scanZones",
@@ -1699,12 +1689,6 @@
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
-  "scan.postScanStaffPin": {
-    "resource": "terminal.staff",
-    "method": "setPin",
-    "sdk": false,
-    "reason": "Scanner device protocol; needs a paired scanner session."
-  },
   "scan.postScanTagEnrollmentsByIdComplete": {
     "resource": "terminal.tagEnrollments",
     "method": "complete",
@@ -1841,15 +1825,15 @@
     "resource": "scanningSessions",
     "method": "overrideHours"
   },
-  "scanners.postScanningSessionsSetup": {
-    "resource": "scanningSessions",
-    "method": "setup"
-  },
   "scanners.postScanningSessionsJoin": {
     "resource": "scanningSessions",
     "method": "join",
     "sdk": false,
     "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+  },
+  "scanners.postScanningSessionsSetup": {
+    "resource": "scanningSessions",
+    "method": "setup"
   },
   "scans.getScans": {
     "resource": "scans",
@@ -1945,6 +1929,10 @@
     "resource": "templates.releases",
     "method": "retrieveImpact"
   },
+  "templates.getTemplatesByIdSampleCsv": {
+    "resource": "templates",
+    "method": "downloadSample"
+  },
   "templates.getTemplatesByIdStampsImpact": {
     "resource": "templates",
     "method": "retrieveStampsImpact"
@@ -2001,17 +1989,21 @@
     "resource": "templates",
     "method": "preview"
   },
-  "templates.postTemplatesByIdReleases": {
-    "resource": "templates.releases",
-    "method": "create"
-  },
   "templates.postTemplatesByIdRelease": {
     "resource": "templates.releases",
     "method": "release"
   },
-  "templates.postTemplatesByIdReviewRequests": {
+  "templates.postTemplatesByIdReleases": {
+    "resource": "templates.releases",
+    "method": "create"
+  },
+  "templates.postTemplatesByIdReview": {
     "resource": "templates.reviews",
-    "method": "request"
+    "method": "approve"
+  },
+  "templates.getTemplateReviews": {
+    "resource": "templates.reviews",
+    "method": "list"
   },
   "templates.postTemplatesByIdReleasesRollback": {
     "resource": "templates.releases",
@@ -2020,6 +2012,10 @@
   "templates.postTemplatesByIdRestore": {
     "resource": "templates",
     "method": "restore"
+  },
+  "templates.postTemplatesByIdReviewRequests": {
+    "resource": "templates.reviews",
+    "method": "request"
   },
   "templates.postTemplatesByIdScanSetup": {
     "resource": "templates",
@@ -2269,18 +2265,6 @@
     "resource": "webhookEndpoints.captures",
     "method": "retrieve"
   },
-  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
-    "resource": "webhookEndpoints.captures",
-    "method": "replay"
-  },
-  "webhooks.postWebhookEndpointsByIdCapturesSecret": {
-    "resource": "webhookEndpoints.captures",
-    "method": "revealSecret"
-  },
-  "webhooks.postWebhookEndpointsCapture": {
-    "resource": "webhookEndpoints",
-    "method": "ensureCapture"
-  },
   "webhooks.getWebhookEndpointsByIdDeliveries": {
     "resource": "webhookEndpoints.deliveries",
     "method": "list"
@@ -2296,6 +2280,14 @@
   "webhooks.postWebhookEndpoints": {
     "resource": "webhookEndpoints",
     "method": "create"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
+    "resource": "webhookEndpoints.captures",
+    "method": "replay"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesSecret": {
+    "resource": "webhookEndpoints.captures",
+    "method": "revealSecret"
   },
   "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay": {
     "resource": "webhookEndpoints.deliveries",
@@ -2313,10 +2305,46 @@
     "resource": "webhookEndpoints",
     "method": "sendTest"
   },
-  "developer.getResolve": {
-    "resource": "developer.search",
-    "method": "resolve",
+  "webhooks.postWebhookEndpointsCapture": {
+    "resource": "webhookEndpoints",
+    "method": "ensureCapture"
+  },
+  "pass-setup.getOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "retrievePassSetup"
+  },
+  "pass-setup.patchOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "updatePassSetup"
+  },
+  "pass-setup.postOrgsByOrgIdBrandAssets": {
+    "resource": "orgs",
+    "method": "stageBrandAsset"
+  },
+  "public.getBByTokenByPassId": {
+    "resource": "public.bundles",
+    "method": "retrievePass",
     "sdk": false,
-    "reason": "Developer portal search: a signed-in person in a browser, not an integration."
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "scan-staff.postScanStaffByIdUnlockPin": {
+    "resource": "scanStaff",
+    "method": "unlockPin"
+  },
+  "scan-staff.postScanStaffResetUntagged": {
+    "resource": "scanStaff",
+    "method": "resetUntagged"
+  },
+  "scan.postScanStaffPin": {
+    "resource": "terminal.staff",
+    "method": "setPin",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "developer.getHome": {
+    "resource": "developer.home",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal workbench: a signed-in person in a browser, not an integration."
   }
 }
