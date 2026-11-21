@@ -333,6 +333,14 @@ describe('review', () => {
       await send(`/${t.templateId}/review`, body, await key(org.id, reviewer.userId)),
     );
     expect(result.approved).toEqual(['test']);
+    // release:true under a key checks the publish step's own scope, not the review one.
+    const again = await send(
+      `/${t.templateId}/review`,
+      { ...body, release: true },
+      await key(org.id, reviewer.userId),
+    );
+    expect([200, 403]).toContain(again.status);
+    expect((await again.clone().text()).includes('You do not have access')).toBe(false);
     expect(await inbox(org, reviewer)).toHaveLength(1);
   });
 });
