@@ -3,6 +3,7 @@ import { directedLabel } from './direction-label.ts';
 import type { ScanActor } from './guard.ts';
 import type { HistoryPolicy } from './history-policy.ts';
 import type { HistoryRow } from './history-row.ts';
+import { bucketOutcome } from './outcome-bucket.ts';
 
 /** A stored effect value, or null when the viewer's policy finds it unsafe (contact data, a hidden input). */
 export function effectValue(
@@ -51,7 +52,7 @@ export function projectScanRecord(
   return {
     id: row.id,
     at: row.at,
-    outcome: row.outcome ?? 'refused',
+    outcome: bucketOutcome(row.outcome, row.reason),
     reason: reason.success ? reason.data : null,
     kind: action?.kind ?? null,
     actionId: action?.id ?? null,

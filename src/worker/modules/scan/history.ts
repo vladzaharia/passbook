@@ -15,6 +15,7 @@ import {
   withKeyset,
 } from './history-row-evidence.ts';
 import { undoWindowMinutes } from './outcome.ts';
+import { bucketOutcome } from './outcome-bucket.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import {
@@ -109,7 +110,7 @@ export async function recentFor(
       return {
         scanId: row.id,
         at: row.at,
-        outcome: row.outcome ?? 'refused',
+        outcome: bucketOutcome(row.outcome, row.reason),
         reason: reason.success ? reason.data : null,
         actionLabel:
           row.actionKind === 'undo'
