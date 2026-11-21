@@ -94,7 +94,7 @@ export async function createPassRowWithRelease(
   // A developer org's pass row names the platform identity (the foreign key needs one) but never loads it:
   // nothing is signed for it, so no certificate or key is read.
   const identity = (await isPreviewOnlyOrg(db, p.orgId))
-    ? { id: PLATFORM_IDENTITY_ID }
+    ? { id: PLATFORM_IDENTITY_ID, orgId: null }
     : await depsOf(ctx.env).identities.forOrg(p.orgId, p.identityId, ctx.clock.now());
   if (identity.id === PLATFORM_IDENTITY_ID)
     await ensurePlatformIdentity(ctx.env, ctx.clock.now(), ctx.log);
