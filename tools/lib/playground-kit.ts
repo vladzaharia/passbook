@@ -29,6 +29,23 @@ export const SEARCH_KIT_SOURCES = [
   'node_modules/@polaris-key/brand/css/theme.css',
 ] as const;
 
+/**
+ * The top bar and the account menu, as the developer site uses them: the bar is prerendered with
+ * the site, the menu is an island. Their classes are the site's menubar sheet.
+ */
+export const MENUBAR_KIT_SOURCES = [
+  'src/web/ui/layout/menubar.tsx',
+  'src/web/developers/pages/layout.tsx',
+  'src/web/ui/layout/wordmark.tsx',
+  'src/web/ui/layout/account-menu.tsx',
+  'src/web/ui/dropdown-menu.tsx',
+  'src/web/ui/icon-button.tsx',
+  'src/web/ui/avatar.tsx',
+  'src/web/ui/button.tsx',
+  'src/web/styles/utilities.css',
+  'node_modules/@polaris-key/brand/css/theme.css',
+] as const;
+
 const words = (root: string, sources: readonly string[]): string[] => {
   const out = new Set<string>();
   for (const file of sources.filter((f) => f.endsWith('.tsx')))
@@ -65,3 +82,4 @@ ${kit}
 export const playgroundKitCss = (root: string) =>
   kitCss(root, PLAYGROUND_KIT_SOURCES, "playground's");
 export const searchKitCss = (root: string) => kitCss(root, SEARCH_KIT_SOURCES, "search palette's");
+export const menubarKitCss = (root: string) => kitCss(root, MENUBAR_KIT_SOURCES, "menubar's");

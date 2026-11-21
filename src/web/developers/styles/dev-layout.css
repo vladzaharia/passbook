@@ -5,7 +5,7 @@
   grid-template-columns: 15rem minmax(0, 1fr);
   max-width: 1440px;
   margin: 0 auto;
-  min-height: calc(100dvh - 59px - 64px);
+  min-height: calc(100dvh - var(--dev-bar) - 64px);
 }
 .docs.no-side {
   grid-template-columns: minmax(0, 1fr);
@@ -23,9 +23,9 @@
   flex-direction: column;
   gap: 20px;
   position: sticky;
-  top: 59px;
+  top: var(--dev-bar);
   align-self: start;
-  max-height: calc(100dvh - 59px);
+  max-height: calc(100dvh - var(--dev-bar));
   overflow-y: auto;
 }
 .sidenav h4 {
