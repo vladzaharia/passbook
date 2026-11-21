@@ -15,6 +15,8 @@
 		6A46AFA4CD128F7FC2A59E31 /* ScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E69BD7514EEA2CC8BE4E1D /* ScannerViewController.swift */; };
 		6D1FCCB54701B4A2D4207DED /* NFCReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450A839D95D7FE6874A73D9A /* NFCReader.swift */; };
 		8655B9E3674B978481EBA576 /* TagRecordParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B5AD17B2D3148AFD62EE49 /* TagRecordParserTests.swift */; };
+		9DD96212B402E900F1CD1BCA /* HardwareMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18EF202B56BA57145B68685E /* HardwareMapTests.swift */; };
+		EDB8B16FFE5FBEFDAD36B5C0 /* HardwareMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0EA748F3477F535BCB3DF7 /* HardwareMap.swift */; };
 		FC422B0D93C808F6A4200D61 /* ScannerHardware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3044A2068995C6D60B178E54 /* ScannerHardware.swift */; };
 /* End PBXBuildFile section */
 
@@ -30,9 +32,11 @@
 
 /* Begin PBXFileReference section */
 		1560A80AF89BA0258A60F99F /* TagReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagReader.swift; sourceTree = "<group>"; };
+		18EF202B56BA57145B68685E /* HardwareMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardwareMapTests.swift; sourceTree = "<group>"; };
 		3044A2068995C6D60B178E54 /* ScannerHardware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerHardware.swift; sourceTree = "<group>"; };
 		450A839D95D7FE6874A73D9A /* NFCReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCReader.swift; sourceTree = "<group>"; };
 		519E7915BE20BD1AFF130C2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5F0EA748F3477F535BCB3DF7 /* HardwareMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardwareMap.swift; sourceTree = "<group>"; };
 		64B5AD17B2D3148AFD62EE49 /* TagRecordParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagRecordParserTests.swift; sourceTree = "<group>"; };
 		74A7D089EF4D0754A8269636 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A0D62E735D9A4228E0EFACA2 /* PassBookScannerTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PassBookScannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -48,6 +52,7 @@
 		2D4E0376CA69F117DC005095 /* PassBookScannerTests */ = {
 			isa = PBXGroup;
 			children = (
+				18EF202B56BA57145B68685E /* HardwareMapTests.swift */,
 				64B5AD17B2D3148AFD62EE49 /* TagRecordParserTests.swift */,
 			);
 			path = PassBookScannerTests;
@@ -59,6 +64,7 @@
 				74A7D089EF4D0754A8269636 /* AppDelegate.swift */,
 				EDABD69675BDED9E40571B1E /* Assets.xcassets */,
 				B6555EBF09F3B6985C67AD42 /* CustomerDisplay.swift */,
+				5F0EA748F3477F535BCB3DF7 /* HardwareMap.swift */,
 				519E7915BE20BD1AFF130C2B /* Info.plist */,
 				450A839D95D7FE6874A73D9A /* NFCReader.swift */,
 				A95D31294A6AB9BF2B917503 /* PassBookScanner.entitlements */,
@@ -177,6 +183,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DD96212B402E900F1CD1BCA /* HardwareMapTests.swift in Sources */,
 				8655B9E3674B978481EBA576 /* TagRecordParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -187,6 +194,7 @@
 			files = (
 				338DC984FDCC09E57453C68D /* AppDelegate.swift in Sources */,
 				4C4130A6F3DF60424057FC44 /* CustomerDisplay.swift in Sources */,
+				EDB8B16FFE5FBEFDAD36B5C0 /* HardwareMap.swift in Sources */,
 				6D1FCCB54701B4A2D4207DED /* NFCReader.swift in Sources */,
 				FC422B0D93C808F6A4200D61 /* ScannerHardware.swift in Sources */,
 				6A46AFA4CD128F7FC2A59E31 /* ScannerViewController.swift in Sources */,
