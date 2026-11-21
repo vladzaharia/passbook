@@ -24,6 +24,7 @@ import { broadcastQuery, useChangeActions, useUndoRun } from './api.ts';
 import { CHANGE_COPY as C } from './copy.ts';
 import { refusalText } from './refusal.ts';
 import { DoneCard, RunningCard, UndoBar } from './run-cards.tsx';
+import { canChangePasses } from './selection.ts';
 
 const ENDED = new Set(['sent', 'partial', 'failed', 'cancelled']);
 
@@ -32,8 +33,7 @@ export function ChangeRunPage({ runId }: { runId: string }) {
   const navigate = useNavigate();
   const scope = useOrgScope();
   const orgId = !scope.isLoading && !scope.isError ? scope.orgId : undefined;
-  const caps = scope.membership?.capabilities;
-  const canManage = caps?.includes('messages:manage') === true && caps.includes('passes:operate');
+  const canManage = canChangePasses(scope.membership?.capabilities);
   const found = useQuery({ ...broadcastQuery(runId), enabled: Boolean(orgId) });
   const b = found.data;
   const mine = b && orgId && b.orgId === orgId && b.kind === 'change' && b.parentId === null;
@@ -119,7 +119,7 @@ export function ChangeRunPage({ runId }: { runId: string }) {
     );
   else
     body = (
-      <DoneCard b={b} undone={Boolean(undo)}>
+      <DoneCard b={b} undone={Boolean(undo && undo.state !== 'sending')}>
         {undo ? (
           <p
             role="status"

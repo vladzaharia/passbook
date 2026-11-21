@@ -47,3 +47,7 @@ export function targetOf(selection: ChangeSelection) {
 export function templatesOf(selection: ChangeSelection): string[] {
   return selection.kind === 'template' ? [selection.templateId] : selection.templateIds;
 }
+
+/** Operate passes and manage messages: what a change run needs from a person. */
+export const canChangePasses = (capabilities: readonly string[] | undefined): boolean =>
+  capabilities?.includes('passes:operate') === true && capabilities.includes('messages:manage');

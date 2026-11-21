@@ -12,13 +12,27 @@ type Preview = z.infer<typeof ChangeRunPreviewSchema>;
  * The stage: a real sample pass, before and after, cycling through the server's samples. The fields
  * that change are outlined (two pulses); nothing here is saved.
  */
-export function BeforeAfter({ preview, empty }: { preview: Preview | undefined; empty: string }) {
+export function BeforeAfter({
+  preview,
+  empty,
+  waiting,
+}: {
+  preview: Preview | undefined;
+  empty: string;
+  /** A preview is on its way: show the placeholder, not the empty line. */
+  waiting: boolean;
+}) {
   const [side, setSide] = useState<'before' | 'after'>('after');
   const [index, setIndex] = useState(0);
   const samples = preview?.samples ?? [];
   const at = samples.length ? index % samples.length : 0;
   const sample = samples[at];
-  if (!preview) return <Skeleton className="h-64" />;
+  if (!preview)
+    return waiting ? (
+      <Skeleton className="h-64" />
+    ) : (
+      <p className="text-sm text-fg-muted">{empty}</p>
+    );
   if (!sample) return <p className="text-sm text-fg-muted">{empty}</p>;
   return (
     <div className="flex flex-col gap-3">

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { z } from 'zod';
 import type { ChangeRunPreviewSchema } from '@/shared/contracts/broadcasts-change.ts';
+import { formatCount } from '../../../lib/format.ts';
 import {
   Buddy,
   Button,
@@ -67,8 +68,7 @@ export function ReviewStep({ w, orgName }: { w: ChangeWizard; orgName: string })
         <Callout
           tone="warning"
           items={p.blocked.map(
-            (b) =>
-              `${b.count.toLocaleString('en-US')} ${C.review.blocked[b.code] ?? C.review.blockedOther}`,
+            (b) => `${formatCount(b.count)} ${C.review.blocked[b.code] ?? C.review.blockedOther}`,
           )}
         >
           {C.review.cantChange}
@@ -93,10 +93,13 @@ export function ReviewStep({ w, orgName }: { w: ChangeWizard; orgName: string })
               [C.review.holders, tells ? C.review.notifyLine : C.review.silentLine, 1],
               [C.review.undo, w.kind === 'design' ? C.run.notUndoable : C.review.undoLine, -1],
             ].map(([label, value, to]) => (
-              <div key={String(label)} className="flex items-baseline justify-between gap-3">
+              <div
+                key={String(label)}
+                className="grid grid-cols-[6rem_minmax(0,1fr)_3.5rem] items-baseline gap-x-3"
+              >
                 <dt className="text-fg-muted">{label}</dt>
-                <dd className="flex items-baseline gap-3 text-fg-strong">
-                  {value}
+                <dd className="min-w-0 break-words text-right text-fg-strong">{value}</dd>
+                <dd className="text-right">
                   {Number(to) >= 0 ? (
                     <Button
                       size="sm"

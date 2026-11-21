@@ -1,10 +1,11 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { ImagePlus, Plus, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
 import { useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
+import { orgPath } from '../../lib/scope.ts';
 import { useOrgOptions } from '../../lib/search.ts';
 import { humanizeStatus } from '../../lib/status.ts';
 import { useSwatches } from '../../lib/swatches.ts';
@@ -19,6 +20,7 @@ import {
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
 import { usePassList } from './api.ts';
+import { canChangePasses, leaveSelection } from './change/selection.ts';
 import { downloadText, toCsv } from './csv.ts';
 import { PassListContext, passColumns } from './list-columns.tsx';
 import { CLEARED, type ListSearch, PassListFilters } from './list-filters.tsx';
@@ -108,6 +110,18 @@ export function PassesListPage({
     const orgs = new Set(rows.filter((r) => selected.has(r.id)).map((r) => r.orgId));
     return orgs.size === 1 ? ([...orgs][0] ?? null) : null;
   }, [rows, selected]);
+  const navigate = useNavigate();
+  const openChange =
+    orgId && canChangePasses(scope.membership?.capabilities)
+      ? (passes: PassSummaryDto[]) => {
+          leaveSelection(orgId, {
+            kind: 'ids',
+            ids: passes.map((p) => p.id),
+            templateIds: [...new Set(passes.map((p) => p.templateId))],
+          });
+          void navigate({ href: orgPath(orgId, '/passes/change') });
+        }
+      : undefined;
   const columns = useMemo(() => passColumns(!orgId), [orgId]);
   const context = useMemo(
     () => ({
@@ -229,6 +243,7 @@ export function PassesListPage({
         bundleOrgId={bundleOrgId}
         onClear={() => setSelected(new Set())}
         onExport={exportCsv}
+        onChange={openChange}
       />
     </div>
   );

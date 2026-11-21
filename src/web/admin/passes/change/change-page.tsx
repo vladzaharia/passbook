@@ -20,7 +20,7 @@ import { CHANGE_COPY as C } from './copy.ts';
 import { HoldersStep } from './holders-step.tsx';
 import type { ChangeKind } from './model.ts';
 import { ReviewStep, willChange } from './review-step.tsx';
-import { type ChangeSelection, takeSelection } from './selection.ts';
+import { type ChangeSelection, canChangePasses, takeSelection } from './selection.ts';
 import { useChangeWizard } from './use-change-wizard.ts';
 
 const STEPS = [
@@ -102,7 +102,11 @@ function Wiz({
         asideLabel="Before and after"
         aside={
           step < 2 ? (
-            <BeforeAfter preview={p} empty="Pick what changes to see a pass." />
+            <BeforeAfter
+              preview={p}
+              waiting={w.patch !== null}
+              empty="Pick what changes to see a pass."
+            />
           ) : undefined
         }
       >
@@ -150,8 +154,7 @@ function Wiz({
 export function ChangePage({ search }: { search: ChangeSearch }) {
   const scope = useOrgScope();
   const orgId = !scope.isLoading && !scope.isError ? scope.orgId : undefined;
-  const caps = scope.membership?.capabilities;
-  const allowed = caps?.includes('passes:operate') === true && caps.includes('messages:manage');
+  const allowed = canChangePasses(scope.membership?.capabilities);
   const imported = useImport(search.importId ?? '', search.importId ? orgId : undefined);
   const handed = useMemo(() => (orgId ? takeSelection(orgId) : undefined), [orgId]);
   const selection: ChangeSelection | undefined =

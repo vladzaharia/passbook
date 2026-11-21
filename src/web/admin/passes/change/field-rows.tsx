@@ -100,7 +100,7 @@ export function FieldRows({
                 </div>
               )}
               <IconButton
-                className="sm:mt-7"
+                className="max-sm:order-first max-sm:justify-self-end sm:mt-7"
                 label={C.fields.remove(field?.label ?? row.key)}
                 icon={<X aria-hidden />}
                 onClick={() => onChange(rows.filter((r) => r.id !== row.id))}

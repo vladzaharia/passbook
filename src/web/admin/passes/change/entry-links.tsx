@@ -3,11 +3,11 @@ import { Megaphone, PencilLine } from 'lucide-react';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { Button } from '../../../ui/index.ts';
 import { CHANGE_COPY as C } from './copy.ts';
+import { canChangePasses } from './selection.ts';
 
 /** Whether the person may run a change: operate passes and manage messages in this organization. */
 export function useCanChange(): boolean {
-  const caps = useOrgScope().membership?.capabilities;
-  return caps?.includes('passes:operate') === true && caps.includes('messages:manage');
+  return canChangePasses(useOrgScope().membership?.capabilities);
 }
 
 /** On an import's results: change the passes the import touched. */

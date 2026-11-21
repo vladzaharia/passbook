@@ -1,5 +1,6 @@
-const n = (c: number, one: string, many: string) =>
-  `${c.toLocaleString('en-US')} ${c === 1 ? one : many}`;
+import { formatCount } from '../../../lib/format.ts';
+
+const n = (c: number, one: string, many: string) => `${formatCount(c)} ${c === 1 ? one : many}`;
 
 /** Words of the change wizard and its run page. */
 export const CHANGE_COPY = {
@@ -45,7 +46,7 @@ export const CHANGE_COPY = {
     silent: 'Passes update quietly. Nobody is told.',
     voidSilent: 'A void never notifies.',
     estimate: (notified: number, silent: number) =>
-      `About ${notified.toLocaleString('en-US')} get a notification, ${silent.toLocaleString('en-US')} update silently.`,
+      `About ${formatCount(notified)} get a notification, ${formatCount(silent)} update silently.`,
     from200: 'Estimated from the 200 newest passes.',
     budget: (c: number) =>
       `${n(c, 'pass is', 'passes are')} at today’s notification limit. They update silently.`,
@@ -99,13 +100,12 @@ export const CHANGE_COPY = {
   } as Record<string, string>,
   run: {
     title: 'Change run',
-    running: (done: number, total: number) =>
-      `${done.toLocaleString('en-US')} of ${total.toLocaleString('en-US')}`,
+    running: (done: number, total: number) => `${formatCount(done)} of ${formatCount(total)}`,
     leave: 'You can leave this page.',
     stop: 'Stop',
     stopping: 'Stopping after this batch',
     stopped: 'Stopped',
-    doneTitle: (c: number) => `${c.toLocaleString('en-US')} changed`,
+    doneTitle: (c: number) => `${formatCount(c)} changed`,
     failedTitle: 'The run failed',
     created: 'Changed',
     unchanged: 'Already set',
@@ -122,12 +122,22 @@ export const CHANGE_COPY = {
     undoing: 'Undoing',
     undone: (restored: number, kept: number) =>
       kept > 0
-        ? `Restored ${restored.toLocaleString('en-US')}. Kept ${kept.toLocaleString('en-US')} changed since.`
-        : `Restored ${restored.toLocaleString('en-US')}.`,
+        ? `Restored ${formatCount(restored)}. Kept ${formatCount(kept)} changed since.`
+        : `Restored ${formatCount(restored)}.`,
     undoExpired: 'The undo window has passed.',
     notUndoable: 'Moving to the latest design can’t be undone.',
     again: 'Change more passes',
-    toPasses: 'Passes',
+    toPasses: 'Back to passes',
+    undoneTitle: 'Change undone',
+    states: {
+      draft: 'Draft',
+      scheduled: 'Scheduled',
+      sending: 'Running',
+      sent: 'Done',
+      partial: 'Partly done',
+      failed: 'Failed',
+      cancelled: 'Stopped',
+    } as Record<string, string>,
     notStarted: 'Not started',
     scheduled: (when: string) => `Starts ${when}`,
     couldNot: (verb: string) => `Could not ${verb}`,
