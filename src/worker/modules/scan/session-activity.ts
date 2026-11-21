@@ -11,6 +11,7 @@ import {
   withKeyset,
 } from './history-row-evidence.ts';
 import { undoWindowMinutes } from './outcome.ts';
+import { bucketOutcome } from './outcome-bucket.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import {
   SESSION_READ,
@@ -106,7 +107,10 @@ export async function scanningSessionActivity(
           : 'Scanner',
       passId: policy ? scan.passId : null,
       title: policy?.titleVisible(title) ? title : null,
-      outcome: scan.raw.raw_undone_by !== null ? ('undone' as const) : (scan.outcome ?? 'refused'),
+      outcome:
+        scan.raw.raw_undone_by !== null
+          ? ('undone' as const)
+          : bucketOutcome(scan.outcome, scan.reason),
       direction:
         policy && policy.action(scan.actionId, scan.actionKind) !== null ? scan.direction : null,
       scanId: policy ? scan.id : null,

@@ -7,10 +7,13 @@ import { SURFACE_ICON } from './surface-picker.tsx';
 
 export function DeviceCard({
   device,
+  stopped = false,
   canManage,
   onConfigure,
 }: {
   device: ScanningDevice;
+  /** The session ended: its devices no longer scan, whatever they last reported. */
+  stopped?: boolean;
   canManage: boolean;
   onConfigure: () => void;
 }) {
@@ -46,29 +49,35 @@ export function DeviceCard({
             status={
               device.revoked
                 ? 'revoked'
-                : device.online
-                  ? 'online'
-                  : device.paired
-                    ? 'offline'
-                    : 'not_paired'
+                : stopped && device.paired
+                  ? 'stopped'
+                  : device.online
+                    ? 'online'
+                    : device.paired
+                      ? 'offline'
+                      : 'not_paired'
             }
             tone={
               device.revoked
                 ? 'danger'
-                : device.online
-                  ? 'success'
-                  : device.paired
-                    ? 'neutral'
-                    : 'warning'
+                : stopped && device.paired
+                  ? 'neutral'
+                  : device.online
+                    ? 'success'
+                    : device.paired
+                      ? 'neutral'
+                      : 'warning'
             }
           >
             {device.revoked
               ? 'Revoked'
-              : device.online
-                ? 'Online'
-                : device.paired
-                  ? 'Offline'
-                  : 'Needs pairing'}
+              : stopped && device.paired
+                ? 'Stopped'
+                : device.online
+                  ? 'Online'
+                  : device.paired
+                    ? 'Offline'
+                    : 'Needs pairing'}
           </StatusPill>
           {device.signIn === 'admin' ? (
             <Badge>Admin · {device.adminName ?? 'Administrator'}</Badge>

@@ -169,7 +169,7 @@ describe('Scanner page', () => {
     );
     expect(screen.getByText('Online')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View scans' }).getAttribute('href')).toContain(
-      'tab=scans',
+      'tab=activity',
     );
     expect(screen.getByRole('link', { name: 'View scans' }).getAttribute('href')).toContain(
       'scannerId=s1',

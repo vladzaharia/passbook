@@ -134,7 +134,7 @@ describe('session dialog organization authority', () => {
   it('does not select a sole membership until the user explicitly chooses it', async () => {
     const { router, writes, onCreated, fetchMock } = setup();
     const user = userEvent.setup();
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     expect(organization(dialog)).toHaveTextContent('Select');
     expect(within(dialog).queryByRole('textbox', { name: 'Session name' })).not.toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
@@ -156,12 +156,11 @@ describe('session dialog organization authority', () => {
     async (sessionKind) => {
       const { fetchMock } = setup({
         memberships: [northwind, harbor, reader, revoked],
-        orgId: 'o1',
         sessionKind,
       });
-      const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+      const dialog = await screen.findByRole('dialog', { name: 'New session' });
       const user = userEvent.setup();
-      expect(organization(dialog)).toHaveTextContent('Northwind');
+      expect(organization(dialog)).toHaveTextContent('Select');
       await user.click(organization(dialog));
       expect(await screen.findByRole('option', { name: 'Northwind' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Harbor' })).toBeInTheDocument();
@@ -174,7 +173,7 @@ describe('session dialog organization authority', () => {
 
   it('does not give a platform admin a tenant choice without a membership', async () => {
     const { fetchMock, writes } = setup({ memberships: [], orgId: 'o1' });
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     expect(organization(dialog)).toHaveTextContent('Select');
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
     expect(within(dialog).queryByRole('textbox', { name: 'Session name' })).not.toBeInTheDocument();
@@ -184,7 +183,7 @@ describe('session dialog organization authority', () => {
 
   it('does not fall back to the sole membership when the requested scope is unauthorized', async () => {
     const { router, writes } = setup({ orgId: 'not-a-membership' });
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     expect(organization(dialog)).toHaveTextContent('Select');
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
     expect(router.state.location.pathname.split('/')[3]).toBe('not-a-membership');
@@ -196,9 +195,20 @@ describe('session dialog organization authority', () => {
     ).toBeInTheDocument();
   });
 
+  it('has no Organization select when the page is already scoped to one', async () => {
+    setup({ memberships: [northwind, harbor], orgId: 'o1' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
+    expect(
+      await within(dialog).findByRole('textbox', { name: 'Session name' }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('combobox', { name: 'Organization' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('allows a tenant manager without the platform admin role to create in the selected scope', async () => {
     const { writes, onCreated } = setup({ sessionKind: 'user', orgId: 'o1' });
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     const user = userEvent.setup();
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Tenant entry');
     await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
@@ -211,7 +221,7 @@ describe('session dialog organization authority', () => {
 
   it('does not initialize from a selected membership lacking scanning management', async () => {
     const { router, writes } = setup({ memberships: [reader, harbor], orgId: 'o3' });
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     expect(organization(dialog)).toHaveTextContent('Select');
     expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
     await chooseOrg(dialog, 'Harbor');
@@ -231,7 +241,7 @@ describe('session dialog organization authority', () => {
         membershipResponse: Promise.resolve(problem(403, 'forbidden', 'Membership access failed.')),
       });
       const dialog = await screen.findByRole('dialog', {
-        name: kind === 'new' ? 'New scanning session' : 'Session rules',
+        name: kind === 'new' ? 'New session' : 'Session rules',
       });
       await waitFor(() =>
         expect(queryClient.getQueryState(['org-memberships', 'me'])?.status).toBe('error'),
@@ -286,7 +296,6 @@ describe('session dialog organization authority', () => {
     };
     const { router, writes, onCreated, fetchMock } = setup({
       memberships: [northwind, harbor],
-      orgId: 'o1',
       initial,
     });
     const user = userEvent.setup();
@@ -313,7 +322,6 @@ describe('session dialog organization authority', () => {
   it('clears eligible template selections when the picker changes organizations', async () => {
     const { router, writes, onCreated, fetchMock } = setup({
       memberships: [northwind, harbor],
-      orgId: 'o1',
       eligibleTemplates: [
         eligibleTemplateFixture(),
         eligibleTemplateFixture({
@@ -325,8 +333,9 @@ describe('session dialog organization authority', () => {
       ],
     });
     const user = userEvent.setup();
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
-    await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
+    await chooseOrg(dialog, 'Northwind');
+    await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Entry');
     await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }));
     expect(
@@ -361,7 +370,7 @@ describe('session dialog organization authority', () => {
       eligibleTemplates: [eligibleTemplateFixture()],
     });
     const user = userEvent.setup();
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
     await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }));
@@ -410,7 +419,7 @@ describe('session dialog organization authority', () => {
     async (change) => {
       const { queryClient, writes } = setup({ memberships: [northwind, harbor], orgId: 'o1' });
       const user = userEvent.setup();
-      const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+      const dialog = await screen.findByRole('dialog', { name: 'New session' });
       await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
       expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeEnabled();
       const changed =
@@ -437,7 +446,7 @@ describe('session dialog organization authority', () => {
   it('does not follow an external scope switch with an existing create draft', async () => {
     const { router, writes } = setup({ memberships: [northwind, harbor], orgId: 'o1' });
     const user = userEvent.setup();
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
     await act(async () => {
       await router.navigate({ href: '/admin/o/o2/scanning' });

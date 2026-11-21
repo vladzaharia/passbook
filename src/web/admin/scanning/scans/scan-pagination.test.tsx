@@ -58,20 +58,23 @@ describe('scan history cursor pagination', () => {
       const now = new Date(2026, 10, 9, 12, 30, 15, 123).getTime();
       const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
       const requests: URL[] = [];
-      const { queryClient } = await renderApp(`/admin/scanning?tab=scans&range=${range}&q=Anna`, {
-        session: 'admin',
-        memberships: [member],
-        selectedOrg: 'o1',
-        handlers: {
-          ...handlers,
-          '/api/v1/scans': (url) => {
-            requests.push(url);
-            return url.searchParams.get('cursor') === 'opaque-next'
-              ? json({ items: [record('scan-2', 'Second')], nextCursor: null })
-              : json({ items: [record('scan-1', 'First')], nextCursor: 'opaque-next' });
+      const { queryClient } = await renderApp(
+        `/admin/scanning?tab=activity&range=${range}&q=Anna`,
+        {
+          session: 'admin',
+          memberships: [member],
+          selectedOrg: 'o1',
+          handlers: {
+            ...handlers,
+            '/api/v1/scans': (url) => {
+              requests.push(url);
+              return url.searchParams.get('cursor') === 'opaque-next'
+                ? json({ items: [record('scan-2', 'Second')], nextCursor: null })
+                : json({ items: [record('scan-1', 'First')], nextCursor: 'opaque-next' });
+            },
           },
         },
-      });
+      );
       const row = (await screen.findByText('First')).closest('tr');
       expect(row).not.toBeNull();
       const start = new Date(now);
@@ -101,7 +104,7 @@ describe('scan history cursor pagination', () => {
     const now = new Date(2026, 10, 9, 12, 30, 15, 123).getTime();
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
     const requests: URL[] = [];
-    const { router } = await renderApp('/admin/scanning?tab=scans&range=7d', {
+    const { router } = await renderApp('/admin/scanning?tab=activity&range=7d', {
       session: 'admin',
       memberships: [member],
       selectedOrg: 'o1',
@@ -120,7 +123,7 @@ describe('scan history cursor pagination', () => {
       await router.navigate({
         to: '/admin/o/$orgId/scanning',
         params: { orgId: 'o1' },
-        search: { tab: 'scans', range: '30d' },
+        search: { tab: 'activity', range: '30d' },
       });
     });
     await waitFor(() =>
@@ -136,7 +139,7 @@ describe('scan history cursor pagination', () => {
       await router.navigate({
         to: '/admin/o/$orgId/scanning',
         params: { orgId: 'o1' },
-        search: { tab: 'scans', range: '30d', q: 'Bob' },
+        search: { tab: 'activity', range: '30d', q: 'Bob' },
       });
     });
     await waitFor(() =>
@@ -153,7 +156,7 @@ describe('scan history cursor pagination', () => {
     const now = new Date(2026, 10, 9, 12, 30, 15, 123).getTime();
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
     const requests: { url: URL; mode: string }[] = [];
-    const { router } = await renderApp('/admin/scanning?tab=scans&range=7d', {
+    const { router } = await renderApp('/admin/scanning?tab=activity&range=7d', {
       session: 'admin',
       memberships: [member, membershipFixture('o2', { orgName: 'Harbor' })],
       selectedOrg: 'o1',
@@ -170,7 +173,7 @@ describe('scan history cursor pagination', () => {
     await act(async () => {
       await router.navigate({
         to: '/admin/scanning',
-        search: { orgId: 'o2', tab: 'scans', range: '7d' },
+        search: { orgId: 'o2', tab: 'activity', range: '7d' },
       });
     });
     const orgStart = new Date(now + 3_600_000);
@@ -206,7 +209,7 @@ describe('scan history cursor pagination', () => {
     const now = new Date(2026, 10, 9, 12, 30, 15, 123).getTime();
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
     const requests: URL[] = [];
-    await renderApp('/admin/scanning?tab=scans&range=7d', {
+    await renderApp('/admin/scanning?tab=activity&range=7d', {
       session: 'admin',
       memberships: [member],
       selectedOrg: 'o1',
@@ -243,7 +246,7 @@ describe('scan history cursor pagination', () => {
 
   it('keeps the empty-page continuation available when loading another page fails', async () => {
     let attempts = 0;
-    await renderApp('/admin/scanning?tab=scans&range=7d', {
+    await renderApp('/admin/scanning?tab=activity&range=7d', {
       session: 'admin',
       memberships: [member],
       selectedOrg: 'o1',
@@ -271,7 +274,7 @@ describe('scan history cursor pagination', () => {
     const now = new Date(2026, 10, 9, 23, 59, 50, 0).getTime();
     vi.setSystemTime(now);
     const requests: URL[] = [];
-    await renderApp('/admin/scanning?tab=scans', {
+    await renderApp('/admin/scanning?tab=activity', {
       session: 'admin',
       memberships: [member],
       selectedOrg: 'o1',

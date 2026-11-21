@@ -10,7 +10,7 @@ import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
 import type { ScanState } from '../machine/types.ts';
 import { keepSession, keptSession } from '../offline/shell.ts';
-import { takePairCode } from './pair-link.ts';
+import { takePairCode, watchPairLink } from './pair-link.ts';
 
 const REFETCH_MS = 10_000;
 const KEY = ['scan', 'session'] as const;
@@ -63,7 +63,8 @@ export function useScanSession(
   const pendingRef = useRef<number | undefined>(undefined);
   pendingRef.current = machine ? machine.queue.pending + machine.unsure.length : undefined;
   // Read before the first request: the fragment is gone from the address bar by then.
-  const [pairCode] = useState(() => takePairCode());
+  const [pairCode, setPairCode] = useState(() => takePairCode());
+  useEffect(() => watchPairLink(setPairCode), []);
   const query = useQuery({
     queryKey: KEY,
     queryFn: async () => {

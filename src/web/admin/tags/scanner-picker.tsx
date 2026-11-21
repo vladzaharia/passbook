@@ -96,7 +96,7 @@ export function ScannerPicker({
         title={D.noScanner}
         action={
           <Button asChild variant="outline" size="sm" iconStart={<Plus aria-hidden />}>
-            <Link to="/admin/scanning" search={{ tab: 'scanners' }}>
+            <Link to="/admin/scanning" search={{ tab: 'devices' }}>
               {D.pairScanner}
             </Link>
           </Button>
