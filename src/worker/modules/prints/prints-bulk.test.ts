@@ -139,6 +139,19 @@ describe('bulk PDF access and deletion', () => {
     return { ...k, pass, started, path };
   }
 
+  it('refuses a read-only key the job state and the PDF', async () => {
+    const { kit, api, path, started } = await ready();
+    const readOnly = await kit.auth.apiKey({ orgId: kit.org.id, scopes: ['passes:read'] });
+    const status = await api(
+      'GET',
+      `/passes/bulk-print/${started.jobId}?orgId=${kit.org.id}`,
+      undefined,
+      readOnly,
+    );
+    expect(status.status).toBe(403);
+    expect((await api('GET', path, undefined, readOnly)).status).toBe(403);
+  });
+
   it('serves only the requesting user, in the org and mode, for 24 hours', async () => {
     const { kit, api, path, started } = await ready();
     expect((await api('GET', path)).status).toBe(200);

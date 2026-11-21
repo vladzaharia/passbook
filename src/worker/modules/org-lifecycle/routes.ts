@@ -164,7 +164,7 @@ register(
   {
     method: 'post',
     path: '/{orgId}/exports/{exportId}/link',
-    summary: 'Get a download link for a finished export, good for 24 hours',
+    summary: 'Get a download link for a finished export, good for 1 hour, one download',
     params: OrgExportParamsSchema,
     response: OrgExportLinkSchema,
   },

@@ -5,8 +5,13 @@ import { EXPORT_ENTITIES, exportPage } from './repo-export.ts';
 import { EXPORT_EXCLUDED } from './repo-export-excluded.ts';
 import { PURGE_NOT_TENANT } from './repo-plan.ts';
 
+/** The invited address is only projected for members, so the invitations table stays excluded. */
 const tablesOf = (select: string) =>
-  [...select.matchAll(/\b(?:FROM|JOIN)\s+([a-z_0-9]+)/g)].map((m) => m[1] ?? '');
+  [
+    ...select
+      .replace(/\(SELECT i\.email FROM org_invitations i[^)]*\)/g, '')
+      .matchAll(/\b(?:FROM|JOIN)\s+([a-z_0-9]+)/g),
+  ].map((m) => m[1] ?? '');
 
 async function schemaTables(): Promise<string[]> {
   const rows = await all<{ name: string }>(

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { createScannerStore } from './auth-store.ts';
 import {
   auditActions,
@@ -46,7 +46,7 @@ describe('pairing', () => {
     expect(raw).toContain('HttpOnly');
     expect(raw).toContain('Secure');
     expect(raw).toContain('SameSite=Strict');
-    expect(raw).toContain('Max-Age=15552000');
+    expect(raw).toContain('Max-Age=7776000');
     expect(raw).toContain('__Host-wallet_scan=wls_');
     const session = (await paired.json()) as {
       principal: string;
@@ -67,6 +67,12 @@ describe('pairing', () => {
       mode: 'live',
       csrfSecret: session.csrfToken,
     });
+    const expires = await first<{ expires_at: number; paired_at: number }>(
+      env.DB,
+      'SELECT expires_at, paired_at FROM scanners WHERE id = ?',
+      [body.id],
+    );
+    expect((expires?.expires_at ?? 0) - (expires?.paired_at ?? 0)).toBe(90 * 86_400_000);
     const state = await poll();
     expect(state.state).toBe('paired');
     expect(state.device?.label).toBe('iPhone · Safari');

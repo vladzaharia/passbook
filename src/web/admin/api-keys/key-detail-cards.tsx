@@ -64,7 +64,7 @@ export function AccessCard({
         ]
       : []),
     { label: 'Allowed IPs', value: k.ipAllow.length ? k.ipAllow.join(', ') : 'Any address' },
-    { label: 'Expires', value: formatDay(k.expiresAt, 'Never') },
+    { label: 'Expires', value: formatDay(k.expiresAt, 'No expiry') },
     ...(k.retireAt === null
       ? []
       : [

@@ -37,7 +37,7 @@ export function KeyDisclosure({
           ...(created.ipAllow.length
             ? [{ label: 'Allowed IPs', value: created.ipAllow.join(', ') }]
             : []),
-          { label: 'Expiry', value: formatDay(created.expiresAt, 'Never') },
+          { label: 'Expiry', value: formatDay(created.expiresAt, 'No expiry') },
         ]}
       />
     </SecretReveal>

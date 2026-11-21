@@ -16,8 +16,8 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { completePairing, previewPairing, unpair } from './pairing.ts';
 import { pairedSession } from './pairing-session.ts';
 
-/** 180 days, as the token's own expiry. */
-const COOKIE_MAX_AGE_S = 15_552_000;
+/** 90 days, as the token's own expiry. */
+const COOKIE_MAX_AGE_S = 7_776_000;
 
 export function setScannerCookie(c: Context<AppBindings>, token: string): void {
   setCookie(c, SCANNER_COOKIE, token, {

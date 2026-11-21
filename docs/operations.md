@@ -38,8 +38,9 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
-   - Groups: `wallet-admins`, `wallet-users`. Pocket ID's generated names (`wallet_admins`) match
-     too. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
+   - Groups: `OIDC_ADMIN_GROUP` and `OIDC_USER_GROUP` hold the exact names the token carries
+     (case and punctuation included), comma-separated when there are several. Pocket ID can turn a display
+     name `wallet-admins` into `wallet_admins`, so `wrangler.jsonc` lists both. Near misses grant nothing. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.
@@ -601,7 +602,7 @@ The console, the developer tools and every API key mint need a Polaris ID sign-i
 
 ### Closing and purging an organization
 
-`POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 24 hours. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.
+`POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 1 hour and one download. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.
 
 The daily `org_lifecycle.sweep` starts the `org-purge` workflow (one instance per org and day) for every closed org past `purge_after` with no active legal hold. A hold placed at any time stops it where it stands; releasing the hold lets the next sweep finish. The purge first voids every pass (a last voided, expired version, pushed to registered devices; Apple serves a closed org's voided passes only, Google and Samsung revoke through their void path), stamps `purge_voided_at` and waits seven days; no row goes before that, enforced in each delete. It then soft-deletes the passes, waits up to seven more days for Wallet providers to let go, deletes every table of `PURGE_STEPS`, the org's R2 prefixes, removes the org's R2 prefixes (prints, branding, template files and uploads, import sheets, exports, member photos), then writes a `org_purge` retention receipt and scrubs the org row to a stub (id, slug, status, audit rows and receipts stay). `blocked` or `incomplete` in the log (`ORG_PURGE_VOID`, `ORG_PURGE_BLOCKED`, `ORG_PURGE_INCOMPLETE`) means a pass or table could not go yet; tomorrow's sweep retries.
 
