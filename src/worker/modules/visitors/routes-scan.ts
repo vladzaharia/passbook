@@ -10,6 +10,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { localDayStart } from '../scan/counts.ts';
 import { policyActor } from '../scan/dto.ts';
 import { deepFreeze } from '../scan/freeze.ts';
 import { requireScanActor, scanActorOf } from '../scan/guard.ts';
@@ -17,6 +18,9 @@ import { scanPolicy } from '../scan/rules.ts';
 import { cloneObservedScanActor } from '../scan/scanning-workspace-observation.ts';
 import { listVisits } from './service.ts';
 import { signOut } from './sign-out.ts';
+
+const HOUR = 3_600_000;
+const MANAGER_DAYS_BACK = 7;
 
 const DayQuery = z.object({
   dayStart: z.coerce.number().int().nonnegative(),
@@ -45,13 +49,18 @@ export function registerScanVisitorRoutes(scanRoutes: OpenAPIHono<AppBindings>):
       // Desk and above, and only the passes this session's templates admit. Desk notes stay in the console.
       if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
         throw new ForbiddenError('Only Desk and above can see visitors.', 'FORBIDDEN');
-      const { dayStart, dayEnd } = c.req.valid('query');
+      const query = c.req.valid('query');
+      const sctx = serviceContext(c);
+      // The client's range is a request, never a grant: today in the session's zone, a week back for a manager.
+      const today = localDayStart(sctx.clock.now(), actor.timeZone);
+      const tomorrow = localDayStart(today + 36 * HOUR, actor.timeZone);
+      const floor = actor.role === 'manager' ? today - MANAGER_DAYS_BACK * 24 * HOUR : today;
       const items = await listVisits(
-        serviceContext(c),
+        sctx,
         actor.orgId,
         actor.mode,
         'today',
-        { start: dayStart, end: dayEnd },
+        { start: Math.max(query.dayStart, floor), end: Math.min(query.dayEnd, tomorrow) },
         actor.templateIds,
       );
       return c.json({ items: items.map((v) => ({ ...v, note: null })), nextCursor: null });

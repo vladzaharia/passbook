@@ -32,7 +32,7 @@ function suite(label: string, lookup: boolean | 'default', body: (t: () => Publi
 
 async function join(t: PublicKit, email: string) {
   const l = await t.link({ askEmail: true });
-  expect((await t.post(l, { email })).status).toBe(303);
+  expect((await t.post(l, { email })).status).toBe(200);
   const row = await first<{ id: string }>(
     t.kit.env.DB,
     'SELECT id FROM passes WHERE holder_email = ? ORDER BY id DESC LIMIT 1',

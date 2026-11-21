@@ -9,6 +9,8 @@ export interface PngInfo {
 
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 export const MAX_PNG_SIDE = 4096;
+/** Above the largest image any slot takes (Google wallet art, 1860 x 1860); the side cap alone allowed 16.7 MP. */
+export const MAX_PNG_PIXELS = 3_500_000;
 
 function u32(bytes: Uint8Array, at: number): number {
   return (
@@ -49,7 +51,13 @@ export function parsePng(bytes: Uint8Array): PngInfo | { error: string } {
     at = end + 4;
   }
   if (!info || !sawData || !sawEnd) return { error: 'PNG is incomplete.' };
-  if (info.width < 1 || info.height < 1 || info.width > MAX_PNG_SIDE || info.height > MAX_PNG_SIDE)
+  if (
+    info.width < 1 ||
+    info.height < 1 ||
+    info.width > MAX_PNG_SIDE ||
+    info.height > MAX_PNG_SIDE ||
+    info.width * info.height > MAX_PNG_PIXELS
+  )
     return { error: 'PNG dimensions are out of range.' };
   return info;
 }

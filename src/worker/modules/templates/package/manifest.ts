@@ -13,9 +13,9 @@ import type {
   TemplateManifest,
   ValidationIssue,
 } from '../../../../passkit/types.ts';
+import { isLinearPattern, PATTERN_MAX_LENGTH, schemaFor } from '../../../../shared/safe-pattern.ts';
 import { checkIdentity } from './manifest-identity.ts';
 import { ALLOWED_KEYWORDS, pointerAllowed } from './manifest-rules.ts';
-import { isSafePattern, needsInputBound, PATTERN_INPUT_MAX } from './safe-regex.ts';
 import { stylesOf } from './slots.ts';
 
 const GROUPS = [
@@ -111,20 +111,18 @@ function checkSchemaNode(
       continue;
     }
     if (key === 'pattern') {
-      const bound = (node as Record<string, unknown>).maxLength;
-      const bounded = typeof bound === 'number' && bound <= PATTERN_INPUT_MAX;
-      if (typeof value !== 'string' || !isSafePattern(value))
+      if (typeof value !== 'string' || value.length > PATTERN_MAX_LENGTH)
         push({
           severity: 'error',
           code: 'SCHEMA_PATTERN',
-          message: 'Pattern is too complex. Use simple character classes and bounded repeats.',
+          message: `A pattern is text of at most ${PATTERN_MAX_LENGTH} characters.`,
           path: `${path}.pattern`,
         });
-      else if (!bounded && needsInputBound(value))
+      else if (!isLinearPattern(value))
         push({
           severity: 'error',
           code: 'SCHEMA_PATTERN',
-          message: `A pattern needs maxLength of at most ${PATTERN_INPUT_MAX}.`,
+          message: 'Pattern uses backreferences, lookaround or invalid syntax.',
           path: `${path}.pattern`,
         });
     } else if (key === 'dependentRequired') {
@@ -301,9 +299,11 @@ export function validateManifest(
 
   if (!issues.some((x) => x.severity === 'error' && x.code.startsWith('SCHEMA'))) {
     try {
-      const result = new Validator(inputs as never, '2020-12', false).validate(
-        manifest.sample ?? {},
-      );
+      const result = new Validator(
+        schemaFor(inputs, manifest.sample ?? {}),
+        '2020-12',
+        false,
+      ).validate(manifest.sample ?? {});
       for (const e of result.errors.slice(0, 5))
         error('SAMPLE_INVALID', `sample ${e.instanceLocation}: ${e.error}`, 'sample');
     } catch {

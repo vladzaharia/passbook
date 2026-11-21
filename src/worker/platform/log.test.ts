@@ -25,6 +25,12 @@ describe('redaction', () => {
     expect(redactString('https://x/auth/magic?t=secret123&x=1')).toBe(
       'https://x/auth/magic?t=[redacted]&x=1',
     );
+    expect(
+      redactString('GET /j/abcdefghijklmnopqrstuv and /preview/abc123.4.5.abcdef0123456789'),
+    ).toBe('GET /j/[redacted] and /preview/[redacted]');
+    expect(redactString('https://x/export?sig=abc&exp=123')).toBe(
+      'https://x/export?sig=[redacted]&exp=[redacted]',
+    );
     expect(redactString('key wlt_abc_def')).toBe('key wlt_[redacted]');
     for (const label of ['pb', 'pbp', 'pbo'])
       expect(redactString(`key ${label}_live_abc12345_${'x'.repeat(43)}`)).toBe(

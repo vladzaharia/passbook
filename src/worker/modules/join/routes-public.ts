@@ -26,9 +26,11 @@ import { langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { platformLimits } from './caps.ts';
 import { readDeviceCookie, setDeviceCookie } from './cookie.ts';
 import { type OpenRelease, openRelease } from './issue.ts';
+import type { JoinOutcome } from './outcome.ts';
 import { joinPreview, previewImage } from './preview.ts';
 import type { PublicLink } from './repo-issues.ts';
-import { closedReason, type JoinOutcome, lookupLink, refuse, submitJoin } from './submit.ts';
+import { closedReason, submitJoin } from './submit.ts';
+import { lookupLink, refuse } from './submit-after.ts';
 
 /** /j: a public join link's page and form. No sign-in; every write is the link's own grant. */
 export const joinPublicRoutes = createRouter();

@@ -53,8 +53,10 @@ export const documentStart = (theme?: PageTheme) =>
  * Auth and error pages: never indexed. They belong to the app, so they link the manifest. The
  * preview text is fixed: the page body can hold the visitor's email.
  */
-export function appPageHead(title: string): string {
-  return `<meta name="robots" content="noindex, nofollow"><meta name="description" content="${APP_DESCRIPTION}"><link rel="manifest" href="/manifest.webmanifest"><meta name="apple-mobile-web-app-title" content="${APP_NAME}"><meta property="og:site_name" content="${APP_NAME}"><meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${APP_DESCRIPTION}">`;
+export function appPageHead(title: string, options: { manifest?: boolean } = {}): string {
+  const manifest =
+    options.manifest === false ? '' : '<link rel="manifest" href="/manifest.webmanifest">';
+  return `<meta name="robots" content="noindex, nofollow"><meta name="description" content="${APP_DESCRIPTION}">${manifest}<meta name="apple-mobile-web-app-title" content="${APP_NAME}"><meta property="og:site_name" content="${APP_NAME}"><meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${APP_DESCRIPTION}">`;
 }
 
 /** This request's page theme, from its cookie header. */

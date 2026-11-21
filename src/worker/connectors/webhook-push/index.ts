@@ -103,7 +103,8 @@ const definition: ConnectorDefinition<z.infer<typeof config>, undefined> = {
     if (!Array.isArray(items) || items.length > MAX_RECORDS) {
       throw new ConnectorError('INVALID_PAYLOAD');
     }
-    const records: Record<string, UpstreamRecord> = {};
+    // No prototype: a signed ref of `__proto__` is a key, not a way to repoint the object.
+    const records: Record<string, UpstreamRecord> = Object.create(null);
     const deleted: string[] = [];
     const refs: string[] = [];
     for (const item of items) {

@@ -2,6 +2,7 @@ import { createApp } from './app.ts';
 import { handleScheduled } from './jobs/cron.ts';
 import { handleQueue } from './jobs/queue.ts';
 import type { AppEnv } from './platform/env.ts';
+import { reportUnsupportedPatterns } from './platform/pattern-report.ts';
 import { createAuthStores } from './stores.ts';
 
 export { ScanHub } from './modules/scan/scan-hub.ts';
@@ -14,6 +15,8 @@ export { OrgExport } from './workflows/org-export.ts';
 export { OrgPurge } from './workflows/org-purge.ts';
 export { PassImport } from './workflows/pass-import.ts';
 export { TemplateImport } from './workflows/template-import.ts';
+
+reportUnsupportedPatterns();
 
 /** Holds routes only. Stores are built from each request's env inside the app. */
 let app: ReturnType<typeof createApp> | undefined;

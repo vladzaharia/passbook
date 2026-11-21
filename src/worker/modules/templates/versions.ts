@@ -17,6 +17,7 @@ import { commitVersion } from './persist.ts';
 import { clearTemplateCache, r2Key } from './registry.ts';
 import { getTemplate, getVersion } from './repo.ts';
 import { detail, loadTemplate } from './service.ts';
+import { enforceTemplateBudget } from './upload-budget.ts';
 import { checkVersion, refusedResponse } from './version-check.ts';
 
 type Body = z.infer<typeof SaveVersionSchema>;
@@ -36,6 +37,7 @@ export async function saveVersion(
 ): Promise<Response> {
   const row = await loadTemplate(ctx, auth, id);
   const author = await authorizeTemplateWrite(ctx, auth, row.orgId, 'templates:author');
+  await enforceTemplateBudget(ctx, auth, row.orgId);
   if (row.origin === 'baked')
     throw new ForbiddenError(
       'Built-in templates cannot be changed. Duplicate it first.',
