@@ -54,10 +54,7 @@
         "mark": {
           "chosen": "full",
           "effective": "full",
-          "allowed": [
-            "full",
-            "small"
-          ]
+          "allowed": ["full", "small"]
         },
         "support": {
           "email": {
@@ -479,10 +476,7 @@
           "mark": {
             "chosen": "full",
             "effective": "full",
-            "allowed": [
-              "full",
-              "small"
-            ]
+            "allowed": ["full", "small"]
           },
           "support": {
             "email": {
