@@ -51,6 +51,16 @@ final class Hardware {
 
     private Hardware() {}
 
+    /** Actions and categories one receiver registers. DataWedge-style senders may add the DEFAULT category. */
+    record Registration(List<String> actions, List<String> categories) {}
+
+    static Registration registration(String configuredAction, List<Vendor> vendors) {
+        List<String> actions = new ArrayList<>();
+        if (configuredAction != null && !configuredAction.isEmpty()) actions.add(configuredAction);
+        for (Vendor vendor : vendors) if (!actions.contains(vendor.action())) actions.add(vendor.action());
+        return new Registration(actions, List.of("android.intent.category.DEFAULT"));
+    }
+
     /** Same bounds as keyboard input: 1 to 2048 characters, no control characters. */
     static boolean validBarcode(String value) {
         return value != null && !value.isEmpty() && value.length() <= 2048 && value.chars().noneMatch(Character::isISOControl);

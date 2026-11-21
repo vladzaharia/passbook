@@ -14,14 +14,19 @@ final class ScannerHardware {
     var tagsEnabled = false
     private(set) var readingNFC = false
 
+    private nonisolated(unsafe) var keyboardObservers: [NSObjectProtocol] = []
+
     init() {
         // A wedge scanner appears as a hardware keyboard; report it when it connects or goes away.
         for name in [NSNotification.Name.GCKeyboardDidConnect, .GCKeyboardDidDisconnect] {
-            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+            let token = NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 Task { @MainActor in self?.onChange?() }
             }
+            keyboardObservers.append(token)
         }
     }
+
+    deinit { keyboardObservers.forEach { NotificationCenter.default.removeObserver($0) } }
 
     var capabilities: [String: Any] {
         let status = AVCaptureDevice.authorizationStatus(for: .video)

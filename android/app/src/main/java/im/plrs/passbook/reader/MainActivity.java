@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
@@ -27,6 +28,7 @@ import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Base64;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -54,6 +56,9 @@ import org.json.JSONObject;
 public final class MainActivity extends Activity implements WebSurface.Listener, NfcController.Listener {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ScanGate gate = new ScanGate();
+    private static final String DATAWEDGE_PROFILE = "PassBook Scanner";
+    private static final String DATAWEDGE_COMMAND = "PASSBOOK_PROFILE";
+    private static final int DATAWEDGE_PROFILE_VERSION = 1;
     private ReaderConfig config;
     private WebSurface web;
     private NfcController nfc;
@@ -85,6 +90,18 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             } catch (RuntimeException malformed) {
                 notice("Invalid barcode. Scan it again.");
             }
+        }
+    };
+    private final BroadcastReceiver dataWedgeResult = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            if (!DATAWEDGE_COMMAND.equals(intent.getStringExtra("COMMAND_IDENTIFIER"))) return;
+            if ("SUCCESS".equals(intent.getStringExtra("RESULT"))) {
+                getSharedPreferences("datawedge", MODE_PRIVATE).edit().putInt("profileVersion", DATAWEDGE_PROFILE_VERSION).apply();
+                return;
+            }
+            Bundle info = intent.getBundleExtra("RESULT_INFO");
+            Log.w("PassBook", "scan.datawedge_config_failed code=" + (info == null ? "unknown" : info.getString("RESULT_CODE")));
+            notice("Zebra scanner setup failed. Use keyboard output.");
         }
     };
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
@@ -384,45 +401,53 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private void registerBarcode() {
         List<Hardware.Vendor> vendors = vendorsPresent();
         if (registered || !foreground || (config.barcodeAction().isEmpty() && vendors.isEmpty())) return;
+        Hardware.Registration registration = Hardware.registration(config.barcodeAction(), vendors);
         IntentFilter filter = new IntentFilter();
-        if (!config.barcodeAction().isEmpty()) filter.addAction(config.barcodeAction());
-        for (Hardware.Vendor vendor : vendors) filter.addAction(vendor.action());
+        for (String action : registration.actions()) filter.addAction(action);
+        for (String category : registration.categories()) filter.addCategory(category);
         if (vendors.stream().anyMatch(vendor -> vendor.name().equals("zebra"))) configureDataWedge();
         ContextCompat.registerReceiver(this, barcodeReceiver, filter, ContextCompat.RECEIVER_EXPORTED);
+        IntentFilter result = new IntentFilter("com.symbol.datawedge.api.RESULT_ACTION");
+        result.addCategory(Intent.CATEGORY_DEFAULT);
+        ContextCompat.registerReceiver(this, dataWedgeResult, result, ContextCompat.RECEIVER_EXPORTED);
         registered = true;
     }
-    /** Creates this app's own DataWedge profile: barcode in, broadcast intent out, no keystrokes. */
+    /**
+     * Creates this app's own DataWedge profile once: barcode input and broadcast intent output, with no
+     * keystroke plugin so the keyboard path stays as a fallback (ScanGate drops the duplicate). The result is
+     * requested; the flag is stored only on success, so a failure retries on the next resume.
+     */
     private void configureDataWedge() {
+        SharedPreferences prefs = getSharedPreferences("datawedge", MODE_PRIVATE);
+        int done = prefs.getInt("profileVersion", 0);
+        if (done >= DATAWEDGE_PROFILE_VERSION) return;
         Hardware.Vendor zebra = Hardware.VENDORS.get(0);
         Bundle barcodeParams = new Bundle();
-        barcodeParams.putString("scanner_selection", "auto"); barcodeParams.putString("scanner_input_enabled", "true");
+        barcodeParams.putString("scanner_input_enabled", "true");
         Bundle intentParams = new Bundle();
         intentParams.putString("intent_output_enabled", "true"); intentParams.putString("intent_action", zebra.action());
-        intentParams.putString("intent_category", "android.intent.category.DEFAULT");
         intentParams.putString("intent_delivery", "2");
-        Bundle keystrokeParams = new Bundle();
-        keystrokeParams.putString("keystroke_output_enabled", "false");
         ArrayList<Bundle> plugins = new ArrayList<>();
-        String[] names = {"BARCODE", "INTENT", "KEYSTROKE"};
-        Bundle[] params = {barcodeParams, intentParams, keystrokeParams};
+        String[] names = {"BARCODE", "INTENT"};
+        Bundle[] params = {barcodeParams, intentParams};
         for (int i = 0; i < names.length; i++) {
             Bundle plugin = new Bundle();
-            plugin.putString("PLUGIN_NAME", names[i]); plugin.putString("RESET_CONFIG", "true");
-            plugin.putBundle("PARAM_LIST", params[i]); plugins.add(plugin);
+            plugin.putString("PLUGIN_NAME", names[i]); plugin.putBundle("PARAM_LIST", params[i]); plugins.add(plugin);
         }
         Bundle app = new Bundle();
         app.putString("PACKAGE_NAME", getPackageName()); app.putStringArray("ACTIVITY_LIST", new String[] {"*"});
         Bundle main = new Bundle();
-        main.putString("PROFILE_NAME", "PassBook Scanner"); main.putString("PROFILE_ENABLED", "true");
-        main.putString("CONFIG_MODE", "OVERWRITE");
+        main.putString("PROFILE_NAME", DATAWEDGE_PROFILE); main.putString("PROFILE_ENABLED", "true");
+        main.putString("CONFIG_MODE", done == 0 ? "CREATE_IF_NOT_EXIST" : "UPDATE");
         main.putParcelableArrayList("PLUGIN_CONFIG", plugins); main.putParcelableArray("APP_LIST", new Bundle[] {app});
         Intent request = new Intent("com.symbol.datawedge.api.ACTION").setPackage(zebra.packages().get(0));
         request.putExtra("com.symbol.datawedge.api.SET_CONFIG", main);
+        request.putExtra("SEND_RESULT", "LAST_RESULT"); request.putExtra("COMMAND_IDENTIFIER", DATAWEDGE_COMMAND);
         sendBroadcast(request);
     }
 
     private void unregisterBarcode() {
-        if (registered) { unregisterReceiver(barcodeReceiver); registered = false; }
+        if (registered) { unregisterReceiver(barcodeReceiver); unregisterReceiver(dataWedgeResult); registered = false; }
     }
 
     @Override public void camera(PermissionRequest request) {

@@ -124,4 +124,12 @@ public class HardwareTest {
             assertEquals(v.name(), v.name().equals("zebra") || v.name().equals("sunmi"), v.verified());
         }
     }
+
+    @Test public void receiverFilterAcceptsTheDefaultCategoryDataWedgeMayAdd() {
+        Hardware.Registration reg = Hardware.registration("", Hardware.present(Set.of("com.symbol.datawedge")));
+        assertEquals(List.of("im.plrs.passbook.reader.action.SCAN"), reg.actions());
+        assertTrue(reg.categories().contains("android.intent.category.DEFAULT"));
+        Hardware.Registration both = Hardware.registration("custom.SCAN", Hardware.present(Set.of("com.sunmi.scanner")));
+        assertEquals(List.of("custom.SCAN", "com.sunmi.scanner.ACTION_DATA_CODE_RECEIVED"), both.actions());
+    }
 }
