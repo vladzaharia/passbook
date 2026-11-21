@@ -1,13 +1,11 @@
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
-import type { ReleaseDiffValue } from '@/shared/contracts/template-release-flow.ts';
 import { isApiError } from '../../../lib/errors.ts';
-import { formatCount } from '../../../lib/format.ts';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import { Button, Callout, Dialog, DialogContent, Skeleton, toast } from '../../../ui/index.ts';
 import { useReleasePlan, useReviewFlow } from './flow-api.ts';
-import { ReleaseDiff } from './release-diff.tsx';
+import { PlanSummary } from './plan-summary.tsx';
 import './release-strip.css';
 
 const MODES: Mode[] = ['test', 'live'];
@@ -44,7 +42,6 @@ export default function ReviewDialog({
   const [done, setDone] = useState(false);
   const [error, setError] = useState<{ message: string; gone: boolean }>();
   const busy = review.isPending || done;
-  const impact = (plan.data?.modes.live ?? plan.data?.modes.test)?.impact;
   const modes = MODES.filter((m) => plan.data?.modes[m]);
 
   useEffect(() => {
@@ -63,8 +60,6 @@ export default function ReviewDialog({
       setError(reviewError(cause));
     }
   }
-  const image = (v: Extract<ReleaseDiffValue, { type: 'image' }>) =>
-    `/api/v1/templates/${encodeURIComponent(templateId)}/versions/${encodeURIComponent(v.version)}/assets/${encodeURIComponent(v.asset)}?orgId=${encodeURIComponent(orgId)}`;
   const off = !plan.data && !plan.isError;
 
   return (
@@ -119,24 +114,11 @@ export default function ReviewDialog({
                   ) : null;
                 })}
               </ul>
-              <ReleaseDiff groups={plan.data.diff} image={image} />
+              <PlanSummary plan={plan.data} templateId={templateId} orgId={orgId} />
             </>
           ) : (
             <p className="text-sm text-fg-muted">Changes are not available to you.</p>
           )}
-          {impact && impact.passes.count > 0 ? (
-            <p className="text-sm text-fg-muted">
-              <b className="text-fg-strong">{formatCount(impact.passes.count)}</b>
-              {impact.passes.capped ? '+' : ''}{' '}
-              {impact.passes.count === 1 ? 'pass updates' : 'passes update'}
-              {impact.devices.count > 0 ? (
-                <>
-                  {' · '}
-                  <b className="text-fg-strong">{formatCount(impact.devices.count)}</b> on phones
-                </>
-              ) : null}
-            </p>
-          ) : null}
           {error ? <Callout tone="danger">{error.message}</Callout> : null}
         </div>
       </DialogContent>

@@ -572,22 +572,30 @@ describe('designer', () => {
     );
   });
 
-  it('names the next release step in the header, from the template state', async () => {
+  it.each([
+    ['release', true, 'Release v2'],
+    ['review', false, 'Review v2'],
+  ] as const)('opens the %s step in place from the header', async (next, alone, name) => {
+    const user = userEvent.setup();
     const s = setup({
       template: {
         release: {
           live: { version: VERSION, at: 1, by: null },
           test: null,
           draft: { version: 'ffeeddccbbaa9988', at: 2 },
-          review: { state: 'none' },
-          alone: true,
-          next: 'release',
+          review:
+            next === 'review'
+              ? { state: 'open', version: 'ffeeddccbbaa9988', by: 'Alex Kim', at: 2 }
+              : { state: 'none' },
+          alone,
+          next,
         },
       },
     });
     await open(s);
-    const link = await screen.findByRole('link', { name: 'Release v2' });
-    expect(link).toHaveAttribute('href', `/admin/templates/tpl1?orgId=${ORG.id}`);
+    await user.click(await screen.findByRole('button', { name }));
+    expect(await screen.findByRole('dialog', { name })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name })).toBeNull();
   });
 
   it('saves an inactive version without activating it', async () => {
