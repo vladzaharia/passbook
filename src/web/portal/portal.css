@@ -1,8 +1,51 @@
 /* Portal motion (motion-and-expression.md): tile chrome after the deal, the list's buddy, the
    sessions leaving. The holder pass page's own sheet is holder-pass.css. Transform and opacity only;
    reduced motion keeps nothing moving. */
-/* My passes: the buddy (S, at="start") sits on the first tile's top edge, under the bundle badge;
-   the grid keeps 68 px clear above the tiles. It looks up at the bundle badge and down at a tile's
+/* My passes (my-passes-page.tsx): one column of the stack, its groups under it; from 768 px the
+   stack (22rem) beside the front pass's page. */
+.wl-mp-side,
+.wl-mp-stack {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.wl-mp-stack {
+  gap: 1.75rem;
+}
+.wl-mp[data-wide] {
+  display: grid;
+  grid-template-columns: 22rem minmax(0, 1fr);
+  align-items: start;
+  column-gap: 2.5rem;
+}
+.wl-mp-group {
+  width: 100%;
+  max-width: 22rem;
+  margin-inline: auto;
+}
+.wl-mp-group-title {
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+/* Test passes hang under a dashed rule: set apart, not hidden. */
+.wl-mp-group[data-group="test"] .wl-stack {
+  padding-top: 0.5rem;
+  border-top: 1.5px dashed var(--pk-warning-border);
+}
+.wl-mp-group .wl-ended-details > summary {
+  margin-bottom: 0.5rem;
+}
+/* The panel's header sits level with the stack's front card, under the buddy's room. */
+.wl-mp-panel {
+  padding-top: 0.5rem;
+}
+
+/* My passes: the buddy (S, at="end") sits on the front card's top edge, under the bundle badge;
+   the stack keeps room clear above it. It looks up at the bundle badge and down at the front's
    badge while one is pointed at or focused. */
 .wl-list-buddy {
   --wl-drop: 18px;

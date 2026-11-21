@@ -21,21 +21,27 @@ import './portal.css';
 type Page = typeof MyPassListSchema._output;
 
 /** The list's copy of the pass, so a tile click shows the card on the first frame. */
-function fromList(client: ReturnType<typeof useQueryClient>, id: string): MyPass | undefined {
+export function fromList(
+  client: ReturnType<typeof useQueryClient>,
+  id: string,
+): MyPass | undefined {
   const list = client.getQueryData<InfiniteData<Page>>(myPassesKey);
   return list?.pages.flatMap((p) => p.items).find((p) => p.id === id);
 }
 
-function Detail({
+export function Detail({
   pass,
   view,
   state,
   dealt,
+  panel = false,
 }: {
   pass: MyPass;
   view: PassView;
   state: HolderState;
   dealt: boolean;
+  /** Beside My passes' stack (master-detail): the stack holds the card and its add row. */
+  panel?: boolean;
 }) {
   const [dip, setDip] = useState(0);
   const [device] = useState(browserDevice);
@@ -46,18 +52,21 @@ function Detail({
   const printUrl = pass.holderPrint && publicUrl ? `${publicUrl}/print` : undefined;
   return (
     <HolderPassView
+      panel={panel}
       pass={
-        <PassCardStage
-          view={view}
-          enter={dealt}
-          dim={state !== 'active'}
-          removed={state === 'removed'}
-          mint={stale ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
-          settle={pass.status}
-          dip={dip}
-          syncing={isPendingRefresh(pass, Date.now())}
-          transitionName={`pass-${pass.id}`}
-        />
+        panel ? null : (
+          <PassCardStage
+            view={view}
+            enter={dealt}
+            dim={state !== 'active'}
+            removed={state === 'removed'}
+            mint={stale ? undefined : `${pass.modifiedAt}:${pass.lastRefreshedAt}`}
+            settle={pass.status}
+            dip={dip}
+            syncing={isPendingRefresh(pass, Date.now())}
+            transitionName={`pass-${pass.id}`}
+          />
+        )
       }
       passTitle={title}
       orgName={pass.orgName}

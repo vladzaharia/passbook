@@ -1,0 +1,112 @@
+/* PassStack (pass-stack.tsx): plain classes only, so the bundle page (SSR) can inline this sheet
+   as it is. The stack is the card's width (22rem at most); its container sizes the peeks' radius
+   as the card's own (14 of 320). Transform and opacity only; reduced motion keeps nothing moving. */
+.wl-stack {
+  --wl-peek: 3.625rem;
+  --wl-peek-radius: calc(100cqw * 14 / 320);
+  container-type: inline-size;
+  display: grid;
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+.wl-stack-front {
+  position: relative;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  min-width: 0;
+}
+/* The front's row sits 14 px above the first peek; peeks overlap 10 px. */
+.wl-stack-front + .wl-stack-peek {
+  margin-top: 0.875rem;
+}
+.wl-stack-peek + .wl-stack-peek {
+  margin-top: -0.625rem;
+}
+.wl-stack-peek {
+  position: relative;
+  min-width: 0;
+}
+.wl-peek {
+  position: relative;
+  display: block;
+  height: var(--wl-peek);
+  overflow: hidden;
+  border-radius: var(--wl-peek-radius) var(--wl-peek-radius) 0 0;
+  box-shadow: 0 -6px 14px -8px rgb(0 0 0 / 0.35);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The last peek is the stack's bottom edge: a short card, rounded all round. */
+.wl-stack-peek:last-child .wl-peek {
+  border-radius: var(--wl-peek-radius);
+}
+.wl-peek:focus-visible {
+  outline: 2px solid var(--pk-focus, #0e7490);
+  outline-offset: 2px;
+  z-index: 1;
+}
+.wl-peek-card {
+  display: block;
+  pointer-events: none;
+}
+.wl-peek[data-dim] .wl-peek-card {
+  filter: saturate(0.25) brightness(0.78);
+}
+/* Dark theme: the front card's hairline rim (stage.css), inset because the peek clips. */
+.wl-peek::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+:root[data-theme="dark"] .wl-peek::after {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .wl-peek::after {
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+  }
+}
+/* The name is read, not shown: the card's own header says it. */
+.wl-peek-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-peek {
+    transition: translate var(--wl-dur-enter, 240ms) var(--wl-ease-spring, ease-out);
+  }
+  @media (hover: hover) {
+    .wl-peek:hover {
+      translate: 0 -4px;
+    }
+  }
+  .wl-peek:active {
+    translate: 0 -1px;
+  }
+  /* No view transition ran (unsupported): the new front rises 70 px instead. */
+  .wl-stack-front[data-raise] > :first-child {
+    animation: wl-stack-raise var(--wl-dur-card, 480ms) var(--wl-ease-spring, ease-out) both;
+  }
+  /* Bringing a peek forward: the card unfurls from its strip, clipped to the card's corners. */
+  html:active-view-transition-type(stack)::view-transition-group(*.pass) {
+    overflow: clip;
+  }
+}
+@keyframes wl-stack-raise {
+  from {
+    opacity: 0.4;
+    transform: translateY(70px);
+  }
+}
