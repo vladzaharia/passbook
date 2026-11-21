@@ -9,7 +9,6 @@ import type { PageTheme } from './head.ts';
 import { actionHtml, hostedPage } from './hosted.ts';
 import { PresentationCode } from './presentation-code.tsx';
 import { RIBBON_CSS, TestRibbon } from './test-ribbon.tsx';
-import { escapeHtml } from './theme.ts';
 
 export const PRESENTATION_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
