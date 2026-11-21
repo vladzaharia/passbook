@@ -80,7 +80,7 @@ describe('a strong session', () => {
 
   it('is kept when the same person uses an email link in that browser', async () => {
     const user = await makeUser(f());
-    const strong = await makeSession(f(), { userId: user.id, amr: 'oidc' });
+    const strong = await makeSession(fixtures(h.env, h.clock), { userId: user.id, amr: 'oidc' });
     const jar: Jar = new Map([['__Host-wallet_sid', strong.cookieValue]]);
     const res = await consumeForm(await linkFor(user.primaryEmail, jar), jar);
     expect(res.status).toBe(303);
@@ -97,7 +97,7 @@ describe('a strong session', () => {
   it('is replaced when another person signs in by email link in that browser', async () => {
     const owner = await makeUser(f());
     const other = await makeUser(f());
-    const strong = await makeSession(f(), { userId: owner.id, amr: 'oidc' });
+    const strong = await makeSession(fixtures(h.env, h.clock), { userId: owner.id, amr: 'oidc' });
     const jar: Jar = new Map([['__Host-wallet_sid', strong.cookieValue]]);
     const res = await consumeForm(await linkFor(other.primaryEmail, jar), jar);
     expect(res.status).toBe(303);
