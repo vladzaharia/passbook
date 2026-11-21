@@ -3297,6 +3297,15 @@
       ]
     },
     {
+      "code": "SCANNING_SESSION_REMOVE_DEVICES",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCANNING_SESSION_SCOPE_INVALID",
       "statuses": [
         409
@@ -3588,7 +3597,61 @@
       ]
     },
     {
+      "code": "SCAN_SETUP_CHECKS_FAILED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCAN_SETUP_CONFLICT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SETUP_CONSOLE_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SETUP_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SETUP_KEY_REQUIRED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SETUP_KEY_REUSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_SETUP_NAME_TAKEN",
       "statuses": [
         409
       ],

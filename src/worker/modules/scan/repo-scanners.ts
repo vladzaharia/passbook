@@ -195,15 +195,17 @@ export interface NewScanner {
   settings: string;
   timeZone: string;
   expiresAt: number | null;
-  createdBy: string;
+  createdBy: string | null;
   now: number;
+  /** A pairing code issued with the row: its hash and expiry. */
+  pair?: { hash: string; expiresAt: number };
 }
 
 /** A scanner not revoked takes a slot of the `scanning.devices` limit (expired terminals included until revoked). */
-export const scannerSlot = (): Check =>
+export const scannerSlot = (adding = 1): Check =>
   withinLimit(
     'scanning.devices',
-    'SELECT COUNT(*) FROM scanners sc WHERE sc.org_id = {org} AND sc.revoked_at IS NULL',
+    `SELECT COUNT(*) + ${Math.max(0, Math.trunc(adding) - 1)} FROM scanners sc WHERE sc.org_id = {org} AND sc.revoked_at IS NULL`,
   );
 
 /** org_id and mode come from the grant row. */
@@ -222,6 +224,7 @@ export const addScannerInsert = (g: Grant, s: NewScanner): GrantedStatement =>
       'created_by',
       'created_at',
       'updated_at',
+      ...(s.pair ? ['pair_code_hash', 'pair_expires_at', 'pair_created_by'] : []),
     ],
     [
       s.id,
@@ -235,6 +238,7 @@ export const addScannerInsert = (g: Grant, s: NewScanner): GrantedStatement =>
       s.createdBy,
       s.now,
       s.now,
+      ...(s.pair ? [s.pair.hash, s.pair.expiresAt, s.createdBy] : []),
     ],
   );
 

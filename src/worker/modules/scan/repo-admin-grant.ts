@@ -44,12 +44,13 @@ export const adminPrincipal = (authority: AdminAuthority): Principal => tenantPr
 /** An API key that holds `scanning:write` for this org (the scan setup of a template). */
 export type KeyAdminAuthority = Extract<TenantPassWrite, { kind: 'api_key' }>;
 
-/** The scan admin grants a key may hold: the writes of a template's scan setup, and nothing else. */
+/** The scan admin grants a key may hold: the writes of a template's scan setup, and the one-call setup (which refuses zones and staff for a key). */
 const KEY_PURPOSES: ReadonlySet<string> = new Set([
   'org_mode.scan.event.create',
   'org_mode.scan.event.archive',
   'org_mode.scan.session.create',
   'org_mode.scan.session.update',
+  'org_mode.scan.setup.apply',
 ]);
 
 /**

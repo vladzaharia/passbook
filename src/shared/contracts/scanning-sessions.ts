@@ -223,6 +223,8 @@ export const UpdateScanningSessionSchema = z.strictObject({
   zoneIds: ZoneIdsSchema.optional(),
   hours: SessionHoursSchema.nullable().optional(),
   status: ScanningSessionStatusSchema.optional(),
+  /** With status `ended`: revoke every device of the session in the same write. Default false. */
+  removeDevices: z.boolean().optional(),
   revision: TimestampSchema.optional(),
 });
 /** Close now, Open now (until at most 24 h ahead; default by the schedule) or Back to hours. */
@@ -291,7 +293,8 @@ export const ScanningSessionDetailSchema = ScanningSessionSchema.extend({
   activity: SessionActivitySchema.shape.items.default([]),
 });
 export const CreateScanningDeviceSchema = z.strictObject({
-  name: PlainLineSchema(40),
+  /** Absent: the server picks a free name from the session's. */
+  name: PlainLineSchema(40).optional(),
   surface: ScanSurfaceChoiceSchema.default('auto'),
   overrides: ScanDeviceOverridesSchema.default({}),
 });

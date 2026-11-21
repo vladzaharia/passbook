@@ -13,6 +13,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { getUser } from '../users/repo.ts';
+import { planScanningDevice, scanningDeviceStatements } from './device-statements.ts';
 import { kickScreen } from './live.ts';
 import { adminGrant, audited, scannerEpoch, sessionEpoch } from './repo-admin-grant.ts';
 import { assertAdminConfigurationAuthority } from './repo-scanner-configuration-authority.ts';
@@ -22,7 +23,6 @@ import {
   addScanningDeviceUpdate,
   adminScanningDevice,
   scanningDeviceRow,
-  scanningDeviceRows,
 } from './repo-scanning-devices.ts';
 import { readScannerScope } from './repo-scope.ts';
 import {
@@ -33,7 +33,8 @@ import {
   resolveSessionScope,
 } from './scanning-session-dto.ts';
 import { loadScanningSession } from './scanning-sessions.ts';
-import { createSetup } from './setups.ts';
+import { newCapture, slotChecks } from './setup-capture.ts';
+import { issuePairing, SETUP_CODES, setupConflict } from './setup-statements.ts';
 
 export { revokeScanner } from './scanning-device-revocation.ts';
 
@@ -54,51 +55,36 @@ export async function createScanningDevice(
   admin?: { userId: string; deviceKey: string },
 ) {
   const parent = await loadScanningSession(ctx, sessionId);
-  if (parent.status !== 'active')
-    throw new ConflictError(
-      'Resume the scanning session before adding devices.',
-      'SCANNING_SESSION_PAUSED',
-    );
-  const scope = await resolveSessionScope(ctx, parent);
-  const parentSettings = effectiveSessionSettings(parent);
-  if (!scope.valid || !parentSettings)
-    throw new ConflictError(
-      'Correct this scanning session’s scope and settings before adding devices.',
-      'SCANNING_SESSION_SCOPE_INVALID',
-    );
-  const devices = await scanningDeviceRows(ctx.env.DB, parent.org_id, sessionId);
-  if (devices.filter((d) => d.revoked_at === null).length >= 64)
-    throw new ValidationError('This session already has 64 devices. Remove an unused device.');
-  const settings = ScannerSettingsSchema.parse({
-    ...parentSettings,
-    ...input.overrides,
-    ...(scope.restricted ? { acceptAllTemplates: false } : {}),
-  });
-  const made = await createSetup(
-    ctx,
+  const capture = newCapture({
     userId,
-    parent.mode,
-    {
-      orgId: parent.org_id,
-      name: input.name,
-      kind: 'device',
-      deviceRole: roleForSurface(input.surface),
-      accepts: parent.accepts ? JSON.parse(parent.accepts) : null,
-      settings,
-      timeZone: parent.time_zone,
-      watch: roleForSurface(input.surface) === 'scan' ? null : { scannerIds: [], allOrg: false },
-      ...(admin ? { adminUserId: admin.userId } : {}),
-    },
-    origin,
     authority,
-    { sessionId, surface: input.surface, overrides: input.overrides, deviceKey: admin?.deviceKey },
-    parent,
+    orgId: parent.org_id,
+    mode: parent.mode,
+    origin,
+  });
+  const { plan, scope } = await planScanningDevice(ctx, parent, input, capture, admin, false);
+  const g = adminGrant(
+    ctx,
+    'org_mode.scan.setup.create',
+    userId,
+    authority,
+    parent.org_id,
+    [...slotChecks(capture), ...plan.checks],
+    SETUP_CODES,
+    plan.id,
   );
+  const made = scanningDeviceStatements(g, ctx, plan, capture);
+  try {
+    await g.commit();
+  } catch (error) {
+    setupConflict(error);
+  }
+  const pairing = await issuePairing(ctx, capture, plan.input, made.id);
   const row = await scanningDeviceRow(ctx.env.DB, parent.org_id, made.id);
   if (!row) throw new NotFoundError('Device not found.', 'SCANNING_DEVICE_NOT_FOUND');
   return {
     ...deviceDto(row, ctx.clock.now(), projectedDeviceSettings(parent, row, scope)),
-    pairing: made.pairing,
+    pairing,
   };
 }
 export async function updateScanningDevice(
