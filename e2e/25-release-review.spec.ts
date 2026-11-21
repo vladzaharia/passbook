@@ -95,7 +95,7 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
 
     // Publisher: releases the approved version from the dialog.
     await authorPage.reload();
-    await strip.getByRole('button', { name: 'Release', exact: true }).click();
+    await authorPage.getByRole('button', { name: 'Release v1' }).first().click();
     const dialog = authorPage.getByRole('dialog');
     await expect(dialog).not.toHaveText(UUID, shown);
     await expect(dialog).not.toHaveText(HASH, shown);
