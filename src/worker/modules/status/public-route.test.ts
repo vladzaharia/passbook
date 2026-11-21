@@ -42,7 +42,7 @@ describe('/developers/status', () => {
     expect(html).not.toContain(STATUS_SLOT);
     expect(html).toContain('Apple push');
     expect(html).toContain('Webhook delivery');
-    expect(res.headers.get('cache-control')).toBe('public, max-age=30');
+    expect(res.headers.get('cache-control')).toBe('public, max-age=30, no-transform');
     expect(res.headers.get('set-cookie')).toBeNull();
   });
 

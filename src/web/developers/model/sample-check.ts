@@ -116,8 +116,8 @@ export function shapeOf(lang: keyof typeof RULES, code: string): string {
 }
 
 /**
- * Runs the TypeScript sample with `@passbook/sdk` replaced by a recorder; returns every SDK call
- * as the request it stands for: the method, the key in the Authorization header, the body.
+ * Runs the TypeScript sample with `@passbook/sdk` and `fetch` replaced by recorders; returns every
+ * call as the request it stands for: the method, the key in the Authorization header, the body.
  */
 export async function runTs(
   code: string,
@@ -139,6 +139,10 @@ export async function runTs(
       }) as never;
     return call([]);
   };
+  const fetchRecorder = async (url: string, init: { headers: Record<string, string> }) => {
+    calls.push({ url, init: init as never });
+    return { status: 200, json: async () => ({}) };
+  };
   const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (
     ...args: string[]
   ) => (...args: unknown[]) => Promise<void>;
@@ -146,9 +150,17 @@ export async function runTs(
     'makePassBook',
     'process',
     'console',
+    'fetch',
+    'readFile',
     code.replace(/^import .*$/gm, '').replace('new PassBook(', 'makePassBook('),
   );
-  await run(makePassBook, { env: { PASSBOOK_KEY: secret } }, { log: () => undefined });
+  await run(
+    makePassBook,
+    { env: { PASSBOOK_KEY: secret } },
+    { log: () => undefined },
+    fetchRecorder,
+    async () => '',
+  );
   return calls as never;
 }
 
@@ -174,8 +186,8 @@ export function runSh(
 }
 
 /**
- * Runs the Python sample with `passbook` replaced by a recorder, when python3 is installed; returns the
- * body of the one SDK call it makes (its first argument).
+ * Runs the Python sample with `passbook` and `requests` replaced by recorders, when python3 is installed;
+ * returns the body of the one call it makes (the SDK's first argument, or `json=`).
  */
 export function runPy(code: string, secret: string): { ran: boolean; sent?: Json } {
   const prog = [
@@ -186,7 +198,15 @@ export function runPy(code: string, secret: string): { ran: boolean; sent?: Json
     '    def __call__(self, *args, **kw):',
     '        sent.append(args[0] if args else None); return {}',
     'def PassBook(api_key=None): return Rec()',
+    'class Res:',
+    '    status_code = 200',
+    '    def raise_for_status(self): pass',
+    '    def json(self): return {}',
+    'def http(*args, **kw):',
+    '    sent.append(kw.get("json"))',
+    '    return Res()',
     'sys.modules["passbook"] = types.SimpleNamespace(PassBook=PassBook)',
+    'sys.modules["requests"] = types.SimpleNamespace(get=http, post=http, put=http, patch=http, delete=http)',
     `os.environ["PASSBOOK_KEY"] = ${JSON.stringify(secret)}`,
     'exec(compile(sys.stdin.read(), "sample.py", "exec"))',
     'sys.stderr.write(json.dumps(sent))',
@@ -198,11 +218,11 @@ export function runPy(code: string, secret: string): { ran: boolean; sent?: Json
   return { ran: true, sent: sent[0] as Json };
 }
 
-/** The value of the Go `json.Unmarshal([]byte(<expr>), &body)` expression: raw strings and `"…"` joined by `+`. */
+/** The value of the Go `json.Unmarshal([]byte(<expr>), &body)` or `strings.NewReader(<expr>)` expression: raw strings and `"…"` joined by `+`. */
 export function goBody(code: string): string {
-  const marker = 'json.Unmarshal([]byte(';
+  const marker = ['json.Unmarshal([]byte(', 'strings.NewReader('].find((m) => code.includes(m));
+  if (!marker) throw new Error('No body.');
   const at = code.indexOf(marker);
-  if (at === -1) throw new Error('No body.');
   let i = at + marker.length;
   let out = '';
   for (;;) {

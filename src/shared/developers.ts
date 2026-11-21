@@ -33,6 +33,9 @@ export const PATHS = {
  */
 export const DEVELOPERS_INDEXABLE = false;
 
+/** The portal's own 404 page, written by the build and served by the Worker with a 404 status (not a route). */
+export const NOT_FOUND_FILE = '/developers/not-found.html';
+
 /** The markdown twin of a page: `/developers/reference/passes` -> `….md`; the home page is `index.md`. */
 export const twin = (path: string) =>
   path === PATHS.home ? `${PATHS.home}/index.md` : `${path}.md`;

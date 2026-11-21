@@ -1,4 +1,5 @@
 import { PATHS } from '../../../shared/developers.ts';
+import { exampleSamples } from '../model/samples.ts';
 import type { Example } from '../model/types.ts';
 import { lifecycleMermaid } from './lifecycle.ts';
 import { type Guide, type GuideOp, hrefOf } from './model.ts';
@@ -48,9 +49,10 @@ function block(
     case 'show': {
       const e = snippets.get(b.snippet);
       if (!e) return '';
-      return [`**${e.title}**`, ...(e.curl ? [fenced('sh', e.curl)] : []), fenced('ts', e.ts)].join(
-        '\n\n',
-      );
+      return [
+        `**${e.title}**`,
+        ...exampleSamples(e).map((s) => fenced(s.lang === 'curl' ? 'sh' : s.lang, s.code)),
+      ].join('\n\n');
     }
   }
 }

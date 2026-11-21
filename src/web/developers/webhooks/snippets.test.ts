@@ -1,6 +1,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import vectorFile from '../../../../docs/api/webhook-vectors.json';
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import type { WebhookVector } from '../../../shared/webhook-verify.ts';
 import { VERIFY_SAMPLES } from './samples.ts';
 
@@ -14,7 +15,7 @@ const verifies = (v: WebhookVector) => v.expect === null;
 describe('the verify samples against docs/api/webhook-vectors.json', () => {
   it('lists the five forms of the tester', () => {
     expect(VERIFY_SAMPLES.map((s) => s.label)).toEqual([
-      'TypeScript',
+      ...(SDK_STATUS.typescript ? ['TypeScript'] : []),
       'Python',
       'Go',
       'Node, no SDK',
@@ -97,7 +98,8 @@ for v in json.load(sys.stdin):
   });
 
   it('TypeScript, Python and Go read the raw body, as the page says', () => {
-    for (const id of ['ts', 'py', 'go']) expect(sample(id)).toMatch(/raw/);
+    for (const id of ['py', 'go', ...(SDK_STATUS.typescript ? ['ts'] : [])])
+      expect(sample(id)).toMatch(/raw/);
     expect(sample('go')).toContain('hmac.Equal');
     expect(sample('py')).toContain('hmac.compare_digest');
   });

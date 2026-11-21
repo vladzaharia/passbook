@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { changedLines, snippetsFor } from './snippets.ts';
 
 describe('playground snippets', () => {
@@ -9,9 +10,12 @@ describe('playground snippets', () => {
     expect(all.map((s) => s.lang)).toEqual(['ts', 'curl', 'py', 'go']);
     for (const s of all) {
       expect(s.code).toContain(
-        { ts: 'pb.passes.create', curl: '/passes', py: 'pb.passes.create', go: 'pb.Passes.Create' }[
-          s.lang
-        ],
+        {
+          ts: SDK_STATUS.typescript ? 'pb.passes.create' : '/passes',
+          curl: '/passes',
+          py: SDK_STATUS.python ? 'pb.passes.create' : '/passes',
+          go: SDK_STATUS.go ? 'pb.Passes.Create' : '/passes',
+        }[s.lang],
       );
       expect(s.code).toContain('baked:starter-store-card');
       expect(s.code).toContain('PASSBOOK_KEY');

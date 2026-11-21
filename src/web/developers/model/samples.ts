@@ -1,8 +1,20 @@
+import { type SampleSdks, SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { goName, pascal, pyName } from '../../../shared/sdk-names.ts';
-import { goRawString, goString, jsonText, pyLiteral, pyString, shQuote } from './code-literals.ts';
+import {
+  goRawString,
+  goString,
+  jsonText,
+  pyLiteral,
+  pyString,
+  shQuote,
+  tsKey,
+  tsLiteral,
+  tsString,
+} from './code-literals.ts';
 import type { Lang } from './highlight.ts';
 import { pathValue } from './ids.ts';
 import { bodyOf, queryOf, type SampleOp, tsSample } from './sample-ts.ts';
+import type { Example } from './types.ts';
 
 export interface Sample {
   lang: Lang;
@@ -46,6 +58,102 @@ function curl(op: SampleOp, base: string): string {
     parts.push('  -H "Content-Type: application/json"', `  -d ${shQuote(bodyJson(op))}`);
   }
   return parts.join(' \\\n');
+}
+
+/** Plain `fetch`, for as long as @passbook/sdk is not published. */
+function tsPlain(op: SampleOp, base: string): string {
+  const headers = [`Authorization: \`Bearer \${process.env.${KEY}}\``];
+  if (op.idempotent) headers.push("'Idempotency-Key': crypto.randomUUID()");
+  for (const [k, v] of Object.entries(op.sample.headers))
+    headers.push(`${tsKey(k)}: ${tsString(v)}`);
+  if (op.binary) headers.push("'Content-Type': 'image/png'");
+  else if (hasBody(op)) headers.push("'Content-Type': 'application/json'");
+  const body = op.binary
+    ? ["  body: await readFile('image.png'),"]
+    : hasBody(op)
+      ? [`  body: JSON.stringify(${tsLiteral(bodyOf(op) ?? {}, '  ')}),`]
+      : [];
+  return [
+    ...(op.binary ? ["import { readFile } from 'node:fs/promises';", ''] : []),
+    `const res = await fetch(${tsString(target(op, base))}, {`,
+    `  method: ${tsString(op.method.toUpperCase())},`,
+    '  headers: {',
+    ...headers.map((h) => `    ${h},`),
+    '  },',
+    ...body,
+    '});',
+    op.download ? 'console.log(res.status);' : 'console.log(res.status, await res.json());',
+  ].join('\n');
+}
+
+/** Plain `requests`, for as long as passbook-sdk is not published. */
+function pyPlain(op: SampleOp, base: string): string {
+  const headers = [`"Authorization": f"Bearer {os.environ['${KEY}']}"`];
+  if (op.idempotent) headers.push('"Idempotency-Key": str(uuid.uuid4())');
+  for (const [k, v] of Object.entries(op.sample.headers))
+    headers.push(`${pyString(k)}: ${pyString(v)}`);
+  if (op.binary) headers.push('"Content-Type": "image/png"');
+  const args = [`    ${pyString(target(op, base))},`, `    headers={${headers.join(', ')}},`];
+  if (op.binary) args.push('    data=open("image.png", "rb").read(),');
+  else if (hasBody(op)) args.push(`    json=${pyLiteral(bodyOf(op) ?? {}, '    ')},`);
+  return [
+    `import os${op.idempotent ? ', uuid' : ''}`,
+    '',
+    'import requests',
+    '',
+    `res = requests.${op.method}(`,
+    ...args,
+    ')',
+    'res.raise_for_status()',
+    op.download ? 'print(res.status_code)' : 'print(res.json())',
+  ].join('\n');
+}
+
+/** Plain `net/http`, for as long as the Go module is not published. */
+function goPlain(op: SampleOp, base: string): string {
+  const body = hasBody(op);
+  return [
+    'package main',
+    '',
+    'import (',
+    '\t"fmt"',
+    '\t"io"',
+    '\t"net/http"',
+    '\t"os"',
+    ...(body && !op.binary ? ['\t"strings"'] : []),
+    ...(op.idempotent ? ['\t"time"'] : []),
+    ')',
+    '',
+    'func main() {',
+    // A raw string keeps the JSON readable; goRawString joins in any backtick as its own literal.
+    ...(op.binary
+      ? ['\tbody, err := os.Open("image.png")', '\tif err != nil {', '\t\tpanic(err)', '\t}']
+      : body
+        ? [`\tbody := strings.NewReader(${goRawString(bodyJson(op))})`]
+        : []),
+    `\treq, err := http.NewRequest(${goString(op.method.toUpperCase())}, ${goString(target(op, base))}, ${body ? 'body' : 'nil'})`,
+    '\tif err != nil {',
+    '\t\tpanic(err)',
+    '\t}',
+    `\treq.Header.Set("Authorization", "Bearer "+os.Getenv("${KEY}"))`,
+    ...(op.idempotent
+      ? ['\treq.Header.Set("Idempotency-Key", fmt.Sprint(time.Now().UnixNano()))']
+      : []),
+    ...Object.entries(op.sample.headers).map(
+      ([k, v]) => `\treq.Header.Set(${goString(k)}, ${goString(v)})`,
+    ),
+    ...(body
+      ? [`\treq.Header.Set("Content-Type", "${op.binary ? 'image/png' : 'application/json'}")`]
+      : []),
+    '\tres, err := http.DefaultClient.Do(req)',
+    '\tif err != nil {',
+    '\t\tpanic(err)',
+    '\t}',
+    '\tdefer res.Body.Close()',
+    '\tout, _ := io.ReadAll(res.Body)',
+    '\tfmt.Println(res.Status, string(out))',
+    '}',
+  ].join('\n');
 }
 
 /** Arguments on one line when they fit, else one per line (each already indented for it). */
@@ -160,12 +268,35 @@ function go(op: SampleOp): string {
   ].join('\n');
 }
 
-/** The request in four languages: curl, and the TypeScript, Python and Go SDKs. */
-export function samplesFor(op: SampleOp, base: string): Sample[] {
+/** The request in four languages: curl, then each language through its SDK once published, else plain HTTP. */
+export function samplesFor(op: SampleOp, base: string, sdk: SampleSdks = SDK_STATUS): Sample[] {
   return [
     { lang: 'curl', label: 'curl', file: 'request.sh', code: curl(op, base) },
-    { lang: 'ts', label: 'TypeScript', file: 'request.ts', code: tsSample(op) },
-    { lang: 'py', label: 'Python', file: 'request.py', code: py(op) },
-    { lang: 'go', label: 'Go', file: 'main.go', code: go(op) },
+    {
+      lang: 'ts',
+      label: 'TypeScript',
+      file: 'request.ts',
+      code: sdk.typescript ? tsSample(op) : tsPlain(op, base),
+    },
+    {
+      lang: 'py',
+      label: 'Python',
+      file: 'request.py',
+      code: sdk.python ? py(op) : pyPlain(op, base),
+    },
+    { lang: 'go', label: 'Go', file: 'main.go', code: sdk.go ? go(op) : goPlain(op, base) },
   ];
+}
+
+/**
+ * A hand-written example's tabs: curl, and the TypeScript that imports the SDK once it is published.
+ * An example with no curl keeps its TypeScript, which is all it has.
+ */
+export function exampleSamples(e: Example, sdk: SampleSdks = SDK_STATUS): Sample[] {
+  const curlTab: Sample[] = e.curl
+    ? [{ lang: 'curl', label: 'curl', file: `${e.id}.sh`, code: e.curl }]
+    : [];
+  return sdk.typescript || !e.curl
+    ? [...curlTab, { lang: 'ts', label: 'TypeScript', file: `${e.id}.ts`, code: e.ts }]
+    : curlTab;
 }

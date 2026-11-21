@@ -1,6 +1,7 @@
 import { ArrowRight, Braces, FlaskConical, LayoutTemplate, Zap } from 'lucide-react';
 import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { BuddyArt } from '../../ui/art/buddy-art.tsx';
 import { shortDate } from '../model/dates.ts';
 import { highlight } from '../model/highlight.ts';
@@ -18,8 +19,21 @@ const TILE_HREF = {
   reference: PATHS.reference,
 } as const;
 
-/** The hero's request: the SDK call the mockup shows. The key is read from the environment. */
-const HERO_CODE = `const pb = new PassBook() // $PASSBOOK_KEY
+/** The hero's request, plain HTTP until the SDK is published. The key is read from the environment. */
+const HERO_FETCH = `const res = await fetch('https://passbook.mobile/api/v1/passes', {
+  method: 'POST',
+  headers: {
+    Authorization: \`Bearer \${process.env.PASSBOOK_KEY}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    templateId: '0193a2f4-7c1e-7b20…',
+    input: { name: 'Casey River', points: 120 },
+  }),
+})`;
+
+/** The hero's request through the SDK. */
+const HERO_SDK = `const pb = new PassBook() // $PASSBOOK_KEY
 
 const pass = await pb.passes.create({
   templateId: '0193a2f4-7c1e-7b20…',
@@ -28,6 +42,8 @@ const pass = await pb.passes.create({
     points: 120,
   },
 })`;
+
+const HERO_CODE = SDK_STATUS.typescript ? HERO_SDK : HERO_FETCH;
 
 const SANDBOX_ROWS = [
   ['Secret key', 'A pb_test_ key, shown once. Copy it as .env.'],
@@ -55,11 +71,13 @@ function Hero() {
             {h.reference}
           </a>
         </div>
-        <div className="cmd mt2">
-          <span className="p">$</span>
-          <code>{h.install}</code>
-          <CopyButton label="Copy command" />
-        </div>
+        {SDK_STATUS.typescript ? (
+          <div className="cmd mt2">
+            <span className="p">$</span>
+            <code>{h.install}</code>
+            <CopyButton label="Copy command" />
+          </div>
+        ) : null}
       </div>
       <div className="comp stage stage-grid" data-art-host>
         <Ticket

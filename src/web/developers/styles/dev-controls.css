@@ -157,6 +157,13 @@
   padding: 10px 16px;
   color: var(--pk-text-default);
 }
+.lrow > * {
+  min-width: 0;
+}
+.lrow code,
+.lrow .push {
+  overflow-wrap: anywhere;
+}
 a.lrow:hover {
   background: var(--pk-state-hover-tint);
   text-decoration: none;
