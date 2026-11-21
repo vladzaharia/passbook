@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { linkToken } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
-import { all } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
@@ -10,6 +10,7 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { removePass } from '../passes/remove.ts';
 import { voidPass } from '../passes/service.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 
 const ORIGIN = 'https://wallet.test';
 const actor = { type: 'user', id: 'admin-1' } as const;
@@ -179,5 +180,87 @@ describe('POST /p/:token/sign-in', () => {
     const body = (await session.json()) as { authenticated: boolean; roles: string[] };
     expect(body.authenticated).toBe(true);
     expect(body.roles).toEqual(['user']);
+  });
+
+  const magicRows = (email: string) =>
+    first<{ n: number }>(kit.env.DB, 'SELECT COUNT(*) AS n FROM magic_links WHERE email = ?', [
+      email,
+    ]);
+  const auditRows = (passId: string) =>
+    all(
+      kit.env.DB,
+      `SELECT 1 FROM audit_log WHERE action = 'holder.sign_in_requested' AND target_id = ?`,
+      [passId],
+    );
+
+  it('sends nothing for a test-mode pass, and hides the button', async () => {
+    const { post, app, env } = setup();
+    const email = 'test-mode@example.test';
+    const pass = await kit.pass({ holderEmail: email, mode: 'test' });
+    const token = await linkToken(kit.env, pass);
+    const res = await post(`/p/${token}/sign-in`);
+    expect(res.headers.get('location')).toBe(`/p/${token}?signin=sent`);
+    expect(mail).toEqual([]);
+    expect((await magicRows(email))?.n).toBe(0);
+    expect(await auditRows(pass.id)).toEqual([]);
+    await voidPass(jobCtxOf(kit), actor, pass.id, null);
+    const page = await (await app.request(`${ORIGIN}/p/${token}`, {}, env)).text();
+    expect(page).not.toContain('/sign-in');
+  });
+
+  it('honours the email sign-in switch: no mail, no audit, no button', async () => {
+    const { post, app, env } = setup();
+    const pass = await kit.pass({ holderEmail: 'switch@example.test' });
+    await voidPass(jobCtxOf(kit), actor, pass.id, null);
+    const token = await linkToken(kit.env, pass);
+    await run(
+      kit.env.DB,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_at) VALUES ('platform', 'auth.magicLinkEnabled', 'false', 0)",
+    );
+    clearSettingsCache(kit.env.DB);
+    try {
+      const res = await post(`/p/${token}/sign-in`);
+      expect(res.headers.get('location')).toBe(`/p/${token}?signin=sent`);
+      expect(mail).toEqual([]);
+      expect(await auditRows(pass.id)).toEqual([]);
+      expect(await (await app.request(`${ORIGIN}/p/${token}`, {}, env)).text()).not.toContain(
+        '/sign-in',
+      );
+    } finally {
+      await run(kit.env.DB, "DELETE FROM settings WHERE key = 'auth.magicLinkEnabled'");
+      clearSettingsCache(kit.env.DB);
+    }
+  });
+
+  it('caps a pass at three mails an hour, and audits only requests that send', async () => {
+    const { post } = setup();
+    const pass = await kit.pass({ holderEmail: 'cap@example.test' });
+    const token = await linkToken(kit.env, pass);
+    const answers: (string | null)[] = [];
+    for (let i = 0; i < 5; i++)
+      answers.push((await post(`/p/${token}/sign-in`)).headers.get('location'));
+    expect(answers.map((a) => a?.split('=')[1])).toEqual(['sent', 'sent', 'sent', 'wait', 'wait']);
+    expect(await auditRows(pass.id)).toHaveLength(3);
+  });
+
+  it('sets the same cookies for a real and an unknown token, and keeps an existing binding', async () => {
+    const { post } = setup();
+    const pass = await kit.pass({ holderEmail: 'cookie@example.test' });
+    const names = async (token: string, cookie?: string) =>
+      (await post(`/p/${token}/sign-in`, cookie ? { cookie } : {})).headers
+        .getSetCookie()
+        .map((c) => c.split('=')[0]);
+    expect(await names(await linkToken(kit.env, pass))).toEqual(await names('A'.repeat(43)));
+    const keep = `__Host-wallet_ml=${'k'.repeat(40)}`;
+    const res = await post(`/p/${await linkToken(kit.env, pass)}/sign-in`, { cookie: keep });
+    expect(res.headers.getSetCookie().join(';')).toContain('k'.repeat(40));
+  });
+
+  it('limits unknown-token guessing by counting misses', async () => {
+    const { post } = setup();
+    let last = 0;
+    for (let i = 0; i < 30; i++)
+      last = (await post(`/p/${'B'.repeat(42)}${i % 10}/sign-in`)).status;
+    expect(last).toBe(429);
   });
 });

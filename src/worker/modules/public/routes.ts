@@ -177,7 +177,9 @@ register(
           lang,
         ),
         ...(notice ? { notice } : {}),
-        ...holderMailProps(page, pass, Boolean(model.removal), (name) => c.req.query(name)),
+        ...(await holderMailProps(svcCtx, page, pass, Boolean(model.removal), (name) =>
+          c.req.query(name),
+        )),
       });
       await assertPassSnapshot(svcCtx, snapshot);
       svcCtx.waitUntil(
