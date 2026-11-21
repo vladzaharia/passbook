@@ -40,19 +40,21 @@ afterEach(() => {
 
 describe('device rule (shared/device.ts)', () => {
   it.each([
-    ['iPhone', IPHONE, 0, false, false],
+    ['iPhone', IPHONE, 0, true, false],
     // A Mac adds with the badge; its QR waits in More (the pass page shows it).
-    ['Mac', MAC, 0, false, false],
-    ['iPad', MAC, 5, true, true],
-    ['Chrome on Windows', WINDOWS, 0, true, true],
+    ['Mac', MAC, 0, true, false],
+    // A computer cannot add: Show QR leads, no badge to download a file nothing opens.
+    ['iPad', MAC, 5, false, true],
+    ['Chrome on Windows', WINDOWS, 0, false, true],
   ])(
-    '%s: badge always; Show QR and the line where it cannot add',
-    async (_n, ua, touch, qr, line) => {
+    '%s: the tile leads with the badge where it adds, else Show QR',
+    async (_n, ua, touch, badge, qr) => {
       as(ua, touch);
       await renderApp('/', { handlers: { '/api/v1/me/passes': () => list(passFixture()) } });
-      expect(await screen.findByRole('link', { name: 'Add to Apple Wallet' })).toBeInTheDocument();
+      await screen.findByRole('heading', { name: 'Gym membership', level: 2 });
+      expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' }) !== null).toBe(badge);
       expect(screen.queryByRole('button', { name: 'Show QR' }) !== null).toBe(qr);
-      expect(screen.queryAllByText(HOLDER_COPY.openOnApple)).toHaveLength(line ? 1 : 0);
+      expect(screen.queryByText(HOLDER_COPY.openOnApple)).toBeNull();
     },
   );
 
@@ -87,6 +89,7 @@ describe('device rule (shared/device.ts)', () => {
 
 describe('in Wallet', () => {
   it('shows the pill instead of the badge and leaves the bundle', async () => {
+    as(MAC);
     await renderApp('/', {
       handlers: {
         '/api/v1/me/passes': () =>

@@ -151,6 +151,8 @@ export interface PassMenuProps {
   help?: boolean;
   /** Tiles: Refresh is also here, the only one when the tile is too narrow for its icon. */
   refresh?: Refresh;
+  /** Tiles: false where Show QR is already the tile's lead. */
+  showQr?: boolean;
 }
 
 /**
@@ -166,13 +168,14 @@ export function PassMoreMenu({
   onRemoved,
   help = false,
   refresh,
+  showQr = true,
 }: PassMenuProps) {
   const [qrOpen, setQrOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const mutation = useRemovePass(passId, onRemoved);
   const { resend, lost } = useHolderHelp(passId);
-  const qr = !page && publicUrl && showsAddQr(browserDevice().device);
+  const qr = showQr && !page && publicUrl && showsAddQr(browserDevice().device);
   return (
     <>
       <DropdownMenu>

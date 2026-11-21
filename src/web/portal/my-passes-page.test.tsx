@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { HOLDER_COPY } from '@/shared/copy/holder.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
@@ -12,9 +12,17 @@ beforeAll(async () => {
   await loadBarcodeEngine();
 });
 
+const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/18.0 Safari/605.1.15';
+
+// A Mac: the badge adds here and Show QR waits in More (my-passes-devices.test.tsx has the rest).
+beforeEach(() => {
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(MAC);
+});
+
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 // The server's Add all snapshot: the passes not yet in a Wallet, ten to a part.
@@ -44,14 +52,16 @@ describe('my passes', () => {
     expect(within(group).queryByRole('link', { name: 'Live' })).toBeNull();
   });
 
-  it('renders cards with org, wallet link and no a11y violations', async () => {
+  it('renders the card as the link, one action row, and no a11y violations', async () => {
     const { container } = await renderApp('/', {
       handlers: { '/api/v1/me/passes': () => list(passFixture()) },
     });
     expect(
       await screen.findByRole('heading', { name: 'Gym membership', level: 2 }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Henrys', { selector: 'p' })).toBeInTheDocument();
+    // The card says the org, the fields and Active: the tile repeats none of it.
+    expect(screen.queryByText('Henrys', { selector: 'p' })).toBeNull();
+    expect(screen.queryByText('Active')).toBeNull();
     expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toHaveAttribute(
       'href',
       '/p/abcdefghijklmnopqrst/pass.pkpass',
@@ -60,16 +70,15 @@ describe('my passes', () => {
       'href',
       '/passes/p1',
     );
-    expect(screen.getByRole('link', { name: 'View pass' })).toHaveAttribute('href', '/passes/p1');
-    expect(screen.getByRole('link', { name: 'Manage account' })).toHaveAttribute(
-      'href',
-      '/account',
-    );
+    // The badge leads; the card is the way in, so no View pass beside it.
+    expect(screen.queryByRole('link', { name: 'View pass' })).toBeNull();
+    // The nav's Account tab is the way to the account.
+    expect(screen.queryByRole('link', { name: 'Manage account' })).toBeNull();
     expect(screen.queryByText('From your organizations')).not.toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('lines tiles up as three rows of the grid, with one outline icon-button variant', async () => {
+  it('lines tiles up as two rows of the grid, with one outline icon-button variant', async () => {
     await renderApp('/', {
       handlers: {
         '/api/v1/me/passes': () =>
@@ -78,9 +87,9 @@ describe('my passes', () => {
     });
     await screen.findByRole('heading', { name: 'Old', level: 2 });
     for (const li of screen.getAllByRole('listitem')) {
-      // The card, title and org, actions: subgrid rows, so a row of tiles aligns them.
-      expect(li).toHaveClass('row-span-3', 'grid-rows-subgrid');
-      expect(li.firstElementChild).toHaveClass('row-span-3', 'grid-rows-subgrid', 'rounded-xl');
+      // The card, then the one action row: subgrid rows, so a row of tiles aligns them.
+      expect(li).toHaveClass('row-span-2', 'grid-rows-subgrid');
+      expect(li.firstElementChild).toHaveClass('row-span-2', 'grid-rows-subgrid', 'rounded-xl');
       // A size container on a subgrid tile collapses its rows (the badge overlaps the title):
       // the container is the actions row.
       expect(li.firstElementChild).not.toHaveClass('@container');
