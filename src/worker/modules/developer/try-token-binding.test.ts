@@ -23,7 +23,7 @@ describe('try token binding', () => {
     expect([...ok.headers.keys()].filter((h) => h.startsWith('access-control-'))).toEqual([]);
     // Copied off the page: no cookie, or another session of the same person.
     await expectProblem(await send('GET', '/passes', bearer(token)), 401, 'INVALID_API_KEY');
-    const phone = await makeSession(t.kit.f, { userId: d.user.id });
+    const phone = await makeSession(t.kit.f, { userId: d.user.id, roles: ['user', 'developer'] });
     await expectProblem(
       await send('GET', '/passes', { cookie: phone.headers.cookie ?? '', ...bearer(token) }),
       401,

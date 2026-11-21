@@ -224,18 +224,18 @@ async function oidcUser(groups: string[], logger: Logger = log) {
 
 describe('sign-in', () => {
   it('creates the org for an admin and nothing for a plain user', async () => {
-    const adminSignIn = await oidcUser(['wallet-admins']);
+    const adminSignIn = await oidcUser(['wallet_admins']);
     await adminSignIn.signIn();
     expect(await orgsOf(adminSignIn.userId)).toHaveLength(1);
     await adminSignIn.signIn();
     expect(await orgsOf(adminSignIn.userId)).toHaveLength(1);
-    const plain = await oidcUser(['wallet-users']);
+    const plain = await oidcUser(['wallet_users']);
     await plain.signIn();
     expect(await orgsOf(plain.userId)).toHaveLength(0);
   });
 
   it('still succeeds, and logs the code, when the personal org cannot be written', async () => {
-    const who = await oidcUser(['wallet-admins']);
+    const who = await oidcUser(['wallet_admins']);
     await run(
       appEnv.DB,
       "CREATE TRIGGER personal_boom2 BEFORE INSERT ON org_entitlements BEGIN SELECT RAISE(ABORT, 'boom'); END",

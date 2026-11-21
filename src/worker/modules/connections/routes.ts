@@ -22,6 +22,7 @@ import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
+import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeConnection, authorizeStoredConnection as authorizeStored } from './access.ts';
 import * as actions from './actions.ts';
@@ -61,6 +62,17 @@ guard(
     methodScope({ read: 'connections:read', write: 'connections:write' }),
   ),
 );
+// A new webhook secret is a credential: a recent sign-in, for a person (not a key).
+connectionsRoutes.post('/:id/webhook-secret', requireStepUp(STEP_UP_SECONDS));
+// Credentials, the webhook secret, the upstream config and the mode (webhook mode generates a secret) change
+// what a connection trusts and reaches; a name, mapping or schedule edit does not ask.
+const TRUST_FIELDS = ['secrets', 'webhookSecret', 'overlapSeconds', 'config', 'mode'];
+const touchesTrust = async (c: Parameters<typeof peekBody>[0]) => {
+  const body = await peekBody(c);
+  return TRUST_FIELDS.some((field) => field in body);
+};
+connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
+connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
 register(

@@ -10,7 +10,7 @@ import {
   modeFromRequest,
   modeOf,
   requireAdmin,
-  requireSession,
+  requireConsoleSession,
 } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
@@ -43,7 +43,7 @@ async function requireMetricsReader(
 }
 
 export const metricsRoutes = createRouter();
-guard(metricsRoutes, requireSession);
+guard(metricsRoutes, requireConsoleSession);
 metricsRoutes.use('/platform/*', requireAdmin);
 register(
   metricsRoutes,
