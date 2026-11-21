@@ -40,6 +40,7 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
   await tile('New', 2);
   await tile('Needs a fix', 1);
   await expect(page.getByRole('table', { name: 'Problems' })).toContainText('Guests');
+  await expect(page.getByRole('table', { name: 'Problems' })).toContainText('many');
   const [errors] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download rows with errors' }).click(),
@@ -123,4 +124,21 @@ test('the template sample file checks with no errors', async ({ page }) => {
   await page.getByRole('button', { name: /^Check/ }).click();
   await expect(page.getByRole('button', { name: /^1\s*New/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^0\s*Needs a fix/ })).toBeVisible();
+});
+
+test('an unreadable choice shows the cell as written in Needs a fix', async ({ page }) => {
+  const { org, template } = readSeed();
+  const ref = uid('ENM').toUpperCase();
+  await page.goto(`/admin/passes/import?orgId=${encodeURIComponent(org.id)}`);
+  await page.getByRole('combobox', { name: 'Template' }).click();
+  await page.getByRole('option', { name: template.name }).click();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'tier.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from([HEAD, row(ref, 'Kai', '3').replace(',Plus,', ',Gold,')].join('\n')),
+  });
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('Match columns')).toBeVisible();
+  await page.getByRole('button', { name: /^Check/ }).click();
+  await expect(page.getByRole('table', { name: 'Problems' })).toContainText('Gold');
 });
