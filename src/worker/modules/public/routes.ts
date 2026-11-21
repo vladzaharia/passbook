@@ -13,6 +13,7 @@ import {
   clientIp,
   gateMisses,
   rateLimit,
+  tokenBucket,
 } from '../../platform/rate-limit.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { renderNotFoundPage, renderPassPage } from '../../ssr/pass-page.tsx';
@@ -49,10 +50,10 @@ publicRoutes.route('/', swRoutes);
 publicRoutes.use('/:token/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 publicRoutes.use(
   '/:token/assets/*',
-  rateLimit('RL_PUBLIC_ASSET', (c) => {
+  rateLimit('RL_PUBLIC_ASSET', async (c) => {
     const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
     const token = c.req.param('token') ?? '';
-    return isTokenShape(token) ? `${token}:${prefix}` : `prefix:${prefix}`;
+    return isTokenShape(token) ? `${await tokenBucket(token)}:${prefix}` : `prefix:${prefix}`;
   }),
 );
 publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));

@@ -16,6 +16,7 @@ import { csrfGuard } from './csrf.ts';
 import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
+import { enforceRateLimit } from './rate-limit.ts';
 import type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
 import { serviceContext } from './service-context.ts';
 
@@ -135,7 +136,10 @@ function bearer(c: Context): string | null {
 
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
   const cookie = getCookie(c, SESSION_COOKIE);
-  return cookie ? c.var.stores.sessions.resolve(cookie) : null;
+  const session = cookie ? await c.var.stores.sessions.resolve(cookie) : null;
+  // A person's browser calls have a budget too; API keys are metered by tier.
+  if (session) await enforceRateLimit(c.env, 'RL_SESSION', `session:${session.sessionId}`);
+  return session;
 }
 
 async function sessionOrThrow(c: Context<AppBindings>): Promise<SessionAuth> {

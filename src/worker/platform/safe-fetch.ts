@@ -261,6 +261,7 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
     const hops = Math.min(Math.max(options.maxRedirects ?? 0, 0), MAX_REDIRECTS);
     const blocked = () =>
       new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
+    // The DNS check below is best effort (the edge resolves the name again); `global_fetch_strictly_public` is the backstop.
     let current = url;
     let headers = init.headers;
     let response: Response;

@@ -4,6 +4,7 @@ import type { AppBindings } from './context.ts';
 import { bump, read as readCounter } from './counters.ts';
 import type { AppEnv, RateLimitName } from './env.ts';
 import { RateLimitedError, UnavailableError } from './errors.ts';
+import { sha256Hex } from './ids.ts';
 import { ipBucket, ipRatePrefix } from './ip.ts';
 import { createLogger } from './log.ts';
 
@@ -139,6 +140,11 @@ export function clientIp(c: Context): string {
   return c.req.header('cf-connecting-ip') ?? 'unknown';
 }
 
+/** A bearer token as a limiter key: a truncated digest, so the token itself is never a key. */
+export async function tokenBucket(token: string): Promise<string> {
+  return (await sha256Hex(token)).slice(0, 32);
+}
+
 /** The default key: the IPv4 address or IPv6 /64, so one subscriber does not hold 2^64 buckets. */
 export const clientBucket = (c: Context): string => ipBucket(clientIp(c)) ?? 'unknown';
 
@@ -148,10 +154,10 @@ export const clientRatePrefix = (c: Context): string => ipRatePrefix(clientIp(c)
 /** Middleware: limits per `keyOf(c)` (default: client IP bucket). */
 export function rateLimit(
   name: RateLimitName,
-  keyOf: (c: Context<AppBindings>) => string = clientBucket,
+  keyOf: (c: Context<AppBindings>) => string | Promise<string> = clientBucket,
 ): MiddlewareHandler<AppBindings> {
   return createMiddleware(async (c, next) => {
-    await enforceRateLimit(c.env, name, `${name}:${keyOf(c)}`);
+    await enforceRateLimit(c.env, name, `${name}:${await keyOf(c)}`);
     await next();
   });
 }

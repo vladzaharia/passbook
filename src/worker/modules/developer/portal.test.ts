@@ -76,6 +76,7 @@ describe('developer portal route', () => {
       const other = (await call(path)).headers.get('content-security-policy') ?? '';
       expect(other, path).not.toContain('cloudflare');
       expect(other, path).toContain("frame-src 'none'");
+      expect(other, path).toContain("trusted-types 'none'");
     }
   });
 

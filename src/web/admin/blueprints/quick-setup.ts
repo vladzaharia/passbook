@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import { GOAL_MAX, GOAL_MIN } from '@/passkit/stamps/layout.ts';
 import type { TemplateVersionDetailSchema } from '@/shared/contracts/index.ts';
 import { currencyOptions } from '@/shared/money.ts';
+import { patternMatches } from '@/shared/safe-pattern.ts';
 import { contrast, type Rgb, toRgbText } from '../templates/designer/contrast.ts';
 import { placeImage, setSlotImage } from '../templates/designer/images.ts';
 import { type DesignDoc, type DraftAsset, isRecord } from '../templates/designer/model.ts';
@@ -48,7 +49,7 @@ const currencyNode = (doc: DesignDoc): Dict | null => {
 /** A code the input accepts: three capitals, and its pattern when it has one. */
 const acceptable = (node: Dict, code: string) =>
   /^[A-Z]{3}$/.test(code) &&
-  (typeof node.pattern !== 'string' || new RegExp(node.pattern).test(code));
+  (typeof node.pattern !== 'string' || patternMatches(node.pattern, code));
 
 export interface Choices {
   goal?: { value: number; min: number; max: number };

@@ -447,10 +447,11 @@ describe('uploaded manifests', () => {
     const props = (p: Record<string, unknown>) => ({
       inputs: { type: 'object', properties: { name: { type: 'string', ...p } } },
     });
-    expect((await run(props({ pattern: '(a+)+$', maxLength: 10 }))).codes).toContain(
-      'error:SCHEMA_PATTERN',
-    );
-    expect((await run(props({ pattern: '^[A-Z]+$' }))).codes).toContain('error:SCHEMA_PATTERN');
+    // RE2 runs nested quantifiers in linear time; backreferences and lookaround it cannot run.
+    for (const pattern of ['(a)\\1', '^(?=a)a', '(?<!a)b', '(', 'a'.repeat(201)])
+      expect((await run(props({ pattern }))).codes, pattern).toContain('error:SCHEMA_PATTERN');
+    expect((await run(props({ pattern: '^(?:[A-Za-z]+)+$' }))).ok).toBe(true);
+    expect((await run(props({ pattern: '^[A-Za-z]+$' }))).ok).toBe(true);
     expect((await run(props({ pattern: '^[A-Za-z]+$', maxLength: 10 }))).ok).toBe(true);
     expect((await run(props({ $ref: '#/x' }))).codes).toContain('error:SCHEMA_KEYWORD');
     expect((await run(props({ 'x-label': 'Name', maxLength: 10 }))).ok).toBe(true);

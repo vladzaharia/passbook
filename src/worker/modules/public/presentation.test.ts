@@ -162,6 +162,10 @@ async function presentationHtml(res: Response, secrets: string[]): Promise<strin
   if (html.includes('data-offline')) expect(html).toMatch(/<script nonce="[^"]+">/);
   const body = bodyOf(html);
   for (const secret of secrets) expect(body).not.toContain(secret);
+  // The pass title can be a holder's name: the tab, the link preview and the manifest stay neutral.
+  expect(html).toContain('<title>Barcode · ');
+  expect(html).toContain('<meta property="og:title" content="Barcode">');
+  expect(html).not.toContain('rel="manifest"');
   return html;
 }
 

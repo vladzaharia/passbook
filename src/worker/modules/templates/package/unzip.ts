@@ -71,9 +71,15 @@ function inflateKept(zip: Uint8Array, keep: Map<string, Declared>): Map<string, 
   const chunks = new Map<string, Uint8Array[]>();
   const sizes = new Map<string, number>();
   let failure: ImportError | null = null;
+  let inflated = 0;
   const unzipper = new Unzip((file) => {
     const entry = keep.get(file.name);
     if (!entry || failure) return;
+    // The central directory names each file once; a repeated local header is a second inflate of it.
+    if (chunks.has(file.name)) {
+      failure = new ImportError('ZIP_INVALID', `Duplicate entry ${file.name}.`);
+      return;
+    }
     const parts: Uint8Array[] = [];
     chunks.set(file.name, parts);
     sizes.set(file.name, 0);
@@ -81,6 +87,12 @@ function inflateKept(zip: Uint8Array, keep: Map<string, Declared>): Map<string, 
       if (failure) return;
       if (err) {
         failure = new ImportError('ZIP_INVALID', `Could not read ${file.name}.`);
+        file.terminate();
+        return;
+      }
+      inflated += chunk.length;
+      if (inflated > LIMITS.totalBytes) {
+        failure = new ImportError('ARCHIVE_TOO_LARGE', 'The archive expands to more than 15 MB.');
         file.terminate();
         return;
       }

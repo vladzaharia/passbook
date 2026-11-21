@@ -69,6 +69,8 @@ export const RATE_LIMITS = [
   'RL_WEBHOOK_HOST_ORG',
   'RL_WEBHOOK_OUT',
   'RL_JOIN',
+  'RL_TEMPLATE_UPLOAD',
+  'RL_SESSION',
 ] as const satisfies readonly RateLimitName[];
 
 /**

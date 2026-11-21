@@ -114,6 +114,30 @@ describe('extractArchive', () => {
   });
 });
 
+describe('repeated local entries', () => {
+  const view = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const cdOffset = (b: Uint8Array) => {
+    for (let i = b.length - 22; i >= 0; i--)
+      if (view(b).getUint32(i, true) === 0x06054b50)
+        return { eocd: i, cd: view(b).getUint32(i + 16, true) };
+    throw new Error('no end record');
+  };
+
+  it('refuses a kept name inflated again by extra local headers the central directory never lists', () => {
+    const base = zipSync({ 'icon.png': noise(200_000) }, { level: 6 });
+    const dup = zipSync({ 'icon.png': new Uint8Array(200_000) }, { level: 9 });
+    const baseLocal = base.subarray(0, cdOffset(base).cd);
+    const dupLocal = dup.subarray(0, cdOffset(dup).cd);
+    const tail = base.subarray(cdOffset(base).cd);
+    const out = new Uint8Array(baseLocal.length + dupLocal.length * 20 + tail.length);
+    out.set(baseLocal);
+    for (let i = 0; i < 20; i++) out.set(dupLocal, baseLocal.length + i * dupLocal.length);
+    out.set(tail, baseLocal.length + dupLocal.length * 20);
+    view(out).setUint32(cdOffset(out).eocd + 16, baseLocal.length + dupLocal.length * 20, true);
+    expect(reject(out)).toBe('ZIP_INVALID');
+  });
+});
+
 describe('names', () => {
   it('detects the single wrapper folder only', () => {
     expect(detectPrefix(['A.pkpasstemplate/pass.json', 'A.pkpasstemplate/icon.png'])).toBe(

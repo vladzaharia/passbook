@@ -17,6 +17,7 @@ import {
   clientIp,
   gateMisses,
   rateLimit,
+  tokenBucket,
 } from '../../platform/rate-limit.ts';
 import { renderBundlePage } from '../../ssr/bundle-page.tsx';
 import { requestTheme } from '../../ssr/head.ts';
@@ -49,10 +50,10 @@ export const bundlePublicRoutes = createRouter();
 bundlePublicRoutes.use('/:token/:passId/assets/*', gateMisses(ASSET_MISSES_PER_MINUTE));
 bundlePublicRoutes.use(
   '/:token/:passId/assets/*',
-  rateLimit('RL_PUBLIC_ASSET', (c) => {
+  rateLimit('RL_PUBLIC_ASSET', async (c) => {
     const prefix = ipRatePrefix(clientIp(c)) ?? 'unknown';
     const token = c.req.param('token') ?? '';
-    return isTokenShape(token) ? `${token}:${prefix}` : `prefix:${prefix}`;
+    return isTokenShape(token) ? `${await tokenBucket(token)}:${prefix}` : `prefix:${prefix}`;
   }),
 );
 bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
