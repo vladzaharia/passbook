@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
@@ -29,6 +29,7 @@ import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { PreviewToggle, type PreviewView } from './preview-toggle.tsx';
+import { stripAlt } from './releases/next-action.ts';
 import { ReleaseStrip } from './releases/release-strip.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
 import { useReleaseControls } from './releases/use-release-controls.tsx';
@@ -45,7 +46,6 @@ import { versionName, versionNumber, vOf } from './versions.ts';
 import { VersionsPanel } from './versions-panel.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
-const ReviewDialog = lazy(() => import('./releases/review-dialog.tsx'));
 type Tab = NonNullable<z.infer<typeof templateDetailSearchSchema>['tab']>;
 
 export function TemplateDetailContent({
@@ -100,15 +100,13 @@ export function TemplateDetailContent({
   const state = t.release;
   const draftHash = state?.draft?.version ?? '';
   const draftName = draftHash ? vOf(t, draftHash) : '';
-  const controls = useReleaseControls(t.id, scope.orgId, (hash) => vOf(t, hash));
-  const alt =
-    state?.review.state === 'open'
-      ? null
-      : state?.next === 'try'
-        ? 'release'
-        : state?.next === 'release' && state.test?.version !== draftHash
-          ? 'try'
-          : null;
+  const controls = useReleaseControls(t.id, scope.orgId, (hash) => vOf(t, hash), {
+    canPublish,
+    requestedBy: state?.review.state === 'open' ? state.review.by : null,
+    open: review && t.versions.some((v) => v.version === review) ? review : undefined,
+    onClose: () => void navigate({ to: '.', search: {}, replace: true }),
+  });
+  const alt = state ? stripAlt(state) : null;
   const scanning = useScanPasses(t);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
@@ -325,19 +323,6 @@ export function TemplateDetailContent({
       ) : null}
       {life.dialogs}
       {controls.dialog}
-      {review && scope.orgId && t.versions.some((v) => v.version === review) ? (
-        <Suspense fallback={null}>
-          <ReviewDialog
-            templateId={t.id}
-            orgId={scope.orgId}
-            version={review}
-            name={(hash) => vOf(t, hash)}
-            requestedBy={state?.review.state === 'open' ? state.review.by : null}
-            canPublish={canPublish}
-            onClose={() => void navigate({ to: '.', search: {}, replace: true })}
-          />
-        </Suspense>
-      ) : null}
     </>
   );
 }

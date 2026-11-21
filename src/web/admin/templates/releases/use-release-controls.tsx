@@ -11,10 +11,17 @@ export function useReleaseControls(
   orgId: string | undefined,
   name: (hash: string | null) => string,
   /** Set where a reviewer can open the review in place (the designer's header). */
-  review?: { canPublish: boolean; requestedBy: string | null },
+  review?: {
+    canPublish: boolean;
+    requestedBy: string | null;
+    /** A version opened from outside (the page's `?review=`), and what closing it does. */
+    open?: string | undefined;
+    onClose?: () => void;
+  },
 ) {
   const [releasing, setReleasing] = useState<string | null>(null);
-  const [reviewing, setReviewing] = useState<string | null>(null);
+  const [localReview, setReviewing] = useState<string | null>(null);
+  const reviewing = review?.open ?? localReview;
   const flow = useReleaseFlow(templateId, orgId ?? '');
   async function tryVersion(version: string) {
     try {
@@ -51,7 +58,7 @@ export function useReleaseControls(
               name={name}
               requestedBy={review.requestedBy}
               canPublish={review.canPublish}
-              onClose={() => setReviewing(null)}
+              onClose={review.onClose ?? (() => setReviewing(null))}
             />
           </Suspense>
         ) : null}
