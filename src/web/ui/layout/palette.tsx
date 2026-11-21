@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Globe, RefreshCw, Search } from 'lucide-react';
+import { Globe, RefreshCw, Search, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PlatformOrgListSchema } from '@/web/admin/orgs/queries.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
@@ -144,13 +144,15 @@ export function AdminPalette({
               },
             ]
           : []),
-        ...memberships.map((item) => ({
-          id: `org:${item.orgId}`,
-          label: item.orgName,
-          icon: ENTITY.org.icon,
-          hint: item.orgId === orgId ? 'Current' : undefined,
-          onSelect: () => switchScope(item.orgId),
-        })),
+        ...[...memberships]
+          .sort((a, b) => Number(b.personal) - Number(a.personal))
+          .map((item) => ({
+            id: `org:${item.orgId}`,
+            label: item.orgName,
+            icon: item.personal ? User : ENTITY.org.icon,
+            hint: item.orgId === orgId ? 'Current' : undefined,
+            onSelect: () => switchScope(item.orgId),
+          })),
       ];
   const orgResults: { id: string; name: string }[] = platformReady
     ? (directory.data?.items ?? []).map(({ id, name }) => ({ id, name }))
