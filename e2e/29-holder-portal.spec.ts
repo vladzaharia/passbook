@@ -30,8 +30,9 @@ test('holder portal: list shows only my passes, detail opens, self-remove drops 
       timeout: 15_000,
     });
     await expect(page.getByRole('group', { name: /front$/ })).toContainText(mine);
-    // One details, untitled: the state pill heads it.
-    await expect(page.locator('.wl-holder-details').getByText('Active')).toBeVisible();
+    // One details, untitled: the back of the pass, never the face's fields again.
+    await expect(page.locator('.wl-holder-details').getByText('Terms')).toBeVisible();
+    await expect(page.locator('.wl-holder-details')).not.toContainText(mine);
 
     await page.getByRole('button', { name: 'More' }).click();
     await page.getByRole('menuitem', { name: 'Remove from My passes' }).click();
