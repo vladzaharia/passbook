@@ -60,6 +60,34 @@ function page(a: KeyApi, hash = '') {
   return render(<KeysPage initial={homeDone} csrf="c" api={a} now={() => NOW} hash={hash} />);
 }
 
+/** Every string held in the React tree's props and hook state under `root`. */
+function heldStrings(root: Element): string[] {
+  const key = Object.keys(root).find((k) => k.startsWith('__reactFiber$'));
+  let fiber = (root as unknown as Record<string, { return: unknown }>)[key ?? ''] as
+    | Record<string, unknown>
+    | undefined;
+  while (fiber?.return) fiber = fiber.return as Record<string, unknown>;
+  const out: string[] = [];
+  const seen = new Set<unknown>();
+  const walk = (v: unknown, depth: number) => {
+    if (typeof v === 'string') out.push(v);
+    else if (v && typeof v === 'object' && depth < 6 && !seen.has(v) && !(v instanceof Node)) {
+      seen.add(v);
+      for (const k of Object.keys(v))
+        if (k !== 'return' && k !== 'stateNode') walk((v as never)[k], depth + 1);
+    }
+  };
+  const visit = (f: Record<string, unknown> | null | undefined) => {
+    for (let n = f; n; n = n.sibling as Record<string, unknown> | null) {
+      walk(n.memoizedProps, 0);
+      walk(n.memoizedState, 0);
+      visit(n.child as Record<string, unknown> | null);
+    }
+  };
+  visit(fiber);
+  return out;
+}
+
 describe('the shared preset map', () => {
   it('fits under the sandbox ceiling, which holds no key minting or terminal scope', () => {
     for (const p of KEY_PRESETS) for (const s of p.scopes) expect(SANDBOX_KEY_SCOPES).toContain(s);
@@ -108,10 +136,16 @@ describe('Keys page', () => {
     // Shown once.
     expect(screen.getByTestId('ks-secret').textContent).toBe(`PASSBOOK_KEY=${SECRET}`);
     expect(screen.getByText('Shown once')).toBeTruthy();
+    // The scan can see it while shown.
+    expect(heldStrings(screen.getByTestId('ks-secret')).some((v) => v.includes(SECRET))).toBe(true);
     await user.click(screen.getByRole('button', { name: 'Copy .env' }));
     expect(await navigator.clipboard.readText()).toBe(`PASSBOOK_KEY=${SECRET}`);
     await waitFor(() =>
       expect(screen.getByTestId('ks-secret').textContent).toContain(maskSecret(SECRET)),
+    );
+    // After Copy no props or hook state anywhere in the tree holds the secret.
+    expect(heldStrings(screen.getByTestId('ks-secret')).some((v) => v.includes(SECRET))).toBe(
+      false,
     );
     expect(document.body.textContent).not.toContain(SECRET);
     expect(screen.getByText('Paste it into .env, then clear your clipboard.')).toBeTruthy();

@@ -233,6 +233,14 @@ export function KeysPage({
         <RevealSheet
           revealed={panel.revealed}
           onDone={() => setPanel({ kind: 'none' })}
+          // The sheet holds the only copy from here on.
+          onHide={() =>
+            setPanel((p) =>
+              p.kind === 'reveal'
+                ? { kind: 'reveal', revealed: { ...p.revealed, secret: null } }
+                : p,
+            )
+          }
           now={now}
         />
       ) : null}
