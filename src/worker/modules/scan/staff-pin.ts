@@ -1,15 +1,15 @@
 import type { GrantPart } from '../../platform/authority-include.ts';
-import { derivedHmacKey, macPreviousVersion } from '../../platform/crypto.ts';
-import { AppError } from '../../platform/errors.ts';
-import { safeEqual, toHex } from '../../platform/ids.ts';
+import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { captureCredentialKeyEnv } from '../passes/credential-keyset.ts';
 import { preparePinCounters } from './repo-staff-pin-counters.ts';
 import type { ScanPredicate } from './scan-predicate.ts';
-import { anyManagerDecision, type PinMatches, personDecision } from './staff-pin-decide.ts';
+import { anyManagerDecision, personDecision, pinOnlyDecision } from './staff-pin-decide.ts';
+import { pinMatches } from './staff-pin-hash.ts';
 import {
   ANY_MANAGER,
+  ANY_STAFF,
   hideHash,
   type PinCheck,
   type PinFailure,
@@ -19,8 +19,10 @@ import {
   type VerifiedPinSnapshot,
 } from './staff-pin-snapshot.ts';
 
+export { hashPin, pinMatches } from './staff-pin-hash.ts';
 export {
   ANY_MANAGER,
+  ANY_STAFF,
   pinStaffFromResult,
   pinStaffListFromResult,
 } from './staff-pin-snapshot.ts';
@@ -32,31 +34,6 @@ export const PIN_PERSON_WINDOW_MS = 5 * MINUTE;
 export const PIN_MISSES_PER_SCANNER = 20;
 export const PIN_SCANNER_WINDOW_MS = 60 * MINUTE;
 const windowOf = (now: number, size: number) => now - (now % size);
-
-/** HMAC-SHA256(K_pin, id:pin), hex. A database leak alone cannot be brute-forced offline. */
-export async function hashPin(
-  env: object,
-  staffId: string,
-  pin: string,
-  version?: number,
-): Promise<string> {
-  const key = await derivedHmacKey(env, 'scan-pin', version);
-  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${staffId}:${pin}`));
-  return toHex(new Uint8Array(mac));
-}
-
-/**
- * Whether `stored` is the hash of `pin`: under the MAC root, or, while `MAC_KEY_VERSION_PREVIOUS` is set,
- * under the previous root. A correct PIN that was set before a rotation keeps working (and is not
- * counted as a miss) until the previous root is unset; it is then reset like any PIN.
- */
-export const pinMatches: PinMatches = async (env, staffId, pin, stored) => {
-  const current = await safeEqual(await hashPin(env, staffId, pin), stored);
-  const previous = macPreviousVersion(env);
-  if (previous === null) return current;
-  const old = await safeEqual(await hashPin(env, staffId, pin, previous), stored);
-  return current || old;
-};
 
 export type PinReservationGuard = ScanPredicate;
 /** A 429 like any rate limit; the `pin` issue lets the desk say it is the PIN that is locked. */
@@ -215,8 +192,15 @@ export function preparePinReservation(
     await finishFailure(audits);
     // Two managers with one PIN answer exactly as a wrong one (a different answer would say so);
     // the owner is told in the log, with no PIN in it.
-    if (verdict === 'ambiguous')
+    if (verdict === 'ambiguous') {
       ctx.log.warn('scan.pin_ambiguous', { orgId, scannerId, code: 'PIN_AMBIGUOUS' });
+      // Sign-in with no name asks for one; the attempt stays counted.
+      if (staffId === ANY_STAFF)
+        throw new ConflictError(
+          'Several people have this PIN. Pick your name.',
+          'STAFF_PIN_AMBIGUOUS',
+        );
+    }
     // The tighter counter: the lockout the next miss would hit, never a promise the hour cannot keep.
     const triesLeft = Math.max(0, Math.min(personCap - person, scannerCap - scanner));
     throw new AppError(
@@ -278,6 +262,12 @@ export function preparePinReservation(
         deskOk,
       );
       return (await verifyCandidate(results, () => any.decide(), failure)) ? any.found() : null;
+    },
+    async verifyOnly(results, roster, pin) {
+      const only = pinOnlyDecision({ pinEnv, orgId, staffId }, roster, pin, pinMatches);
+      if (!(await verifyCandidate(results, () => only.decide())))
+        throw new Error('PIN reservation was not authorized');
+      return only.found();
     },
     async verifyLogin(results, staff, pin) {
       if (

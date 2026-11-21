@@ -77,3 +77,30 @@ export function anyManagerDecision(
     found: () => found,
   };
 }
+
+/**
+ * No one is named at sign-in: the PIN is matched against every active staff member (all are
+ * hashed, so the time does not say which matched). Exactly one match verifies; two or more are
+ * `ambiguous`, whatever their roles, so a Desk member is never signed in as a Manager.
+ */
+export function pinOnlyDecision(
+  { pinEnv, orgId, staffId }: Subject,
+  roster: readonly PinStaffSnapshot[],
+  pin: string,
+  matches: PinMatches,
+) {
+  let found: PinStaffSnapshot | null = null;
+  return {
+    async decide(): Promise<'match' | 'miss' | 'ambiguous'> {
+      const matched: PinStaffSnapshot[] = [];
+      for (const person of roster) {
+        const usable = person.orgId === orgId && person.disabledAt === null;
+        if (usable && (await matches(pinEnv, person.id, pin, person.pinHash))) matched.push(person);
+      }
+      await matches(pinEnv, staffId, pin, DUMMY_PIN_HASH);
+      found = matched.length === 1 ? (matched[0] ?? null) : null;
+      return matched.length === 1 ? 'match' : matched.length > 1 ? 'ambiguous' : 'miss';
+    },
+    found: () => found,
+  };
+}

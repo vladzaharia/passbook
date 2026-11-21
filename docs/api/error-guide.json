@@ -1879,7 +1879,7 @@
   },
   "STAFF_PIN_AMBIGUOUS": {
     "title": "PIN shared",
-    "when": "Staff sign-in without a name matched more than one active staff member.",
+    "when": "Staff sign-in without a name matched more than one active staff member, or the org has had too many wrong PINs this hour, or has more than 500 active staff.",
     "fix": "Pick the name and enter the PIN again.",
     "retryable": false
   },

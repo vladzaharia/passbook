@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
+import { SCAN_STAFF_COPY as COPY } from '../../../shared/copy/scan-staff.ts';
 import { useDebounced } from '../../lib/debounce.ts';
-import { errorMessage } from '../../lib/errors.ts';
+import { ApiError, errorMessage } from '../../lib/errors.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
 import { CodeField } from '../../ui/code-field.tsx';
@@ -10,6 +11,7 @@ import { Select } from '../../ui/select.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { ScanTextField } from '../input/wedge-field.tsx';
 import { BootCard } from '../ui/boot-card.tsx';
+import { StaffPinPad } from './staff-pin-pad.tsx';
 
 type Person = NonNullable<ScanSession['staffList']>[number];
 
@@ -26,11 +28,17 @@ export function StaffStart({
   session,
   api,
   refetch,
+  initialByName = false,
 }: {
   session: ScanSession;
   api: ScanApi;
   refetch: () => Promise<void>;
+  /** Opens on the name list (the gallery). */
+  initialByName?: boolean;
 }) {
+  // The PIN alone first; a name is asked for on request, or when the server says the PIN is shared.
+  const [byName, setByName] = useState(initialByName);
+  const [refusals, setRefusals] = useState(0);
   const [staffId, setStaffId] = useState('');
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
@@ -59,59 +67,80 @@ export function StaffStart({
   for (const person of listed) seen.current.set(person.id, person);
   const chosen = seen.current.get(staffId);
   const people = chosen && !listed.some((p) => p.id === staffId) ? [chosen, ...listed] : listed;
-  async function submit() {
+  async function submit(digits: string, named: boolean) {
     setBusy(true);
     setError('');
     try {
-      await api.staffSignIn({ staffId, pin });
+      await api.staffSignIn(named ? { staffId, pin: digits } : { pin: digits });
       await refetch();
     } catch (cause) {
       setError(pinMessage(errorMessage(cause)));
+      setRefusals((n) => n + 1);
       setPin('');
+      if (!named && cause instanceof ApiError && cause.code === 'STAFF_PIN_AMBIGUOUS')
+        setByName(true);
     } finally {
       setBusy(false);
     }
   }
   return (
-    <BootCard title="Staff sign-in" line={session.workspace?.session.name ?? session.scanner?.name}>
-      <form
-        className="grid gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit();
-        }}
-      >
-        {truncated ? (
-          <FormField label="Find your name">
-            {(p) => <ScanTextField {...p} value={text} onChange={(e) => setText(e.target.value)} />}
+    <BootCard title={COPY.title} line={session.workspace?.session.name ?? session.scanner?.name}>
+      {byName ? (
+        <form
+          className="grid gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submit(pin, true);
+          }}
+        >
+          {truncated ? (
+            <FormField label="Find your name">
+              {(p) => (
+                <ScanTextField {...p} value={text} onChange={(e) => setText(e.target.value)} />
+              )}
+            </FormField>
+          ) : null}
+          <FormField label="Staff member">
+            {(p) => (
+              <Select
+                {...p}
+                value={staffId || undefined}
+                onValueChange={setStaffId}
+                options={people.map((s) => ({ value: s.id, label: s.name }))}
+              />
+            )}
           </FormField>
-        ) : null}
-        <FormField label="Staff member">
-          {(p) => (
-            <Select
-              {...p}
-              value={staffId || undefined}
-              onValueChange={setStaffId}
-              options={people.map((s) => ({ value: s.id, label: s.name }))}
-            />
-          )}
-        </FormField>
-        {truncated && q && found?.length === 0 ? (
-          <p className="text-sm text-fg-muted">No one by that name.</p>
-        ) : null}
-        <FormField label="PIN">
-          {(p) => <CodeField id={p.id} value={pin} onChange={setPin} disabled={busy} />}
-        </FormField>
-        {error ? <Callout tone="danger">{error}</Callout> : null}
-        {!people.length && !truncated ? (
-          <Callout tone="warning">
-            Add staff in the administration panel to use this session.
-          </Callout>
-        ) : null}
-        <Button type="submit" disabled={!staffId || pin.length !== 6} loading={busy}>
-          Sign in
-        </Button>
-      </form>
+          {truncated && q && found?.length === 0 ? (
+            <p className="text-sm text-fg-muted">No one by that name.</p>
+          ) : null}
+          <FormField label="PIN">
+            {(p) => <CodeField id={p.id} value={pin} onChange={setPin} disabled={busy} />}
+          </FormField>
+          {error ? <Callout tone="danger">{error}</Callout> : null}
+          {!people.length && !truncated ? (
+            <Callout tone="warning">
+              Add staff in the administration panel to use this session.
+            </Callout>
+          ) : null}
+          <Button type="submit" disabled={!staffId || pin.length !== 6} loading={busy}>
+            Sign in
+          </Button>
+          <Button type="button" variant="ghost" disabled={busy} onClick={() => setByName(false)}>
+            {COPY.usePin}
+          </Button>
+        </form>
+      ) : (
+        <StaffPinPad
+          busy={busy}
+          error={error}
+          shake={refusals}
+          onPin={(digits) => void submit(digits, false)}
+          onName={() => {
+            setError('');
+            setByName(true);
+          }}
+        />
+      )}
     </BootCard>
   );
 }

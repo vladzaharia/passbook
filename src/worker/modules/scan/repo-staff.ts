@@ -61,6 +61,14 @@ export const managerRosterStatement = (
     [orgId],
   );
 
+/** Every active person of an org, for sign-in by PIN alone; one extra row says the roster is too big. */
+export const activeRosterStatement = (db: Db, orgId: string, limit: number): D1PreparedStatement =>
+  stmt(
+    db,
+    `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND disabled_at IS NULL ORDER BY id LIMIT ?`,
+    [orgId, limit + 1],
+  );
+
 /** The named person, or every active manager when the PIN names none. */
 export const approverStatement = (
   db: Db,

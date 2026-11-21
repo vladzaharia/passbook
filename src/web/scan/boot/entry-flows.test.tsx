@@ -119,6 +119,7 @@ describe('scanner entry flows', () => {
       ),
     );
     const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Not you? Pick your name' }));
     await user.click(screen.getByRole('combobox', { name: 'Staff member' }));
     await user.click(screen.getByRole('option', { name: 'Door staff' }));
     await user.type(screen.getByLabelText('PIN'), '123456');
@@ -150,6 +151,7 @@ describe('scanner entry flows', () => {
       ),
     );
     const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Not you? Pick your name' }));
     await user.type(screen.getByLabelText('Find your name'), 'zed');
     await waitFor(() => expect(search).toHaveBeenCalledWith('zed'));
     await user.click(screen.getByRole('combobox', { name: 'Staff member' }));
@@ -157,6 +159,84 @@ describe('scanner entry flows', () => {
     await user.type(screen.getByLabelText('PIN'), '123456');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(signIn).toHaveBeenCalledWith({ staffId: 'staff-9', pin: '123456' }));
+  });
+  it('opens on the keypad and signs in with the PIN alone', async () => {
+    const signIn = vi.fn<ScanApi['staffSignIn']>().mockResolvedValue(sessionFixture());
+    const refetch = vi.fn().mockResolvedValue(undefined);
+    render(
+      wrapper(
+        <StaffStart
+          session={sessionFixture({ state: 'staff_required' })}
+          api={{ staffSignIn: signIn } as unknown as ScanApi}
+          refetch={refetch}
+        />,
+      ),
+    );
+    const user = userEvent.setup();
+    expect(screen.queryByRole('combobox', { name: 'Staff member' })).not.toBeInTheDocument();
+    for (const digit of '246801') await user.click(screen.getByRole('button', { name: digit }));
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+    expect(signIn).toHaveBeenCalledWith({ pin: '246801' });
+  });
+  it('shows a wrong PIN and lets the keypad try again', async () => {
+    const signIn = vi
+      .fn<ScanApi['staffSignIn']>()
+      .mockRejectedValueOnce(
+        new ApiError({ status: 400, code: 'PIN_INVALID', detail: 'Wrong PIN. 4 tries left.' }),
+      )
+      .mockResolvedValue(sessionFixture());
+    const refetch = vi.fn().mockResolvedValue(undefined);
+    render(
+      wrapper(
+        <StaffStart
+          session={sessionFixture({ state: 'staff_required' })}
+          api={{ staffSignIn: signIn } as unknown as ScanApi}
+          refetch={refetch}
+        />,
+      ),
+    );
+    const user = userEvent.setup();
+    for (const digit of '000000') await user.click(screen.getByRole('button', { name: digit }));
+    expect(await screen.findByText('Wrong PIN. 4 tries left.')).toBeInTheDocument();
+    for (const digit of '123456') await user.click(screen.getByRole('button', { name: digit }));
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+    expect(signIn).toHaveBeenLastCalledWith({ pin: '123456' });
+  });
+  it('falls back to a name when the PIN is shared, and can go back to the keypad', async () => {
+    const signIn = vi
+      .fn<ScanApi['staffSignIn']>()
+      .mockRejectedValueOnce(
+        new ApiError({
+          status: 409,
+          code: 'STAFF_PIN_AMBIGUOUS',
+          detail: 'Several people have this PIN. Pick your name.',
+        }),
+      )
+      .mockResolvedValue(sessionFixture());
+    const refetch = vi.fn().mockResolvedValue(undefined);
+    render(
+      wrapper(
+        <StaffStart
+          session={sessionFixture({
+            state: 'staff_required',
+            staffList: [{ id: 'staff-1', name: 'Door staff', role: 'door' }],
+          })}
+          api={{ staffSignIn: signIn } as unknown as ScanApi}
+          refetch={refetch}
+        />,
+      ),
+    );
+    const user = userEvent.setup();
+    for (const digit of '112358') await user.click(screen.getByRole('button', { name: digit }));
+    expect(await screen.findByText(/Several people have this PIN/)).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'Staff member' }));
+    await user.click(screen.getByRole('option', { name: 'Door staff' }));
+    await user.type(screen.getByLabelText('PIN'), '112358');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+    expect(signIn).toHaveBeenLastCalledWith({ staffId: 'staff-1', pin: '112358' });
+    await user.click(screen.getByRole('button', { name: 'Use PIN only' }));
+    expect(screen.getByTestId('scan-keypad')).toBeInTheDocument();
   });
   it('shows no search field when the roster is whole', () => {
     render(

@@ -15,6 +15,7 @@ import { bindScanningSession } from './scanning-workspace.ts';
 import { buildSession } from './session.ts';
 import { boundStaff } from './staff-binding.ts';
 import { checkPin } from './staff-pin.ts';
+import { checkPinOnly } from './staff-pin-only.ts';
 
 /** Staff sign-in belongs to a paired scanner device; a terminal, a screen or an admin has none. */
 function staffScanner(actor: ScanActor) {
@@ -97,12 +98,16 @@ export async function searchStaff(ctx: ServiceContext, actor: ScanActor, q: stri
 export async function signInStaff(
   ctx: ServiceContext,
   actor: ScanActor,
-  input: { staffId: string; pin: string },
+  input: { staffId?: string | undefined; pin: string },
 ): Promise<ScanSession> {
   const scanner = requireSignIn(actor);
   const { staffId, pin } = input;
-  const staff = await getStaff(ctx.env.DB, actor.orgId, staffId);
-  await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin });
+  // With no name, the PIN picks the person among the org's active staff.
+  const staff = staffId
+    ? await getStaff(ctx.env.DB, actor.orgId, staffId)
+    : await checkPinOnly(ctx, { scannerId: scanner.id, orgId: actor.orgId }, pin);
+  if (staffId)
+    await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin });
   const bound = actor.scanningSession;
   const sessionEpoch = scanEpochsOf(actor)?.session;
   if (!staff || staff.authEpoch === undefined || (bound && sessionEpoch?.id !== bound.id))
