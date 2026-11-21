@@ -368,9 +368,9 @@ describe('passes list', () => {
     await screen.findByText('No passes yet');
     expect(screen.queryByRole('searchbox')).toBeNull();
     const creates = screen.getAllByRole('link', { name: 'New pass' });
-    expect(creates).toHaveLength(2);
-    // The header turns outline; the empty state holds the only primary.
-    expect(creates.filter((a) => a.className.includes('bg-accent'))).toHaveLength(1);
+    // The empty state holds the only action; the header has none.
+    expect(creates).toHaveLength(1);
+    expect(creates[0]?.className).toContain('bg-accent');
   });
 
   it('has no axe violations', async () => {
