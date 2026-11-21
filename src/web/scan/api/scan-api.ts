@@ -45,7 +45,6 @@ import {
   ScanRecentSchema,
   ScanRosterSchema,
   ScanSessionSchema,
-  type ScanStaffPinSchema,
   ScanStaffSearchSchema,
   type ScanStaffSignInSchema,
   ScanSummarySchema,
@@ -82,7 +81,6 @@ import {
 
 export { ScanApiError } from './errors.ts';
 export type { ScanApiDeps } from './scan-api-support.ts';
-
 const BASE = '/api/v1/scan';
 
 export function createScanApi(deps: ScanApiDeps) {
@@ -255,8 +253,7 @@ export function createScanApi(deps: ScanApiDeps) {
     signOut: () => request('POST', '/unpair', null),
     staffSignIn: (body: z.infer<typeof ScanStaffSignInSchema>) =>
       request('POST', '/staff', ScanSessionSchema, body),
-    staffSetPin: (body: z.infer<typeof ScanStaffPinSchema>) =>
-      request('POST', '/staff/pin', ScanSessionSchema, body),
+    staffSetPin: (pin: string) => request('POST', '/staff/pin', ScanSessionSchema, { pin }),
     staffSignOut: () => request('DELETE', '/staff', ScanSessionSchema),
     setRole: (body: ScanRoleChange) => request('POST', '/role', ScanSessionSchema, body),
     staffSearch: (q: string, call?: Call) =>
