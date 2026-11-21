@@ -89,7 +89,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                 return;
             }
             try {
-                if (Build.VERSION.SDK_INT >= 34 && intent.getSentFromPackage() == null) {
+                if (Build.VERSION.SDK_INT >= 34 && getSentFromPackage() == null) {
                     Log.i("PassBook", "scan.broadcast_unattributed");
                 }
                 if (intent.getAction().equals(config.barcodeAction())) {
@@ -108,8 +108,8 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         @Override public void onReceive(Context context, Intent intent) {
             if (!DATAWEDGE_COMMAND.equals(intent.getStringExtra("COMMAND_IDENTIFIER"))) return;
             // API 34 names the sending package; a different one is not DataWedge answering.
-            if (Build.VERSION.SDK_INT >= 34 && intent.getSentFromPackage() != null
-                && !Hardware.VENDORS.get(0).packages().contains(intent.getSentFromPackage())) return;
+            if (Build.VERSION.SDK_INT >= 34 && getSentFromPackage() != null
+                && !Hardware.VENDORS.get(0).packages().contains(getSentFromPackage())) return;
             if ("SUCCESS".equals(intent.getStringExtra("RESULT"))) {
                 getSharedPreferences("datawedge", MODE_PRIVATE).edit().putInt("profileVersion", DATAWEDGE_PROFILE_VERSION).apply();
                 return;
