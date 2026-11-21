@@ -1,12 +1,12 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import {
-  type CreateScanningDeviceSchema,
-  ScanDeviceCapabilitiesSchema,
-  type UpdateScanningDeviceSchema,
+import type {
+  CreateScanningDeviceSchema,
+  UpdateScanningDeviceSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
+import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
@@ -126,8 +126,13 @@ export async function updateScanningDevice(
     );
   const surface = input.surface ?? device.surface;
   const caps =
-    input.surface !== undefined && device.capabilities
-      ? ScanDeviceCapabilitiesSchema.parse(JSON.parse(device.capabilities))
+    input.surface !== undefined
+      ? readStoredCapabilities(device.capabilities, (issue) =>
+          ctx.log.warn('scan.device_caps_unreadable', {
+            code: 'SCAN_DEVICE_CAPS_UNREADABLE',
+            issue,
+          }),
+        )
       : null;
   const effective =
     input.surface === undefined ? device.effective_surface : surfaceFor(surface, caps);
