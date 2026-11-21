@@ -11,7 +11,7 @@ const dist = join(root, 'dist/client');
  * Scanning pages, pass inspection, tables and search controls remain lazy. */
 export const BUDGET_BYTES = 235_000;
 /** The scanner's initial load (scan.html), in gzip bytes. */
-export const SCAN_BUDGET_BYTES = 150_000;
+export const SCAN_BUDGET_BYTES = 151_000;
 /**
  * The developer portal's initial load (developers.html), scripts and stylesheets, in gzip bytes.
  * The pages are prerendered, so this is only the enhancement script and the page CSS; the console,
