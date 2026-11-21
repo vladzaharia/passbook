@@ -44,10 +44,6 @@ function HeaderFields({ editor: e, variant }: { editor: Editor; variant?: string
     <div className="grid gap-4">
       {!variant ? (
         <>
-          <p className="text-sm text-fg-muted">
-            The holder line always shows. Choose one text input, pass field or the pass title as its
-            source.
-          </p>
           <ScanExpressionField
             label="Holder source"
             value={e.display.holder}
@@ -189,9 +185,7 @@ function Rules({ editor: e }: { editor: Editor }) {
   };
   return (
     <div className="grid gap-3">
-      <p className="text-sm text-fg-muted">
-        The first matching rule chooses the header. Unset slots use the default header.
-      </p>
+      <p className="text-sm text-fg-muted">The first matching rule wins.</p>
       <ul aria-label="Header rules" className="grid gap-2">
         {variants.map((variant, index) => {
           const open =
