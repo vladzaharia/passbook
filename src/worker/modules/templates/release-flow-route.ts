@@ -27,14 +27,21 @@ type Router = OpenAPIHono<AppBindings>;
 /** The 409 body: the problem document with the plan that stopped it. */
 export function reviewRequiredResponse(error: ReviewRequiredError, requestId: string): Response {
   const { headers, ...problem } = toProblem(error, requestId);
-  return new Response(JSON.stringify({ ...problem, plan: error.plan }), {
-    status: 409,
-    headers: {
-      'content-type': 'application/problem+json',
-      'cache-control': 'no-store',
-      ...headers,
+  return new Response(
+    JSON.stringify({
+      ...problem,
+      plan: error.plan,
+      ...(error.approved ? { approved: error.approved } : {}),
+    }),
+    {
+      status: 409,
+      headers: {
+        'content-type': 'application/problem+json',
+        'cache-control': 'no-store',
+        ...headers,
+      },
     },
-  });
+  );
 }
 
 async function once<T>(run: () => Promise<T>): Promise<T> {

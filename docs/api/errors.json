@@ -4981,11 +4981,21 @@
       ]
     },
     {
+      "code": "TEMPLATE_REVIEW_SUPERSEDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
       "code": "TEMPLATE_SELF_APPROVAL",
       "statuses": [
         403
       ],
       "modules": [
+        "templates",
         "wallet-providers"
       ]
     },

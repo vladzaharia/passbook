@@ -8,6 +8,7 @@ import { ForbiddenError, UnauthenticatedError, ValidationError } from '../../pla
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { tenantAuthorityOf, tenantKeyScopeOf } from '../passes/http.ts';
+import { keyActor } from './repo-key-creator.ts';
 import { userNames } from './repo-release-names.ts';
 import { listOpenReviews } from './repo-reviews.ts';
 import { isPlatformAdmin } from './service-access.ts';
@@ -37,10 +38,14 @@ export async function listTemplateReviews(
   )
     throw new ForbiddenError();
   await tenantAuthorityOf(ctx, auth, query.orgId, 'templates:read');
+  // Why: a Test key sees Test requests only, and neither it nor a session sees its own work.
+  const userId =
+    auth.kind === 'session' ? auth.userId : (await keyActor(ctx.env.DB, auth.keyId)).userId;
   const rows = await listOpenReviews(
     ctx.env.DB,
     query.orgId,
-    auth.kind === 'session' ? auth.userId : null,
+    auth.kind === 'api_key' ? auth.mode : 'live',
+    userId,
     decode(query.cursor),
     query.limit + 1,
   );

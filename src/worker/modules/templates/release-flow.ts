@@ -27,6 +27,8 @@ type ModeResult = NonNullable<ReleaseResult['modes'][Mode]>;
 /** 409 `TEMPLATE_REVIEW_REQUIRED`: the caller cannot approve this version alone. The route adds `plan`. */
 export class ReviewRequiredError extends ConflictError {
   readonly plan: ReleasePlan;
+  /** Set by `/review`: the modes it approved before the release stopped. */
+  approved?: Mode[];
   constructor(plan: ReleasePlan, mode: Mode) {
     super(
       `Another reviewer must approve this version before it is released in ${mode === 'live' ? 'Live' : 'Test'}.`,
@@ -36,10 +38,18 @@ export class ReviewRequiredError extends ConflictError {
   }
 }
 
-/** Called with the candidates a review request created or reused; T3 sends the reviewers' email here. */
+/** Called with the candidates this call created, so a repeated request notifies nobody. */
 export type ReviewRequested = (
   ctx: ServiceContext,
-  info: { templateId: string; orgId: string; version: string; candidateIds: string[] },
+  info: {
+    templateId: string;
+    orgId: string;
+    version: string;
+    candidateIds: string[];
+    /** Who asked: a key or the signed-in user, and the member it acts as. */
+    actor: { type: 'user' | 'api_key'; id: string };
+    userId: string;
+  },
 ) => Promise<void>;
 
 export interface ReleaseFlowOptions {
@@ -76,7 +86,9 @@ async function runMode(
     };
   const scope = scopeOf(p, mode);
   let picked = await pickCandidate(ctx, p, mode);
+  let created = false;
   if (!picked) {
+    created = true;
     await createCandidate(
       ctx,
       stepAuth(p.auth, mode, 'templates:write'),
@@ -94,7 +106,7 @@ async function runMode(
     );
   const row = picked.candidate;
   if (p.request) {
-    requested.push(row.id);
+    if (created) requested.push(row.id);
     return {
       outcome: 'review_requested',
       releaseId: null,
@@ -176,6 +188,11 @@ export async function releaseTemplate(
       orgId,
       version: p.version.version,
       candidateIds: requested,
+      actor:
+        auth.kind === 'api_key'
+          ? { type: 'api_key', id: auth.keyId }
+          : { type: 'user', id: p.userId },
+      userId: p.userId,
     });
   return {
     version: p.version.version,

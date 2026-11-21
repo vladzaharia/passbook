@@ -7,7 +7,6 @@ import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import type { ReviewRequested } from './release-flow.ts';
 import { getTemplate } from './repo.ts';
 import { userNames } from './repo-release-names.ts';
-import { getCandidate } from './repo-releases.ts';
 import { olderOpenVersions, reviewerEmails } from './repo-reviews.ts';
 
 /**
@@ -15,13 +14,12 @@ import { olderOpenVersions, reviewerEmails } from './repo-reviews.ts';
  * other reviewers. Best effort: the request is committed, and a mail failure logs a code, never an address.
  */
 export const notifyReviewers: ReviewRequested = async (ctx: ServiceContext, info) => {
-  const candidate = await getCandidate(ctx.env.DB, info.candidateIds[0] ?? '');
   const template = await getTemplate(ctx.env.DB, info.templateId);
-  if (!candidate || !template) return;
+  if (!template) return;
   await recordAudit(ctx, {
     orgId: info.orgId,
-    actorType: 'user',
-    actorId: candidate.authorId,
+    actorType: info.actor.type,
+    actorId: info.actor.id,
     action: 'template.review_requested',
     targetType: 'template',
     targetId: info.templateId,
@@ -33,8 +31,8 @@ export const notifyReviewers: ReviewRequested = async (ctx: ServiceContext, info
   // A developer org sends no real mail; the audit row above is its record.
   if (await isPreviewOnlyOrg(ctx.env.DB, info.orgId)) return;
   const [emails, names] = await Promise.all([
-    reviewerEmails(ctx.env.DB, info.orgId, candidate.authorId),
-    userNames(ctx.env.DB, [candidate.authorId], info.orgId, false),
+    reviewerEmails(ctx.env.DB, info.orgId, info.userId),
+    userNames(ctx.env.DB, [info.userId], info.orgId, false),
   ]);
   const base = baseUrl(ctx.env);
   const message = templateReviewEmail({
@@ -42,7 +40,7 @@ export const notifyReviewers: ReviewRequested = async (ctx: ServiceContext, info
     link: `${base}/admin/templates/${info.templateId}`,
     template: template.name,
     version: info.version,
-    by: names.get(candidate.authorId) ?? null,
+    by: names.get(info.userId) ?? null,
   });
   const mailer = createEmailBindingMailer(ctx.env);
   for (const to of emails) {
