@@ -384,6 +384,30 @@
     "note": "Each import row shows the fields it changes and what the pass would look like (changes, wouldBe)."
   },
   {
+    "key": "GET /api/v1/passes 200.count: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.count: field added",
+    "note": "count is the number of passes the filters match, when count=true."
+  },
+  {
+    "key": "GET /api/v1/passes optional parameter query:count added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "optional parameter query:count added",
+    "note": "count=true adds the number of passes the filters match."
+  },
+  {
+    "key": "GET /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesViews",
+    "op": "GET /api/v1/passes/views",
+    "change": "new operation",
+    "note": "GET /passes/views lists the saved views of the passes list."
+  },
+  {
     "key": "GET /api/v1/platform/apple-calls new operation",
     "class": "additive",
     "operationId": "wallet-identities.getPlatformAppleCalls",
@@ -1238,6 +1262,14 @@
     "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.putPassesViews",
+    "op": "PUT /api/v1/passes/views",
+    "change": "new operation",
+    "note": "PUT /passes/views replaces the saved views (at most 20)."
   },
   {
     "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",

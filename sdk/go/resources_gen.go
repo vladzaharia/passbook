@@ -1217,7 +1217,7 @@ func newPassesResource(c *core) *PassesResource {
 	}
 }
 
-// BulkApply Void, email or remove up to 100 passes of one org (Idempotency-Key for email) `POST /api/v1/passes/bulk`
+// BulkApply Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email) `POST /api/v1/passes/bulk`
 func (r *PassesResource) BulkApply(ctx context.Context, body *PassesBulkApplyBody, opts ...RequestOption) (*PassesBulkApplyResult, error) {
 	var out PassesBulkApplyResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/bulk", body: body, idempotent: true}, &out, opts); err != nil {
@@ -1267,6 +1267,15 @@ func (r *PassesResource) List(ctx context.Context, query *PassesListQuery, opts 
 	return newPager[PassSummary](r.c, call{method: "GET", path: "/api/v1/passes", query: queryValues(query)}, "cursor", opts)
 }
 
+// ListViews List the saved views of the passes list `GET /api/v1/passes/views`
+func (r *PassesResource) ListViews(ctx context.Context, opts ...RequestOption) (*PassesListViewsResult, error) {
+	var out PassesListViewsResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/views"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // MatchPhotos Match photo file names to passes by External ID or serial `POST /api/v1/passes/photos/match`
 func (r *PassesResource) MatchPhotos(ctx context.Context, body *PassesMatchPhotosBody, opts ...RequestOption) (*PassesMatchPhotosResult, error) {
 	var out PassesMatchPhotosResult
@@ -1298,6 +1307,15 @@ func (r *PassesResource) Remove(ctx context.Context, id string, body *PassesRemo
 func (r *PassesResource) Renew(ctx context.Context, id string, body *PassesRenewBody, opts ...RequestOption) (*PassesRenewResult, error) {
 	var out PassesRenewResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/" + pathEscape(id) + "/renew", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ReplaceViews Replace the saved views of the passes list `PUT /api/v1/passes/views`
+func (r *PassesResource) ReplaceViews(ctx context.Context, body *PassesReplaceViewsBody, opts ...RequestOption) (*PassesReplaceViewsResult, error) {
+	var out PassesReplaceViewsResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/passes/views", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

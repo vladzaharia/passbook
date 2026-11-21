@@ -3376,10 +3376,7 @@
   "pathParams": [],
   "query": [],
   "body": {
-   "action": "void",
-   "ids": [
-    "x"
-   ]
+   "action": "void"
   },
   "binary": false,
   "idempotent": true,
@@ -3533,6 +3530,57 @@
      "key": "x",
      "passId": "x",
      "state": "matched"
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.getPassesViews",
+  "call": "passes.list_views",
+  "http": "GET",
+  "path": "/api/v1/passes/views",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ]
+  }
+ },
+ {
+  "id": "passes.putPassesViews",
+  "call": "passes.replace_views",
+  "http": "PUT",
+  "path": "/api/v1/passes/views",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
     }
    ]
   }

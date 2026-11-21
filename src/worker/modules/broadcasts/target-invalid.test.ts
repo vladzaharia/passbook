@@ -65,16 +65,14 @@ describe('match input checks', () => {
     expect((await post([{ input: 'gate', values: ['A'] }])).status).toBe(201);
   });
 
-  it('GET /passes refuses a match without an organization and a template', async () => {
+  it('GET /passes reads a match without a template when its input is unambiguous', async () => {
     const kit = await broadcastKit();
     const auth = await broadcastAuth(kit, ORIGIN);
     const app = createApp({ stores: auth.stores, clock: kit.clock });
     const match = encodeURIComponent(JSON.stringify([{ input: 'gate', values: ['A'] }]));
     const get = (query: string) =>
       app.request(`${ORIGIN}/api/v1/passes?${query}`, { headers: auth.admin() }, kit.env);
-    const bad = await get(`orgId=${kit.org.id}&match=${match}`);
-    expect(bad.status).toBe(422);
-    expect(await bad.json()).toMatchObject({ code: 'MATCH_NEEDS_TEMPLATE' });
+    expect((await get(`orgId=${kit.org.id}&match=${match}`)).status).toBe(200);
     expect(
       (await get(`orgId=${kit.org.id}&templateId=${kit.messaging.id}&match=${match}`)).status,
     ).toBe(200);

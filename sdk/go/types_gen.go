@@ -3207,6 +3207,53 @@ type PassDevice struct {
 	LastPush  map[string]any `json:"lastPush"`
 }
 
+type PassFilter struct {
+	TemplateID   *string `json:"templateId,omitempty"`
+	ConnectionID *string `json:"connectionId,omitempty"`
+	ImportID     *string `json:"importId,omitempty"`
+	Status       *string `json:"status,omitempty"`
+	HolderEmail  *string `json:"holderEmail,omitempty"`
+	HolderState  *string `json:"holderState,omitempty"`
+	OnDevice     *bool   `json:"onDevice,omitempty"`
+	Q            *string `json:"q,omitempty"`
+	ExternalID   *string `json:"externalId,omitempty"`
+	Scan         any     `json:"scan,omitempty"`
+	Match        []any   `json:"match,omitempty"`
+}
+
+type PassFilterMatchItem1 struct {
+	Input  string   `json:"input"`
+	Values []string `json:"values"`
+}
+
+type PassFilterMatchItem2 struct {
+	Input string   `json:"input"`
+	Min   *float64 `json:"min,omitempty"`
+	Max   *float64 `json:"max,omitempty"`
+}
+
+type PassFilterMatchItem3 struct {
+	Input    string  `json:"input"`
+	From     *string `json:"from,omitempty"`
+	To       *string `json:"to,omitempty"`
+	TimeZone string  `json:"timeZone"`
+}
+
+type PassFilterMatchItem4 struct {
+	Input string `json:"input"`
+	Op    string `json:"op"`
+	Value string `json:"value"`
+}
+
+type PassFilterScan1 struct {
+	EventID   string `json:"eventId"`
+	CheckedIn bool   `json:"checkedIn"`
+}
+
+type PassFilterScan2 struct {
+	NoScanDays int64 `json:"noScanDays"`
+}
+
 type PassImportsCheckBody = PassImportsCheckParams
 
 type PassImportsCheckParams struct {
@@ -3822,6 +3869,7 @@ type PassIssuedEventData struct {
 type PassPage struct {
 	Items      []PassSummary `json:"items"`
 	NextCursor *string       `json:"nextCursor"`
+	Count      *int64        `json:"count,omitempty"`
 }
 
 type PassPrintVoidedEvent struct {
@@ -4048,6 +4096,16 @@ type PassVersion struct {
 	Purged          bool    `json:"purged"`
 }
 
+type PassViews struct {
+	Items []PassViewsItemsItem `json:"items"`
+}
+
+type PassViewsItemsItem struct {
+	ID     string     `json:"id"`
+	Name   string     `json:"name"`
+	Filter PassFilter `json:"filter"`
+}
+
 type PassVoidedEvent struct {
 	ID         string              `json:"id"`
 	Type       string              `json:"type"`
@@ -4112,10 +4170,20 @@ type PassesAssetsUploadResult struct {
 type PassesBulkApplyBody = PassesBulkApplyParams
 
 type PassesBulkApplyParams struct {
-	Action  string   `json:"action"`
-	Message *string  `json:"message,omitempty"`
-	Ids     []string `json:"ids"`
-	OrgID   *string  `json:"orgId,omitempty"`
+	Action    string   `json:"action"`
+	Message   *string  `json:"message,omitempty"`
+	OrgID     *string  `json:"orgId,omitempty"`
+	Ids       []string `json:"ids,omitempty"`
+	Selection any      `json:"selection,omitempty"`
+}
+
+type PassesBulkApplyParamsSelection1 struct {
+	Ids []string `json:"ids"`
+}
+
+type PassesBulkApplyParamsSelection2 struct {
+	Filter      PassFilter `json:"filter"`
+	ExpectCount int64      `json:"expectCount"`
 }
 
 type PassesBulkApplyResult struct {
@@ -4544,9 +4612,12 @@ type PassesListQuery struct {
 	ExternalID   *string `json:"externalId,omitempty"`
 	Scan         *string `json:"scan,omitempty"`
 	Match        *string `json:"match,omitempty"`
+	Count        *string `json:"count,omitempty"`
 	Cursor       *string `json:"cursor,omitempty"`
 	Limit        *int64  `json:"limit,omitempty"`
 }
+
+type PassesListViewsResult = PassViews
 
 type PassesMatchPhotosBody = PassesMatchPhotosParams
 
@@ -4667,6 +4738,21 @@ type PassesRenewBody = PassesRenewParams
 type PassesRenewParams struct{}
 
 type PassesRenewResult = PassDetail
+
+type PassesReplaceViewsBody = PassesReplaceViewsParams
+
+type PassesReplaceViewsParams struct {
+	Items []PassesReplaceViewsParamsItemsItem `json:"items"`
+	OrgID *string                             `json:"orgId,omitempty"`
+}
+
+type PassesReplaceViewsParamsItemsItem struct {
+	ID     string     `json:"id"`
+	Name   string     `json:"name"`
+	Filter PassFilter `json:"filter"`
+}
+
+type PassesReplaceViewsResult = PassViews
 
 type PassesRestoreResult = PassSummary
 

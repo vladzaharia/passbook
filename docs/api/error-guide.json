@@ -3142,5 +3142,29 @@
     "when": "No zone with this id exists in this mode and organization.",
     "fix": "Check the zone id.",
     "retryable": false
+  },
+  "MATCH_AMBIGUOUS_FIELD": {
+    "title": "Input has different types",
+    "when": "A match without a template names an input that your templates give different types.",
+    "fix": "Send templateId with the match.",
+    "retryable": false
+  },
+  "MATCH_TOO_BROAD": {
+    "title": "Too many passes match",
+    "when": "A selection by filter matches more than 50,000 passes.",
+    "fix": "Narrow the filter and send the request again.",
+    "retryable": false
+  },
+  "SELECTION_CHANGED": {
+    "title": "Selection changed",
+    "when": "The number of passes the filter matches moved more than 2% from expectCount.",
+    "fix": "List the passes again and send the new count as expectCount.",
+    "retryable": false
+  },
+  "SELECTION_TOO_LARGE": {
+    "title": "Too many passes at once",
+    "when": "A selection by filter matches more passes than one request acts on (200).",
+    "fix": "Narrow the filter, or send ids in batches of 100.",
+    "retryable": false
   }
 }

@@ -716,7 +716,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.bulkApply", "POST", "/api/v1/passes/bulk", true,
-		`{"action":"void","ids":["x"]}`, `{"done":0,"skipped":[{"id":"x","code":"x"}]}`,
+		`{"action":"void"}`, `{"done":0,"skipped":[{"id":"x","code":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassesBulkApplyBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -781,6 +781,24 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Passes.MatchPhotos(ctx, &b)
+		},
+	},
+	{
+		"passes.listViews", "GET", "/api/v1/passes/views", false,
+		"", `{"items":[{"id":"x","name":"x","filter":{}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Passes.ListViews(ctx)
+		},
+	},
+	{
+		"passes.replaceViews", "PUT", "/api/v1/passes/views", false,
+		`{"items":[{"id":"x","name":"x","filter":{}}]}`, `{"items":[{"id":"x","name":"x","filter":{}}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassesReplaceViewsBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Passes.ReplaceViews(ctx, &b)
 		},
 	},
 	{

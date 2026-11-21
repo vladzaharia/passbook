@@ -2082,7 +2082,25 @@
       ]
     },
     {
+      "code": "MATCH_AMBIGUOUS_FIELD",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "MATCH_NEEDS_TEMPLATE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MATCH_TOO_BROAD",
       "statuses": [
         422
       ],
@@ -4114,6 +4132,24 @@
       ],
       "modules": [
         "webhooks"
+      ]
+    },
+    {
+      "code": "SELECTION_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "SELECTION_TOO_LARGE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {

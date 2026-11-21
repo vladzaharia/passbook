@@ -464,6 +464,13 @@ __all__ = [
     "PassDetailTemplateWarningsItem",
     "PassDetailWarningsItem",
     "PassDevice",
+    "PassFilter",
+    "PassFilterMatchItem1",
+    "PassFilterMatchItem2",
+    "PassFilterMatchItem3",
+    "PassFilterMatchItem4",
+    "PassFilterScan1",
+    "PassFilterScan2",
     "PassImportsCheckBody",
     "PassImportsCheckParams",
     "PassImportsCheckParamsPlan",
@@ -576,6 +583,8 @@ __all__ = [
     "PassUpdatedEvent",
     "PassUpdatedEventData",
     "PassVersion",
+    "PassViews",
+    "PassViewsItemsItem",
     "PassVoidedEvent",
     "PassVoidedEventData",
     "PassesActivityListItem",
@@ -588,6 +597,8 @@ __all__ = [
     "PassesAssetsUploadResult",
     "PassesBulkApplyBody",
     "PassesBulkApplyParams",
+    "PassesBulkApplyParamsSelection1",
+    "PassesBulkApplyParamsSelection2",
     "PassesBulkApplyResult",
     "PassesBulkApplyResultSkippedItem",
     "PassesBulkReissueBody",
@@ -646,6 +657,7 @@ __all__ = [
     "PassesDevicesListResult",
     "PassesDevicesListResultDevicesItem",
     "PassesListResult",
+    "PassesListViewsResult",
     "PassesMatchPhotosBody",
     "PassesMatchPhotosParams",
     "PassesMatchPhotosResult",
@@ -669,6 +681,10 @@ __all__ = [
     "PassesRenewBody",
     "PassesRenewParams",
     "PassesRenewResult",
+    "PassesReplaceViewsBody",
+    "PassesReplaceViewsParams",
+    "PassesReplaceViewsParamsItemsItem",
+    "PassesReplaceViewsResult",
     "PassesRestoreResult",
     "PassesRetrieveProviderStatusResult",
     "PassesRetrieveProviderStatusResultProviders1",
@@ -4263,6 +4279,46 @@ class PassDevice(_Model):
     createdAt: int
     lastPush: _Dict[str, _Any] | None
 
+class PassFilter(_Model):
+    templateId: str | None = None
+    connectionId: str | None = None
+    importId: str | None = None
+    status: _Literal["active", "voided", "removed"] | str | None = None
+    holderEmail: str | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
+    onDevice: bool | None = None
+    q: str | None = None
+    externalId: str | None = None
+    scan: PassFilterScan1 | PassFilterScan2 | None = None
+    match: _List[PassFilterMatchItem1 | PassFilterMatchItem2 | PassFilterMatchItem3 | PassFilterMatchItem4] | None = None
+
+class PassFilterMatchItem1(_Model):
+    input: str
+    values: _List[str]
+
+class PassFilterMatchItem2(_Model):
+    input: str
+    min: float | None = None
+    max: float | None = None
+
+class PassFilterMatchItem3(_Model):
+    input: str
+    from_: str | None = _Field(default=None, alias="from")
+    to: str | None = None
+    timeZone: str
+
+class PassFilterMatchItem4(_Model):
+    input: str
+    op: _Literal["startsWith", "contains"] | str
+    value: str
+
+class PassFilterScan1(_Model):
+    eventId: str
+    checkedIn: bool
+
+class PassFilterScan2(_Model):
+    noScanDays: int
+
 class PassImportsCheckParams(_Model):
     plan: PassImportsCheckParamsPlan
 
@@ -4897,6 +4953,7 @@ class PassIssuedEventData(_Model):
 class PassPage(_Model):
     items: _List[PassSummary]
     nextCursor: str | None
+    count: int | None = None
 
 class PassPrintVoidedEvent(_Model):
     id: str
@@ -5100,6 +5157,14 @@ class PassVersion(_Model):
     createdAt: int
     purged: bool
 
+class PassViews(_Model):
+    items: _List[PassViewsItemsItem]
+
+class PassViewsItemsItem(_Model):
+    id: str
+    name: str
+    filter: PassFilter
+
 class PassVoidedEvent(_Model):
     id: str
     type: _Literal["pass.voided"]
@@ -5174,8 +5239,16 @@ class PassesAssetsUploadResult(_Model):
 class PassesBulkApplyParams(_Model):
     action: _Literal["void", "send_email", "remove"] | str
     message: str | None = None
-    ids: _List[str]
     orgId: str | None = None
+    ids: _List[str] | None = None
+    selection: PassesBulkApplyParamsSelection1 | PassesBulkApplyParamsSelection2 | None = None
+
+class PassesBulkApplyParamsSelection1(_Model):
+    ids: _List[str]
+
+class PassesBulkApplyParamsSelection2(_Model):
+    filter: PassFilter
+    expectCount: int
 
 class PassesBulkApplyResult(_Model):
     done: int
@@ -5617,6 +5690,15 @@ class PassesRemoveParams(_Model):
 
 class PassesRenewParams(_Model):
     pass
+
+class PassesReplaceViewsParams(_Model):
+    items: _List[PassesReplaceViewsParamsItemsItem]
+    orgId: str | None = None
+
+class PassesReplaceViewsParamsItemsItem(_Model):
+    id: str
+    name: str
+    filter: PassFilter
 
 class PassesRetrieveProviderStatusResult(_Model):
     credentialGeneration: int
@@ -8970,6 +9052,8 @@ PassesCreateResult = PassDetail
 
 PassesListResult = PassPage
 
+PassesListViewsResult = PassViews
+
 PassesMatchPhotosBody = PassesMatchPhotosParams
 
 PassesMemberPhotoUpdateBody = PassesMemberPhotoUpdateParams
@@ -8983,6 +9067,10 @@ PassesRemoveResult = PassSummary
 PassesRenewBody = PassesRenewParams
 
 PassesRenewResult = PassDetail
+
+PassesReplaceViewsBody = PassesReplaceViewsParams
+
+PassesReplaceViewsResult = PassViews
 
 PassesRestoreResult = PassSummary
 

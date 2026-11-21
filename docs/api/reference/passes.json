@@ -178,7 +178,7 @@
     }
   },
   "passes.getPasses": {
-    "description": "Lists passes, newest first. Filter by template, status, holder email or `externalId`; page with `cursor`.",
+    "description": "Lists passes, newest first. Filter by template, status, holder email, `externalId` or inputs with `match`; page with `cursor`. `count=true` adds the number of matches.",
     "response": {
       "items": [
         {
@@ -431,6 +431,21 @@
     "description": "Mints a new scan code. The old code stops working.",
     "response": {
       "ok": true
+    }
+  },
+  "passes.getPassesViews": {
+    "description": "The saved views of the passes list.",
+    "response": {
+      "items": []
+    }
+  },
+  "passes.putPassesViews": {
+    "description": "Replaces the saved views (at most 20).",
+    "request": {
+      "items": []
+    },
+    "response": {
+      "items": []
     }
   }
 }

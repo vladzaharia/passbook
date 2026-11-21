@@ -1115,6 +1115,41 @@ export type PassDevice = {
   } | null;
 };
 
+export type PassFilter = {
+  templateId?: string;
+  connectionId?: string;
+  importId?: string;
+  status?: "active" | "voided" | "removed";
+  holderEmail?: string;
+  holderState?: "unassigned" | "waiting" | "owned";
+  onDevice?: boolean;
+  q?: string;
+  externalId?: string;
+  scan?: {
+    eventId: string;
+    checkedIn: boolean;
+  } | {
+    noScanDays: number;
+  };
+  match?: Array<{
+    input: string;
+    values: Array<string>;
+  } | {
+    input: string;
+    min?: number;
+    max?: number;
+  } | {
+    input: string;
+    from?: string;
+    to?: string;
+    timeZone: string;
+  } | {
+    input: string;
+    op: "startsWith" | "contains";
+    value: string;
+  }>;
+};
+
 export type PassImportsCheckParams = {
   plan: {
     mapping: Record<string, {
@@ -1230,6 +1265,7 @@ export type PassIssuedEvent = {
 export type PassPage = {
   items: Array<PassSummary>;
   nextCursor: string | null;
+  count?: number;
 };
 
 export type PassPrintVoidedEvent = {
@@ -1436,6 +1472,14 @@ export type PassVersion = {
   purged: boolean;
 };
 
+export type PassViews = {
+  items: Array<{
+    id: string;
+    name: string;
+    filter: PassFilter;
+  }>;
+};
+
 export type PassVoidedEvent = {
   id: string;
   type: "pass.voided";
@@ -1453,8 +1497,14 @@ export type PassVoidedEvent = {
 export type PassesBulkApplyParams = {
   action: "void" | "send_email" | "remove";
   message?: string;
-  ids: Array<string>;
   orgId?: string;
+  ids?: Array<string>;
+  selection?: {
+    ids: Array<string>;
+  } | {
+    filter: PassFilter;
+    expectCount: number;
+  };
 };
 
 export type PassesBulkReissueParams = {
@@ -1543,6 +1593,15 @@ export type PassesRemoveParams = {
 };
 
 export type PassesRenewParams = Record<string, unknown>;
+
+export type PassesReplaceViewsParams = {
+  items: Array<{
+    id: string;
+    name: string;
+    filter: PassFilter;
+  }>;
+  orgId?: string;
+};
 
 export type PassesSendEmailParams = {
   to?: string;

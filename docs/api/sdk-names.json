@@ -1041,6 +1041,10 @@
     "resource": "passes.versions",
     "method": "retrieve"
   },
+  "passes.getPassesViews": {
+    "resource": "passes",
+    "method": "listViews"
+  },
   "passes.patchPassesById": {
     "resource": "passes",
     "method": "update"
@@ -1140,6 +1144,10 @@
   "passes.putPassesByIdMemberPhoto": {
     "resource": "passes.memberPhoto",
     "method": "upload"
+  },
+  "passes.putPassesViews": {
+    "resource": "passes",
+    "method": "replaceViews"
   },
   "public.getBByToken": {
     "resource": "public.bundles",

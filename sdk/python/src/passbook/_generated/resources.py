@@ -1121,7 +1121,7 @@ class PassesResource:
         body: m.PassesBulkApplyBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.PassesBulkApplyResult:
-        """Void, email or remove up to 100 passes of one org (Idempotency-Key for email) `POST /api/v1/passes/bulk`"""
+        """Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email) `POST /api/v1/passes/bulk`"""
         return self._core.request("POST", "/api/v1/passes/bulk", body=body, idempotent=True, result=m.PassesBulkApplyResult, **opts)
 
     def bulk_reissue(
@@ -1170,12 +1170,20 @@ class PassesResource:
         external_id: str | None = None,
         scan: str | None = None,
         match: str | None = None,
+        count: _Literal["true", "false"] | None = None,
         cursor: str | None = None,
         limit: int | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.PassSummary]:
         """List passes `GET /api/v1/passes`"""
-        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "count": count, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
+
+    def list_views(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesListViewsResult:
+        """List the saved views of the passes list `GET /api/v1/passes/views`"""
+        return self._core.request("GET", "/api/v1/passes/views", result=m.PassesListViewsResult, **opts)
 
     def match_photos(
         self,
@@ -1210,6 +1218,14 @@ class PassesResource:
     ) -> m.PassesRenewResult:
         """Renew the term of a pass `POST /api/v1/passes/{id}/renew`"""
         return self._core.request("POST", f"/api/v1/passes/{_p(id)}/renew", body=body, result=m.PassesRenewResult, **opts)
+
+    def replace_views(
+        self,
+        body: m.PassesReplaceViewsBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesReplaceViewsResult:
+        """Replace the saved views of the passes list `PUT /api/v1/passes/views`"""
+        return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassesReplaceViewsResult, **opts)
 
     def restore(
         self,
