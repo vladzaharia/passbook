@@ -82,7 +82,15 @@ export const EPOCH_TABLES: EpochTable[] = [
   {
     table: 'users',
     epochs: { access_revision: ['status'] },
-    volatile: ['id', 'name', 'primary_email', 'primary_set_amr', 'created_at', 'last_login_at', 'last_roles'],
+    volatile: [
+      'id',
+      'name',
+      'primary_email',
+      'primary_set_amr',
+      'created_at',
+      'last_login_at',
+      'last_roles',
+    ],
     fixed: [],
   },
   {
