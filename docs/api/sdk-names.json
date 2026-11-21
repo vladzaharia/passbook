@@ -1947,6 +1947,14 @@
     "resource": "visitors",
     "method": "sendHostEmail"
   },
+  "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged": {
+    "resource": "walletAccounts.googleManaged",
+    "method": "retrieve"
+  },
+  "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleShared": {
+    "resource": "walletAccounts.googleShared",
+    "method": "retrieve"
+  },
   "wallet-credentials.getOrgsByOrgIdWalletCredentials": {
     "resource": "walletCredentials",
     "method": "list"
@@ -1954,6 +1962,14 @@
   "wallet-credentials.getOrgsByOrgIdWalletCredentialsByIdChecksByCheckId": {
     "resource": "walletCredentials.checks",
     "method": "retrieve"
+  },
+  "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleManaged": {
+    "resource": "walletAccounts.googleManaged",
+    "method": "create"
+  },
+  "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared": {
+    "resource": "walletAccounts.googleShared",
+    "method": "create"
   },
   "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdCheck": {
     "resource": "walletCredentials.checks",
@@ -2003,6 +2019,14 @@
     "resource": "platform.walletEnrollments",
     "method": "list"
   },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged": {
+    "resource": "platform.walletAccounts.googleManaged",
+    "method": "create"
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete": {
+    "resource": "platform.walletAccounts.googleManaged",
+    "method": "complete"
+  },
   "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold": {
     "resource": "platform.orgs.walletEnrollments",
     "method": "hold"
@@ -2018,6 +2042,10 @@
   "wallet-platform.postPlatformWalletCredentialsByIdRevoke": {
     "resource": "platform.walletCredentials",
     "method": "revoke"
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdRotateKey": {
+    "resource": "platform.walletCredentials",
+    "method": "rotateKey"
   },
   "wallet-platform.postPlatformWalletCredentialsMigrate": {
     "resource": "platform.walletCredentials",

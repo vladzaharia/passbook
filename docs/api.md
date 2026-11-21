@@ -450,6 +450,32 @@ Data Fetch reference can remain reusable after first fetch: protect it as a secr
 providers, installation remains unknown absent authenticated authoritative holder-specific
 evidence. Routes must be deployed before use; see [operations](operations.md#google-and-samsung-wallet-accounts).
 
+### Google managed and shared issuers
+
+A Google credential has a `provenance`: `platform` (PassBook's own), `managed` (a child issuer
+PassBook made, named "<Org> via PassBook") or `own` (the org's issuer). Managed and shared issuers
+sign with PassBook's service account; no key changes hands, and the org credential follows the
+platform key's rotation.
+
+| Method and path | Who | Notes |
+|---|---|---|
+| `POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed` `{mode: "live"}` | org member with `integrations:manage`, live session, `identity.managed` | 202 with a run. `GET` on the same path reads the latest run |
+| `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed` | platform admin | Same run, no plan check |
+| `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete` `{issuerId}` | platform admin | Finishes a run that waits with `google_manual_issuer` |
+| `POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared` `{issuerId}` | org member with `integrations:manage` | Checks `issuer.get` with PassBook's service account. `GET` returns the address to add as a user of the issuer |
+| `POST /api/v1/platform/wallet-credentials/{id}/rotate-key` | platform admin | Starts a service-account key rotation; the first success arms the 90-day schedule |
+
+A run is `queued`, `running`, `waiting`, `succeeded` or `failed`. Until PassBook is a trusted
+aggregator, Google refuses `issuer.insert` and the run waits as `google_manual_issuer`: a platform
+admin makes the issuer in the Google Pay & Wallet Console, shares it with PassBook's service
+account, then completes the run with its id.
+
+Error codes: `WALLET_PLATFORM_CREDENTIAL_MISSING` (409, no PassBook Google credential for the
+mode), `WALLET_ISSUER_EXISTS` (409, the org already has a Google issuer), `WALLET_ISSUER_CLAIMED`
+(409, another org holds the issuer), `WALLET_ISSUER_NOT_WAITING` (409), `GOOGLE_ISSUER_NOT_SHARED`
+(422, add the service account to the issuer), `GOOGLE_UNAVAILABLE` (502), `FEATURE_NOT_INCLUDED`
+(403, `identity.managed` is off).
+
 ## Create a pass
 
 ```

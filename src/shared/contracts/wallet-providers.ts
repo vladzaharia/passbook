@@ -123,6 +123,8 @@ export const WalletCredentialSchema = z.strictObject({
   mode: ModeSchema,
   provider: WalletProviderSchema,
   identityHint: z.string(),
+  /** platform: PassBook's own; managed: a child issuer PassBook made; own: the org's issuer. */
+  provenance: z.enum(['platform', 'managed', 'own']),
   revision,
   verifiedAt: TimestampSchema.nullable(),
   revokedAt: TimestampSchema.nullable(),
@@ -282,3 +284,47 @@ export const PlatformWalletCredentialCheckParamsSchema = z.strictObject({
   id: IdSchema,
   checkId: IdSchema,
 });
+
+/** Google managed issuer: a child issuer PassBook makes for the org ("<Org> via PassBook"). */
+export const GoogleManagedIssuerRequestSchema = z.strictObject({ mode: z.literal('live') });
+
+export const GoogleManagedOrgParamsSchema = z.strictObject({ orgId: IdSchema });
+
+/** The run that makes the issuer. `waiting: google_manual_issuer` until a platform admin enters an issuer id. */
+export const GoogleIssuerRunSchema = z.strictObject({
+  runId: IdSchema,
+  state: z.enum(['queued', 'running', 'waiting', 'succeeded', 'failed', 'cancelled']),
+  step: z.string().nullable(),
+  waitingFor: z.string().nullable(),
+  errorCode: z.string().nullable(),
+  issuerId: z.string().nullable(),
+  updatedAt: TimestampSchema,
+});
+export type GoogleIssuerRun = z.infer<typeof GoogleIssuerRunSchema>;
+
+/** The org's latest managed-issuer run, or null before the first. */
+export const GoogleManagedStatusSchema = z.strictObject({ run: GoogleIssuerRunSchema.nullable() });
+
+/** A platform admin finishes a parked run with an issuer made in the Google Pay & Wallet Console. */
+export const CompleteGoogleManagedIssuerSchema = z.strictObject({
+  issuerId: z.string().regex(/^[0-9]{1,32}$/),
+});
+
+/** Own issuer shared with PassBook's service account: no key changes hands. */
+export const ShareGoogleIssuerSchema = z.strictObject({
+  issuerId: z.string().regex(/^[0-9]{1,32}$/),
+});
+
+export const GoogleSharedIssuerInfoSchema = z.strictObject({
+  /** The address the org adds as a user of its issuer in the Google Pay & Wallet Console. */
+  serviceAccountEmail: z.string().nullable(),
+});
+
+export const GoogleSharedIssuerSchema = z.strictObject({
+  credential: WalletCredentialSchema,
+  serviceAccountEmail: z.string(),
+});
+
+/** Starts a service-account key rotation of a platform credential now. */
+export const WalletCredentialKeyRotationSchema = z.strictObject({ runId: IdSchema });
+export const WalletCredentialIdParamsSchema = z.strictObject({ id: IdSchema });
