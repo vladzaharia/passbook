@@ -28,7 +28,8 @@ export function planCheckFacts(
       seen.add(linkId(at));
       const ref = 'ref' in at ? at.ref : null;
       const made = ref ? plan.zones.find((z) => z.ref === ref) : undefined;
-      const known = ref ? undefined : ctx.zones.find((z) => 'id' in at && z.id === at.id);
+      const id = 'id' in at ? at.id : null;
+      const known = id === null ? undefined : ctx.zones.find((z) => z.id === id);
       const key = made?.key ?? known?.key;
       if (key !== undefined) keys.push(key);
       at = made ? made.parent : known?.parentId ? { id: known.parentId } : null;
