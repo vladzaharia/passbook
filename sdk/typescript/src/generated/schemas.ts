@@ -1115,32 +1115,68 @@ export type PassDevice = {
   } | null;
 };
 
+export type PassImportMappings = {
+  saved: Array<{
+    name: string;
+    columns: Array<string>;
+    plan: {
+      mapping: Record<string, {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      }>;
+      holderEmail: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      externalId: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      match: "externalId" | "email" | "none";
+      keepManual?: boolean;
+      save?: boolean;
+      overrides?: Record<string, Record<string, string>>;
+    };
+    savedAt: number;
+  }>;
+};
+
 export type PassImportsCheckParams = {
   plan: {
     mapping: Record<string, {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     }>;
     holderEmail: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     externalId: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     match: "externalId" | "email" | "none";
     keepManual?: boolean;
     save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
   };
 };
 
@@ -1163,28 +1199,63 @@ export type PassImportsCreateParams = {
     mapping: Record<string, {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     }>;
     holderEmail: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     externalId: {
       from: string;
       transform?: {
-        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
         options?: Record<string, unknown>;
       };
     } | null;
     match: "externalId" | "email" | "none";
     keepManual?: boolean;
     save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
   };
+  mapping?: "auto";
+};
+
+export type PassImportsMappingsSaveParams = {
+  name: string;
+  columns: Array<string>;
+  plan: {
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }>;
+    holderEmail: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    externalId: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    match: "externalId" | "email" | "none";
+    keepManual?: boolean;
+    save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
+  };
+  templateId: string;
 };
 
 export type PassImportsRemoveCreatedParams = {

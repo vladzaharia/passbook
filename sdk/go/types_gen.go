@@ -3207,6 +3207,37 @@ type PassDevice struct {
 	LastPush  map[string]any `json:"lastPush"`
 }
 
+type PassImportMappings struct {
+	Saved []PassImportMappingsSavedItem `json:"saved"`
+}
+
+type PassImportMappingsSavedItem struct {
+	Name    string                          `json:"name"`
+	Columns []string                        `json:"columns"`
+	Plan    PassImportMappingsSavedItemPlan `json:"plan"`
+	SavedAt int64                           `json:"savedAt"`
+}
+
+type PassImportMappingsSavedItemPlan struct {
+	Mapping     map[string]PassImportMappingsSavedItemPlanMappingValue `json:"mapping"`
+	HolderEmail map[string]any                                         `json:"holderEmail"`
+	ExternalID  map[string]any                                         `json:"externalId"`
+	Match       string                                                 `json:"match"`
+	KeepManual  *bool                                                  `json:"keepManual,omitempty"`
+	Save        *bool                                                  `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                           `json:"overrides,omitempty"`
+}
+
+type PassImportMappingsSavedItemPlanMappingValue struct {
+	From      string                                                `json:"from"`
+	Transform *PassImportMappingsSavedItemPlanMappingValueTransform `json:"transform,omitempty"`
+}
+
+type PassImportMappingsSavedItemPlanMappingValueTransform struct {
+	Kind    string         `json:"kind"`
+	Options map[string]any `json:"options,omitempty"`
+}
+
 type PassImportsCheckBody = PassImportsCheckParams
 
 type PassImportsCheckParams struct {
@@ -3220,6 +3251,7 @@ type PassImportsCheckParamsPlan struct {
 	Match       string                                            `json:"match"`
 	KeepManual  *bool                                             `json:"keepManual,omitempty"`
 	Save        *bool                                             `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                      `json:"overrides,omitempty"`
 }
 
 type PassImportsCheckParamsPlanMappingValue struct {
@@ -3427,6 +3459,7 @@ type PassImportsCreateParams struct {
 	TemplateID string                       `json:"templateId"`
 	Source     any                          `json:"source"`
 	Plan       *PassImportsCreateParamsPlan `json:"plan,omitempty"`
+	Mapping    *string                      `json:"mapping,omitempty"`
 }
 
 type PassImportsCreateParamsPlan struct {
@@ -3436,6 +3469,7 @@ type PassImportsCreateParamsPlan struct {
 	Match       string                                             `json:"match"`
 	KeepManual  *bool                                              `json:"keepManual,omitempty"`
 	Save        *bool                                              `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                       `json:"overrides,omitempty"`
 }
 
 type PassImportsCreateParamsPlanMappingValue struct {
@@ -3649,6 +3683,50 @@ type PassImportsListQuery struct {
 	Cursor *string `json:"cursor,omitempty"`
 	Limit  *int64  `json:"limit,omitempty"`
 }
+
+type PassImportsMappingsDeleteQuery struct {
+	TemplateID string `json:"templateId"`
+	Name       string `json:"name"`
+}
+
+type PassImportsMappingsDeleteResult = PassImportMappings
+
+type PassImportsMappingsListQuery struct {
+	TemplateID string `json:"templateId"`
+}
+
+type PassImportsMappingsListResult = PassImportMappings
+
+type PassImportsMappingsSaveBody = PassImportsMappingsSaveParams
+
+type PassImportsMappingsSaveParams struct {
+	Name       string                            `json:"name"`
+	Columns    []string                          `json:"columns"`
+	Plan       PassImportsMappingsSaveParamsPlan `json:"plan"`
+	TemplateID string                            `json:"templateId"`
+}
+
+type PassImportsMappingsSaveParamsPlan struct {
+	Mapping     map[string]PassImportsMappingsSaveParamsPlanMappingValue `json:"mapping"`
+	HolderEmail map[string]any                                           `json:"holderEmail"`
+	ExternalID  map[string]any                                           `json:"externalId"`
+	Match       string                                                   `json:"match"`
+	KeepManual  *bool                                                    `json:"keepManual,omitempty"`
+	Save        *bool                                                    `json:"save,omitempty"`
+	Overrides   map[string]map[string]string                             `json:"overrides,omitempty"`
+}
+
+type PassImportsMappingsSaveParamsPlanMappingValue struct {
+	From      string                                                  `json:"from"`
+	Transform *PassImportsMappingsSaveParamsPlanMappingValueTransform `json:"transform,omitempty"`
+}
+
+type PassImportsMappingsSaveParamsPlanMappingValueTransform struct {
+	Kind    string         `json:"kind"`
+	Options map[string]any `json:"options,omitempty"`
+}
+
+type PassImportsMappingsSaveResult = PassImportMappings
 
 type PassImportsRemoveCreatedParams struct {
 	Cursor *string `json:"cursor"`

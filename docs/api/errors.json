@@ -1729,6 +1729,15 @@
       ]
     },
     {
+      "code": "IMPORT_MAPPINGS_FULL",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IMPORT_NOT_FOUND",
       "statuses": [
         404

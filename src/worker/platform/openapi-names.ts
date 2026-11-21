@@ -9,6 +9,7 @@ import {
 } from '../../shared/contracts/api-keys.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
+import { SavedImportMappingsResultSchema } from '../../shared/contracts/pass-imports.ts';
 import {
   PassDetailSchema,
   PassDeviceSchema,
@@ -124,6 +125,7 @@ const names = {
   Org: OrgSchema,
   OrgSummary: OrgSummarySchema,
   OrgBranding: OrgBrandingSchema,
+  PassImportMappings: SavedImportMappingsResultSchema,
   PassSummary: PassSummarySchema,
   PassDetail: PassDetailSchema,
   PassVersion: PassVersionSchema,

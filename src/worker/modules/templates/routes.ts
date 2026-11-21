@@ -47,6 +47,7 @@ import {
   registerVersions,
 } from './routes-more.ts';
 import { registerTemplateReleases } from './routes-releases.ts';
+import { registerTemplateSample } from './routes-sample.ts';
 import { registerVersionReads } from './routes-version-reads.ts';
 import { detail, importStatus, list, preview } from './service.ts';
 import { acceptUpload, UPLOAD_BODY_LIMIT } from './upload.ts';
@@ -313,6 +314,7 @@ register(
 );
 
 registerInputSchema(templatesRoutes);
+registerTemplateSample(templatesRoutes);
 registerVersionReads(templatesRoutes);
 registerTemplateChannelRoutes(templatesRoutes);
 

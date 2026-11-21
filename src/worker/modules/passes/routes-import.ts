@@ -1,7 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
 import { z } from 'zod';
 import { IdParamSchema, IdSchema, OkSchema } from '../../../shared/contracts/common.ts';
-import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import {
   CheckPassImportSchema,
   CreatePassImportSchema,
@@ -20,17 +19,10 @@ import { methodScope } from '../../platform/auth.ts';
 import { defaultBodyLimit, limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
+import { idempotentJson, principalOf } from '../../platform/idempotency.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
-import {
-  actorFor,
-  authOf,
-  type C,
-  orgIdOf,
-  requireTenantSessionOrApiKey,
-  svc,
-  tenantAuthorityOf,
-} from './http.ts';
+import { actorFor, authOf, requireTenantSessionOrApiKey, svc } from './http.ts';
 import { commitImport } from './import-commit.ts';
 import { emailRest } from './import-email-rest.ts';
 import { errorsCsv, importDto, rowsPage } from './import-read.ts';
@@ -43,6 +35,7 @@ import {
   listImportPage,
   requireImport,
 } from './import-service.ts';
+import { authorityFor, registerImportMappings } from './routes-import-mappings.ts';
 
 /** Bulk create and update from a file or a sheet link: the check (dry run) and the draft it keeps. */
 export const passImportRoutes = createRouter({ bodyLimit: false });
@@ -72,10 +65,7 @@ const OrgQuerySchema = z.object({ orgId: IdSchema.optional() });
 const ListQuerySchema = PassImportListQuerySchema.extend({ orgId: IdSchema.optional() });
 const RowsQuerySchema = PassImportRowsQuerySchema.extend({ orgId: IdSchema.optional() });
 
-async function authorityFor(c: C, orgId: string | undefined, capability: OrgCapability) {
-  const auth = authOf(c);
-  return tenantAuthorityOf(svc(c), auth, orgIdOf(auth, orgId), capability);
-}
+registerImportMappings(passImportRoutes);
 
 register(
   passImportRoutes,
@@ -92,7 +82,13 @@ register(
   async (c) => {
     const body = c.req.valid('json');
     const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
-    return c.json(await createImport(svc(c), authority, body), 201);
+    return idempotentJson(
+      c,
+      svc(c),
+      { orgId: authority.orgId, mode: authority.mode, principal: principalOf(authOf(c)), body },
+      201,
+      () => createImport(svc(c), authority, body),
+    );
   },
 );
 
@@ -166,8 +162,21 @@ register(
   },
   async (c) => {
     const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:operate');
-    return c.json(
-      await commitImport(svc(c), authority, c.req.valid('param').id, c.req.valid('json')),
+    const body = c.req.valid('json');
+    const id = c.req.valid('param').id;
+    return idempotentJson(
+      c,
+      svc(c),
+      {
+        orgId: authority.orgId,
+        mode: authority.mode,
+        principal: principalOf(authOf(c)),
+        body: { id, ...body },
+      },
+      200,
+      () => commitImport(svc(c), authority, id, body),
+      // A replay shows the import as it is now: the commit runs on after the first answer.
+      async () => importDto(svc(c), await requireImport(svc(c), authority, id)),
     );
   },
 );

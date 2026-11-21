@@ -58,12 +58,37 @@ export function headerOf(from: string, header: readonly string[]): string | null
   return header.find((h) => pointerOfHeader(h) === pointer) ?? null;
 }
 
+/** The column pointers an entry reads: `from`, and a join's other columns. */
+function pointersOf(e: Entry): string[] {
+  const more = e.transform?.kind === 'join' ? e.transform.options?.with : undefined;
+  return [e.from, ...(Array.isArray(more) ? more.filter((p) => typeof p === 'string') : [])];
+}
+
 /** Pointers of the plan that name no column of the file. */
 export function missingColumns(plan: ImportPlan, header: readonly string[]): string[] {
   const missing = new Set<string>();
   for (const e of entriesOf(plan))
-    if (usesColumn(e) && headerOf(e.from, header) === null) missing.add(e.from);
+    if (usesColumn(e))
+      for (const p of pointersOf(e)) if (headerOf(p, header) === null) missing.add(p);
   return [...missing];
+}
+
+/** A row's cells with the fixes made in the check laid over them. */
+export function withOverrides(
+  plan: ImportPlan,
+  header: readonly string[],
+  row: number,
+  cells: readonly string[],
+): readonly string[] {
+  const fixes = plan.overrides?.[String(row)];
+  if (!fixes) return cells;
+  const next = [...cells];
+  for (const [pointer, value] of Object.entries(fixes)) {
+    const h = headerOf(pointer, header);
+    const i = h === null ? -1 : header.indexOf(h);
+    if (i >= 0) next[i] = value;
+  }
+  return next;
 }
 
 /** The column of the plan's match key (External ID or Email) when the file lacks it; matching cannot silently turn off. */
@@ -80,7 +105,7 @@ export function missingKeyColumn(plan: ImportPlan, header: readonly string[]): s
 /** A saved plan with the entries for missing columns removed (call `missingKeyColumn` first: the match key stays). */
 export function withoutColumns(plan: ImportPlan, header: readonly string[]): ImportPlan {
   const keep = (e: Entry | null): Entry | null =>
-    e && (!usesColumn(e) || headerOf(e.from, header) !== null) ? e : null;
+    e && (!usesColumn(e) || pointersOf(e).every((p) => headerOf(p, header) !== null)) ? e : null;
   const mapping = Object.fromEntries(
     Object.entries(plan.mapping).filter(([, e]) => keep(e) !== null),
   );

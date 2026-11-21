@@ -37,11 +37,12 @@ export const sourcesOf = (imp: PassImportDto): SourceField[] =>
 export function rowsOfImport(imp: PassImportDto, targets: readonly TargetField[]): MappingRow[] {
   const plan = imp.plan;
   const sources = sourcesOf(imp);
-  const mapping: Mapping = {
+  // A joined column has no row in this editor yet (I5).
+  const mapping = {
     ...(plan?.holderEmail ? { [PIN_EMAIL]: plan.holderEmail } : {}),
     ...(plan?.externalId ? { [PIN_ID]: plan.externalId } : {}),
     ...(plan?.mapping ?? {}),
-  };
+  } as Mapping;
   const rows = withPinned(toRows(mapping), PINNED);
   if (plan) return rows;
   const fill = (rs: MappingRow[], key: string, patterns: readonly RegExp[]) => {

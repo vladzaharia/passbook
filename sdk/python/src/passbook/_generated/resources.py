@@ -739,6 +739,38 @@ class OrgsResource:
         self.entitlements = OrgsEntitlementsResource(core)
 
 
+class PassImportsMappingsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def delete(
+        self,
+        *,
+        template_id: str,
+        name: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassImportsMappingsDeleteResult:
+        """Delete a saved column mapping by name `DELETE /api/v1/pass-imports/mappings`"""
+        return self._core.request("DELETE", "/api/v1/pass-imports/mappings", query={"templateId": template_id, "name": name}, result=m.PassImportsMappingsDeleteResult, **opts)
+
+    def list(
+        self,
+        *,
+        template_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassImportsMappingsListResult:
+        """A template's saved column mappings `GET /api/v1/pass-imports/mappings`"""
+        return self._core.request("GET", "/api/v1/pass-imports/mappings", query={"templateId": template_id}, result=m.PassImportsMappingsListResult, **opts)
+
+    def save(
+        self,
+        body: m.PassImportsMappingsSaveBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassImportsMappingsSaveResult:
+        """Save a named column mapping for a template; the same name replaces it `PUT /api/v1/pass-imports/mappings`"""
+        return self._core.request("PUT", "/api/v1/pass-imports/mappings", body=body, result=m.PassImportsMappingsSaveResult, **opts)
+
+
 class PassImportsRowsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -758,6 +790,7 @@ class PassImportsRowsResource:
 class PassImportsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.mappings = PassImportsMappingsResource(core)
         self.rows = PassImportsRowsResource(core)
 
     def check(
@@ -776,7 +809,7 @@ class PassImportsResource:
         **opts: _Unpack[RequestOptions],
     ) -> m.PassImportsCommitResult:
         """Apply the checked rows: create the new passes and update the matched ones `POST /api/v1/pass-imports/{id}/commit`"""
-        return self._core.request("POST", f"/api/v1/pass-imports/{_p(id)}/commit", body=body, result=m.PassImportsCommitResult, **opts)
+        return self._core.request("POST", f"/api/v1/pass-imports/{_p(id)}/commit", body=body, idempotent=True, result=m.PassImportsCommitResult, **opts)
 
     def create(
         self,
@@ -784,7 +817,7 @@ class PassImportsResource:
         **opts: _Unpack[RequestOptions],
     ) -> m.PassImportsCreateResult:
         """Start an import from a file or a sheet link; checks it when a plan is known `POST /api/v1/pass-imports`"""
-        return self._core.request("POST", "/api/v1/pass-imports", body=body, result=m.PassImportsCreateResult, **opts)
+        return self._core.request("POST", "/api/v1/pass-imports", body=body, idempotent=True, result=m.PassImportsCreateResult, **opts)
 
     def delete(
         self,
@@ -1637,6 +1670,14 @@ class TemplatesResource:
     ) -> httpx.Response:
         """The active version or unpublished draft as an uploadable zip `GET /api/v1/templates/{id}/package`"""
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/package", raw=True, **opts)
+
+    def download_sample(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> httpx.Response:
+        """A sample import file: the template field labels and one valid row `GET /api/v1/templates/{id}/sample.csv`"""
+        return self._core.request("GET", f"/api/v1/templates/{_p(id)}/sample.csv", raw=True, **opts)
 
     def list(
         self,

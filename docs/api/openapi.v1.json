@@ -4517,6 +4517,204 @@
           "purged"
         ]
       },
+      "PassImportMappings": {
+        "type": "object",
+        "properties": {
+          "saved": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "columns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "maxItems": 100
+                },
+                "plan": {
+                  "type": "object",
+                  "properties": {
+                    "mapping": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "from": {
+                            "type": "string",
+                            "maxLength": 500
+                          },
+                          "transform": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "enum",
+                                  "bool-status",
+                                  "date",
+                                  "constant",
+                                  "trim",
+                                  "upper",
+                                  "lower",
+                                  "join"
+                                ]
+                              },
+                              "options": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "from"
+                        ]
+                      }
+                    },
+                    "holderEmail": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "transform": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "enum",
+                                "bool-status",
+                                "date",
+                                "constant",
+                                "trim",
+                                "upper",
+                                "lower",
+                                "join"
+                              ]
+                            },
+                            "options": {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "from"
+                      ]
+                    },
+                    "externalId": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "transform": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "enum",
+                                "bool-status",
+                                "date",
+                                "constant",
+                                "trim",
+                                "upper",
+                                "lower",
+                                "join"
+                              ]
+                            },
+                            "options": {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "from"
+                      ]
+                    },
+                    "match": {
+                      "type": "string",
+                      "enum": [
+                        "externalId",
+                        "email",
+                        "none"
+                      ]
+                    },
+                    "keepManual": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "save": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "overrides": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "maxLength": 2000
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "mapping",
+                    "holderEmail",
+                    "externalId",
+                    "match"
+                  ],
+                  "additionalProperties": false
+                },
+                "savedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "name",
+                "columns",
+                "plan",
+                "savedAt"
+              ]
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "saved"
+        ]
+      },
       "CapturedEmailPage": {
         "type": "object",
         "properties": {
@@ -19217,6 +19415,193 @@
           }
         }
       },
+      "PassImportsMappingsSaveParams": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "maxItems": 100
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "mapping": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "transform": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "enum",
+                            "bool-status",
+                            "date",
+                            "constant",
+                            "trim",
+                            "upper",
+                            "lower",
+                            "join"
+                          ]
+                        },
+                        "options": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "from"
+                  ]
+                }
+              },
+              "holderEmail": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "transform": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "enum",
+                          "bool-status",
+                          "date",
+                          "constant",
+                          "trim",
+                          "upper",
+                          "lower",
+                          "join"
+                        ]
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  }
+                },
+                "required": [
+                  "from"
+                ]
+              },
+              "externalId": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "transform": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "enum",
+                          "bool-status",
+                          "date",
+                          "constant",
+                          "trim",
+                          "upper",
+                          "lower",
+                          "join"
+                        ]
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  }
+                },
+                "required": [
+                  "from"
+                ]
+              },
+              "match": {
+                "type": "string",
+                "enum": [
+                  "externalId",
+                  "email",
+                  "none"
+                ]
+              },
+              "keepManual": {
+                "type": "boolean",
+                "default": false
+              },
+              "save": {
+                "type": "boolean",
+                "default": true
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            },
+            "required": [
+              "mapping",
+              "holderEmail",
+              "externalId",
+              "match"
+            ],
+            "additionalProperties": false
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "name",
+          "columns",
+          "plan",
+          "templateId"
+        ]
+      },
       "PassImportsCreateParams": {
         "type": "object",
         "properties": {
@@ -19301,7 +19686,8 @@
                             "constant",
                             "trim",
                             "upper",
-                            "lower"
+                            "lower",
+                            "join"
                           ]
                         },
                         "options": {
@@ -19341,7 +19727,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19380,7 +19767,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19412,6 +19800,16 @@
               "save": {
                 "type": "boolean",
                 "default": true
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
               }
             },
             "required": [
@@ -19421,6 +19819,12 @@
               "match"
             ],
             "additionalProperties": false
+          },
+          "mapping": {
+            "type": "string",
+            "enum": [
+              "auto"
+            ]
           }
         },
         "required": [
@@ -19456,7 +19860,8 @@
                             "constant",
                             "trim",
                             "upper",
-                            "lower"
+                            "lower",
+                            "join"
                           ]
                         },
                         "options": {
@@ -19496,7 +19901,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19535,7 +19941,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19567,6 +19974,16 @@
               "save": {
                 "type": "boolean",
                 "default": true
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
               }
             },
             "required": [
@@ -45468,6 +45885,128 @@
         ]
       }
     },
+    "/api/v1/templates/{id}/sample.csv": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "A sample import file: the template field labels and one valid row",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.getTemplatesByIdSampleCsv",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "downloadSample"
+        },
+        "description": "Downloads a sample import file for the template: one column per field, labelled as in the pass form, and Holder email, with one valid row. Importing it with mapping auto maps every column and checks without errors.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
     "/api/v1/templates/{id}/versions/{version}": {
       "get": {
         "summary": "Template version with its validation report",
@@ -61277,6 +61816,599 @@
         ]
       }
     },
+    "/api/v1/pass-imports/mappings": {
+      "get": {
+        "summary": "A template's saved column mappings",
+        "tags": [
+          "pass-imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "templateId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassImportMappings"
+                },
+                "example": {
+                  "saved": [
+                    {
+                      "name": "Gym export",
+                      "columns": [
+                        "Member #",
+                        "Name",
+                        "Holder email"
+                      ],
+                      "savedAt": 1790000000000,
+                      "plan": {
+                        "mapping": {
+                          "memberName": {
+                            "from": "/Name"
+                          }
+                        },
+                        "holderEmail": {
+                          "from": "/Holder email"
+                        },
+                        "externalId": {
+                          "from": "/Member #"
+                        },
+                        "match": "externalId",
+                        "keepManual": false,
+                        "save": true
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "pass-imports.getPassImportsMappings",
+        "x-sdk": {
+          "resource": "passImports.mappings",
+          "method": "list"
+        },
+        "description": "Lists a template's saved column mappings. A mapping is picked for a new file when at least 80% of its columns are in the file's headers.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_NEEDS_TEMPLATE",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      },
+      "put": {
+        "summary": "Save a named column mapping for a template; the same name replaces it",
+        "tags": [
+          "pass-imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassImportsMappingsSaveParams"
+              },
+              "example": {
+                "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
+                "name": "Gym export",
+                "columns": [
+                  "Member #",
+                  "Name",
+                  "Holder email"
+                ],
+                "plan": {
+                  "mapping": {
+                    "memberName": {
+                      "from": "/Name"
+                    }
+                  },
+                  "holderEmail": {
+                    "from": "/Holder email"
+                  },
+                  "externalId": {
+                    "from": "/Member #"
+                  },
+                  "match": "externalId",
+                  "keepManual": false,
+                  "save": true
+                }
+              },
+              "examples": {
+                "Match by member number": {
+                  "summary": "Match by member number",
+                  "value": {
+                    "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
+                    "name": "Gym export",
+                    "columns": [
+                      "Member #",
+                      "Name",
+                      "Holder email"
+                    ],
+                    "plan": {
+                      "mapping": {
+                        "memberName": {
+                          "from": "/Name"
+                        }
+                      },
+                      "holderEmail": {
+                        "from": "/Holder email"
+                      },
+                      "externalId": {
+                        "from": "/Member #"
+                      },
+                      "match": "externalId",
+                      "keepManual": false,
+                      "save": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassImportMappings"
+                },
+                "example": {
+                  "saved": [
+                    {
+                      "name": "Gym export",
+                      "columns": [
+                        "Member #",
+                        "Name",
+                        "Holder email"
+                      ],
+                      "savedAt": 1790000000000,
+                      "plan": {
+                        "mapping": {
+                          "memberName": {
+                            "from": "/Name"
+                          }
+                        },
+                        "holderEmail": {
+                          "from": "/Holder email"
+                        },
+                        "externalId": {
+                          "from": "/Member #"
+                        },
+                        "match": "externalId",
+                        "keepManual": false,
+                        "save": true
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "pass-imports.putPassImportsMappings",
+        "x-sdk": {
+          "resource": "passImports.mappings",
+          "method": "save"
+        },
+        "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_NEEDS_TEMPLATE",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      },
+      "delete": {
+        "summary": "Delete a saved column mapping by name",
+        "tags": [
+          "pass-imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "templateId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "required": true,
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassImportMappings"
+                },
+                "example": {
+                  "saved": []
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "pass-imports.deletePassImportsMappings",
+        "x-sdk": {
+          "resource": "passImports.mappings",
+          "method": "delete"
+        },
+        "description": "Deletes a saved column mapping by name. A name that is not saved changes nothing.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_NEEDS_TEMPLATE",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
     "/api/v1/pass-imports": {
       "post": {
         "summary": "Start an import from a file or a sheet link; checks it when a plan is known",
@@ -61294,6 +62426,9 @@
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
         "requestBody": {
@@ -61427,7 +62562,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -61467,7 +62603,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -61506,7 +62643,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -61538,6 +62676,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -61579,6 +62727,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }
@@ -62333,7 +63489,8 @@
                                             "constant",
                                             "trim",
                                             "upper",
-                                            "lower"
+                                            "lower",
+                                            "join"
                                           ]
                                         },
                                         "options": {
@@ -62373,7 +63530,8 @@
                                           "constant",
                                           "trim",
                                           "upper",
-                                          "lower"
+                                          "lower",
+                                          "join"
                                         ]
                                       },
                                       "options": {
@@ -62412,7 +63570,8 @@
                                           "constant",
                                           "trim",
                                           "upper",
-                                          "lower"
+                                          "lower",
+                                          "join"
                                         ]
                                       },
                                       "options": {
@@ -62444,6 +63603,16 @@
                               "save": {
                                 "type": "boolean",
                                 "default": true
+                              },
+                              "overrides": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "type": "string",
+                                    "maxLength": 2000
+                                  }
+                                }
                               }
                             },
                             "required": [
@@ -62485,6 +63654,14 @@
                                 "minimum": 0
                               },
                               "emailable": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "errorsCreate": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "errorsUpdate": {
                                 "type": "integer",
                                 "minimum": 0
                               }
@@ -63239,7 +64416,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -63279,7 +64457,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -63318,7 +64497,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -63350,6 +64530,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -63391,6 +64581,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }
@@ -64309,7 +65507,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -64349,7 +65548,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -64388,7 +65588,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -64420,6 +65621,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -64461,6 +65672,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }
@@ -65080,6 +66299,9 @@
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
         "requestBody": {
@@ -65213,7 +66435,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -65253,7 +66476,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -65292,7 +66516,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -65324,6 +66549,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -65365,6 +66600,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }

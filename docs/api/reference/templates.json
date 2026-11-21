@@ -77,6 +77,9 @@
       "additionalProperties": false
     }
   },
+  "templates.getTemplatesByIdSampleCsv": {
+    "description": "Downloads a sample import file for the template: one column per field, labelled as in the pass form, and Holder email, with one valid row. Importing it with mapping auto maps every column and checks without errors."
+  },
   "templates.postTemplatesByIdRelease": {
     "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`. A Test key may name only `test`; a Live key cannot release.",
     "request": {

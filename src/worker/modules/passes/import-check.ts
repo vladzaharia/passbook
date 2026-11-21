@@ -7,8 +7,14 @@ import { strictEmail } from '../../../shared/email.ts';
 import { applyMapping } from '../../../shared/mapping/transform.ts';
 import { accessInputIssues } from './access-input.ts';
 import { coerceInput } from './import-coerce.ts';
-import { IMPORT_TEXT, type ImportProblem, inputMessage, problem } from './import-messages.ts';
-import { headerOf, type ImportPlan, recordOf } from './import-plan.ts';
+import {
+  IMPORT_TEXT,
+  type ImportProblem,
+  inputMessage,
+  labelOf,
+  problem,
+} from './import-messages.ts';
+import { headerOf, type ImportPlan, recordOf, withOverrides } from './import-plan.ts';
 
 /** A row after the checks that need no database; `input` is null when the row could not be mapped. */
 export interface CheckedRow {
@@ -54,7 +60,7 @@ export function rowChecker(rc: RowCheckContext) {
         ? (/required property "([^"]+)"/.exec(issue.message)?.[1] ?? '')
         : (issue.path ?? '');
       if (scope === 'keys' && (required || name === '')) continue;
-      const label = typeof props[name]?.title === 'string' ? (props[name].title as string) : name;
+      const label = name === '' ? '' : labelOf(props[name], name);
       out.push(
         problem(row, {
           column: columnOf(name),
@@ -79,6 +85,42 @@ export function rowChecker(rc: RowCheckContext) {
   };
 }
 
+const READ_KEYWORD = { enum: 'enum', date: 'format' } as const;
+
+/**
+ * A cell the plan's enum or date step could not read is dropped by the transform, which would let the
+ * template's default stand in for it. Say so instead, in the input's own words.
+ */
+function unreadValues(
+  row: number,
+  rc: RowCheckContext,
+  record: Record<string, Json>,
+  input: Personalization,
+): ImportProblem[] {
+  const props = (rc.manifest.inputs.properties ?? {}) as Record<string, Record<string, unknown>>;
+  const out: ImportProblem[] = [];
+  for (const [field, entry] of Object.entries(rc.plan.mapping)) {
+    const kind = entry.transform?.kind;
+    if (kind !== 'enum' && kind !== 'date') continue;
+    const column = headerOf(entry.from, rc.header);
+    const cell = column === null ? undefined : record[column];
+    if (cell === undefined || input[field] !== undefined) continue;
+    out.push(
+      problem(row, {
+        column,
+        field,
+        code: kind === 'enum' ? 'IMPORT_OPTION_UNKNOWN' : 'IMPORT_DATE_UNREADABLE',
+        message: inputMessage(
+          { keyword: READ_KEYWORD[kind], message: '' },
+          labelOf(props[field], field),
+          props[field],
+        ),
+      }),
+    );
+  }
+  return out;
+}
+
 /** Shape, map, coerce, per-key input checks, email and keys (design §8, steps 1-7); the whole-input checks follow the match. */
 export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): CheckedRow[] {
   const { plan, header } = rc;
@@ -87,7 +129,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
   const matchKey =
     plan.match === 'externalId' ? 'externalId' : plan.match === 'email' ? 'email' : null;
 
-  return rows.map(({ row, cells }): CheckedRow => {
+  return rows.map(({ row, cells: raw }): CheckedRow => {
     const problems: ImportProblem[] = [];
     const add = (p: Parameters<typeof problem>[1]) => problems.push(problem(row, p));
     const out = (
@@ -103,13 +145,14 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
     });
 
     // 1. Shape. A row wider or narrower than the header is refused before mapping.
-    if (cells.length !== header.length) {
+    if (raw.length !== header.length) {
       add({
         code: 'IMPORT_ROW_SHAPE',
-        message: IMPORT_TEXT.rowShape(cells.length, header.length),
+        message: IMPORT_TEXT.rowShape(raw.length, header.length),
       });
       return out(null, null, null);
     }
+    const cells = withOverrides(plan, header, row, raw);
     const long = cells.findIndex((c) => c.length > PASS_IMPORT_MAX_CELL);
     if (long >= 0) {
       add({
@@ -123,6 +166,7 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
     // 2-4. Map, read the text as the input types, check each value on its own. A blank cell is unset.
     const record = recordOf(header, cells);
     const input = coerceInput(rc.manifest.inputs, applyMapping(plan.mapping, record));
+    problems.push(...unreadValues(row, rc, record, input));
     problems.push(...checkInputs(row, input, 'keys'));
 
     // 6. Holder email.

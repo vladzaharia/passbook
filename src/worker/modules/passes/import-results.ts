@@ -52,12 +52,12 @@ export async function resultsCsv(
           ctx.env.DB,
           imp.org_id,
           imp.mode,
-          rows.flatMap((r) => (r.pass_id ? [r.pass_id] : [])),
+          rows.flatMap((r) => (r.pass_id && r.action !== 'error' ? [r.pass_id] : [])),
         )
       ).map((p) => [p.id, p]),
     );
     for (const r of rows) {
-      const pass = r.pass_id ? passes.get(r.pass_id) : undefined;
+      const pass = r.pass_id && r.action !== 'error' ? passes.get(r.pass_id) : undefined;
       const token =
         pass && pass.removed_at === null
           ? await revealToken(ctx.env, 'pass', pass.id, pass.org_id, pass.download_token)

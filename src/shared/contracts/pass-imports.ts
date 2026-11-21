@@ -7,7 +7,6 @@ import {
   pageOf,
   TimestampSchema,
 } from './common.ts';
-import { MappingEntrySchema, MappingSchema } from './connections.ts';
 import {
   FieldChangeSchema,
   MappingSuggestionSchema,
@@ -40,14 +39,29 @@ export const PassImportSourceSchema = z.discriminatedUnion('kind', [
 
 export const PassImportMatchSchema = z.enum(['externalId', 'email', 'none']);
 
+/** Cell fixes from the check, by spreadsheet row then column pointer. */
+export const PASS_IMPORT_MAX_OVERRIDES = 200;
+export const PassImportOverridesSchema = z
+  .record(
+    z.string().regex(/^[1-9]\d{0,5}$/),
+    z.record(z.string().max(500), z.string().max(PASS_IMPORT_MAX_CELL)),
+  )
+  .refine(
+    (o) =>
+      Object.values(o).reduce((n, cells) => n + Object.keys(cells).length, 0) <=
+      PASS_IMPORT_MAX_OVERRIDES,
+    `Fix at most ${PASS_IMPORT_MAX_OVERRIDES} cells in place; fix the rest in the file.`,
+  );
+
 export const PassImportPlanSchema = z
   .strictObject({
-    mapping: MappingSchema,
-    holderEmail: MappingEntrySchema.nullable(),
-    externalId: MappingEntrySchema.nullable(),
+    mapping: PlanMappingSchema,
+    holderEmail: PlanMappingEntrySchema.nullable(),
+    externalId: PlanMappingEntrySchema.nullable(),
     match: PassImportMatchSchema,
     keepManual: z.boolean().default(false),
     save: z.boolean().default(true),
+    overrides: PassImportOverridesSchema.optional(),
   })
   .refine((p) => p.match !== 'externalId' || p.externalId !== null, {
     path: ['externalId'],
@@ -62,6 +76,8 @@ export const CreatePassImportSchema = z.strictObject({
   templateId: IdSchema,
   source: PassImportSourceSchema,
   plan: PassImportPlanSchema.optional(),
+  /** `auto`: with no plan, map the file from the template (or a saved mapping of the same columns). */
+  mapping: z.literal('auto').optional(),
 });
 export const CheckPassImportSchema = z.strictObject({ plan: PassImportPlanSchema });
 export const PassImportCommitSchema = z.strictObject({
@@ -108,6 +124,9 @@ export const PassImportCountsSchema = z.object({
   errors: count,
   warnings: count,
   emailable: count,
+  /** Rows with errors by what they would do once fixed. */
+  errorsCreate: count.optional(),
+  errorsUpdate: count.optional(),
 });
 
 export const PassImportProgressSchema = z.object({
@@ -209,39 +228,9 @@ export const PassImportEmailRestResultSchema = z.object({
 // Issuing at scale. Additive: the routes above validate with the v1 shapes until the import server
 // and import undo take these.
 
-/** Cell fixes from the check, by spreadsheet row then column pointer. */
-export const PASS_IMPORT_MAX_OVERRIDES = 200;
-export const PassImportOverridesSchema = z
-  .record(
-    z.string().regex(/^[1-9]\d{0,5}$/),
-    z.record(z.string().max(500), z.string().max(PASS_IMPORT_MAX_CELL)),
-  )
-  .refine(
-    (o) =>
-      Object.values(o).reduce((n, cells) => n + Object.keys(cells).length, 0) <=
-      PASS_IMPORT_MAX_OVERRIDES,
-    `Fix at most ${PASS_IMPORT_MAX_OVERRIDES} cells in place; fix the rest in the file.`,
-  );
-
-export const PassImportPlanV2Schema = z
-  .strictObject({
-    mapping: PlanMappingSchema,
-    holderEmail: PlanMappingEntrySchema.nullable(),
-    externalId: PlanMappingEntrySchema.nullable(),
-    match: PassImportMatchSchema,
-    keepManual: z.boolean().default(false),
-    save: z.boolean().default(true),
-    overrides: PassImportOverridesSchema.optional(),
-  })
-  .refine((p) => p.match !== 'externalId' || p.externalId !== null, {
-    path: ['externalId'],
-    message: 'Map an External ID column to match on it.',
-  })
-  .refine((p) => p.match !== 'email' || p.holderEmail !== null, {
-    path: ['holderEmail'],
-    message: 'Map a Holder email column to match on it.',
-  });
-export type PassImportPlanV2 = z.infer<typeof PassImportPlanV2Schema>;
+/** The plan as stored and checked since issuing at scale: join entries, cell fixes. */
+export const PassImportPlanV2Schema = PassImportPlanSchema;
+export type PassImportPlanV2 = z.infer<typeof PassImportPlanSchema>;
 
 /** Named mappings per template, picked by the file's headers (80% overlap), in the stored plan JSON. */
 export const PASS_IMPORT_SAVED_MAX = 20;
@@ -254,6 +243,21 @@ export const SavedImportMappingSchema = z.object({
 });
 export const SavedImportMappingsSchema = z.object({
   v: z.literal(2),
+  saved: z.array(SavedImportMappingSchema).max(PASS_IMPORT_SAVED_MAX),
+  /** The plan of the last check that saved (the unnamed one). */
+  last: PassImportPlanSchema.optional(),
+});
+export const SavedImportMappingsQuerySchema = z.object({
+  templateId: IdSchema,
+  orgId: IdSchema.optional(),
+});
+export const PutSavedImportMappingSchema = SavedImportMappingSchema.omit({ savedAt: true }).extend({
+  templateId: IdSchema,
+});
+export const DeleteSavedImportMappingQuerySchema = SavedImportMappingsQuerySchema.extend({
+  name: PlainLineSchema(60),
+});
+export const SavedImportMappingsResultSchema = z.object({
   saved: z.array(SavedImportMappingSchema).max(PASS_IMPORT_SAVED_MAX),
 });
 

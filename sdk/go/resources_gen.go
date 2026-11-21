@@ -799,6 +799,43 @@ func newOrgsResource(c *core) *OrgsResource {
 	}
 }
 
+type PassImportsMappingsResource struct {
+	c *core
+}
+
+func newPassImportsMappingsResource(c *core) *PassImportsMappingsResource {
+	return &PassImportsMappingsResource{
+		c: c,
+	}
+}
+
+// Delete Delete a saved column mapping by name `DELETE /api/v1/pass-imports/mappings`
+func (r *PassImportsMappingsResource) Delete(ctx context.Context, query *PassImportsMappingsDeleteQuery, opts ...RequestOption) (*PassImportsMappingsDeleteResult, error) {
+	var out PassImportsMappingsDeleteResult
+	if err := r.c.do(ctx, call{method: "DELETE", path: "/api/v1/pass-imports/mappings", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List A template's saved column mappings `GET /api/v1/pass-imports/mappings`
+func (r *PassImportsMappingsResource) List(ctx context.Context, query *PassImportsMappingsListQuery, opts ...RequestOption) (*PassImportsMappingsListResult, error) {
+	var out PassImportsMappingsListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/pass-imports/mappings", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Save Save a named column mapping for a template; the same name replaces it `PUT /api/v1/pass-imports/mappings`
+func (r *PassImportsMappingsResource) Save(ctx context.Context, body *PassImportsMappingsSaveBody, opts ...RequestOption) (*PassImportsMappingsSaveResult, error) {
+	var out PassImportsMappingsSaveResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/pass-imports/mappings", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassImportsRowsResource struct {
 	c *core
 }
@@ -815,14 +852,16 @@ func (r *PassImportsRowsResource) List(ctx context.Context, id string, query *Pa
 }
 
 type PassImportsResource struct {
-	c    *core
-	Rows *PassImportsRowsResource
+	c        *core
+	Mappings *PassImportsMappingsResource
+	Rows     *PassImportsRowsResource
 }
 
 func newPassImportsResource(c *core) *PassImportsResource {
 	return &PassImportsResource{
-		c:    c,
-		Rows: newPassImportsRowsResource(c),
+		c:        c,
+		Mappings: newPassImportsMappingsResource(c),
+		Rows:     newPassImportsRowsResource(c),
 	}
 }
 
@@ -838,7 +877,7 @@ func (r *PassImportsResource) Check(ctx context.Context, id string, body *PassIm
 // Commit Apply the checked rows: create the new passes and update the matched ones `POST /api/v1/pass-imports/{id}/commit`
 func (r *PassImportsResource) Commit(ctx context.Context, id string, body *PassImportsCommitBody, opts ...RequestOption) (*PassImportsCommitResult, error) {
 	var out PassImportsCommitResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/commit", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/commit", body: body, idempotent: true}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -847,7 +886,7 @@ func (r *PassImportsResource) Commit(ctx context.Context, id string, body *PassI
 // Create Start an import from a file or a sheet link; checks it when a plan is known `POST /api/v1/pass-imports`
 func (r *PassImportsResource) Create(ctx context.Context, body *PassImportsCreateBody, opts ...RequestOption) (*PassImportsCreateResult, error) {
 	var out PassImportsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports", body: body, idempotent: true}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -1740,6 +1779,11 @@ func newTemplatesResource(c *core) *TemplatesResource {
 // DownloadPackage The active version or unpublished draft as an uploadable zip `GET /api/v1/templates/{id}/package`
 func (r *TemplatesResource) DownloadPackage(ctx context.Context, id string, opts ...RequestOption) (*http.Response, error) {
 	return r.c.download(ctx, call{method: "GET", path: "/api/v1/templates/" + pathEscape(id) + "/package"}, opts)
+}
+
+// DownloadSample A sample import file: the template field labels and one valid row `GET /api/v1/templates/{id}/sample.csv`
+func (r *TemplatesResource) DownloadSample(ctx context.Context, id string, opts ...RequestOption) (*http.Response, error) {
+	return r.c.download(ctx, call{method: "GET", path: "/api/v1/templates/" + pathEscape(id) + "/sample.csv"}, opts)
 }
 
 // List List templates `GET /api/v1/templates`

@@ -1,3 +1,4 @@
+import type { MappingSuggestion } from '../../../shared/contracts/issuing.ts';
 import {
   PASS_IMPORT_PREVIEWS,
   PASS_IMPORT_PROBLEMS,
@@ -7,11 +8,13 @@ import {
 import { BOM, toCsv } from '../../../shared/csv/write.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { rowChanges } from './import-changes.ts';
 import type { ImportProblem } from './import-messages.ts';
 import { columnsOf, parsePlan } from './import-plan.ts';
 import { parseImport } from './import-source.ts';
 import {
   emailableCount,
+  errorIntents,
   errorRows,
   type ImportRowRecord,
   pageRows,
@@ -65,7 +68,7 @@ async function columnsFile(ctx: ServiceContext, imp: ImportRow) {
 export async function importDto(
   ctx: ServiceContext,
   imp: ImportRow,
-  options: { light?: boolean } = {},
+  options: { light?: boolean; mapping?: MappingSuggestion } = {},
 ): Promise<PassImportDto> {
   const db = ctx.env.DB;
   const editing = EDITING.includes(imp.state);
@@ -103,6 +106,7 @@ export async function importDto(
           errors: imp.errors,
           warnings: imp.warnings,
           emailable: light ? 0 : await emailableCount(db, imp.id),
+          ...(light ? {} : intents(await errorIntents(db, imp.id))),
         }
       : null,
     previews: previews.map((p) => ({
@@ -135,8 +139,14 @@ export async function importDto(
     committedAt: imp.committed_at,
     finishedAt: imp.finished_at,
     expiresAt: imp.expires_at,
+    ...(options.mapping ? { mapping: options.mapping } : {}),
   };
 }
+
+const intents = (n: { create: number; update: number }) => ({
+  errorsCreate: n.create,
+  errorsUpdate: n.update,
+});
 
 /** The row page after `cursor` (a row number), 100 at a time. */
 export async function rowsPage(
@@ -153,9 +163,11 @@ export async function rowsPage(
     101,
   );
   const page = rows.slice(0, 100);
+  const changes = await rowChanges(ctx, imp, page, (r) => problemsOf(ctx, imp.id, r.problems));
   return {
     items: page.map((r: ImportRowRecord) => {
-      const first = problemsOf(ctx, imp.id, r.problems).find((p) => p.severity === 'error');
+      const found = problemsOf(ctx, imp.id, r.problems);
+      const first = found.find((p) => p.severity === 'error');
       return {
         row: r.row_no,
         action: r.action,
@@ -166,10 +178,18 @@ export async function rowsPage(
         code: r.code ?? first?.code ?? null,
         message: first?.message ?? null,
         emailed: r.emailed === 1,
+        ...(changes.get(r.row_no) ? { changes: changes.get(r.row_no) } : {}),
+        ...(r.action === 'error' ? { wouldBe: wouldBeOf(r, first?.code) } : {}),
       };
     }),
     nextCursor: rows.length > 100 ? String(page[page.length - 1]?.row_no) : null,
   };
+}
+
+/** What an error row would do once fixed; null when its cells could not be read at all. */
+function wouldBeOf(r: ImportRowRecord, code: string | undefined): 'create' | 'update' | null {
+  if (r.input === null) return null;
+  return r.pass_id !== null || code === 'IMPORT_MATCH_AMBIGUOUS' ? 'update' : 'create';
 }
 
 /** The uploaded columns in order, then Problem, for the rows that failed the check. */

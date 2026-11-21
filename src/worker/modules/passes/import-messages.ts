@@ -3,6 +3,16 @@ import {
   PASS_IMPORT_MAX_CELL,
   type PassImportProblemSchema,
 } from '../../../shared/contracts/pass-imports.ts';
+import { humanize } from '../../../shared/issuing/fields.ts';
+
+/** The label the form shows for an input: `x-label`, else `title`, else the humanized key. */
+export function labelOf(def: Record<string, unknown> | undefined, key: string): string {
+  const x = def?.['x-label'];
+  const title = def?.title;
+  if (typeof x === 'string' && x !== '') return x;
+  if (typeof title === 'string' && title !== '') return title;
+  return humanize(key);
+}
 
 export type ImportProblem = z.infer<typeof PassImportProblemSchema>;
 
@@ -99,7 +109,13 @@ function describeInput(
     case 'maxItems':
       return `${label} allows at most ${num('maxItems')} items.`;
     case 'enum': {
-      const values = Array.isArray(s.enum) ? s.enum.map(String).slice(0, 8) : [];
+      const names = (s['x-enumLabels'] ?? {}) as Record<string, unknown>;
+      const values = Array.isArray(s.enum)
+        ? s.enum
+            .map((v) => (typeof names[String(v)] === 'string' ? names[String(v)] : String(v)))
+            .map(String)
+            .slice(0, 8)
+        : [];
       const last = values.pop();
       if (last === undefined) return `${label} is not valid.`;
       return `${label} must be ${values.length ? `${values.join(', ')} or ` : ''}${last}.`;

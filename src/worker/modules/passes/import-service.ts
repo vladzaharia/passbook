@@ -1,5 +1,7 @@
 import type { TemplateManifest } from '../../../passkit/types.ts';
+import type { MappingSuggestion } from '../../../shared/contracts/issuing.ts';
 import type { PassImportDto } from '../../../shared/contracts/pass-imports.ts';
+import { planOfSuggestion, suggestMapping } from '../../../shared/issuing/matcher.ts';
 import { bump } from '../../platform/counters.ts';
 import {
   AppError,
@@ -14,12 +16,12 @@ import { resolveTemplate } from './builder.ts';
 import { effectiveApiRelease } from './create-release.ts';
 import type { TenantPassWrite } from './http.ts';
 import { checkRows, rowChecker } from './import-check.ts';
+import { pickSaved, readMappings, rememberPlan, who } from './import-mappings.ts';
 import { planRows, summarize } from './import-match.ts';
 import {
   type ImportPlan,
   missingColumns,
   missingKeyColumn,
-  parsePlan,
   planProblems,
   withoutColumns,
 } from './import-plan.ts';
@@ -33,7 +35,6 @@ import {
   sourceName,
 } from './import-source.ts';
 import { activeZoneKeys } from './repo-access-zones.ts';
-import { savedPlan, savePlan } from './repo-import-mappings.ts';
 import { createdRowNumbers, insertRows } from './repo-import-rows.ts';
 import {
   beginCheck,
@@ -51,9 +52,9 @@ const DRAFT_TTL = 23 * HOUR;
 /** Imports an org may start an hour, and checks it may run (each re-reads the file and rewrites the rows). */
 const CREATES_PER_HOUR = 30;
 const CHECKS_PER_HOUR = 120;
+/** Rows the suggestion reads: enough to see a column's values, bounded for a 2,000-row file. */
+const SUGGEST_ROWS = 500;
 const OPEN = ['mapping', 'checking', 'ready', 'stale'];
-
-const who = (a: TenantPassWrite) => (a.kind === 'session' ? a.userId : a.keyId);
 
 async function enforceRate(
   ctx: ServiceContext,
@@ -158,14 +159,46 @@ async function runCheck(
     })),
   );
   await finishCheck(ctx, a, imp.id, checkId, summary);
-  if (plan.save) await savePlan(ctx, a, imp.template_id, JSON.stringify(plan), who(a));
+  if (plan.save) await rememberPlan(ctx, a, imp.template_id, plan);
   ctx.log.info('pass_import.checked', { orgId: a.orgId, importId: imp.id, ...summary });
+}
+
+/** The plan `mapping: 'auto'` stands for: a saved mapping of the same columns, else the template's own suggestion. */
+async function autoPlan(
+  ctx: ServiceContext,
+  a: TenantPassWrite,
+  templateId: string,
+  manifest: TemplateManifest,
+  parsed: ReturnType<typeof parseImport>,
+): Promise<{ plan: ImportPlan | null; suggestion: MappingSuggestion }> {
+  const suggestion = suggestMapping(
+    manifest.inputs,
+    parsed.header,
+    parsed.rows.slice(0, SUGGEST_ROWS).map((r) => r.cells),
+    { idInput: manifest.scan?.lookup?.input },
+  );
+  const saved = pickSaved((await readMappings(ctx, a.orgId, templateId)).saved, parsed.header);
+  if (
+    saved &&
+    planProblems(saved.plan, manifest).length === 0 &&
+    missingColumns(saved.plan, parsed.header).length === 0
+  )
+    return { plan: saved.plan, suggestion };
+  const base = planOfSuggestion(suggestion);
+  const plan: ImportPlan = { ...base, keepManual: false, save: true };
+  const usable = Object.keys(plan.mapping).length > 0 && planProblems(plan, manifest).length === 0;
+  return { plan: usable ? plan : null, suggestion };
 }
 
 export async function createImport(
   ctx: ServiceContext,
   a: TenantPassWrite,
-  body: { templateId: string; source: ImportSource; plan?: ImportPlan | undefined },
+  body: {
+    templateId: string;
+    source: ImportSource;
+    plan?: ImportPlan | undefined;
+    mapping?: 'auto' | undefined;
+  },
 ): Promise<PassImportDto> {
   await enforceRate(ctx, a, 'pass-import', CREATES_PER_HOUR);
   const { release, template: tpl } = await template(ctx, a, body.templateId);
@@ -173,8 +206,13 @@ export async function createImport(
   const parsed = parseImport(bytes);
   let plan: ImportPlan | null = body.plan ?? null;
   let runnable = plan !== null;
-  if (plan === null) {
-    const saved = parsePlan(await savedPlan(ctx.env.DB, a.orgId, body.templateId), ctx.log);
+  let suggestion: MappingSuggestion | undefined;
+  if (plan === null && body.mapping === 'auto') {
+    const auto = await autoPlan(ctx, a, body.templateId, tpl.manifest, parsed);
+    ({ plan, suggestion } = auto);
+    runnable = plan !== null;
+  } else if (plan === null) {
+    const saved = (await readMappings(ctx, a.orgId, body.templateId)).last;
     if (saved && planProblems(saved, tpl.manifest).length === 0) {
       const key = missingKeyColumn(saved, parsed.header);
       if (key !== null)
@@ -231,7 +269,7 @@ export async function createImport(
       );
     }
   }
-  return importDto(ctx, await requireImport(ctx, a, id));
+  return importDto(ctx, await requireImport(ctx, a, id), suggestion ? { mapping: suggestion } : {});
 }
 
 export async function checkImport(

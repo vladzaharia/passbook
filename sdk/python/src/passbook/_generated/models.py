@@ -464,6 +464,11 @@ __all__ = [
     "PassDetailTemplateWarningsItem",
     "PassDetailWarningsItem",
     "PassDevice",
+    "PassImportMappings",
+    "PassImportMappingsSavedItem",
+    "PassImportMappingsSavedItemPlan",
+    "PassImportMappingsSavedItemPlanMappingValue",
+    "PassImportMappingsSavedItemPlanMappingValueTransform",
     "PassImportsCheckBody",
     "PassImportsCheckParams",
     "PassImportsCheckParamsPlan",
@@ -530,6 +535,14 @@ __all__ = [
     "PassImportsListResultItemsItemProblemTotals",
     "PassImportsListResultItemsItemProblemsItem",
     "PassImportsListResultItemsItemSource",
+    "PassImportsMappingsDeleteResult",
+    "PassImportsMappingsListResult",
+    "PassImportsMappingsSaveBody",
+    "PassImportsMappingsSaveParams",
+    "PassImportsMappingsSaveParamsPlan",
+    "PassImportsMappingsSaveParamsPlanMappingValue",
+    "PassImportsMappingsSaveParamsPlanMappingValueTransform",
+    "PassImportsMappingsSaveResult",
     "PassImportsRemoveCreatedParams",
     "PassImportsRetrieveResult",
     "PassImportsRetrieveResultColumnsItem",
@@ -4263,6 +4276,32 @@ class PassDevice(_Model):
     createdAt: int
     lastPush: _Dict[str, _Any] | None
 
+class PassImportMappings(_Model):
+    saved: _List[PassImportMappingsSavedItem]
+
+class PassImportMappingsSavedItem(_Model):
+    name: str
+    columns: _List[str]
+    plan: PassImportMappingsSavedItemPlan
+    savedAt: int
+
+class PassImportMappingsSavedItemPlan(_Model):
+    mapping: _Dict[str, PassImportMappingsSavedItemPlanMappingValue]
+    holderEmail: _Dict[str, _Any] | None
+    externalId: _Dict[str, _Any] | None
+    match: _Literal["externalId", "email", "none"] | str
+    keepManual: bool | None = None
+    save: bool | None = None
+    overrides: _Dict[str, _Dict[str, str]] | None = None
+
+class PassImportMappingsSavedItemPlanMappingValue(_Model):
+    from_: str = _Field(alias="from")
+    transform: PassImportMappingsSavedItemPlanMappingValueTransform | None = None
+
+class PassImportMappingsSavedItemPlanMappingValueTransform(_Model):
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
+    options: _Dict[str, _Any] | None = None
+
 class PassImportsCheckParams(_Model):
     plan: PassImportsCheckParamsPlan
 
@@ -4273,13 +4312,14 @@ class PassImportsCheckParamsPlan(_Model):
     match: _Literal["externalId", "email", "none"] | str
     keepManual: bool | None = None
     save: bool | None = None
+    overrides: _Dict[str, _Dict[str, str]] | None = None
 
 class PassImportsCheckParamsPlanMappingValue(_Model):
     from_: str = _Field(alias="from")
     transform: PassImportsCheckParamsPlanMappingValueTransform | None = None
 
 class PassImportsCheckParamsPlanMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class PassImportsCheckResult(_Model):
@@ -4452,6 +4492,7 @@ class PassImportsCreateParams(_Model):
     templateId: str
     source: PassImportsCreateParamsSource1 | PassImportsCreateParamsSource2
     plan: PassImportsCreateParamsPlan | None = None
+    mapping: _Literal["auto"] | str | None = None
 
 class PassImportsCreateParamsPlan(_Model):
     mapping: _Dict[str, PassImportsCreateParamsPlanMappingValue]
@@ -4460,13 +4501,14 @@ class PassImportsCreateParamsPlan(_Model):
     match: _Literal["externalId", "email", "none"] | str
     keepManual: bool | None = None
     save: bool | None = None
+    overrides: _Dict[str, _Dict[str, str]] | None = None
 
 class PassImportsCreateParamsPlanMappingValue(_Model):
     from_: str = _Field(alias="from")
     transform: PassImportsCreateParamsPlanMappingValueTransform | None = None
 
 class PassImportsCreateParamsPlanMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class PassImportsCreateParamsSource1(_Model):
@@ -4727,6 +4769,29 @@ class PassImportsListResultItemsItemProblemsItem(_Model):
 class PassImportsListResultItemsItemSource(_Model):
     kind: _Literal["file", "url"] | str
     name: str
+
+class PassImportsMappingsSaveParams(_Model):
+    name: str
+    columns: _List[str]
+    plan: PassImportsMappingsSaveParamsPlan
+    templateId: str
+
+class PassImportsMappingsSaveParamsPlan(_Model):
+    mapping: _Dict[str, PassImportsMappingsSaveParamsPlanMappingValue]
+    holderEmail: _Dict[str, _Any] | None
+    externalId: _Dict[str, _Any] | None
+    match: _Literal["externalId", "email", "none"] | str
+    keepManual: bool | None = None
+    save: bool | None = None
+    overrides: _Dict[str, _Dict[str, str]] | None = None
+
+class PassImportsMappingsSaveParamsPlanMappingValue(_Model):
+    from_: str = _Field(alias="from")
+    transform: PassImportsMappingsSaveParamsPlanMappingValueTransform | None = None
+
+class PassImportsMappingsSaveParamsPlanMappingValueTransform(_Model):
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
+    options: _Dict[str, _Any] | None = None
 
 class PassImportsRemoveCreatedParams(_Model):
     cursor: str | None
@@ -8947,6 +9012,14 @@ PassImportsCheckBody = PassImportsCheckParams
 PassImportsCommitBody = PassImportsCommitParams
 
 PassImportsCreateBody = PassImportsCreateParams
+
+PassImportsMappingsDeleteResult = PassImportMappings
+
+PassImportsMappingsListResult = PassImportMappings
+
+PassImportsMappingsSaveBody = PassImportsMappingsSaveParams
+
+PassImportsMappingsSaveResult = PassImportMappings
 
 PassImportsSendEmailsBody = PassImportsSendEmailsParams
 

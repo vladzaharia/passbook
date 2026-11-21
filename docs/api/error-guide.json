@@ -749,6 +749,12 @@
     "fix": "Check the import again with POST /api/v1/pass-imports/{id}/check, then commit.",
     "retryable": false
   },
+  "IMPORT_MAPPINGS_FULL": {
+    "title": "Too many saved mappings",
+    "when": "The template already has 20 saved import mappings and the request names a new one.",
+    "fix": "Delete a saved mapping with DELETE /api/v1/pass-imports/mappings, or reuse an existing name to replace it.",
+    "retryable": false
+  },
   "IMPORT_NOT_FOUND": {
     "title": "Import not found",
     "when": "No import with this id exists in this mode and organization.",

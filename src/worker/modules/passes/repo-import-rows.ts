@@ -28,6 +28,7 @@ export interface ImportRowRecord {
   result: 'created' | 'updated' | 'unchanged' | null;
   code: string | null;
   emailed: number;
+  before: string | null;
 }
 
 /** Rows per grant, and per statement (a guarded insert binds at most 40 values: 8 columns, 4 rows). */
@@ -77,7 +78,7 @@ export async function insertRows(
 }
 
 const SELECT = `SELECT row_no, action, pass_id, expected_version, external_id, holder_email, input,
-  problems, state, result, code, emailed FROM pass_import_rows`;
+  problems, state, result, code, emailed, before FROM pass_import_rows`;
 
 /** One page by row number: 100 and one more to know whether another page follows. */
 export function pageRows(
@@ -134,6 +135,21 @@ export function previewRows(
      WHERE import_id = ? AND action IN ('create', 'update') ORDER BY row_no LIMIT ?`,
     [importId, limit],
   );
+}
+
+/** Rows with errors, by what they would do once fixed: those that found a pass would update it. */
+export async function errorIntents(
+  db: D1Database,
+  importId: string,
+): Promise<{ create: number; update: number }> {
+  const row = await first<{ n: number; found: number | null }>(
+    db,
+    `SELECT count(*) AS n, sum(pass_id IS NOT NULL) AS found FROM pass_import_rows
+     WHERE import_id = ? AND action = 'error' AND input IS NOT NULL`,
+    [importId],
+  );
+  const update = row?.found ?? 0;
+  return { create: (row?.n ?? 0) - update, update };
 }
 
 export async function emailableCount(db: D1Database, importId: string): Promise<number> {
