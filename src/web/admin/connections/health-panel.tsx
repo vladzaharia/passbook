@@ -148,7 +148,7 @@ function RunStrip({ runs }: { runs: readonly Run[] }) {
       </ol>
       <ul aria-label="Legend" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-muted">
         {LEGEND.map((o) => (
-          <li key={o} className="inline-flex items-center gap-1.5" title={LEGEND_HINT[o]}>
+          <li key={o} className="inline-flex items-center gap-1.5">
             <span aria-hidden className={cn('size-2.5 rounded-sm', OUTCOME[o].bar)} />
             {OUTCOME[o].label}
             {LEGEND_HINT[o] ? (

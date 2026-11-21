@@ -12,5 +12,5 @@
 ## Rules
 
 - The key is `$PASSBOOK_KEY` or `process.env.PASSBOOK_KEY`, never a value.
-- TypeScript uses `@passbook/sdk`. Python and Go use `httpx` and `net/http` until their SDKs ship.
+- TypeScript, Python and Go use their SDKs: `@passbook/sdk`, `passbook-sdk` (`sdk/python`) and `sdk/go`. A Go body or query is JSON decoded into the SDK's type. `sdk/python` runs every Python sample against a stub of the contract; `sdk/go` builds every Go sample.
 - A comment only where a step is not obvious.

@@ -46,15 +46,7 @@ export function MessagesPage({
   if (scope.isLoading) return <SkeletonRows label="Loading organization access" />;
   if (scope.isError)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  if (!scope.orgId)
-    return (
-      <EmptyState
-        heading
-        art="building"
-        title="Choose an organization"
-        description="Choose an organization in the top bar to continue."
-      />
-    );
+  if (!scope.orgId) return <EmptyState heading art="building" title="Choose an organization" />;
   if (!scope.membership?.capabilities.includes('messages:read')) return <ForbiddenPage />;
   return (
     <ScopedMessagesPage
@@ -169,7 +161,6 @@ function ScopedMessagesPage({
         <EmptyState
           art={ENTITY.broadcast.art}
           title="No messages yet"
-          description="Send a note to pass holders' wallets, now or on a schedule."
           action={
             canCreate ? (
               <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
@@ -223,14 +214,7 @@ function ScopedMessagesPage({
                   </div>
                 }
                 emptyFiltered={<FilteredEmpty inline entity="broadcast" onClear={clear} />}
-                empty={
-                  <EmptyState
-                    inline
-                    art={ENTITY.broadcast.art}
-                    title="No messages"
-                    description="Send a note to pass holders' wallets."
-                  />
-                }
+                empty={<EmptyState inline art={ENTITY.broadcast.art} title="No messages" />}
                 footer={
                   <div className="px-3 pb-3">
                     <LoadMore

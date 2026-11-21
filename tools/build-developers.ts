@@ -7,16 +7,18 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { runnerImport } from 'vite';
 import { PATHS } from '../src/shared/developers.ts';
+import { type GuideInputs, loadGuideInputs } from '../src/web/developers/guide/load.ts';
 import { loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
 import type { OutFile, Site } from '../src/web/developers/model/types.ts';
+import { searchIndexFile } from '../src/web/developers/search/build.ts';
 import { publicBaseUrl } from './lib/site-origin.ts';
 
 const root = resolve(import.meta.dirname, '..');
 
 /** src/web/developers/render.tsx, loaded through Vite's runner (it is JSX, which Node does not run). */
 interface Renderer {
-  renderSite(site: Site, origin: string, assets: string): OutFile[];
+  renderSite(site: Site, origin: string, assets: string, guides: GuideInputs): OutFile[];
   sitemap(origin: string, urls: string[]): string;
 }
 
@@ -84,13 +86,15 @@ export async function buildDevelopers(
       })
     ).module;
   const module = await load<Renderer>('src/web/developers/render.tsx');
-  const rendered: OutFile[] = module.renderSite(site, origin, options.head);
+  const rendered: OutFile[] = module.renderSite(site, origin, options.head, loadGuideInputs(root));
   const urls = rendered.flatMap((f) => (f.url ? [f.url] : []));
   rendered.push({ file: PATHS.sitemap, body: module.sitemap(origin, urls) });
   const previews = (
     await load<PreviewBuilder>('src/web/developers/playground/build.tsx')
   ).blueprintPreviews(root, origin);
   rendered.push({ file: PATHS.previews, body: previews.json }, ...previews.files);
+  // The ⌘K index: one file, fetched on the first search; the build fails past its 150 kB gzip budget.
+  rendered.push(searchIndexFile(site));
 
   const manifest: Manifest = {};
   for (const f of rendered) {

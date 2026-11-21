@@ -76,18 +76,22 @@ export const DEV_COPY = {
     status: 'Status',
   },
   slots: {
-    quickstart: {
-      title: 'Quickstart',
-      line: 'Not available yet. A sandbox, a first request and your pass, live.',
-    },
     playground: {
       title: 'Playground',
       line: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
     },
     guides: {
       title: 'Guides',
-      line: 'Not available yet. Ten recipes, each ending in a working file.',
+      line: 'Ten recipes. Each runs in your sandbox and ends at a test preview.',
     },
+  },
+  guides: {
+    title: 'Guides',
+    openConsole: 'Open in console',
+    consoleHint: 'Opens the console with this request filled in.',
+    copyForAi: 'Copy for AI',
+    markdown: 'Markdown',
+    operations: 'Operations',
   },
 } as const;
 

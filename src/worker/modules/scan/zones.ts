@@ -13,6 +13,7 @@ import { addDueRecompute } from './occupancy/recompute.ts';
 import { addZoneTapOut } from './occupancy/service.ts';
 import { accessTemplates } from './repo-access.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
   addZoneArchive,
   addZoneInsert,
@@ -48,10 +49,11 @@ export async function listZones(
   mode: Mode,
 ) {
   assertAuthority(authority, query.orgId, 'scanning:read');
-  const [rows, templates, checked] = await Promise.all([
+  const [rows, templates, checked, clock] = await Promise.all([
     orgZoneRows(ctx.env.DB, query.orgId),
     accessTemplates(ctx.env.DB, query.orgId),
     checkedAtByZone(ctx.env.DB, query.orgId, mode),
+    readOrgTimeZone(ctx.env.DB, query.orgId),
   ]);
   const plans = plansByZone(rows, templates);
   const shown = treeOrder(
@@ -60,7 +62,7 @@ export async function listZones(
   const start = query.cursor ? shown.findIndex((r) => r.id === query.cursor) + 1 : 0;
   const page = shown.slice(start, start + query.limit);
   return {
-    items: page.map((r) => toDto(r, rows, plans.get(r.id) ?? [], checked.get(r.id) ?? [])),
+    items: page.map((r) => toDto(r, rows, plans.get(r.id) ?? [], checked.get(r.id) ?? [], clock)),
     nextCursor: start + query.limit < shown.length ? (page.at(-1)?.id ?? null) : null,
   };
 }
@@ -74,13 +76,16 @@ function mutationError(error: unknown): never {
   throw error;
 }
 
-/** Clear at needs a clock: a root zone's time zone. Checked for the zone and every zone below it. */
-function assertClocks(rows: readonly ZoneRow[], id: string): void {
+/** Clear at needs a clock: a root zone's time zone, else the org's. Checked for the zone and every zone below it. */
+function assertClocks(rows: readonly ZoneRow[], id: string, orgTimeZone: string | null): void {
   const index = indexZones(rows);
   const byId = new Map(rows.map((r) => [r.id, r]));
   for (const node of subtree(index, id))
-    if (byId.get(node.id)?.clearAt && effectiveTimeZone(index, node.id) === null)
-      throw invalid('Clear at needs a time zone on the top zone.', 'ZONE_CLEAR_NEEDS_TIME_ZONE');
+    if (byId.get(node.id)?.clearAt && effectiveTimeZone(index, node.id, orgTimeZone) === null)
+      throw invalid(
+        'Set a time zone on the top zone or the organization.',
+        'ZONE_CLEAR_NEEDS_TIME_ZONE',
+      );
 }
 
 export async function createZone(
@@ -121,6 +126,7 @@ export async function createZone(
   assertClocks(
     [...rows, { ...values, orgId: input.orgId, archivedAt: null, updatedAt: now, sessions: 0 }],
     id,
+    await readOrgTimeZone(ctx.env.DB, input.orgId),
   );
   const g = adminGrant(
     ctx,
@@ -192,9 +198,11 @@ export async function updateZone(
     throw invalid('Turn on tracking first.', 'ZONE_NEEDS_TRACKING');
   if (next.hardLimit && next.capacity === null)
     throw invalid('Set a capacity first.', 'ZONE_NEEDS_CAPACITY');
+  const orgClock = await readOrgTimeZone(ctx.env.DB, orgId);
   assertClocks(
     rows.map((r) => (r.id === id ? next : r)),
     id,
+    orgClock,
   );
   const now = ctx.clock.now();
   const tree = subtree(indexZones(rows), id).map((n) => n.id);
@@ -252,6 +260,7 @@ export async function updateZone(
         rows.map((r) => (r.id === id ? next : r)),
         clock ? tree : [id],
         now,
+        orgClock,
       );
   }
   g.add(

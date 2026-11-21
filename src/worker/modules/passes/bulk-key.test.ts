@@ -16,7 +16,8 @@ beforeAll(async () => {
 });
 
 /** The fake workflow never finishes a run; mark them done so the next start is not a duplicate. */
-const settle = () => run(kit.env.DB, "UPDATE workflow_runs SET status = 'complete'", []);
+const settle = () =>
+  run(kit.env.DB, "UPDATE workflow_runs SET status = 'complete', run_guard = NULL", []);
 
 const reissue = async (
   scopes: string[],
@@ -110,6 +111,23 @@ describe('POST /passes/bulk-reissue takes a passes:write key in its own org', ()
     });
     expect(kit.workflow.created).toHaveLength(0);
     await settle();
+    expect((await reissue(['passes:write'])).status).toBe(202);
+  });
+
+  it('lets only one of two simultaneous starts of a target through', async () => {
+    await settle();
+    kit.workflow.created.length = 0;
+    const [a, b] = await Promise.all([reissue(['passes:write']), reissue(['passes:write'])]);
+    expect([a.status, b.status].sort()).toEqual([202, 409]);
+    const loser = a.status === 409 ? a : b;
+    expect(await loser.json()).toMatchObject({ code: 'BULK_RUN_ACTIVE' });
+    expect(kit.workflow.created).toHaveLength(1);
+  });
+
+  it('frees the guard of a run that never finished after an hour', async () => {
+    await settle();
+    expect((await reissue(['passes:write'])).status).toBe(202);
+    kit.clock.advance(61 * 60_000);
     expect((await reissue(['passes:write'])).status).toBe(202);
   });
 

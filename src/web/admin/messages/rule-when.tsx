@@ -124,7 +124,7 @@ export function RuleWhen({
       {lastScan ? null : (
         <SwitchRow
           label="Every year"
-          help={errors.yearly ?? 'Repeats on the same date each year, like a birthday.'}
+          help={errors.yearly}
           checked={state.yearly}
           disabled={state.unit !== 'day'}
           onCheckedChange={(yearly) => onChange({ yearly })}

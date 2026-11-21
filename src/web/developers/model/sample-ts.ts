@@ -14,7 +14,8 @@ export type SampleOp = Pick<
   | 'download'
   | 'paged'
   | 'sdkCall'
->;
+> &
+  Partial<Pick<OpView, 'noContent' | 'cursorList'>>;
 
 /** The JSON body to send, when the operation takes one. */
 export function bodyOf(op: SampleOp): Json | undefined {

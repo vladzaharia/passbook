@@ -124,7 +124,6 @@ export function IdleView({
             <h2 data-operator-heading tabIndex={-1}>
               {I.none}
             </h2>
-            <p>{I.noneHint}</p>
           </div>
         )}
       </section>

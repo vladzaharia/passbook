@@ -43,6 +43,13 @@ export interface SdkOp {
   /** The query parameter that carries the next page's cursor. */
   cursor?: string;
   typeName: string;
+  /** The raw schemas the type text above was written from, for generators of other languages. */
+  schemas: {
+    path: Array<{ name: string; schema: Schema }>;
+    query: Array<{ name: string; schema: Schema; required: boolean }>;
+    body?: Schema;
+    result?: Schema;
+  };
 }
 
 const METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
@@ -140,6 +147,16 @@ function operationOf(doc: OpenApiDoc, path: string, http: string, op: Operation)
     idempotent,
     ...(cursor ? { cursor } : {}),
     typeName,
+    schemas: {
+      path: pathParams.map((p) => ({ name: p.name, schema: (byName.get(p.name) as Param).schema })),
+      query: queryParams.map((p) => ({
+        name: p.name,
+        schema: p.schema,
+        required: p.required === true,
+      })),
+      ...(bodySchema ? { body: bodySchema } : {}),
+      ...(okSchema ? { result: okSchema } : {}),
+    },
   };
 }
 

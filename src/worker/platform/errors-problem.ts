@@ -1,6 +1,7 @@
 import { HTTPException } from 'hono/http-exception';
 import { ZodError } from 'zod';
 import { AppError, type FieldIssue } from './errors-core.ts';
+import { isInternalCode } from './internal-codes.ts';
 
 export interface Problem {
   type: string;
@@ -57,7 +58,7 @@ export function toProblem(
   let limit: number | undefined;
   let used: number | undefined;
 
-  if (error instanceof AppError) {
+  if (error instanceof AppError && !isInternalCode(error.code)) {
     ({ status, code, issues, headers, feature, limit, used } = error);
     detail = error.message;
   } else if (error instanceof ZodError) {

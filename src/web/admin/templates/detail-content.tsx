@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
 import { previewSource } from '../../channel-previews/source.ts';
+import { BELOW_LG, PHONE, useMediaQuery } from '../../lib/media.ts';
 import { useMode } from '../../lib/mode.ts';
 import { useMintedOnArrival } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -17,7 +18,6 @@ import {
   EmptyState,
   ErrorState,
   JsonViewer,
-  KeyValue,
   Skeleton,
   Tabs,
   TabsContent,
@@ -33,7 +33,7 @@ import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
 import type { templateDetailSearchSchema } from './search.ts';
-import { DuplicateDialog } from './template-dialogs.tsx';
+import { DuplicateDialog, OrgDialog } from './template-dialogs.tsx';
 import {
   type TemplateCreated,
   TemplateCreatedCallout,
@@ -98,6 +98,12 @@ export function TemplateDetailContent({
     if (minted) setMint(1);
   }, [minted]);
   const [duplicate, setDuplicate] = useState(false);
+  // The tablet layout shows the version beside the pass; the card above would repeat it.
+  const belowLg = useMediaQuery(BELOW_LG);
+  const phone = useMediaQuery(PHONE);
+  const tablet = belowLg && !phone;
+  const [changingOrg, setChangingOrg] = useState(false);
+  const canAssign = canAuthor && isAdmin;
   const baked = t.origin === 'baked';
   const archived = t.status === 'archived';
   // Hashes stay in the Versions tab; versions show by number. The live version and the newest
@@ -131,7 +137,7 @@ export function TemplateDetailContent({
             assetNames={preview.data.assetNames}
             enter={size !== 'sheet' && !minted && deal}
             mint={mint}
-            label={candidate ? 'Latest draft' : (activeLabel ?? undefined)}
+            label={candidate ? 'Latest draft' : undefined}
             // Arrived from an upload or a duplicate: the buddy waves from the Front / Details row.
             beside={
               minted ? (
@@ -147,6 +153,27 @@ export function TemplateDetailContent({
       <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
     );
 
+  const versionBlock = (
+    <div className="grid gap-3">
+      <h2 className="text-xl font-semibold">{activeLabel ?? 'No active version'}</h2>
+      {draftLabel ? (
+        <p className="text-sm">
+          <span className="text-fg-muted">Latest draft: </span>
+          {draftLabel}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {canEdit && !baked && !archived ? (
+          <Button asChild>
+            <Link to="/admin/templates/upload" search={{ templateId: t.id, orgId: scope.orgId }}>
+              Upload version
+            </Link>
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+
   return (
     <>
       <TemplateDetailHeader
@@ -159,40 +186,15 @@ export function TemplateDetailContent({
         canOperate={canOperate}
         lifecycleMenu={life.menu}
         onDuplicate={() => setDuplicate(true)}
+        onChangeOrg={canAssign ? () => setChangingOrg(true) : undefined}
         onScanPasses={scanning.canScan ? scanning.scan : undefined}
         scanPending={scanning.pending}
       />
-      <Card className="mb-6">
-        <CardBody className="grid gap-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-fg-muted">
-            Active version
-          </p>
-          <h2 className="text-xl font-semibold">{activeLabel ?? 'No active version'}</h2>
-          {draftLabel ? (
-            <p className="text-sm">
-              <span className="text-fg-muted">Latest draft: </span>
-              {draftLabel}
-            </p>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            {canEdit && !baked && !archived ? (
-              <Button asChild>
-                <Link
-                  to="/admin/templates/upload"
-                  search={{ templateId: t.id, orgId: scope.orgId }}
-                >
-                  Upload version
-                </Link>
-              </Button>
-            ) : null}
-            <Button asChild variant="outline">
-              <Link to="." search={{ tab: 'versions', orgId: scope.orgId }}>
-                View versions
-              </Link>
-            </Button>
-          </div>
-        </CardBody>
-      </Card>
+      {tablet ? null : (
+        <Card className="mb-6">
+          <CardBody>{versionBlock}</CardBody>
+        </Card>
+      )}
       {life.notice}
       {canAuthor && created.shown && created.mark ? (
         <div className="mb-6">
@@ -219,14 +221,7 @@ export function TemplateDetailContent({
             />
           ) : null
         }
-        summary={
-          <KeyValue
-            items={[
-              { label: 'Active version', value: activeLabel },
-              { label: 'Latest draft', value: draftLabel },
-            ]}
-          />
-        }
+        summary={versionBlock}
       >
         <Tabs
           value={tab}
@@ -243,7 +238,7 @@ export function TemplateDetailContent({
             <TabsTrigger value="inputs">Inputs</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
-            <TemplateOverview template={t} canAssign={canAuthor && isAdmin} />
+            <TemplateOverview template={t} canAssign={canAssign} />
           </TabsContent>
           <TabsContent value="versions">
             {scope.orgId && scope.membership ? (
@@ -290,6 +285,14 @@ export function TemplateDetailContent({
           template={t}
           open={duplicate}
           onOpenChange={setDuplicate}
+        />
+      ) : null}
+      {canAssign ? (
+        <OrgDialog
+          key={String(changingOrg)}
+          template={t}
+          open={changingOrg}
+          onOpenChange={setChangingOrg}
         />
       ) : null}
       {life.dialogs}

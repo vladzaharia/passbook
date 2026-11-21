@@ -3,6 +3,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import {
+  errorCodesFile,
   operationTypesFile,
   resourceFiles,
   resourceTree,
@@ -14,11 +15,16 @@ import { type OpenApiDoc, type SdkNames, sdkOperations } from './lib/sdk-ts-ops.
 const root = resolve(import.meta.dirname, '..');
 export const OUT = 'sdk/typescript/src/generated';
 
+/** The codes of docs/api/errors.json. */
+export const errorCodes = (catalog: { codes: { code: string }[] }): string[] =>
+  catalog.codes.map((c) => c.code);
+
 /** Generated files by path under OUT. */
-export function generate(doc: OpenApiDoc, names: SdkNames): Map<string, string> {
+export function generate(doc: OpenApiDoc, names: SdkNames, codes: string[]): Map<string, string> {
   const ops = sdkOperations(doc, names);
   const files = new Map<string, string>([
     ['schemas.ts', schemasFile(doc.components.schemas)],
+    ['error-codes.ts', errorCodesFile(codes)],
     ['operation-types.ts', operationTypesFile(ops, new Set(Object.keys(doc.components.schemas)))],
   ]);
   const tree = resourceTree(ops);
@@ -45,7 +51,11 @@ export function drift(files: Map<string, string>, dir: string): string[] {
 
 function main(): void {
   const read = <T>(file: string): T => JSON.parse(readFileSync(resolve(root, file), 'utf8')) as T;
-  const files = generate(read('docs/api/openapi.v1.json'), read('docs/api/sdk-names.json'));
+  const files = generate(
+    read('docs/api/openapi.v1.json'),
+    read('docs/api/sdk-names.json'),
+    errorCodes(read('docs/api/errors.json')),
+  );
   const dir = resolve(root, OUT);
   if (process.argv.includes('--check')) {
     const bad = drift(files, dir);

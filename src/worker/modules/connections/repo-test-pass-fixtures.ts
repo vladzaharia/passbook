@@ -1,5 +1,6 @@
 import { fixtureToken, makeTemplate, persistTemplate } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { ensurePlatformIdentity } from '../identities/repo.ts';
 import { PLATFORM_IDENTITY_ID } from '../identities/resolver.ts';
 import type { Kit } from './test-kit.ts';
@@ -14,7 +15,7 @@ export async function seedPass(
   reservedPassId?: string,
 ) {
   const template = makeTemplate({ id: kit.templateId, orgId }).resolved;
-  await ensurePlatformIdentity(kit.env, kit.clock.now());
+  await ensurePlatformIdentity(kit.env, kit.clock.now(), nullLogger);
   await persistTemplate(kit, template);
   const id = reservedPassId ?? kit.ids.id();
   const pass = {

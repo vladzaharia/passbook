@@ -55,9 +55,9 @@ beforeAll(async () => {
         identityCalls.push('byId');
         return real.byId(id);
       },
-      async forOrg(orgId, identityId) {
+      async forOrg(orgId, identityId, now) {
         identityCalls.push('forOrg');
-        return real.forOrg(orgId, identityId);
+        return real.forOrg(orgId, identityId, now);
       },
       async byRow(row) {
         identityCalls.push('byRow');

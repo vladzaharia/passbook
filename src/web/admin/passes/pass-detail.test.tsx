@@ -1025,8 +1025,7 @@ describe('pass detail: tabs', () => {
         '/api/v1/passes/p1/resend-email': () => json({ ok: true }, 202),
       }),
     });
-    expect(await screen.findByText(/original recipient is not recorded here/)).toBeInTheDocument();
-    const b = screen.getByRole('button', { name: 'Send to current holder' });
+    const b = await screen.findByRole('button', { name: 'Send to current holder' });
     await user.click(b);
     await waitFor(() => {
       const call = server.calls.find((c) => c.path === '/api/v1/passes/p1/resend-email');

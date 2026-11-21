@@ -140,7 +140,6 @@ function AssignToPerson({
       <Dialog open onOpenChange={(o) => !o && onClose()}>
         <DialogContent
           title={TAG_COPY.dialog.title}
-          description={`To ${name}`}
           footer={
             <Button variant="outline" onClick={onClose}>
               Cancel
@@ -165,7 +164,7 @@ function AssignToPerson({
   if (!pass.data) {
     return (
       <Dialog open onOpenChange={(o) => !o && onClose()}>
-        <DialogContent title={TAG_COPY.dialog.title} description={`To ${name}`}>
+        <DialogContent title={TAG_COPY.dialog.title}>
           {pass.isError ? (
             <ErrorState inline error={pass.error} onRetry={() => void pass.refetch()} />
           ) : (

@@ -98,6 +98,10 @@ export interface OpView {
   binary: boolean;
   /** The SDK hands back the `Response`: a GET with no JSON body. */
   download: boolean;
+  /** A write that answers with no JSON body: the SDK returns nothing. */
+  noContent: boolean;
+  /** The Python and Go SDKs return a page iterator for it (`paged` is the subset whose example shows pages). */
+  cursorList: boolean;
   /** Guide snippets that call this operation. */
   examples: Example[];
   /** What the code samples send: the body, the query the call needs and any extra headers. */

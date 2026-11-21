@@ -9,10 +9,13 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { DEVELOPERS_INDEXABLE } from '../src/shared/developers.ts';
+import { DEVELOPERS_INDEXABLE, PATHS } from '../src/shared/developers.ts';
 import { loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
+import { INDEX_BUDGET_GZIP } from '../src/web/developers/search/build.ts';
+import type { SearchIndex } from '../src/web/developers/search/types.ts';
 import { buildDevelopers, headTags, type Manifest } from './build-developers.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -102,11 +105,11 @@ describe('build-developers', () => {
         const [path, hash] = href.split('#') as [string, string | undefined];
         if (!path.startsWith('/') || outside.some((o) => path.startsWith(o))) continue;
         expect(served.has(path), `${url} -> ${href}`).toBe(true);
-        if (hash && !path.endsWith('.md')) {
+        // The console's operation ids come from its island, not from the page.
+        if (hash && !path.endsWith('.md') && path !== '/developers/console') {
           const asset = manifest[path]?.asset ?? '';
           const file = asset.endsWith('/') ? `${asset}index.html` : `${asset}.html`;
-          if (path !== '/developers/guides')
-            expect(ids(read(file)).has(hash), `${url} -> ${href}`).toBe(true);
+          expect(ids(read(file)).has(hash), `${url} -> ${href}`).toBe(true);
         }
       }
     }
@@ -170,6 +173,32 @@ describe('build-developers', () => {
     for (const item of data.items) {
       expect(manifest[item.paper.src]?.type, item.slug).toBe('image/svg+xml');
       expect(read(item.paper.src).startsWith('<svg'), item.slug).toBe(true);
+    }
+  });
+
+  it('writes the ⌘K index, and every link in it lands on a page and an anchor the build made', () => {
+    const entry = manifest[PATHS.searchIndex];
+    expect(entry?.type).toBe('application/json; charset=utf-8');
+    const index = JSON.parse(read(PATHS.searchIndex)) as SearchIndex;
+    expect(index.v).toBe(1);
+    expect(gzipSync(read(PATHS.searchIndex)).length).toBeLessThan(INDEX_BUDGET_GZIP);
+    const rows = [
+      ...index.errors,
+      ...index.ops,
+      ...index.guides,
+      ...index.events,
+      ...index.actions,
+    ];
+    expect(rows.length).toBeGreaterThan(500);
+    for (const { href } of rows) {
+      const [path = '', anchor] = href.split('#');
+      // The admin app's own pages are not the portal's.
+      if (path.startsWith('/admin/')) continue;
+      const page = manifest[path];
+      expect(page?.type, href).toMatch(/^text\/html/);
+      if (!anchor) continue;
+      const file = page?.asset.endsWith('/') ? `${page.asset}index.html` : `${page?.asset}.html`;
+      expect(ids(read(file)), href).toContain(anchor);
     }
   });
 

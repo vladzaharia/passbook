@@ -129,6 +129,7 @@ describe('islands', () => {
       'logs',
       'org-chip',
       'playground',
+      'quickstart',
       'run',
       'snippets',
       'webhook-tester',

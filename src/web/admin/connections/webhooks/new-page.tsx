@@ -97,11 +97,7 @@ export function NewWebhookPage() {
     return (
       <>
         <PageHeader title="Add endpoint" breadcrumbs={crumbs} />
-        <EmptyState
-          art="building"
-          title="Choose an organization"
-          description="Choose an organization in the top bar to add a webhook."
-        />
+        <EmptyState art="building" title="Choose an organization" />
       </>
     );
 
@@ -152,7 +148,6 @@ export function NewWebhookPage() {
               disabled={!canManage}
               orgId={orgId}
               urlHelp="https only. A signing secret is shown once after you add this."
-              eventsHelp="Recommended events are selected. Change them any time."
               checking={checking}
               onUrlBlur={() => void dryRun()}
             />

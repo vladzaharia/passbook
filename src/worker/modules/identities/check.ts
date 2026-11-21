@@ -63,7 +63,7 @@ export async function checkIdentityById(
 /** Daily: sync the platform row, check every identity, audit expiry inside the warning window. */
 export async function runDailyIdentityChecks(ctx: ServiceContext): Promise<void> {
   try {
-    await ensurePlatformIdentity(ctx.env, ctx.clock.now());
+    await ensurePlatformIdentity(ctx.env, ctx.clock.now(), ctx.log);
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     ctx.log.info('identity.platform_not_configured', { code: error.code });

@@ -131,7 +131,7 @@ export default function InsideHost({
         description={
           roll.call && roll.call.counts.unconfirmed > 0
             ? fill(COPY.endConfirm, { n: roll.call.counts.unconfirmed })
-            : COPY.endConfirmNone
+            : undefined
         }
         confirmLabel={COPY.end}
         onConfirm={async () => {

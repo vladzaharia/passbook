@@ -20,6 +20,7 @@ import {
   insertPlatformAdminBulkWorkflowRun,
   insertTenantBulkWorkflowRun,
   insertWorkflowRun,
+  releaseStaleRunGuard,
   setWorkflowStatus,
 } from './repo.ts';
 import { reissuePrincipalOf } from './repo-bulk-principal.ts';
@@ -27,6 +28,14 @@ import { reserveWorkflowReleases } from './repo-workflow-releases.ts';
 import type { Actor } from './service.ts';
 
 const ACTIVE_RUN_WINDOW_MS = 60 * 60_000;
+
+const runActive = (running: string) =>
+  new AppError(
+    'BULK_RUN_ACTIVE',
+    409,
+    `A rebuild of this target is already running (${running}). Wait for it to finish.`,
+    { issues: [{ path: 'workflowInstanceId', message: running }] },
+  );
 
 async function resolveUnscoped(ctx: ServiceContext, id: string, version: string) {
   try {
@@ -112,21 +121,30 @@ export async function startBulkReissue(
 
   const targetId = templateId ?? body.identityId ?? orgId ?? '';
   // A key may not stack rebuilds: one active run per org, mode and target. A stuck run frees the target after an hour.
-  if (options?.authority?.kind === 'api_key' && orgId !== null && options.mode) {
+  const runGuard =
+    options?.authority?.kind === 'api_key' && orgId !== null && options.mode
+      ? `${orgId}|${options.mode}|${targetId}`
+      : undefined;
+  if (runGuard !== undefined && orgId !== null && options?.mode) {
+    await releaseStaleRunGuard(ctx.env.DB, runGuard, ctx.clock.now() - ACTIVE_RUN_WINDOW_MS);
     const running = await activeBulkRun(ctx.env.DB, {
       orgId,
       targetId,
       mode: options.mode,
       since: ctx.clock.now() - ACTIVE_RUN_WINDOW_MS,
     });
-    if (running)
-      throw new AppError(
-        'BULK_RUN_ACTIVE',
-        409,
-        `A rebuild of this target is already running (${running}). Wait for it to finish.`,
-        { issues: [{ path: 'workflowInstanceId', message: running }] },
-      );
+    if (running) throw runActive(running);
   }
+  // The unique guard settles two starts that both passed the check above: the loser's insert is refused.
+  const refusedForActiveRun = async (): Promise<AppError> =>
+    runActive(
+      (await activeBulkRun(ctx.env.DB, {
+        orgId: orgId ?? '',
+        targetId,
+        mode: options?.mode ?? '',
+        since: 0,
+      })) ?? 'unknown',
+    );
   const instanceId = `bulk-${ctx.ids.id()}`;
   if (cause === 'template_upgrade') {
     const reserved = await reserveWorkflowReleases(ctx.env.DB, {
@@ -139,10 +157,12 @@ export async function startBulkReissue(
       // An omitted version captures each scope's own effective release.
       version: body.version ?? null,
       now: ctx.clock.now(),
+      ...(runGuard === undefined ? {} : { runGuard }),
       ...(release ? { expectedRelease: release } : {}),
       ...(options?.authority ? { authority: options.authority } : {}),
       ...(options?.platformSession ? { platformSession: options.platformSession } : {}),
     });
+    if (reserved === 'run_active') throw await refusedForActiveRun();
     if (reserved === 'forbidden') throw new ForbiddenError();
     if (reserved === 'release_changed')
       throw new ConflictError(
@@ -154,9 +174,13 @@ export async function startBulkReissue(
     const now = ctx.clock.now();
     const inserted = await insertTenantBulkWorkflowRun(
       ctx.env.DB,
-      { instanceId, orgId, targetId, now },
+      { instanceId, orgId, targetId, now, ...(runGuard === undefined ? {} : { runGuard }) },
       options.authority,
-    );
+    ).catch(async (error: unknown) => {
+      if (error instanceof Error && error.message.includes('workflow_runs.run_guard'))
+        throw await refusedForActiveRun();
+      throw error;
+    });
     if (!inserted) throw new ForbiddenError();
   } else if (options?.platformSession) {
     const now = ctx.clock.now();

@@ -179,9 +179,6 @@ export function DeviceSheet({
                       Reset
                     </Button>
                   </div>
-                  <p className="text-xs text-fg-muted">
-                    These settings inherit from the session unless changed here.
-                  </p>
                   <DeviceOverrides value={overrides} onChange={setOverrides} session={session} />
                 </section>
               ) : (
@@ -199,11 +196,6 @@ export function DeviceSheet({
                 >
                   Save device
                 </Button>
-                {!dirty && !device.revoked ? (
-                  <p className="text-center text-xs text-fg-muted">
-                    Change a setting to save. Overrides inherit from the session.
-                  </p>
-                ) : null}
                 <div className="grid grid-cols-2 gap-3">
                   {device.signIn === 'paired' && !device.revoked ? (
                     <Button variant="outline" iconStart={<QrCode aria-hidden />} onClick={onPair}>

@@ -77,11 +77,7 @@ function ConnectionDetailLoader({
     return (
       <>
         <PageHeader title="Connection" breadcrumbs={crumbs} />
-        <EmptyState
-          art="building"
-          title="Choose an organization"
-          description="Choose an organization in the top bar to continue."
-        />
+        <EmptyState art="building" title="Choose an organization" />
       </>
     );
   }

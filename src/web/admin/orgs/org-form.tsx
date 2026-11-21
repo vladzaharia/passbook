@@ -166,8 +166,7 @@ export function OrgForm({ org, canChooseIdentity }: { org: Org; canChooseIdentit
                   error={errors.defaultIdentityId}
                   help={
                     <>
-                      The default for new passes, not a migration of existing passes. Only this
-                      organization&apos;s and platform identities can be selected.
+                      For new passes only.
                       {identities.isPending
                         ? ' Loading identities…'
                         : identities.isError
@@ -211,7 +210,6 @@ export function OrgForm({ org, canChooseIdentity }: { org: Org; canChooseIdentit
                 fallback={DEFAULT_ACCENT}
                 empty="Teal"
                 error={errors.accent}
-                help="Subtle accent on scan screens and the org avatar. Empty uses teal."
                 onChange={(accent) => patch({ accent })}
               />
             </FormGrid>

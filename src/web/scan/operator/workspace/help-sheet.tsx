@@ -35,7 +35,7 @@ export function HelpSheet({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title={H.title} description={H.scan} size="md">
+      <DialogContent title={H.title} size="md">
         <div className="op-help">
           {GROUPS.map((group) => {
             const list = rows.filter((row) => row.group === group);
