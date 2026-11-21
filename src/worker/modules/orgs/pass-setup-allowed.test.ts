@@ -215,6 +215,7 @@ async function patchAs(
   scopes: string[],
   body: object,
   mode: 'test' | 'live' = 'test',
+  dryRun = false,
 ) {
   const headers = (await makeApiKey(k.f, { scopes, orgId, mode })).headers;
   const app = createApp({
@@ -229,7 +230,7 @@ async function patchAs(
   const read = await app.request(base, { headers }, k.env);
   const { revision } = (await read.json()) as { revision: string };
   const res = await app.request(
-    base,
+    dryRun ? `${base}?dryRun=true` : base,
     {
       method: 'PATCH',
       headers: { ...headers, 'content-type': 'application/json' },
@@ -237,7 +238,10 @@ async function patchAs(
     },
     k.env,
   );
-  return { status: res.status, json: (await res.json()) as { code?: string } };
+  return {
+    status: res.status,
+    json: (await res.json()) as { code?: string } & Record<string, any>,
+  };
 }
 
 describe('who may turn an enrolment on', () => {
@@ -291,6 +295,37 @@ describe('who may turn an enrolment on', () => {
       const refused = await patchAs(org.id, ['org:read', 'wallet:write'], body);
       expect(refused.status, JSON.stringify(body)).toBe(403);
     }
+  });
+
+  it('on an already allowed channel the dry run shows the account the apply turns on', async () => {
+    restore = setWalletProvidersEnabledForTest(true, 'test');
+    const { org } = await ready();
+    const scopes = ['org:read', 'wallet:write'];
+    const dry = await patchAs(org.id, scopes, { channels: { google: 'allowed' } }, 'test', true);
+    expect(dry.status).toBe(200);
+    expect(dry.json.impact.enrolments).toEqual(['google']);
+    expect(dry.json.view.channels.google.account.state).toBe('on');
+    expect((await enrolment(org.id))?.enabled_at).toBeNull();
+    const done = await patchAs(org.id, scopes, { channels: { google: 'allowed' } });
+    expect(done.status).toBe(200);
+    expect(done.json.impact.enrolments).toEqual(dry.json.impact.enrolments);
+    expect(done.json.view.channels.google.account.state).toBe(
+      dry.json.view.channels.google.account.state,
+    );
+  });
+
+  it('a key holding brand:manage and wallet:write still takes the wallet path', async () => {
+    restore = setWalletProvidersEnabledForTest(true, 'test');
+    const { org } = await ready();
+    const done = await patchAs(org.id, ['org:read', 'brand:manage', 'wallet:write'], {
+      channels: { google: 'allowed' },
+    });
+    expect(done.status).toBe(200);
+    expect((await enrolment(org.id))?.enabled_at).not.toBeNull();
+    const kit = await patchAs(org.id, ['org:read', 'brand:manage', 'wallet:write'], {
+      brand: { accent: '#112233' },
+    });
+    expect(kit.status).toBe(200);
   });
 
   it('a member with integrations:manage only may turn an account on, nothing else', async () => {

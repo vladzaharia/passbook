@@ -158,8 +158,7 @@ export function planOf(
     values['channels.blocked'] = [...list];
     if (!same(nfc, settings['nfc.tags'])) values['nfc.tags'] = nfc;
   }
-  const enable = allowed.filter((c): c is WalletProvider => ready.has(c as WalletProvider));
-
+  const enable = [...ready];
   const nextBranding = branding ? next : null;
   const before = { name: b.name.value ?? '', branding: JSON.stringify(stored) };
   const after = {

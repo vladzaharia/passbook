@@ -47,7 +47,17 @@ async function writeAuthority(
   patch: z.infer<typeof PassSetupPatchSchema>,
 ) {
   try {
-    return await tenantAuthorityOf(ctx, auth, orgId, 'org:manage');
+    const authority = await tenantAuthorityOf(ctx, auth, orgId, 'org:manage');
+    // A key holding wallet:write as well as brand:manage is checked as brand:manage (first in the rule); for a
+    // wallet-shaped body it takes the wallet path. The grant re-proves the scope it names.
+    if (
+      authority.kind === 'api_key' &&
+      authority.scope !== 'org:write' &&
+      walletShaped(patch) &&
+      authority.scopes.includes('wallet:write')
+    )
+      return { ...authority, scope: 'wallet:write' as const };
+    return authority;
   } catch (error) {
     if (!(error instanceof ForbiddenError) || !walletShaped(patch)) throw error;
     return tenantAuthorityOf(ctx, auth, orgId, 'integrations:manage');

@@ -112,7 +112,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'brand:manage': 'Manage brand kit',
   'org:read': 'Read organization setup',
   'org:write': 'Change organization setup',
-  'wallet:write': 'Turn wallet accounts on',
+  'wallet:write': 'Turn on wallet accounts (channel already allowed)',
   'scanning:write': 'Set up scanning',
   'scan-setup:read': 'Read scanner setups',
   'scanning:admin': 'Set up scanning with staff and devices',

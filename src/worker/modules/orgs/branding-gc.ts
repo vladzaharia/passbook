@@ -90,7 +90,13 @@ export async function sweepBrandingGc(ctx: ServiceContext): Promise<void> {
       }
       if (keysOf(orgId, current).includes(key)) continue;
       if (await isBrandingKeyQueued(ctx.env.DB, orgId, key)) continue;
-      await ctx.env.BUCKET.delete(key);
+      try {
+        await ctx.env.BUCKET.delete(key);
+      } catch (error) {
+        // The row was claimed: put it back so the next sweep tries again.
+        await queueBrandingKeys(ctx.env.DB, orgId, [key], ctx.clock.now());
+        throw error;
+      }
     } catch (error) {
       ctx.log.error('branding.gc_failed', { orgId, code: 'BRANDING_GC_FAILED', error });
     }

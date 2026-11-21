@@ -36,12 +36,9 @@ const missing = (path: string) =>
 /** Staged keys are queued this long past the advertised `expiresAt`, so a save at the deadline still finds them. */
 const SLACK_MS = 3_600_000;
 
-const concat = (a: Uint8Array, b: Uint8Array) => {
-  const out = new Uint8Array(a.length + b.length);
-  out.set(a);
-  out.set(b, a.length);
-  return out;
-};
+/** The version of a pair: the digest of both digests (each 64 characters, so no split of the bytes can collide). */
+const versionOf = async (x3: Uint8Array, x2: Uint8Array) =>
+  sha256Hex(new TextEncoder().encode(`${await sha256Hex(x3)}${await sha256Hex(x2)}`));
 
 /**
  * Stores a checked PNG under a content-addressed key and queues it for the sweep, which deletes it after the
@@ -80,7 +77,7 @@ export async function stageBrandAsset(
     size = pair.size;
     sha = await sha256Hex(pair.x3);
     // Without an @2x the version is the sha itself: the one file is the public image's own bytes.
-    version = pair.x2 ? await sha256Hex(concat(pair.x3, pair.x2)) : sha;
+    version = pair.x2 ? await versionOf(pair.x3, pair.x2) : sha;
     const keys = [brandingKey(orgId, slot, 3, version)];
     if (pair.x2) keys.push(brandingKey(orgId, slot, 2, version));
     await queue(keys);
@@ -145,7 +142,7 @@ export async function resolveStaged(
         // The version is the digest of both scales: the @2x must be the one that was staged.
         const x2 = await ctx.env.BUCKET.get(key2);
         const bytes2 = x2 ? new Uint8Array(await x2.arrayBuffer()) : null;
-        if (!bytes2 || (await sha256Hex(concat(x3, bytes2))) !== version) throw missing(path);
+        if (!bytes2 || (await versionOf(x3, bytes2)) !== version) throw missing(path);
       }
       out[slot] = { sha: ref.sha, ...size, storageVersion: version };
       named.push(key, key2);
