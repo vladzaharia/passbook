@@ -125,6 +125,7 @@ describe('member photos', () => {
     const request = {
       orgId: pass.orgId,
       orgName: kit.org.name,
+      personal: false,
       branding: { logo: { sha: 'org-logo', w: 120, h: 120 } },
       passId: pass.id,
       serial: pass.serial,

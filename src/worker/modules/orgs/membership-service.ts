@@ -5,6 +5,7 @@ import {
   type OrgMember,
   type OrgMembership,
 } from '../../../shared/contracts/org-membership.ts';
+import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
@@ -37,12 +38,18 @@ import {
   revokePendingInvitation,
 } from './repo-member-writes.ts';
 import * as repo from './repo-members.ts';
+import { isPersonalOrg } from './repo-personal.ts';
 
 const TTL = 7 * 24 * 60 * 60 * 1000;
 const invalidLink = () =>
   new BadRequestError('This invitation is invalid or expired.', 'INVITATION_INVALID');
 const changed = () =>
   new ConflictError('The request could not be completed.', 'MEMBERSHIP_CONFLICT');
+/** A personal org has one member, its owner: nobody is invited and the owner is never revoked. */
+async function assertNotPersonal(ctx: ServiceContext, orgId: string): Promise<void> {
+  if (await isPersonalOrg(ctx.env.DB, orgId))
+    throw new ConflictError(PERSONAL_ORG_COPY.singleMember, 'ORG_PERSONAL_SINGLE_MEMBER');
+}
 /** Platform-admin bypass, re-verified against the live admin session inside each statement. */
 const adminFenceOf = (ctx: ServiceContext, auth: SessionAuth): repo.AdminFence =>
   auth.roles.includes('admin')
@@ -120,6 +127,7 @@ export async function inviteOrgMember(
   input: InviteOrgMember,
 ): Promise<OrgInvitation> {
   const manager = await managerOf(ctx, auth, orgId);
+  await assertNotPersonal(ctx, orgId);
   await assertNotPreviewOnly(ctx.env.DB, orgId);
   const parsed = InviteOrgMemberSchema.safeParse(input);
   if (!parsed.success) throw new ValidationError();
@@ -231,6 +239,7 @@ export async function revokeOrgMembership(
   membershipId: string,
 ): Promise<void> {
   const manager = await managerOf(ctx, auth, orgId);
+  await assertNotPersonal(ctx, orgId);
   let revoked: boolean;
   try {
     revoked = await revokeActiveMembership(ctx, manager.principal, manager.checks, membershipId, {

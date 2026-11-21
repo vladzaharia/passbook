@@ -25,6 +25,7 @@ import {
   type InsertJoinedOptions,
   type JoinedOptions,
 } from './authority-joined.ts';
+import { personalOrgInsert, personalOrgOnlyInserts } from './authority-personal.ts';
 import { joinLedgerRow, joinOnlyInserts, pinOf } from './authority-pin.ts';
 import type { GrantScope, Principal } from './authority-principal.ts';
 import { assertReceipt, type ReceiptStatement } from './authority-receipt.ts';
@@ -130,6 +131,7 @@ export class Grant {
     op: 'insert' | 'change' = 'change',
   ): GrantedStatement {
     if (verb) joinOnlyInserts(this.principal, verb);
+    if (verb) personalOrgOnlyInserts(this.purpose, verb);
     if (this.#keyed && !may) this.#limitedRefused = true;
     // A write outside the grant's `tables` is a programming error.
     const allowed = assertTableAllowed(this.purpose, this.#tables, table, op);
@@ -155,6 +157,7 @@ export class Grant {
     options?: InsertOptions,
   ): GrantedStatement {
     joinLedgerRow(this.principal, table, columns, values);
+    personalOrgInsert(this.#input, table, columns, values, options?.from !== undefined);
     return this.#write(
       null,
       keyMayRow(table, options?.from),
@@ -228,6 +231,7 @@ export class Grant {
 
   /** Validated read and write parts from side builders, appended in call order (see `readPart`, `writePart`). */
   include(...parts: GrantPart[]): GrantedStatement[] {
+    personalOrgOnlyInserts(this.purpose, 'raw parts');
     // A part is checked text, not typed by table: it cannot carry a key's template limits.
     this.#limitedRefused ||= this.#keyed;
     return parts.map((p) =>
