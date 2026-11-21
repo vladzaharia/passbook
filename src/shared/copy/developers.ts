@@ -58,6 +58,7 @@ export const DEV_COPY = {
     copyAs: 'Copy as',
     examples: 'Examples',
     sdk: 'SDK',
+    sdkSoon: 'SDK coming soon',
     tryIt: 'Try it',
     signInToTry: 'Sign in to try',
     tryPlaceholder: 'The console opens here once you are signed in.',

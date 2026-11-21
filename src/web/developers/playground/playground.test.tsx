@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_BAND_COPY } from '../../../shared/copy/developer.ts';
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { encodeEdits } from './hash.ts';
 import { Playground } from './playground.tsx';
 import { builtPreviews } from './test-data.ts';
@@ -102,7 +103,7 @@ describe('playground, anonymous', () => {
     expect(await navigator.clipboard.readText()).toBe(location.href);
     await user.click(screen.getByRole('button', { name: 'Copy code' }));
     const code = await navigator.clipboard.readText();
-    expect(code).toContain('pb.passes.create');
+    expect(code).toContain(SDK_STATUS.typescript ? 'pb.passes.create' : '/passes');
     expect(code).toContain('PASSBOOK_KEY');
   });
 

@@ -1,5 +1,6 @@
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import type { CodeLang } from '../playground/hash.ts';
 import { CodeBlock } from './code-block.tsx';
 import { CopyRow } from './copy-row.tsx';
@@ -190,12 +191,14 @@ export function HomeStep({
             />
           )}
           {secret ? null : <p className="xs muted qs-note">{C.home.noKey}</p>}
-          <CopyRow
-            label={C.home.install}
-            text="npm i @passbook/sdk"
-            value="npm i @passbook/sdk"
-            onCopied={onHome}
-          />
+          {SDK_STATUS.typescript ? (
+            <CopyRow
+              label={C.home.install}
+              text="npm i @passbook/sdk"
+              value="npm i @passbook/sdk"
+              onCopied={onHome}
+            />
+          ) : null}
           {file ? (
             <CopyRow
               label={C.home.file}

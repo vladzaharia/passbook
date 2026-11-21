@@ -1,8 +1,9 @@
 import { ArrowUpRight } from 'lucide-react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { anySdk } from '../../../shared/developers-sdk.ts';
 import { operations } from '../model/dates.ts';
-import { samplesFor } from '../model/samples.ts';
+import { exampleSamples, samplesFor } from '../model/samples.ts';
 import type { ConsoleOp, Field, OpView, ResourcePage, Site } from '../model/types.ts';
 import { CopyButton, JsonBlock, SampleTabs } from '../ui/code.tsx';
 import { EnvChip } from '../ui/env-chip.tsx';
@@ -112,15 +113,7 @@ function Rail({ op, site, slot, slug }: { op: OpView; site: Site; slot: string; 
           {op.examples.map((e) => (
             <details key={e.id} className="example">
               <summary>{e.title}</summary>
-              <SampleTabs
-                id={`e-${op.anchor}-${e.id}`}
-                samples={[
-                  ...(e.curl
-                    ? [{ lang: 'curl' as const, label: 'curl', file: `${e.id}.sh`, code: e.curl }]
-                    : []),
-                  { lang: 'ts' as const, label: 'TypeScript', file: `${e.id}.ts`, code: e.ts },
-                ]}
-              />
+              <SampleTabs id={`e-${op.anchor}-${e.id}`} samples={exampleSamples(e)} />
             </details>
           ))}
         </div>
@@ -251,6 +244,7 @@ export function ResourceView({ page, site }: { page: ResourcePage; site: Site })
       <i data-island="snippets" aria-hidden="true" />
       <h1 className="h1 page-h">{page.label}</h1>
       <p className="muted mt2">
+        {anySdk() ? null : <span className="pill neutral">{DEV_COPY.reference.sdkSoon}</span>}{' '}
         {operations(page.ops.length)}. Send{' '}
         <code className="inline-code">Authorization: Bearer</code> <EnvChip />.{' '}
         <a href={`${PATHS.reference}/${page.slug}.md`}>Markdown</a>

@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { highlight } from './highlight.ts';
 import { loadInputs } from './load.ts';
 import { GROUP_ORDER, groupOf } from './resources.ts';
@@ -81,13 +82,13 @@ describe('portal model', () => {
     for (const s of samples) {
       expect(s.code, s.lang).toContain('PASSBOOK_KEY');
       expect(s.code, s.lang).not.toMatch(/pb_(live|test)_/);
-      // The SDKs own the path; curl spells it out.
+      // A published SDK owns the path; curl and the plain HTTP samples spell it out.
       expect(s.code, s.lang).toContain(
         {
           curl: '/api/v1/passes',
-          ts: 'pb.passes.create(',
-          py: 'pb.passes.create(',
-          go: 'pb.Passes.Create(',
+          ts: SDK_STATUS.typescript ? 'pb.passes.create(' : '/api/v1/passes',
+          py: SDK_STATUS.python ? 'pb.passes.create(' : '/api/v1/passes',
+          go: SDK_STATUS.go ? 'pb.Passes.Create(' : '/api/v1/passes',
         }[s.lang as 'curl'],
       );
     }
