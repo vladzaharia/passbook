@@ -174,7 +174,7 @@ private final class CustomerDisplayViewController: UIViewController, WKNavigatio
         stack.spacing = 24
         stack.translatesAutoresizingMaskIntoConstraints = false
         symbol.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 88, weight: .regular)
-        titleLabel.font = UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .largeTitle).pointSize, weight: .semibold)
+        titleLabel.font = UIFontMetrics(forTextStyle: .largeTitle).scaledFont(for: .systemFont(ofSize: 34, weight: .semibold))
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 2
         titleLabel.adjustsFontForContentSizeCategory = true
@@ -203,6 +203,10 @@ private final class CustomerDisplayViewController: UIViewController, WKNavigatio
         super.viewDidLoad()
         model.onChange = { [weak self] in self?.updateStatus() }
         updateStatus()
+        loadDisplay()
+    }
+
+    private func loadDisplay() {
         let url = URL(string: "https://\(trustedHost)/scan?customer-display=1")!
         webView.load(URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30))
     }
@@ -237,6 +241,12 @@ private final class CustomerDisplayViewController: UIViewController, WKNavigatio
             return
         }
         decisionHandler(.allow)
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        webView.isHidden = true
+        fallbackView.isHidden = false
+        loadDisplay()
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

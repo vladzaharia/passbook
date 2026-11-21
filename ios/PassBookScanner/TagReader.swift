@@ -25,13 +25,15 @@ final class TagReader: NSObject, NFCTagReaderSessionDelegate {
     private let id: String
 
     static var available: Bool { NFCTagReaderSession.readingAvailable }
+    static var isActive: Bool { current != nil }
 
     static func start(owner: ScannerHardware, id: String, prompt: String, timeoutMs: Int) {
-        guard available else { owner.onCancelled?(); return }
+        guard available else { Log.bridge.error("tag.unavailable"); owner.onCancelled?(); return }
         NFCReader.stop()
         stop()
         let reader = TagReader(owner: owner, id: id)
         guard let session = NFCTagReaderSession(pollingOption: [.iso14443], delegate: reader, queue: nil) else {
+            Log.bridge.error("tag.beginFailed")
             owner.onCancelled?()
             return
         }

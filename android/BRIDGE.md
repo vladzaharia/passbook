@@ -127,6 +127,24 @@ sends every later message with that version.
 - Tag data stays out of logs, analytics and URLs. The server stores a keyed hash
   of the UID, never the UID.
 
+## Scan gate (v2 addendum)
+
+- `hello` may carry `features:string[]`. The web sends `['scanAck']` when it
+  posts `{version, op:'scanAck', id}` as soon as it receives a native `scan`.
+- The app answers every `hello` with `ready` (current snapshot), also a repeat
+  one on the same page. The version and features are those of the latest
+  `hello`.
+- With `scanAck` the app holds the next scan only until the ack, at most 2 s,
+  and sends no `timeout` after that. Without it, the app holds until `result`
+  (15 s, then `timeout`) as before.
+- The app drops the same payload from the same source within 1500 ms. A tag
+  read the web asked for with `tagRead` is never dropped. Other scans are
+  queued, not dropped; if the queue (8) is full the app sends `busy`.
+- Additive event `{event:'busy', id?:string}`: a `tagRead` (with its `id`) was
+  refused because a read is in flight, or the scan queue is full. It does not
+  cancel the pending check. A web that does not know `busy` ignores it.
+  `cancelled` keeps its meaning: the read ended without a result.
+
 ## Backend obligations
 
 For Apple VAS, use the matching pass encryption private key to decrypt the cryptogram using the VAS ECDH/KDF/AES-GCM scheme. Validate the authenticated payload and timestamp, and map its opaque credential to the expected tenant and pass. Reject replayed cryptograms according to your policy; perform redemption/check-in changes atomically. Neither the Android `source` field, its request nonce, nor the reader timestamp authenticates a genuine reader or proves a fresh tap to the server.

@@ -5,15 +5,17 @@ import WebKit
 final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
     private let hardware = ScannerHardware()
     private var webView: WKWebView!
-    private let trustedHost = "passbook.mobile"
     private var trustedOrigin: String { "https://\(trustedHost)" }
-    private var ready = false
-    private var wireVersion = 1
-    private var armed = false
-    private var pendingID: String?
-    private var scanTimeout: Task<Void, Never>?
-    private var lastCapabilities: Data?
-    private var capabilitiesSent = false
+    private var trustedHost: String { NavigationPolicy.trustedHost }
+    static weak var primary: ScannerViewController?
+    private var handshake = BridgeHandshake()
+    private var gate = ScanGate()
+    private var crashPolicy = CrashPolicy()
+    /// The scanner is armed: keep the screen awake and let reads through.
+    private var armed = false {
+        didSet { UIApplication.shared.isIdleTimerDisabled = armed }
+    }
+    private var holdTimer: Task<Void, Never>?
     private var customerDisplayExpiry: Task<Void, Never>?
     private var customerDisplayGeneration = 0
     private let customerDisplay = CustomerDisplayModel()
@@ -22,7 +24,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
 
     override func loadView() {
         let content = WKUserContentController()
-        content.add(self, name: "passbookNative")
+        content.add(WeakScriptHandler(self), name: "passbookNative")
         content.addUserScript(WKUserScript(source: """
           (() => { const bridge={onmessage:null,postMessage(message){window.webkit.messageHandlers.passbookNative.postMessage(message)}}; Object.defineProperty(window,'PassBookNative',{value:bridge,configurable:false}); })();
           """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
@@ -34,12 +36,15 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
-        webView.isInspectable = _isDebugAssertConfiguration()
+        #if DEBUG
+        webView.isInspectable = true
+#endif
         view = webView
         hardware.onChange = { [weak self] in self?.refreshCapabilities() }
         hardware.onRead = { [weak self] value, method in self?.sendScan(value, method: method) }
         hardware.onTag = { [weak self] id, result in self?.sendTagScan(id: id, result: result) }
         hardware.onCancelled = { [weak self] in self?.send(["event": "cancelled"]) }
+        Self.primary = self
     }
 
     override func viewDidLoad() {
@@ -66,29 +71,40 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
 
     func pause() {
         armed = false
-        pendingID = nil
-        scanTimeout?.cancel()
-        scanTimeout = nil
+        resetScanState()
         setCustomerDisplayStatus(.ready)
         hardware.stop()
         send(["event": "cancelled"])
     }
 
-    func refreshCapabilities(force: Bool = false) {
+    /// Ends a scene's scanner: nothing keeps running for a window that is gone.
+    func teardown() {
+        armed = false
+        resetScanState()
+        hardware.stop()
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "passbookNative")
+        webView.stopLoading()
+        if Self.primary === self { Self.primary = nil }
+    }
+
+    private func resetScanState() {
+        holdTimer?.cancel()
+        holdTimer = nil
+        _ = gate.reset()
+    }
+
+    func refreshCapabilities() {
         guard webView.url?.host == trustedHost, webView.url?.scheme == "https" else { return }
         var capabilities = hardware.capabilities
         capabilities["layout"] = layoutCapabilities()
         capabilities["customerDisplay"] = customerDisplayCapabilities()
-        guard let data = try? JSONSerialization.data(withJSONObject: capabilities, options: [.sortedKeys]) else { return }
-        if !force && lastCapabilities == data { return }
-        lastCapabilities = data
-        let first = !capabilitiesSent
-        capabilitiesSent = true
+        guard let data = try? JSONSerialization.data(withJSONObject: capabilities, options: [.sortedKeys]),
+              let kind = handshake.outgoing(snapshot: data) else { return }
         var message: [String: Any] = [
-            "event": first ? "ready" : "capabilities",
+            "event": kind == .ready ? "ready" : "capabilities",
             "capabilities": capabilities,
         ]
-        if first {
+        if kind == .ready {
             let nfc = capabilities["nfc"] as? [String: Any]
             message["nfc"] = nfc?["available"] as? Bool ?? false
             message["ecp"] = false
@@ -96,6 +112,31 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
             message["appVersion"] = capabilities["appVersion"] as? String ?? "1"
         }
         send(message)
+    }
+
+    /// Sends the next queued scan once the app is not in the background. The Core NFC sheet leaves the app
+    /// inactive, not backgrounded, and the web view is alive then, so reads are delivered directly.
+    func pump() {
+        guard handshake.ready, UIApplication.shared.applicationState != .background,
+              let item = gate.takeNext() else { return }
+        let id = item.id
+        let limit = gate.holdLimit
+        holdTimer?.cancel()
+        holdTimer = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(limit))
+            guard let self, !Task.isCancelled else { return }
+            self.holdTimer = nil
+            if self.gate.expire(id: id) { self.send(["event": "timeout"]) }
+            self.pump()
+        }
+        send(item.event)
+    }
+
+    private func releaseGate(id: String, byAck: Bool) {
+        guard gate.release(id: id, byAck: byAck) else { return }
+        holdTimer?.cancel()
+        holdTimer = nil
+        pump()
     }
 
     private func layoutCapabilities() -> [String: Any] {
@@ -160,42 +201,50 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
               let data = raw.data(using: .utf8),
               let request = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let version = request["version"] as? Int, version == 1 || version == 2,
-              let op = request["op"] as? String else { return }
-        if op == "hello" {
-            wireVersion = version == 2 && (request["versions"] as? [Int])?.contains(2) == true ? 2 : 1
-            hardware.tagsEnabled = wireVersion == 2
-        } else if version != wireVersion { return }
+              let op = request["op"] as? String,
+              handshake.accepts(version: version, op: op) else { return }
+        let inForeground = UIApplication.shared.applicationState != .background
+        let ready = handshake.ready
         switch op {
         case "hello":
-            ready = true
-            refreshCapabilities(force: true)
+            handshake.hello(version: version, versions: request["versions"] as? [Int],
+                            features: request["features"] as? [String])
+            hardware.tagsEnabled = handshake.wireVersion == 2
+            gate.ackEnabled = handshake.scanAck
+            refreshCapabilities()
         case "start":
-            guard ready, UIApplication.shared.applicationState == .active else { return }
+            guard ready, inForeground else { return }
             armed = true
             hardware.start()
         case "stop": pause()
         case "nfcRead":
-            guard ready, armed, UIApplication.shared.applicationState == .active else { return }
+            guard ready, armed, inForeground else { return }
             hardware.readNFC()
         case "tagRead":
-            guard ready, wireVersion == 2, UIApplication.shared.applicationState == .active, pendingID == nil,
+            guard ready, handshake.wireVersion == 2, inForeground,
                   let id = request["id"] as? String, (1...100).contains(id.count),
                   let prompt = request["prompt"] as? String, prompt.count <= 200,
                   let timeoutMs = request["timeoutMs"] as? Int, (1...60000).contains(timeoutMs) else {
-                if ready, wireVersion == 2 { send(["event": "cancelled"]) }
+                if ready, handshake.wireVersion == 2 {
+                    Log.bridge.error("tagRead.invalid")
+                    send(["event": "cancelled"])
+                }
                 return
             }
+            // A read in flight keeps its own verdict: say busy, never cancelled.
+            guard !gate.isBusy, !hardware.tagReading else { send(["event": "busy", "id": id]); return }
             hardware.readTag(id: id, prompt: prompt, timeoutMs: timeoutMs)
         case "tagCancel":
-            guard wireVersion == 2, let id = request["id"] as? String else { return }
+            guard handshake.wireVersion == 2, let id = request["id"] as? String else { return }
             hardware.cancelTag(id: id)
+        case "scanAck":
+            guard let id = request["id"] as? String else { return }
+            releaseGate(id: id, byAck: true)
         case "result":
-            guard request["id"] as? String == pendingID,
+            guard let id = request["id"] as? String,
                   let outcome = request["outcome"] as? String,
                   ["accepted", "rejected", "error"].contains(outcome) else { return }
-            pendingID = nil
-            scanTimeout?.cancel()
-            scanTimeout = nil
+            releaseGate(id: id, byAck: false)
         case "haptic":
             guard let pattern = request["pattern"] as? [Int], let kind = Self.hapticKind(pattern) else { return }
             switch kind {
@@ -209,7 +258,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
                   let branding = CustomerDisplayBranding(payload: payload) else { return }
             customerDisplay.branding = branding
         case "customerStatus":
-            guard ready, armed, UIApplication.shared.applicationState == .active,
+            guard ready, armed, inForeground,
                   let status = request["status"] as? String else { return }
             let display = customerDisplayCapabilities()
             guard display["supported"] as? Bool == true,
@@ -238,36 +287,48 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     }
 
     private func sendScan(_ value: String, method: String) {
-        guard ready, armed, UIApplication.shared.applicationState == .active, pendingID == nil,
-              method == "nfc" || method == "wedge",
-              value.utf8.count <= 2048,
-              !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return }
+        guard method == "nfc" || method == "wedge", value.utf8.count <= 2048,
+              !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else {
+            Log.bridge.error("scan.invalid")
+            return
+        }
+        guard handshake.ready, armed else {
+            Log.bridge.error("scan.notArmed")
+            send(["event": "cancelled"])
+            return
+        }
         let id = UUID().uuidString
-        awaitResult(id)
-        send(["event": "scan", "id": id, "source": "barcode", "value": value, "method": method])
+        let event: [String: Any] = ["event": "scan", "id": id, "readAt": Self.nowMs, "source": "barcode",
+                                    "value": value, "method": method]
+        enqueue(ScanGate.Item(id: id, source: method, dedupeKey: "\(method)|\(value)", event: event))
     }
 
     private func sendTagScan(id: String, result: TagReadResult) {
-        guard ready, wireVersion == 2, UIApplication.shared.applicationState == .active, pendingID == nil else { return }
-        awaitResult(id)
-        send(["event": "scan", "id": id, "readAt": Int(Date().timeIntervalSince1970 * 1000), "source": "nfc-tag", "tag": result.wire])
+        guard handshake.ready, handshake.wireVersion == 2 else {
+            Log.bridge.error("tag.notReady")
+            send(["event": "cancelled"])
+            return
+        }
+        let event: [String: Any] = ["event": "scan", "id": id, "readAt": Self.nowMs, "source": "nfc-tag", "tag": result.wire]
+        enqueue(ScanGate.Item(id: id, source: "nfc-tag", dedupeKey: nil, event: event))
     }
 
-    private func awaitResult(_ id: String) {
-        pendingID = id
-        scanTimeout = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(15))
-            guard let self, !Task.isCancelled, self.pendingID == id else { return }
-            self.pendingID = nil
-            self.scanTimeout = nil
-            self.send(["event": "timeout"])
+    private static var nowMs: Int { Int(Date().timeIntervalSince1970 * 1000) }
+
+    private func enqueue(_ item: ScanGate.Item) {
+        switch gate.enqueue(item, now: ProcessInfo.processInfo.systemUptime) {
+        case .queued: pump()
+        case .duplicate: Log.bridge.info("scan.duplicate")
+        case .full:
+            Log.bridge.error("scan.queueFull")
+            send(["event": "busy"])
         }
     }
 
     private func send(_ fields: [String: Any]) {
         guard webView.url?.host == trustedHost, webView.url?.scheme == "https" else { return }
         var event = fields
-        event["version"] = wireVersion
+        event["version"] = handshake.wireVersion
         guard let data = try? JSONSerialization.data(withJSONObject: event),
               let json = String(data: data, encoding: .utf8),
               let script = try? JSONSerialization.data(withJSONObject: [json]),
@@ -276,31 +337,54 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void) {
-        guard navigationAction.targetFrame?.isMainFrame == true,
-              let url = navigationAction.request.url, url.scheme == "https" else {
-            decisionHandler(.cancel); pause(); return
+        let url = navigationAction.request.url
+        let decision = NavigationPolicy.decide(
+            url: url,
+            isMainFrame: navigationAction.targetFrame?.isMainFrame == true,
+            isTargetFrameNil: navigationAction.targetFrame == nil,
+            isLinkTap: navigationAction.navigationType == .linkActivated)
+        switch decision {
+        case .allow:
+            decisionHandler(.allow)
+        case .cancel:
+            Log.bridge.info("nav.blocked")
+            decisionHandler(.cancel)
+        case .openExternally:
+            decisionHandler(.cancel)
+            if let url { UIApplication.shared.open(url) }
+            // The scanner page stays up. If there is none (a redirect on first load), offer Reload.
+            if webView.url?.host != trustedHost { showLoadError() }
         }
-        if url.host == trustedHost || navigationAction.navigationType == .linkActivated {
-            if url.host != trustedHost { UIApplication.shared.open(url) }
-            decisionHandler(url.host == trustedHost ? .allow : .cancel)
-            if url.host != trustedHost { pause() }
-            return
-        }
-        decisionHandler(.allow)
-        pause()
+    }
+
+    /// Cancelled and policy-interrupted loads are not failures.
+    private func isBenign(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return (nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled)
+            || (nsError.domain == "WebKitErrorDomain" && nsError.code == 102)
+    }
+
+    private func resetBridge() {
+        handshake.reset()
+        gate.ackEnabled = false
+        hardware.tagsEnabled = false
+        armed = false
+        resetScanState()
+        setCustomerDisplayStatus(.ready)
+        hardware.stop()
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        ready = false
-        wireVersion = 1
-        hardware.tagsEnabled = false
-        capabilitiesSent = false
-        armed = false
-        pendingID = nil
-        scanTimeout?.cancel()
-        scanTimeout = nil
-        setCustomerDisplayStatus(.ready)
-        hardware.stop()
+        resetBridge()
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        Log.bridge.error("web.terminated")
+        resetBridge()
+        switch crashPolicy.record(now: ProcessInfo.processInfo.systemUptime) {
+        case .reload: loadScanner()
+        case .askOperator: showLoadError(message: "The scanner stopped. Reload to continue.")
+        }
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -309,22 +393,37 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         refreshCapabilities()
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { showLoadError() }
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        guard !isBenign(error) else { return }
+        Log.bridge.error("load.failed")
+        showLoadError()
+    }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { showLoadError() }
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        guard !isBenign(error) else { return }
+        Log.bridge.error("load.failed")
+        showLoadError()
+    }
 
-    private func showLoadError() {
+    private func showLoadError(message: String = "Could not load the scanner. Check your connection.") {
         guard loadErrorView == nil else { return }
 
         let label = UILabel()
-        label.text = "Could not load the scanner. Check your connection."
+        label.text = message
+        label.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: .systemFont(ofSize: 17))
+        label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 0
         label.textAlignment = .center
 
         let retryButton = UIButton(type: .system)
-        retryButton.setTitle("Retry", for: .normal)
+        retryButton.setTitle("Reload scanner", for: .normal)
+        retryButton.titleLabel?.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: .systemFont(ofSize: 17))
+        retryButton.titleLabel?.adjustsFontForContentSizeCategory = true
         retryButton.accessibilityIdentifier = "scannerLoadRetry"
-        retryButton.addAction(UIAction { [weak self] _ in self?.loadScanner() }, for: .touchUpInside)
+        retryButton.addAction(UIAction { [weak self] _ in
+            self?.crashPolicy.reset()
+            self?.loadScanner()
+        }, for: .touchUpInside)
 
         let stack = UIStackView(arrangedSubviews: [label, retryButton])
         stack.axis = .vertical
@@ -354,13 +453,26 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
 
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void) {
         guard type == .camera, origin.host == trustedHost, origin.protocol == "https", frame.isMainFrame,
-              UIApplication.shared.applicationState == .active else { decisionHandler(.deny); return }
+              UIApplication.shared.applicationState != .background else { decisionHandler(.deny); return }
+        // The system alert leaves the app inactive while the grant arrives, so only a background app is refused.
         hardware.requestCameraPermission { [weak self] granted in
-            guard let self, UIApplication.shared.applicationState == .active,
+            guard let self, UIApplication.shared.applicationState != .background,
                   self.webView.url?.host == self.trustedHost, self.webView.url?.scheme == "https" else {
                 decisionHandler(.deny); return
             }
             decisionHandler(granted ? .grant : .deny)
         }
+    }
+}
+
+/// Holds the view controller weakly: WKUserContentController retains its handlers for the web view's life.
+@MainActor
+private final class WeakScriptHandler: NSObject, WKScriptMessageHandler {
+    private weak var target: WKScriptMessageHandler?
+
+    init(_ target: WKScriptMessageHandler) { self.target = target }
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        target?.userContentController(userContentController, didReceive: message)
     }
 }
