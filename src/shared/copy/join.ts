@@ -54,7 +54,6 @@ export const JOIN_COPY = {
     title: 'Get your {org} card',
     firstName: 'First name',
     email: 'Email',
-    emailHelp: 'To find your card again.',
     submit: 'Get my card',
     keeps: '{org} keeps your name for this card.',
     keepsWithEmail: '{org} keeps your name and email for this card.',
