@@ -17,6 +17,7 @@
       "!src/generated",
       "!sdk/typescript/src/generated",
       "!sdk/typescript/dist",
+      "!sdk/python/tests/ops.json",
       "!test/setup/schema-snapshot.generated.json",
       "!src/web/routeTree.gen.ts",
       "!worker-configuration.d.ts",

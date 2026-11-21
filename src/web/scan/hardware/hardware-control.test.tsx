@@ -72,7 +72,7 @@ describe('scanner hardware pill and panel', () => {
     await waitFor(() => expect(pill()).toHaveAccessibleName(/Camera/));
     fireEvent.click(pill());
     const dialog = await screen.findByRole('dialog', { name: 'Hardware' });
-    expect(within(dialog).getByTestId('hardware-guide')).toHaveTextContent(
+    expect(within(dialog).getByTestId('hw-camera:0')).toHaveTextContent(
       'Point the back camera at the code',
     );
     fireEvent.click(within(dialog).getByRole('button', { name: 'Use Front Camera' }));
@@ -91,12 +91,12 @@ describe('scanner hardware pill and panel', () => {
         camera
       />,
     );
-    await waitFor(() => expect(pill()).toHaveAccessibleName(/Camera needs access/));
+    await waitFor(() => expect(pill()).toHaveAccessibleName(/Camera blocked/));
     expect(runtime.camera.start).not.toHaveBeenCalled();
     fireEvent.click(pill());
     fireEvent.click(await screen.findByRole('button', { name: /^Allow/ }));
     expect(runtime.camera.start).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('hardware-guide')).not.toHaveTextContent('camera');
+    expect(screen.getByTestId('hw-camera:0')).toHaveTextContent('Allow the camera to scan');
   });
 
   it('starts Web NFC from a tap and says so', async () => {
@@ -192,7 +192,7 @@ describe('monitor hardware', () => {
     render(<MonitorHardware online />);
     fireEvent.click(pill());
     const dialog = await screen.findByRole('dialog', { name: 'Hardware' });
-    expect(within(dialog).queryByTestId('hardware-guide')).toBeNull();
+    expect(within(dialog).getByTestId('hardware-list')).not.toHaveTextContent('Point the');
     await waitFor(() => expect(within(dialog).getByTestId('hw-camera:0')).toBeVisible());
     expect(within(dialog).queryByRole('button', { name: /^(Allow|Use|Start|Test)/ })).toBeNull();
   });

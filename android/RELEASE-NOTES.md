@@ -4,6 +4,7 @@
 - Scanner, camera-free Operator, Desk and Customer layouts adapt to phones, tablets and computers.
 - Administrators join as devices; session and device settings update while scanning stays started.
 - Camera decoding covers the whole frame, including its edges; aiming marks are only a guide.
+- Hardware enumeration reports cameras, NFC, scanners and input devices. The manifest declares BLUETOOTH_CONNECT (never requested; used only if device policy grants it). Ship after the web schema accepts `hardware`.
 - Keyboard and Android barcode inputs retain the same configured automatic or review flow.
 
 

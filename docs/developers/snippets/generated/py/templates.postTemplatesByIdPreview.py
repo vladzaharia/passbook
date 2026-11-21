@@ -1,10 +1,8 @@
 import os
-import httpx
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/templates/0193a1b2-7c00-7000-8000-0000000000b1/preview",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-    json={},
-)
-res.raise_for_status()
-print(res.json())
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.templates.preview("0193a1b2-7c00-7000-8000-0000000000b1", {})
+print(result)

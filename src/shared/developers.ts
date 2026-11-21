@@ -10,6 +10,10 @@ export const PATHS = {
   status: '/developers/status',
   statusJson: '/developers/status.json',
   logsOps: '/developers/logs-ops.json',
+  /** The ⌘K index: built with the pages, fetched on first open. */
+  searchIndex: '/developers/search-index.json',
+  /** Where the search reports a term that found nothing (the term only). */
+  searchMiss: '/developers/search-miss',
   reference: '/developers/reference',
   errors: '/developers/errors',
   protocols: '/developers/reference/protocols',

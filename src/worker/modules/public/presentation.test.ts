@@ -600,7 +600,7 @@ describe('presentation barcode', () => {
     expect(html).toContain(ALT_TEXT);
     expect(html).toContain(qrDataUri(toSvg, `${ORIGIN}${page}`));
     expect(html).not.toContain(qrDataUri(toSvg, PRIMARY));
-    expect(html).toContain('Scan with the camera.');
+    expect(html).toContain('Scan with your iPhone camera.');
   });
 
   it('offers Save for offline on the bearer page only, with one nonced script and no credential in it', async () => {
@@ -656,13 +656,11 @@ describe('presentation barcode', () => {
     });
     const html = await res.text();
     expect(html).toContain('Show barcode');
-    expect(html).toContain('Open this page on your phone to add the pass to your wallet.');
+    expect(html).toContain('For Apple Wallet, open this page on an iPhone.');
     expect(html).not.toContain('data-awb=');
     expect(html).not.toContain('wl-add-scan');
     expect(html).not.toContain('/apple/badge/');
-    expect(html.indexOf('Show a barcode in your browser')).toBeLessThan(
-      html.indexOf('Open this page on your phone'),
-    );
+    expect(html.indexOf('wl-hero-action')).toBeLessThan(html.indexOf('For Apple Wallet'));
   });
 
   it.each(['primary', 'persisted'])(

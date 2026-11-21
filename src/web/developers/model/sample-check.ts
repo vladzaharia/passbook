@@ -173,17 +173,20 @@ export function runSh(
   };
 }
 
-/** Runs the Python sample against a stand-in `httpx`, when python3 is installed; returns the json it sent. */
+/**
+ * Runs the Python sample with `passbook` replaced by a recorder, when python3 is installed; returns the
+ * body of the one SDK call it makes (its first argument).
+ */
 export function runPy(code: string, secret: string): { ran: boolean; sent?: Json } {
   const prog = [
     'import sys, types, json, os',
     'sent = []',
-    'class R:',
-    '    def raise_for_status(self): pass',
-    '    def json(self): return {}',
-    'def post(url, headers=None, json=None, **kw):',
-    '    sent.append(json); return R()',
-    'sys.modules["httpx"] = types.SimpleNamespace(post=post)',
+    'class Rec:',
+    '    def __getattr__(self, name): return Rec()',
+    '    def __call__(self, *args, **kw):',
+    '        sent.append(args[0] if args else None); return {}',
+    'def PassBook(api_key=None): return Rec()',
+    'sys.modules["passbook"] = types.SimpleNamespace(PassBook=PassBook)',
     `os.environ["PASSBOOK_KEY"] = ${JSON.stringify(secret)}`,
     'exec(compile(sys.stdin.read(), "sample.py", "exec"))',
     'sys.stderr.write(json.dumps(sent))',
@@ -195,11 +198,12 @@ export function runPy(code: string, secret: string): { ran: boolean; sent?: Json
   return { ran: true, sent: sent[0] as Json };
 }
 
-/** The value a Go `strings.NewReader(<expr>)` expression holds: raw strings and `"…"` joined by `+`. */
+/** The value of the Go `json.Unmarshal([]byte(<expr>), &body)` expression: raw strings and `"…"` joined by `+`. */
 export function goBody(code: string): string {
-  const at = code.indexOf('strings.NewReader(');
+  const marker = 'json.Unmarshal([]byte(';
+  const at = code.indexOf(marker);
   if (at === -1) throw new Error('No body.');
-  let i = at + 'strings.NewReader('.length;
+  let i = at + marker.length;
   let out = '';
   for (;;) {
     const c = code[i];

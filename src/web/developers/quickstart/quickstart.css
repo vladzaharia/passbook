@@ -1,0 +1,189 @@
+/* What only the signed-in quickstart needs: the code, the run bar, copy rows, the live stage and its timeline. */
+.qs .seg > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--pk-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.qs .seg > button:hover {
+  color: var(--pk-text-strong);
+}
+.qs .seg > button[aria-checked="true"] {
+  background: var(--pk-surface-raised);
+  box-shadow: 0 0 0 1px var(--pk-border-strong);
+  color: var(--pk-text-strong);
+}
+.qs .seg > button:focus-visible,
+.qs .tab:focus-visible,
+.qs .iconbtn:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+.qs .btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.qs-spin {
+  animation: qs-spin 0.9s linear infinite;
+}
+.qs-bad,
+.qs-err {
+  color: var(--pk-danger);
+}
+.qs-err {
+  padding: 8px 0 0;
+}
+.qs-slow {
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-warning-subtle);
+  color: var(--pk-warning);
+  border: 1px solid color-mix(in oklab, var(--pk-warning-border) 55%, transparent);
+}
+.qs-make .check {
+  margin-top: 8px;
+}
+.qs-make .check:not([data-shown="true"]) {
+  height: 0;
+  overflow: hidden;
+}
+.qs-note {
+  margin: 0;
+}
+
+/* ---------- Copy rows ---------- */
+.qs-copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-sunken);
+  min-width: 0;
+}
+.qs-copy-l {
+  flex: none;
+  min-width: 4.5rem;
+}
+.qs-copy-v {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--pk-text-strong);
+}
+.qs-copied {
+  color: var(--pk-success);
+  border-color: color-mix(in oklab, var(--pk-success-border) 60%, transparent);
+  background: var(--pk-success-subtle);
+}
+.qs-home {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.qs-finish {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-accent-subtle);
+  border: 1px solid color-mix(in oklab, var(--pk-accent) 40%, transparent);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+/* ---------- The request, as a ticket: code over its run bar ---------- */
+.qs-ticket {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+  overflow: hidden;
+}
+.qs-ticket .code {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 2px dashed var(--pk-border-subtle);
+}
+.qs-code .src {
+  overflow-x: auto;
+}
+.qs-code-ghost {
+  min-height: 9rem;
+}
+.qs-runbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 12px 10px 16px;
+  background: var(--pk-surface-raised);
+}
+.qs-runbar > .btn {
+  flex: none;
+}
+.qs .spin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: qs-spin 0.7s linear infinite;
+}
+.qs .bars {
+  display: grid;
+  gap: 12px;
+  padding: 22px 20px;
+}
+.qs .bars span {
+  height: 12px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--pk-text-muted) 16%, transparent);
+}
+.qs .bars span:nth-child(1) {
+  width: 40%;
+}
+.qs .bars span:nth-child(3) {
+  width: 70%;
+}
+.qs-run-left {
+  min-width: 0;
+  flex: 1;
+}
+.qs-mini {
+  width: 24px;
+  height: 24px;
+}
+.qs-mini .lucide {
+  width: 13px;
+  height: 13px;
+}
+.qs-admission {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--pk-border-subtle);
+}
+.qs-input {
+  max-width: 11rem;
+}

@@ -5,7 +5,7 @@ import { type CSSProperties, type ReactNode, useState } from 'react';
 import type { MyPassListSchema } from '../../shared/contracts/me.ts';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { addLine } from '../../shared/device.ts';
+import { canAddToWallet } from '../../shared/device.ts';
 import { useArrival } from '../lib/motion.ts';
 import {
   AppleWalletBadge,
@@ -96,7 +96,7 @@ function PassGrid({
       {passes.map((pass, i) => (
         <li
           key={pass.id}
-          className="row-span-3 grid min-w-0 grid-rows-subgrid"
+          className="row-span-2 grid min-w-0 grid-rows-subgrid"
           style={{ '--i': i } as CSSProperties}
         >
           <PassTile
@@ -156,19 +156,13 @@ export function MyPassesPage() {
   } else {
     body = (
       <div className="wl-passes flex flex-col gap-6">
-        {bundle && (addable > 1 || addLine(device)) ? (
-          <section
-            className="wl-bundle flex flex-col gap-3 sm:self-start rounded-2xl border border-border bg-surface-raised p-5 sm:p-6"
-            aria-labelledby="bundle-title"
-          >
-            <div>
-              <h2 id="bundle-title" className="text-lg font-semibold text-fg-strong">
-                {addable > 1 ? HOLDER_COPY.addAllTitle : HOLDER_COPY.addAllOne}
-              </h2>
-            </div>
-            {addable > 1 ? <AddAllLinks bundle={bundle} /> : null}
+        {canAddToWallet(device.device) && ((bundle && addable > 1) || device.inApp) ? (
+          // No card and no title: the badge says what it adds; Apple's line only in an app's
+          // web view, which cannot add. A computer gets Show QR on each tile instead.
+          <div className="wl-bundle flex flex-wrap items-center gap-x-4 gap-y-2">
+            {bundle && addable > 1 ? <AddAllLinks bundle={bundle} /> : null}
             <AddLine />
-          </section>
+          </div>
         ) : null}
         <div className="flex flex-col gap-8">
           <PassGrid passes={live} dealt={dealt} lead />
@@ -190,14 +184,7 @@ export function MyPassesPage() {
 
   return (
     <>
-      <PageHeader
-        title="My passes"
-        actions={
-          <Button asChild variant="outline">
-            <Link to="/account">Manage account</Link>
-          </Button>
-        }
-      />
+      <PageHeader title="My passes" />
       {pendingRemovals > 0 ? (
         <p
           role="status"

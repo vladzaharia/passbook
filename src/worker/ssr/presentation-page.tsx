@@ -74,7 +74,6 @@ export function renderPresentationPage(props: PresentationPageProps): string {
             <p data-fail role="alert" hidden>
               {HOLDER_COPY.saveOfflineFailed}
             </p>
-            <p>{HOLDER_COPY.saveOfflineLine}</p>
           </div>,
         )
       : '';

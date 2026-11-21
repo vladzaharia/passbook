@@ -10,8 +10,8 @@ import { isAdmin, membershipsQuery, sessionQuery, useSession } from '../../lib/s
 import { Button } from '../../ui/button.tsx';
 import { Card, CardBody } from '../../ui/card.tsx';
 import { EmptyState } from '../../ui/empty-state.tsx';
-import { EntityAvatar } from '../../ui/entity.tsx';
 import { ErrorState } from '../../ui/error-state.tsx';
+import { OrgMark } from '../../ui/layout/scope-switcher.tsx';
 import { ListRow, ListRows } from '../../ui/list-row.tsx';
 import { PageHeader } from '../../ui/page-header.tsx';
 import { RowLink } from '../../ui/row-link.tsx';
@@ -67,7 +67,7 @@ function ScopeChooser() {
               return (
                 <ListRow
                   key={m.orgId}
-                  leading={<EntityAvatar kind="org" id={m.orgId} name={m.orgName} />}
+                  leading={<OrgMark org={m} />}
                   title={<RowLink to={to}>{m.orgName}</RowLink>}
                 />
               );

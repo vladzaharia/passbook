@@ -8,78 +8,7 @@
 .scan-detail-sheet .scan-sheet-head:has(.hw-title) {
   display: none;
 }
-.scan-detail-sheet .hw-guide {
-  margin-block-start: 16px;
-}
-
-.hw-guide {
-  padding: 14px 16px 6px;
-  border-radius: 18px;
-  background: color-mix(in oklab, var(--sd-accent) 11%, transparent);
-  color: var(--sd-strong);
-}
-.hw-guide h3 {
-  margin: 0 0 6px;
-  color: var(--sd-accent);
-  font: 650 13px / 16px var(--pk-font-sans);
-  letter-spacing: 0.02em;
-}
-.hw-guide ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.hw-guide li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  font: 500 15px / 20px var(--pk-font-sans);
-}
-.hw-guide li:first-child {
-  font-weight: 650;
-  font-size: 17px;
-  line-height: 22px;
-}
-.hw-guide li + li {
-  border-block-start: 1px solid color-mix(in oklab, var(--sd-accent) 18%, transparent);
-}
-.hw-step-icon {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: var(--sd-accent);
-  color: var(--scan-accent-on);
-}
-.hw-guide li + li .hw-step-icon {
-  background: color-mix(in oklab, var(--sd-accent) 22%, transparent);
-  color: var(--sd-accent);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .hw-guide li {
-    animation: hw-rise 320ms var(--wl-ease-out, ease-out) both;
-  }
-  .hw-guide li:nth-child(2) {
-    animation-delay: 50ms;
-  }
-  .hw-guide li:nth-child(3) {
-    animation-delay: 100ms;
-  }
-  .hw-guide li:nth-child(n + 4) {
-    animation-delay: 150ms;
-  }
-}
-@keyframes hw-rise {
-  from {
-    transform: translateY(6px);
-    opacity: 0;
-  }
-}
-
-.hw-list {
+.scan-detail-sheet .hw-list {
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -158,6 +87,19 @@
 }
 .hw-row[data-state="error"] .hw-word {
   color: var(--hw-red);
+}
+.hw-how {
+  margin-block-start: 2px;
+  color: var(--sd-strong);
+  font: 500 14px / 19px var(--pk-font-sans);
+}
+.hw-row:not([data-found]) .hw-how {
+  color: var(--sd-muted);
+}
+/* The best way to scan here: its tile filled. */
+.hw-row[data-best] .hw-tile {
+  background: var(--sd-accent);
+  color: var(--scan-accent-on);
 }
 .hw-act {
   flex: none;

@@ -1,13 +1,13 @@
 import os
-import httpx
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/nfc/tag-types",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-    json={
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.nfc.tag_types.create(
+    {
         "name": "Example",
         "use": "member",
     },
 )
-res.raise_for_status()
-print(res.json())
+print(result)

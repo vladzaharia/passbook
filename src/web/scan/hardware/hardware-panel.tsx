@@ -1,32 +1,12 @@
 import { Button } from '../../ui/button.tsx';
 import { SheetFrame } from '../ui/sheet-frame.tsx';
 import { HARDWARE_COPY as C } from './copy.ts';
-import type { GuideStep } from './guide.ts';
-import { HardwareIcon, StepIcon } from './icons.tsx';
+import { HardwareIcon } from './icons.tsx';
 import { isFound } from './items.ts';
 import { TestPad, type TestRead } from './test-pad.tsx';
 import type { HardwareAction, HardwareItem } from './types.ts';
 import './hardware.css';
 import './hardware-panel.css';
-
-function Guide({ steps }: { steps: readonly GuideStep[] }) {
-  if (!steps.length) return null;
-  return (
-    <section className="hw-guide" aria-labelledby="hw-guide-title" data-testid="hardware-guide">
-      <h3 id="hw-guide-title">{C.guide.title}</h3>
-      <ol>
-        {steps.map((step) => (
-          <li key={step} data-step={step}>
-            <span className="hw-step-icon">
-              <StepIcon step={step} />
-            </span>
-            {C.guide[step]}
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
 
 function Row({
   item,
@@ -48,6 +28,7 @@ function Row({
       className="hw-row"
       data-state={item.state}
       data-found={isFound(item) ? '' : undefined}
+      data-best={item.best ? '' : undefined}
       data-testid={`hw-${item.id}`}
     >
       <span className="hw-tile" aria-hidden>
@@ -59,6 +40,7 @@ function Row({
           <span className="hw-word">{word}</span>
           {item.detail ? <span> · {item.detail}</span> : null}
         </span>
+        {item.how ? <span className="hw-how">{item.how}</span> : null}
       </span>
       {action && !testing ? (
         <Button
@@ -76,10 +58,9 @@ function Row({
   );
 }
 
-/** Every kind the scanner can use, found first; how to scan here on top. */
+/** Every kind the scanner can use: ways to scan first, each with its instruction, best first. */
 export function HardwarePanel({
   items,
-  steps,
   testing,
   testRead = null,
   onAction,
@@ -87,7 +68,6 @@ export function HardwarePanel({
   onClose,
 }: {
   items: readonly HardwareItem[];
-  steps: readonly GuideStep[];
   /** The row whose test pad is open. */
   testing: string | null;
   testRead?: TestRead | null;
@@ -97,7 +77,6 @@ export function HardwarePanel({
 }) {
   return (
     <SheetFrame label={C.title} onClose={onClose} header={<h2 className="hw-title">{C.title}</h2>}>
-      <Guide steps={steps} />
       <ul className="hw-list" data-testid="hardware-list">
         {items.map((item) => (
           <Row

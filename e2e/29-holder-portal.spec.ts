@@ -22,7 +22,8 @@ test('holder portal: list shows only my passes, detail opens, self-remove drops 
     // Positive control above; a pass issued to someone else never lists.
     await expect(page.getByRole('link', { name: foreign, exact: true })).toHaveCount(0);
 
-    await page.getByRole('link', { name: mine, exact: true }).click();
+    // The tile's name link is the keyboard path (shown on focus); pointers use the card.
+    await page.getByRole('link', { name: mine, exact: true }).press('Enter');
     await page.waitForURL((u) => u.pathname === `/passes/${own.id}`);
     // The h1 names what the pass is, never the holder; the holder's name is a field on the card.
     // The route loads its chunk and the pass; on a loaded CI runner that can pass 5 s.
@@ -30,7 +31,9 @@ test('holder portal: list shows only my passes, detail opens, self-remove drops 
       timeout: 15_000,
     });
     await expect(page.getByRole('group', { name: /front$/ })).toContainText(mine);
-    await expect(page.getByRole('heading', { name: 'Details' })).toBeVisible();
+    // One details, untitled: the back of the pass, never the face's fields again.
+    await expect(page.locator('.wl-holder-details').getByText('Terms')).toBeVisible();
+    await expect(page.locator('.wl-holder-details')).not.toContainText(mine);
 
     await page.getByRole('button', { name: 'More' }).click();
     await page.getByRole('menuitem', { name: 'Remove from My passes' }).click();

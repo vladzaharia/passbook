@@ -162,7 +162,7 @@ function Guides() {
       </div>
       <div className="card-b recipes">
         {DEV_GUIDES.slice(0, 4).map((g) => (
-          <a key={g.id} className="row g3" href={`${PATHS.guides}#${g.id}`}>
+          <a key={g.id} className="row g3" href={`${PATHS.guides}/${g.id}`}>
             <span className={`sw ${g.tone}`} />
             <span className="strong">{g.title}</span>
           </a>

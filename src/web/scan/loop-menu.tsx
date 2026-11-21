@@ -85,6 +85,7 @@ export function LoopMenu(p: {
         {...{ runtime, s }}
         lens={[p.cameraChoice, p.setCameraChoice]}
         camera={!p.operator || p.duoLayout}
+        readerUsable={p.readerUsable}
       />
       {menu}
     </>

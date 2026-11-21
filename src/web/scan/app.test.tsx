@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { type BootScreen, ScanAppView, type ScanAppViewProps } from './app.tsx';
 import type { BlockKind } from './boot/block-panel.tsx';
-import { CountChip, ReaderChip, SyncChip, TestChip } from './ui/chips.tsx';
+import { CountChip, SyncChip, TestChip } from './ui/chips.tsx';
 import { DoorThumbRow } from './ui/dock.tsx';
 import { ANNOUNCE_DELAY_MS, LiveAnnouncer } from './ui/live-announcer.tsx';
 
@@ -46,7 +46,6 @@ const view = (screenState: BootScreen, over: Partial<ScanAppViewProps> = {}) => 
       chips: (
         <>
           <TestChip mode="test" />
-          <ReaderChip state="idle" />
           <SyncChip state={{ kind: 'offline', queued: 3 }} />
           <CountChip count={312} capacity={500} />
         </>

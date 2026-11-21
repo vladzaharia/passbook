@@ -1,14 +1,14 @@
 import os
-import httpx
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/passes/photos/match",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-    json={
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.passes.match_photos(
+    {
         "keys": [
             "Example",
         ],
     },
 )
-res.raise_for_status()
-print(res.json())
+print(result)

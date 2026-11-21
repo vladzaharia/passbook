@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { playgroundKitCss } from './lib/playground-kit.ts';
+import { playgroundKitCss, searchKitCss } from './lib/playground-kit.ts';
 
 const root = resolve(import.meta.dirname, '..');
 
@@ -17,5 +17,20 @@ describe('generated playground kit CSS (tools/build-playground-kit.ts)', () => {
       expect(css, cls).toContain(cls);
     expect(css).not.toMatch(/(^|\})(html|body|\*),?(:before|:after|::backdrop)?\{/);
     expect(css).not.toContain('tailwindcss v');
+  });
+});
+
+describe('generated search kit CSS', () => {
+  it('is what the generator makes from the palette sources today (run `npm run gen`)', async () => {
+    const generated = readFileSync(resolve(root, 'src/generated/search-kit.css'), 'utf8');
+    expect(generated).toBe(await searchKitCss(root));
+  });
+
+  it('carries the palette frame and stays out of the playground sheet', () => {
+    const search = readFileSync(resolve(root, 'src/generated/search-kit.css'), 'utf8');
+    const playground = readFileSync(resolve(root, 'src/generated/playground-kit.css'), 'utf8');
+    expect(search).toContain('cmdk-group-heading');
+    expect(search).toContain('.max-w-\\[880px\\]');
+    expect(playground).not.toContain('cmdk-');
   });
 });

@@ -4,8 +4,20 @@
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Only read when already granted (for example by device policy); the app never requests it. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <queries>
+        <package android:name="com.symbol.datawedge" />
+        <package android:name="com.sunmi.scanner" />
+        <package android:name="com.intermec.datacollectionservice" />
+        <package android:name="com.honeywell.decode.service" />
+        <package android:name="com.ubx.scanner" />
+        <package android:name="com.ubx.datawedge" />
+        <package android:name="com.nlscan.android.scan" />
+        <package android:name="com.nlscan.scanservice" />
+    </queries>
     <application android:label="@string/app_name" android:icon="@drawable/ic_reader"
         android:theme="@style/ReaderTheme" android:allowBackup="false"
         android:fullBackupContent="@xml/backup_rules"
