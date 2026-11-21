@@ -4,17 +4,19 @@ import type { OrgBrand } from '../../shared/contracts/brand.ts';
 import type { Mode } from '../../shared/contracts/common.ts';
 import type { WalletProvider } from '../../shared/contracts/wallet-providers.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { addLine, type DeviceInfo, isAndroid } from '../../shared/device.ts';
+import { addLine, type DeviceInfo, isAndroid, MAC_REVEAL_SCRIPT } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { NATIVE_WALLET_BADGES } from '../../shared/wallet-choice.ts';
 import { statusOf } from '../../web/lib/status.ts';
+import { hasBack } from '../../web/pass-card/back.tsx';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import { AddBlock } from '../../web/portal/add/add-block.tsx';
 import { OUTLINE_ACTION_CLASS } from '../../web/portal/add/added.tsx';
 import { type AddAreaProps, addMode } from '../../web/portal/add/area.ts';
 import { HolderHeading } from '../../web/portal/holder-heading.tsx';
 import { Help, type HolderSupport, Notice, PortalLink } from '../../web/portal/holder-parts.tsx';
+import { PassDetails } from '../../web/portal/pass-details.tsx';
 import { AppleWalletBadge } from '../../web/ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../../web/ui/art/buddy-art.tsx';
 import { Badge } from '../../web/ui/badge.tsx';
@@ -34,6 +36,7 @@ export const BUNDLE_COPY = {
     `${n} ${n === 1 ? 'pass' : 'passes'}${voided ? ` · ${voided} voided` : ''}${removed ? ` · ${removed} removed` : ''}`,
   qrAlt: (name: string) => `QR code for ${name}`,
   preview: 'Open these passes.',
+  details: 'Details',
 } as const;
 
 export interface BundlePageItem {
@@ -70,6 +73,8 @@ export interface BundlePageProps {
   publicUrl: string;
   device: DeviceInfo;
   support?: HolderSupport;
+  /** The request clock, for the details' dates. */
+  now?: Date;
 }
 
 /** The kit's status words for a pass that cannot be added (the SPA's StatusPill needs the DOM). */
@@ -121,14 +126,17 @@ function BundleBody(props: BundlePageProps) {
           device,
           publicUrl: props.publicUrl,
           qrLabel: BUNDLE_COPY.qrAlt(props.name),
-          badge: (
-            <AppleWalletBadge
-              href={props.addAllHref}
-              label={BUNDLE_COPY.count(apple.length)}
-              className="p-0"
-            />
-          ),
+          // As on the pass page: off the phone only a Mac adds beside the QR.
+          badge:
+            device.device === 'other' ? null : (
+              <AppleWalletBadge
+                href={props.addAllHref}
+                label={BUNDLE_COPY.count(apple.length)}
+                className="p-0"
+              />
+            ),
           line: device.device === 'other' ? null : addLine(device),
+          macUnsure: true,
         };
   return (
     <div className="flex min-h-dvh flex-col [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
@@ -144,10 +152,10 @@ function BundleBody(props: BundlePageProps) {
           {area && android ? (
             <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
           ) : area ? (
-            <section className="bd-add" aria-labelledby="bd-add">
-              <h2 id="bd-add">{BUNDLE_COPY.addAll}</h2>
+            // The pass page's lead: the card says what it adds, no heading over it.
+            <div className="bd-add">
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
-            </section>
+            </div>
           ) : addable.length === 0 ? (
             <Notice
               state={voided === 0 ? 'removed' : 'voided'}
@@ -168,7 +176,6 @@ function BundleBody(props: BundlePageProps) {
                 enter
                 dim={item.state !== 'active'}
                 removed={item.state === 'removed'}
-                toggleId={`pc-${item.id}`}
               />
               <p className="bd-name" id={`bd-n-${item.id}`}>
                 {item.title}
@@ -208,6 +215,17 @@ function BundleBody(props: BundlePageProps) {
                     ))
                   : null}
               </div>
+              {hasBack(item.view, item.view.layouts[item.view.target]) ? (
+                // The pass page's details, folded: a native disclosure, no script.
+                <details className="bd-more">
+                  <summary>{BUNDLE_COPY.details}</summary>
+                  <PassDetails
+                    view={item.view}
+                    locale={item.view.locale}
+                    now={props.now ?? new Date()}
+                  />
+                </details>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -230,5 +248,5 @@ function previewHead(org: string): string {
 }
 
 export function renderBundlePage(props: BundlePageProps): string {
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel)}<title>${escapeHtml(props.orgLabel ? `${props.orgLabel} passes` : 'Passes')}</title>${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}\n${bundleCss}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<BundleBody {...props} />)}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel)}<title>${escapeHtml(props.orgLabel ? `${props.orgLabel} passes` : 'Passes')}</title>${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}\n${bundleCss}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<BundleBody {...props} />)}${props.device.device === 'mac' ? `<script nonce="${props.nonce}">${MAC_REVEAL_SCRIPT}</script>` : ''}</body></html>`;
 }

@@ -621,6 +621,12 @@
     "resource": "metrics",
     "method": "retrieveOverview"
   },
+  "metrics.getMetricsPlatformDeveloper": {
+    "resource": "platform.metrics",
+    "method": "retrieveDeveloper",
+    "sdk": false,
+    "reason": "Platform admin console card; needs an admin's session."
+  },
   "metrics.getMetricsPlatformOverview": {
     "resource": "platform.metrics",
     "method": "retrieveOverview"
@@ -2178,5 +2184,11 @@
   "webhooks.postWebhookEndpointsByIdTest": {
     "resource": "webhookEndpoints",
     "method": "sendTest"
+  },
+  "developer.getResolve": {
+    "resource": "developer.search",
+    "method": "resolve",
+    "sdk": false,
+    "reason": "Developer portal search: a signed-in person in a browser, not an integration."
   }
 }

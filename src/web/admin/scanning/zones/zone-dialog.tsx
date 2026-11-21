@@ -139,7 +139,7 @@ export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
             label="Key"
             required={!zone}
             error={shownErrors.key}
-            help={zone ? 'Plans use it. It cannot change.' : 'Plans grant zones by this key.'}
+            help={zone ? 'Cannot change.' : undefined}
           >
             {(p) => (
               <Input
@@ -164,7 +164,7 @@ export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
             )}
           </FormField>
           {root ? (
-            <FormField label="Time zone" help="Hours at this site use this clock.">
+            <FormField label="Time zone">
               {(p) => (
                 <Select
                   {...p}

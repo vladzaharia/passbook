@@ -15,14 +15,12 @@ const STATE_ACTS = {
 function Stat({
   label,
   value,
-  hint,
   filter,
   current,
   id,
 }: {
   label: string;
   value: number;
-  hint?: string;
   /** The Passes list this count opens: undefined for none, null for every pass. */
   filter?: ItemOutcome | null;
   current?: ItemOutcome | undefined;
@@ -53,7 +51,6 @@ function Stat({
           </Link>
         )}
       </dd>
-      {hint ? <span className="text-xs text-fg-muted">{hint}</span> : null}
     </div>
   );
 }
@@ -89,12 +86,7 @@ export function Counts({ b, outcome }: { b: BroadcastDto; outcome: ItemOutcome |
                 filter="unchanged"
                 current={outcome}
               />
-              <Stat
-                id={b.id}
-                label="Not sent as alert (daily limit)"
-                value={c.overBudget}
-                hint={c.overBudget ? 'Updated without a notification' : ''}
-              />
+              <Stat id={b.id} label="Not sent as alert (daily limit)" value={c.overBudget} />
               <Stat id={b.id} label="Failed" value={c.failed} filter="failed" current={outcome} />
             </dl>
           </>

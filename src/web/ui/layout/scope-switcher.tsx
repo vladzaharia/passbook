@@ -1,8 +1,9 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Link } from '@tanstack/react-router';
 import { Command } from 'cmdk';
-import { Check, ChevronsUpDown, Globe, RefreshCw } from 'lucide-react';
+import { Check, ChevronsUpDown, Globe, RefreshCw, User } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
+import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import { cn } from '../../lib/cn.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { orgPath } from '../../lib/scope.ts';
@@ -16,11 +17,31 @@ const ITEM =
 const GROUP =
   '[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-fg-muted';
 
+const MARK =
+  'flex size-6 shrink-0 items-center justify-center rounded-md bg-accent-subtle text-accent-fg';
+
 export function PlatformMark() {
   return (
-    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-accent-subtle text-accent-fg">
+    <span className={MARK}>
       <Globe aria-hidden className="size-4" />
     </span>
+  );
+}
+
+export function PersonalMark() {
+  return (
+    <span className={MARK}>
+      <User aria-hidden className="size-4" />
+    </span>
+  );
+}
+
+/** The mark of an organization as a scope: the user tile for a personal one, else its avatar. */
+export function OrgMark({ org }: { org: Pick<OrgMembership, 'orgId' | 'orgName' | 'personal'> }) {
+  return org.personal ? (
+    <PersonalMark />
+  ) : (
+    <EntityAvatar kind="org" id={org.orgId} name={org.orgName} />
   );
 }
 
@@ -78,11 +99,9 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   // Platform is a scope only for platform admins; anyone else is offered their organizations.
   const platform = scope?.kind === 'platform' && isAdmin;
   const name = platform ? 'Platform' : (membership?.orgName ?? undefined);
-  const icon = platform ? (
-    <PlatformMark />
-  ) : membership ? (
-    <EntityAvatar kind="org" id={membership.orgId} name={membership.orgName} />
-  ) : null;
+  const icon = platform ? <PlatformMark /> : membership ? <OrgMark org={membership} /> : null;
+  const personal = memberships.find((m) => m.personal);
+  const others = memberships.filter((m) => !m.personal);
   const choose = (run: () => void) => () => {
     setOpen(false);
     onNavigate?.();
@@ -103,7 +122,7 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
         className="flex h-9 min-w-0 items-center gap-2 rounded-md text-sm font-medium text-fg-strong hover:underline"
       >
         {failed}
-        <EntityAvatar kind="org" id={only.orgId} name={only.orgName} />
+        <OrgMark org={only} />
         <span className="truncate">{only.orgName}</span>
       </Link>
     );
@@ -151,26 +170,36 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
             />
             <Command.List className="max-h-72 overflow-auto p-1">
               <Command.Empty className="px-3 py-2 text-sm text-fg-muted">No results</Command.Empty>
-              {isAdmin ? (
+              {isAdmin || personal ? (
                 <Command.Group className={GROUP}>
-                  <Item
-                    current={platform}
-                    icon={<PlatformMark />}
-                    label="Platform"
-                    onSelect={choose(() => switchScope(undefined))}
-                  />
+                  {isAdmin ? (
+                    <Item
+                      current={platform}
+                      icon={<PlatformMark />}
+                      label="Platform"
+                      onSelect={choose(() => switchScope(undefined))}
+                    />
+                  ) : null}
+                  {personal ? (
+                    <Item
+                      current={membership?.orgId === personal.orgId}
+                      icon={<OrgMark org={personal} />}
+                      label={personal.orgName}
+                      onSelect={choose(() => switchScope(personal.orgId))}
+                    />
+                  ) : null}
                 </Command.Group>
               ) : null}
-              {isAdmin && memberships.length > 0 ? (
+              {(isAdmin || personal) && others.length > 0 ? (
                 <Command.Separator alwaysRender className="mx-1 my-1 h-px bg-border" />
               ) : null}
-              {memberships.length > 0 ? (
+              {others.length > 0 ? (
                 <Command.Group heading="Organizations" className={GROUP}>
-                  {memberships.map((m) => (
+                  {others.map((m) => (
                     <Item
                       key={m.orgId}
                       current={membership?.orgId === m.orgId}
-                      icon={<EntityAvatar kind="org" id={m.orgId} name={m.orgName} />}
+                      icon={<OrgMark org={m} />}
                       label={m.orgName}
                       onSelect={choose(() => switchScope(m.orgId))}
                     />

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg, runOne } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first } from '../../platform/db.ts';
 import { afterBatch, beforeBatch } from './batch-interceptor-test-support.ts';
 import { recordedCheckIn, recordedNoMatch } from './console-privacy-actions-test-fixtures.ts';
@@ -172,10 +173,12 @@ describe('scan console and feed privacy', () => {
       [pass.id],
     );
     if (!identity) throw new Error('The issued pass must have a signing identity.');
-    await runOne(kit.env.DB, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
-      'OTHERTEAM',
-      identity.identity_id,
-    ]);
+    await withoutTrigger(kit.env.DB, 'signing_identities_pti_immutable', () =>
+      runOne(kit.env.DB, 'UPDATE signing_identities SET team_identifier = ? WHERE id = ?', [
+        'OTHERTEAM',
+        identity.identity_id,
+      ]),
+    );
 
     const history = await page(`?orgId=${kit.org.id}`);
     expect(history.items).toHaveLength(1);

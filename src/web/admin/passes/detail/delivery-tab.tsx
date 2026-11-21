@@ -292,12 +292,6 @@ export function DeliveryTab({ pass, readOnly }: { pass: PassDetailDto; readOnly:
             />
           }
         />
-        <CardBody>
-          <p className="text-sm text-fg-muted">
-            Sending to the current holder creates a new email; the original recipient is not
-            recorded here.
-          </p>
-        </CardBody>
         {delivery.isError ? (
           <CardBody>
             <ErrorState inline error={delivery.error} onRetry={() => void delivery.refetch()} />

@@ -1,10 +1,11 @@
-import os, uuid
-import httpx
+import os
 
-res = httpx.post(
-    "https://passbook.mobile/api/v1/passes",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}", "Idempotency-Key": str(uuid.uuid4())},
-    json={
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.passes.create(
+    {
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "input": {
             "eventName": "Harbor Night",
@@ -20,5 +21,4 @@ res = httpx.post(
         "sendEmail": True,
     },
 )
-res.raise_for_status()
-print(res.json())
+print(result)

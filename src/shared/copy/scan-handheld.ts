@@ -60,7 +60,7 @@ export const SCAN_HANDHELD_COPY = {
     all: 'All numbers',
     end: 'End shift',
     keep: 'Keep scanning',
-    endNote: 'This device stays paired. Start a new shift when you’re ready.',
+    endNote: 'This device stays paired.',
     pending: '{n} scans need confirmation. Keep this shift open.',
   },
 } as const;

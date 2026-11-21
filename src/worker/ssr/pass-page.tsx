@@ -10,7 +10,7 @@ import type {
   WalletProviderIssuance,
 } from '../../shared/contracts/wallet-providers.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import type { DeviceInfo } from '../../shared/device.ts';
+import { type DeviceInfo, MAC_REVEAL_SCRIPT } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
@@ -141,7 +141,6 @@ function PassBody(props: PassPageProps) {
               glow={active}
               dim={!active}
               removed={state === 'removed'}
-              toggleId="pc-flip"
             />
           }
           passTitle={props.passTitle}
@@ -164,13 +163,13 @@ function PassBody(props: PassPageProps) {
             <PassDetails
               passJson={props.passJson}
               view={view}
-              state={state}
               locale={view.locale}
               now={props.now}
               {...(props.timeZone ? { timeZone: props.timeZone } : {})}
             />
           }
           rise
+          macUnsure
         />
       </main>
       <OrgMark brand={props.brand} />
@@ -195,6 +194,11 @@ export function renderPassPage(props: PassPageProps): string {
   // The tab says what the pass is, as the portal's does; never the holder.
   const title = headingOf(props).title;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
+  // A Mac agent may be an iPad: the Mac's badge shows only once the browser says it is a Mac.
+  const mac =
+    props.device.device === 'mac'
+      ? `<script nonce="${props.nonce}">${MAC_REVEAL_SCRIPT}</script>`
+      : '';
   const line = props.removal
     ? HOLDER_COPY.previewRemoved
     : voided
@@ -204,7 +208,7 @@ export function renderPassPage(props: PassPageProps): string {
           ? HOLDER_COPY.previewWallets
           : HOLDER_COPY.previewActive
         : HOLDER_COPY.expired;
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}${mac}</body></html>`;
 }
 
 /**

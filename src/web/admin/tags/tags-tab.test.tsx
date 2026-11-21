@@ -66,7 +66,6 @@ describe('Tags tab', () => {
   it('sends the status filter and shows the empty state', async () => {
     const { fetchMock } = await open({ '/api/v1/nfc/tags': () => page([]) });
     expect(await screen.findByText(TAG_COPY.inventory.empty.headline)).toBeInTheDocument();
-    expect(screen.getByText(TAG_COPY.inventory.empty.sub)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalled();
   });
 

@@ -1,9 +1,8 @@
 import os
-import httpx
 
-res = httpx.get(
-    "https://passbook.mobile/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/member-photo/image",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-)
-res.raise_for_status()
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+res = pb.passes.member_photo.download("0193a1b2-7c00-7000-8000-0000000000c1")
 print(res.status_code)

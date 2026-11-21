@@ -1,12 +1,18 @@
 /* The holder pass page (holder-pass-view.tsx, holder-heading.tsx): the portal imports it, /p
-   inlines it. One grid: phone, one column (the pass, the add block, the details, the help); from
-   1024 the pass holds the left column, sticky under the bar, and the rest stacks at its right,
-   top edges level. Transform and opacity only; reduced motion keeps nothing moving. */
+   inlines it. One grid: phone, one column (the pass, the lead, the other ways, the details, the
+   help); from 1024 the pass holds the left column, sticky under the bar, and the rest stacks at
+   its right. Transform and opacity only; reduced motion keeps nothing moving. */
 .wl-holder {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "pass" "add" "details" "help";
-  row-gap: 1.5rem;
+  grid-template-areas: "pass" "add" "more" "details" "help";
+}
+/* Margins, not row-gap: an area with nothing in it (no other ways, no details) leaves no gap. */
+.wl-holder > :not(:empty) {
+  margin-bottom: 1.5rem;
+}
+.wl-holder > :last-child {
+  margin-bottom: 0;
 }
 .wl-holder-pass {
   grid-area: pass;
@@ -23,15 +29,27 @@
   flex-direction: column;
   gap: 1rem;
 }
+.wl-holder-more {
+  grid-area: more;
+  min-width: 0;
+  /* The other ways hang off the lead: closer to it than to the details. */
+  margin-top: -0.5rem;
+}
+.wl-holder-more:empty {
+  display: none;
+}
 .wl-holder-details {
   grid-area: details;
+  display: flex;
   min-width: 0;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 .wl-holder-help {
   grid-area: help;
   min-width: 0;
 }
-/* Provider artwork stays proportional and unmodified, with clear space and a 48px target. */
+/* The bundle's per-pass provider badges (bundle-page.tsx). */
 .wl-native-wallets {
   display: flex;
   flex-wrap: wrap;
@@ -54,29 +72,85 @@
   height: 3rem;
   object-fit: contain;
 }
-.wl-choice-label {
+/* The other ways (wallet-choice.tsx): one quiet list under the lead, hairlines between rows, no
+   label. A row is a whole link (or the resend form's button), its hover tint past the text edge. */
+.wl-others {
+  display: flex;
+  flex-direction: column;
   margin: 0;
-  color: var(--pk-text-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  padding: 0;
+  list-style: none;
 }
-.wl-presentation {
-  display: grid;
-  justify-items: start;
+.wl-others > li + li {
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.wl-others form {
+  margin: 0;
+}
+.wl-other {
+  display: flex;
+  width: calc(100% + 1.5rem);
+  min-height: 3rem;
+  align-items: center;
   gap: 0.75rem;
-  padding: 1.25rem;
-  border: 1px solid var(--pk-border-subtle);
-  border-radius: var(--pk-radius-xl);
-  background: var(--pk-surface-raised);
+  margin-inline: -0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: var(--pk-radius-md);
+  background: none;
+  color: var(--pk-text-default);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--wl-dur-hover) var(--wl-ease-move),
+    color var(--wl-dur-hover) var(--wl-ease-move);
 }
-.wl-presentation h2 {
-  margin: 0;
+.wl-other:hover {
+  background: var(--pk-state-hover-tint);
   color: var(--pk-text-strong);
-  font-size: 1rem;
-  font-weight: 600;
 }
-.wl-presentation p {
+.wl-other:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+.wl-other > svg,
+.wl-other-text > svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  color: var(--pk-text-muted);
+}
+.wl-other-go {
+  margin-inline-start: auto;
+  transition: translate var(--wl-dur-hover) var(--wl-ease-move);
+}
+.wl-other:hover .wl-other-go {
+  translate: 2px 0;
+}
+.wl-other-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.875rem;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}
+.wl-other-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-block: 0.75rem;
+}
+.wl-other-badges .wl-native-badge img {
+  height: 2.5rem;
+}
+.wl-other-status {
   margin: 0;
+  padding-bottom: 0.75rem;
   color: var(--pk-text-muted);
   font-size: 0.875rem;
 }
@@ -84,15 +158,16 @@
    the pass under it. */
 @media (max-width: 1023.98px) {
   .wl-holder[data-lead] {
-    grid-template-areas: "add" "pass" "details" "help";
+    grid-template-areas: "add" "pass" "more" "details" "help";
   }
 }
 @media (min-width: 1024px) {
   .wl-holder {
     grid-template-columns: 22rem minmax(0, 1fr);
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
     grid-template-areas:
       "pass add"
+      "pass more"
       "pass details"
       "pass help"
       "pass .";
@@ -128,6 +203,58 @@
 .pc-flat .pc-group-title {
   color: var(--pk-text-muted);
 }
+/* The card's back on the page (pass-details.tsx): no grey well inside the card, hairlines between
+   rows, the label beside the value from 640, links in the page's accent. */
+.pc-flat .pc-list {
+  border-radius: 0;
+  background: none;
+}
+.pc-flat .pc-item {
+  display: grid;
+  gap: 0.125rem 1.5rem;
+  padding: 0.625rem 0;
+  font-size: 0.875rem;
+}
+.pc-flat .pc-group:first-child .pc-item:first-child,
+.pc-flat .pc-group .pc-group-title + .pc-list .pc-item:first-child {
+  padding-top: 0.25rem;
+}
+.pc-flat .pc-item + .pc-item {
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.pc-flat .pc-label {
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.pc-flat .pc-value {
+  color: var(--pk-text-default);
+  font-size: 0.875rem;
+  white-space: pre-line;
+}
+.pc-flat .pc-value a {
+  color: var(--pk-accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pc-flat .pc-action {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  color: var(--pk-text-default);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+}
+@media (min-width: 640px) {
+  .pc-flat .pc-item {
+    grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+  }
+}
 
 /* base.css gives the app's text links a 44 px touch height; /p has no base.css. */
 @media (pointer: coarse) {
@@ -139,12 +266,20 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* The column rises after the card (240 ms). Apple's badge never animates: what holds it does
-     not rise. */
+  /* The column rises after the card (240 ms), the other ways one row after another. Wallet
+     badges never animate: what holds one does not rise. */
   .wl-holder[data-rise] :is(.wl-holder-details, .wl-holder-help),
-  .wl-holder[data-rise]
-    .wl-holder-add
-    > :not(:has([data-awb])):not(.wl-native-wallets):not(.wl-choice-label) {
+  .wl-holder[data-rise] .wl-holder-add > :not(:has([data-awb], .wl-native-badge)) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
+  }
+  /* /p allows no inline styles but the pass's colours: the rows count themselves. */
+  .wl-holder[data-rise] .wl-others > li:not(.wl-other-badges) {
+    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 320ms backwards;
+  }
+  .wl-holder[data-rise] .wl-others > li:nth-child(2):not(.wl-other-badges) {
+    animation-delay: 380ms;
+  }
+  .wl-holder[data-rise] .wl-others > li:nth-child(n + 3):not(.wl-other-badges) {
+    animation-delay: 440ms;
   }
 }

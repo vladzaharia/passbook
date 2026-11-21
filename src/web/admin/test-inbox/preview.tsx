@@ -30,14 +30,12 @@ const VIEWS = [
 
 function Details({
   email,
-  orgName,
   orgId,
   send,
   view,
   onView,
 }: {
   email: Email;
-  orgName: string | undefined;
   orgId: string;
   send: SendState;
   view: View;
@@ -48,7 +46,6 @@ function Details({
       <KeyValue
         items={[
           { label: 'Would go to', value: email.to },
-          { label: 'Organization', value: orgName ?? null },
           {
             label: 'For',
             value: email.passId ? (
@@ -140,14 +137,12 @@ function PreviewContent({
   userId,
   canOperate,
   sendScope,
-  orgName,
 }: {
   id: string;
   orgId: string;
   userId: string;
   canOperate: boolean;
   sendScope: InboxSendScope;
-  orgName: (orgId: string) => string | undefined;
 }) {
   const email = useCapturedEmail(id, orgId);
   const emails = useVerifiedInboxEmails(userId, canOperate);
@@ -223,14 +218,7 @@ function PreviewContent({
             ) : null}
           </>
         ) : data ? (
-          <Details
-            email={data}
-            orgName={orgName(data.orgId)}
-            orgId={orgId}
-            send={sendState}
-            view={view}
-            onView={setView}
-          />
+          <Details email={data} orgId={orgId} send={sendState} view={view} onView={setView} />
         ) : (
           <Skeleton className="h-64 w-full" />
         )}
@@ -251,7 +239,6 @@ export function EmailPreview({
   mode,
   canOperate,
   sendScope,
-  orgName,
   onClose,
 }: {
   id: string;
@@ -260,7 +247,6 @@ export function EmailPreview({
   mode: Mode;
   canOperate: boolean;
   sendScope: InboxSendScope;
-  orgName: (orgId: string) => string | undefined;
   onClose: () => void;
 }) {
   const [opened] = useState(() => ({ orgId, userId, mode }));
@@ -278,7 +264,6 @@ export function EmailPreview({
           userId={userId}
           canOperate={canOperate}
           sendScope={sendScope}
-          orgName={orgName}
         />
       ) : null}
     </Sheet>

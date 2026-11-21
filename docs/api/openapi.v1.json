@@ -27505,6 +27505,7 @@
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -27684,6 +27685,7 @@
           "NOT_FOUND",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -27839,6 +27841,7 @@
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -27846,6 +27849,96 @@
           "TURNSTILE_FAILED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/developer/resolve": {
+      "get": {
+        "summary": "What a pasted id is in your sandbox: a request, a pass, a template or the sandbox",
+        "operationId": "developer.getResolve",
+        "tags": [
+          "developer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[0-9a-fA-F]{16}-[A-Za-z]{3})$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "request",
+                        "pass",
+                        "template",
+                        "org"
+                      ]
+                    },
+                    "href": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "href",
+                    "label"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.search",
+          "method": "resolve",
+          "sdk": false,
+          "reason": "Developer portal search: a signed-in person in a browser, not an integration."
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "FORBIDDEN",
+          "INVALID_API_KEY",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
         ]
       }
     },
@@ -27873,6 +27966,10 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 4096
+                  },
+                  "viewedAt": {
+                    "type": "integer",
+                    "minimum": 0
                   }
                 },
                 "required": [
@@ -28022,6 +28119,7 @@
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -28141,6 +28239,7 @@
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -28244,6 +28343,7 @@
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -28313,6 +28413,7 @@
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -28378,6 +28479,7 @@
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
           "SANDBOX_CONFLICT",
           "SANDBOX_EXISTS",
           "SANDBOX_KEY_MISSING",
@@ -77813,13 +77915,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
@@ -78132,13 +78247,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
@@ -78455,13 +78583,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
@@ -78787,13 +78928,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
@@ -78865,13 +79019,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
@@ -79199,13 +79366,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
@@ -79307,13 +79487,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
@@ -79641,13 +79834,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
@@ -79963,13 +80169,26 @@
         ],
         "x-codes": [
           "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_CHANGED",
           "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PUSH_KEY_NONE",
@@ -87581,6 +87800,109 @@
         ]
       }
     },
+    "/api/v1/metrics/platform/developer": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:status",
+        "summary": "Developer quickstart funnel: sandboxes by step and time to first pass (30 days)",
+        "tags": [
+          "metrics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "windowDays": {
+                      "type": "integer"
+                    },
+                    "sandboxes": {
+                      "type": "integer"
+                    },
+                    "viewed": {
+                      "type": "integer"
+                    },
+                    "called": {
+                      "type": "integer"
+                    },
+                    "passed": {
+                      "type": "integer"
+                    },
+                    "previewed": {
+                      "type": "integer"
+                    },
+                    "completion": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "ttfpP50Ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "ttfpP90Ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "ttfpSamples": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "windowDays",
+                    "sandboxes",
+                    "viewed",
+                    "called",
+                    "passed",
+                    "previewed",
+                    "completion",
+                    "ttfpP50Ms",
+                    "ttfpP90Ms",
+                    "ttfpSamples"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "metrics.getMetricsPlatformDeveloper",
+        "x-sdk": {
+          "resource": "platform.metrics",
+          "method": "retrieveDeveloper",
+          "sdk": false,
+          "reason": "Platform admin console card; needs an admin's session."
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "METRICS_NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      }
+    },
     "/api/v1/scan/pair/preview": {
       "post": {
         "summary": "What a pairing code is for (consumes nothing)",
@@ -87690,6 +88012,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -87920,6 +88243,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -88123,6 +88447,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -88358,6 +88683,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -88630,6 +88956,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -88863,6 +89190,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -89071,6 +89399,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -89497,6 +89826,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -89910,6 +90240,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -90337,6 +90668,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -90855,6 +91187,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -91284,6 +91617,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -91564,6 +91898,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -91864,6 +92199,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -92104,6 +92440,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -92436,6 +92773,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -92708,6 +93046,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -92972,6 +93311,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -93341,6 +93681,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -93878,6 +94219,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -94115,6 +94457,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -94401,6 +94744,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -94660,6 +95004,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -94981,6 +95326,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -95215,6 +95561,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -95462,6 +95809,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -95765,6 +96113,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -95979,6 +96328,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -96262,6 +96612,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -96644,6 +96995,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -96912,6 +97264,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -97193,6 +97546,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -97374,6 +97728,44 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 280
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "setupId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "orgId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "eventId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "templateIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "maxItems": 100
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "orgId",
+                      "timeZone"
+                    ]
                   }
                 },
                 "required": [
@@ -97480,6 +97872,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -97722,6 +98115,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -97946,6 +98340,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -98208,6 +98603,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -98460,6 +98856,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -98683,6 +99080,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -98906,6 +99304,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -99129,6 +99528,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -99379,6 +99779,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -99603,6 +100004,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -99832,6 +100234,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -100117,6 +100520,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -100352,6 +100756,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -100644,6 +101049,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -100860,6 +101266,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -101080,6 +101487,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -101309,6 +101717,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -101558,6 +101967,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -101810,6 +102220,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -102044,6 +102455,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -102289,6 +102701,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -102510,6 +102923,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -102741,6 +103155,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -102978,6 +103393,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -103541,6 +103957,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -104052,6 +104469,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -104318,6 +104736,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -104809,6 +105228,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -105309,6 +105729,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -105569,6 +105990,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -105785,6 +106207,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -106051,6 +106474,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -106271,6 +106695,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -106500,6 +106925,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -106721,6 +107147,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -106952,6 +107379,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -107183,6 +107611,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -107424,6 +107853,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -109218,6 +109648,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -109443,6 +109874,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -109853,6 +110285,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -110270,6 +110703,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -110494,6 +110928,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -110777,6 +111212,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -110993,6 +111429,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -111213,6 +111650,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -111442,6 +111880,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -111663,6 +112102,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -111894,6 +112334,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -112161,6 +112602,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -112390,6 +112832,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -112631,6 +113074,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -112872,6 +113316,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -113290,6 +113735,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -113514,6 +113960,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -113957,6 +114404,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -114344,6 +114792,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -114745,6 +115194,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -115137,6 +115587,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -115529,6 +115980,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -115767,6 +116219,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -116228,6 +116681,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -116597,6 +117051,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -116817,6 +117272,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -117048,6 +117504,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -117502,6 +117959,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -117942,6 +118400,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",
@@ -118394,6 +118853,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -118892,6 +119352,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -119345,6 +119806,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_FOUND",
@@ -119621,6 +120083,7 @@
           "MISSING_SCOPE",
           "NOTE_CAP",
           "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
           "NOTE_NOT_FOUND",
           "NOTE_ROLE",
           "NOT_INSIDE",

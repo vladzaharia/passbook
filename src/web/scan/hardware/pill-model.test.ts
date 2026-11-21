@@ -21,7 +21,7 @@ describe('the hardware pill', () => {
   });
 
   it('takes the most urgent state of a kind', () => {
-    expect(icons('denied')).toEqual([{ kind: 'camera', state: 'attention' }]);
+    expect(icons('denied')).toEqual([{ kind: 'camera', state: 'attention', status: 'Blocked' }]);
   });
 
   it('names each icon and its state', () => {
@@ -49,5 +49,20 @@ describe('hardware announcements', () => {
       hardwareItems(probeFixture({ webNfc: true }), liveFixture({ webNfc: 'on' })),
     );
     expect(changeOf(idle, on)).toBe('NFC on');
+  });
+
+  it('folds the reader into the pill and says when it pauses and comes back', () => {
+    const live = liveFixture({ readerUsable: true, readerKind: 'barcode' });
+    const ready = pillIcons(hardwareItems(probeFixture(), live));
+    expect(ready.map((i) => i.kind)).toEqual(['camera', 'reader']);
+    const paused = pillIcons(hardwareItems(probeFixture(), { ...live, focused: false }));
+    expect(paused.find((i) => i.kind === 'reader')).toEqual({
+      kind: 'reader',
+      state: 'attention',
+      status: 'Paused',
+    });
+    expect(pillLabel(paused)).toBe('Hardware: Camera on, Built-in reader paused');
+    expect(changeOf(ready, paused)).toBe('Built-in reader paused');
+    expect(changeOf(paused, ready)).toBe('Built-in reader back');
   });
 });

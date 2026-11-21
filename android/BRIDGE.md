@@ -54,6 +54,36 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | `externalReader.mode`, `externalReader.connected` | `"keyboard"` and `null`; this does not claim a connected scanner or generic USB/Bluetooth serial support. |
 | `haptics` | `true`: the app plays the `haptic` op. |
 | `customerDisplay.supported`, `customerDisplay.available`, `customerDisplay.active` | All `false`; no customer-display integration is implemented. |
+| `hardware` | Optional array, at most 16 entries: `{kind, id, name?, builtIn, connected, state, facing?, trigger?, reason?}`. `kind` is `camera`, `barcode`, `nfc`, `keyboard`, `usb`, `bluetooth`, `display`, `haptics` or `speaker`; `state` is `ready`, `active`, `off`, `needs-permission`, `unavailable` or `error`; `connected` is `true`, `false` or `null` (unknown). `id` is at most 64 characters and never a serial or MAC. `name` is the OS name, at most 80 characters; the web keeps it on the device. `reason` is at most 120 characters. Existing fields above are unchanged. See the per-kind table below. |
+
+`hardware` entries on Android and iOS:
+
+| Kind | Android | iOS |
+| --- | --- | --- |
+| `camera` | One per `CameraManager` camera, `facing` from `LENS_FACING` (`front`, `back`, `external`). `state`: `ready` when permission is granted, `needs-permission` otherwise, `unavailable` when restricted. | One per `AVCaptureDevice.DiscoverySession` video device, `facing` from `position`; `external` for external cameras. Same states from authorization. |
+| `barcode` | Built-in reader, `builtIn:true`. A non-external, non-virtual keyboard-source `InputDevice` whose name or descriptor matches a scanner word (scanner, barcode, scan, honeywell, zebra, symbol, datalogic, urovo, newland, sunmi, chainway), or an installed vendor scanner service (Zebra DataWedge, Sunmi, Honeywell, Urovo, Newland) with `state:'ready'`. Listed once. `trigger:'unknown'`. | Not reported. |
+| `nfc` | Present when the device has an adapter: `ready`, `active` while reading, or `off` with reason "NFC is off in Settings". | Present when `NFCReaderSession.readingAvailable`: `ready`, or `active` while reading. |
+| `keyboard` | External, non-virtual keyboard-source `InputDevice` (a wedge scanner looks like one), `connected:true`. Below API 34 a device with a vendor id counts as external. | `GCKeyboard.coalesced` when a hardware keyboard or wedge scanner is connected, `connected:true`. |
+| `usb` | `UsbManager` devices except hubs, `name` is the product name, `connected:true`. | Not reported. |
+| `bluetooth` | Bonded HID peripherals, `connected:null`, only when `BLUETOOTH_CONNECT` is already granted (for example by device policy). The app never requests it. | Not reported. |
+| `haptics`, `speaker` | Vibrator present; audio output feature present. | Haptics engine support; always a speaker. |
+| `display` | Not reported. | Not reported. |
+
+Android re-sends `capabilities` on input-device changes, USB attach and detach, NFC adapter changes and resume (debounced 200 ms). iOS re-sends it on keyboard connect and disconnect, and on the other changes above.
+
+Vendor scan broadcasts: when a vendor scanner service is installed the app also listens for its scan intent and delivers reads as `{event:'scan', source:'barcode', value}`. A broadcast can come from any app, so a value only ever becomes a normal `barcode` scan: 1 to 2048 characters, no control characters, one read at a time and duplicates within two seconds dropped by `ScanGate`, exactly as for typed input. Receivers are registered `RECEIVER_EXPORTED`, which Android 13+ requires for broadcasts from other apps. The manual action and extra in Settings still work, and keyboard output keeps working through the input field.
+
+| Vendor | Action and extra | Status |
+| --- | --- | --- |
+| Zebra DataWedge | `im.plrs.passbook.reader.action.SCAN`, string extra `com.symbol.datawedge.data_string` | Confirmed. The action is chosen in the profile, so the app sends `SET_CONFIG` once (action `com.symbol.datawedge.api.ACTION`, `CONFIG_MODE` `CREATE_IF_NOT_EXIST`, later versions `UPDATE`, no `RESET_CONFIG`) to create its own device-wide profile "PassBook Scanner" bound to this package: barcode input, Intent output as broadcast (`intent_delivery` 2), no intent category, keystroke output left at its default so the keyboard path remains a fallback. It asks for `SEND_RESULT`, stores a done flag only on `SUCCESS`, and logs a failure as `scan.datawedge_config_failed code=<RESULT_CODE>`. The profile stays after uninstall. Receivers also accept the `DEFAULT` category, which DataWedge may add. Not yet run on a Zebra device. [Result codes](https://techdocs.zebra.com/datawedge/latest/guide/api/resultinfo/), [tutorial (category left blank, Broadcast delivery)](https://techdocs.zebra.com/datawedge/latest/guide/api/tutorials/) [Set Config](https://techdocs.zebra.com/datawedge/latest/guide/api/setconfig/), [Intent output](https://techdocs.zebra.com/datawedge/latest/guide/output/intent/) |
+| Sunmi | `com.sunmi.scanner.ACTION_DATA_CODE_RECEIVED`, string extra `data` | Confirmed. Broadcast output must be on (the default; mode switch is `com.sunmi.scanner.ACTION_BAR_DEVICES_SETTING`). [Scanner guide](https://file.cdn.sunmi.com/SUNMIDOCS/Barcode-Scanner-User-Guide-20201202.pdf) |
+| Honeywell | `com.honeywell.sample.action.BARCODE_DATA`, `data` | Unverified, off. Honeywell has no fixed action: the app that claims the scanner chooses it (needs the `com.honeywell.decode.permission.DECODE` permission, which this app does not hold) and the sample string is documented as a placeholder. Use the manual action and extra in Settings. [Data Collection Intent API](https://support.honeywellaidc.com/servlet/fileField?entityId=ka02K000000cS1bQAE&field=File_1__Body__s) |
+| Urovo | `android.intent.ACTION_DECODE_DATA`, `barcode_string` | Action and extra confirmed, service package names unverified, so off. Needs the scanner output mode set to intent (`WEDGE_KEYBOARD_ENABLE` 0). [ScanManager](https://en.urovo.com/developer/android/device/ScanManager.html) |
+| Newland | `nlscan.action.SCANNER_RESULT`, `SCAN_BARCODE1` | Action and extra confirmed, service package names unverified, so off. Needs Output Mode "Output via API" in the scanner settings. [ScanDemo](https://github.com/NewlandAutoID/ScanDemo), [API handbook](https://d1bx683snmhtki.cloudfront.net/MobileTerminal/Newland_Android_PDA_API_Handbook.pdf) |
+
+"Confirmed" means the vendor documentation was checked, not the sender: any app can send these broadcasts, so reads are bounded and still need a valid code at the server.
+
+Unverified vendors are gated by the `unverifiedScanners` flag in `ReaderConfig` (shared preference `reader`/`unverifiedScanners`, default `false`, kept when Settings is saved). With it off they are neither registered nor listed in `hardware`.
 
 Snapshots are sent at handshake, when NFC is started/stopped or its adapter changes, on activity pause/resume, and after camera permission results or camera availability callbacks. A new page must handshake again. The supplied `ReaderClient` keeps the legacy ready envelope in `reader.capabilities`; on an update it replaces `reader.capabilities.capabilities`, refreshes the legacy `nfc` boolean, and dispatches a `capabilities` event whose `detail` is the nested snapshot.
 

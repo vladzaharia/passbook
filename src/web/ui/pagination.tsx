@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useOrgScope } from '../lib/org-filter.tsx';
 import { Button } from './button.tsx';
 
 /** The slice of a TanStack useInfiniteQuery result that cursor paging needs. */
@@ -23,14 +22,8 @@ export interface LoadMoreProps {
   shown?: number;
   /** Singular and plural: ['pass', 'passes']. */
   noun?: readonly [string, string];
-  /** Append the top-bar org scope: "19 passes in Northwind". */
+  /** No effect: the shell already shows the org. Kept so callers still compile. */
   scoped?: boolean;
-}
-
-function ScopeName() {
-  const scope = useOrgScope();
-  const name = !scope.isLoading && !scope.isError ? scope.membership?.orgName : undefined;
-  return name ? <> in {name}</> : null;
 }
 
 /**
@@ -45,7 +38,6 @@ export function LoadMore({
   onLoadMore = () => void query?.fetchNextPage(),
   shown,
   noun = ['item', 'items'],
-  scoped,
 }: LoadMoreProps) {
   const count = useRef<HTMLSpanElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -70,7 +62,6 @@ export function LoadMore({
     <div className="flex items-center justify-between gap-3 pt-3 text-sm text-fg-muted">
       <span ref={count} tabIndex={-1} className="tabular-nums outline-none">
         {label}
-        {label && scoped ? <ScopeName /> : null}
         {failed ? <span className="text-danger"> Could not load more.</span> : null}
       </span>
       <span role="status" className="sr-only">

@@ -17,11 +17,11 @@ const props = {
 } as const;
 
 describe('presentation page', () => {
-  it('sits on the hosted card with one line and no jargon', () => {
+  it('sits on the hosted card with no lede and no jargon', () => {
     const html = renderPresentationPage(props);
     expect(html).toContain('class="hosted wide"');
     expect(html).toContain('<h1>Membership</h1>');
-    expect(html).toContain('Show this to the reader.');
+    expect(html).not.toContain('class="lede"');
     expect(html.slice(html.indexOf('<body')).replace(/aria-label="[^"]*"/g, '')).not.toMatch(
       /Code 39|NFC|presentation barcode/i,
     );

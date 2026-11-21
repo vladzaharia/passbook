@@ -77,6 +77,7 @@ describe('the session lookup', () => {
       kind: 'ready',
       csrf: 'csrf-1',
       sandbox: { id: 's1', orgSlug: 'acme', templateId: 't1' },
+      siteKey: '',
     };
     expect(await loadSession()).toEqual(ready);
     expect(await loadSession()).toEqual(ready);

@@ -29,8 +29,7 @@ describe('sign-in email preference', () => {
   it('leads with the link by default', async () => {
     await request(await known(), new Map());
     expect(h.mail[0]?.subject).toBe('Your sign-in link');
-    expect(h.mail[0]?.text.startsWith('Sign in to PassBook\n\nFor ')).toBe(true);
-    expect(h.mail[0]?.text).toContain('\n\nSign in: ');
+    expect(h.mail[0]?.text.startsWith('Sign in to PassBook\n\nSign in: ')).toBe(true);
   });
 
   it('leads with the code when the installed app asks, and both still sign in', async () => {

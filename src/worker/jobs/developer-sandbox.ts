@@ -19,8 +19,8 @@ export const SANDBOX_CREATE_TABLES = [
 
 /**
  * The `system:` grants a request may trigger for developer sandboxes: making one (a person who proved a live
- * session, Turnstile and the rest in the request), closing one (its person or the daily sweep) and ending its try
- * tokens (its person). Fixed purposes and tables; the job context never leaves this function, and
+ * session, Turnstile and the rest in the request), closing one (its person or the daily sweep), ending its try
+ * tokens (its person) and stamping its funnel columns (its person, set once). Fixed purposes and tables; the job context never leaves this function, and
  * `tools/authority-scope.ts` allows only `modules/developer/repo-grants.ts` to import it.
  */
 export function developerSandboxGrant(
@@ -28,7 +28,8 @@ export function developerSandboxGrant(
   purpose:
     | 'platform.job.developer_sandbox.create'
     | 'platform.job.developer_sandbox.close'
-    | 'platform.job.developer_sandbox.try_revoke',
+    | 'platform.job.developer_sandbox.try_revoke'
+    | 'platform.job.developer_sandbox.funnel',
   checks: Check[],
   orgId?: string,
 ): Grant {
@@ -46,7 +47,8 @@ export function developerSandboxGrant(
     tables:
       purpose === 'platform.job.developer_sandbox.create'
         ? SANDBOX_CREATE_TABLES
-        : purpose === 'platform.job.developer_sandbox.try_revoke'
+        : purpose === 'platform.job.developer_sandbox.try_revoke' ||
+            purpose === 'platform.job.developer_sandbox.funnel'
           ? ['developer_sandboxes']
           : ['orgs', 'api_keys', 'developer_sandboxes'],
     ...(orgId === undefined ? {} : { orgId }),

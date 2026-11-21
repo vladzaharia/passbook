@@ -4,7 +4,7 @@ import type { ScanState } from '../machine/types.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
 import { LiveAnnouncer } from '../ui/live-announcer.tsx';
 import type { CameraChoice } from '../ui/scan-menu.tsx';
-import { guideOf } from './guide.ts';
+import { panelRows } from './guide.ts';
 import { HardwarePanel } from './hardware-panel.tsx';
 import { HardwarePill } from './hardware-pill.tsx';
 import { createSerialScanners, type SerialLike } from './serial-scanners.ts';
@@ -60,8 +60,7 @@ function HardwareSurface({
       <LiveAnnouncer message={said} />
       {open ? (
         <HardwarePanel
-          items={view.items}
-          steps={guideOf(view.items, { reads: inputs.reads, camera: inputs.camera !== null })}
+          items={panelRows(view.items, { reads: inputs.reads, camera: inputs.camera !== null })}
           testing={testing}
           testRead={testRead}
           onAction={(item, action) => {
@@ -86,6 +85,7 @@ export function ScanHardware({
   video,
   lens,
   camera,
+  readerUsable = false,
 }: {
   runtime: ScanRuntime;
   s: ScanState;
@@ -94,10 +94,14 @@ export function ScanHardware({
   lens: [CameraChoice, (choice: CameraChoice) => void];
   /** False where the view runs no camera (the operator desk). */
   camera: boolean;
+  /** The session's built-in reader (barcode or Wallet), as the loop decides it. */
+  readerUsable?: boolean;
 }) {
   const [web, setWeb] = useState(runtime.webNfc.status());
   const inputs: HardwareInputs = {
     reads: true,
+    focused: s.focused,
+    readerUsable,
     camera: camera ? s.camera : null,
     cameraChoice: lens[0],
     hasWide: runtime.camera.hasWide(),
@@ -178,6 +182,8 @@ export function ScanHardware({
 export function MonitorHardware({ online }: { online: boolean }) {
   const inputs: HardwareInputs = {
     reads: false,
+    focused: true,
+    readerUsable: false,
     camera: null,
     cameraChoice: 'back',
     hasWide: false,

@@ -10,9 +10,9 @@ export type RenderBuddy = (props: BuddyProps) => ReactNode;
 
 /**
  * The scan: the add QR on the buddy's sign, the ways to add beside it (under it on a phone). One
- * for the pass page's add block (the portal and /p) and My passes' QR dialog. With `buddy` it sits
+ * for My passes' and the bundle's QR dialogs and the console's pairing face. With `buddy` it sits
  * on the sign (M) and points its teal pass at the code; without, the sign keeps no room above it.
- * The ways start with the iPhone's scan; `children` follow it.
+ * The ways start with the iPhone's scan line; `children` follow it.
  */
 export function Scan({
   url,
@@ -43,9 +43,8 @@ export function Scan({
           <div className="wl-way">
             <p className="wl-way-label">
               <Smartphone aria-hidden />
-              {HOLDER_COPY.iphone}
+              {HOLDER_COPY.scanLine}
             </p>
-            <p className="text-sm text-fg-muted">{HOLDER_COPY.scanLine}</p>
           </div>
         )}
         {children}

@@ -17,9 +17,9 @@ describe('the assign card', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(SCAN_TAG_COPY.tag.ios);
     expect(screen.getByRole('button', { name: SCAN_TAG_COPY.tag.readButton })).toBeTruthy();
   });
-  it('USB says the reader types the ID, and Chrome offers Allow NFC', () => {
+  it('USB asks for a tap on the reader', () => {
     show('assign-tag-usb');
-    expect(screen.getByText(SCAN_TAG_COPY.tag.usbSub)).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(SCAN_TAG_COPY.tag.usb);
   });
   it('Chrome asks for a tap: Allow NFC is in the dock', () => {
     show('assign-tag-web');

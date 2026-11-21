@@ -87,5 +87,5 @@
 
 /* A preview is for the ticket: it leads, where the iPhone's page puts the badge first. */
 .wp-phone-page .wl-holder[data-lead] {
-  grid-template-areas: "pass" "add" "details" "help";
+  grid-template-areas: "pass" "add" "more" "details" "help";
 }

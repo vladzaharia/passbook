@@ -7,9 +7,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.hardware.input.InputManager;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+import android.os.Build;
+import android.view.InputDevice;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,6 +28,7 @@ import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Base64;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -33,7 +44,11 @@ import im.plrs.passbook.reader.protocol.VasReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,10 +56,14 @@ import org.json.JSONObject;
 public final class MainActivity extends Activity implements WebSurface.Listener, NfcController.Listener {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ScanGate gate = new ScanGate();
+    private static final String DATAWEDGE_PROFILE = "PassBook Scanner";
+    private static final String DATAWEDGE_COMMAND = "PASSBOOK_PROFILE";
+    private static final int DATAWEDGE_PROFILE_VERSION = 1;
     private ReaderConfig config;
     private WebSurface web;
     private NfcController nfc;
     private CameraManager cameraManager;
+    private InputManager inputManager;
     private TextView status;
     private Button scan;
     private boolean foreground;
@@ -58,11 +77,42 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private final CameraPermissions cameraPermissions = new CameraPermissions();
     private final BroadcastReceiver barcodeReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
-            if (foreground && config.barcodeAction().equals(intent.getAction())) {
-                barcode(intent.getStringExtra(config.barcodeExtra()));
+            // Any app can send these. They only ever become a bounded barcode read, as if typed.
+            if (!foreground || intent.getAction() == null) return;
+            try {
+                if (intent.getAction().equals(config.barcodeAction())) {
+                    barcode(intent.getStringExtra(config.barcodeExtra()));
+                    return;
+                }
+                for (Hardware.Vendor vendor : vendorsPresent()) {
+                    if (vendor.action().equals(intent.getAction())) barcode(intent.getStringExtra(vendor.extra()));
+                }
+            } catch (RuntimeException malformed) {
+                notice("Invalid barcode. Scan it again.");
             }
         }
     };
+    private final BroadcastReceiver dataWedgeResult = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            if (!DATAWEDGE_COMMAND.equals(intent.getStringExtra("COMMAND_IDENTIFIER"))) return;
+            if ("SUCCESS".equals(intent.getStringExtra("RESULT"))) {
+                getSharedPreferences("datawedge", MODE_PRIVATE).edit().putInt("profileVersion", DATAWEDGE_PROFILE_VERSION).apply();
+                return;
+            }
+            Bundle info = intent.getBundleExtra("RESULT_INFO");
+            Log.w("PassBook", "scan.datawedge_config_failed code=" + (info == null ? "unknown" : info.getString("RESULT_CODE")));
+            notice("Zebra scanner setup failed. Use keyboard output.");
+        }
+    };
+    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) { hardwareChanged(); }
+    };
+    private final InputManager.InputDeviceListener inputListener = new InputManager.InputDeviceListener() {
+        @Override public void onInputDeviceAdded(int deviceId) { hardwareChanged(); }
+        @Override public void onInputDeviceRemoved(int deviceId) { hardwareChanged(); }
+        @Override public void onInputDeviceChanged(int deviceId) { hardwareChanged(); }
+    };
+    private final Runnable hardwareReport = () -> { if (foreground) reportCapabilities(); };
     private final BroadcastReceiver nfcReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (!foreground || !NfcAdapter.ACTION_ADAPTER_STATE_CHANGED.equals(intent.getAction())) return;
@@ -100,6 +150,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         config = ReaderConfig.load(this);
         cameraManager = getSystemService(CameraManager.class);
+        inputManager = getSystemService(InputManager.class);
         nfc = new NfcController(this, this);
         buildUi();
         web.load(config);
@@ -176,12 +227,18 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         ContextCompat.registerReceiver(this, nfcReceiver, new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
             ContextCompat.RECEIVER_EXPORTED);
         if (cameraManager != null) cameraManager.registerAvailabilityCallback(cameraAvailability, handler);
+        if (inputManager != null) inputManager.registerInputDeviceListener(inputListener, handler);
+        IntentFilter usb = new IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+        usb.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        ContextCompat.registerReceiver(this, usbReceiver, usb, ContextCompat.RECEIVER_NOT_EXPORTED);
         resumeReader(); cameraPermissions.resume(); reportCapabilities();
     }
     @Override protected void onPause() {
         web.send(message("cancelled"));
         foreground = false; endOneShot(); nfc.stop(); gate.reset(); unregisterBarcode(); unregisterReceiver(nfcReceiver);
         if (cameraManager != null) cameraManager.unregisterAvailabilityCallback(cameraAvailability);
+        if (inputManager != null) inputManager.unregisterInputDeviceListener(inputListener);
+        unregisterReceiver(usbReceiver); handler.removeCallbacks(hardwareReport);
         cameraPermissions.pause(); reportCapabilities();
         web.view.onPause(); super.onPause();
     }
@@ -312,7 +369,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     void barcode(String value) {
-        if (value == null || value.isEmpty() || value.length() > 2048 || value.chars().anyMatch(Character::isISOControl)) {
+        if (!Hardware.validBarcode(value)) {
             notice("Invalid barcode. Scan it again."); return;
         }
         JSONObject event = message("scan"); put(event, "source", "barcode"); put(event, "value", value);
@@ -342,12 +399,55 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     private void registerBarcode() {
-        if (registered || config.barcodeAction().isEmpty() || !foreground) return;
-        ContextCompat.registerReceiver(this, barcodeReceiver, new IntentFilter(config.barcodeAction()), ContextCompat.RECEIVER_EXPORTED);
+        List<Hardware.Vendor> vendors = vendorsPresent();
+        if (registered || !foreground || (config.barcodeAction().isEmpty() && vendors.isEmpty())) return;
+        Hardware.Registration registration = Hardware.registration(config.barcodeAction(), vendors);
+        IntentFilter filter = new IntentFilter();
+        for (String action : registration.actions()) filter.addAction(action);
+        for (String category : registration.categories()) filter.addCategory(category);
+        if (vendors.stream().anyMatch(vendor -> vendor.name().equals("zebra"))) configureDataWedge();
+        ContextCompat.registerReceiver(this, barcodeReceiver, filter, ContextCompat.RECEIVER_EXPORTED);
+        IntentFilter result = new IntentFilter("com.symbol.datawedge.api.RESULT_ACTION");
+        result.addCategory(Intent.CATEGORY_DEFAULT);
+        ContextCompat.registerReceiver(this, dataWedgeResult, result, ContextCompat.RECEIVER_EXPORTED);
         registered = true;
     }
+    /**
+     * Creates this app's own DataWedge profile once: barcode input and broadcast intent output, with no
+     * keystroke plugin so the keyboard path stays as a fallback (ScanGate drops the duplicate). The result is
+     * requested; the flag is stored only on success, so a failure retries on the next resume.
+     */
+    private void configureDataWedge() {
+        SharedPreferences prefs = getSharedPreferences("datawedge", MODE_PRIVATE);
+        int done = prefs.getInt("profileVersion", 0);
+        if (done >= DATAWEDGE_PROFILE_VERSION) return;
+        Hardware.Vendor zebra = Hardware.VENDORS.get(0);
+        Bundle barcodeParams = new Bundle();
+        barcodeParams.putString("scanner_input_enabled", "true");
+        Bundle intentParams = new Bundle();
+        intentParams.putString("intent_output_enabled", "true"); intentParams.putString("intent_action", zebra.action());
+        intentParams.putString("intent_delivery", "2");
+        ArrayList<Bundle> plugins = new ArrayList<>();
+        String[] names = {"BARCODE", "INTENT"};
+        Bundle[] params = {barcodeParams, intentParams};
+        for (int i = 0; i < names.length; i++) {
+            Bundle plugin = new Bundle();
+            plugin.putString("PLUGIN_NAME", names[i]); plugin.putBundle("PARAM_LIST", params[i]); plugins.add(plugin);
+        }
+        Bundle app = new Bundle();
+        app.putString("PACKAGE_NAME", getPackageName()); app.putStringArray("ACTIVITY_LIST", new String[] {"*"});
+        Bundle main = new Bundle();
+        main.putString("PROFILE_NAME", DATAWEDGE_PROFILE); main.putString("PROFILE_ENABLED", "true");
+        main.putString("CONFIG_MODE", done == 0 ? "CREATE_IF_NOT_EXIST" : "UPDATE");
+        main.putParcelableArrayList("PLUGIN_CONFIG", plugins); main.putParcelableArray("APP_LIST", new Bundle[] {app});
+        Intent request = new Intent("com.symbol.datawedge.api.ACTION").setPackage(zebra.packages().get(0));
+        request.putExtra("com.symbol.datawedge.api.SET_CONFIG", main);
+        request.putExtra("SEND_RESULT", "LAST_RESULT"); request.putExtra("COMMAND_IDENTIFIER", DATAWEDGE_COMMAND);
+        sendBroadcast(request);
+    }
+
     private void unregisterBarcode() {
-        if (registered) { unregisterReceiver(barcodeReceiver); registered = false; }
+        if (registered) { unregisterReceiver(barcodeReceiver); unregisterReceiver(dataWedgeResult); registered = false; }
     }
 
     @Override public void camera(PermissionRequest request) {
@@ -398,8 +498,106 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED,
             shouldShowRequestPermissionRationale(Manifest.permission.CAMERA),
             getSharedPreferences("camera-permission", MODE_PRIVATE).getBoolean("denied", false));
-        return capabilitySnapshot(BuildConfig.VERSION_NAME, cameraAvailable, permission,
+        JSONObject snapshot = capabilitySnapshot(BuildConfig.VERSION_NAME, cameraAvailable, permission,
             nfc.supported(), nfc.available(), nfc.isReading(), web != null && web.version() == 2);
+        put(snapshot, "hardware", hardware(permission));
+        return snapshot;
+    }
+
+    private void hardwareChanged() {
+        handler.removeCallbacks(hardwareReport);
+        handler.postDelayed(hardwareReport, 200);
+    }
+
+    private List<Hardware.Vendor> vendorsPresent() { return Hardware.present(installedVendorPackages()); }
+
+    private Set<String> installedVendorPackages() {
+        Set<String> found = new HashSet<>();
+        PackageManager packages = getPackageManager();
+        for (Hardware.Vendor vendor : Hardware.VENDORS) {
+            if (!vendor.verified() && !config.unverifiedScanners()) continue;
+            for (String name : vendor.packages()) {
+                try { packages.getPackageInfo(name, 0); found.add(name); }
+                catch (PackageManager.NameNotFoundException ignored) { /* not installed */ }
+            }
+        }
+        return found;
+    }
+
+    private JSONArray hardware(String cameraPermission) {
+        List<String> facings = new ArrayList<>();
+        try {
+            if (cameraManager != null) {
+                for (String id : cameraManager.getCameraIdList()) {
+                    Integer lens = cameraManager.getCameraCharacteristics(id).get(CameraCharacteristics.LENS_FACING);
+                    facings.add(lens == null ? "external" : lens == CameraCharacteristics.LENS_FACING_FRONT ? "front"
+                        : lens == CameraCharacteristics.LENS_FACING_BACK ? "back" : "external");
+                }
+            }
+        } catch (CameraAccessException | SecurityException | IllegalArgumentException ignored) {
+            // Report the cameras read so far; the camera field already covers a failed enumeration.
+        }
+        List<Hardware.Input> inputs = new ArrayList<>();
+        for (int id : InputDevice.getDeviceIds()) {
+            InputDevice device = InputDevice.getDevice(id);
+            if (device == null || (device.getSources() & InputDevice.SOURCE_KEYBOARD) != InputDevice.SOURCE_KEYBOARD
+                || (device.getSources() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) continue;
+            // isExternal is API 34. Earlier, a USB or Bluetooth device carries a vendor id; built-in keys usually do not.
+            boolean external = Build.VERSION.SDK_INT >= 34 ? device.isExternal() : device.getVendorId() != 0;
+            inputs.add(new Hardware.Input(id, device.getName(), device.getDescriptor(), true, external, device.isVirtual()));
+        }
+        List<String> usb = new ArrayList<>();
+        UsbManager usbManager = getSystemService(UsbManager.class);
+        if (usbManager != null) {
+            for (UsbDevice device : usbManager.getDeviceList().values()) {
+                if (device.getDeviceClass() == 9) continue; // hubs
+                String product = device.getProductName();
+                usb.add(product == null ? "USB device" : product);
+            }
+        }
+        PackageManager packages = getPackageManager();
+        Vibrator vibrator = getSystemService(Vibrator.class);
+        return toJson(Hardware.build(new Hardware.Snapshot(facings, cameraPermission, nfc.supported(), nfc.available(),
+            nfc.isReading(), inputs, installedVendorPackages(), usb, bluetoothInputs(),
+            vibrator != null && vibrator.hasVibrator(), packages.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT))));
+    }
+
+    /** Bonded Bluetooth keyboards and HID peripherals. Never asks for BLUETOOTH_CONNECT; empty when it is not granted. */
+    private List<String> bluetoothInputs() {
+        List<String> names = new ArrayList<>();
+        if (Build.VERSION.SDK_INT < 31
+            || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return names;
+        try {
+            BluetoothManager manager = getSystemService(BluetoothManager.class);
+            if (manager == null || manager.getAdapter() == null) return names;
+            for (BluetoothDevice device : manager.getAdapter().getBondedDevices()) {
+                BluetoothClass type = device.getBluetoothClass();
+                if (type != null && type.getMajorDeviceClass() == BluetoothClass.Device.Major.PERIPHERAL) {
+                    String name = device.getName();
+                    names.add(name == null ? "Bluetooth device" : name);
+                }
+            }
+        } catch (SecurityException ignored) {
+            // Permission revoked between the check and the call: list nothing.
+        }
+        return names;
+    }
+
+    static JSONArray toJson(List<Hardware.Entry> entries) {
+        JSONArray array = new JSONArray();
+        for (Hardware.Entry entry : entries) {
+            JSONObject item = new JSONObject();
+            put(item, "kind", entry.kind()); put(item, "id", entry.id());
+            if (entry.name() != null) put(item, "name", entry.name());
+            put(item, "builtIn", entry.builtIn());
+            put(item, "connected", entry.connected() == null ? JSONObject.NULL : entry.connected());
+            put(item, "state", entry.state());
+            if (entry.facing() != null) put(item, "facing", entry.facing());
+            if (entry.trigger() != null) put(item, "trigger", entry.trigger());
+            if (entry.reason() != null) put(item, "reason", entry.reason());
+            array.put(item);
+        }
+        return array;
     }
 
     static JSONObject capabilitySnapshot(String version, boolean cameraAvailable, String cameraPermission,

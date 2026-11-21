@@ -77,7 +77,6 @@ export function MobilePreview({
                 <PassDetails
                   passJson={source.passJson}
                   view={view}
-                  state="active"
                   locale={navigator.language}
                   now={now}
                 />

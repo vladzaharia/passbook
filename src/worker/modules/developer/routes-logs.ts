@@ -5,6 +5,8 @@ import {
   RequestLogDetailSchema,
   RequestLogPageSchema,
   RequestLogQuerySchema,
+  ResolvedSchema,
+  ResolveQuerySchema,
 } from '../../../shared/contracts/index.ts';
 import { keyCaller, requireSession } from '../../platform/auth.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
@@ -14,6 +16,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { apiRail, getRequestLog, listRequestLog } from './request-log-service.ts';
+import { resolveId } from './resolve-service.ts';
 
 /**
  * The portal reads its own sandbox's log with the session, or with the try token it sends beside it. A try token
@@ -36,7 +39,8 @@ const logCaller = declareKeyAccess(
 );
 
 export const developerLogRoutes = createRouter();
-for (const path of ['/logs', '/logs/*', '/rail']) developerLogRoutes.use(path, logCaller);
+for (const path of ['/logs', '/logs/*', '/rail', '/resolve'])
+  developerLogRoutes.use(path, logCaller);
 
 register(
   developerLogRoutes,
@@ -85,5 +89,22 @@ register(
   async (c) => {
     c.header('cache-control', 'no-store');
     return c.json(await apiRail(serviceContext(c), c.var.auth));
+  },
+);
+
+register(
+  developerLogRoutes,
+  'developer',
+  {
+    method: 'get',
+    path: '/resolve',
+    summary: 'What a pasted id is in your sandbox: a request, a pass, a template or the sandbox',
+    operationId: 'developer.getResolve',
+    query: ResolveQuerySchema,
+    response: ResolvedSchema,
+  },
+  async (c) => {
+    c.header('cache-control', 'no-store');
+    return c.json(await resolveId(serviceContext(c), c.var.auth, c.req.valid('query').id));
   },
 );

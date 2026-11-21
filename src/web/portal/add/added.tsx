@@ -43,14 +43,11 @@ export function RevealButton({
   );
 }
 
-/** An Apple registration was reported: a calm line and a reveal button. */
+/** An Apple registration was reported: one line and the reveal button. */
 export function AddedLine({ children }: { children?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-fg-strong">{HOLDER_COPY.added}</p>
-        <p className="text-sm text-fg-muted">{HOLDER_COPY.addedLine}</p>
-      </div>
+      <p className="min-w-0 flex-1 text-sm font-semibold text-fg-strong">{HOLDER_COPY.added}</p>
       {children}
     </div>
   );

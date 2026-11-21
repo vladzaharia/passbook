@@ -132,11 +132,12 @@ test('a Both door cycles Auto, In, Out from the thumb row and says so in the sta
     await tall(button);
     await button.click();
     await expect(button).toHaveAccessibleName('Direction: In');
-    await expect(page.getByTestId('scan-capsule')).toContainText('Scanning · In');
+    // The direction button names the direction; the capsule does not repeat it.
+    await expect(page.getByTestId('scan-capsule')).not.toContainText('· In');
     await button.click();
     await expect(button).toHaveAccessibleName('Direction: Out');
     await expect(button).toHaveAttribute('data-variant', 'filled');
-    await expect(page.getByTestId('scan-capsule')).toContainText('Scanning · Out');
+    await expect(page.getByTestId('scan-capsule')).not.toContainText('· Out');
     await button.click();
     await expect(button).toHaveAccessibleName('Direction: Auto');
   } finally {

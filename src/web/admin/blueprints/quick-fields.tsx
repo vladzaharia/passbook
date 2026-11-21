@@ -169,7 +169,6 @@ export function QuickFields({ state, choices }: { state: QuickState; choices: Ch
           )}
         </FormField>
       ) : null}
-      <p className="text-xs text-fg-muted">Change anything later in the designer.</p>
     </div>
   );
 }

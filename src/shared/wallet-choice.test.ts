@@ -16,11 +16,15 @@ describe('walletChoices', () => {
     }
   });
 
-  it('leads with the browser barcode elsewhere and keeps Apple reachable', () => {
+  it("leads with Apple's QR on a computer, the browser barcode after it", () => {
     expect(ids({ device: other, apple: true, browserHref: '/barcode' })).toEqual([
-      'browser',
       'apple',
+      'browser',
     ]);
+  });
+
+  it('leads with the browser barcode on a computer while Apple is off', () => {
+    expect(ids({ device: other, apple: false, browserHref: '/barcode' })).toEqual(['browser']);
   });
 
   it('never hides an eligible option, only a disabled provider', () => {

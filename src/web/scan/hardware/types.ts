@@ -62,6 +62,12 @@ export interface HardwareItem {
   facing?: Facing;
   /** NFC that reads Wallet passes, not only tags. */
   wallet?: boolean;
+  /** Built-in readers: how they are triggered. */
+  trigger?: 'side' | 'pistol' | 'none' | 'unknown';
+  /** One line on how to scan with it, or what to do instead. Scanning rows only. */
+  how?: string;
+  /** The best way to scan here now. */
+  best?: boolean;
 }
 
 export type Facing = 'front' | 'back' | 'external' | null;
@@ -104,6 +110,10 @@ export interface Probe {
 export interface LiveHardware {
   /** The device reads codes (a scanner); a monitor only shows them. */
   reads: boolean;
+  /** The page has focus: keyboard-mode readers type into it only then. */
+  focused: boolean;
+  /** The session says this device reads with a built-in reader (no shell list needed). */
+  readerUsable: boolean;
   /** Null where the view runs no camera: a monitor, the operator desk. */
   camera: CameraStatus | null;
   cameraChoice: CameraChoice;

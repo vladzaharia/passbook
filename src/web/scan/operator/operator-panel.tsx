@@ -104,7 +104,7 @@ export function OperatorPanel({
           </p>
         ) : null}
         {!activity.length ? (
-          <p className="text-sm text-fg-muted">Check-ins appear here.</p>
+          <p className="text-sm text-fg-muted">No check-ins yet.</p>
         ) : (
           <ol>
             {activity.map((row) => (

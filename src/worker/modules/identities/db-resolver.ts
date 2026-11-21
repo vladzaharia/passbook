@@ -1,6 +1,7 @@
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
-import { AppError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
+import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
+import { createLogger } from '../../platform/log.ts';
 import {
   type IdentityResolver,
   intermediatePem,
@@ -62,11 +63,45 @@ export async function loadIdentityKey(env: AppEnv, row: IdentityRow): Promise<st
   return pem;
 }
 
+export function platformEnvMismatch(
+  identity: Pick<ResolvedIdentity, 'passTypeIdentifier' | 'teamIdentifier'>,
+  row: Pick<IdentityRow, 'pass_type_identifier' | 'team_identifier'>,
+): boolean {
+  return (
+    identity.passTypeIdentifier !== row.pass_type_identifier ||
+    identity.teamIdentifier !== row.team_identifier
+  );
+}
+
+// Every refused sign would log; once per 50 per isolate keeps a bad deploy loud but not flooding.
+let mismatchRefusals = 0;
+export function resetEnvMismatchLog(): void {
+  mismatchRefusals = 0;
+}
+function noteEnvMismatch(identity: ResolvedIdentity, row: IdentityRow): void {
+  if (mismatchRefusals++ % 50 !== 0) return;
+  createLogger().error('identity.platform_env_mismatch', {
+    code: 'IDENTITY_PLATFORM_ENV_MISMATCH',
+    identityId: row.id,
+    rowPassType: row.pass_type_identifier,
+    envPassType: identity.passTypeIdentifier,
+  });
+}
+
 export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<ResolvedIdentity> {
   if (row.source === 'env') {
     if (row.id !== PLATFORM_IDENTITY_ID)
       throw new NotFoundError('Signing identity is not configured.', 'IDENTITY_NOT_CONFIGURED');
-    return { ...readEnvIdentity(env), label: row.label, nfcEnabled: row.nfc_enabled === 1 };
+    const identity = readEnvIdentity(env);
+    // Installed passes key on the row's pass type and team: never sign them as anything else.
+    if (platformEnvMismatch(identity, row)) {
+      noteEnvMismatch(identity, row);
+      throw new UnavailableError(
+        'The platform signing identity does not match its configuration.',
+        'IDENTITY_PLATFORM_ENV_MISMATCH',
+      );
+    }
+    return { ...identity, label: row.label, nfcEnabled: row.nfc_enabled === 1 };
   }
   if (!row.cert_pem) throw notFound();
   return {
@@ -83,6 +118,20 @@ export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<Resolve
       intermediate: intermediatePem(env),
     },
   };
+}
+
+/** Why an identity cannot sign new passes, or null. */
+async function refusal(env: AppEnv, id: string, now: number): Promise<ConflictError | null> {
+  const row = await getIdentityRow(env.DB, id);
+  if (!row) return null;
+  if (row.issuing === 0)
+    return new ConflictError('This signing identity no longer issues passes.', 'IDENTITY_RETIRED');
+  if (row.not_after !== null && row.not_after <= now)
+    return new ConflictError(
+      'The signing certificate has expired. Renew it before issuing passes.',
+      'IDENTITY_EXPIRED',
+    );
+  return null;
 }
 
 export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
@@ -102,18 +151,38 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
     platform,
     byId,
     byRow: (row) => resolveRow(env, row),
-    async forOrg(orgId, identityId) {
-      const explicit = identityId ?? (await orgDefaultIdentityId(env.DB, orgId));
-      if (explicit) {
-        const identity = await byId(explicit);
-        // An org may use its own identities and global ones, never another org's.
+    async forOrg(orgId, identityId, now) {
+      // An org may use its own identities and global ones, never another org's.
+      const scoped = async (id: string) => {
+        const identity = await byId(id);
         if (identity.orgId !== null && identity.orgId !== orgId) throw notFound();
         return identity;
+      };
+      // A named identity is refused when it cannot issue; defaults fall through to the next one.
+      if (identityId) {
+        const identity = await scoped(identityId);
+        const refused = await refusal(env, identity.id, now);
+        if (refused) throw refused;
+        return identity;
+      }
+      const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
+      if (orgDefault) {
+        const identity = await scoped(orgDefault);
+        const refused = await refusal(env, identity.id, now);
+        if (!refused) return identity;
+        // Only a retired default hands over to the next one: a pass never changes identity, so an
+        // expired one must refuse instead of quietly issuing under another pass type.
+        if (refused.code !== 'IDENTITY_RETIRED') throw refused;
       }
       const fallback = await getDefaultRow(env.DB);
-      if (fallback && (fallback.org_id === null || fallback.org_id === orgId))
-        return resolveRow(env, fallback);
-      return platform();
+      if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
+        const identity = await resolveRow(env, fallback);
+        if (!(await refusal(env, identity.id, now))) return identity;
+      }
+      const identity = await platform();
+      const refused = await refusal(env, identity.id, now);
+      if (refused) throw refused;
+      return identity;
     },
   };
 }

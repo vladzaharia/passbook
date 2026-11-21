@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { makeOrg, makePass } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { candidateById } from './repo-lookup.ts';
 import { CHECK_IN, kit } from './repo-lookup-release-test-fixtures.ts';
@@ -102,15 +103,19 @@ export function registerLookupWalletCases() {
     if (!original?.identityTeamIdentifier || original.identityRevision === null)
       throw new Error('Missing signing identity snapshot');
     try {
-      await run(kit.env.DB, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
-        `${original.identityTeamIdentifier}-changed`,
-        pass.identityId,
-      ]);
+      await withoutTrigger(kit.env.DB, 'signing_identities_pti_immutable', () =>
+        run(kit.env.DB, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
+          `${original.identityTeamIdentifier}-changed`,
+          pass.identityId,
+        ]),
+      );
     } finally {
-      await run(kit.env.DB, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
-        original.identityTeamIdentifier,
-        pass.identityId,
-      ]);
+      await withoutTrigger(kit.env.DB, 'signing_identities_pti_immutable', () =>
+        run(kit.env.DB, 'UPDATE signing_identities SET team_identifier=? WHERE id=?', [
+          original.identityTeamIdentifier,
+          pass.identityId,
+        ]),
+      );
     }
     const fresh = await candidateById(kit.env.DB, kit.org.id, pass.id);
     expect(fresh?.identityTeamIdentifier).toBe(original.identityTeamIdentifier);

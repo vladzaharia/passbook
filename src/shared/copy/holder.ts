@@ -12,13 +12,15 @@ export const HOLDER_COPY = {
   /** In an in-app web view, which cannot add to Wallet. */
   openInSafari: 'Open in Safari to add to Apple Wallet.',
   qrAlt: (pass: string) => `QR code for ${pass}`,
-  /** The pass page's add block and My passes' QR dialog: the name, then the ways beside the QR. */
+  /** The pass page's add block and My passes' QR dialog: the name, then the line beside the QR. */
   addTitle: 'Add to Apple Wallet',
-  iphone: 'On your iPhone',
-  scanLine: 'Scan with the camera.',
+  scanLine: 'Scan with your iPhone camera.',
+  /** Under the scan line on a Mac, beside the badge. */
+  onThisMac: 'Or on this Mac',
+  /** An Android phone: Apple's way, as text in the other ways. */
+  appleElsewhere: 'For Apple Wallet, open this page on an iPhone.',
   /** An Apple device registered the pass. */
   added: 'In Apple Wallet',
-  addedLine: 'If it is missing, add it again.',
   inWalletPill: 'In Wallet',
   showQr: 'Show QR',
   hideQr: 'Hide QR',
@@ -44,25 +46,20 @@ export const HOLDER_COPY = {
   help: 'Help',
   /** /p: the holder's own page in the portal (Refresh, Remove), through sign-in. */
   openInPortal: 'Open in My passes',
-  /** The wallet choice: the way that fits this device, then the rest. */
-  bestForDevice: 'Best for this device',
+  /** The wallet choice: the way that fits this device, then the rest (a list's accessible name). */
   otherWays: 'Other ways',
-  browserTitle: 'Show a barcode in your browser',
   showBarcode: 'Show barcode',
   /** The paper channel: a link to the print page. */
-  printTitle: 'Print your ticket',
   print: 'Print',
   /** Every channel is off for this pass. */
   noTicket: (org: string) => `No ticket available. Contact ${org || 'the organizer'}.`,
-  /** The barcode page: one line for the reader, then the offline copy (this device only). */
-  presentLine: 'Show this to the reader.',
+  /** The barcode page: the offline copy (this device only). */
   presentUnavailable: 'Barcode unavailable',
   presentUnavailableLine: (org: string) => `Ask ${org || 'the organization'} for help.`,
   backToPass: 'Back to pass',
   saveOffline: 'Save for offline',
   savedOffline: 'Saved on this device',
   removeSaved: 'Remove from this device',
-  saveOfflineLine: 'Works without signal. Staff still verify it.',
   connectToRefresh: 'Connect to refresh this pass.',
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */
@@ -79,14 +76,12 @@ export const HOLDER_COPY = {
   /** My passes: new code and link; old copies stop at the door. */
   lostPhone: 'I lost my phone',
   lostPhoneDone:
-    'Done. The old copies stop working and your other devices are signed out. Check your email for the new pass.',
+    'The old copies stop working and your other devices are signed out. Check your email for the new pass.',
   /** A voided or expired pass: when, then who to ask. */
   voidedOn: (date: string) => `This pass was voided on ${date}. It no longer works.`,
   expiredOn: (date: string) => `This pass expired on ${date}.`,
   /** My passes: the group of voided and removed ones, under the live ones. */
   endedTitle: 'Voided and removed',
-  /** My passes. */
-  noPasses: 'Passes sent to your verified emails show up here.',
   addAllTitle: 'Add all to Apple Wallet',
   addAllOne: 'Add to Apple Wallet',
   addAllCount: (n: number) => `Add ${n} passes`,

@@ -31,6 +31,8 @@ const RANK: Record<HardwareState, number> = {
 export interface PillIcon {
   kind: HardwareKind;
   state: HardwareState;
+  /** The state's own word when it has one: Paused, Blocked, Lost. */
+  status?: string;
 }
 
 /** One icon per detected kind, in its most urgent state. A battery shows only when low. */
@@ -43,7 +45,7 @@ export function pillIcons(items: readonly HardwareItem[]): PillIcon[] {
     if (!units.length) continue;
     if (kind === 'battery' && !units.some((u) => u.state === 'attention')) continue;
     const top = units.reduce((a, b) => (RANK[b.state] > RANK[a.state] ? b : a));
-    icons.push({ kind, state: top.state });
+    icons.push({ kind, state: top.state, ...(top.status ? { status: top.status } : {}) });
   }
   return icons;
 }
@@ -51,7 +53,9 @@ export function pillIcons(items: readonly HardwareItem[]): PillIcon[] {
 /** The pill's accessible name: each icon and its state. */
 export function pillLabel(icons: readonly PillIcon[]): string {
   if (!icons.length) return fill(C.pill, { list: C.none });
-  const list = icons.map((i) => `${C.names[i.kind]} ${C.states[i.state].toLowerCase()}`).join(', ');
+  const list = icons
+    .map((i) => `${C.names[i.kind]} ${(i.status ?? C.states[i.state]).toLowerCase()}`)
+    .join(', ');
   return fill(C.pill, { list });
 }
 
@@ -59,12 +63,17 @@ export function pillLabel(icons: readonly PillIcon[]): string {
 export function changeOf(before: readonly PillIcon[], after: readonly PillIcon[]): string | null {
   const lines: string[] = [];
   const was = new Map(before.map((i) => [i.kind, i.state]));
+  const wasStatus = new Map(before.map((i) => [i.kind, i.status]));
   const now = new Map(after.map((i) => [i.kind, i.state]));
-  for (const { kind, state } of after) {
+  for (const { kind, state, status } of after) {
     const name = C.names[kind];
     const prev = was.get(kind);
     if (prev === undefined) lines.push(fill(C.announce.connected, { name }));
     else if (state === 'error' && prev !== 'error') lines.push(fill(C.announce.lost, { name }));
+    else if (status === C.paused && wasStatus.get(kind) !== C.paused)
+      lines.push(fill(C.announce.paused, { name }));
+    else if (wasStatus.get(kind) === C.paused && status !== C.paused)
+      lines.push(fill(C.announce.back, { name }));
     else if (state === 'active' && prev === 'error') lines.push(fill(C.announce.back, { name }));
     else if (state === 'active' && (prev === 'attention' || (kind === 'nfc' && prev !== 'active')))
       lines.push(fill(C.announce.on, { name }));

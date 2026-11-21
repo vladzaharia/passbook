@@ -33,7 +33,8 @@ async function openOrgDialog(onPost: (body: Record<string, unknown>) => unknown)
     },
   });
   const user = userEvent.setup();
-  await user.click((await screen.findAllByRole('button', { name: 'New API key' }))[0]!);
+  await screen.findByText(/^No (active )?API keys$/);
+  await user.click(screen.getByRole('button', { name: 'New API key' }));
   const dialog = await screen.findByRole('dialog', { name: 'New API key' });
   await user.type(within(dialog).getByLabelText(/Name/), 'Mine');
   return { user, dialog };
