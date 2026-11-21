@@ -12,13 +12,14 @@ import {
   UpdateBroadcastSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { activeMembership } from '../orgs/repo-members.ts';
 import {
   actorFor,
   assertOrg,
   authOf,
+  orgIdOf,
   passScopeOf,
   requireTenantSessionOrApiKey,
   svc,
@@ -90,11 +91,7 @@ register(
     const ctx = svc(c);
     const auth = authOf(c);
     const q = c.req.valid('query');
-    const orgId = q.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
-    if (!orgId)
-      throw new ValidationError('Choose an organization.', [
-        { path: 'orgId', message: 'Choose an organization.' },
-      ]);
+    const orgId = orgIdOf(auth, q.orgId);
     assertOrg(c, orgId);
     await tenantAuthorityOf(ctx, auth, orgId, 'messages:read');
     return c.json(
