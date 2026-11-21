@@ -3,33 +3,18 @@
     "description": "Makes the zones, events, staff, sessions and devices for a set of doors in one batch. Send an `Idempotency-Key`: the same key and body replays the answer with `replayed: true` and no PINs or pairing codes (codes that ran out are reissued, `pairingReissued: true`); the same key with another body is 409 `SCAN_SETUP_KEY_REUSED`. PINs and pairing codes appear once. `?dryRun=true` returns the plan and its checks with refs in place of ids and writes nothing. Any `error` check is 422 `SCAN_SETUP_CHECKS_FAILED`. `dryRun` needs no key and runs the same rules. A `scanning:write` key makes places (live) and devices with no pairing code; staff and pairing codes need `scanning:admin`.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "preset": "front_desk",
-      "places": [
-        {
-          "ref": "gym",
-          "name": "Gym",
-          "max": 60
-        }
-      ],
-      "staff": [
-        {
-          "name": "Maya Chen",
-          "role": "manager"
-        },
-        {
-          "name": "Sam Ortiz",
-          "role": "desk"
-        }
-      ],
+      "preset": "venue",
       "doors": [
         {
-          "name": "Front desk",
-          "place": "gym",
+          "name": "Main door",
           "admits": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
-          },
-          "hours": {
-            "every": ["06:00-22:00"]
+          }
+        },
+        {
+          "name": "VIP door",
+          "admits": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
           }
         }
       ]
@@ -58,13 +43,13 @@
         "doors": [
           {
             "name": "Front desk",
-            "place": "gym",
             "admits": {
               "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
             },
             "hours": {
               "every": ["06:00-22:00"]
-            }
+            },
+            "place": "gym"
           }
         ]
       },
@@ -101,30 +86,15 @@
       "Several areas": {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "preset": "venue",
-        "places": [
-          {
-            "ref": "club",
-            "name": "Club",
-            "max": 200
-          },
-          {
-            "ref": "vip",
-            "name": "VIP",
-            "inside": "club",
-            "max": 20
-          }
-        ],
         "doors": [
           {
             "name": "Main door",
-            "place": "club",
             "admits": {
               "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
             }
           },
           {
             "name": "VIP door",
-            "place": "vip",
             "admits": {
               "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
             }
@@ -163,29 +133,9 @@
           ]
         }
       ],
-      "zones": [
-        {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "ref": "gym",
-          "name": "Gym",
-          "created": true
-        }
-      ],
+      "zones": [],
       "events": [],
-      "staff": [
-        {
-          "id": "0193a1b2-7c00-7000-8000-0000000000f1",
-          "name": "Maya Chen",
-          "role": "manager",
-          "pin": "482913"
-        },
-        {
-          "id": "0193a1b2-7c00-7000-8000-0000000000f2",
-          "name": "Sam Ortiz",
-          "role": "desk",
-          "pin": "730256"
-        }
-      ],
+      "staff": [],
       "checks": []
     }
   }
