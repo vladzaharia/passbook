@@ -117,6 +117,7 @@ export async function preparePublishAttempt(
   const buildRequest = {
     orgId: current.orgId,
     orgName: org.name,
+    personal: org.personal,
     branding: org.branding,
     ...(options.notify === undefined
       ? {}

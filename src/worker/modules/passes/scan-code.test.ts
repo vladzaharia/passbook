@@ -136,6 +136,7 @@ describe('scan code', () => {
     const artifact = await buildArtifact(kit.ctx, {
       orgId: pass.orgId,
       orgName: org.name,
+      personal: org.personal,
       branding: org.branding,
       passId: pass.id,
       serial: pass.serial,

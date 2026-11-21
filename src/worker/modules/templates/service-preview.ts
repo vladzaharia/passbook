@@ -76,7 +76,7 @@ export async function preview(
     ? {
         ...resolved,
         passJson: withBackContacts(
-          tenantPassJson(resolved.passJson, tenant.name, branding),
+          tenantPassJson(resolved.passJson, tenant.name, branding, tenant.personal),
           await backContactsFor(ctx, tenant.id, tenant.branding),
         ),
       }
