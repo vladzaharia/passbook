@@ -60,6 +60,8 @@ export const TEMPLATE_REFS: Readonly<Record<string, TemplateRef>> = {
   roll_call_marks: ofPass(),
   webhook_endpoints: { list: 'template_ids' },
   webhook_endpoint_secrets: ofEndpoint,
+  // A capture follows its endpoint, as a delivery does.
+  webhook_captures: ofEndpoint,
   webhook_deliveries: { all: [ofEndpoint, ofEvent] },
   // A test send has no event.
   webhook_attempts: { all: [ofEndpoint, { ...ofEvent, nullable: true }] },

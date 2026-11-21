@@ -29,6 +29,8 @@ export interface GrantInput {
    * lists the tables its work writes, so the purpose is a bound and not only a label.
    */
   tables?: readonly string[];
+  /** Set by `grant()` from the context: a try-token request marks its audit rows (`detail.via`). */
+  via?: 'try';
 }
 
 /** Module-local: only `newGrantedStatement` holds it, so no other module can construct a statement. */

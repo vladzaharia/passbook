@@ -15,7 +15,7 @@ import {
   verifiedScopeOf,
 } from '../../platform/auth.ts';
 import { type AppBindings, actorOf } from '../../platform/context.ts';
-import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { ForbiddenError, UnauthenticatedError, ValidationError } from '../../platform/errors.ts';
 import { enforceFeatures } from '../../platform/feature-guard.ts';
 import { declareKeyAccess, keyAccessOf } from '../../platform/openapi-security.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
@@ -161,6 +161,23 @@ export function passScopeOf(c: C): PassScope {
 
 export function assertOrg(c: C, orgId: string): void {
   assertOrgAccess(authOf(c), orgId);
+}
+
+/**
+ * The organization a request acts in: the one named, else an org key's own. A platform key or a
+ * session must name one. The contract marks `orgId` `x-platform-only`, so every route an org key may call
+ * resolves it here; the route's own authority check still refuses an org the caller cannot reach.
+ * `null` (the platform-wide scope some routes accept) passes through for that check.
+ */
+export function orgIdOf<T extends string | null = string>(
+  auth: AuthContext,
+  orgId: T | undefined,
+): T | string {
+  if (orgId === null) return orgId as T;
+  const resolved = orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
+  if (!resolved)
+    throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+  return resolved;
 }
 
 export function actorFor(c: C): Actor {

@@ -12,6 +12,8 @@ export const HOLDER_SOURCES = [
   'src/worker/ssr/pass-page.tsx',
   'src/worker/ssr/org-bar.tsx',
   'src/worker/ssr/bundle-page.tsx',
+  'src/worker/ssr/preview-page.tsx',
+  'src/web/channel-previews/fidelity-notes.tsx',
   'src/web/ui/badge.tsx',
   'src/web/portal/holder-heading.tsx',
   'src/web/portal/holder-pass-view.tsx',

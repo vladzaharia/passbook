@@ -1,0 +1,183 @@
+import { BLUEPRINT_ID, EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts';
+import { createApp } from '../../src/worker/app.ts';
+import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
+import { createSessionStore } from '../../src/worker/modules/auth/sessions.ts';
+import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolver.ts';
+import {
+  type BlueprintKit,
+  blueprintKit,
+} from '../../src/worker/modules/templates/blueprint-test-fixtures.ts';
+import { denyAllStores } from '../../src/worker/platform/auth.ts';
+import { run } from '../../src/worker/platform/db.ts';
+import { sha256Hex } from '../../src/worker/platform/ids.ts';
+import { makeOrg } from './../helpers/index.ts';
+
+const ORIGIN = 'https://passbook.mobile';
+const SCOPES = [
+  'org:read',
+  'brand:manage',
+  'templates:read',
+  'templates:write',
+  'templates:review',
+  'templates:publish',
+  'scanning:write',
+  'passes:read',
+  'passes:write',
+  'messages:write',
+  'holders:write',
+  'connections:read',
+  'connections:write',
+  'webhooks:manage',
+  'api-keys:write',
+  'scans:read',
+  'scans:write',
+];
+
+export interface Call {
+  method: string;
+  path: string;
+  status: number;
+  code?: string;
+  detail?: string;
+}
+
+/**
+ * A fresh organization with a Test key, a template made from a blueprint and released in Test, and a
+ * pass. `fetch` answers like the Worker, with the example ids in the request swapped for these.
+ */
+let shared: Promise<BlueprintKit> | undefined;
+/** The fixtures every world of this file shares: one database, the baked blueprints synced once. */
+export const kit = () => {
+  shared ??= blueprintKit().then((k) => {
+    // The import workflow would run in the test runner's own env, which has no signing identity.
+    Object.assign(k.env, { PASS_IMPORT: { create: async ({ id }: { id: string }) => ({ id }) } });
+    return k;
+  });
+  return shared;
+};
+
+export async function snippetWorld(kit: BlueprintKit) {
+  const org = await makeOrg(kit.f);
+  const owner = await kit.member(org.id, ['org_admin']);
+  const id = kit.f.ids.id();
+  const prefix = kit.f.ids.token(6);
+  const secret = `wlt_${prefix}_${kit.f.ids.token()}`;
+  await run(
+    kit.env.DB,
+    `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_by, created_at)
+     VALUES (?, ?, 'Snippets', ?, ?, ?, 'test', ?, ?)`,
+    [
+      id,
+      org.id,
+      prefix,
+      await sha256Hex(secret),
+      JSON.stringify(SCOPES),
+      owner.userId,
+      kit.clock.now(),
+    ],
+  );
+  const app = createApp({
+    stores: {
+      ...denyAllStores,
+      sessions: createSessionStore(kit.env, kit.clock),
+      apiKeys: createApiKeyStore(kit.env, kit.clock),
+    },
+    clock: kit.clock,
+  });
+  const auth = { authorization: `Bearer ${secret}` };
+  const send = (method: string, path: string, body?: unknown) =>
+    app.request(
+      `${ORIGIN}/api/v1${path}`,
+      {
+        method,
+        headers: {
+          ...auth,
+          'content-type': 'application/json',
+          'idempotency-key': kit.f.ids.token(),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      },
+      kit.env,
+    );
+  const json = async (res: Response) => {
+    if (!res.ok) throw new Error(`${res.url} ${res.status} ${await res.text()}`);
+    return (await res.json()) as Record<string, any>;
+  };
+
+  const used = await json(
+    await send('POST', `/templates/${BLUEPRINT_ID}/use`, { orgId: org.id, name: 'Tickets' }),
+  );
+  const version = used.activeVersion ?? used.versions[0].version;
+  const scope = { orgId: org.id, mode: 'test', provider: 'apple' };
+  const candidate = await json(
+    await send('POST', `/templates/${used.id}/candidates`, { ...scope, version }),
+  );
+  const approval = await json(
+    await send('POST', `/templates/${used.id}/candidates/${candidate.id}/approve`, {
+      ...scope,
+      candidateHash: candidate.candidateHash,
+      alone: true,
+    }),
+  );
+  const release = await json(
+    await send('POST', `/templates/${used.id}/releases`, {
+      ...scope,
+      candidateId: candidate.id,
+      approvalId: approval.id,
+      candidateHash: candidate.candidateHash,
+      expectedGeneration: 0,
+    }),
+  );
+  const pass = await json(
+    await send('POST', '/passes', {
+      orgId: org.id,
+      templateId: used.id,
+      templateVersion: release.version,
+      releaseId: release.id,
+      releaseGeneration: release.generation,
+      mode: 'test',
+      input: used.manifest.sample ?? {},
+      holderEmail: 'ada@example.com',
+      externalId: 'seed',
+    }),
+  );
+
+  const real: Record<string, string> = {
+    [EXAMPLE_IDS.orgId]: org.id,
+    [EXAMPLE_IDS.templateId]: used.id,
+    [EXAMPLE_IDS.passId]: pass.id,
+    [EXAMPLE_IDS.identityId]: PLATFORM_IDENTITY_ID,
+  };
+  const swap = (text: string) =>
+    text.replace(/0193a1b2-7c00-7000-8000-0000000000[a-e]1/g, (m) => real[m] ?? m);
+  const calls: Call[] = [];
+  const fetchLike = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+    const url = new URL(swap(String(input instanceof Request ? input.url : input)));
+    const body = typeof init.body === 'string' ? swap(init.body) : init.body;
+    const res = await app.request(url.toString(), { ...init, body }, kit.env);
+    const problem = res.ok
+      ? {}
+      : ((await res
+          .clone()
+          .json()
+          .catch(() => ({}))) as { code?: string; detail?: string; issues?: unknown });
+    calls.push({
+      method: init.method ?? 'GET',
+      path: url.pathname,
+      status: res.status,
+      code: problem.code,
+      detail: problem.issues
+        ? `${problem.detail} ${JSON.stringify(problem.issues)}`
+        : problem.detail,
+    });
+    return res;
+  };
+  return {
+    secret,
+    orgId: org.id,
+    templateId: used.id,
+    passId: pass.id,
+    calls,
+    fetch: fetchLike as typeof fetch,
+  };
+}

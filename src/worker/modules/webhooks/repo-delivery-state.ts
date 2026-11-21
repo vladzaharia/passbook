@@ -213,3 +213,40 @@ export async function disableEndpoint(
   ]);
   return (disabled?.meta.changes ?? 0) > 0;
 }
+
+export interface CaptureRecord {
+  id: string;
+  eventId: string;
+  eventType: string;
+  trigger: 'event' | 'replay' | 'test';
+  headers: Record<string, string>;
+  body: string;
+  durationMs: number;
+  at: number;
+}
+
+/**
+ * A capture endpoint's "send": the signed request is stored, never sent. The triggers hold it to a capture
+ * endpoint of its own org, 600 an hour per org and 200 per endpoint (the oldest are dropped), and the body
+ * to 256 KiB.
+ */
+export function captureStmt(db: D1Database, lane: LaneKey, c: CaptureRecord): D1PreparedStatement {
+  return stmt(
+    db,
+    `INSERT INTO webhook_captures (id, endpoint_id, org_id, mode, event_id, event_type, trigger, headers, body,
+       status, duration_ms, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 200, ?, ?)`,
+    [
+      c.id,
+      lane.endpointId,
+      lane.orgId,
+      lane.mode,
+      c.eventId,
+      c.eventType,
+      c.trigger,
+      JSON.stringify(c.headers),
+      c.body,
+      c.durationMs,
+      c.at,
+    ],
+  );
+}

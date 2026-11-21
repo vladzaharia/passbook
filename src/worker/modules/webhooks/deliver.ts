@@ -2,9 +2,9 @@ import type { WebhookEvent } from '../../../shared/contracts/webhooks.ts';
 import { type KekRing, loadKekRing } from '../../platform/crypto.ts';
 import { batch } from '../../platform/db.ts';
 import { AppError } from '../../platform/errors.ts';
-import { checkRateLimit } from '../../platform/rate-limit.ts';
 import { createSafeFetch, platformHostsOf, type SafeFetch } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { sendAllowed } from './deliver-gate.ts';
 import { dispatchLane, LANE_HOLD_MS } from './dispatch.ts';
 import { bodyOf, buildEnvelope } from './payload.ts';
 import {
@@ -16,6 +16,7 @@ import {
 } from './repo-delivery-read.ts';
 import {
   attemptStmt,
+  captureStmt,
   claimAttempt,
   disableEndpoint,
   endpointFailureStmt,
@@ -170,19 +171,7 @@ export async function attemptDelivery(
     return cancel('WEBHOOK_TENANT_MISMATCH');
   }
 
-  // One destination host takes a bounded number of sends a minute, across every org and lane. Over the
-  // limit the delivery waits, and neither the attempt nor the endpoint is charged.
-  const host = hostOf(endpoint.url).toLowerCase();
-  let allowed = false;
-  try {
-    // The org's own share first, so a tenant over it never spends the host's global budget.
-    allowed =
-      (await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST_ORG', `host:${host}:${endpoint.orgId}`)) &&
-      (await checkRateLimit(ctx.env, 'RL_WEBHOOK_HOST', `host:${host}`));
-  } catch {
-    ctx.log.error('webhooks.rate_limit_unavailable', { ...log, code: 'RATE_LIMIT_UNAVAILABLE' });
-  }
-  if (!allowed) {
+  if (!(await sendAllowed(ctx, endpoint))) {
     await rescheduleStmt(db, k, ctx.clock.now() + HOST_DEFER_MS, null, 'RATE_LIMITED').run();
     return 'deferred';
   }
@@ -197,25 +186,29 @@ export async function attemptDelivery(
   let status: number | null = null;
   let error: string | null = null;
   let retryAfter: number | null = null;
+  let captured: { headers: Record<string, string> } | null = null;
   const secrets = await openSecrets(ctx, sender, endpoint, startedAt);
   if (secrets.length === 0) {
     error = 'SECRET_UNAVAILABLE';
   } else {
     try {
-      const res = await sender.send(endpoint.url, {
-        method: 'POST',
-        headers: await requestHeaders({
-          eventId: event.id,
-          eventType: event.type,
-          secrets,
-          nowMs: startedAt,
-          body,
-        }),
+      const headers = await requestHeaders({
+        eventId: event.id,
+        eventType: event.type,
+        secrets,
+        nowMs: startedAt,
         body,
       });
-      status = res.status;
-      if (status === 429 || status === 503)
-        retryAfter = parseRetryAfter(res.headers.get('retry-after'), startedAt);
+      if (endpoint.target === 'capture') {
+        // Stored with the attempt below, in one batch. Nothing is sent, so there is no receiver to fail.
+        status = 200;
+        captured = { headers };
+      } else {
+        const res = await sender.send(endpoint.url, { method: 'POST', headers, body });
+        status = res.status;
+        if (status === 429 || status === 503)
+          retryAfter = parseRetryAfter(res.headers.get('retry-after'), startedAt);
+      }
     } catch (e) {
       error = e instanceof AppError && /^[A-Z][A-Z0-9_]{1,39}$/.test(e.code) ? e.code : 'UPSTREAM';
     }
@@ -241,6 +234,19 @@ export async function attemptDelivery(
       finishStmt(db, k, 'delivered', now, status, null),
       endpointSuccessStmt(db, k, now),
     );
+    if (captured)
+      statements.push(
+        captureStmt(db, k, {
+          id: ctx.ids.id(),
+          eventId: event.id,
+          eventType: event.type,
+          trigger: trigger === 'replay' ? 'replay' : 'event',
+          headers: captured.headers,
+          body,
+          durationMs: Math.max(0, now - startedAt),
+          at: startedAt,
+        }),
+      );
   } else {
     const delay = retryDelay(attempt, randomUnit(), retryAfter);
     if (delay === null) {

@@ -147,6 +147,7 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
 export function buildEnvelope(
   row: FeedRow,
   apiVersion: WebhookApiVersion = LATEST_WEBHOOK_API_VERSION,
+  sample = false,
 ): WebhookEvent {
   const type = WebhookEventTypeSchema.parse(row.type);
   return {
@@ -158,6 +159,7 @@ export function buildEnvelope(
     mode: row.mode,
     pass: { id: row.passId, externalId: row.externalId, templateId: row.templateId },
     data: dataOf(row, type),
+    ...(sample ? { sample: true } : {}),
   } as WebhookEvent;
 }
 

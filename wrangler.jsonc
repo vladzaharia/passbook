@@ -48,6 +48,8 @@
   "vars": {
     "PUBLIC_BASE_URL": "https://passbook.mobile",
     "REDIRECT_HOSTS": "wallet.plrs.im",
+    // Answers 308 to /developers on PUBLIC_BASE_URL. The DNS record and Worker route are the owner's.
+    "DEVELOPERS_HOSTS": "developers.passbook.mobile",
     "EMAIL_FROM": "delivery@passbook.mobile",
     "SUPPORT_EMAIL": "support@passbook.mobile",
     "OIDC_ISSUER": "https://id.plrs.im",
@@ -183,7 +185,9 @@
       "simple": { "limit": 12000, "period": 60 }
     },
     // Aggregate per org (key org:<id>) across all its keys; platform keys are exempt.
-    { "name": "RL_API_ORG", "namespace_id": "1022", "simple": { "limit": 6000, "period": 60 } }
+    { "name": "RL_API_ORG", "namespace_id": "1022", "simple": { "limit": 6000, "period": 60 } },
+    // Developer try tokens: mint and use per person (key user:<id>).
+    { "name": "RL_API_TRY", "namespace_id": "1023", "simple": { "limit": 60, "period": 60 } }
   ],
 
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "wallet_events" }],

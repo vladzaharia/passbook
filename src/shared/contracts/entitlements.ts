@@ -8,7 +8,7 @@ import { z } from 'zod';
  * Values are stored as JSON text. A missing or malformed value denies; JSON `null` means "no limit" and is
  * valid for a limit only.
  */
-export const ENTITLEMENT_PRESETS = ['legacy', 'trial', 'standard'] as const;
+export const ENTITLEMENT_PRESETS = ['legacy', 'trial', 'standard', 'developer'] as const;
 export const EntitlementPresetSchema = z.enum(ENTITLEMENT_PRESETS);
 export type EntitlementPreset = z.infer<typeof EntitlementPresetSchema>;
 
@@ -27,58 +27,74 @@ export type EntitlementDef =
   | { kind: 'list'; block: boolean; presets: Column<string[]> }
   | { kind: 'limit'; presets: Column<LimitValue> };
 
-const col = <V>(legacy: V, trial: V, standard: V): Column<V> => ({ legacy, trial, standard });
-const flag = (legacy: FlagValue, trial: FlagValue, standard: FlagValue): EntitlementDef => ({
-  kind: 'flag',
-  presets: col(legacy, trial, standard),
+const col = <V>(legacy: V, trial: V, standard: V, developer: V): Column<V> => ({
+  legacy,
+  trial,
+  standard,
+  developer,
 });
-const level = (levels: readonly string[], l: string, t: string, s: string): EntitlementDef => ({
+const flag = (
+  legacy: FlagValue,
+  trial: FlagValue,
+  standard: FlagValue,
+  developer: FlagValue,
+): EntitlementDef => ({
+  kind: 'flag',
+  presets: col(legacy, trial, standard, developer),
+});
+const level = (
+  levels: readonly string[],
+  l: string,
+  t: string,
+  s: string,
+  d: string,
+): EntitlementDef => ({
   kind: 'level',
   levels,
-  presets: col(l, t, s),
+  presets: col(l, t, s, d),
 });
-const allow = (l: string[], t: string[], s: string[]): EntitlementDef => ({
+const allow = (l: string[], t: string[], s: string[], d: string[]): EntitlementDef => ({
   kind: 'list',
   block: false,
-  presets: col(l, t, s),
+  presets: col(l, t, s, d),
 });
-const block = (l: string[], t: string[], s: string[]): EntitlementDef => ({
+const block = (l: string[], t: string[], s: string[], d: string[]): EntitlementDef => ({
   kind: 'list',
   block: true,
-  presets: col(l, t, s),
+  presets: col(l, t, s, d),
 });
-const limit = (l: LimitValue, t: LimitValue, s: LimitValue): EntitlementDef => ({
+const limit = (l: LimitValue, t: LimitValue, s: LimitValue, d: LimitValue): EntitlementDef => ({
   kind: 'limit',
-  presets: col(l, t, s),
+  presets: col(l, t, s, d),
 });
 
-/** Presets read legacy, trial, standard. `legacy` is every flag on and no limits: nothing changes for existing orgs. */
+/** Presets read legacy, trial, standard, developer. `legacy` is every flag on and no limits: nothing changes for existing orgs. */
 export const ENTITLEMENTS = {
-  api: level(['off', 'read', 'full'], 'full', 'full', 'full'),
-  'api.rateTier': level(['standard', 'high', 'bulk'], 'bulk', 'standard', 'high'),
-  'api.keys': limit(null, 2, 10),
-  apps: flag(1, 0, 1),
-  webhooks: flag(1, 0, 1),
-  'webhooks.endpoints': limit(null, 1, 10),
-  connections: limit(null, 1, 10),
-  connectors: allow(['*'], ['csv-url', 'webhook-push/*'], ['*']),
-  'wallet.google': flag(1, 0, 1),
-  'wallet.samsung': flag(1, 0, 1),
-  print: flag(1, 0, 1),
-  nfc: level(['off', 'basic', 'secure'], 'secure', 'off', 'basic'),
-  'scanning.devices': limit(null, 2, 20),
-  'join.perDay': limit(null, 100, 1000),
-  'messages.perDay': limit(null, 3, 20),
-  'passes.live': limit(null, 100, 5000),
-  'passes.test': limit(null, 50, 500),
-  templates: limit(null, 3, 25),
-  'templates.uploads': flag(1, 0, 1),
-  'templates.stylesBlocked': block([], ['boardingPass'], []),
-  'email.perDay': limit(null, 100, 500),
-  members: limit(null, 3, 25),
-  'brand.mark': level(['none', 'quiet', 'full'], 'full', 'full', 'quiet'),
-  domains: limit(0, 0, 1),
-  'identity.own': flag(1, 0, 1),
+  api: level(['off', 'read', 'full'], 'full', 'full', 'full', 'full'),
+  'api.rateTier': level(['standard', 'high', 'bulk'], 'bulk', 'standard', 'high', 'standard'),
+  'api.keys': limit(null, 2, 10, 3),
+  apps: flag(1, 0, 1, 0),
+  webhooks: flag(1, 0, 1, 1),
+  'webhooks.endpoints': limit(null, 1, 10, 3),
+  connections: limit(null, 1, 10, 0),
+  connectors: allow(['*'], ['csv-url', 'webhook-push/*'], ['*'], []),
+  'wallet.google': flag(1, 0, 1, 0),
+  'wallet.samsung': flag(1, 0, 1, 0),
+  print: flag(1, 0, 1, 0),
+  nfc: level(['off', 'basic', 'secure'], 'secure', 'off', 'basic', 'off'),
+  'scanning.devices': limit(null, 2, 20, 0),
+  'join.perDay': limit(null, 100, 1000, 0),
+  'messages.perDay': limit(null, 3, 20, 0),
+  'passes.live': limit(null, 100, 5000, 0),
+  'passes.test': limit(null, 50, 500, 500),
+  templates: limit(null, 3, 25, 10),
+  'templates.uploads': flag(1, 0, 1, 0),
+  'templates.stylesBlocked': block([], ['boardingPass'], [], []),
+  'email.perDay': limit(null, 100, 500, 100),
+  members: limit(null, 3, 25, 1),
+  'brand.mark': level(['none', 'quiet', 'full'], 'full', 'full', 'quiet', 'full'),
+  domains: limit(0, 0, 1, 0),
+  'identity.own': flag(1, 0, 1, 0),
 } as const satisfies Record<string, EntitlementDef>;
 
 export type EntitlementKey = keyof typeof ENTITLEMENTS;

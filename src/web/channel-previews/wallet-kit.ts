@@ -29,9 +29,12 @@ const COMPILERS: Record<keyof WalletTargetOut, WalletCompiler> = {
  * The real compilers on the browser's copy of the pass: the same view, the same bodies and the
  * same fidelity report the release pipeline builds. Art is the template's own, by its dry-run URL.
  */
-export function compileWallets(source: PreviewSource): WalletTargetOut {
+export function compileWallets(
+  source: PreviewSource,
+  where: { origin?: string; now?: Date } = {},
+): WalletTargetOut {
   const manifest = source.manifest as unknown as TemplateManifest;
-  const now = new Date();
+  const now = where.now ?? new Date();
   const urls = assetUrlMap(source.assetBaseUrl, source.assetNames);
   const previewOnly = new Set(manifest.previewOnlyAssets ?? []);
   const known = new Map(source.assets.map((a) => [a.name, a]));
@@ -52,7 +55,8 @@ export function compileWallets(source: PreviewSource): WalletTargetOut {
     report: { ok: true, issues: [] },
     assets: shipped,
   } as unknown as PlannedPass;
-  const origin = globalThis.location.origin;
+  const origin =
+    where.origin ?? (globalThis as unknown as { location: { origin: string } }).location.origin;
   const view = resolveWalletView(plan, manifest, {
     now,
     locales: ['en'],

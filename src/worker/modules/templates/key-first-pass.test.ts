@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import {
@@ -58,7 +59,7 @@ const send = (method: string, path: string, headers: Record<string, string>, bod
       method,
       headers: {
         ...headers,
-        origin: ORIGIN,
+        ...originUnlessKey(headers, ORIGIN),
         'content-type': 'application/json',
         'idempotency-key': kit.f.ids.token(),
       },

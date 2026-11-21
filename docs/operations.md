@@ -28,6 +28,7 @@
 - Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
 - e2e runs the dev server or, in CI, the built preview. Both raise `RL_SCAN_PAIR` (30 a minute in production) to 100,000: `vite.config.ts` for dev, `tools/e2e-server.ts` patches the built `wrangler.json` for preview. A worker test covers the real limit.
 - `npm run gen` rewrites `src/generated/*` and `worker-configuration.d.ts`. Commit the result.
+- Changelog: the integration PR runs `npm run changelog:release` and commits the dated file; `deploy --apply` only warns while `unreleased.json` has entries.
 
 ## Go-live checklist
 
@@ -524,6 +525,18 @@ The `pass_events_feed` trigger journals catalog events into `event_feed` and fan
 endpoints. Set the platform setting `events.feed` to `"off"` to skip it without a deploy. Events written
 while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
 gap; turning it back on does not backfill.
+
+### Request log and status notes
+
+`request_log` holds one row per Test call of a developer org (sandboxes only; Live and real orgs write nothing): metadata for 7 days, request and response bodies for 24 hours (a trigger refuses a body or a query value anywhere else). A sandbox keeps at most 2,000 rows an hour and 20,000 in all (`request_log_budget`). The minute cron hook `developer.request_log_purge` purges on a 20-second budget every minute, so a backlog is caught up; reads already hide bodies older than 24 hours and rows older than 7 days.
+
+Public status incident notes are rows of `status_incidents`; there is no admin screen yet. Open one:
+
+```sh
+npx wrangler d1 execute DB --remote --command "INSERT INTO status_incidents (id, title, note, component, impact, started_at) VALUES (lower(hex(randomblob(8))), 'Apple push delayed', 'Pushes arrive late. We are on it.', 'apple_push', 'degraded', strftime('%s','now') * 1000)"
+```
+
+`component` is `api`, `apple_push`, `email`, `webhooks`, `google`, `samsung` or NULL; `impact` is `notice`, `degraded` or `outage` (an open degraded or outage note moves the page's overall state). Resolve it with `UPDATE status_incidents SET resolved_at = ... WHERE id = ...`; it stays listed for 14 days.
 
 ### Closing and purging an organization
 

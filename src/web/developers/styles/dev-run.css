@@ -1,0 +1,238 @@
+/* The Try it slot, its skeleton, the org chip with the Run budget and the phone sheet. The
+   console's own controls live in console/console.css and load with the island. */
+
+/* One size from signed-out to ready, so the island arriving moves nothing. */
+@media (min-width: 721px) {
+  .try .stub {
+    block-size: 24rem;
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+  }
+  .try .body {
+    min-block-size: 14rem;
+  }
+  .try .stub > .code {
+    flex: 1;
+    min-block-size: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .try .stub .panel {
+    flex: 1;
+    min-block-size: 0;
+    overflow: auto;
+  }
+  .console-slot .stub {
+    block-size: 28rem;
+  }
+}
+/* The console page: the ticket plus the operation's heading row. */
+.console-slot {
+  min-block-size: 45rem;
+  margin-top: 24px;
+}
+.ticket > .body {
+  position: relative;
+}
+.start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px 20px;
+}
+.resp-hint {
+  padding: 18px 20px;
+  margin: 0;
+}
+
+/* Skeleton: the slot keeps its boxes (visibility, not display) and shows bars where content goes. */
+.try[data-state="loading"] :is(.stub, .body) > * {
+  visibility: hidden;
+}
+.try[data-state="loading"] :is(.stub, .body)::before {
+  content: "";
+  position: absolute;
+  inset: 20px;
+  --sk: color-mix(in oklab, var(--pk-text-muted) 16%, transparent);
+  background:
+    linear-gradient(var(--sk), var(--sk)) 0 0 / 38% 14px no-repeat,
+    linear-gradient(var(--sk), var(--sk)) 0 32px / 100% 14px no-repeat,
+    linear-gradient(var(--sk), var(--sk)) 0 60px / 86% 14px no-repeat,
+    linear-gradient(var(--sk), var(--sk)) 0 88px / 64% 14px no-repeat;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .try[data-state="loading"] :is(.stub, .body)::before {
+    animation: dp-sk 1.3s ease-in-out infinite;
+  }
+}
+@keyframes dp-sk {
+  50% {
+    opacity: 0.45;
+  }
+}
+/* On a phone the page's slot keeps its samples; the sheet is the console. */
+@media (max-width: 720px) {
+  .try[data-state="ready"] .try-foot {
+    display: none;
+  }
+}
+
+/* ---------- Org chip and the Run budget ---------- */
+/* The slot keeps the chip's width, so the Sign in button turning into the chip moves nothing. */
+[data-island="org-chip"] {
+  display: inline-flex;
+  justify-content: flex-end;
+  min-inline-size: 12.5rem;
+}
+.orgchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+  color: var(--pk-text-strong);
+  font-weight: 500;
+  font-size: 13px;
+  max-width: 100%;
+}
+.orgchip:hover {
+  text-decoration: none;
+  border-color: var(--pk-border-strong);
+}
+.orgchip-dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--pk-accent);
+  color: var(--pk-accent-on);
+  font-size: 12px;
+  font-weight: 600;
+}
+.orgchip-name {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.budget {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.budget-bar {
+  display: block;
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--pk-border-strong);
+  overflow: hidden;
+}
+.budget-fill {
+  display: block;
+  height: 100%;
+  background: var(--pk-accent);
+  transform-origin: left;
+  transition: transform var(--wl-dur-indicator) var(--wl-ease-move);
+}
+.budget[data-low="true"] .budget-fill {
+  background: var(--pk-warning);
+}
+.budget-label {
+  font-size: 12px;
+  color: var(--pk-text-muted);
+}
+.orgchip .budget-label {
+  display: none;
+}
+@media (max-width: 1280px) {
+  .orgchip-name {
+    display: none;
+  }
+  [data-island="org-chip"] {
+    min-inline-size: 7rem;
+  }
+}
+@media (max-width: 720px) {
+  [data-island="org-chip"] {
+    min-inline-size: 0;
+  }
+  .orgchip {
+    padding-right: 6px;
+  }
+  .orgchip .budget {
+    display: none;
+  }
+}
+
+/* ---------- The phone sheet ---------- */
+dialog.sheet {
+  position: fixed;
+  inset: auto 0 0;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: none;
+  height: min(92dvh, 52rem);
+  max-height: none;
+  border: 0;
+  border-top: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-xl) var(--pk-radius-xl) 0 0;
+  background: var(--pk-surface-page);
+  color: var(--pk-text-default);
+  overflow: hidden;
+}
+dialog.sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+@media (prefers-reduced-motion: no-preference) {
+  dialog.sheet[open] {
+    animation: dp-sheet var(--wl-dur-card) var(--wl-ease-out);
+  }
+}
+@keyframes dp-sheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.sheet-h {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 12px 6px 16px;
+  flex: none;
+}
+.sheet-grab {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: var(--pk-border-strong);
+}
+.sheet-b {
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+  padding: 8px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+}
+:root[data-sheet="open"] body {
+  overflow: hidden;
+}

@@ -2,6 +2,7 @@ import { revealToken } from '../../platform/capability-token.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { channelOn } from '../channels/gate.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { recordPassEvents } from '../events/record.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { packagePassObjects } from '../passes/package-objects.ts';
@@ -146,6 +147,7 @@ export async function addablePass(
 
 /** The `.pkpasses` body of the bundle's addable passes; voided and removed ones are left out. */
 export async function bundleArchive(ctx: ServiceContext, bundle: BundleRow) {
+  await assertNotPreviewOnly(ctx.env.DB, bundle.org_id);
   const snapshot = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
   const live =
     snapshot && snapshot.bundle.token === bundle.token

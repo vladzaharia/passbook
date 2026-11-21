@@ -218,21 +218,25 @@ export const getKey = (db: Db, id: string, orgId: string | null) =>
  * The key plus its org's status (null: a platform key), for a personal key the roles of its member while that
  * membership is live and the user active (null otherwise), and for a child its parent's end times as JSON (null: none).
  */
-export const findByPrefix = (db: Db, prefix: string) =>
-  first<
-    ApiKeyRow & {
-      org_status: string | null;
-      member_roles: string | null;
-      parent: string | null;
-    }
-  >(
-    db,
-    `SELECT k.*, o.status AS org_status,
+export type ResolvedKeyRow = ApiKeyRow & {
+  org_status: string | null;
+  org_kind: string | null;
+  member_roles: string | null;
+  parent: string | null;
+};
+
+/** The columns of a `ResolvedKeyRow`, over `api_keys k` and `orgs o`: also read by the try-token resolver. */
+export const RESOLVED_KEY_COLUMNS = `k.*, o.status AS org_status, o.kind AS org_kind,
        (SELECT m.roles FROM org_memberships m JOIN users u ON u.id = m.user_id
         WHERE m.id = k.membership_id AND m.org_id = k.org_id AND m.revoked_at IS NULL
           AND u.status = 'active') AS member_roles,
        (SELECT json_object('revoked_at', q.revoked_at, 'expires_at', q.expires_at, 'retire_at', q.retire_at)
-        FROM api_keys q WHERE q.id = k.parent_key_id) AS parent
+        FROM api_keys q WHERE q.id = k.parent_key_id) AS parent`;
+
+export const findByPrefix = (db: Db, prefix: string) =>
+  first<ResolvedKeyRow>(
+    db,
+    `SELECT ${RESOLVED_KEY_COLUMNS}
      FROM api_keys k LEFT JOIN orgs o ON o.id = k.org_id
      WHERE k.prefix = ?`,
     [prefix],

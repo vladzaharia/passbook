@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { PAPER_SPECS } from '../../passkit/template/paper.ts';
+import { TestBand } from '../pass-card/test-band.tsx';
 import { CardBack, CardFront } from './ticket-card.tsx';
 import { TicketFull } from './ticket-full.tsx';
 import type { TicketProps } from './ticket-parts.tsx';
@@ -7,11 +8,12 @@ import { TicketCoupon, TicketPermit } from './ticket-small.tsx';
 
 export type { TicketProps } from './ticket-parts.tsx';
 
-const pageOf = (
+const pageWith = (
   key: string,
   size: { w: number; h: number },
   size_: string,
   children: ReactNode,
+  band: boolean,
 ) => (
   <div
     key={key}
@@ -19,6 +21,7 @@ const pageOf = (
     data-size={size_}
     style={{ '--w': size.w, '--h': size.h } as CSSProperties}
   >
+    {band ? <TestBand /> : null}
     {children}
   </div>
 );
@@ -31,6 +34,8 @@ const pageOf = (
  */
 export function PaperTicket(props: TicketProps) {
   const { design, content } = props;
+  const pageOf = (...a: [string, { w: number; h: number }, string, ReactNode]) =>
+    pageWith(...a, props.testBand === true);
   const spec = PAPER_SPECS[design.size];
   const size = { w: spec.widthMm, h: spec.heightMm };
   if (design.size === 'cr80')

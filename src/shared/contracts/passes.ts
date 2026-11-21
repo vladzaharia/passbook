@@ -6,6 +6,7 @@ import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './com
 import { REMOVE_MESSAGE_MAX } from './events.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
 import { PassTermSchema } from './pass-term.ts';
+import { CREATE_PASS_DOCS } from './passes-docs.ts';
 import { ScanTargetSchema } from './scan.ts';
 import { PUSH_BUDGET_DEFAULT } from './settings.ts';
 import { ValidationIssueSchema } from './templates.ts';
@@ -146,6 +147,8 @@ export const PassDetailSchema = PassSummarySchema.extend({
   blockedUsers: z.array(z.object({ id: IdSchema, name: z.string().nullable() })),
   downloadUrl: z.string(),
   publicUrl: z.string(),
+  /** A test pass of a developer org: a preview only, shown with the TEST PREVIEW band on every channel. */
+  testPreview: z.boolean().default(false),
   /** What each delivery channel offers this pass, with its source, reason and retirement. */
   channels: EffectiveChannelsSchema.optional(),
   registrations: z.number().int(),
@@ -226,15 +229,16 @@ export const CreatePassSchema = z.object({
   releaseId: IdSchema.optional(),
   releaseGeneration: z.number().int().positive().optional(),
   identityId: IdSchema.optional(),
-  input: z.record(z.string(), JsonSchema),
+  input: z.record(z.string(), JsonSchema).describe(CREATE_PASS_DOCS.input),
   holderEmail: z.string().max(254).optional(),
-  externalId: z.string().max(200).optional(),
+  externalId: z.string().max(200).optional().describe(CREATE_PASS_DOCS.externalId),
   serial: z
     .string()
     .regex(/^[A-Za-z0-9._~-]{1,100}$/, 'Use letters, digits and . _ ~ - only.')
-    .optional(),
-  connectionId: IdSchema.optional(),
-  externalRef: z.string().max(500).optional(),
+    .optional()
+    .describe(CREATE_PASS_DOCS.serial),
+  connectionId: IdSchema.optional().describe(CREATE_PASS_DOCS.connectionId),
+  externalRef: z.string().max(500).optional().describe(CREATE_PASS_DOCS.externalRef),
   sendEmail: z.boolean().optional(),
 });
 export const UpdatePassSchema = z.object({

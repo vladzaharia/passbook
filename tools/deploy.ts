@@ -33,6 +33,7 @@ import {
   waitForBakedHeads,
 } from './lib/baked-sync-wait.ts';
 import { buildProblem, gitState, stampPath } from './lib/build-stamp.ts';
+import { readPending } from './lib/changelog-files.ts';
 import {
   deployFlags,
   deployStage,
@@ -151,6 +152,11 @@ if (!args.has('--apply')) {
 
 // Migrations come from this working tree and the Worker from dist/: both must be the same clean HEAD.
 const git = gitState(root);
+const unstamped = readPending(root).length;
+if (unstamped > 0)
+  console.warn(
+    `Warning: docs/api/changelog/unreleased.json has ${unstamped} entries; npm run changelog:release stamps them. Deploying anyway.`,
+  );
 const buildRefusal = buildProblem({
   servesUploaded: stage === 'promote' && !first,
   git,

@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   assertNoLeakedGrants,
@@ -67,7 +68,11 @@ const post = (headers: Record<string, string>, path: string, body: object = {}) 
     `${ORIGIN}/api/v1/passes${path}`,
     {
       method: 'POST',
-      headers: { ...headers, origin: ORIGIN, 'content-type': 'application/json' },
+      headers: {
+        ...headers,
+        ...originUnlessKey(headers, ORIGIN),
+        'content-type': 'application/json',
+      },
       body: JSON.stringify(body),
     },
     kit.env,

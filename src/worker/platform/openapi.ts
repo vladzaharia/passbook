@@ -25,6 +25,8 @@ export interface RouteSpec {
   query?: ZodType;
   /** JSON request body. */
   body?: ZodType;
+  /** The body may be left out (every field of `body` has a default); documented as not required. */
+  bodyOptional?: true;
   /** JSON success body. Omit for redirects, HTML and binary responses. */
   response?: ZodType;
   status?: 200 | 201 | 202 | 204 | 302;
@@ -141,7 +143,12 @@ export function register<S extends RouteSpec>(
       ...(spec.params ? { params: spec.params } : {}),
       ...(spec.query ? { query: spec.query } : {}),
       ...(spec.body
-        ? { body: { required: true, content: { 'application/json': { schema: spec.body } } } }
+        ? {
+            body: {
+              required: !spec.bodyOptional,
+              content: { 'application/json': { schema: spec.body } },
+            },
+          }
         : {}),
     },
     responses: {

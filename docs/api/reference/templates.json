@@ -58,5 +58,23 @@
         }
       ]
     }
+  },
+  "templates.getTemplatesByIdInputSchema": {
+    "description": "Returns the JSON Schema that `input` must satisfy in `POST /passes` for this template's active version. Field labels, groups and order are in the `x-label`, `x-group` and `x-order` keywords. Use it to build a form or generate types.",
+    "response": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-label": "Name"
+        },
+        "seat": {
+          "type": "string",
+          "x-label": "Seat"
+        }
+      },
+      "additionalProperties": false
+    }
   }
 }

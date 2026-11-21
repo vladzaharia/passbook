@@ -19,6 +19,8 @@ export interface ServiceContext {
   requestId: string | null;
   /** Set by `createJobContext` only; `jobGrant` refuses a context without it. */
   job?: JobAuthority;
+  /** The request's key came as a developer try token: its audit rows carry `via: 'try'`. */
+  via?: 'try';
   waitUntil(promise: Promise<unknown>): void;
 }
 
@@ -34,6 +36,7 @@ export function serviceContext(c: Context<AppBindings>): ServiceContext {
     ids: c.var.ids,
     log: c.var.log,
     requestId: c.var.requestId,
+    ...(c.var.auth?.kind === 'api_key' && c.var.auth.via ? { via: c.var.auth.via } : {}),
     waitUntil: (promise) => {
       const reported = reportFailure(promise, c.var.log);
       try {

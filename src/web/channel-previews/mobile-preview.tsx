@@ -60,7 +60,9 @@ export function MobilePreview({
           >
             <HolderHeading heading={heading} bare />
             <HolderPassView
-              pass={<PassCardStage view={view} tilt={false} glow={false} />}
+              pass={
+                <PassCardStage view={view} tilt={false} glow={false} testBand={source.testBand} />
+              }
               passTitle={heading.title}
               orgName={view.organizationName}
               state="active"

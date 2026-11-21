@@ -151,6 +151,8 @@ const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass
     mode: ModeSchema,
     pass,
     data: WEBHOOK_DATA_SCHEMAS[type],
+    /** Only on a sample sent from "Send test": it describes no real pass. */
+    sample: z.literal(true).optional(),
   });
 
 const P = WebhookPassRefSchema;
@@ -192,6 +194,8 @@ export const WebhookEndpointSchema = z.object({
   templateIds: z.array(IdSchema).nullable(),
   apiVersion: WebhookApiVersionSchema,
   status: WebhookEndpointStatusSchema,
+  /** `capture` stores the signed request instead of sending it (developer orgs, Test). */
+  target: z.enum(['url', 'capture']),
   failingSince: TimestampSchema.nullable(),
   disabledAt: TimestampSchema.nullable(),
   lastSuccessAt: TimestampSchema.nullable(),
@@ -247,6 +251,8 @@ export const WebhookTestResultSchema = z.object({
   status: z.number().int().nullable(),
   durationMs: z.number().int().nonnegative(),
   errorCode: z.string().nullable(),
+  /** The stored capture, for a capture endpoint. */
+  captureId: IdSchema.nullable(),
 });
 
 export const WebhookDeliveryStateSchema = z.enum(['pending', 'delivered', 'failed', 'cancelled']);

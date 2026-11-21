@@ -20,6 +20,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import {
   actorFor,
   authOf,
+  orgIdOf,
   requireTenantSessionOrApiKey,
   svc,
   tenantAuthorityOf,
@@ -60,7 +61,7 @@ register(
   async (c) => {
     const q = c.req.valid('query');
     const ctx = svc(c);
-    const a = await tenantAuthorityOf(ctx, authOf(c), q.orgId, 'passes:read');
+    const a = await tenantAuthorityOf(ctx, authOf(c), orgIdOf(authOf(c), q.orgId), 'passes:read');
     return c.json({
       items: await listVisits(ctx, a.orgId, a.mode, q.tab, { start: q.dayStart, end: q.dayEnd }),
       nextCursor: null,
@@ -80,7 +81,13 @@ register(
   },
   async (c) => {
     const ctx = svc(c);
-    const a = await tenantAuthorityOf(ctx, authOf(c), c.req.valid('query').orgId, 'passes:read');
+    const auth = authOf(c);
+    const a = await tenantAuthorityOf(
+      ctx,
+      auth,
+      orgIdOf(auth, c.req.valid('query').orgId),
+      'passes:read',
+    );
     const emails = await canTypeHost(ctx, a);
     const items = await hostChoices(ctx.env.DB, a.orgId);
     return c.json({
@@ -113,16 +120,16 @@ for (const [path, summary, run] of [
   [
     '/{id}/check-out',
     'Check a visitor out',
-    (c: Parameters<typeof svc>[0], id: string, orgId: string) =>
-      tenantAuthorityOf(svc(c), authOf(c), orgId, 'passes:operate').then((a) =>
+    (c: Parameters<typeof svc>[0], id: string, orgId: string | undefined) =>
+      tenantAuthorityOf(svc(c), authOf(c), orgIdOf(authOf(c), orgId), 'passes:operate').then((a) =>
         checkOutVisit(svc(c), a, id),
       ),
   ],
   [
     '/{id}/cancel',
     'Cancel a visit and void its pass',
-    (c: Parameters<typeof svc>[0], id: string, orgId: string) =>
-      tenantAuthorityOf(svc(c), authOf(c), orgId, 'passes:operate').then((a) =>
+    (c: Parameters<typeof svc>[0], id: string, orgId: string | undefined) =>
+      tenantAuthorityOf(svc(c), authOf(c), orgIdOf(authOf(c), orgId), 'passes:operate').then((a) =>
         cancelVisit(svc(c), actorFor(c), a, id),
       ),
   ],
@@ -156,7 +163,9 @@ register(
   },
   async (c) => {
     const ctx = svc(c);
-    const a = await tenantAuthorityOf(ctx, authOf(c), c.req.valid('query').orgId, 'passes:operate');
+    const auth = authOf(c);
+    const orgId = orgIdOf(auth, c.req.valid('query').orgId);
+    const a = await tenantAuthorityOf(ctx, auth, orgId, 'passes:operate');
     const row = await visitorById(ctx.env.DB, a.orgId, a.mode, c.req.valid('param').id);
     if (!row) throw new NotFoundError('Visitor not found.', 'VISITOR_NOT_FOUND');
     await resendHostNotice(ctx, row, c.req.valid('json').timeZone);
@@ -177,7 +186,9 @@ register(
   },
   async (c) => {
     const ctx = svc(c);
-    const a = await tenantAuthorityOf(ctx, authOf(c), c.req.valid('query').orgId, 'passes:operate');
+    const auth = authOf(c);
+    const orgId = orgIdOf(auth, c.req.valid('query').orgId);
+    const a = await tenantAuthorityOf(ctx, auth, orgId, 'passes:operate');
     return c.json(await offboard(ctx, actorFor(c), a, c.req.valid('json')));
   },
 );

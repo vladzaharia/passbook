@@ -1,7 +1,9 @@
 /**
  * Which hosts answer. PUBLIC_BASE_URL's origin serves the app. A REDIRECT_HOSTS host (comma list)
  * answers every request, any path or method, with a 308 to the same path and query on the
- * canonical origin. Any other host is refused. index.ts turns this on; tests build the app
+ * canonical origin. A DEVELOPERS_HOSTS host does the same into /developers (its root is the portal's
+ * home, so developers.passbook.mobile/reference/passes lands on /developers/reference/passes). Any
+ * other host is refused. index.ts turns this on; tests build the app
  * without it because they use several hosts.
  */
 import { createMiddleware } from 'hono/factory';
@@ -14,14 +16,27 @@ export type HostDecision =
   | { action: 'redirect'; location: string }
   | { action: 'refuse' };
 
-type HostEnv = Pick<AppEnv, 'PUBLIC_BASE_URL'> & { REDIRECT_HOSTS?: string };
+type HostEnv = Pick<AppEnv, 'PUBLIC_BASE_URL'> & {
+  REDIRECT_HOSTS?: string;
+  DEVELOPERS_HOSTS?: string;
+};
 
-export function redirectHosts(env: HostEnv): string[] {
-  return (env.REDIRECT_HOSTS ?? '')
+const hostList = (value: string | undefined): string[] =>
+  (value ?? '')
     .split(',')
     .map((host) => host.trim().toLowerCase())
     .filter(Boolean);
-}
+
+export const redirectHosts = (env: HostEnv): string[] => hostList(env.REDIRECT_HOSTS);
+const developersHosts = (env: HostEnv): string[] => hostList(env.DEVELOPERS_HOSTS);
+
+/** The portal path a developers-host path maps to: the root is the home page. */
+const portalPath = (pathname: string) =>
+  pathname === '/'
+    ? '/developers'
+    : /^\/developers(\/|$)/.test(pathname)
+      ? pathname
+      : `/developers${pathname}`;
 
 export function hostDecision(env: HostEnv, url: URL): HostDecision {
   const canonical = new URL(env.PUBLIC_BASE_URL);
@@ -32,6 +47,12 @@ export function hostDecision(env: HostEnv, url: URL): HostDecision {
   // Same host over plain http: upgrade, so Secure cookies and HSTS apply.
   if (url.host === canonical.host)
     return url.protocol === canonical.protocol ? { action: 'serve' } : moved;
+  if (developersHosts(env).includes(url.host)) {
+    return {
+      action: 'redirect',
+      location: `${canonical.origin}${portalPath(url.pathname)}${url.search}`,
+    };
+  }
   return redirectHosts(env).includes(url.host) ? moved : { action: 'refuse' };
 }
 

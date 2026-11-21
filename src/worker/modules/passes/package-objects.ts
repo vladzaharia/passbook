@@ -1,5 +1,6 @@
 import { PackageLimitError, packagePasses } from '../../../passkit/index.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { assertSignedObject } from '../developer/fence.ts';
 
 export interface PackablePass {
   id: string;
@@ -12,6 +13,7 @@ export interface PackablePass {
  * bundle link serve it. Object bytes are read lazily as the archive streams.
  */
 export function packagePassObjects(bucket: R2Bucket, passes: readonly PackablePass[]) {
+  for (const pass of passes) assertSignedObject(pass.objectKey);
   try {
     return packagePasses(
       passes.map((pass) => ({

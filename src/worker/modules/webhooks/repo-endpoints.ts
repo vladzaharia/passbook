@@ -20,6 +20,8 @@ export interface EndpointRow {
   templateIds: string[] | null;
   apiVersion: WebhookApiVersion;
   status: WebhookEndpointStatus;
+  /** `capture` stores the signed request in the developer org and sends nothing. */
+  target: 'url' | 'capture';
   disabledAt: number | null;
   failingSince: number | null;
   consecutiveFailures: number;
@@ -45,6 +47,7 @@ interface Raw {
   template_ids: string | null;
   api_version: WebhookApiVersion;
   status: WebhookEndpointStatus;
+  target: 'url' | 'capture';
   disabled_at: number | null;
   failing_since: number | null;
   consecutive_failures: number;
@@ -59,7 +62,7 @@ interface Raw {
 }
 
 const COLUMNS = `id, org_id, mode, url, description, event_types, template_ids, api_version, status,
-  disabled_at, failing_since, consecutive_failures, last_success_at, last_failure_at, created_by,
+  target, disabled_at, failing_since, consecutive_failures, last_success_at, last_failure_at, created_by,
   created_at, updated_at`;
 
 /** Newest attempted delivery by the primary key (endpoint_id, event_seq): no scan of the backlog. */
@@ -82,6 +85,7 @@ function endpointOf(r: Raw): EndpointRow {
     templateIds: r.template_ids ? (JSON.parse(r.template_ids) as string[]) : null,
     apiVersion: r.api_version,
     status: r.status,
+    target: r.target,
     disabledAt: r.disabled_at,
     failingSince: r.failing_since,
     consecutiveFailures: r.consecutive_failures,
@@ -141,6 +145,8 @@ export interface NewEndpoint {
   eventTypes: readonly string[];
   templateIds: readonly string[] | null;
   apiVersion: WebhookApiVersion;
+  /** Default `url`. A capture endpoint is made only through `capture.ts`. */
+  target?: 'url' | 'capture';
   createdBy: string | null;
   now: number;
 }
@@ -157,6 +163,7 @@ export function insertEndpoint(g: Grant, e: NewEndpoint): GrantedStatement {
       'event_types',
       'template_ids',
       'api_version',
+      'target',
       'created_by',
       'created_at',
       'updated_at',
@@ -168,6 +175,7 @@ export function insertEndpoint(g: Grant, e: NewEndpoint): GrantedStatement {
       JSON.stringify(e.eventTypes),
       e.templateIds ? JSON.stringify(e.templateIds) : null,
       e.apiVersion,
+      e.target ?? 'url',
       e.createdBy,
       e.now,
       e.now,

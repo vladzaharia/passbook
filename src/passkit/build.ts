@@ -159,7 +159,7 @@ function checkPackageContents(
 }
 
 /** Everything up to and including validation. No I/O, no signing. */
-export function planPass(args: BuildPassInput): PlannedPass {
+export function planPass(args: PreviewPassInput & { signing?: SigningMaterial }): PlannedPass {
   const { template, input, server } = args;
   validateInput(template, input);
   const unmet = unmetRequirements(template.manifest, server.identity);
@@ -224,18 +224,18 @@ export function planPass(args: BuildPassInput): PlannedPass {
   return { passJson: pass, report, assets };
 }
 
-/**
- * resolve -> validate input -> bindings -> behaviors -> server fields -> validatePass -> sign.
- * With `previousHash` and no `force`, an unchanged pass returns without signing.
- */
-export async function buildPass(
-  args: BuildPassInput & { previousHash: string },
-): Promise<BuiltPass | UnchangedPass>;
-export async function buildPass(args: BuildPassInput): Promise<BuiltPass>;
-export async function buildPass(args: BuildPassInput): Promise<BuiltPass | UnchangedPass> {
-  const { template, registry, signing } = args;
-  const plan = planPass(args);
+interface HashedPlan {
+  plan: PlannedPass;
+  bytes: Record<string, Uint8Array>;
+  sha1: Record<string, string>;
+  crc: Record<string, number>;
+  contentHash: string;
+}
 
+/** `planPass`, then every asset's bytes and the content hash. No signing. */
+async function planAndHash(args: PreviewPassInput): Promise<HashedPlan> {
+  const { template, registry } = args;
+  const plan = planPass(args);
   const bytes: Record<string, Uint8Array> = {};
   const sha1: Record<string, string> = {};
   const crc: Record<string, number> = {};
@@ -255,6 +255,38 @@ export async function buildPass(args: BuildPassInput): Promise<BuiltPass | Uncha
       .map((name) => `${name}:${sha1[name]}`)
       .join('\n')}`,
   );
+  return { plan, bytes, sha1, crc, contentHash };
+}
+
+/** The input of a pass that is only ever previewed: no signing material exists to pass. */
+export type PreviewPassInput = Omit<BuildPassInput, 'signing' | 'previousHash' | 'force'>;
+
+export interface PreviewPass {
+  passJson: PassJson;
+  report: ValidationReport;
+  contentHash: string;
+}
+
+/**
+ * The same build as `buildPass`, stopping before the signature: the pass a developer sandbox issues. It has no
+ * `signing` parameter, so no caller can sign through it.
+ */
+export async function buildPassPreview(args: PreviewPassInput): Promise<PreviewPass> {
+  const { plan, contentHash } = await planAndHash(args);
+  return { passJson: plan.passJson, report: plan.report, contentHash };
+}
+
+/**
+ * resolve -> validate input -> bindings -> behaviors -> server fields -> validatePass -> sign.
+ * With `previousHash` and no `force`, an unchanged pass returns without signing.
+ */
+export async function buildPass(
+  args: BuildPassInput & { previousHash: string },
+): Promise<BuiltPass | UnchangedPass>;
+export async function buildPass(args: BuildPassInput): Promise<BuiltPass>;
+export async function buildPass(args: BuildPassInput): Promise<BuiltPass | UnchangedPass> {
+  const { signing } = args;
+  const { plan, bytes, sha1, crc, contentHash } = await planAndHash(args);
   if (args.previousHash === contentHash && !args.force)
     return { passJson: plan.passJson, report: plan.report, contentHash, changed: false };
 

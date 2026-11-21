@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import {
   assertNoLeakedGrants,
   limitSuite,
@@ -63,7 +64,7 @@ const issue = (headers: Record<string, string>) =>
       method: 'POST',
       headers: {
         ...headers,
-        origin: ORIGIN,
+        ...originUnlessKey(headers, ORIGIN),
         'content-type': 'application/json',
         'idempotency-key': kit.fx.ids.token(12),
       },

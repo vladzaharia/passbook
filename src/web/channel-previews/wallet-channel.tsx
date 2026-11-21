@@ -1,5 +1,8 @@
 import { PREVIEW_COPY, walletName } from '@/shared/copy/previews.ts';
-import { Badge, Callout, EmptyState, Skeleton } from '../ui/index.ts';
+import { Badge } from '../ui/badge.tsx';
+import { Callout } from '../ui/callout.tsx';
+import { EmptyState } from '../ui/empty-state.tsx';
+import { Skeleton } from '../ui/skeleton.tsx';
 import { GoogleCard } from '../wallet-previews/google/google-card.tsx';
 import { SamsungCard } from '../wallet-previews/samsung/samsung-card.tsx';
 import { FidelityNotes } from './fidelity-notes.tsx';
@@ -9,9 +12,12 @@ import type { WalletPreviews } from './use-wallet-previews.ts';
 export function WalletChannel({
   target,
   previews,
+  testBand,
 }: {
   target: 'google' | 'samsung';
   previews: WalletPreviews;
+  /** A sandbox pass: the TEST PREVIEW band on the card. */
+  testBand?: boolean | undefined;
 }) {
   const wallet = walletName(target);
   if (previews.state === 'loading')
@@ -34,13 +40,17 @@ export function WalletChannel({
   const card =
     target === 'samsung' ? (
       compiled.cardData ? (
-        <SamsungCard data={compiled.cardData as Parameters<typeof SamsungCard>[0]['data']} />
+        <SamsungCard
+          data={compiled.cardData as Parameters<typeof SamsungCard>[0]['data']}
+          testBand={testBand}
+        />
       ) : null
     ) : compiled.objectBody ? (
       <GoogleCard
         type={compiled.type}
         classBody={compiled.classBody}
         objectBody={compiled.objectBody}
+        testBand={testBand}
       />
     ) : null;
   return (

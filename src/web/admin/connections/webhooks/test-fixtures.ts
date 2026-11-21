@@ -23,6 +23,7 @@ export function endpoint(over: Partial<WebhookEndpointDto> = {}): WebhookEndpoin
     templateIds: null,
     apiVersion: '2026-12-01',
     status: 'active',
+    target: 'url',
     failingSince: null,
     disabledAt: null,
     lastSuccessAt: NOW - HOUR,
@@ -136,7 +137,7 @@ export function hooks(
     },
     '/api/v1/webhook-endpoints/we-new/test': (url, init) => {
       log(url, init);
-      return json({ ok: true, status: 200, durationMs: 140, errorCode: null });
+      return json({ ok: true, status: 200, durationMs: 140, errorCode: null, captureId: null });
     },
     '/api/v1/webhook-endpoints/we1/deliveries': (url, init) => {
       log(url, init);
@@ -169,7 +170,7 @@ export function hooks(
     },
     '/api/v1/webhook-endpoints/we1/test': (url, init) => {
       log(url, init);
-      return json({ ok: true, status: 200, durationMs: 140, errorCode: null });
+      return json({ ok: true, status: 200, durationMs: 140, errorCode: null, captureId: null });
     },
     ...extra,
   };

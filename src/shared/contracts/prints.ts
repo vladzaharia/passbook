@@ -65,4 +65,5 @@ export const BulkPrintStatusSchema = z.object({
 export type BulkPrintStatus = z.infer<typeof BulkPrintStatusSchema>;
 
 export const BulkPrintParamSchema = z.object({ jobId: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/) });
-export const BulkPrintQuerySchema = z.object({ orgId: IdSchema });
+/** An org key leaves `orgId` out and reads its own org's jobs. */
+export const BulkPrintQuerySchema = z.object({ orgId: IdSchema.optional() });

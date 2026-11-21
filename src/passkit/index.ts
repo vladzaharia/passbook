@@ -5,10 +5,12 @@ export type {
   BuildPassInput,
   BuiltPass,
   PlannedPass,
+  PreviewPass,
+  PreviewPassInput,
   ServerFields,
   UnchangedPass,
 } from './build.ts';
-export { buildPass, PassBuildError, planPass } from './build.ts';
+export { buildPass, buildPassPreview, PassBuildError, planPass } from './build.ts';
 export { crc32 } from './package/crc32.ts';
 export type { BundledPass, ZipEntry } from './package/zip.ts';
 export {

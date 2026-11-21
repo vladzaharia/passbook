@@ -32,7 +32,7 @@ export function versionAssets(template: Template, version?: string): PreviewAsse
 export function previewSource(
   built: BuiltPass | undefined,
   template: Template | undefined,
-  options: { input?: Personalization; version?: string } = {},
+  options: { input?: Personalization; version?: string; testBand?: boolean } = {},
 ): PreviewSource | null {
   if (!built || !template) return null;
   return {
@@ -42,5 +42,6 @@ export function previewSource(
     manifest: template.manifest as Record<string, unknown>,
     assets: versionAssets(template, options.version),
     input: options.input ?? template.sample,
+    ...(options.testBand ? { testBand: true } : {}),
   };
 }

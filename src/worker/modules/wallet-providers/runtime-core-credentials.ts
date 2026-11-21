@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
   readSamsungPromotedRefreshCredentials,
@@ -154,6 +155,8 @@ async function snapshot(
 ): Promise<WalletProviderCredentialSnapshot> {
   // Every provider credential read, hence every outbound provider call, passes this gate.
   assertWalletProviderEnabled(provider, scope.mode);
+  // A developer org never reads a provider credential, so it never mints, signs or calls out.
+  await assertNotPreviewOnly(ctx.env.DB, scope.orgId);
   try {
     await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
     // Unpurposed reads have no credential path yet; the provider track that enables issuance adds one.

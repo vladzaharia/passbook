@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TestBand } from '../../pass-card/test-band.tsx';
 import { WalletCode } from '../barcode.tsx';
 import '../wallet-previews.css';
 import './samsung.css';
@@ -11,7 +12,7 @@ function Img({ src, className }: { src: string | undefined; className: string })
   ) : null;
 }
 
-function Face({ m }: { m: SamsungModel }) {
+function Face({ m, testBand }: { m: SamsungModel; testBand?: boolean | undefined }) {
   const art = m.image && m.type !== 'loyalty';
   return (
     <article
@@ -22,6 +23,7 @@ function Face({ m }: { m: SamsungModel }) {
       style={m.bg ? { background: m.bg } : undefined}
       aria-label={`${m.kind} card`}
     >
+      {testBand ? <TestBand /> : null}
       {m.type === 'loyalty' ? <Img src={m.image} className="wp-s-bg" /> : null}
       {art ? <Img src={m.image} className="wp-s-banner" /> : null}
       <div className="wp-s-body">
@@ -58,13 +60,16 @@ function Face({ m }: { m: SamsungModel }) {
 /** The card as the Samsung Wallet app shows it, then its detail page: code, notice, support. */
 export function SamsungCard({
   data,
+  testBand,
 }: {
   data: { type: string; subType?: string; state?: string; attributes: Record<string, string> };
+  /** A sandbox pass: the TEST PREVIEW band across the card's top. */
+  testBand?: boolean;
 }) {
   const m = samsungModel(data);
   return (
     <div className="wp wp-s" data-testid="samsung-preview">
-      <Face m={m} />
+      <Face m={m} testBand={testBand} />
       <section className="wp-s-detail" aria-label="Card details">
         {m.barcode ? (
           <div className="wp-s-code">

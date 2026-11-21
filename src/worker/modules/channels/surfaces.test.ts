@@ -18,7 +18,7 @@ const SOURCES = Object.fromEntries(
 const ARTIFACT =
   /servePassFile\(|\/pass\.pkpass|passes\.pkpasses|BUCKET\.get\([^)]*(?:objectKey|object_key)|packagePassObjects\(|packagePasses\(|listWalletOffers\(|issueWalletOffer\(/i;
 const GATE =
-  /channelGate\(|channelOn\(|holderChannels\(|holderChannelsMany\(|appleVariant\(|eligibleWalletProvider\(/;
+  /channelGate\(|appleFileGate\(|channelOn\(|holderChannels\(|holderChannelsMany\(|appleVariant\(|eligibleWalletProvider\(/;
 
 /** Every file that hands a .pkpass or a wallet offer to a holder goes through the one gate (M11). */
 const GATED = [
@@ -65,10 +65,16 @@ describe('channel gate coverage', () => {
   it.each(GATED)('%s uses the gate', (file) => {
     expect(SOURCES[file]).toMatch(GATE);
   });
+
+  it('appleFileGate, the file routes gate, still runs the channel gate for apple', () => {
+    expect(SOURCES['modules/channels/gate.ts']).toMatch(
+      /function appleFileGate[\s\S]*?await channelGate\(ctx, pass, 'apple'\)/,
+    );
+  });
 });
 
 /** In the route files, each handler that serves an artifact names its own gate (or a gated helper). */
-const ROUTE_GATE = /channelGate\(|appleVariant\(|bundleArchive\(/;
+const ROUTE_GATE = /channelGate\(|appleFileGate\(|appleVariant\(|bundleArchive\(/;
 describe('channel gate per route', () => {
   it.each([
     'modules/apple/routes.ts',

@@ -1,6 +1,6 @@
 // The only module that builds guarded writes. Contract: docs/design/authority-epochs.md section 1.2.
 import type { AfterRead } from './authority-after.ts';
-import { type AuditRow, type AuditWhen, buildAudit } from './authority-audit.ts';
+import { type AuditRow, type AuditWhen, buildAudit, withVia } from './authority-audit.ts';
 import { grantedBatch, grantedBatchWith, registerPrepare } from './authority-batch.ts';
 import type { Check } from './authority-checks.ts';
 import { buildAssert, type GrantCond } from './authority-cond.ts';
@@ -211,7 +211,7 @@ export class Grant {
    * after an insert to ask "does the new row exist?".
    */
   audit(entry: AuditRow, when?: AuditWhen): GrantedStatement {
-    return this.#push(buildAudit(this.id, this.scope, entry, when));
+    return this.#push(buildAudit(this.id, this.scope, withVia(entry, this.#input.via), when));
   }
 
   /**
@@ -313,7 +313,7 @@ export function grant(ctx: ServiceContext, input: GrantInput): Grant {
   const scope = scopeOf(input);
   assertDeferredContext(hasJobAuthority(ctx), input);
   const p = input.principal;
-  const full = p.kind === 'holder' ? { ...input, target: p.passId } : input;
+  const full = { ...input, ...(p.kind === 'holder' ? { target: p.passId } : {}), via: ctx.via };
   return new Grant(ctx.env.DB, ctx.ids.token(), scope, full, ctx.clock.now());
 }
 
