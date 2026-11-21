@@ -43,8 +43,8 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     const closes = new Date(Date.now() + 3_600_000);
     const local = (date: Date) =>
       new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-    await page.getByLabel('Scanning opens', { exact: true }).fill(local(opens));
-    await page.getByLabel('Scanning closes', { exact: true }).fill(local(closes));
+    await page.getByLabel('Scanning opens').fill(local(opens));
+    await page.getByLabel('Scanning closes').fill(local(closes));
     await page
       .getByRole('textbox', { name: 'Note for staff', exact: true })
       .fill('Check the ticket name.');
