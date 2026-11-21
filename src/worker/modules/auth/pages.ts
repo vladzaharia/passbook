@@ -215,6 +215,8 @@ const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedA
   LINK_INVALID: { status: 400, art: 'expired' },
   EMAIL_TAKEN: { status: 403, art: 'no-access' },
   MAGIC_LINK_DISABLED: { status: 503, art: 'broken' },
+  PASSKEY_REQUIRED: { status: 403, art: 'login' },
+  IDP_EMAIL_NOT_PRIMARY: { status: 403, art: 'no-access' },
   RATE_LIMITED: { status: 429, art: 'throttled' },
   VALIDATION: { status: 422, art: 'broken' },
 };
@@ -223,7 +225,7 @@ const PAGE: Record<SignInErrorCode, { status: ContentfulStatusCode; art: HostedA
 export function signInErrorPage(
   nonce: string,
   code: SignInErrorCode,
-  opts: { next?: string | null; action?: PageAction } = {},
+  opts: { next?: string | null; action?: PageAction; message?: string } = {},
   theme?: PageTheme,
 ): { html: string; status: ContentfulStatusCode } {
   // One page for "no access", whichever route refuses.
@@ -231,7 +233,19 @@ export function signInErrorPage(
     return { html: noAccessPage(nonce, opts.next ?? null, theme), status: 403 };
   const { status, art } = PAGE[code];
   const action = opts.action ?? backToSignIn(loginPath(opts.next));
-  return { html: messagePage(nonce, { ...SIGN_IN_ERROR_COPY[code], action, art }, theme), status };
+  return {
+    html: messagePage(
+      nonce,
+      {
+        ...SIGN_IN_ERROR_COPY[code],
+        ...(opts.message ? { message: opts.message } : {}),
+        action,
+        art,
+      },
+      theme,
+    ),
+    status,
+  };
 }
 
 const OIDC_ART: Record<OidcFailure, HostedArt> = {

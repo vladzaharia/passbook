@@ -1,6 +1,7 @@
 import { parseIsoDate } from '../../../passkit/schema/util.ts';
 import type { ScanOutcome, ScanRole } from '../../../shared/contracts/scan.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import { isStrongAmr } from '../../../shared/sign-in.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -98,6 +99,9 @@ export function liveAttachment(
     if (!authority)
       throw new UnauthenticatedError('Pair this screen to continue.', 'SCANNER_UNAUTHENTICATED');
     expiresAt = authority.sessionExpiresAt;
+    // An email session keeps the console only inside its grace window. A short socket makes the
+    // guard re-check it on every reconnect, so a feed cannot outlive the window by long.
+    if (!isStrongAmr(authority.amr)) expiresAt = Math.min(expiresAt, ctx.clock.now() + 60_000);
   } else {
     expiresAt = row.expiresAt ?? Infinity;
   }

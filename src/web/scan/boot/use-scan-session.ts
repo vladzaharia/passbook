@@ -124,7 +124,7 @@ export function useScanSession(
       phase = 'scope_required';
     else if (
       isApiError(query.error) &&
-      ['SCANNER_UNAUTHENTICATED', 'FORBIDDEN'].includes(query.error.code)
+      ['SCANNER_UNAUTHENTICATED', 'FORBIDDEN', 'IDP_SIGN_IN_REQUIRED'].includes(query.error.code)
     )
       phase = 'unpaired';
     else if (

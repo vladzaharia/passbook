@@ -35,6 +35,15 @@ export type RouteAuth =
       templateScoped?: true;
     }
   /** A signed-in person: never a key. `requestMode` adopts the x-passbook-mode header; `feature` needs it. */
-  | { human: true; requestMode?: boolean; feature?: FeatureRule }
+  | {
+      human: true;
+      requestMode?: boolean;
+      feature?: FeatureRule;
+      /**
+       * Deny by default: a session needs a strong sign-in (Polaris ID), or an email link inside the console
+       * grace. `any` admits an email link (holder features); `strict` takes no grace.
+       */
+      signIn?: 'any' | 'strict';
+    }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
   | { platform: PlatformScope };

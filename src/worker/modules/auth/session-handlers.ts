@@ -33,6 +33,7 @@ export async function getSession(c: Context<AppBindings>): Promise<SessionRespon
       roles: auth.roles,
       csrfToken: auth.csrfSecret,
       amr: auth.amr,
+      consoleUntil: auth.consoleUntil ?? null,
       expiresAt,
     };
   }

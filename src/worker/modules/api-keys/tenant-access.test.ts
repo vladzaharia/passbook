@@ -225,12 +225,18 @@ describe('API key tenant authorization', () => {
       rotated_from: null,
       created_by_key: null,
       last_ip_prefix: null,
+      created_amr: null,
     };
     await expect(
       createKey(
         ctx,
         row,
-        { kind: 'platform' as const, userId: session.userId, sessionId: 'not-a-session' },
+        {
+          kind: 'platform' as const,
+          userId: session.userId,
+          sessionId: 'not-a-session',
+          amr: 'oidc' as const,
+        },
         { orgId: null, actorType: 'user', actorId: session.userId, action: 'api_key.create' },
       ),
     ).rejects.toMatchObject({ status: 403, code: 'ACTOR_CHANGED' });

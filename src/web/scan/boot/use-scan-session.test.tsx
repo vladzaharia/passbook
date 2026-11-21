@@ -72,6 +72,17 @@ describe('useScanSession (against a stub server)', () => {
     expect(result.current.session?.scanner?.name).toBe('Front door');
   });
 
+  it.each(['SCANNER_UNAUTHENTICATED', 'IDP_SIGN_IN_REQUIRED'])(
+    'shows pairing, not "Scanner unavailable", on %s (a holder email session in the browser)',
+    async (code) => {
+      const fetchFn = vi.fn(async () => json({ code, title: 'No', status: 401 }, 401));
+      const holder = createCsrfHolder();
+      const api = createScanApi({ fetch: fetchFn as unknown as typeof fetch, csrf: holder.get });
+      const { result } = renderHook(() => useScanSession(api, holder), { wrapper: wrapper() });
+      await waitFor(() => expect(result.current.phase).toBe('unpaired'));
+    },
+  );
+
   it('a revoked scanner is a block, not an unpaired card', async () => {
     const fetchFn = vi.fn(async () =>
       json({ code: 'SCANNER_REVOKED', title: 'Gone', status: 401 }, 401),

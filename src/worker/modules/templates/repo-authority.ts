@@ -1,4 +1,5 @@
 import { first, type SqlValue } from '../../platform/db.ts';
+import { STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import {
   orgEpochMatchSql,
@@ -46,6 +47,7 @@ export function templateAuthorityPredicate(
       SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id_hash = ? AND s.user_id = ? AND u.status = 'active'
         AND s.revoked_at IS NULL AND s.expires_at > ? AND s.idle_expires_at > ?
+        AND s.amr IN ${STRONG_AMR_SQL}
         AND json_type(s.roles) = 'array'
         AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.value = 'admin')
     )`,

@@ -39,6 +39,8 @@ export const ProblemSchema = z.object({
   /** FEATURE_LIMIT_REACHED: the cap and the count the organization holds. */
   limit: z.number().int().optional(),
   used: z.number().int().optional(),
+  /** IDP_SIGN_IN_REQUIRED: where to sign in with Polaris ID. */
+  signInUrl: z.string().optional(),
 });
 export type ProblemDto = z.infer<typeof ProblemSchema>;
 

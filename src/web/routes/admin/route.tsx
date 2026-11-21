@@ -13,7 +13,7 @@ function AdminRouteLayout() {
   const { authed } = useSession();
   const here = useRouterState({ select: (s) => s.location.href });
   // An email link opens the holder's spaces only: the console waits for Polaris ID.
-  if (authed && needsPocketId('admin', authed.amr)) {
+  if (authed && needsPocketId('admin', authed.amr, authed.consoleUntil)) {
     return (
       <AppShell bar={PORTAL_BAR} width="holder" holder>
         <PolarisIdRequired space="Admin" next={here} />

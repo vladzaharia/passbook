@@ -124,7 +124,7 @@ export async function requireAdminConsole(
 ): Promise<AuthedSession> {
   const session = await requireSession(queryClient, next);
   // An email link never reaches the console; the route says so (PolarisIdRequired).
-  if (needsPocketId('admin', session.amr)) return session;
+  if (needsPocketId('admin', session.amr, session.consoleUntil)) return session;
   if (!session.roles.includes('admin')) {
     // fetchQuery refreshes invalidated grants; an error with retained data must be retried too.
     const previous = queryClient.getQueryState(membershipsQuery.queryKey);

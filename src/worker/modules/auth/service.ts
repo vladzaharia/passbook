@@ -1,3 +1,4 @@
+import { isStrongAmr } from '../../../shared/sign-in.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import type { Amr, Role } from '../../platform/auth.ts';
 import { envString } from '../../platform/env.ts';
@@ -5,7 +6,12 @@ import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
-import { accountProvenByMail, createUser, releaseClaimOtherThan } from './account-claims.ts';
+import {
+  accountProvenByMail,
+  createUser,
+  refuseNonPrimaryOwner,
+  releaseClaimOtherThan,
+} from './account-claims.ts';
 import * as repo from './repo.ts';
 import { bumpCounter } from './repo-magic.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';
@@ -29,9 +35,13 @@ export interface SignInContext {
   sessionUserId?: string | null;
   /** How that session was made (`oidc`, `magic_link`, ...). */
   sessionAmr?: string | null;
+  /** Roles of that session. */
+  sessionRoles?: Role[];
   /** Hash of a fresh browser-binding cookie, set by the caller if the proof mail is sent. */
   bindingHash?: string | null;
   next?: string | null;
+  /** The provider's authentication time (ms), kept on the session. */
+  authTime?: number;
 }
 
 /** A Pocket ID identity waiting for email proof before it is linked to an existing account. */
@@ -86,6 +96,7 @@ export async function startSession(
     amr,
     ipPrefix: sign.ipPrefix,
     userAgent: sign.userAgent,
+    ...(sign.authTime === undefined ? {} : { authTime: sign.authTime }),
   });
   await repo.recordLogin(ctx.env.DB, userId, roles, name, ctx.clock.now());
   writeEvent(ctx.env, { event: 'auth.sign_in', outcome: amr });
@@ -117,13 +128,27 @@ export async function auditIdentityLinked(
   });
 }
 
-/** Magic-link sign-in for an email the browser just proved. Grants `user` only. */
+/** An email link used in a browser that already holds the same person's strong session: nothing changes. */
+export interface KeptSession {
+  userId: string;
+  roles: Role[];
+  session: null;
+}
+
+/**
+ * Magic-link sign-in for an email the browser just proved. Grants `user` only. A browser holding the
+ * same user's strong session keeps it: the link must never swap Polaris ID access for email access.
+ */
 export async function signInMagicLink(
   ctx: ServiceContext,
   email: string,
   sign: SignInContext,
-): Promise<SignInResult> {
+): Promise<SignInResult | KeptSession> {
   const user = await accountProvenByMail(ctx, email, sign);
+  if (sign.sessionUserId === user.id && sign.sessionAmr && isStrongAmr(sign.sessionAmr)) {
+    await attachWaitingPassesForEmail(ctx, user.id, email);
+    return { userId: user.id, roles: sign.sessionRoles ?? ['user'], session: null };
+  }
   const result = await startSession(ctx, user.id, ['user'], 'magic_link', null, sign);
   await attachWaitingPassesForEmail(ctx, user.id, email);
   return result;
@@ -140,7 +165,8 @@ export async function linkIdentityByMail(
   pending: PendingIdentity,
   sign: SignInContext,
 ): Promise<void> {
-  const user = await accountProvenByMail(ctx, email, sign);
+  await refuseNonPrimaryOwner(ctx, email);
+  const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: true });
   const linked = await repo.insertIdentity(ctx.env.DB, {
     ...pending,
     userId: user.id,
@@ -171,7 +197,7 @@ export async function verifyEmailForUser(
   if (ownerId !== userId) {
     throw new ForbiddenError('That address belongs to another account.', 'EMAIL_TAKEN');
   }
-  await repo.adoptPrimaryEmail(ctx.env.DB, userId, email);
+  await repo.adoptPrimaryEmail(ctx.env.DB, userId, email, 'magic_link');
   await recordAudit(ctx, {
     actorType: 'user',
     actorId: userId,
