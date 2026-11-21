@@ -52,4 +52,13 @@ describe('the menu sheet', () => {
       [...(root.querySelectorAll('[data-menu-sandbox] a') ?? [])].map((a) => a.textContent),
     ).toEqual(['Workbench', 'Keys']);
   });
+
+  it('turns the Sign in slot into Polaris ID for an email-link session', () => {
+    const root = sheet();
+    fillMenuSheet(root, { spaces: [all[0]], polarisId: '/auth/oidc/start?next=%2Fdevelopers' });
+    const link = root.querySelector<HTMLAnchorElement>('[data-menu-signin]');
+    expect(link?.hidden).toBe(false);
+    expect(link?.textContent).toBe('Sign in with Polaris ID');
+    expect(link?.getAttribute('href')).toBe('/auth/oidc/start?next=%2Fdevelopers');
+  });
 });

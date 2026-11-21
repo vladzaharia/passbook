@@ -1,6 +1,10 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
+import { POLARIS_ID_COPY } from '../../../shared/copy/sign-in.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import type { Space } from '../../../shared/spaces.ts';
+
+/** Email-link sessions: the way in to Developers, beside the menu (the sheet carries it on a phone). */
+export const POLARIS_START = `/auth/oidc/start?next=${encodeURIComponent('/developers')}`;
 
 export interface SheetSpace {
   space: Space;
@@ -35,9 +39,15 @@ function link(href: string, text: string, current = false): HTMLAnchorElement {
  */
 export function fillMenuSheet(
   root: ParentNode,
-  opts: { spaces: readonly SheetSpace[]; sandbox?: string | null },
+  opts: { spaces: readonly SheetSpace[]; sandbox?: string | null; polarisId?: string | null },
 ): void {
-  for (const el of root.querySelectorAll<HTMLElement>('[data-menu-signin]')) el.hidden = true;
+  for (const el of root.querySelectorAll<HTMLAnchorElement>('[data-menu-signin]')) {
+    // An email session is signed in but not for Developers: the same slot offers Polaris ID.
+    if (opts.polarisId) {
+      el.href = opts.polarisId;
+      el.textContent = POLARIS_ID_COPY.signIn;
+    } else el.hidden = true;
+  }
   const spaces = root.querySelector<HTMLElement>('[data-menu-spaces]');
   const shown = opts.spaces.filter((s) => LABEL[s.space]);
   const sandbox = root.querySelector<HTMLElement>('[data-menu-sandbox]');

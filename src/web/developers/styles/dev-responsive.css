@@ -59,6 +59,10 @@
   }
 }
 @media (max-width: 720px) {
+  /* An email session's Polaris ID button leaves the bar for the menu sheet. */
+  [data-menubar] .dev-polaris {
+    display: none;
+  }
   .main {
     padding: 20px 16px 96px;
   }
