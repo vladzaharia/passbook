@@ -154,6 +154,16 @@ public final class WebSurface {
         return Set.copyOf(names);
     }
 
+    /** Forget this device's session with the old origin: cookies, local storage and cache. */
+    public void clearSiteData() {
+        invalidate();
+        android.webkit.CookieManager.getInstance().removeAllCookies(null);
+        android.webkit.CookieManager.getInstance().flush();
+        android.webkit.WebStorage.getInstance().deleteAllData();
+        view.clearCache(true);
+        view.clearHistory();
+    }
+
     public int version() { return version; }
     public boolean feature(String name) { return features.contains(name); }
 

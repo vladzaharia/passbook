@@ -176,12 +176,20 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         header.addView(title, new LinearLayout.LayoutParams(0, dp(56), 1));
         Button settings = new Button(this);
         settings.setText(R.string.settings); settings.setMinHeight(dp(48));
-        settings.setOnClickListener(view -> {
+        settings.setContentDescription("Settings. Press and hold to open.");
+        // Press and hold: a held-out device cannot repoint the verifier by accident or by a passer-by.
+        settings.setOnClickListener(view -> notice("Press and hold Settings to change them."));
+        settings.setOnLongClickListener(view -> {
             web.send(message("cancelled"));
             configuring = true; endOneShot(); nfc.stop(); gate.reset(); reportCapabilities();
             SettingsDialog.show(this, config, next -> {
-                unregisterBarcode(); config = next; registerBarcode(); web.load(next);
+                // A different origin starts clean: its cookies and storage are cleared and the bridge is re-bound to it.
+                boolean moved = !next.origin().equals(config.origin());
+                unregisterBarcode(); config = next; registerBarcode();
+                if (moved) web.clearSiteData();
+                web.load(next);
             }, () -> { configuring = false; resumeReader(); reportCapabilities(); });
+            return true;
         });
         header.addView(settings);
         root.addView(header);
