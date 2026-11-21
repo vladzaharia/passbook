@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
 import type { PreviewSource } from '../../../channel-previews/types.ts';
 import { useTemplateChannels } from '../channels/api.ts';
@@ -33,6 +34,15 @@ export function DesignerStage({
 }) {
   const { passJson, assets, assetBase } = card;
   const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
+  // The designer edits every channel's design, so what only the template turned off stays open;
+  // what the organization or platform withholds is disabled.
+  const effective = useMemo(() => {
+    const all = channels.data?.effective;
+    if (!all) return undefined;
+    return Object.fromEntries(
+      Object.entries(all).map(([c, s]) => [c, s.source === 'template' ? { ...s, on: true } : s]),
+    ) as EffectiveChannels;
+  }, [channels.data]);
   const source = useMemo<PreviewSource | null>(
     () =>
       passJson
@@ -50,7 +60,7 @@ export function DesignerStage({
   return (
     <ChannelPreviews
       source={source}
-      channels={channels.data?.effective}
+      channels={effective}
       apple={<DesignerPreview {...card} />}
       paper={
         <PaperPreview
