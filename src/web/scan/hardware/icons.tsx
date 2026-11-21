@@ -12,8 +12,6 @@ import {
   PlugZap,
   ScanBarcode,
   ScanLine,
-  ScanQrCode,
-  SmartphoneNfc,
   Sun,
   Usb,
   Vibrate,
@@ -22,7 +20,6 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import type { GuideStep } from './guide.ts';
 import type { HardwareKind, HardwareState } from './types.ts';
 
 const KIND: Record<HardwareKind, LucideIcon> = {
@@ -59,19 +56,4 @@ export function HardwareIcon({
   if (kind === 'network' && state === 'error') Icon = WifiOff;
   if (kind === 'sound' && state === 'off') Icon = VolumeX;
   return <Icon aria-hidden size={size} strokeWidth={2} />;
-}
-
-const STEP: Record<GuideStep, LucideIcon> = {
-  reader: ScanLine,
-  wallet: SmartphoneNfc,
-  nfc: Nfc,
-  camera: Camera,
-  front: Camera,
-  handheld: ScanBarcode,
-  none: ScanQrCode,
-};
-
-export function StepIcon({ step }: { step: GuideStep }) {
-  const Icon = STEP[step];
-  return <Icon aria-hidden size={20} strokeWidth={2} />;
 }
