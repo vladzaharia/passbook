@@ -8,6 +8,7 @@ import type {
   ScanningSession,
   ScanningSessionDetailSchema,
 } from '@/shared/contracts/scanning-sessions.ts';
+import { BELOW_XL, useMediaQuery } from '@/web/lib/media.ts';
 import { Badge, Button, CheckboxField, EmptyState, PageHeader, TwoPane } from '@/web/ui/index.ts';
 import { CreatedCallout, useCreated } from '../../passes/created.tsx';
 import { AddDeviceDialog } from './add-device-dialog.tsx';
@@ -66,6 +67,9 @@ export function SessionDetail({
     device: () => setDialog('add'),
     person: setAdding,
   });
+  // Stacked layouts show open checks first, so the fix is seen before the setup.
+  const stacked = useMediaQuery(BELOW_XL);
+  const onTop = stacked && live.checks.some((c) => c.level !== 'info');
   const device = s.devices.find((d) => d.id === selected);
   const crumbs = [{ label: 'Scanning', to: '/admin/scanning' }, { label: s.name }];
   const active = s.status === 'active';
@@ -115,11 +119,12 @@ export function SessionDetail({
         aside={
           <>
             {canManage ? <SessionTonight sessionId={s.id} /> : null}
-            <SessionChecks live={live} fixes={fixes} canManage={canManage} />
+            {onTop ? null : <SessionChecks live={live} fixes={fixes} canManage={canManage} />}
             <SessionSummary session={s} onEdit={canManage ? () => setDialog('rules') : undefined} />
           </>
         }
       >
+        {onTop ? <SessionChecks live={live} fixes={fixes} canManage={canManage} /> : null}
         <SessionSetup
           session={s}
           live={live}
