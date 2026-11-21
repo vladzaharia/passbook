@@ -522,7 +522,7 @@ describe('new pass wizard', () => {
     ).toBeChecked();
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('Mode', { selector: 'dt' }).parentElement).toHaveTextContent('Live');
-    expect(screen.getByText('a1b2c3d4e5f6a7b8')).toBeInTheDocument();
+    expect(screen.queryByText('a1b2c3d4e5f6a7b8')).toBeNull();
     expect(screen.getByText('Requested for sam@example.com')).toBeInTheDocument();
     expect(screen.queryByText(/this review does not lock it/i)).toBeNull();
     // Review: rows are a valid dl; an Edit link per row keeps the state.
@@ -676,7 +676,6 @@ describe('new pass wizard', () => {
         org="Example"
         mode="test"
         template="Membership"
-        templateVersion="version-1"
         schema={{ type: 'object', properties }}
         input={{ one: '1', two: '2', three: '3', four: '4', five: 'fifth value' }}
         email=""
@@ -690,5 +689,39 @@ describe('new pass wizard', () => {
     expect(screen.getByText('fifth value')).toBeInTheDocument();
     expect(screen.getByText('Test')).toBeInTheDocument();
     expect(screen.getByText('Not requested')).toBeInTheDocument();
+  });
+
+  it('reviews labels and dates in words, and no release hash', () => {
+    render(
+      <ReviewStep
+        org="Example"
+        mode="test"
+        template="Membership"
+        release={{ id: 'r1', generation: 2, provider: 'apple' }}
+        schema={{
+          type: 'object',
+          properties: {
+            plan: {
+              type: 'string',
+              title: 'Plan',
+              enum: ['member'],
+              'x-enumLabels': { member: 'Monthly' },
+            },
+            until: { type: 'string', title: 'Until', format: 'date-time' },
+          },
+        }}
+        input={{ plan: 'member', until: '2030-01-01T00:00:00Z' }}
+        email=""
+        send={false}
+        steps={{ template: 0, details: 1, holder: 2 }}
+        onEdit={() => {}}
+        warnings={[]}
+        error={null}
+      />,
+    );
+    expect(screen.getByText('Monthly')).toBeInTheDocument();
+    expect(screen.getByText(/Jan 1, 2030/)).toBeInTheDocument();
+    expect(screen.getByText('Generation 2')).toBeInTheDocument();
+    expect(screen.queryByText(/2030-01-01T/)).toBeNull();
   });
 });
