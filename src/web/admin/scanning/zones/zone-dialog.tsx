@@ -164,7 +164,7 @@ export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
             )}
           </FormField>
           {root ? (
-            <FormField label="Time zone" help="Hours at this site use this clock.">
+            <FormField label="Time zone">
               {(p) => (
                 <Select
                   {...p}

@@ -51,11 +51,7 @@ export function SessionsTab({
     return (
       <div>
         <SetupChecklist onNew={canManage ? onNew : undefined} />
-        <EmptyState
-          art="scanner"
-          title="No scanning sessions"
-          description="Create a session to share admission rules across devices."
-        />
+        <EmptyState art="scanner" title="No scanning sessions" />
       </div>
     );
   const online = items.reduce((n, s) => n + s.onlineCount, 0);

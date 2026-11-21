@@ -59,12 +59,7 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
           <h3 className="text-sm font-semibold text-fg-strong">Device details</h3>
         </div>
         <div className="grid min-w-0 gap-4">
-          <FormField
-            label="Name"
-            required
-            error={errors.name}
-            help="Shown on scans as where they happened."
-          >
+          <FormField label="Name" required error={errors.name}>
             {(p) => (
               <Input
                 {...p}

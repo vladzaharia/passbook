@@ -14,7 +14,7 @@ export function SessionActivity({
       <CardHeader title={`Recent session activity, ${zoneName(timeZone ?? null)}`} />
       <CardBody>
         {!items.length ? (
-          <p className="text-sm text-fg-muted">Check-ins from every device will appear here.</p>
+          <p className="text-sm text-fg-muted">No check-ins yet.</p>
         ) : (
           <ul className="divide-y divide-border">
             {items.map((row) => (

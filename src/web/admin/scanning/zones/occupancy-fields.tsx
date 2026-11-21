@@ -36,7 +36,7 @@ export function OccupancyFields({
       </div>
       <SwitchRow
         label="Track who’s inside"
-        help="Counts people in and out. Monitors show In now."
+        help="Monitors show In now."
         checked={draft.track}
         onCheckedChange={(track) => set(withTrack(draft, track))}
       />
