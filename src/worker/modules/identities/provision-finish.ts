@@ -83,7 +83,8 @@ export async function postCheck(ctx: ServiceContext, runId: string): Promise<voi
   );
 }
 
-const CAP = 3;
+/** The provisioner's own cap per pass type (workers/apple-provisioner/src/ledger.ts); this one stops the run before an order is refused. */
+const CAP = 2;
 const CAP_WINDOW_MS = 30 * 86_400_000;
 
 /** Apple orders: fail closed, with an alert, when an identity already got `CAP` certificates in 30 days. */
