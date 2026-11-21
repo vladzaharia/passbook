@@ -1,7 +1,7 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
-import { PATHS, twin } from '../../../shared/developers.ts';
+import { opUrl, PATHS, twin } from '../../../shared/developers.ts';
 import { operations } from './dates.ts';
 import { pagePath } from './markdown.ts';
 import type { ErrorEntry, Site } from './types.ts';
@@ -60,7 +60,7 @@ export function errorMarkdown(e: ErrorEntry): string {
   if (e.usedBy.length > 0) {
     out.push('## Returned by', '');
     for (const u of e.usedBy)
-      out.push(`- [${u.title}](${PATHS.reference}/${u.slug}.md#${u.anchor})`);
+      out.push(`- [${u.title}](${twin(opUrl(u.slug, u.anchor))})`);
   }
   return end(out);
 }

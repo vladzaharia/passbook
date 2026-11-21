@@ -9,11 +9,6 @@ export interface BuiltFile {
 
 /** Most HTML a page may weigh (UTF-8 bytes). */
 export const PAGE_BUDGET = 300 * 1024;
-/** Pages over the budget on purpose: passes (43 operations) and templates (releases, reviews and samples) shrink only by splitting per operation. */
-export const PAGE_BUDGET_OVERRIDES: Record<string, number> = {
-  '/developers/reference/passes': 600 * 1024,
-  '/developers/reference/templates': 360 * 1024,
-};
 
 export function outputFailures(files: BuiltFile[], cliPublished = false): string[] {
   const out: string[] = [];
@@ -23,11 +18,10 @@ export function outputFailures(files: BuiltFile[], cliPublished = false): string
       out.push(`${f.file}: names @passbook/cli while sdk-status.json has cli: false`);
     if (!f.url || !f.file.endsWith('.html')) continue;
     if (!have.has(twin(f.url))) out.push(`${f.url}: no markdown twin (${twin(f.url)})`);
-    const budget = PAGE_BUDGET_OVERRIDES[f.url] ?? PAGE_BUDGET;
     const size = Buffer.byteLength(f.body);
-    if (size > budget)
+    if (size > PAGE_BUDGET)
       out.push(
-        `${f.url}: ${Math.round(size / 1024)} kB of HTML, over the ${budget / 1024} kB budget`,
+        `${f.url}: ${Math.round(size / 1024)} kB of HTML, over the ${PAGE_BUDGET / 1024} kB budget`,
       );
   }
   const llms = files.find((f) => f.file.endsWith('/llms.txt'))?.body ?? '';

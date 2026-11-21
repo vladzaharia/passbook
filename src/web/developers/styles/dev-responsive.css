@@ -1,6 +1,19 @@
 /* Responsive steps; loads last. */
 /* ---------- Responsive ---------- */
 @media (max-width: 1180px) {
+  .trybar {
+    display: flex;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 15;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in oklab, var(--pk-surface-page) 90%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--pk-border-subtle);
+  }
+  .trybar .btn {
+    flex: none;
+  }
   .dev-nav {
     display: none;
   }
@@ -124,19 +137,6 @@
   }
   .op {
     padding-block: 28px 8px;
-  }
-  .trybar {
-    display: flex;
-    position: fixed;
-    inset: auto 0 0 0;
-    z-index: 15;
-    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in oklab, var(--pk-surface-page) 90%, transparent);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--pk-border-subtle);
-  }
-  .trybar .btn {
-    flex: 1;
   }
 }
 @media (prefers-reduced-motion: reduce) {

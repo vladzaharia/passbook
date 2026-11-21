@@ -1,5 +1,5 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { PATHS } from '../../../shared/developers.ts';
+import { opUrl, PATHS } from '../../../shared/developers.ts';
 import { operations } from '../model/dates.ts';
 import { pagePath } from '../model/markdown.ts';
 import type { ErrorEntry, Site } from '../model/types.ts';
@@ -117,7 +117,7 @@ export function ErrorEntryView({ entry }: { entry: ErrorEntry }) {
               <a
                 key={`${u.slug}${u.anchor}`}
                 className="lrow"
-                href={`${PATHS.reference}/${u.slug}#${u.anchor}`}
+                href={opUrl(u.slug, u.anchor)}
               >
                 {u.title}
               </a>

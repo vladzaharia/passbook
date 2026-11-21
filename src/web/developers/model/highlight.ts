@@ -5,11 +5,12 @@ import { escapeHtml } from '../../../shared/html.ts';
  * classes in every page, island and .md twin. keys .k, strings .s, literals .l, numbers .n,
  * keywords .kw, calls .fn, comments .c. The JsonViewer's mapping, extended for code.
  */
-export type Lang = 'json' | 'curl' | 'ts' | 'py' | 'go';
+export type Lang = 'json' | 'curl' | 'cli' | 'ts' | 'py' | 'go';
 
 const KEYWORDS: Record<Lang, string[]> = {
   json: [],
   curl: [],
+  cli: [],
   ts: ['const', 'await', 'import', 'from', 'new', 'async', 'function', 'return', 'let'],
   py: ['import', 'from', 'as', 'def', 'return', 'with'],
   go: ['package', 'import', 'func', 'defer', 'if', 'return', 'nil', 'var'],
@@ -17,11 +18,12 @@ const KEYWORDS: Record<Lang, string[]> = {
 const LITERALS: Record<Lang, string[]> = {
   json: ['true', 'false', 'null'],
   curl: [],
+  cli: [],
   ts: ['true', 'false', 'null', 'undefined'],
   py: ['True', 'False', 'None'],
   go: ['true', 'false'],
 };
-const COMMENT: Record<Lang, string | null> = { json: null, curl: '#', ts: '//', py: '#', go: '//' };
+const COMMENT: Record<Lang, string | null> = { json: null, curl: '#', cli: '#', ts: '//', py: '#', go: '//' };
 
 /** A run of text and its token class; no class is plain text. */
 export interface Tok {
@@ -76,7 +78,7 @@ function line(text: string, lang: Lang, state: State): Tok[] {
     if (ch === '"' || ch === "'") {
       const m = new RegExp(`^${ch}(?:\\\\.|[^${ch}\\\\])*${ch}?`).exec(rest);
       const str = m ? m[0] : ch;
-      if (lang === 'curl' && (str.length < 2 || !str.endsWith(ch))) state.quote = ch;
+      if ((lang === 'curl' || lang === 'cli') && (str.length < 2 || !str.endsWith(ch))) state.quote = ch;
       const colon = /^\s*:/.test(text.slice(i + str.length));
       out.push(span(lang === 'json' && colon ? 'k' : colon && lang === 'ts' ? 'k' : 's', str));
       i += str.length;
@@ -119,7 +121,7 @@ export function highlightTokens(code: string, lang: Lang): Tok[][] {
   const state: State = { quote: null };
   return code
     .split('\n')
-    .map((text) => (lang === 'curl' ? curlLine(text, state) : line(text, lang, state)));
+    .map((text) => (lang === 'curl' || lang === 'cli' ? curlLine(text, state) : line(text, lang, state)));
 }
 
 /** Highlighted lines, each `<span class="ln">`; `mark` lines (1-based) get the highlight bar. */

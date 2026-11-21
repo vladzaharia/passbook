@@ -62,15 +62,20 @@ beforeAll(async () => {
 afterAll(() => rmSync(work, { recursive: true, force: true }));
 
 describe('build-developers', () => {
-  it('writes one page and one markdown twin per resource', () => {
+  it('writes a page and a twin per resource, and one of each per operation', () => {
     for (const page of site.pages) {
       const url = `/developers/reference/${page.slug}`;
       expect(manifest[url], url).toBeDefined();
       expect(manifest[`${url}.md`], url).toBeDefined();
-      expect(existsSync(join(out, `${url}.html`)), url).toBe(true);
       const html = read(`${url}.html`);
-      expect(html.match(/<section class="op"/g)?.length, page.key).toBe(page.ops.length);
+      expect(html.match(/<a class="lrow oprow"/g)?.length, page.key).toBe(page.ops.length);
       expect(read(`${url}.md`)).toContain(`# ${page.label}`);
+      for (const op of page.ops) {
+        const opUrl = `${url}/${op.anchor.toLowerCase()}`;
+        expect(manifest[opUrl], opUrl).toBeDefined();
+        expect(manifest[`${opUrl}.md`], opUrl).toBeDefined();
+        expect(read(`${opUrl}.html`).match(/<section class="op"/g)?.length, opUrl).toBe(1);
+      }
     }
   });
 
@@ -84,13 +89,20 @@ describe('build-developers', () => {
       expect(manifest[m[1] ?? ''], m[1]).toBeDefined();
   });
 
-  it('resolves every anchor: a method id and an operation id alias per operation, every #link', () => {
+  it('keeps every old anchor: a row per operation on its resource page, the ids on its own page', () => {
+    const seen = new Set<string>();
     for (const page of site.pages) {
       const html = read(`/developers/reference/${page.slug}.html`);
       const have = ids(html);
       for (const op of page.ops) {
+        const own = `/developers/reference/${page.slug}/${op.anchor.toLowerCase()}`;
+        expect(seen.has(own), `${own} is not unique`).toBe(false);
+        seen.add(own);
         expect(have.has(op.anchor), `${page.slug}#${op.anchor}`).toBe(true);
-        expect(have.has(op.operationId), op.operationId).toBe(true);
+        expect(html).toContain(`data-alias="${op.operationId}" href="${own}"`);
+        const page2 = ids(read(`${own}.html`));
+        expect(page2.has(op.anchor), own).toBe(true);
+        expect(page2.has(op.operationId), op.operationId).toBe(true);
       }
       for (const href of hrefs(html).filter((h) => h.startsWith('#')))
         expect(have.has(href.slice(1)), `${page.slug} ${href}`).toBe(true);
@@ -127,8 +139,9 @@ describe('build-developers', () => {
   });
 
   it('renders the errors table from x-codes, with fixes from the catalog, and an entry per code', () => {
-    const html = read('/developers/reference/passes.html');
+    const html = read('/developers/reference/passes/create.html');
     expect(html).toContain('<table class="errs">');
+    expect(html).toContain('All ');
     expect(html).toContain('This serial exists. Use another or omit it.');
     expect(html).toContain('href="/developers/errors/PASS_CONFLICT"');
     expect(read('/developers/errors/PASS_CONFLICT.html')).toContain('Returned by');

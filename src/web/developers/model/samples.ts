@@ -21,6 +21,8 @@ export interface Sample {
   label: string;
   file: string;
   code: string;
+  /** The tool is not published yet: the tab says so. */
+  soon?: boolean;
 }
 
 const KEY = 'PASSBOOK_KEY';
@@ -277,14 +279,22 @@ export function samplesFor(op: SampleOp, base: string, sdk: SampleSdks = SDK_STA
       label: 'TypeScript',
       file: 'request.ts',
       code: sdk.typescript ? tsSample(op) : tsPlain(op, base),
+      ...(sdk.typescript ? {} : { soon: true }),
     },
     {
       lang: 'py',
       label: 'Python',
       file: 'request.py',
       code: sdk.python ? py(op) : pyPlain(op, base),
+      ...(sdk.python ? {} : { soon: true }),
     },
-    { lang: 'go', label: 'Go', file: 'main.go', code: sdk.go ? go(op) : goPlain(op, base) },
+    {
+      lang: 'go',
+      label: 'Go',
+      file: 'main.go',
+      code: sdk.go ? go(op) : goPlain(op, base),
+      ...(sdk.go ? {} : { soon: true }),
+    },
   ];
 }
 

@@ -25,6 +25,17 @@ function meterInto(host: HTMLElement | null): () => void {
   };
 }
 
+/** The Try it heading's chip names the sandbox the call runs against. */
+function sandboxInto(el: HTMLElement, props: RunAppProps): () => void {
+  const chip = el.closest('.rail-pane')?.querySelector<HTMLElement>('[data-sandbox]');
+  if (!chip || props.session.kind !== 'ready') return () => undefined;
+  const before = chip.textContent;
+  chip.textContent = `test · ${props.session.sandbox.orgSlug}`;
+  return () => {
+    chip.textContent = before;
+  };
+}
+
 /** Draws the console into `el`. Returns the function that takes it down. */
 export function mountRun(el: HTMLElement, props: RunAppProps): () => void {
   const root = createRoot(el);
@@ -34,6 +45,7 @@ export function mountRun(el: HTMLElement, props: RunAppProps): () => void {
       ? (el.closest('.rail-pane')?.querySelector<HTMLElement>('[data-budget]') ?? null)
       : null,
   );
+  const stopChip = sandboxInto(el, props);
   root.render(
     <Ready el={el}>
       <RunApp {...props} />
@@ -41,6 +53,7 @@ export function mountRun(el: HTMLElement, props: RunAppProps): () => void {
   );
   return () => {
     stopMeter();
+    stopChip();
     root.unmount();
   };
 }

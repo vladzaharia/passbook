@@ -128,6 +128,7 @@ describe('islands', () => {
       'account',
       'api-rail',
       'logs',
+      'moved',
       'org-chip',
       'playground',
       'quickstart',

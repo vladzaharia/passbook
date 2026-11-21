@@ -83,4 +83,24 @@
 }
 .trybar {
   display: none;
+  align-items: center;
+  gap: 12px;
+}
+.trybar-op {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oprow-t {
+  font-weight: 500;
+  color: var(--pk-text-strong);
+}
+.op-next .push {
+  margin-left: auto;
 }

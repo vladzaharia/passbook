@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { PATHS } from '../../../../shared/developers.ts';
+import { opUrl, PATHS } from '../../../../shared/developers.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { loadFile, loadIndex } from '../data.ts';
 import { type Prefill, parseHash } from '../prefill.ts';
@@ -142,7 +142,7 @@ function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string }) {
           <>
             <div className="console-op">
               <h2 className="h1">{item.title}</h2>
-              <a className="sm" href={`/developers/reference/${item.slug}#${item.anchor}`}>
+              <a className="sm" href={opUrl(item.slug, item.anchor)}>
                 Read the reference
               </a>
             </div>

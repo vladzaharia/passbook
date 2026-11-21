@@ -10,6 +10,7 @@ export interface Island {
 export const ISLANDS: Record<string, () => Promise<Island>> = {
   'webhook-tester': () => import('../webhooks/index.tsx'),
   snippets: () => import('./personal.ts'),
+  moved: async () => (await import('./moved.ts')).movedIsland,
   playground: () => import('../playground/index.tsx'),
   quickstart: () => import('../quickstart/index.tsx'),
   run: () => import('../console/run-entry.ts'),
