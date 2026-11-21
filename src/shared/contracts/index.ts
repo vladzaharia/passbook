@@ -34,6 +34,7 @@ export * from './settings.ts';
 export * from './status.ts';
 export * from './template-forks.ts';
 export * from './template-releases.ts';
+export * from './template-rollout.ts';
 export * from './template-versions.ts';
 export * from './templates.ts';
 export * from './users.ts';

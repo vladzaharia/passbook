@@ -19,6 +19,7 @@ import {
   TemplateReleaseImpactSchema,
   TemplateReleaseSchema,
 } from '../../../shared/contracts/template-releases.ts';
+import { TemplateRolloutSchema } from '../../../shared/contracts/template-rollout.ts';
 import { TemplateListSchema } from '../../../shared/contracts/templates.ts';
 import { createApp } from '../../app.ts';
 import * as templateSyncModule from '../../jobs/template-sync.ts';
@@ -757,5 +758,97 @@ describe('moving a template', () => {
     ).toEqual({
       org_id: org.id,
     });
+  });
+});
+
+describe('rollout and impact', () => {
+  async function released(name: string) {
+    const { t, c, a } = await reviewed(name);
+    expect((await post(`/${t.templateId}/releases`, publishBody(c, a.id), publisher)).status).toBe(
+      201,
+    );
+    return t;
+  }
+  const secondVersion = (name: string, orgId = org.id) =>
+    importZip(env, clock, {
+      orgId,
+      createdBy: author.userId,
+      name,
+      zip: zipOf(
+        basicPackage(
+          { 'wallet.template.json': JSON.stringify({ ...manifest(name), description: 'Two' }) },
+          { ...passJson(), backgroundColor: 'rgb(4, 5, 6)' },
+        ),
+      ),
+    });
+  const rollout = async (id: string, actor: Actor, query: Record<string, string> = {}) => {
+    const q = new URLSearchParams({ orgId: org.id, mode: 'live', ...query });
+    return request(`/${id}/rollout?${q}`, actor);
+  };
+
+  it('reports progress, leftovers after the rebuild, and nothing from other orgs', async () => {
+    const t = await released('Rollout Card');
+    const registry = createTemplateRegistry(env);
+    const onRelease = await registry.resolve(t.templateId, t.version);
+    await makePass(f, { orgId: org.id, template: onRelease });
+    const second = await secondVersion('Rollout Card');
+    const old = await registry.resolve(t.templateId, second.result?.version ?? '');
+    const behind = await makePass(f, { orgId: org.id, template: old });
+    await makePass(f, { orgId: otherOrg.id, template: old });
+    const read = async () =>
+      TemplateRolloutSchema.parse(await (await rollout(t.templateId, publisher)).json());
+    const before = await read();
+    expect(before).toMatchObject({
+      releaseVersion: t.version,
+      total: 2,
+      remaining: 1,
+      running: false,
+    });
+    expect(before).toMatchObject({ onRelease: 1, failed: [], failedCount: 0, runId: null });
+
+    const started = clock.now();
+    await run(
+      env.DB,
+      `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
+       VALUES ('run-open', 'bulk_reissue', ?, ?, 'running', ?)`,
+      [org.id, t.templateId, started + 1],
+    );
+    expect(await read()).toMatchObject({ running: true, failed: [], remaining: 1 });
+    await run(
+      env.DB,
+      "UPDATE workflow_runs SET status = 'complete' WHERE instance_id = 'run-open'",
+    );
+    const after = await read();
+    expect(after).toMatchObject({ running: false, runId: 'run-open', failedCount: 1 });
+    expect(after.failed.map((p) => p.passId)).toEqual([behind.id]);
+
+    await run(env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [behind.id]);
+    expect(await read()).toMatchObject({ total: 1, remaining: 0, failed: [] });
+  });
+
+  it('refuses another org and another mode', async () => {
+    const t = await released('Rollout Scope');
+    const foreign = await member(otherOrg.id, ['template_publisher']);
+    await expectProblem(await rollout(t.templateId, foreign), 404, 'TEMPLATE_NOT_FOUND');
+    await expectProblem(
+      await rollout(t.templateId, publisher, { mode: 'test' }),
+      403,
+      'TEMPLATE_MODE_MISMATCH',
+    );
+  });
+
+  it('counts only the active passes the cron would move', async () => {
+    const t = await released('Impact Moves');
+    const second = await secondVersion('Impact Moves');
+    const registry = createTemplateRegistry(env);
+    const old = await registry.resolve(t.templateId, t.version);
+    const voided = await makePass(f, { orgId: org.id, template: old });
+    await makePass(f, { orgId: org.id, template: old });
+    await run(env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided.id]);
+    const query = new URLSearchParams({ ...scope(), version: second.result?.version ?? '' });
+    const impact = TemplateReleaseImpactSchema.parse(
+      await (await request(`/${t.templateId}/releases/impact?${query}`, publisher)).json(),
+    );
+    expect(impact.passes).toEqual({ count: 1, capped: false });
   });
 });
