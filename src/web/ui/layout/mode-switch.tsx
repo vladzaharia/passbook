@@ -10,6 +10,8 @@ export function ModeSwitch() {
       label="Mode"
       value={mode}
       onValueChange={setMode}
+      // On a phone the bar is full: no icon, tighter segments.
+      className="max-[28rem]:[&_svg]:hidden max-[28rem]:[&>[role=radio]]:px-2!"
       options={[
         { value: 'live', label: 'Live' },
         { value: 'test', label: 'Test', icon: FlaskConical },
