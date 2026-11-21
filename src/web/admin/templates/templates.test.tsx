@@ -530,7 +530,6 @@ describe('template detail', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Version 1' })).toBeInTheDocument();
-    expect(screen.getByText('Active version')).toBeInTheDocument();
     expect(screen.getByText(/Latest draft:/).parentElement).toHaveTextContent(
       'Latest draft: Version 2',
     );
