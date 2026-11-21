@@ -18,3 +18,10 @@ describe('formatEndedOn locale', () => {
     expect(formatEndedOn('voided', { modifiedAt: at })).toBe('Nov 19, 2026');
   });
 });
+
+describe('date-only expiry', () => {
+  it('shows the written day in any zone', () => {
+    const pass = { modifiedAt: at, expirationDate: '2026-12-01' };
+    expect(formatEndedOn('expired', pass, 'America/Los_Angeles')).toBe('Dec 1, 2026');
+  });
+});

@@ -58,6 +58,7 @@ export const HOLDER_COPY = {
   presentUnavailableLine: (org: string) => `Ask ${org || 'the organization'} for help.`,
   backToPass: 'Back to pass',
   saveOffline: 'Save for offline',
+  saveToPhone: 'Save to this phone',
   savedOffline: 'Saved on this device',
   removeSaved: 'Remove from this device',
   connectToRefresh: 'Connect to refresh this pass.',

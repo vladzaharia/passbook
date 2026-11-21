@@ -2,11 +2,11 @@ import type { WalletProvider, WalletProviderIssuance } from './contracts/wallet-
 import { type DeviceInfo, isAndroid, type PassDevice } from './device.ts';
 
 /** Every way to get a pass into a wallet or onto a screen. */
-export type WalletChoiceId = 'apple' | 'browser' | WalletProvider;
+export type WalletChoiceId = 'apple' | 'browser' | 'phone' | WalletProvider;
 
 export interface WalletChoice {
   id: WalletChoiceId;
-  /** Set for browser and native providers; Apple's links are built by the page. */
+  /** Set for browser, phone and native providers; Apple's links are built by the page. */
   href: string | null;
   /** The first choice, which fits this device best. */
   recommended: boolean;
@@ -16,7 +16,7 @@ export interface WalletChoiceInput {
   device: DeviceInfo;
   /** The pass can be added to Apple Wallet. */
   apple: boolean;
-  /** The pass's browser barcode page, when it may be shown. */
+  /** The pass's door view, when it may be shown: the browser barcode, or "this phone" on Android. */
   browserHref?: string | undefined;
   /** Native offers the server lists for this pass. */
   offers?: readonly { provider: WalletProvider; href: string }[];
@@ -49,20 +49,20 @@ export const NATIVE_WALLET_BADGES: Record<
 /**
  * What leads per device: the wallet that adds here; on a computer or an iPad (`other`, or `mac`
  * on the server, which cannot tell them apart) Apple's QR, since a barcode on that screen never
- * reaches the door; else the browser barcode.
+ * reaches the door; on Android the native wallet, else the saved door view (`phone`).
  */
 const LEAD: Record<PassDevice, readonly WalletChoiceId[]> = {
   iphone: ['apple'],
   mac: ['apple'],
-  galaxy: ['samsung', 'google', 'browser'],
-  android: ['google', 'browser'],
+  galaxy: ['samsung', 'google', 'phone'],
+  android: ['google', 'phone'],
   other: ['apple', 'browser'],
 };
 
 /**
  * Which ways a holder has, best first. Device detection only orders: Apple leads on an iPhone, a
  * Mac or a computer (its QR), Samsung then Google on a Galaxy, Google on other Android, the
- * browser barcode next, the rest after. A provider's offer is dropped only when its issuance is disabled, so a Galaxy
+ * saved door view (`phone`, the browser barcode elsewhere) next, the rest after. A provider's offer is dropped only when its issuance is disabled, so a Galaxy
  * holder never sees Samsung while it is dark.
  */
 export function walletChoices(input: WalletChoiceInput): WalletChoice[] {
@@ -71,7 +71,14 @@ export function walletChoices(input: WalletChoiceInput): WalletChoice[] {
   );
   const all: Omit<WalletChoice, 'recommended'>[] = [
     ...(input.apple ? [{ id: 'apple' as const, href: null }] : []),
-    ...(input.browserHref ? [{ id: 'browser' as const, href: input.browserHref }] : []),
+    ...(input.browserHref
+      ? [
+          {
+            id: isAndroid(input.device.device) ? ('phone' as const) : ('browser' as const),
+            href: input.browserHref,
+          },
+        ]
+      : []),
     ...native.map((offer) => ({ id: offer.provider, href: offer.href })),
   ];
   // Apple cannot add on Android: it stays reachable as the last, text-only way.
