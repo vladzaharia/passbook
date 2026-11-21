@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -44,23 +44,16 @@ function serve(items: unknown[]) {
 }
 
 describe('wallet rows', () => {
-  it('shows Apple released and Google and Samsung off with the reason', async () => {
+  it('hides the wallets card while Google and Samsung are off', async () => {
     serve([
       enrolment('google', 'off', { state: 'disabled', reason: 'not_released' }),
       enrolment('samsung', 'absent', { state: 'enabled' }),
     ]);
     const { container } = mountPanel();
-    const list = await screen.findByRole('list', { name: 'Wallets' });
-    const rows = within(list).getAllByRole('listitem');
-    expect(rows).toHaveLength(3);
-    await waitFor(() => expect(rows[0]).toHaveTextContent('Released'));
-    expect(rows[0]).toHaveTextContent('Apple Wallet');
-    expect(rows[0]).toHaveTextContent('Version 1 · Ready');
-    expect(rows[1]).toHaveTextContent('Off');
-    await waitFor(() => expect(rows[1]).toHaveTextContent('Not open to holders yet.'));
-    expect(rows[2]).toHaveTextContent('Samsung Wallet is off for this organization.');
-    expect(screen.getByRole('button', { name: 'Review Google Wallet' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Review Samsung Wallet' })).toBeDisabled();
+    await screen.findByRole('heading', { name: 'Releases' });
+    await waitFor(() => expect(screen.queryByText('Checking.')).toBeNull());
+    expect(screen.queryByRole('list', { name: 'Wallets' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Review (Google|Samsung)/ })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 

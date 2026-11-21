@@ -50,7 +50,8 @@ describe('Scan passes', () => {
         '/api/v1/scan-staff': () => json({ items: [], nextCursor: null }),
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Scan passes' }));
+    await user.click(await screen.findByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Scan passes' }));
     expect(await screen.findByRole('textbox', { name: /Door name/ })).toHaveValue('Doors');
     // Nothing was made: the setup asks first, and its route is the only way on.
     await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -71,7 +72,8 @@ describe('Scan passes', () => {
       },
     });
     await screen.findByRole('heading', { name: 'Copper card' });
-    expect(screen.getByRole('button', { name: 'Scan passes' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: 'Scan passes' })).toBeInTheDocument();
   });
 
   it('is hidden until the template has an active version', async () => {
@@ -84,7 +86,7 @@ describe('Scan passes', () => {
       },
     });
     await screen.findByRole('heading', { name: 'Copper card' });
-    expect(screen.queryByRole('button', { name: 'Scan passes' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Scan passes' })).toBeNull();
   });
 
   it('is hidden without the scanning capability', async () => {
@@ -103,6 +105,6 @@ describe('Scan passes', () => {
     });
     await screen.findByRole('heading', { name: 'Copper card' });
     expect(screen.getByRole('link', { name: 'New pass' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Scan passes' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Scan passes' })).toBeNull();
   });
 });
