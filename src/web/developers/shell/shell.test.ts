@@ -120,7 +120,8 @@ describe('personal snippets', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
-        if (url.endsWith('/session')) return json({ authenticated: true, csrfToken: 'c' });
+        if (url.endsWith('/session'))
+          return json({ authenticated: true, csrfToken: 'c', roles: ['developer'] });
         if (response instanceof Error) throw response;
         return response.clone();
       }),
