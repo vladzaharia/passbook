@@ -78,26 +78,25 @@ export function InboxPage({
   const list = useCapturedEmails(orgId);
   const rows = canRead && mode === 'test' ? (list.data?.pages.flatMap((p) => p.items) ?? []) : [];
   const now = useNow();
+  const platformAdmin = session.isAdmin && !session.isError && !session.isFetching;
 
   return (
     <>
       <PageHeader
         title="Test inbox"
         description={
-          <>
-            Test emails land here, not in recipients' inboxes.
-            {canOperate ? ' You can send a copy to your verified account email.' : ''}
-            {session.isAdmin && !session.isError && !session.isFetching ? (
-              <PlatformRetention />
-            ) : null}
-          </>
+          platformAdmin || canOperate ? (
+            <>
+              {canOperate ? 'You can send a copy to your verified account email.' : ''}
+              {platformAdmin ? <PlatformRetention /> : null}
+            </>
+          ) : undefined
         }
       />
       {mode !== 'test' ? (
         <EmptyState
           art="envelope"
           title="Test mode is off"
-          description="Turn it on to see mail from test passes."
           action={
             <Button
               variant="outline"
@@ -109,11 +108,7 @@ export function InboxPage({
           }
         />
       ) : !orgId ? (
-        <EmptyState
-          art="envelope"
-          title="Choose an organization"
-          description="Select an organization to view its test emails."
-        />
+        <EmptyState art="envelope" title="Choose an organization" />
       ) : !canRead ? (
         <SkeletonRows label="Loading test inbox" />
       ) : list.isError ? (

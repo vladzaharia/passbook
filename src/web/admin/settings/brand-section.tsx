@@ -177,7 +177,6 @@ function KitForm({ kit, refetch }: { kit: BrandKit; refetch: () => unknown }) {
         fallback="#0f766e"
         empty="Default"
         error={invalid ? 'Use a hex colour like #0f766e.' : undefined}
-        help="Buttons and links on holder pages."
         onChange={setAccent}
       />
       {warnings.length ? <Callout tone="warning" items={warnings} /> : null}

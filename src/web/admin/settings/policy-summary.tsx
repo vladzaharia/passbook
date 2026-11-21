@@ -73,9 +73,6 @@ export function PolicySummary({
             </div>
           ))}
         </dl>
-        <p className="text-sm text-fg-muted">
-          {RETENTION_COPY.holdNote} Place a platform hold from an organization page.
-        </p>
         {advancedDirty > 0 ? (
           <p className="text-sm text-fg-muted">
             {advancedDirty} unsaved {advancedDirty === 1 ? 'change' : 'changes'} in Advanced.
