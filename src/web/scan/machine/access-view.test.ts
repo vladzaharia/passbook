@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
 import { accessBeat, type ResolvedOutcome } from './access-events.ts';
-import { accessInfo, exit, full, grant, heldIn, heldOut } from './access-fixtures.test-support.ts';
+import {
+  accessInfo,
+  exit,
+  full,
+  grant,
+  heldIn,
+  heldOut,
+  occupancyInfo,
+  SINCE,
+} from './access-fixtures.test-support.ts';
 import {
   accessBeatOf,
   accessLines,
@@ -73,6 +82,37 @@ describe('access lines', () => {
       sub: '40 s ago · Front desk',
     });
     expect(accessLines(full(), NOW)).toEqual({ title: 'Gym full', sub: '60 of 60 in.' });
+  });
+});
+
+describe('an event place', () => {
+  const gala = { kind: 'event' as const, id: 'e1', name: 'Gala' };
+  const at = (over: Parameters<typeof occupancyInfo>[0]) => occupancyInfo({ place: gala, ...over });
+  it('a check-in and a check-out keep the event words and the pill names the direction', () => {
+    const entered = fixtureOutcome('ok', null, { occupancy: at({}) });
+    const left = fixtureOutcome('ok', null, { occupancy: at({ direction: 'out', state: 'out' }) });
+    expect([accessLines(entered, NOW), accessLines(left, NOW)]).toEqual([null, null]);
+    expect([directionPill(entered), directionPill(left)]).toEqual(['in', 'out']);
+  });
+  it('holds read Already checked in and Not checked in', () => {
+    const inside = fixtureOutcome('heads_up', 'still_inside', {
+      occupancy: at({ since: SINCE }),
+    });
+    const absent = fixtureOutcome('heads_up', 'not_inside', {
+      occupancy: at({ state: 'out', since: null }),
+    });
+    expect(accessLines(inside, NOW)?.title).toBe('Already checked in');
+    expect(accessLines(absent, NOW)).toEqual({
+      title: 'Not checked in',
+      sub: 'Check them in instead?',
+    });
+  });
+  it('a full event keeps the event name with the exact count', () => {
+    const o = fixtureOutcome('heads_up', 'capacity_full', {
+      occupancy: at({ inNow: 5, capacity: 5, state: 'out', since: null }),
+    });
+    expect(accessLines(o, NOW)).toBeNull();
+    expect(accessValues(o, NOW)).toMatchObject({ in: 5, capacity: 5, zone: 'Gala' });
   });
 });
 

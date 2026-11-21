@@ -10,7 +10,6 @@ export const DEV_COPY = {
     { key: 'webhooks', label: 'Webhooks' },
     { key: 'logs', label: 'Logs' },
   ],
-  test: 'Test',
   signIn: 'Sign in',
   skip: 'Skip to content',
   menu: 'Menu',

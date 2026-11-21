@@ -2123,6 +2123,12 @@
     "fix": "Choose a tag type for this tag's system.",
     "retryable": false
   },
+  "TAG_ID_INVALID": {
+    "title": "Tag ID not valid",
+    "when": "The typed tag ID is not 4, 7 or 10 bytes in the chosen format.",
+    "fix": "Check the ID against the reader or the supplier's list.",
+    "retryable": false
+  },
   "TAG_UID_RANDOM": {
     "title": "Tag randomizes its ID",
     "when": "The tag changes its ID on each read, so it cannot be registered.",

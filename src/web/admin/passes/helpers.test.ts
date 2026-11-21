@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { changedKeys } from './detail/fields-tab.tsx';
 import { fitScale, requiredSize, usedSlots } from './detail/image-slots.ts';
 import { fingerprint } from './format.ts';
-import { actionsFor } from './pass-actions.tsx';
+import { actionsFor } from './pass-action-defs.ts';
 import { assetMap, viewTarget } from './pass-preview.tsx';
 import { assetName, checkPng, MAX_ASSET_BYTES } from './png.ts';
 import { cleanValues, pickDeclared, sameValues } from './schema-form/index.ts';

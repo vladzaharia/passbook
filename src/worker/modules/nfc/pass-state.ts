@@ -50,3 +50,20 @@ export async function assertBindable(
   if (validity.status === 'expired') throw refused('expired');
   assertTakesTag(ctx, candidate, assurance);
 }
+
+/** The state refusals of `assertBindable` for a pass that may have no scan release or wallet view: nothing to read, nothing to refuse. */
+export async function assertBindableIfScannable(
+  ctx: ServiceContext,
+  orgId: string,
+  passId: string,
+): Promise<void> {
+  const candidate = await candidateById(ctx.env.DB, orgId, passId);
+  if (!candidate) return;
+  if (candidate.pass.removedAt !== null) throw refused('removed');
+  if (candidate.pass.status === 'voided') throw refused('voided');
+  const wallet = candidateWallet(candidate);
+  if (!wallet) return;
+  const validity = validityOf(wallet, ctx.clock.now());
+  if (validity.status === 'voided') throw refused('voided');
+  if (validity.status === 'expired') throw refused('expired');
+}

@@ -784,6 +784,21 @@ Console routes need a session and `scanning:manage`. They act on the console mod
 - `GET /scan-staff?orgId=&q=&limit=&cursor=` returns `items`, and `hasMore` with `nextCursor` when there are more. Pass `nextCursor` as `cursor` for the next page.
 - `GET /scan/staff?q=` (paired scanner) finds staff by name. The scanner session sets `staffTruncated: true` when its `staffList` was cut at 500.
 
+## Scanning setup in one call
+
+`POST /scanning-sessions/setup` (coming) makes the zones, events, staff, sessions and devices for a set of doors in one batch. It takes a console session with `scanning:manage` or a key with `scanning:write`, acts in the caller's mode, and needs an `Idempotency-Key`. `?dryRun=true` returns the plan without writing. The body is `ScanSetupIntentSchema` (`src/shared/contracts/scan-setup-intent.ts`):
+
+- `places`: zones to make (`ref`, `name`, optional `key`, `inside` a ref or zone id, `max`, `count`, `tapOut`, `maxStayMinutes`, `clearAt`) or `{ zoneId }` to reuse. At most 8; three levels below a root.
+- `events`: new events (`ref`, `name`, `templateIds`, `opensAt`, `closesAt`, `max`, `reentry`), `{ eventId }`, or `{ fromTemplate, ref? }` for a template's upcoming events. At most 10.
+- `staff`: people to add (`name`, `role`). At most 50. PINs come back once.
+- `doors`: one session each (1-8). `place`, `admits` (`{ any: true }` or `templateIds` and `events`, by ref or id), `hours` (`always`, or `every`/`mon`…`sun` spans plus `closed` dates), `scanners` (`{ by: 'anyone', as }` or `{ by: 'staff' }`), `devices` (1-10: `name`, `layout`, `direction`, `reader`) and `more` for any other session setting.
+- `preset`: `front_desk`, `event_night` or `venue`. It fills only what a door leaves out.
+- `timeZone`: absent is the org's, else UTC.
+
+Defaults: a counted place or a re-entry event sets the door to In and out with Track in / out; a barcode reader there scans In. A place with a max tracks, with a 12 h max stay and clear-at at the last closing time. A door with no place and no re-entry gets no direction. Hours are only what the body says.
+
+A ref (`^[a-z][a-z0-9-]{0,23}$`) names something made in the same call; an unknown, duplicate or wrong-kind ref, a zone cycle or a fourth level is 422 with the field path. The answer, and the dry run, carry `checks` (`code`, `level`, `message`, optional `fix`); any `error` check stops the write. Codes: `NO_EXIT`, `NO_MANAGER`, `NO_STAFF`, `PLAN_MISSES_PLACE`, `HOURS_DIFFER`, `EVENT_NO_PASSES`, `READER_BOTH`, `PLACE_ON_EVENT`, `DIRECTION_NEEDS_TRACKING`, `TEST_ONLY`.
+
 ## Scanner device actions
 
 The paired scanner (or an admin session joining a scanning session) calls `/api/v1/scan/*`. `POST /scan/resolve` returns a card with `actions[]`; `POST /scan/actions` runs one.

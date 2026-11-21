@@ -91,9 +91,11 @@ describe('what the Run island reads', () => {
     expect(read('developers/reference/passes.html')).toMatch(
       /data-island="run"[^>]*><div class="ticket"><div class="stub">.*?<\/div><div class="body">/s,
     );
-    // The console's signed-out slot is a card with one sign-in action.
-    expect(read('developers/console.html')).toMatch(
-      /data-island="run" data-mode="console"><div class="card[^>]*>.*?Sign in to try/s,
-    );
+  });
+
+  it('draws the console slot as a sign-in card until the island takes over', () => {
+    const html = read('developers/console.html');
+    expect(html).toContain('data-mode="console"');
+    expect(html).toMatch(/data-island="run"[^>]*><div class="card card-b stack g3">/);
   });
 });

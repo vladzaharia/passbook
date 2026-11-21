@@ -40,4 +40,8 @@ export interface PresenceRow {
   prev_first_at: number | null;
   prev_last_entry_at: number | null;
   prev_scan_id: string | null;
+  /** When the row last moved and who moved it, as `admissionReads` joins them (an event's place view). */
+  due_at?: number | null;
+  changed_at?: number | null;
+  via?: string | null;
 }

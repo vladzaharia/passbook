@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { type KeyboardEvent, useRef } from 'react';
+import { type KeyboardEvent, useId, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useChangeCount } from '../lib/motion.ts';
 import { ActiveIndicator } from './active-indicator.tsx';
@@ -11,6 +11,8 @@ export interface SegmentOption<V extends string = string> {
   label: string;
   icon?: LucideIcon;
   disabled?: boolean;
+  /** Why it is unavailable: the segment stays visible and described but cannot be chosen (aria-disabled, skipped by arrow keys). */
+  reason?: string;
   /** The full name when the label is short: the tooltip and the accessible name. */
   title?: string;
 }
@@ -41,9 +43,10 @@ export function SegmentedControl<V extends string>({
   className,
 }: SegmentedControlProps<V>) {
   const group = useRef<HTMLDivElement>(null);
+  const id = useId();
   // The selected icon springs in on a change, never on mount.
   const changed = useChangeCount(value);
-  const enabled = options.filter((o) => !o.disabled);
+  const enabled = options.filter((o) => !o.disabled && !o.reason);
   const move = (e: KeyboardEvent) => {
     const at = enabled.findIndex((o) => o.value === value);
     const step =
@@ -79,6 +82,8 @@ export function SegmentedControl<V extends string>({
       <ActiveIndicator variant="thumb" />
       {options.map((o) => {
         const checked = o.value === value;
+        const blocked = Boolean(o.reason);
+        const reasonId = `${id}-${o.value}`;
         return (
           // biome-ignore lint/a11y/useSemanticElements: a styled radiogroup with roving focus and a sliding thumb
           <button
@@ -87,17 +92,23 @@ export function SegmentedControl<V extends string>({
             role="radio"
             aria-checked={checked}
             data-value={o.value}
-            title={o.title}
-            aria-label={o.title}
+            title={o.reason ?? o.title}
+            aria-label={o.title ?? (blocked ? o.label : undefined)}
+            aria-disabled={blocked || undefined}
+            aria-describedby={blocked ? reasonId : undefined}
             tabIndex={checked ? 0 : -1}
             disabled={o.disabled}
-            onClick={() => onValueChange(o.value)}
+            onClick={() => {
+              if (!blocked) onValueChange(o.value);
+            }}
             className={cn(
               'relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap wl-colors',
               'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
               'disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4',
               block && 'flex-1',
-              checked ? 'text-fg-strong' : 'text-fg-muted hover:not-disabled:text-fg-strong',
+              blocked && 'cursor-not-allowed opacity-50',
+              checked ? 'text-fg-strong' : 'text-fg-muted',
+              !(checked || blocked) && 'hover:not-disabled:text-fg-strong',
             )}
           >
             {o.icon ? (
@@ -108,6 +119,11 @@ export function SegmentedControl<V extends string>({
               />
             ) : null}
             {o.label}
+            {o.reason ? (
+              <span id={reasonId} className="sr-only">
+                {o.reason}
+              </span>
+            ) : null}
           </button>
         );
       })}

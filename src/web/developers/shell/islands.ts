@@ -13,6 +13,10 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   playground: () => import('../playground/index.tsx'),
   quickstart: () => import('../quickstart/index.tsx'),
   run: () => import('../console/run-entry.ts'),
+  account: async () => {
+    const { mountAccount } = await import('./account.ts');
+    return { mount: async (el) => void (await mountAccount(el)) };
+  },
   'org-chip': async () => {
     const { mountOrgChip } = await import('../console/org-chip.ts');
     return { mount: mountOrgChip };

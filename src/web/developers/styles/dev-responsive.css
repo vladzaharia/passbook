@@ -22,12 +22,6 @@
   }
 }
 @media (max-width: 900px) {
-  .topnav {
-    display: none;
-  }
-  .menu-btn {
-    display: inline-grid;
-  }
   .docs,
   .docs.no-side {
     grid-template-columns: minmax(0, 1fr);
@@ -35,7 +29,7 @@
   .sidenav {
     display: none;
     position: fixed;
-    inset: 59px 0 0 0;
+    inset: var(--dev-bar) 0 0 0;
     z-index: 25;
     max-height: none;
     align-self: stretch;
@@ -55,13 +49,6 @@
   }
 }
 @media (max-width: 720px) {
-  .top {
-    padding-inline: 16px;
-    gap: 8px;
-  }
-  .brand .sub {
-    display: none;
-  }
   .main {
     padding: 20px 16px 96px;
   }

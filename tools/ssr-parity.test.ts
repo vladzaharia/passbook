@@ -138,7 +138,7 @@ describe('generated SSR kit', () => {
     const wordmark = read('src/web/ui/layout/wordmark.tsx');
     expect(wordmark).toContain("md: { link: 'gap-2 text-base', icon: 'size-5' }");
     expect(wordmark).toContain(
-      "'inline-flex min-h-8 min-w-8 items-center justify-center rounded-md font-semibold text-fg-strong pointer-coarse:min-h-11 pointer-coarse:min-w-11'",
+      "'inline-flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-md font-semibold text-fg-strong pointer-coarse:min-h-11 pointer-coarse:min-w-11'",
     );
     const theme = read('src/worker/ssr/theme.ts');
     expect(theme).toContain(
