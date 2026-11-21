@@ -88,9 +88,6 @@ describe('add endpoint', () => {
     expect(
       await screen.findByText('https only. A signing secret is shown once after you add this.'),
     ).toBeVisible();
-    expect(
-      screen.getByText('Recommended events are selected. Change them any time.'),
-    ).toBeVisible();
   });
 });
 

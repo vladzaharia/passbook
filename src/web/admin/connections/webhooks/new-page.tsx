@@ -148,7 +148,6 @@ export function NewWebhookPage() {
               disabled={!canManage}
               orgId={orgId}
               urlHelp="https only. A signing secret is shown once after you add this."
-              eventsHelp="Recommended events are selected. Change them any time."
               checking={checking}
               onUrlBlur={() => void dryRun()}
             />
