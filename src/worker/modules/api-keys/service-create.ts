@@ -30,6 +30,19 @@ export async function newSecret(ctx: ServiceContext, kind: ApiKeyKind, mode: 'li
   return { prefix, label, secret, hash: await sha256Hex(secret) };
 }
 
+/** `scanning:admin` mints PINs and pairing codes, which only an org-bound live key may: refuse it at mint, not at the first call. */
+export function assertScanningAdminKey(
+  scopes: readonly string[],
+  kind: ApiKeyKind,
+  mode: 'live' | 'test',
+): void {
+  if (scopes.includes('scanning:admin') && (kind === 'platform' || mode !== 'live'))
+    throw invalid(
+      'The scanning:admin scope is for live keys of one organization.',
+      'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+    );
+}
+
 export const invalid = (message: string, code: string, path = 'scopes') =>
   new ValidationError(message, [{ path, message }], code);
 
@@ -193,6 +206,7 @@ export async function createApiKey(
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
   const mode = authority.kind === 'platform' ? input.mode : authority.mode;
+  assertScanningAdminKey(effectiveScopes(input.scopes, input.roles), kind, mode);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),

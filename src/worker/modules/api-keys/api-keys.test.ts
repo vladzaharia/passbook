@@ -93,6 +93,28 @@ async function create(raw: object, orgId?: string) {
   return { res, headers, userId, key: (await res.clone().json()) as Created };
 }
 
+describe('the scanning:admin scope', () => {
+  it('is minted for a live key of one organization only', async () => {
+    const org = await makeOrg(f());
+    const live = await create(
+      { name: 'live admin', scopes: ['scanning:admin'], orgId: org.id },
+      org.id,
+    );
+    expect(live.res.status).toBe(201);
+    const test = await create(
+      { name: 'test admin', scopes: ['scanning:admin'], orgId: org.id, mode: 'test' },
+      org.id,
+    );
+    await expectProblem(test.res, 422, 'API_KEY_SCANNING_ADMIN_LIVE_ORG');
+    const platform = await create({
+      name: 'platform admin',
+      scopes: ['scanning:admin'],
+      orgId: null,
+    });
+    await expectProblem(platform.res, 422, 'API_KEY_SCANNING_ADMIN_LIVE_ORG');
+  });
+});
+
 describe('credential identity invariant', () => {
   it('rejects in-place identity and authority changes while a new key resolves independently', async () => {
     const org = await makeOrg(f());

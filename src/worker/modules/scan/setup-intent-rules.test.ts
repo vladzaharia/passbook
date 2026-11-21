@@ -187,6 +187,26 @@ describe('who may call', () => {
     expect(await count('scanning_sessions')).toBe(before);
   });
 
+  it('lets a scanning:write key alone apply an events-only setup', async () => {
+    const k = await keyOf(['scanning:write']);
+    const now = fixture.kit.clock.now();
+    const res = await send(k.headers, {
+      orgId: orgId(),
+      events: [
+        {
+          ref: 'kv',
+          name: 'Key event',
+          templateIds: [templateId],
+          opensAt: now,
+          closesAt: now + 86_400_000,
+        },
+      ],
+      doors: [{ name: 'Key event door', admits: { events: ['kv'] } }],
+    });
+    expect(res.status, await res.clone().text()).toBe(200);
+    expect(((await res.json()) as ScanSetupResult).events[0]?.created).toBe(true);
+  });
+
   it('refuses zones to a test-mode key', async () => {
     const k = await keyOf(['scanning:write'], { mode: 'test' });
     await expectProblem(
