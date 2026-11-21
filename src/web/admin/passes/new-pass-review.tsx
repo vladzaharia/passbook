@@ -1,7 +1,7 @@
 import { Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Button, Callout, Card, CardBody } from '../../ui/index.ts';
 import { formatExpiry } from '../../lib/format.ts';
+import { Button, Callout, Card, CardBody } from '../../ui/index.ts';
 import { describeSchema, type FieldDef, type FormValues } from './schema-form/index.ts';
 
 const shown = (v: unknown, field?: FieldDef) => {
