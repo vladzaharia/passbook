@@ -98,7 +98,7 @@ describe('session configuration flows', () => {
     expect(within(device).getByText('Stopped')).toBeInTheDocument();
     expect(within(device).queryByText('Online')).not.toBeInTheDocument();
     expect(screen.queryByText(/\d+ online/)).not.toBeInTheDocument();
-    expect(screen.getByText(/^Stopped ·/)).toBeInTheDocument();
+    expect(screen.getByText('Ended')).toBeInTheDocument();
   });
 
   it('duplicates into the page’s organization with no Organization select', async () => {
@@ -111,7 +111,7 @@ describe('session configuration flows', () => {
     });
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'More' }));
-    await user.click(screen.getByRole('menuitem', { name: 'Duplicate session' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }));
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate session' });
     expect(
       within(dialog).queryByRole('combobox', { name: 'Organization' }),
@@ -245,7 +245,9 @@ describe('session configuration flows', () => {
       handlers: s.handlers,
     });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Edit' }));
+    await user.click(
+      (await screen.findAllByRole('button', { name: 'Edit' })).at(-1) as HTMLElement,
+    );
     const dialog = screen.getByRole('dialog', { name: 'Session rules' });
     const name = within(dialog).getByRole('textbox', { name: 'Session name' });
     await user.clear(name);

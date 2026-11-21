@@ -3,7 +3,6 @@ import type { SessionActivitySchema } from '@/shared/contracts/scanning-sessions
 import { formatTime } from '@/web/lib/format.ts';
 import { Card, CardBody, CardHeader, StatusPill } from '@/web/ui/index.ts';
 import { scanStatusKey } from '../scans/outcome-copy.ts';
-import { zoneName } from './zone-name.ts';
 
 export function SessionActivity({
   items,
@@ -11,7 +10,7 @@ export function SessionActivity({
 }: z.infer<typeof SessionActivitySchema> & { timeZone?: string | undefined }) {
   return (
     <Card>
-      <CardHeader title={`Recent session activity, ${zoneName(timeZone ?? null)}`} />
+      <CardHeader title="Activity" />
       <CardBody>
         {!items.length ? (
           <p className="text-sm text-fg-muted">No activity yet.</p>

@@ -27,6 +27,8 @@ describe('pairing', () => {
     expect(preview.status).toBe(200);
     expect(await preview.json()).toEqual({
       scannerName: 'Front door',
+      // The session the device joins; this test's session shares the scanner's name.
+      sessionName: 'Front door',
       orgName: 'Test Org',
       mode: 'live',
     });

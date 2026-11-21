@@ -1,8 +1,8 @@
 /** Boot and Start strings that `SCAN_COPY` does not carry (SD 5.1). Everything else reads SCAN_COPY. */
 export const UI_COPY = {
   scanPairingCode: 'Scan pairing code',
-  confirmTitle: 'Pair this device?',
-  confirmLine: 'Pair this device as {scanner} for {org}?',
+  confirmTitle: 'Join {session}?',
+  confirmLine: '{org} · {mode}',
   paired: 'Paired as {scanner}.',
   scanAsAdmin: 'Scan as admin',
   organization: 'Organization',

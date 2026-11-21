@@ -77,6 +77,7 @@ function ScanBoot() {
   const [preview, setPreview] = useState<{
     code: string;
     scannerName: string;
+    sessionName: string | null;
     orgName: string;
     mode: 'live' | 'test';
   } | null>(null);
@@ -202,6 +203,7 @@ function ScanBoot() {
   const card = preview ? (
     <PairConfirm
       scannerName={preview.scannerName}
+      sessionName={preview.sessionName}
       orgName={preview.orgName}
       mode={preview.mode}
       busy={busy}

@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
-import { NOW, scannerFixture, templateFixture } from './test-fixtures.ts';
+import { managedSession } from './sessions/test-fixtures.ts';
+import { NOW, templateFixture } from './test-fixtures.ts';
 
 const northwind = membershipFixture('o1', { orgName: 'Northwind', orgSlug: 'northwind' });
 const harbor = membershipFixture('o2', { orgName: 'Harbor', orgSlug: 'harbor' });
@@ -110,7 +111,7 @@ describe('Event detail organization scope', () => {
     expect(await screen.findByText(/Result screen: Gala ticket/)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit event' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Assign scanners' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add to a session' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Archive event' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open scanner' })).not.toBeInTheDocument();
   });
@@ -173,7 +174,7 @@ describe('Event detail organization scope', () => {
     expect(screen.queryByText('Harbor admission')).not.toBeInTheDocument();
     expect(screen.queryByText('Private instructions')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit event' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Assign scanners' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add to a session' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open scanner' })).not.toBeInTheDocument();
     expect(unexpected).toEqual([]);
   });
@@ -257,47 +258,52 @@ describe('Event detail organization scope', () => {
     expect(screen.queryByRole('dialog', { name: 'Edit event' })).not.toBeInTheDocument();
   });
 
-  it('shows only the selected organization’s related scanners and its or shared templates', async () => {
-    const assignments: unknown[] = [];
+  it('shows only the selected organization’s sessions and templates, and adds the event to one', async () => {
+    const saved: unknown[] = [];
+    const session = (over: Record<string, unknown>) => ({ ...managedSession, ...over });
     await renderApp('/admin/scanning/events/e1', {
       session: 'admin',
       memberships: [northwind, harbor],
       selectedOrg: 'o1',
       handlers: {
         '/api/v1/scan-events/e1': () => json(event({ templateIds: ['t1', 'shared', 'foreign'] })),
-        '/api/v1/scanners': () =>
+        '/api/v1/scanning-sessions': () =>
           page([
-            scannerFixture({ name: 'Own scanner', accepts: { eventId: 'e1' } }),
-            scannerFixture({
-              id: 's2',
+            session({ name: 'Own session', accepts: { eventId: 'e1' } }),
+            session({ id: 'session-2', name: 'Other session', accepts: { templateIds: ['t1'] } }),
+            session({
+              id: 'session-3',
               orgId: 'o2',
-              name: 'Foreign scanner',
+              name: 'Foreign session',
               accepts: { eventId: 'e1' },
             }),
           ]),
+        '/api/v1/scanning-sessions/session-2': (_url, init) => {
+          saved.push(JSON.parse(String(init?.body)));
+          return json(session({ id: 'session-2' }));
+        },
         '/api/v1/templates': () =>
           page([
             templateFixture({ name: 'Own template' }),
             templateFixture({ id: 'shared', orgId: null, orgName: null, name: 'Shared template' }),
             templateFixture({ id: 'foreign', orgId: 'o2', name: 'Foreign template' }),
           ]),
-        '/api/v1/scan-events/e1/scanners': (_url, init) => {
-          assignments.push(JSON.parse(String(init?.body)));
-          return new Response(null, { status: 204 });
-        },
       },
     });
-    expect(await screen.findByText('Own scanner')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Own session' })).toBeInTheDocument();
     expect(await screen.findByText(/Result screen: Shared template/)).toBeInTheDocument();
     expect(screen.getByText(/Result screen: Own template/)).toBeInTheDocument();
-    expect(screen.queryByText('Foreign scanner')).not.toBeInTheDocument();
+    expect(screen.queryByText('Foreign session')).not.toBeInTheDocument();
     expect(screen.queryByText(/Foreign template/)).not.toBeInTheDocument();
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Assign scanners' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Assign scanners' });
-    expect(await within(dialog).findByRole('checkbox', { name: 'Own scanner' })).toBeChecked();
-    expect(within(dialog).queryByText('Foreign scanner')).not.toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Assign scanners' }));
-    await waitFor(() => expect(assignments).toEqual([{ scannerIds: ['s1'] }]));
+    await user.click(screen.getByRole('button', { name: 'Add to a session' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add to a session' });
+    expect(await within(dialog).findByRole('checkbox', { name: 'Own session' })).toBeChecked();
+    expect(within(dialog).queryByText('Foreign session')).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Other session' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(saved).toMatchObject([{ accepts: { templateIds: ['t1'], eventIds: ['e1'] } }]),
+    );
   });
 });

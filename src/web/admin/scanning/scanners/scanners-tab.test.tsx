@@ -3,14 +3,15 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
-import { pairingFixture, scannerFixture as s, templateFixture } from '../test-fixtures.ts';
+import { managedSession } from '../sessions/test-fixtures.ts';
+import { scannerFixture as s, templateFixture } from '../test-fixtures.ts';
 
 const page = (items: unknown[]) => json({ items, nextCursor: null });
 const none = () => page([]);
 const northwind = membershipFixture('o1', { orgName: 'Northwind', orgSlug: 'northwind' });
 
 const scanners = [
-  s({ id: 's1', name: 'Front door', lastSeenAt: Date.now() - 60_000 }),
+  s({ id: 's1', name: 'Front door', lastSeenAt: Date.now() - 60_000, sessionId: 'session-1' }),
   s({ id: 's2', name: 'Side door', online: false, today: 0, lastSeenAt: Date.now() - 20 * 60_000 }),
   s({
     id: 's3',
@@ -31,12 +32,13 @@ const handlers = (over: Record<string, never> = {}) => ({
     return page(revoked ? scanners.filter((x) => x.status === 'revoked') : scanners.slice(0, 3));
   },
   '/api/v1/scan-events': none,
+  '/api/v1/scanning-sessions': () => page([managedSession]),
   '/api/v1/templates': () => page([templateFixture()]),
   ...over,
 });
 
 describe('Scanners tab', () => {
-  it('lists scanners with status, accepts and a ghost Pair on the unpaired one', async () => {
+  it('lists scanners with status, accepts and the session each belongs to', async () => {
     const { container } = await renderApp('/admin/scanning?tab=devices&orgId=o1', {
       session: 'admin',
       memberships: [northwind],
@@ -53,7 +55,10 @@ describe('Scanners tab', () => {
     expect(within(table).getAllByText('Not paired')).toHaveLength(2);
     expect(within(table).getByText('2 templates')).toBeInTheDocument();
     expect(within(table).getAllByText('No PIN').length).toBeGreaterThan(0);
-    expect(within(table).getByRole('button', { name: 'Pair' })).toBeInTheDocument();
+    expect(
+      within(table).getByRole('link', { name: 'Membership desk' }).getAttribute('href'),
+    ).toMatch(/\/scanning\/sessions\/session-1$/);
+    expect(within(table).queryByRole('button')).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -68,50 +73,6 @@ describe('Scanners tab', () => {
     expect(screen.queryByText('Old gate')).toBeNull();
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Show revoked (1)' }));
     expect(screen.getByText('Old gate')).toBeInTheDocument();
-  });
-
-  it('revokes with a plain confirm that says the scans stay', async () => {
-    let revoked = false;
-    await renderApp('/admin/scanning?tab=devices&orgId=o1', {
-      session: 'admin',
-      memberships: [northwind],
-      selectedOrg: 'o1',
-      handlers: handlers({
-        '/api/v1/scanners/s1/revoke': (_u: URL, init?: RequestInit) => {
-          revoked = init?.method === 'POST';
-          return new Response(null, { status: 204 });
-        },
-      } as never),
-    });
-    const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Actions for Front door' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Revoke' }));
-    const dialog = await screen.findByRole('alertdialog', { name: 'Revoke Front door?' });
-    expect(dialog).toHaveTextContent('The device stops scanning at once. Its scans stay.');
-    await user.click(within(dialog).getByRole('button', { name: 'Revoke' }));
-    await waitFor(() => expect(revoked).toBe(true));
-  });
-
-  it('asks before pairing a paired scanner again, then shows the pairing face', async () => {
-    await renderApp('/admin/scanning?tab=devices&orgId=o1', {
-      session: 'admin',
-      memberships: [northwind],
-      selectedOrg: 'o1',
-      handlers: handlers({
-        '/api/v1/scanners/s1/pairing': (_u: URL, init?: RequestInit) =>
-          init?.method === 'POST'
-            ? json(pairingFixture())
-            : json({ state: 'waiting', device: null }),
-      } as never),
-    });
-    const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Actions for Front door' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Pair again' }));
-    const ask = await screen.findByRole('alertdialog', { name: 'Pair Front door again?' });
-    expect(ask).toHaveTextContent('The device using it now signs out at its next scan.');
-    await user.click(within(ask).getByRole('button', { name: 'Pair again' }));
-    expect(await screen.findByText('K7QH2-M9XTR')).toBeInTheDocument();
-    expect(screen.getByRole('dialog', { name: /Pair Front door/ })).toBeInTheDocument();
   });
 
   it('offers session creation when no devices are listed', async () => {
