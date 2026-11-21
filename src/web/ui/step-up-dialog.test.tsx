@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { api } from '../lib/api.ts';
-import { dismissStepUp, stepUpExit } from '../lib/step-up.ts';
+import { dismissStepUp } from '../lib/step-up.ts';
+import { stepUpExit } from '../lib/step-up-exit.ts';
 import { json, problem, renderApp } from '../lib/test-utils.tsx';
 
 const STALE = () =>

@@ -54,6 +54,29 @@ describe('Polaris ID needs a passkey', () => {
     expect(row?.auth_time).toBe(Math.floor(h.clock.now() / 1000) * 1000);
   });
 
+  it("never lets another account's re-authentication refresh the first session", async () => {
+    await setup();
+    const jar: Jar = new Map();
+    const first_ = await oidcSignIn(h, jar, person(['phr']));
+    expect(first_.res.status).toBe(302);
+    const before = await h.env.DB.prepare(
+      'SELECT id_hash, user_id, auth_time, revoked_at FROM sessions ORDER BY created_at DESC, rowid DESC LIMIT 1',
+    ).first<{ id_hash: string; user_id: string; auth_time: number; revoked_at: number | null }>();
+    h.clock.advance(5 * 60_000);
+    // The same browser, still holding the first cookie, signs in as someone else.
+    const second = await oidcSignIn(h, jar, person(['phr']));
+    expect(second.res.status).toBe(302);
+    const mine = (
+      await h.env.DB.prepare('SELECT id_hash, auth_time FROM sessions WHERE user_id = ?')
+        .bind(before?.user_id)
+        .all<{ id_hash: string; auth_time: number }>()
+    ).results;
+    // The first user still has exactly their one session, with the auth_time it started with.
+    expect(mine).toEqual([{ id_hash: before?.id_hash, auth_time: before?.auth_time }]);
+    const latest = await lastSession();
+    expect(latest?.auth_time).not.toBe(before?.auth_time);
+  });
+
   it('restarts once with prompt=login when the sign-in used a login code', async () => {
     await setup();
     const jar: Jar = new Map();

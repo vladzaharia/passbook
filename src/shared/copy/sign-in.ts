@@ -15,11 +15,6 @@ export const SIGN_IN_SENT =
 export const IDP_SIGN_IN_REQUIRED_MESSAGE = 'Sign in with Polaris ID to continue.';
 /** 403 STEP_UP_REQUIRED: a sensitive action needs a recent sign-in. */
 export const STEP_UP_REQUIRED_MESSAGE = 'Sign in again to confirm it is you.';
-export const STEP_UP_COPY = {
-  title: "Confirm it's you",
-  body: 'This needs a recent sign-in. Continue, then try again.',
-  confirm: 'Continue with Polaris ID',
-} as const;
 /** The invitation page for someone without a Polaris ID session; `{org}` is the organization's name. */
 export const INVITE_SIGN_IN_LINE = 'Sign in with Polaris ID to join {org}.';
 /** The admin shell's line for an email session still inside the console grace window. */
