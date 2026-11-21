@@ -2,6 +2,7 @@ import type { SqlValue } from '../../platform/db.ts';
 import type { ScanActor } from './actor.ts';
 import type { HistoryRaw, HistoryRow } from './history-row.ts';
 import { toHistoryRow } from './history-row.ts';
+import { HEADS_UP_SQL } from './outcome-bucket.ts';
 import { scanLedgerScopeSql } from './repo-feed-scope.ts';
 import { historyPageStmt } from './repo-history-rows.ts';
 import { type ScanReadAuthority, scanAuthorizedStmt, scanRead } from './repo-read-authority.ts';
@@ -132,8 +133,8 @@ export async function readSummary(
       auth,
       `SELECT COUNT(*) AS total,
         COALESCE(SUM(s.outcome = 'ok'), 0) AS ok,
-        COALESCE(SUM(s.outcome = 'heads_up'), 0) AS heads_up,
-        COALESCE(SUM(s.outcome IS NOT 'ok' AND s.outcome IS NOT 'heads_up'), 0) AS refused,
+        COALESCE(SUM(${HEADS_UP_SQL}), 0) AS heads_up,
+        COALESCE(SUM(s.outcome IS NOT 'ok' AND NOT ${HEADS_UP_SQL}), 0) AS refused,
         COALESCE(SUM(s.undone_by IS NOT NULL), 0) AS undone,
         MIN(s.at) AS first_at, MAX(s.at) AS last_at
       FROM scans s WHERE ${auth.ok} AND ${auth.tenant('+s', 'scans')} AND ${inWindow}`,

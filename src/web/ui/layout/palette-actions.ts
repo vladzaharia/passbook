@@ -75,7 +75,7 @@ export function paletteActions({
     },
     {
       id: 'new-scanner',
-      label: 'New scanning session',
+      label: 'New session',
       icon: ENTITY.scanner.icon,
       onSelect: open(org('/scanning'), { new: '1' }),
       allowed: can(org('/scanning')) && membership?.capabilities.includes('scanning:manage'),

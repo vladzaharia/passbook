@@ -1,5 +1,6 @@
 import type { SqlValue } from '../../platform/db.ts';
 import { issuedReleasePredicateSql } from '../templates/repo-releases.ts';
+import { HEADS_UP_SQL, REFUSED_SQL } from './outcome-bucket.ts';
 import type { ScanLogFilter } from './repo-feed.ts';
 import { scanPasslessCandidateSql } from './repo-scan-passless.ts';
 import { scanRetentionCandidateSql, scanRetentionExcludedSql } from './repo-scan-retention.ts';
@@ -142,6 +143,8 @@ export function where(f: ScanLogFilter): { sql: string; params: SqlValue[] } {
   }
   eq('s.pass_id', f.passId);
   if (f.outcome === 'undone') clauses.push('s.undone_at IS NOT NULL');
+  else if (f.outcome === 'refused') clauses.push(REFUSED_SQL);
+  else if (f.outcome === 'heads_up') clauses.push(HEADS_UP_SQL);
   else eq('s.outcome', f.outcome);
   // Name searches are projected in the service before pagination; repository callers may still
   // select an exact pass id without consulting the untrusted cached display title.

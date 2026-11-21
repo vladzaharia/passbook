@@ -6,12 +6,7 @@ import type {
   UpdateScanEventSchema,
 } from '../../../shared/contracts/index.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { admitsJson } from './admits.ts';
@@ -22,37 +17,29 @@ import {
   committedEventView,
   loadManageEvent,
 } from './events.ts';
+import { EVENT_CODES, eventStatements, planEvent } from './events-statements.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import {
   adminActorOf,
   adminGrant,
   audited,
-  createdByOf,
   eventEpoch,
   scannersAssignable,
-  templatesUsable,
 } from './repo-admin-grant.ts';
-import { attachedTemplateChecks, eventReleaseChecks } from './repo-event-authority.ts';
+import { attachedTemplateChecks } from './repo-event-authority.ts';
 import type { EventAuthority } from './repo-event-keyset.ts';
 import {
   addEventArchive,
   addEventAssign,
-  addEventInsert,
   addEventRestore,
   addEventTemplates,
   addEventUpdate,
-  type EventValues,
   eventArchiveChecks,
   eventDependents,
   scannersInOrg,
 } from './repo-events-write.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
-
-const EVENT_CODES = {
-  config: 'SCAN_EVENT_CHANGED',
-  lineage: 'SCAN_EVENT_CHANGED',
-  release: 'SCAN_EVENT_CHANGED',
-} as const;
+import { newCapture } from './setup-capture.ts';
 
 const modeMismatch = (what: string) =>
   new ValidationError(`${what} is in a different mode.`, [], 'SCAN_MODE_MISMATCH');
@@ -66,57 +53,20 @@ export async function createEvent(
   /** Scan passes: one live event per key. A second insert fails on the unique index. */
   setupKey?: string,
 ) {
-  if (authority.orgId !== input.orgId || authority.mode !== mode) throw new ForbiddenError();
-  if (input.hardLimit && input.capacity == null)
-    throw new ValidationError('Set a capacity first.', [], 'EVENT_NEEDS_CAPACITY');
-  const templateIds = [...new Set(input.templateIds)];
-  const stamps = await checkTemplates(
-    ctx,
-    input.orgId,
-    mode,
-    templateIds,
-    input.match?.input ?? null,
-  );
-  const values: EventValues = {
-    id: ctx.ids.id(),
-    orgId: input.orgId,
-    mode,
-    name: input.name,
-    matchInput: input.match?.input ?? null,
-    matchValues: input.match?.values ?? null,
-    opensAt: input.opensAt,
-    closesAt: input.closesAt,
-    timeZone: input.timeZone,
-    capacity: input.capacity ?? null,
-    reentry: input.reentry ?? false,
-    hardLimit: input.hardLimit ?? false,
-    note: input.note ?? null,
-    ...(setupKey ? { setupKey } : {}),
-  };
-  const now = ctx.clock.now();
+  const capture = newCapture({ userId, authority, orgId: input.orgId, mode });
+  const plan = await planEvent(ctx, input, capture, setupKey);
   const g = adminGrant(
     ctx,
     'org_mode.scan.event.create',
     userId,
     authority,
     input.orgId,
-    [...templatesUsable(templateIds), ...eventReleaseChecks(stamps, mode)],
+    plan.checks,
     EVENT_CODES,
-    values.id,
+    plan.values.id,
   );
-  addEventInsert(g, values, createdByOf(authority, userId), now);
-  addEventTemplates(g, values.id, templateIds, false);
-  g.add(
-    audited(g, ctx, {
-      orgId: input.orgId,
-      ...adminActorOf(authority, userId),
-      action: 'scan_event.create',
-      targetType: 'scan_event',
-      targetId: values.id,
-      detail: { mode, templates: templateIds.length, capacity: values.capacity },
-    }),
-  );
-  const committed = await commitEvent(ctx, g, values.id, input.orgId);
+  const { id } = eventStatements(g, ctx, plan, capture);
+  const committed = await commitEvent(ctx, g, id, input.orgId);
   return committedEventView(ctx, committed);
 }
 

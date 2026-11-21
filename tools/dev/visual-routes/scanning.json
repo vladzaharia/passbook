@@ -552,7 +552,7 @@
   },
   {
     "role": "org",
-    "path": "/admin/scanning?tab=scanners",
+    "path": "/admin/scanning?tab=devices",
     "name": "scan-admin-scanners",
     "filterOrg": "northwindId"
   },
@@ -576,13 +576,13 @@
   },
   {
     "role": "org",
-    "path": "/admin/scanning?tab=scans",
+    "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scans",
     "filterOrg": "northwindId"
   },
   {
     "role": "org",
-    "path": "/admin/scanning?tab=scans",
+    "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scans-harbor",
     "filterOrg": "harborId"
   },
@@ -762,21 +762,21 @@
   },
   {
     "role": "org",
-    "path": "/admin/scanning?tab=scans",
+    "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scans-status-dropdown",
     "filterOrg": "northwindId",
     "click": "[aria-haspopup]:has-text(\"Status\"), button:has-text(\"Status\")"
   },
   {
     "role": "org",
-    "path": "/admin/scanning?tab=scans",
+    "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scan-row-detail",
     "filterOrg": "northwindId",
     "click": "tbody tr a, tbody tr"
   },
   {
     "role": "org",
-    "path": "/admin/scanning?tab=scans",
+    "path": "/admin/scanning?tab=activity",
     "name": "scan-admin-scan-customer-row",
     "filterOrg": "northwindId",
     "click": "tbody tr:has-text(\"accepted\"), tbody tr"

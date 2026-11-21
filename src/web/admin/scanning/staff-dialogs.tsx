@@ -14,13 +14,13 @@ import {
   Button,
   Callout,
   ConfirmDialog,
+  CopyButton,
   Dialog,
   DialogContent,
   Form,
   FormField,
   Input,
   OptionTile,
-  SecretReveal,
   useFormErrors,
 } from '@/web/ui/index.ts';
 
@@ -271,18 +271,20 @@ export function StaffPinDialog({
   onClose: () => void;
 }) {
   return (
-    <Dialog open onOpenChange={() => undefined}>
-      <DialogContent
-        title={`${name}'s PIN`}
-        closeButton={false}
-        onInteractOutside={(event) => event.preventDefault()}
-        onEscapeKeyDown={(event) => event.preventDefault()}
-      >
-        <SecretReveal
-          fields={[{ label: 'PIN', value: pin, copyLabel: 'Copy PIN' }]}
-          savedLabel="I saved the PIN"
-          onDone={onClose}
-        />
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent title={`${name}'s PIN`} footer={<Button onClick={onClose}>Done</Button>}>
+        <div className="flex flex-col gap-4">
+          <Callout tone="warning">Shown once.</Callout>
+          <div className="flex items-center justify-center gap-2">
+            <output
+              aria-label="PIN"
+              className="select-all rounded-md border border-border bg-surface-sunken px-4 py-3 font-mono text-4xl font-semibold tracking-[0.2em] text-fg-strong tabular-nums"
+            >
+              {pin}
+            </output>
+            <CopyButton value={pin} label="Copy PIN" />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

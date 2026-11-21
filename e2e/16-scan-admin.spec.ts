@@ -43,8 +43,8 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     const closes = new Date(Date.now() + 3_600_000);
     const local = (date: Date) =>
       new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-    await page.getByLabel('Scanning opens', { exact: true }).fill(local(opens));
-    await page.getByLabel('Scanning closes', { exact: true }).fill(local(closes));
+    await page.getByLabel('Scanning opens').fill(local(opens));
+    await page.getByLabel('Scanning closes').fill(local(closes));
     await page
       .getByRole('textbox', { name: 'Note for staff', exact: true })
       .fill('Check the ticket name.');
@@ -69,7 +69,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
       clientTs: Date.now(),
     });
     expect(outcome.kind).toBe('ok');
-    await page.goto(`/admin/scanning?orgId=${orgId}&tab=scans&q=Admin%20Door%20Guest`);
+    await page.goto(`/admin/scanning?orgId=${orgId}&tab=activity&q=Admin%20Door%20Guest`);
     const row = page.getByRole('row').filter({ hasText: 'Admin Door Guest' });
     await row.getByRole('button').click();
     await expect(page.getByRole('dialog', { name: 'Scan', exact: true })).toContainText(
