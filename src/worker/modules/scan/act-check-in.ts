@@ -130,7 +130,10 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
         scanId,
         now,
         keep:
-          place.inside && place.zone.occupancy === 'track' && override?.reason !== 'still_inside',
+          place.inside &&
+          place.spec.kind === 'zone' &&
+          place.spec.zone.occupancy === 'track' &&
+          override?.reason !== 'still_inside',
       })
     : null;
   const observed = placed ? { ...read, presenceBefore: placed.presenceBefore } : read;
@@ -148,7 +151,9 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     throw new ScanAttemptRaced();
   const seed = {
     ...gate,
+    // At an event place the entry statement holds capacity itself, with the exact reason.
     ...(action.kind === 'check_in' &&
+    !place &&
     event?.capacity != null &&
     found.admission?.state.direction !== 'out' &&
     (override?.reason !== 'capacity_full' || event.hardLimit === true)

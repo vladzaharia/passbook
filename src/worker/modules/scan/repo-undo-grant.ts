@@ -1,6 +1,7 @@
 import { type Grant, grant } from '../../platform/authority.ts';
 import { type Check, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { scanActorChecks, scanPrincipal } from './authority-checks.ts';
+import { bumpRev } from './occupancy/repo.ts';
 import { ACCESS_GATE } from './repo-access.ts';
 import { includeSystemRetentionProof } from './repo-scan-retention-part.ts';
 import type { ScanRow } from './repo-scans.ts';
@@ -278,6 +279,8 @@ export function addUndoWrites(g: Grant, c: UndoCommit): Grant {
             returning: ['pass_id'],
           }),
     );
+    // An event place's Who's in sheet follows `scan_place_revs`, as after a scan or Mark as out.
+    if (key.scope.startsWith('event:')) bumpRev(g, key.scope, []);
   }
   if (c.retention) includeSystemRetentionProof(g, c.retention);
   return g;

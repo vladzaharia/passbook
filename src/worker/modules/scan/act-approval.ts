@@ -17,7 +17,7 @@ import { policyActor } from './dto.ts';
 import { amountOf, ScanEffectStop } from './effects-value.ts';
 import type { ScanActor } from './guard.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
-import { hardLimited } from './occupancy/rules.ts';
+import { hardLimited } from './occupancy/place.ts';
 import { approvalReservationPredicate } from './repo-act-approval.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import { passAnswerFence, underAuthorityCtes } from './repo-read-fences.ts';
@@ -118,9 +118,7 @@ export async function executeApprovedAction(input: ActionApprovalInput): Promise
                 ...pa.settings,
                 hardLimit:
                   override.doorHardLimit ||
-                  (found.occupancy
-                    ? hardLimited(found.occupancy.zones, found.occupancy.zone.id)
-                    : false) ||
+                  (found.occupancy ? hardLimited(found.occupancy.spec) : false) ||
                   found.admission?.event?.hardLimit === true,
                 ...(override.doorLetInAgain ? { letInAgain: override.doorLetInAgain } : {}),
               },

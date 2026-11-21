@@ -5,7 +5,12 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanAccessOf, waiveOf } from './access.ts';
 import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
 import { checkInFinalizer, planCheckInDisplay } from './act-check-in-finalize.ts';
-import { occupancyAfter, occupancyReads, planOccupancyCommit } from './act-check-in-occupancy.ts';
+import {
+  eventPlaceInputs,
+  occupancyAfter,
+  occupancyReads,
+  planOccupancyCommit,
+} from './act-check-in-occupancy.ts';
 import { finishCheckInResult } from './act-check-in-result.ts';
 import { addCheckInStatements, type HeldVariant } from './act-check-in-statements.ts';
 import { checkInVariants, signVariants } from './act-check-in-variants.ts';
@@ -68,14 +73,24 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const access = found.access && gate.actionId === ACCESS_GATE ? found.access : null;
   const overrideOf = req.overrideOf ?? null;
   const occupancy = found.occupancy ?? null;
+  const eventIn = eventPlaceInputs(
+    occupancy,
+    gate.passId,
+    presencePlan,
+    effect.presenceBefore,
+    action,
+    now,
+  );
   const occ = occupancy
     ? planOccupancyCommit(occupancy, {
         passId: found.pass.id,
         scanId,
-        now: authorityNow,
+        now: claim.now,
         access,
         override: claim.authority.override?.reason ?? null,
         open: overrideOf ? [overrideOpen(overrideOf)] : [],
+        // A re-entry event keeps the admission's single or daily limit as a condition of the entry.
+        ...eventIn,
         // A first exit inserts its gate (insert or nothing): no other gate row may appear first.
         gateAsRead: effect.gateBefore
           ? null
@@ -113,7 +128,14 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
       )
     : null;
   // The admission or override that let this scan in, repeated in the gate write (another door wins).
-  const admitted = commitConditions(gate.passId, presencePlan, effect.presenceBefore, overrideOf);
+  // At an event place the builder holds in and out; only a limit's own conditions repeat here.
+  const admitted = commitConditions(
+    gate.passId,
+    occupancy ? (eventIn.limit?.length ? presencePlan : undefined) : presencePlan,
+    effect.presenceBefore,
+    overrideOf,
+  );
+  if (eventIn.limit?.length) admitted.reason = 'already_done';
   // Each way a scan that did not get in closes, the first that applies: another scan admitted the
   // pass, the event is full, or a rule of its place failed (step 15's order). One ledger row per reason.
   const why: Omit<HeldVariant, 'variant'>[] = [
