@@ -7,12 +7,12 @@ import { gzipSync } from 'node:zlib';
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
 
-/** Console entry: 217.9 kB measured (tooltip loads after first paint); the account menu and its Radix chunks load after first paint.
- * Scanning pages, pass inspection, tables and search controls remain lazy. */
-// Raised from 235_000 while the entry-chunk diet (known-bugs: bundle diet) brings it under 230_000.
-export const BUDGET_BYTES = 238_000;
-/** The scanner's initial load (scan.html), in gzip bytes. */
-export const SCAN_BUDGET_BYTES = 151_000;
+/** Console entry: 221.8 kB measured (tooltip loads after first paint); the account menu and its Radix chunks load after first paint.
+ * Scanning pages, pass inspection, tables and search controls remain lazy. Route search schemas import
+ * only light contract files (pass-list-status.ts), never the pass, scan or template contracts. */
+export const BUDGET_BYTES = 230_000;
+/** The scanner's initial load (scan.html), in gzip bytes: 151.3 kB measured (the console's smaller shared chunk moved some contracts into scan's own). */
+export const SCAN_BUDGET_BYTES = 152_000;
 /**
  * The developer portal's initial load (developers.html), scripts and stylesheets, in gzip bytes.
  * The pages are prerendered, so this is only the enhancement script and the page CSS; the console,
