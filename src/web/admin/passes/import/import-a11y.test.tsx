@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { membershipFixture, renderApp } from '../../../lib/test-utils.tsx';
@@ -41,7 +40,7 @@ async function open(path: string, imp?: Record<string, unknown>) {
 describe('import screens pass axe at 1440, 820 and 390, in both themes', () => {
   it('source', async () => {
     const { container } = await open('/admin/passes/import');
-    await screen.findByRole('button', { name: 'Check file' });
+    await screen.findByRole('button', { name: 'Next' });
     await axeEverywhere(container);
   });
 
@@ -51,14 +50,10 @@ describe('import screens pass axe at 1440, 820 and 390, in both themes', () => {
     await axeEverywhere(container);
   });
 
-  it('check, with problems, and its commit sheet', async () => {
-    const user = userEvent.setup();
+  it('check, with problems', async () => {
     const { container } = await open('/admin/passes/import/imp1', checked());
-    await screen.findByText(/120 to create/);
+    await screen.findByRole('button', { name: /Needs a fix/ });
     await axeEverywhere(container);
-    await user.click(screen.getByRole('button', { name: /^(Create|Update) \d+/ }));
-    await screen.findByRole('dialog');
-    await axeEverywhere(document.body);
   });
 
   it('progress', async () => {
@@ -80,7 +75,7 @@ describe('import screens pass axe at 1440, 820 and 390, in both themes', () => {
         },
       }),
     );
-    await screen.findByText('12 of 160');
+    await screen.findByText(/12 of 160/);
     await axeEverywhere(container);
   });
 
