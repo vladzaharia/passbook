@@ -34,6 +34,7 @@ import {
 } from './credential-service.ts';
 import { holdEnrolment, releaseEnrolment } from './enrolment-hold.ts';
 import { listPlatformEnrolments } from './enrolment-platform-read.ts';
+import { googleManagedPlatformRoutes } from './routes-google-managed.ts';
 
 /** Mount at /api/v1/platform. Platform admins only; the pages show Live and Test together, so the mode is named. */
 export const walletPlatformRoutes = createRouter();
@@ -42,6 +43,8 @@ walletPlatformRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });
+
+walletPlatformRoutes.route('/', googleManagedPlatformRoutes);
 
 const sessionOf = (c: Parameters<typeof authOf>[0]) => {
   const auth = authOf(c);

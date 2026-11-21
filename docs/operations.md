@@ -184,6 +184,20 @@ mode and provider; Test configuration is not Live readiness. See the
   and [developer terms](https://developer.samsung.com/terms?location=us) do not by themselves
   establish a redistribution license.
 
+### Google managed issuers and key rotation (owner steps)
+
+- **Aggregator access.** `issuer.insert` works only for a trusted aggregator's parent issuer. Until Google
+  grants it, a managed-issuer run waits as `google_manual_issuer`: make the issuer in the Google Pay &
+  Wallet Console, share it with PassBook's service account, then complete the run in Platform.
+- **IAM role.** Rotation and the daily key inventory call the IAM API as PassBook's own service account. Grant
+  it `roles/iam.serviceAccountKeyAdmin` on itself only (not on the project), and keep the IAM API enabled.
+- **First rotation.** Rotate once by hand (`POST /api/v1/platform/wallet-credentials/{id}/rotate-key`);
+  that arms the 90-day schedule. The new key replaces the old one in every managed and shared org
+  credential, and the old key is deleted a day later. At most two keys exist at once.
+- **Alert.** More than two keys, or a key PassBook did not create, raises `wallet.key_unknown` (audit row,
+  error log, email to platform admins) once a day. PassBook never deletes such a key: remove it in Google
+  Cloud. One key found before the first rotation is the uploaded one and is adopted.
+
 The Google callback at `POST /wallet/v1/google/{accountId}` verifies Google's signed event; the
 Samsung interaction at `GET` or `POST /wallet/v1/samsung/cards/{cardId}/{refId}` authenticates
 the method and path, not query fields or callback bodies. Confirm Samsung interoperability with

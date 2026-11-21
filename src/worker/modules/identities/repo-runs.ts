@@ -7,7 +7,7 @@ export interface RunRow {
   id: string;
   org_id: string | null;
   kind: RunKind;
-  target_type: 'identity' | 'org';
+  target_type: 'identity' | 'org' | 'wallet_credential';
   target_id: string;
   state: RunState;
   step: string | null;
@@ -27,12 +27,15 @@ const COLUMNS = `id, org_id, kind, target_type, target_id, state, step, attempt,
 
 export const OPEN_STATES = "('queued', 'running', 'waiting')";
 
-export function getRun(db: D1Database, id: string): Promise<RunRow | null> {
-  return first<RunRow>(
-    db,
-    `SELECT ${COLUMNS} FROM identity_runs WHERE id = ? AND provider = 'apple'`,
-    [id],
-  );
+export function getRun(
+  db: D1Database,
+  id: string,
+  provider: 'apple' | 'google' = 'apple',
+): Promise<RunRow | null> {
+  return first<RunRow>(db, `SELECT ${COLUMNS} FROM identity_runs WHERE id = ? AND provider = ?`, [
+    id,
+    provider,
+  ]);
 }
 
 export function findOpenRun(
@@ -65,6 +68,8 @@ export function latestRun(
 
 export interface NewRun {
   id: string;
+  /** Default `apple`. */
+  provider?: 'apple' | 'google';
   orgId: string | null;
   kind: RunKind;
   targetType: RunRow['target_type'];
@@ -80,10 +85,11 @@ export async function insertRun(db: D1Database, r: NewRun): Promise<boolean> {
     db,
     `INSERT OR IGNORE INTO identity_runs
        (id, org_id, provider, kind, target_type, target_id, state, external_ref, created_by, created_at, updated_at)
-     VALUES (?, ?, 'apple', ?, ?, ?, 'queued', ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?)`,
     [
       r.id,
       r.orgId,
+      r.provider ?? 'apple',
       r.kind,
       r.targetType,
       r.targetId,

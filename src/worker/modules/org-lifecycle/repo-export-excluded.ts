@@ -94,6 +94,10 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
     'certificate history links to stored credentials: upload the certificate again',
   identity_handles: 'reserved platform names, kept after a purge',
   identity_runs: BOOKKEEPING,
+  wallet_google_issuers:
+    'which org holds a Google issuer: platform bookkeeping, kept after a purge',
+  wallet_sa_keys: 'platform service-account key inventory',
+  wallet_org_cards: WALLET,
   signing_identities: 'certificate and push key links: upload the certificate again',
   tag_enrollments: BOOKKEEPING,
   template_approvals: DERIVED,

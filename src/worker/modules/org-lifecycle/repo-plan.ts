@@ -59,6 +59,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('template_imports'),
   inOrg('workflow_runs'),
   inOrg('identity_runs'),
+  inOrg('wallet_org_cards'),
   inOrg('idempotency_keys'),
   inOrg('idempotent_requests'),
   { ...inOrg('request_log'), slices: true },
@@ -118,6 +119,8 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
   retention_holds: 'a hold cannot be deleted while its org exists; released before a purge starts',
   pass_credential_tombstones: 'revocation evidence: refs only, no personal data',
   identity_handles: 'a handle is reserved forever: no reuse after a purge',
+  wallet_google_issuers:
+    'an issuer claim is permanent: no reuse after a purge without proof of ownership',
   org_entitlements:
     'the stub keeps its plan row: a trigger refuses deleting it while the org exists',
   developer_sandboxes:
@@ -127,6 +130,7 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
 /** Tables with no tenant rows. The authority tables (grants live inside one batch and are swept) count as well. */
 export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   apns_keys: 'platform push key',
+  wallet_sa_keys: 'platform service-account key inventory',
   auth_identities: 'user sign-in',
   authority_grant_leaks: 'grant bookkeeping',
   counters: 'rate-limit windows',

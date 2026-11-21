@@ -14847,6 +14847,34 @@
           "png"
         ]
       },
+      "WalletAccountsGoogleManagedCreateParams": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "WalletAccountsGoogleSharedCreateParams": {
+        "type": "object",
+        "properties": {
+          "issuerId": {
+            "type": "string",
+            "pattern": "^[0-9]{1,32}$"
+          }
+        },
+        "required": [
+          "issuerId"
+        ],
+        "additionalProperties": false
+      },
       "WalletCredentialsUpsertParams": {
         "oneOf": [
           {
@@ -15085,6 +15113,34 @@
             "maxLength": 64
           }
         },
+        "additionalProperties": false
+      },
+      "PlatformWalletAccountsGoogleManagedCreateParams": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformWalletAccountsGoogleManagedCompleteParams": {
+        "type": "object",
+        "properties": {
+          "issuerId": {
+            "type": "string",
+            "pattern": "^[0-9]{1,32}$"
+          }
+        },
+        "required": [
+          "issuerId"
+        ],
         "additionalProperties": false
       },
       "PlatformWalletCredentialsUpsertParams": {
@@ -31714,6 +31770,468 @@
         ]
       }
     },
+    "/api/v1/orgs/{orgId}/wallet-accounts/google/managed": {
+      "post": {
+        "x-feature": "identity.managed",
+        "summary": "Ask PassBook for a managed Google issuer",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletAccountsGoogleManagedCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "issuerId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "runId",
+                    "state",
+                    "step",
+                    "waitingFor",
+                    "errorCode",
+                    "issuerId",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleManaged",
+        "x-sdk": {
+          "resource": "walletAccounts.googleManaged",
+          "method": "create"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Read the latest managed Google issuer run",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "run": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "runId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "running",
+                            "waiting",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ]
+                        },
+                        "step": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "waitingFor": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "errorCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "issuerId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "runId",
+                        "state",
+                        "step",
+                        "waitingFor",
+                        "errorCode",
+                        "issuerId",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "run"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged",
+        "x-sdk": {
+          "resource": "walletAccounts.googleManaged",
+          "method": "retrieve"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-accounts/google/shared": {
+      "post": {
+        "summary": "Connect your Google issuer through PassBook's service account",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletAccountsGoogleSharedCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "credential": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "platform",
+                            "org"
+                          ]
+                        },
+                        "orgId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "live",
+                            "test"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "google",
+                            "samsung"
+                          ]
+                        },
+                        "identityHint": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "platform",
+                            "managed",
+                            "own"
+                          ]
+                        },
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "verifiedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "revokedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "scope",
+                        "orgId",
+                        "mode",
+                        "provider",
+                        "identityHint",
+                        "provenance",
+                        "revision",
+                        "verifiedAt",
+                        "revokedAt",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "serviceAccountEmail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "credential",
+                    "serviceAccountEmail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+        "x-sdk": {
+          "resource": "walletAccounts.googleShared",
+          "method": "create"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "Read PassBook's service-account address for sharing an issuer",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "serviceAccountEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "serviceAccountEmail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleShared",
+        "x-sdk": {
+          "resource": "walletAccounts.googleShared",
+          "method": "retrieve"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/v1/orgs/{orgId}/wallet-credentials": {
       "get": {
         "summary": "List the organization wallet credentials of the session mode",
@@ -31803,6 +32321,14 @@
                           "identityHint": {
                             "type": "string"
                           },
+                          "provenance": {
+                            "type": "string",
+                            "enum": [
+                              "platform",
+                              "managed",
+                              "own"
+                            ]
+                          },
                           "revision": {
                             "type": "integer",
                             "minimum": 0
@@ -31837,6 +32363,7 @@
                           "mode",
                           "provider",
                           "identityHint",
+                          "provenance",
                           "revision",
                           "verifiedAt",
                           "revokedAt",
@@ -31994,6 +32521,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -32028,6 +32563,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",
@@ -32184,6 +32720,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -32218,6 +32762,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",
@@ -35339,6 +35884,305 @@
         ]
       }
     },
+    "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed": {
+      "post": {
+        "summary": "Start a managed Google issuer for an organization",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformWalletAccountsGoogleManagedCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "issuerId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "runId",
+                    "state",
+                    "step",
+                    "waitingFor",
+                    "errorCode",
+                    "issuerId",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
+        "x-sdk": {
+          "resource": "platform.walletAccounts.googleManaged",
+          "method": "create"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete": {
+      "post": {
+        "summary": "Finish a parked managed Google issuer with an issuer id made in the console",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformWalletAccountsGoogleManagedCompleteParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "issuerId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "runId",
+                    "state",
+                    "step",
+                    "waitingFor",
+                    "errorCode",
+                    "issuerId",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete",
+        "x-sdk": {
+          "resource": "platform.walletAccounts.googleManaged",
+          "method": "complete"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/platform/wallet-credentials/{id}/rotate-key": {
+      "post": {
+        "summary": "Rotate a platform Google credential's service-account key now",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "runId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRotateKey",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "rotateKey"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/v1/platform/wallet-credentials": {
       "get": {
         "summary": "List the platform wallet credentials",
@@ -35406,6 +36250,14 @@
                           "identityHint": {
                             "type": "string"
                           },
+                          "provenance": {
+                            "type": "string",
+                            "enum": [
+                              "platform",
+                              "managed",
+                              "own"
+                            ]
+                          },
                           "revision": {
                             "type": "integer",
                             "minimum": 0
@@ -35440,6 +36292,7 @@
                           "mode",
                           "provider",
                           "identityHint",
+                          "provenance",
                           "revision",
                           "verifiedAt",
                           "revokedAt",
@@ -35552,6 +36405,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -35586,6 +36447,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",
@@ -35699,6 +36561,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -35733,6 +36603,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",

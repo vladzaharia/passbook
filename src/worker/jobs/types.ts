@@ -76,6 +76,10 @@ export const JobSchema = z.discriminatedUnion('kind', [
   /** A platform admin's hold on a suspended org's wallet enrolment: a job grant writes it. */
   /** One legacy wallet account onto its credential source, under the migrate job grant. */
   z.object({ kind: z.literal('wallet.credential_migrate'), accountId: z.string().min(1) }),
+  /** One managed Google issuer run (adopt or insert the issuer, record it on the org). */
+  z.object({ kind: z.literal('wallet.google_issuer'), runId: z.string().min(1).max(64) }),
+  /** One service-account key rotation run of a platform Google credential. */
+  z.object({ kind: z.literal('wallet.google_key_rotate'), runId: z.string().min(1).max(64) }),
   /** An Apple release published: the platform authors the provider candidate (CW7b). */
   z.object({
     kind: z.literal('wallet.projection_system'),
