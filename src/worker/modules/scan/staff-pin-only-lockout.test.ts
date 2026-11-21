@@ -23,12 +23,14 @@ const device = () =>
     templateIds: [fixture.deskTemplate],
     settings: { staffSignIn: true },
   });
-const audits = (action: string) =>
-  all<{ target_id: string }>(
+const audits = async (action: string) => {
+  await fixture.settle();
+  return all<{ target_id: string }>(
     fixture.kit.env.DB,
     'SELECT target_id FROM audit_log WHERE org_id = ? AND action = ?',
     [fixture.kit.org.id, action],
   );
+};
 
 describe('PIN-only abuse limits at 100 staff', () => {
   it('lets concurrent attempts through only up to the hourly cap', async () => {
@@ -71,6 +73,7 @@ describe('PIN-only abuse limits at 100 staff', () => {
       for (let hour = 0; hour < 4; hour++) {
         const scanner = await device();
         await problem(await pinOnly(scanner.headers, '000000'), 400, 'PIN_INVALID');
+        await fixture.settle();
         kit.clock.advance(3_600_000);
       }
     }

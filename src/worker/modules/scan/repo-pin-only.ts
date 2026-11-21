@@ -19,11 +19,12 @@ const flagStatements = (db: D1Database, orgId: string) => [
   ]),
 ];
 
-/** Off when a lockout stands that no later admin `true` has overridden. */
+/** Off when an admin set `false`, or a lockout stands that no later admin `true` has overridden. */
 export function pinOnlyIsOff(lock: D1Result, setting: D1Result): boolean {
+  const row = setting.results[0] as { value?: string; updated_at?: number } | undefined;
+  if (row?.value === 'false') return true;
   const locked = (lock.results[0] as { value?: string } | undefined)?.value;
   if (locked === undefined) return false;
-  const row = setting.results[0] as { value?: string; updated_at?: number } | undefined;
   const at = (JSON.parse(locked) as { at: number }).at;
   return !(row?.value === 'true' && (row.updated_at ?? 0) > at);
 }

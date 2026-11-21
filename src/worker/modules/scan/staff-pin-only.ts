@@ -138,12 +138,21 @@ export async function checkPinOnly(
       return verified;
     } catch (error) {
       if (error instanceof AppError && error.code === 'PIN_INVALID')
-        await recordMiss(
-          ctx,
-          { orgId, scannerId },
-          counts as { hour: number; day: number },
-          { hour: budget.hour.cap, day: budget.day.cap },
-          only.matched(),
+        // Deferred on every miss, so an audit for a shared or Manager PIN cannot make that answer slower.
+        ctx.waitUntil(
+          recordMiss(
+            ctx,
+            { orgId, scannerId },
+            counts as { hour: number; day: number },
+            { hour: budget.hour.cap, day: budget.day.cap },
+            only.matched(),
+          ).catch((cause: unknown) =>
+            ctx.log.error('scan.pin_only_audit_failed', {
+              orgId,
+              code: 'PIN_ONLY_AUDIT',
+              error: cause,
+            }),
+          ),
         );
       // A device lockout is not a guess, so the org does not pay for it.
       else if (error instanceof AppError && error.code === 'RATE_LIMITED') await refundBudget();

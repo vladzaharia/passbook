@@ -33,12 +33,14 @@ async function device(mode: 'live' | 'test' = 'live') {
     settings: { staffSignIn: true },
   });
 }
-const audits = (action: string) =>
-  all<{ target_id: string; actor_id: string }>(
+const audits = async (action: string) => {
+  await fixture.settle();
+  return all<{ target_id: string; actor_id: string }>(
     fixture.kit.env.DB,
     'SELECT target_id, actor_id FROM audit_log WHERE org_id = ? AND action = ?',
     [fixture.kit.org.id, action],
   );
+};
 
 describe('the PIN-only budget scales with the staff count', () => {
   it.each([
@@ -121,6 +123,40 @@ describe('staff sign-in with a PIN alone', () => {
     expect((await session(await signIn(first.headers, manager), manager.pin)).staff?.id).toBe(
       manager.id,
     );
+  });
+
+  it('defers the audit of a Manager or shared PIN, so the answer is no slower than a plain miss', async () => {
+    const { kit, problem, deferred, settle } = fixture;
+    const manager = await makeScanStaff(kit.fx, {
+      orgId: kit.org.id,
+      role: 'manager',
+      pin: '664422',
+    });
+    const scanner = await device();
+    await settle();
+    await problem(await pinOnly(scanner.headers, manager.pin), 400, 'PIN_INVALID', manager.pin);
+    // The answer is out while the audit is still queued on waitUntil, not awaited.
+    expect(deferred.length).toBeGreaterThan(0);
+    expect(
+      (await audits('scan_staff.pin_only_manager')).filter((r) => r.target_id === manager.id),
+    ).toHaveLength(1);
+    // A plain miss defers the same work.
+    await problem(await pinOnly(scanner.headers, '000003'), 400, 'PIN_INVALID');
+    expect(deferred.length).toBeGreaterThan(0);
+  });
+
+  it('turns PIN-only off when an admin sets scan.pinOnly to false, with no lockout', async () => {
+    const { kit, problem, session } = fixture;
+    const staff = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '775533' });
+    await run(
+      kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'scan.pinOnly', 'false', ?)",
+      [`org:${kit.org.id}`, kit.clock.now()],
+    );
+    const scanner = await device();
+    await problem(await pinOnly(scanner.headers, staff.pin), 409, 'STAFF_NAME_REQUIRED', staff.pin);
+    await run(kit.env.DB, "UPDATE settings SET value = 'true' WHERE key = 'scan.pinOnly'");
+    expect((await session(await pinOnly(scanner.headers, staff.pin))).staff?.id).toBe(staff.id);
   });
 
   it('locks the device after five misses; another device is unaffected', async () => {
