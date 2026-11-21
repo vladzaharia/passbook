@@ -1,8 +1,10 @@
+import { STRONG_AMR } from '../../shared/sign-in.ts';
+
 /**
  * The SQL backstop of the sign-in rule: a session grants console authority only when it is strong
  * (`oidc`, `breakglass`) or an email session inside the grace window, whatever route guard let it in.
  */
-export const STRONG_AMR_SQL = `('oidc', 'breakglass')`;
+export const STRONG_AMR_SQL = `(${STRONG_AMR.map((amr) => `'${amr}'`).join(', ')})`;
 
 /**
  * `alias` is a `sessions` row. `now` is the placeholder for the time in ms.

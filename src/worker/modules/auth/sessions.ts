@@ -27,6 +27,17 @@ export function lifetimeFor(roles: readonly Role[], amr?: Amr): SessionLifetime 
     : { idleMs: 30 * DAY, absoluteMs: 90 * DAY, touchEveryMs: 5 * MINUTE };
 }
 
+const AUTH_TIME_SKEW_MS = 5 * MINUTE;
+
+/** Break-glass proves itself now; Polaris ID's claim is kept only when positive and not in the future. */
+function authTimeFor(amr: Amr, claimed: number | undefined, now: number): number | null {
+  if (amr === 'breakglass') return now;
+  if (amr !== 'oidc' || claimed === undefined) return null;
+  return Number.isFinite(claimed) && claimed > 0 && claimed <= now + AUTH_TIME_SKEW_MS
+    ? claimed
+    : null;
+}
+
 export const hashSessionCookie = (cookieValue: string) => sha256Hex(cookieValue);
 
 export interface NewSession {
@@ -45,7 +56,7 @@ export async function createSession(
     amr: Amr;
     ipPrefix: string | null;
     userAgent: string | null;
-    /** When the identity provider last authenticated the person (ms); the session's start when absent. */
+    /** When the identity provider last authenticated the person (ms). Kept as NULL when absent or implausible. */
     authTime?: number;
   },
 ): Promise<NewSession> {
@@ -58,7 +69,7 @@ export async function createSession(
     idHash,
     userId: input.userId,
     amr: input.amr,
-    authTime: input.authTime ?? now,
+    authTime: authTimeFor(input.amr, input.authTime, now),
     roles: input.roles,
     csrfSecret,
     now,
@@ -98,7 +109,7 @@ export async function resolveSession(
     roles,
     csrfSecret: row.csrf_secret,
     amr: row.amr,
-    consoleUntil: row.amr === 'magic_link' ? await repo.consoleGraceEnd(env.DB, row.user_id) : null,
+    consoleUntil: row.console_until,
     mode: 'live',
     expiresAt: Math.min(row.expires_at, row.idle_expires_at),
   };
