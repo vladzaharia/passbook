@@ -99388,6 +99388,12 @@
           }
         },
         "operationId": "scan.postScanStaffPin",
+        "x-sdk": {
+          "resource": "terminal.staff",
+          "method": "setPin",
+          "sdk": false,
+          "reason": "Scanner device protocol; needs a paired scanner session."
+        },
         "security": [
           {
             "scanner": []
