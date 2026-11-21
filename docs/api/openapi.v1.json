@@ -14850,6 +14850,34 @@
           "png"
         ]
       },
+      "WalletAccountsGoogleManagedCreateParams": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "WalletAccountsGoogleSharedCreateParams": {
+        "type": "object",
+        "properties": {
+          "issuerId": {
+            "type": "string",
+            "pattern": "^[0-9]{1,32}$"
+          }
+        },
+        "required": [
+          "issuerId"
+        ],
+        "additionalProperties": false
+      },
       "WalletCredentialsUpsertParams": {
         "oneOf": [
           {
@@ -15088,6 +15116,34 @@
             "maxLength": 64
           }
         },
+        "additionalProperties": false
+      },
+      "PlatformWalletAccountsGoogleManagedCreateParams": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformWalletAccountsGoogleManagedCompleteParams": {
+        "type": "object",
+        "properties": {
+          "issuerId": {
+            "type": "string",
+            "pattern": "^[0-9]{1,32}$"
+          }
+        },
+        "required": [
+          "issuerId"
+        ],
         "additionalProperties": false
       },
       "PlatformWalletCredentialsUpsertParams": {
@@ -19245,6 +19301,16 @@
               "null"
             ],
             "maxLength": 64
+          },
+          "rotation": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ]
+          },
+          "issuing": {
+            "type": "boolean"
           }
         }
       },
@@ -19289,6 +19355,41 @@
           "keyId",
           "p8"
         ]
+      },
+      "IdentitiesCertificatesRevokeParams": {
+        "type": "object",
+        "properties": {
+          "certificateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "compromised"
+            ]
+          },
+          "confirm": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "certificateId",
+          "reason",
+          "confirm"
+        ]
+      },
+      "IdentityRunsStartManagedParams": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]{1,29}$"
+          }
+        }
       },
       "WalletProviderAccountsVerifyParams": {
         "type": "object",
@@ -28698,7 +28799,8 @@
                               "members",
                               "brand.mark",
                               "domains",
-                              "identity.own"
+                              "identity.own",
+                              "identity.managed"
                             ]
                           },
                           "value": {
@@ -31837,6 +31939,656 @@
         ]
       }
     },
+    "/api/v1/orgs/{orgId}/wallet-accounts/google/managed": {
+      "post": {
+        "x-feature": "identity.managed",
+        "summary": "Ask PassBook for a managed Google issuer",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletAccountsGoogleManagedCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "issuerId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "runId",
+                    "state",
+                    "step",
+                    "waitingFor",
+                    "errorCode",
+                    "issuerId",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleManaged",
+        "x-sdk": {
+          "resource": "walletAccounts.googleManaged",
+          "method": "create"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "GOOGLE_CALLBACK_INVALID",
+          "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SAMSUNG_FIELDS_INVALID",
+          "SAMSUNG_UNAUTHENTICATED",
+          "SAMSUNG_UNAVAILABLE",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_SELF_APPROVAL",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_ACCOUNT_INSTANCES_ACTIVE",
+          "WALLET_ACCOUNT_MOVED",
+          "WALLET_ART_MISMATCH",
+          "WALLET_CREDENTIALS_INVALID",
+          "WALLET_CREDENTIALS_UNAVAILABLE",
+          "WALLET_ENROLMENT_HELD",
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WALLET_IDENTITY_IMMUTABLE",
+          "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
+          "WALLET_MODE_MISMATCH",
+          "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WALLET_PROJECTION_BLOCKED",
+          "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_NOT_FOUND",
+          "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
+          "WALLET_VERIFICATION_CONFLICT"
+        ]
+      },
+      "get": {
+        "summary": "Read the latest managed Google issuer run",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "run": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "runId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "running",
+                            "waiting",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ]
+                        },
+                        "step": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "waitingFor": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "errorCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "issuerId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "runId",
+                        "state",
+                        "step",
+                        "waitingFor",
+                        "errorCode",
+                        "issuerId",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "run"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged",
+        "x-sdk": {
+          "resource": "walletAccounts.googleManaged",
+          "method": "retrieve"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "GOOGLE_CALLBACK_INVALID",
+          "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SAMSUNG_FIELDS_INVALID",
+          "SAMSUNG_UNAUTHENTICATED",
+          "SAMSUNG_UNAVAILABLE",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_SELF_APPROVAL",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_ACCOUNT_INSTANCES_ACTIVE",
+          "WALLET_ACCOUNT_MOVED",
+          "WALLET_ART_MISMATCH",
+          "WALLET_CREDENTIALS_INVALID",
+          "WALLET_CREDENTIALS_UNAVAILABLE",
+          "WALLET_ENROLMENT_HELD",
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WALLET_IDENTITY_IMMUTABLE",
+          "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
+          "WALLET_MODE_MISMATCH",
+          "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WALLET_PROJECTION_BLOCKED",
+          "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_NOT_FOUND",
+          "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
+          "WALLET_VERIFICATION_CONFLICT"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/wallet-accounts/google/shared": {
+      "post": {
+        "summary": "Connect your Google issuer through PassBook's service account",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletAccountsGoogleSharedCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "credential": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "platform",
+                            "org"
+                          ]
+                        },
+                        "orgId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "live",
+                            "test"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "google",
+                            "samsung"
+                          ]
+                        },
+                        "identityHint": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "platform",
+                            "managed",
+                            "own"
+                          ]
+                        },
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "verifiedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "revokedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "updatedAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "scope",
+                        "orgId",
+                        "mode",
+                        "provider",
+                        "identityHint",
+                        "provenance",
+                        "revision",
+                        "verifiedAt",
+                        "revokedAt",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "serviceAccountEmail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "credential",
+                    "serviceAccountEmail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+        "x-sdk": {
+          "resource": "walletAccounts.googleShared",
+          "method": "create"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "GOOGLE_CALLBACK_INVALID",
+          "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SAMSUNG_FIELDS_INVALID",
+          "SAMSUNG_UNAUTHENTICATED",
+          "SAMSUNG_UNAVAILABLE",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_SELF_APPROVAL",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_ACCOUNT_INSTANCES_ACTIVE",
+          "WALLET_ACCOUNT_MOVED",
+          "WALLET_ART_MISMATCH",
+          "WALLET_CREDENTIALS_INVALID",
+          "WALLET_CREDENTIALS_UNAVAILABLE",
+          "WALLET_ENROLMENT_HELD",
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WALLET_IDENTITY_IMMUTABLE",
+          "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
+          "WALLET_MODE_MISMATCH",
+          "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WALLET_PROJECTION_BLOCKED",
+          "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_NOT_FOUND",
+          "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
+          "WALLET_VERIFICATION_CONFLICT"
+        ]
+      },
+      "get": {
+        "summary": "Read PassBook's service-account address for sharing an issuer",
+        "tags": [
+          "wallet-credentials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "serviceAccountEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "serviceAccountEmail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleShared",
+        "x-sdk": {
+          "resource": "walletAccounts.googleShared",
+          "method": "retrieve"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "GOOGLE_CALLBACK_INVALID",
+          "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SAMSUNG_FIELDS_INVALID",
+          "SAMSUNG_UNAUTHENTICATED",
+          "SAMSUNG_UNAVAILABLE",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_SELF_APPROVAL",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_ACCOUNT_CONFLICT",
+          "WALLET_ACCOUNT_INSTANCES_ACTIVE",
+          "WALLET_ACCOUNT_MOVED",
+          "WALLET_ART_MISMATCH",
+          "WALLET_CREDENTIALS_INVALID",
+          "WALLET_CREDENTIALS_UNAVAILABLE",
+          "WALLET_ENROLMENT_HELD",
+          "WALLET_ENROLMENT_PREREQUISITE",
+          "WALLET_IDENTITY_IMMUTABLE",
+          "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
+          "WALLET_MODE_MISMATCH",
+          "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WALLET_PROJECTION_BLOCKED",
+          "WALLET_PROJECTION_CONFLICT",
+          "WALLET_PROJECTION_NOT_FOUND",
+          "WALLET_PROJECTION_SCHEMA",
+          "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
+          "WALLET_VERIFICATION_CONFLICT"
+        ]
+      }
+    },
     "/api/v1/orgs/{orgId}/wallet-credentials": {
       "get": {
         "summary": "List the organization wallet credentials of the session mode",
@@ -31926,6 +32678,14 @@
                           "identityHint": {
                             "type": "string"
                           },
+                          "provenance": {
+                            "type": "string",
+                            "enum": [
+                              "platform",
+                              "managed",
+                              "own"
+                            ]
+                          },
                           "revision": {
                             "type": "integer",
                             "minimum": 0
@@ -31960,6 +32720,7 @@
                           "mode",
                           "provider",
                           "identityHint",
+                          "provenance",
                           "revision",
                           "verifiedAt",
                           "revokedAt",
@@ -32010,8 +32771,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -32031,13 +32798,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       },
@@ -32113,6 +32886,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -32147,6 +32928,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",
@@ -32184,8 +32966,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -32205,13 +32993,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -32299,6 +33093,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -32333,6 +33135,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",
@@ -32370,8 +33173,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -32391,13 +33200,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -32485,8 +33300,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -32506,13 +33327,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -32627,8 +33454,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -32648,13 +33481,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -32886,8 +33725,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -32907,13 +33752,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -33140,8 +33991,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -33161,13 +34018,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -33394,8 +34257,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -33415,13 +34284,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -33648,8 +34523,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -33669,13 +34550,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -33902,8 +34789,14 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -33923,13 +34816,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -35444,6 +36343,332 @@
         ]
       }
     },
+    "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed": {
+      "post": {
+        "summary": "Start a managed Google issuer for an organization",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformWalletAccountsGoogleManagedCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "issuerId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "runId",
+                    "state",
+                    "step",
+                    "waitingFor",
+                    "errorCode",
+                    "issuerId",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
+        "x-sdk": {
+          "resource": "platform.walletAccounts.googleManaged",
+          "method": "create"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete": {
+      "post": {
+        "summary": "Finish a parked managed Google issuer with an issuer id made in the console",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformWalletAccountsGoogleManagedCompleteParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "issuerId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "runId",
+                    "state",
+                    "step",
+                    "waitingFor",
+                    "errorCode",
+                    "issuerId",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete",
+        "x-sdk": {
+          "resource": "platform.walletAccounts.googleManaged",
+          "method": "complete"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/wallet-credentials/{id}/rotate-key": {
+      "post": {
+        "summary": "Rotate a platform Google credential's service-account key now",
+        "tags": [
+          "wallet-platform"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "runId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRotateKey",
+        "x-sdk": {
+          "resource": "platform.walletCredentials",
+          "method": "rotateKey"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/platform/wallet-credentials": {
       "get": {
         "summary": "List the platform wallet credentials",
@@ -35511,6 +36736,14 @@
                           "identityHint": {
                             "type": "string"
                           },
+                          "provenance": {
+                            "type": "string",
+                            "enum": [
+                              "platform",
+                              "managed",
+                              "own"
+                            ]
+                          },
                           "revision": {
                             "type": "integer",
                             "minimum": 0
@@ -35545,6 +36778,7 @@
                           "mode",
                           "provider",
                           "identityHint",
+                          "provenance",
                           "revision",
                           "verifiedAt",
                           "revokedAt",
@@ -35659,6 +36893,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -35693,6 +36935,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",
@@ -35808,6 +37051,14 @@
                     "identityHint": {
                       "type": "string"
                     },
+                    "provenance": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ]
+                    },
                     "revision": {
                       "type": "integer",
                       "minimum": 0
@@ -35842,6 +37093,7 @@
                     "mode",
                     "provider",
                     "identityHint",
+                    "provenance",
                     "revision",
                     "verifiedAt",
                     "revokedAt",
@@ -36873,7 +38125,8 @@
                               "members",
                               "brand.mark",
                               "domains",
-                              "identity.own"
+                              "identity.own",
+                              "identity.managed"
                             ]
                           },
                           "value": {
@@ -37161,7 +38414,8 @@
                               "members",
                               "brand.mark",
                               "domains",
-                              "identity.own"
+                              "identity.own",
+                              "identity.managed"
                             ]
                           },
                           "value": {
@@ -78355,6 +79609,56 @@
                               "createdAt": {
                                 "type": "integer",
                                 "minimum": 0
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "platform",
+                                  "managed",
+                                  "own"
+                                ],
+                                "default": "own"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "provisioning",
+                                  "active",
+                                  "renewing",
+                                  "expiring",
+                                  "expired",
+                                  "retired",
+                                  "failed"
+                                ],
+                                "default": "active"
+                              },
+                              "rotation": {
+                                "type": "string",
+                                "enum": [
+                                  "auto",
+                                  "csr",
+                                  "manual"
+                                ],
+                                "default": "manual"
+                              },
+                              "issuing": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "nextRotationAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0,
+                                "default": null
+                              },
+                              "handle": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
                               }
                             },
                             "required": [
@@ -78514,8 +79818,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -78523,18 +79830,38 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -78797,6 +80124,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -78848,8 +80225,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -78857,18 +80237,38 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -79135,6 +80535,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -79186,8 +80636,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -79195,19 +80648,39 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -79482,6 +80955,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -79533,8 +81056,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -79542,19 +81068,39 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -79626,8 +81172,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -79635,19 +81184,39 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -79924,6 +81493,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -79975,8 +81594,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -79984,19 +81606,39 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -80098,8 +81740,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -80107,19 +81752,39 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -80396,6 +82061,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -80447,8 +82162,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -80456,19 +82174,39 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
@@ -80733,6 +82471,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -80784,8 +82572,11 @@
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
           "ASC_CONFLICT",
           "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
           "ASC_REFUSED",
           "ASC_UNAVAILABLE",
           "ASC_UPSTREAM",
@@ -80793,21 +82584,1904 @@
           "CERT_PENDING_KEY_MISSING",
           "CERT_PENDING_NOT_FOUND",
           "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
           "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
           "IDENTITY_EXISTS",
           "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
           "IDENTITY_IN_USE",
           "IDENTITY_KEY_UNREADABLE",
           "IDENTITY_NOT_CONFIGURED",
           "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
           "IDENTITY_PLATFORM_ENV_MISMATCH",
           "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
           "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
+          "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/identities/{id}/renew": {
+      "post": {
+        "summary": "Get a new certificate now (managed identities)",
+        "tags": [
+          "identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org",
+                        "wallet_credential"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identities.postIdentitiesByIdRenew",
+        "x-sdk": {
+          "resource": "identities",
+          "method": "renew"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
+          "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
+          "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
+          "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
+          "IDENTITY_IN_USE",
+          "IDENTITY_KEY_UNREADABLE",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
+          "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
+          "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "OIDC_REQUIRED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PUSH_KEY_NONE",
+          "PUSH_KEY_UNREADABLE",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/identities/{id}/certificates": {
+      "get": {
+        "summary": "Certificate history of an identity, newest first",
+        "tags": [
+          "identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "active",
+                              "superseded",
+                              "revoked",
+                              "failed"
+                            ]
+                          },
+                          "origin": {
+                            "type": "string",
+                            "enum": [
+                              "upload",
+                              "asc",
+                              "csr",
+                              "env"
+                            ]
+                          },
+                          "certSha256": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "notBefore": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "notAfter": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "activatedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "endedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "state",
+                          "origin",
+                          "certSha256",
+                          "notBefore",
+                          "notAfter",
+                          "createdAt",
+                          "activatedAt",
+                          "endedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identities.getIdentitiesByIdCertificates",
+        "x-sdk": {
+          "resource": "identities.certificates",
+          "method": "list"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
+          "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
+          "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
+          "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
+          "IDENTITY_IN_USE",
+          "IDENTITY_KEY_UNREADABLE",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
+          "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
+          "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "OIDC_REQUIRED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PUSH_KEY_NONE",
+          "PUSH_KEY_UNREADABLE",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/identities/{id}/revoke-certificate": {
+      "post": {
+        "summary": "Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in",
+        "tags": [
+          "identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentitiesCertificatesRevokeParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org",
+                        "wallet_credential"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identities.postIdentitiesByIdRevokeCertificate",
+        "x-sdk": {
+          "resource": "identities.certificates",
+          "method": "revoke"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "APNS_BINDING_MANAGED",
+          "ASC_AUTH",
+          "ASC_CERT_DER_MISSING",
+          "ASC_CERT_MISSING",
+          "ASC_CONFLICT",
+          "ASC_NOT_FOUND",
+          "ASC_PASS_TYPE_MISSING",
+          "ASC_REFUSED",
+          "ASC_UNAVAILABLE",
+          "ASC_UPSTREAM",
+          "CERT_NOT_PENDING",
+          "CERT_PENDING_KEY_MISSING",
+          "CERT_PENDING_NOT_FOUND",
+          "FORBIDDEN",
+          "IDENTITY_ALREADY_PROVISIONED",
+          "IDENTITY_CERT_CAP",
+          "IDENTITY_CERT_NOT_FOUND",
+          "IDENTITY_CERT_NOT_REVOCABLE",
+          "IDENTITY_CHANGED",
+          "IDENTITY_CONFIRM_MISMATCH",
+          "IDENTITY_EXISTS",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_HANDLE_ADMIN_ONLY",
+          "IDENTITY_HANDLE_FIXED",
+          "IDENTITY_HANDLE_INVALID",
+          "IDENTITY_HANDLE_RESERVED",
+          "IDENTITY_HANDLE_TAKEN",
+          "IDENTITY_IN_USE",
+          "IDENTITY_KEY_UNREADABLE",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_NOT_READY",
+          "IDENTITY_NOT_ROTATABLE",
+          "IDENTITY_PLATFORM_ENV_MISMATCH",
+          "IDENTITY_PROTECTED",
+          "IDENTITY_PTI_TAKEN",
+          "IDENTITY_REISSUE_PENDING",
+          "IDENTITY_RETIRED",
+          "IDENTITY_RUN_CLOSED",
+          "IDENTITY_RUN_INCOMPLETE",
+          "IDENTITY_RUN_NOT_FOUND",
+          "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "OIDC_REQUIRED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PUSH_KEY_NONE",
+          "PUSH_KEY_UNREADABLE",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/identity-runs": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "List identity runs, newest first",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "targetId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "orgId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "provision",
+                              "rotate",
+                              "revoke"
+                            ]
+                          },
+                          "targetType": {
+                            "type": "string",
+                            "enum": [
+                              "identity",
+                              "org",
+                              "wallet_credential"
+                            ]
+                          },
+                          "targetId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "queued",
+                              "running",
+                              "waiting",
+                              "succeeded",
+                              "failed",
+                              "cancelled"
+                            ]
+                          },
+                          "step": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "attempt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "waitingFor": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "errorCode": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "updatedAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "finishedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "orgId",
+                          "kind",
+                          "targetType",
+                          "targetId",
+                          "state",
+                          "step",
+                          "attempt",
+                          "waitingFor",
+                          "errorCode",
+                          "createdAt",
+                          "updatedAt",
+                          "finishedAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.getIdentityRuns",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/identity-runs/{id}": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Get an identity run",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org",
+                        "wallet_credential"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.getIdentityRunsById",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "retrieve"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/identity-runs/{id}/retry": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Start a failed or cancelled run again",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org",
+                        "wallet_credential"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.postIdentityRunsByIdRetry",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "retry"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/identity-runs/{id}/cancel": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Cancel an open run",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org",
+                        "wallet_credential"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.postIdentityRunsByIdCancel",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "cancel"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/wallet-identities": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "List wallet identities; a member reads their own organization",
+        "tags": [
+          "wallet-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "apple"
+              ],
+              "default": "apple"
+            },
+            "required": false,
+            "name": "provider",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "platform",
+                "managed",
+                "own"
+              ]
+            },
+            "required": false,
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "provisioning",
+                "active",
+                "renewing",
+                "expiring",
+                "expired",
+                "retired",
+                "failed"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "apple"
+                            ]
+                          },
+                          "orgId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "identifier": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "platform",
+                              "managed",
+                              "own"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "provisioning",
+                              "active",
+                              "renewing",
+                              "expiring",
+                              "expired",
+                              "retired",
+                              "failed"
+                            ]
+                          },
+                          "notBefore": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "notAfter": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "rotation": {
+                            "type": "string",
+                            "enum": [
+                              "auto",
+                              "csr",
+                              "manual"
+                            ]
+                          },
+                          "nextRotationAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "issuing": {
+                            "type": "boolean"
+                          },
+                          "isDefault": {
+                            "type": "boolean"
+                          },
+                          "passCount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "provider",
+                          "orgId",
+                          "label",
+                          "identifier",
+                          "kind",
+                          "status",
+                          "notBefore",
+                          "notAfter",
+                          "rotation",
+                          "nextRotationAt",
+                          "issuing",
+                          "isDefault",
+                          "passCount",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.getWalletIdentities",
+        "x-sdk": {
+          "resource": "walletIdentities",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/orgs/{orgId}/identities/apple": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-feature": "identity.managed",
+        "summary": "Start the managed Apple identity of an organization (Idempotency-Key)",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityRunsStartManagedParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org",
+                        "wallet_credential"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "startManaged"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/apple-calls": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Apple provisioner's call ledger",
+        "tags": [
+          "wallet-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "since",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "callId": {
+                            "type": "string"
+                          },
+                          "phase": {
+                            "type": "string"
+                          },
+                          "method": {
+                            "type": "string"
+                          },
+                          "target": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "caller": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "status": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "durationMs": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "callId",
+                          "phase",
+                          "method",
+                          "target",
+                          "caller",
+                          "status",
+                          "durationMs",
+                          "at"
+                        ]
+                      }
+                    },
+                    "available": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "available"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.getPlatformAppleCalls",
+        "x-sdk": {
+          "resource": "platform.appleCalls",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -80892,7 +84566,13 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -80912,13 +84592,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -81110,7 +84796,13 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -81130,13 +84822,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       },
@@ -81299,7 +84997,13 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -81319,13 +85023,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -81490,7 +85200,13 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -81510,13 +85226,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -81913,10 +85635,16 @@
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -81936,13 +85664,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -126535,9 +130269,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -130073,7 +133809,13 @@
         "x-codes": [
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -130092,13 +133834,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }
@@ -130156,7 +133904,13 @@
         "x-codes": [
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -130175,13 +133929,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       },
@@ -130237,7 +133997,13 @@
         "x-codes": [
           "GOOGLE_CALLBACK_INVALID",
           "GOOGLE_CALLBACK_UNAVAILABLE",
+          "GOOGLE_ISSUER_NOT_OWNED",
+          "GOOGLE_ISSUER_NOT_SHARED",
+          "GOOGLE_UNAVAILABLE",
+          "IAM_BAD_ACCOUNT",
+          "IAM_BAD_KEY",
           "NOT_FOUND",
+          "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
@@ -130256,13 +134022,19 @@
           "WALLET_ENROLMENT_PREREQUISITE",
           "WALLET_IDENTITY_IMMUTABLE",
           "WALLET_IMAGE_NOT_FOUND",
+          "WALLET_ISSUER_CLAIMED",
+          "WALLET_ISSUER_EXISTS",
+          "WALLET_ISSUER_NOT_WAITING",
+          "WALLET_KEY_HELD",
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
+          "WALLET_PLATFORM_CREDENTIAL_MISSING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED",
+          "WALLET_RUN_BUSY",
           "WALLET_VERIFICATION_CONFLICT"
         ]
       }

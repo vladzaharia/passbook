@@ -150,6 +150,10 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
     calls: { encryptSecret: 1 },
     tables: ['wallet_credential_versions'],
   },
+  'modules/wallet-providers/credential-system-save.ts': {
+    calls: { encryptSecret: 1 },
+    tables: ['wallet_credential_versions'],
+  },
   'modules/wallet-providers/credential-migrate.ts': {
     calls: { encryptSecret: 2 },
     tables: ['wallet_credential_versions', 'wallet_provider_accounts'],

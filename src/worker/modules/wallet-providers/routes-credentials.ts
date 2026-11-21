@@ -21,6 +21,7 @@ import {
   revokeOrgCredential,
   saveOrgCredential,
 } from './credential-service.ts';
+import { googleManagedOrgRoutes } from './routes-google-managed.ts';
 
 /** Mount at /api/v1/orgs. `integrations:read` lists, `integrations:manage` writes; the session's mode applies. */
 export const walletCredentialRoutes = createRouter();
@@ -29,6 +30,8 @@ walletCredentialRoutes.use('*', async (c, next) => {
   await next();
   c.header('cache-control', 'no-store');
 });
+
+walletCredentialRoutes.route('/', googleManagedOrgRoutes);
 
 const orgParam = z.strictObject({ orgId: IdSchema });
 const sessionOf = (c: Parameters<typeof authOf>[0]) => {

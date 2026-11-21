@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { ACTION_ICON } from './action-icons.ts';
 import { AUTH_ACTIONS } from './actions-auth.ts';
+import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -280,8 +281,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'join_link.enable': a('Join link on', Link2, 'success'),
   'join_link.rotate': a('Join link replaced', I.rotate, 'info'),
   'join_link.update': a('Join link changed', I.edit, 'info'),
-  'identity.expired': a('Identity expired', Clock, 'danger'),
-  'identity.expiring': a('Identity expiring', Clock, 'warning'),
+  ...IDENTITY_RUN_ACTIONS,
   'identity.push_key_remove': a('Push key removed', I.pushKey, 'warning'),
   'identity.push_key_rotate': a('Push key rotated', I.rotate, 'info'),
   'identity.push_key_set': a('Push key set', I.pushKey, 'success'),

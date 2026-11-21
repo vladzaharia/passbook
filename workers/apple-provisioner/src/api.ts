@@ -2,16 +2,22 @@ import { type AscResponse, ascRequest, type Deps, failure } from './asc-http.ts'
 import { assertCsr } from './csr.ts';
 import {
   type Allowed,
+  alert,
   allowedByAscId,
   allowedByIdentifier,
   finish,
+  hasSettledReplacement,
   logRefusal,
+  markActive,
   readCalls,
+  rememberCertificate,
   rememberPassType,
   reserve,
+  takeRevokeSlot,
 } from './ledger.ts';
 import {
   assertManagedIdentifier,
+  assertOrderable,
   assertPassTypeName,
   assertRevokeReason,
   managedIdentifier,
@@ -159,6 +165,20 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
     );
   }
 
+  /** The allowlisted pass type a certificate belongs to, read from Apple. */
+  async function certificateOwner(
+    req: Req,
+    certAscId: string,
+  ): Promise<Allowed & { ascId: string; cert: Resource }> {
+    const cert = one(await req('GET', `/v1/certificates/${certAscId}?include=passTypeId`));
+    const rel = (cert.relationships as { passTypeId?: { data?: { id?: unknown } } } | undefined)
+      ?.passTypeId;
+    const owner = str(rel?.data?.id);
+    const allowed = owner ? await allowedByAscId(db, owner) : null;
+    if (!owner || !allowed) refuse('Certificate does not belong to an allowlisted pass type.');
+    return { ...(allowed as Allowed), ascId: owner as string, cert };
+  }
+
   return {
     async createPassType(handle, name, runId) {
       const identifier = await guard('createPassType', null, runId, async () => {
@@ -190,10 +210,11 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
       const type = nfc ? 'PASS_TYPE_ID_WITH_NFC' : 'PASS_TYPE_ID';
       await guard('createCertificate', passTypeAscId, runId, async () => {
         const allowed = await requireAllowed(passTypeAscId);
+        assertOrderable(allowed.identifier);
         await assertCsr(csrDer, allowed.identifier);
       });
-      return ledgered('createCertificate', passTypeAscId, runId, async (req) =>
-        certificate(
+      return ledgered('createCertificate', passTypeAscId, runId, async (req) => {
+        const created = certificate(
           one(
             await req('POST', '/v1/certificates', {
               data: {
@@ -203,8 +224,24 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
               },
             }),
           ),
-        ),
-      );
+        );
+        await rememberCertificate(db, created.ascId, passTypeAscId, deps.now());
+        alert('warn', 'provisioner.cert_ordered', { passTypeAscId });
+        return created;
+      });
+    },
+
+    async reportCertificateActive(certAscId, runId) {
+      await guard('reportCertificateActive', certAscId, runId, async () => {
+        if (!ID.test(certAscId)) refuse('Invalid certificate id.');
+      });
+      await ledgered('reportCertificateActive', certAscId, runId, async (req) => {
+        const owner = await certificateOwner(req, certAscId);
+        assertOrderable(owner.identifier);
+        // A certificate whose order response was lost is adopted now, so its cool-off starts now.
+        await rememberCertificate(db, certAscId, owner.ascId, deps.now());
+        await markActive(db, certAscId, deps.now());
+      });
     },
 
     async listCertificates(passTypeAscId, runId) {
@@ -225,29 +262,31 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
         if (!ID.test(certAscId)) refuse('Invalid certificate id.');
       });
       // The owner lookup is its own ledgered call, so a refused lookup never uses the hourly revoke slot.
-      await ledgered('revokeCertificate.read', certAscId, runId, async (req) => {
-        const cert = one(await req('GET', `/v1/certificates/${certAscId}?include=passTypeId`));
-        const rel = (cert.relationships as { passTypeId?: { data?: { id?: unknown } } } | undefined)
-          ?.passTypeId;
-        const owner = str(rel?.data?.id);
-        const allowed = owner ? await allowedByAscId(db, owner) : null;
-        if (!owner || !allowed) refuse('Certificate does not belong to an allowlisted pass type.');
-        if (PLATFORM_IDENTIFIERS.has(allowed?.identifier ?? ''))
+      const owner = await ledgered('revokeCertificate.read', certAscId, runId, async (req) => {
+        const found = await certificateOwner(req, certAscId);
+        if (PLATFORM_IDENTIFIERS.has(found.identifier))
           refuse('Platform pass type certificates are revoked by the owner only.');
         // Installed passes depend on the newest certificate: only a superseded one may go.
-        const mine = certificate(cert);
+        const mine = certificate(found.cert);
         const all = many(
           await req(
             'GET',
-            `/v1/passTypeIds/${encodeURIComponent(owner ?? '')}/certificates?limit=200`,
+            `/v1/passTypeIds/${encodeURIComponent(found.ascId)}/certificates?limit=200`,
           ),
         ).map(certificate);
         const newer = all.some(
           (c) => c.ascId !== mine.ascId && (c.expiresAt ?? 0) > (mine.expiresAt ?? 0),
         );
         if (!newer) refuse('Refusing to revoke the newest certificate of a pass type.');
+        // The provisioner's own state, not the caller's word: a replacement ordered a moment ago does not count.
+        if (!(await hasSettledReplacement(db, found.ascId, certAscId, deps.now())))
+          refuse('A replacement must be active and at least 24 hours old before a revoke.');
+        return found.ascId;
       });
       await ledgered('revokeCertificate', certAscId, runId, async (req) => {
+        if (!(await takeRevokeSlot(db, certAscId, owner, deps.now())))
+          refuse('This pass type already had a revoke in the last 7 days.');
+        alert('error', 'provisioner.cert_revoked', { passTypeAscId: owner });
         const res = await req('DELETE', `/v1/certificates/${certAscId}`);
         if (res.status !== 204 && res.status !== 200) throw failure(res);
       });

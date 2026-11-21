@@ -1868,7 +1868,7 @@ export type OrgsEntitlementsRetrieveResult = {
   preset: string | null;
   label: string | null;
   items: Array<{
-    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own";
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
     value: number | string | Array<string> | null;
     source: "preset" | "override";
   }>;

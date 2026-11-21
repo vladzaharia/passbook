@@ -58,9 +58,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private final ScanGate gate = new ScanGate();
     private static final String DATAWEDGE_PROFILE = "PassBook Scanner";
     private static final String DATAWEDGE_COMMAND = "PASSBOOK_PROFILE";
-    private static final int DATAWEDGE_PROFILE_VERSION = 1;
+    private static final int DATAWEDGE_PROFILE_VERSION = 2;
     private ReaderConfig config;
     private WebSurface web;
+    private LinearLayout root;
+    private int rendererLosses;
+    private long firstRendererLoss;
     private NfcController nfc;
     private CameraManager cameraManager;
     private InputManager inputManager;
@@ -75,11 +78,20 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private boolean tagOn;
     private String oneShot;
     private final CameraPermissions cameraPermissions = new CameraPermissions();
+    private final RateLimit broadcastLimit = new RateLimit(4, 1000);
     private final BroadcastReceiver barcodeReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
-            // Any app can send these. They only ever become a bounded barcode read, as if typed.
+            // Any app can send these (the vendor service is another app, so the receiver must be exported). They only
+            // ever become a bounded, rate-limited barcode read, as if typed; registered only while resumed.
             if (!foreground || intent.getAction() == null) return;
+            if (!broadcastLimit.allow(SystemClock.elapsedRealtime())) {
+                Log.w("PassBook", "scan.broadcast_rate_limited");
+                return;
+            }
             try {
+                if (Build.VERSION.SDK_INT >= 34 && getSentFromPackage() == null) {
+                    Log.i("PassBook", "scan.broadcast_unattributed");
+                }
                 if (intent.getAction().equals(config.barcodeAction())) {
                     barcode(intent.getStringExtra(config.barcodeExtra()));
                     return;
@@ -95,6 +107,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private final BroadcastReceiver dataWedgeResult = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (!DATAWEDGE_COMMAND.equals(intent.getStringExtra("COMMAND_IDENTIFIER"))) return;
+            // API 34 names the sending package; a different one is not DataWedge answering.
+            if (Build.VERSION.SDK_INT >= 34 && getSentFromPackage() != null
+                && !Hardware.VENDORS.get(0).packages().contains(getSentFromPackage())) return;
             if ("SUCCESS".equals(intent.getStringExtra("RESULT"))) {
                 getSharedPreferences("datawedge", MODE_PRIVATE).edit().putInt("profileVersion", DATAWEDGE_PROFILE_VERSION).apply();
                 return;
@@ -123,25 +138,26 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         }
     };
     private final CameraManager.AvailabilityCallback cameraAvailability = new CameraManager.AvailabilityCallback() {
-        @Override public void onCameraAvailable(String cameraId) {
-            if (foreground) reportCapabilities();
-        }
-        @Override public void onCameraUnavailable(String cameraId) {
-            if (foreground) reportCapabilities();
-        }
+        @Override public void onCameraAvailable(String cameraId) { if (foreground) hardwareChanged(); }
+        @Override public void onCameraUnavailable(String cameraId) { if (foreground) hardwareChanged(); }
     };
     private final Runnable oneShotExpiry = () -> {
         if (oneShot == null) return;
+        String expired = oneShot;
         oneShot = null;
-        web.send(message("cancelled")); resumeReader(); reportCapabilities();
+        JSONObject ended = message("cancelled"); put(ended, "id", expired);
+        web.send(ended); resumeReader(); reportCapabilities();
     };
+    /** Runs only while a read holds the gate: until its acknowledgement, or its verdict on an older web. */
     private final Runnable expiry = new Runnable() {
         @Override public void run() {
-            if (gate.expire(SystemClock.elapsedRealtime())) {
-                notice("Unverified · no decision received");
-                web.send(message("timeout"));
+            long now = SystemClock.elapsedRealtime();
+            switch (gate.expire(now)) {
+                case NO_VERDICT -> { notice("Unverified · no decision received"); web.send(message("timeout")); }
+                case NO_ACK -> notice("Verifier did not respond. Scan again.");
+                case NONE -> { }
             }
-            handler.postDelayed(this, 500);
+            if (gate.busy(now)) handler.postDelayed(this, 250);
         }
     };
 
@@ -154,11 +170,10 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         nfc = new NfcController(this, this);
         buildUi();
         web.load(config);
-        handler.post(expiry);
     }
 
     private void buildUi() {
-        LinearLayout root = new LinearLayout(this);
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xfff5f4ef);
         int padding = dp(12);
@@ -174,12 +189,20 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         header.addView(title, new LinearLayout.LayoutParams(0, dp(56), 1));
         Button settings = new Button(this);
         settings.setText(R.string.settings); settings.setMinHeight(dp(48));
-        settings.setOnClickListener(view -> {
+        settings.setContentDescription("Settings. Press and hold to open.");
+        // Press and hold: a held-out device cannot repoint the verifier by accident or by a passer-by.
+        settings.setOnClickListener(view -> notice("Press and hold Settings to change them."));
+        settings.setOnLongClickListener(view -> {
             web.send(message("cancelled"));
             configuring = true; endOneShot(); nfc.stop(); gate.reset(); reportCapabilities();
             SettingsDialog.show(this, config, next -> {
-                unregisterBarcode(); config = next; registerBarcode(); web.load(next);
+                // A different origin starts clean: its cookies and storage are cleared and the bridge is re-bound to it.
+                boolean moved = !next.origin().equals(config.origin());
+                unregisterBarcode(); config = next; registerBarcode();
+                if (moved) web.clearSiteData();
+                web.load(next);
             }, () -> { configuring = false; resumeReader(); reportCapabilities(); });
+            return true;
         });
         header.addView(settings);
         root.addView(header);
@@ -194,7 +217,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         scan.setOnClickListener(view -> { armed = !armed; resumeReader(); reportCapabilities(); });
         actions.addView(scan, new LinearLayout.LayoutParams(0, dp(48), 1));
         Button reload = new Button(this);
-        reload.setText(R.string.reload); reload.setOnClickListener(view -> web.load(config));
+        reload.setText(R.string.reload); reload.setOnClickListener(view -> { rendererLosses = 0; web.load(config); });
         actions.addView(reload, new LinearLayout.LayoutParams(0, dp(48), 1));
         root.addView(actions);
         EditText barcode = new EditText(this);
@@ -230,12 +253,13 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         if (inputManager != null) inputManager.registerInputDeviceListener(inputListener, handler);
         IntentFilter usb = new IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         usb.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        usb.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         ContextCompat.registerReceiver(this, usbReceiver, usb, ContextCompat.RECEIVER_NOT_EXPORTED);
         resumeReader(); cameraPermissions.resume(); reportCapabilities();
     }
     @Override protected void onPause() {
         web.send(message("cancelled"));
-        foreground = false; endOneShot(); nfc.stop(); gate.reset(); unregisterBarcode(); unregisterReceiver(nfcReceiver);
+        foreground = false; endOneShot(); nfc.stop(); gate.reset(); handler.removeCallbacks(expiry); unregisterBarcode(); unregisterReceiver(nfcReceiver);
         if (cameraManager != null) cameraManager.unregisterAvailabilityCallback(cameraAvailability);
         if (inputManager != null) inputManager.unregisterInputDeviceListener(inputListener);
         unregisterReceiver(usbReceiver); handler.removeCallbacks(hardwareReport);
@@ -245,12 +269,38 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     @Override protected void onDestroy() {
         cameraPermissions.cancel(); handler.removeCallbacksAndMessages(null); nfc.destroy(); web.destroy(); super.onDestroy();
     }
+    @Override public void onConfigurationChanged(android.content.res.Configuration next) {
+        super.onConfigurationChanged(next);
+        // Rotation or a keyboard being attached no longer recreates the activity; only the hardware list can change.
+        hardwareChanged();
+    }
     @Override public void onBackPressed() {
         if (web.view.canGoBack()) web.view.goBack();
         else super.onBackPressed();
     }
     @Override public void reset() {
-        cameraPermissions.cancel(); gate.reset(); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
+        cameraPermissions.cancel(); gate.reset(); handler.removeCallbacks(expiry); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
+    }
+    /** A killed renderer would otherwise take the whole app with it. Rebuild the surface; after three in a minute, wait for Reload. */
+    @Override public void rendererGone(boolean crashed) {
+        Log.w("PassBook", "scan.webview_renderer_gone crashed=" + crashed);
+        long now = SystemClock.elapsedRealtime();
+        if (rendererLosses == 0 || now - firstRendererLoss > 60000) { rendererLosses = 0; firstRendererLoss = now; }
+        rendererLosses++;
+        int index = root.indexOfChild(web.view);
+        root.removeView(web.view);
+        web.destroy();
+        web = new WebSurface(this, this);
+        root.addView(web.view, Math.max(index, 0), new LinearLayout.LayoutParams(-1, 0, 1));
+        if (foreground) web.view.onResume();
+        if (rendererLosses >= 3) { notice("Verifier keeps stopping. Press Reload."); return; }
+        web.load(config);
+        notice("Verifier restarted");
+    }
+
+    @Override public void external(android.net.Uri url) {
+        try { startActivity(new Intent(Intent.ACTION_VIEW, url).addCategory(Intent.CATEGORY_BROWSABLE)); }
+        catch (android.content.ActivityNotFoundException none) { notice("No browser to open that link."); }
     }
     @Override public void notice(String text) { status.setTextColor(0xff34415d); status.setText(text); }
 
@@ -273,7 +323,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             JSONObject ready = message("ready");
             put(ready, "nfc", nfc.available()); put(ready, "ecp", false);
             put(ready, "diagnostics", config.isLocal()); put(ready, "appVersion", BuildConfig.VERSION_NAME);
-            put(ready, "capabilities", capabilities());
+            put(ready, "capabilities", capabilities()); put(ready, "features", features());
             web.send(ready); return;
         }
         if (!foreground) return;
@@ -285,6 +335,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                     endOneShot(); resumeReader(); reportCapabilities();
                 }
                 break;
+            case "scanAck": gate.ack(json.optString("id"), SystemClock.elapsedRealtime()); break;
             case "captured":
                 if (config.isLocal() && gate.finish(json.optString("id"), SystemClock.elapsedRealtime())) {
                     notice("Read captured · unverified");
@@ -307,6 +358,8 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                 Vibrator buzz = getSystemService(Vibrator.class);
                 if (timings != null && buzz != null && buzz.hasVibrator()) buzz.vibrate(VibrationEffect.createWaveform(timings, -1));
                 break;
+            // iOS-only operations: nothing to do here, and nothing to tell the operator.
+            case "nfcRead": case "customerStatus": case "customerBranding": break;
             default: notice("Verifier requested an unsupported reader operation.");
         }
     }
@@ -378,9 +431,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
 
     private boolean deliver(JSONObject event, String fingerprint) {
         if (!foreground || !web.isReady()) { notice("Connect the verifier before scanning."); return false; }
-        String id = gate.begin(fingerprint, SystemClock.elapsedRealtime());
-        if (id == null) return false;
-        put(event, "id", id); put(event, "readAt", System.currentTimeMillis());
+        boolean acks = web.feature("scanAck") && !config.isLocal();
+        ScanGate.Begin begin = gate.begin(event.optString("source"), fingerprint, SystemClock.elapsedRealtime(), acks);
+        if (begin.admit() == ScanGate.Admit.BUSY) { notice("Finish the current scan first."); return false; }
+        if (begin.admit() == ScanGate.Admit.DUPLICATE) return false;
+        handler.removeCallbacks(expiry); handler.postDelayed(expiry, 250);
+        put(event, "id", begin.id()); put(event, "readAt", System.currentTimeMillis());
         status.setTextColor(0xff34415d);
         notice(config.isLocal() ? "Read captured · unverified" : "Checking…");
         if (!web.send(event)) { gate.reset(); notice("Verifier disconnected. Scan again."); return false; }
@@ -413,9 +469,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         registered = true;
     }
     /**
-     * Creates this app's own DataWedge profile once: barcode input and broadcast intent output, with no
-     * keystroke plugin so the keyboard path stays as a fallback (ScanGate drops the duplicate). The result is
-     * requested; the flag is stored only on success, so a failure retries on the next resume.
+     * Creates this app's own DataWedge profile once (version 2 updates v1): barcode input and broadcast intent
+     * output, with keystroke output off so one scan is not delivered twice. The result is requested; the flag is
+     * stored only on success, so a failure retries on the next resume.
      */
     private void configureDataWedge() {
         SharedPreferences prefs = getSharedPreferences("datawedge", MODE_PRIVATE);
@@ -427,9 +483,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         Bundle intentParams = new Bundle();
         intentParams.putString("intent_output_enabled", "true"); intentParams.putString("intent_action", zebra.action());
         intentParams.putString("intent_delivery", "2");
+        // The intent path is the one in use, so DataWedge must not also type the scan into the focused field.
+        Bundle keystrokeParams = new Bundle();
+        keystrokeParams.putString("keystroke_output_enabled", "false");
         ArrayList<Bundle> plugins = new ArrayList<>();
-        String[] names = {"BARCODE", "INTENT"};
-        Bundle[] params = {barcodeParams, intentParams};
+        String[] names = {"BARCODE", "INTENT", "KEYSTROKE"};
+        Bundle[] params = {barcodeParams, intentParams, keystrokeParams};
         for (int i = 0; i < names.length; i++) {
             Bundle plugin = new Bundle();
             plugin.putString("PLUGIN_NAME", names[i]); plugin.putBundle("PARAM_LIST", params[i]); plugins.add(plugin);
@@ -504,6 +563,16 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         return snapshot;
     }
 
+    private String installSalt() {
+        SharedPreferences prefs = getSharedPreferences("hardware", MODE_PRIVATE);
+        String salt = prefs.getString("salt", null);
+        if (salt == null) {
+            salt = java.util.UUID.randomUUID().toString();
+            prefs.edit().putString("salt", salt).apply();
+        }
+        return salt;
+    }
+
     private void hardwareChanged() {
         handler.removeCallbacks(hardwareReport);
         handler.postDelayed(hardwareReport, 200);
@@ -538,13 +607,17 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             // Report the cameras read so far; the camera field already covers a failed enumeration.
         }
         List<Hardware.Input> inputs = new ArrayList<>();
+        Set<String> installed = installedVendorPackages();
+        List<Hardware.Vendor> vendors = Hardware.present(installed);
         for (int id : InputDevice.getDeviceIds()) {
             InputDevice device = InputDevice.getDevice(id);
             if (device == null || (device.getSources() & InputDevice.SOURCE_KEYBOARD) != InputDevice.SOURCE_KEYBOARD
                 || (device.getSources() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) continue;
-            // isExternal is API 34. Earlier, a USB or Bluetooth device carries a vendor id; built-in keys usually do not.
-            boolean external = Build.VERSION.SDK_INT >= 34 ? device.isExternal() : device.getVendorId() != 0;
-            inputs.add(new Hardware.Input(id, device.getName(), device.getDescriptor(), true, external, device.isVirtual()));
+            boolean alphabetic = device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC;
+            boolean external = Build.VERSION.SDK_INT >= 34 ? device.isExternal()
+                : Hardware.externalBeforeApi34(device.getName(), device.getVendorId(), alphabetic, !vendors.isEmpty());
+            inputs.add(new Hardware.Input(Hardware.stableId(device.getDescriptor(), installSalt()), device.getName(),
+                device.getDescriptor(), true, external, device.isVirtual(), alphabetic));
         }
         List<String> usb = new ArrayList<>();
         UsbManager usbManager = getSystemService(UsbManager.class);
@@ -558,12 +631,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         PackageManager packages = getPackageManager();
         Vibrator vibrator = getSystemService(Vibrator.class);
         return toJson(Hardware.build(new Hardware.Snapshot(facings, cameraPermission, nfc.supported(), nfc.available(),
-            nfc.isReading(), inputs, installedVendorPackages(), usb, bluetoothInputs(),
+            nfc.isReading(), inputs, installed, usb, bluetoothInputs(inputs),
             vibrator != null && vibrator.hasVibrator(), packages.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT))));
     }
 
     /** Bonded Bluetooth keyboards and HID peripherals. Never asks for BLUETOOTH_CONNECT; empty when it is not granted. */
-    private List<String> bluetoothInputs() {
+    private List<String> bluetoothInputs(List<Hardware.Input> inputs) {
         List<String> names = new ArrayList<>();
         if (Build.VERSION.SDK_INT < 31
             || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return names;
@@ -574,7 +647,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                 BluetoothClass type = device.getBluetoothClass();
                 if (type != null && type.getMajorDeviceClass() == BluetoothClass.Device.Major.PERIPHERAL) {
                     String name = device.getName();
-                    names.add(name == null ? "Bluetooth device" : name);
+                    // A bonded keyboard-class device is already listed as an input device; do not list it twice.
+                    boolean listed = name != null && inputs.stream().anyMatch(input -> name.equalsIgnoreCase(input.name()));
+                    if (!listed) names.add(name == null ? "Bluetooth device" : name);
                 }
             }
         } catch (SecurityException ignored) {
@@ -599,6 +674,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         }
         return array;
     }
+
+    /** Additive bridge features, a top-level event field outside the strict capability snapshot. */
+    static JSONArray features() { return new JSONArray().put("scanAck"); }
 
     static JSONObject capabilitySnapshot(String version, boolean cameraAvailable, String cameraPermission,
                                          boolean nfcSupported, boolean nfcAvailable, boolean nfcReading) {
@@ -627,7 +705,8 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         if (nfcSupported) formats.put("wallet-vas");
         if (nfcSupported && tags) { formats.put("tag-uid"); formats.put("tag-sun"); }
         put(nfc, "formats", formats);
-        if (tags) put(nfc, "continuous", nfcSupported); put(capabilities, "nfc", nfc);
+        if (tags) put(nfc, "continuous", nfcSupported);
+        put(capabilities, "nfc", nfc);
 
         JSONObject vas = new JSONObject();
         put(vas, "deviceSupported", nfcSupported); put(vas, "available", false);
@@ -650,7 +729,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private void reportCapabilities() {
         if (web == null || !web.isReady()) return;
         JSONObject event = message("capabilities");
-        put(event, "capabilities", capabilities());
+        put(event, "capabilities", capabilities()); put(event, "features", features());
         web.send(event);
     }
 

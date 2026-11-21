@@ -19,6 +19,9 @@ export interface IdentityRow {
   is_default: number;
   issuing: number;
   provenance: 'platform' | 'managed' | 'own';
+  rotation: 'auto' | 'csr' | 'manual';
+  next_rotation_at: number | null;
+  handle: string | null;
   created_at: number;
   revision: number;
 }
@@ -31,7 +34,7 @@ export interface CredentialBlob {
 }
 
 const COLUMNS = `id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, credential_id,
-  cert_pem, cert_sha256, not_before, not_after, apns_binding, apns_health, nfc_enabled, is_default, issuing, provenance, created_at, revision`;
+  cert_pem, cert_sha256, not_before, not_after, apns_binding, apns_health, nfc_enabled, is_default, issuing, provenance, rotation, next_rotation_at, handle, created_at, revision`;
 
 export function listIdentityRows(db: D1Database): Promise<IdentityRow[]> {
   return all<IdentityRow>(db, `SELECT ${COLUMNS} FROM signing_identities ORDER BY created_at, id`);
@@ -43,19 +46,21 @@ export function pageIdentityRows(
   after: string | undefined,
   limit: number,
   orgId?: string,
+  kind?: IdentityRow['provenance'],
 ): Promise<IdentityRow[]> {
   const where = [
     ...(after
       ? ['(created_at, id) > (SELECT created_at, id FROM signing_identities WHERE id = ?)']
       : []),
     ...(orgId ? ['org_id = ?'] : []),
+    ...(kind ? ['provenance = ?'] : []),
   ];
   return all<IdentityRow>(
     db,
     `SELECT ${COLUMNS} FROM signing_identities
      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
      ORDER BY created_at, id LIMIT ?`,
-    [...(after ? [after] : []), ...(orgId ? [orgId] : []), limit],
+    [...(after ? [after] : []), ...(orgId ? [orgId] : []), ...(kind ? [kind] : []), limit],
   );
 }
 
@@ -155,6 +160,8 @@ export interface IdentityPatch {
   nfcEnabled: boolean;
   apnsBinding: string | null;
   isDefault: boolean;
+  issuing: boolean;
+  rotation: IdentityRow['rotation'];
 }
 
 export async function updateIdentityRow(
@@ -164,8 +171,18 @@ export async function updateIdentityRow(
 ): Promise<void> {
   const update = stmt(
     db,
-    'UPDATE signing_identities SET label = ?, nfc_enabled = ?, apns_binding = ?, is_default = ? WHERE id = ?',
-    [patch.label, patch.nfcEnabled, patch.apnsBinding, patch.isDefault, id],
+    `UPDATE signing_identities
+     SET label = ?, nfc_enabled = ?, apns_binding = ?, is_default = ?, issuing = ?, rotation = ?
+     WHERE id = ?`,
+    [
+      patch.label,
+      patch.nfcEnabled,
+      patch.apnsBinding,
+      patch.isDefault,
+      patch.issuing,
+      patch.rotation,
+      id,
+    ],
   );
   // The partial unique index allows one default; clear the old one first.
   await batch(
@@ -270,4 +287,19 @@ export async function rotateIdentityRows(db: D1Database, r: IdentityRotation): P
       ? [stmt(db, 'DELETE FROM credentials WHERE id = ?', [r.oldCredentialId])]
       : []),
   ]);
+}
+
+/** Passes per identity, for a page of identities in one query. */
+export async function passCounts(
+  db: D1Database,
+  ids: readonly string[],
+): Promise<Map<string, number>> {
+  if (ids.length === 0) return new Map();
+  const rows = await all<{ identity_id: string; n: number }>(
+    db,
+    `SELECT identity_id, count(*) AS n FROM passes
+     WHERE identity_id IN (${ids.map(() => '?').join(', ')}) GROUP BY identity_id`,
+    ids,
+  );
+  return new Map(rows.map((r) => [r.identity_id, r.n]));
 }

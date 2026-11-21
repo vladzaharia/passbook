@@ -10,6 +10,7 @@ import { minutelyRequestLogPurge } from '../modules/developer/request-log-jobs.t
 import { dailyEvents } from '../modules/events/jobs.ts';
 import { resumeVerifiedHolderAttachments } from '../modules/holders/transfer-jobs.ts';
 import { dailyApnsProbe, dailyIdentities } from '../modules/identities/jobs.ts';
+import { dailyRotationPlan } from '../modules/identities/rotation-plan.ts';
 import { dailyJoin } from '../modules/join/jobs.ts';
 import { rewrapEnvelopes } from '../modules/keys/rewrap.ts';
 import { dailyMessageRules } from '../modules/message-rules/jobs.ts';
@@ -36,6 +37,7 @@ import { planForkUpdates } from '../modules/templates/fork-updates-plan.ts';
 import { syncBakedOnDeploy } from '../modules/templates/jobs.ts';
 import { dailyVisitors } from '../modules/visitors/retention.ts';
 import { enqueueCredentialChecks } from '../modules/wallet-providers/account-check.ts';
+import { dailyGoogleKeys } from '../modules/wallet-providers/sa-key-inventory.ts';
 import { drainWalletProviderSync } from '../modules/wallet-providers/sync.ts';
 import { dailyWebhooks, sweepWebhooks } from '../modules/webhooks/jobs.ts';
 import { sweepLeakedGrants } from '../platform/authority.ts';
@@ -99,6 +101,8 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'apple.retention', run: dailyApple },
     { name: 'identities.expiry', run: dailyIdentities },
     { name: 'identities.apns_probe', run: dailyApnsProbe },
+    { name: 'identities.rotation_plan', run: dailyRotationPlan },
+    { name: 'wallet.google_keys', run: dailyGoogleKeys },
     { name: 'wallet.credential_checks', run: enqueueCredentialChecks },
     { name: 'scan.retention', run: dailyScans },
     { name: 'join.retention', run: dailyJoin },

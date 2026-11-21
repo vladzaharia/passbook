@@ -123,7 +123,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
 
 ## Apple provisioner
 
-`workers/apple-provisioner` is a separate Worker that holds the App Store Connect key. The main Worker reaches it only through the `APPLE` service binding; it has no route and no `workers.dev` host. Its D1 holds the allowlist (`asc_pass_types`) and the append-only call ledger (`asc_calls`). Limits: 30 calls a minute and 200 a day per method, one revoke an hour, all fail closed (`ASC_BUDGET`).
+`workers/apple-provisioner` is a separate Worker that holds the App Store Connect key. The main Worker reaches it only through the `APPLE` service binding; it has no route and no `workers.dev` host. Its D1 holds the allowlist (`asc_pass_types`) and the append-only call ledger (`asc_calls`). Limits: 30 calls a minute and 200 a day per method, one revoke an hour, at most 2 certificate orders per pass type in 30 days and 1 revoke per pass type in 7 days, all fail closed (`ASC_BUDGET`). It logs `provisioner.cert_ordered`, `provisioner.cert_revoked` and, past half the daily budget, `provisioner.budget_high` (error); alert on the last two.
 
 One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
 
@@ -143,11 +143,21 @@ One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
    Until then `ascClient` reports `ASC_UNAVAILABLE`.
 6. Seed the allowlist with the platform pass type: `node tools/apple-provisioner-seed.ts --apply --remote`. Without `--apply` it prints the command. The first `findPassType('pass.im.plrs.wallet')` call fills in Apple's id.
 
-Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any certificate of `pass.im.plrs.wallet` or `pass.mobile.passbook.wallet` (revoke those by hand in the developer portal). The main Worker may ask only for a superseded certificate after a reissue (design 5.1).
+Platform certificates: the provisioner never orders or revokes for `pass.im.plrs.wallet`, `pass.mobile.passbook.wallet` or any identifier outside `pass.mobile.passbook.<handle>`. Order and renew those yourself in the developer portal (or Xcode) with your own Apple ID, then upload the result as `SIGNER_PLATFORM_*`. Nothing the main Worker can call does this.
+
+Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any platform certificate (revoke those by hand in the developer portal). It revokes a certificate only when a newer one of the same pass type was ordered at least 24 hours earlier and the main Worker has since called `reportCertificateActive` for it, and at most once per pass type in 7 days. The main Worker calls `reportCertificateActive` after it activates a new certificate.
 
 Trust boundary: the service binding, not the lint rule (`tools/check-apple-binding.ts`), is the boundary. Anyone who can deploy Workers in the account can bind to or redeploy the provisioner, so scope Cloudflare API tokens and never give CI a token that can deploy `apple-provisioner`.
 
 Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
+
+## Managed identity runs
+
+`IdentityProvision` (workflow binding `IDENTITY_PROVISION`) provisions a managed pass type and certificate for an org (`provision`) and replaces a certificate (`rotate`). The daily hook `identities.rotation_plan` starts a rotate run 60 days before expiry for every `rotation='auto'` identity with no open run. Adding the binding needs `npm run deploy -- --first`.
+
+- Runs are rows in `identity_runs`: `step`, `state`, `error_code`. A run waits as `waiting: apple_unavailable` while the `APPLE` binding is missing and tries again daily for 45 days.
+- A failed run is retried by the planner the next day. At 45 days to expiry platform admins get an email and an audit row (`identity.rotation_overdue`); status goes amber at 30 days and red at 14; from 7 days an email goes out daily.
+- A rotation never revokes the old certificate.
 
 ## Google and Samsung Wallet accounts
 
@@ -175,6 +185,20 @@ mode and provider; Test configuration is not Live readiness. See the
   permissions: Samsung's [badge guidance](https://developer.samsung.com/wallet/add-to-wallet.html)
   and [developer terms](https://developer.samsung.com/terms?location=us) do not by themselves
   establish a redistribution license.
+
+### Google managed issuers and key rotation (owner steps)
+
+- **Aggregator access.** `issuer.insert` works only for a trusted aggregator's parent issuer. Until Google
+  grants it, a managed-issuer run waits as `google_manual_issuer`: make the issuer in the Google Pay &
+  Wallet Console, share it with PassBook's service account, then complete the run in Platform.
+- **IAM role.** Rotation and the daily key inventory call the IAM API as PassBook's own service account. Grant
+  it `roles/iam.serviceAccountKeyAdmin` on itself only (not on the project), and keep the IAM API enabled.
+- **First rotation.** Rotate once by hand (`POST /api/v1/platform/wallet-credentials/{id}/rotate-key`);
+  that arms the 90-day schedule. The new key replaces the old one in every managed and shared org
+  credential, and the old key is deleted a day later. At most two keys exist at once.
+- **Alert.** More than two keys, or a key PassBook did not create, raises `wallet.key_unknown` (audit row,
+  error log, email to platform admins) once a day. PassBook never deletes such a key: remove it in Google
+  Cloud. One key found before the first rotation is the uploaded one and is adopted.
 
 The Google callback at `POST /wallet/v1/google/{accountId}` verifies Google's signed event; the
 Samsung interaction at `GET` or `POST /wallet/v1/samsung/cards/{cardId}/{refId}` authenticates
@@ -586,6 +610,45 @@ The `ORG_EXPORT` (`wallet-org-export`) and `ORG_PURGE` (`wallet-org-purge`) work
 ### Printed ticket PDFs
 
 PDFs are drawn in the Worker with pdf-lib from the same content and layout boxes as the print page. Text is Rubik and JetBrains Mono, embedded as subsets from the static assets (`public/fonts/pdf/`, rebuilt by `tools/build-pdf-fonts.sh`), so names in Latin, Latin extended and Cyrillic stay real text. A character those fonts lack (CJK, emoji, Vietnamese tone marks, Hebrew, Arabic) becomes its base letter or "?", logged once per PDF as `PRINT_PDF_TEXT_LOSSY`. Logo and art PNGs go through the bounded decoder (`pdf-png.ts`) and are shrunk to 300 dpi at their size on paper; an animated, interlaced, oversized (over 2 M pixels) or inflate-bomb file is left out and the PDF is drawn without it (`PRINT_PDF_IMAGE_INVALID`), as is a missing file (`PRINT_PDF_IMAGE_MISSING`) or any distinct image past 12 in one PDF (`PRINT_PDF_IMAGE_LIMIT`). The cache fingerprint includes each image's etag, so a replaced logo or art redraws. PDFs are cached in R2 under `prints/{orgId}/{passId}/{printId}.pdf`, valid while the pass version and the drawing fingerprint (design, content, code, test mode, print number, image names, `PDF_RENDER_VERSION`) match; bump `PDF_RENDER_VERSION` in `pdf-render.ts` when the drawing changes. Bulk files are under `prints/{orgId}/bulk/`. The daily `prints.pdf_sweep` deletes PDFs of ended prints and bulk files after 24 h.
+
+## App distribution
+
+Install page: https://vladzaharia.github.io/passbook/ (GitHub Pages, workflow-built). Workflows:
+
+- `Android Reader`: tag `android-vX.Y.Z` from main. Signed APK, AAB and checksums go to the GitHub release; AAB goes to Play internal testing when `PLAY_SERVICE_ACCOUNT_JSON` is set.
+- `iOS AltStore`: tag `ios-vX.Y.Z` from main, or dispatch with a version. Unsigned IPA and checksums go to the release.
+- `iOS TestFlight`: dispatch from main. Signed build to App Store Connect.
+- `Apps feeds`: after a release, after the two workflows above, or by hand. Downloads every `android-v*` and `ios-v*` release, builds the F-Droid repo and the AltStore source, and deploys Pages. Releases made by `GITHUB_TOKEN` don't fire `release`, so it follows the workflow runs.
+
+Feeds:
+
+- AltStore and SideStore: `https://vladzaharia.github.io/passbook/altstore/source.json`, id `mobile.passbook.source`.
+- F-Droid and Droid-ify: `https://vladzaharia.github.io/passbook/fdroid/repo`, SHA-256 fingerprint `B1487911B4DCC4D9B797DE9E7A1500245FD27171A90C807A1AB0FF352ABD2425`. The job fails if the index key doesn't match `FDROID_REPO_FINGERPRINT`.
+- Obtainium: `obtainium://add/https://github.com/vladzaharia/passbook`.
+
+Install by channel:
+
+- AltStore, SideStore: add the source, install PassBook Scanner. Free Apple ID: 7-day refresh, 3 apps, and NFC Tag Reading may be missing after re-signing.
+- F-Droid, Droid-ify: add the repo with the link or QR on the install page; confirm the fingerprint.
+- Obtainium: add the GitHub URL.
+- TestFlight internal: add the tester to the internal group; the build appears after processing. External: add a group, submit for Beta App Review, share the public link (`TESTFLIGHT_PUBLIC_URL`).
+- Play internal: add testers' emails to the internal list, send them the opt-in link (`PLAY_INTERNAL_URL`).
+
+Secrets and variables: `ANDROID_READER_KEYSTORE_B64`, `ANDROID_READER_SIGNING_PASSWORD` (app key); `FDROID_KEYSTORE_B64`, `FDROID_KEYSTORE_PASS`, variables `FDROID_KEY_ALIAS`, `FDROID_REPO_FINGERPRINT` (repo index key, different from the app key); `PLAY_SERVICE_ACCOUNT_JSON`, optional variables `PLAY_INTERNAL_URL`, `PLAY_RELEASE_STATUS`, `TESTFLIGHT_PUBLIC_URL`; `APPLE_TEAM_ID`. Losing the F-Droid index key means everyone re-adds the repo.
+
+Owner steps, Play:
+
+1. Create the Play Console developer account and the app `im.plrs.passbook.reader`.
+2. Fill the content forms (privacy policy, data safety, app access, ads, content rating, target audience).
+3. Enrol in Play App Signing with the existing app key so every channel shares one signature: Play Console, Test and release, App signing, upload an existing key with `pepk.jar` (`java -jar pepk.jar --keystore=<p12> --alias=passbook-reader --output=pepk.zip --include-cert --encryptionkey=<Google key>`). Keep using the same key as the upload key.
+4. Create a service account in Google Cloud, enable the Android Publisher API, invite it in Play Console, Users and permissions, with release permission for the app, and save its JSON key as the `PLAY_SERVICE_ACCOUNT_JSON` secret.
+5. Upload the first release once by hand, create the internal testing list, then set `PLAY_INTERNAL_URL`. Until the first release completes, set `PLAY_RELEASE_STATUS` to `draft`.
+
+Owner steps, App Store Connect:
+
+1. Add the `ASC_ISSUER_ID` secret (Users and Access, Integrations) to the `iOS TestFlight` environment, with `ASC_KEY_ID` and `ASC_KEY_P8_BASE64`.
+2. Create the app record for `mobile.passbook.scanner` and accept the agreements.
+3. Create the internal group and set `PASSBOOK_TESTFLIGHT_GROUP`. For an external group, enable a public link and set `TESTFLIGHT_PUBLIC_URL`.
 
 ## Runtime decisions
 

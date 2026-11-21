@@ -1,8 +1,13 @@
-import type { z } from 'zod';
-import type { IdentitySchema } from '@/shared/contracts/identities.ts';
 import { DANGER_DAYS, remainingDays, WARN_DAYS } from './expiry.tsx';
 
-type Identity = z.infer<typeof IdentitySchema>;
+/** What the attention rules read: the full identity or a row of the wallet list. */
+interface Attentive {
+  id: string;
+  label: string;
+  notAfter: number | null;
+  notBefore?: number | null;
+  daysRemaining?: number | null;
+}
 
 export const ATTENTION_COPY = {
   expired: 'has expired',
@@ -22,9 +27,9 @@ export function expiryPhrase(days: number): string {
   return `expires in ${days} ${days === 1 ? 'day' : 'days'}`;
 }
 
-export interface Attention {
+export interface Attention<T extends Attentive = Attentive> {
   /** The most urgent: expired, then not yet valid, then soonest to expire. */
-  identity: Identity;
+  identity: T;
   reason: keyof typeof ATTENTION_COPY;
   /** How many identities need a look. */
   count: number;
@@ -34,15 +39,18 @@ export interface Attention {
 }
 
 /** The identity whose certificate needs a look first, or undefined when none does. */
-export function identityAttention(rows: readonly Identity[], now: number): Attention | undefined {
-  let top: (Attention & { priority: number; order: number }) | undefined;
+export function identityAttention<T extends Attentive>(
+  rows: readonly T[],
+  now: number,
+): Attention<T> | undefined {
+  let top: (Attention<T> & { priority: number; order: number }) | undefined;
   let count = 0;
   for (const identity of rows) {
     const days = remainingDays(identity, now);
     const reason =
       days !== null && days < 0
         ? 'expired'
-        : identity.notBefore !== null && identity.notBefore > now
+        : identity.notBefore != null && identity.notBefore > now
           ? 'not_yet_valid'
           : days !== null && days <= WARN_DAYS
             ? 'expiring'

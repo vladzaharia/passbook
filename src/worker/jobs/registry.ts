@@ -12,6 +12,10 @@ import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
 import { handleCredentialCheck } from '../modules/wallet-providers/account-check-job.ts';
 import { handleCredentialMigrate } from '../modules/wallet-providers/credential-migrate-job.ts';
 import { handleEnrolmentHold } from '../modules/wallet-providers/enrolment-hold-job.ts';
+import {
+  handleGoogleIssuer,
+  handleGoogleKeyRotate,
+} from '../modules/wallet-providers/google-managed-job.ts';
 import { handleProjectionSystem } from '../modules/wallet-providers/projection-system-job.ts';
 import { handleWebhookDeliver } from '../modules/webhooks/jobs.ts';
 import type { ServiceContext } from '../platform/service-context.ts';
@@ -33,6 +37,8 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'template.fork_update': handleForkUpdate,
   'wallet.enrolment_hold': handleEnrolmentHold,
   'wallet.credential_migrate': handleCredentialMigrate,
+  'wallet.google_issuer': handleGoogleIssuer,
+  'wallet.google_key_rotate': handleGoogleKeyRotate,
   'wallet.credential_check': handleCredentialCheck,
   'wallet.projection_system': handleProjectionSystem,
   'channel.apple_bump': handleAppleBump,
@@ -68,6 +74,10 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'wallet.enrolment_hold':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.credential_migrate':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.google_issuer':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.google_key_rotate':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.credential_check':
       return JOB_HANDLERS[job.kind](job, ctx);

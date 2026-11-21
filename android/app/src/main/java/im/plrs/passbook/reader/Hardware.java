@@ -43,7 +43,36 @@ final class Hardware {
                  String facing, String trigger, String reason) {}
 
     /** An input device as the OS describes it. {@code descriptor} is only matched, never reported. */
-    record Input(int id, String name, String descriptor, boolean keyboard, boolean external, boolean virtual) {}
+    record Input(int id, String name, String descriptor, boolean keyboard, boolean external, boolean virtual,
+                 boolean alphabetic) {
+        /** An input device that is a full keyboard; a scan engine's key node is not, but still counts as a reader. */
+        Input(int id, String name, String descriptor, boolean keyboard, boolean external, boolean virtual) {
+            this(id, name, descriptor, keyboard, external, virtual, true);
+        }
+    }
+
+    private static final String[] INTERNAL_NODES = {"gpio", "keypad", "pmic", "qpnp", "power", "volume", "headset",
+        "button", "fingerprint", "touch"};
+
+    /**
+     * Before API 34 the OS cannot say whether an input device is external. Be conservative: only a full keyboard
+     * with a vendor id that is not a known SoC key node, and not the vendor's own scan engine, counts as attached.
+     */
+    static boolean externalBeforeApi34(String name, int vendorId, boolean alphabetic, boolean vendorServicePresent) {
+        if (!alphabetic || vendorId == 0) return false;
+        String lower = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        for (String node : INTERNAL_NODES) if (lower.contains(node)) return false;
+        return !(vendorServicePresent && scannerLike(name, ""));
+    }
+
+    /** A stable id for one input device: its descriptor hashed with a per-install salt, never the descriptor itself. */
+    static int stableId(String descriptor, String salt) {
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                .digest((salt + "|" + descriptor).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return ((digest[0] & 0x7f) << 24) | ((digest[1] & 0xff) << 16) | ((digest[2] & 0xff) << 8) | (digest[3] & 0xff);
+        } catch (java.security.NoSuchAlgorithmException exception) { throw new IllegalStateException(exception); }
+    }
 
     record Snapshot(List<String> cameraFacings, String cameraPermission, boolean nfcSupported, boolean nfcEnabled,
                     boolean nfcReading, List<Input> inputs, Set<String> installedPackages, List<String> usbNames,
@@ -106,7 +135,7 @@ final class Hardware {
             out.add(camera(i, s.cameraFacings().get(i), s.cameraPermission()));
         }
         for (Input input : s.inputs()) {
-            if (input.keyboard() && input.external() && !input.virtual()) {
+            if (input.keyboard() && input.alphabetic() && input.external() && !input.virtual()) {
                 out.add(entry("keyboard", "input-" + input.id(), input.name(), false, true, "ready", null, null, null));
             }
         }
@@ -137,5 +166,9 @@ final class Hardware {
             builtIn, connected, state, facing, trigger, reason == null ? null : cut(reason, MAX_REASON));
     }
 
-    private static String cut(String value, int max) { return value.length() <= max ? value : value.substring(0, max); }
+    private static String cut(String value, int max) {
+        if (value.length() <= max) return value;
+        // Do not split a surrogate pair.
+        return value.substring(0, Character.isHighSurrogate(value.charAt(max - 1)) ? max - 1 : max);
+    }
 }

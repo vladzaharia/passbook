@@ -273,7 +273,12 @@ describe('dead links', () => {
     expect(html).toContain('an organization admin');
     expect(html).toContain('Accept and sign in');
     expect(html).not.toContain('tied to your email');
-    await run(h.env.DB, "UPDATE magic_links SET expires_at = 0 WHERE invitation_id = 'inv-pg'");
+    // Expired normally (after it was made); `expires_at <= created_at` reads as voided by 0169.
+    await run(
+      h.env.DB,
+      "UPDATE magic_links SET created_at = ?, expires_at = ? WHERE invitation_id = 'inv-pg'",
+      [now - 2_000, now - 1_000],
+    );
     const dead = await (await page(`/auth/magic?t=${token}`)).text();
     expect(dead).toMatch(/<h1[^>]*>Invitation expired<\/h1>/);
     expect(dead).not.toContain('/auth/magic/resend');

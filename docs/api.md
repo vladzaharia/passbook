@@ -237,6 +237,14 @@ management check and must not be used as a general tenant capability grant.
 
 Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-20` to opt in; without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date.
 
+- **Unreleased, managed Apple identities**: `GET /wallet-identities`, `POST /orgs/{orgId}/identities/apple`
+  (202, `Idempotency-Key`, needs the `identity.managed` feature), `POST /identities/{id}/renew`,
+  `GET /identities/{id}/certificates`, `POST /identities/{id}/revoke-certificate`, `/identity-runs`
+  (list, get, retry, cancel) and `GET /platform/apple-calls`. `PATCH /identities/{id}` takes
+  `rotation` (`auto` or `manual`) and `issuing`; an identity gains `kind`, `status`, `rotation`,
+  `issuing`, `nextRotationAt` and `handle`. All are for signed-in people: a platform admin, or an
+  organization member for their own organization. Keys are not accepted yet.
+
 ## Conventions for new routes
 
 - **Status**: creating a resource returns `201`; queuing a job returns `202` and names the job
@@ -282,6 +290,8 @@ Branch on `code`, not `detail`. Quote `requestId` when asking for help.
 `FEATURE_NOT_INCLUDED` (403) carries `feature`: the organization's plan lacks it, so ask PassBook to turn it on. Every key call of an organization also needs its `api` feature: `off` refuses all, `read` allows only GET and HEAD (so `POST` reads such as `/broadcasts/preview` and `/scan/lookup` are refused too), `full` allows all. Platform-wide keys are not limited by it. Operations that need a feature carry `x-feature` in the OpenAPI document.
 
 Delivery features follow the plan too: Google and Samsung Wallet (`wallet.google`, `wallet.samsung`), `print` and `nfc` (Basic to bind tags, Secure to create keysets). A channel the plan lacks reads `{ "on": false, "source": "platform", "reason": "not_included" }`, creating a print, binding a tag or turning `nfc.tags` on answers `FEATURE_NOT_INCLUDED`, and the settings entry for `nfc.tags` carries `blockedByPlan`. A downgrade only pauses: passes, copies, printed tickets and tag bindings stay (a printed ticket and a bound tag still admit at the door), only new prints, binds and wallet offers are refused, and an upgrade turns them back on.
+
+Managed Apple identity errors: `IDENTITY_ALREADY_PROVISIONED` (409, the org has one), `IDENTITY_HANDLE_RESERVED` and `IDENTITY_HANDLE_INVALID` (422, choose another handle), `IDENTITY_HANDLE_TAKEN` (409), `IDENTITY_NOT_ROTATABLE` (409, only a managed identity with a certificate renews automatically), `IDENTITY_NOT_READY` (409, no certificate yet), `IDENTITY_RUN_OPEN` (409, only a failed or cancelled run retries), `IDENTITY_RUN_CLOSED` (409, the run already finished), `IDENTITY_RUN_NOT_FOUND` (404), `IDENTITY_CONFIRM_MISMATCH` (422, type the pass type ID), `IDENTITY_CERT_NOT_FOUND` (404) and `IDENTITY_CERT_NOT_REVOCABLE` (409, only a superseded certificate issued by Apple). `ORG_REQUIRED` (422) on the two lists means a member must name their organization.
 
 `FEATURE_LIMIT_REACHED` (403) carries `feature`, `limit` and `used`: a create would pass the organization's cap for that feature. It covers live and test passes, templates, members (pending invitations count), API keys, scanner devices, webhook endpoints, connections, broadcasts a day and join cards a day (a join visitor sees only the daily-limit answer). A downgrade never removes anything: what exists stays, only new creates are refused, and a removed or revoked item frees its slot. A pass import that reaches the limit stops creating: it reports the rest as `skipped` (`progress.skipped`, row code `FEATURE_LIMIT_REACHED`) and still applies its updates. A connection sync records each refused record as failed and goes on. Daily limits count per mode, so test-mode work never uses up the live allowance. Emails a day (`email.perDay`) lower the organization's own daily email cap and answer `EMAIL_RATE_LIMITED`.
 
@@ -453,6 +463,32 @@ Only already-promoted Samsung references may refresh under current approved bind
 Data Fetch reference can remain reusable after first fetch: protect it as a secret. For both
 providers, installation remains unknown absent authenticated authoritative holder-specific
 evidence. Routes must be deployed before use; see [operations](operations.md#google-and-samsung-wallet-accounts).
+
+### Google managed and shared issuers
+
+A Google credential has a `provenance`: `platform` (PassBook's own), `managed` (a child issuer
+PassBook made, named "<Org> via PassBook") or `own` (the org's issuer). Managed and shared issuers
+sign with PassBook's service account; no key changes hands, and the org credential follows the
+platform key's rotation.
+
+| Method and path | Who | Notes |
+|---|---|---|
+| `POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed` `{mode: "live"}` | org member with `integrations:manage`, live session, `identity.managed` | 202 with a run. `GET` on the same path reads the latest run |
+| `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed` | platform admin | Same run, no plan check |
+| `POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete` `{issuerId}` | platform admin | Finishes a run that waits with `google_manual_issuer` |
+| `POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared` `{issuerId}` | org member with `integrations:manage` | Checks `issuer.get` with PassBook's service account. `GET` returns the address to add as a user of the issuer |
+| `POST /api/v1/platform/wallet-credentials/{id}/rotate-key` | platform admin | Starts a service-account key rotation; the first success arms the 90-day schedule |
+
+A run is `queued`, `running`, `waiting`, `succeeded` or `failed`. Until PassBook is a trusted
+aggregator, Google refuses `issuer.insert` and the run waits as `google_manual_issuer`: a platform
+admin makes the issuer in the Google Pay & Wallet Console, shares it with PassBook's service
+account, then completes the run with its id.
+
+Error codes: `WALLET_PLATFORM_CREDENTIAL_MISSING` (409, no PassBook Google credential for the
+mode), `WALLET_ISSUER_EXISTS` (409, the org already has a Google issuer), `WALLET_ISSUER_CLAIMED`
+(409, another org holds the issuer), `WALLET_ISSUER_NOT_WAITING` (409), `GOOGLE_ISSUER_NOT_SHARED`
+(422, add the service account to the issuer), `GOOGLE_UNAVAILABLE` (502), `FEATURE_NOT_INCLUDED`
+(403, `identity.managed` is off).
 
 ## Create a pass
 

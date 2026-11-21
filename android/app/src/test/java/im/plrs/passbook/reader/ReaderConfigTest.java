@@ -21,4 +21,15 @@ public class ReaderConfigTest {
         assertThrows(IllegalArgumentException.class, () -> new ReaderConfig("", List.of("pass.a"), "android.intent.action.VIEW", "data"));
         assertEquals(List.of("pass.a", "pass.b"), ReaderConfig.parseIds(" pass.a\npass.b "));
     }
+    @Test public void navigationStaysOnPassBookHostsAndTheConfiguredOrigin() {
+        String configured = "https://verifier.example";
+        for (String url : List.of("https://verifier.example/scan", "https://passbook.mobile/scan", "https://app.passbook.mobile:443/x",
+            "https://wallet.plrs.im/p/1", ReaderConfig.HOME)) {
+            assertTrue(url, ReaderConfig.allowsNavigation(url, configured));
+        }
+        for (String url : List.of("https://evil.example/", "https://passbook.mobile.evil.example/", "https://notpassbook.mobile/",
+            "http://passbook.mobile/", "https://passbook.mobile@evil.example/", "intent://scan#Intent;end", "")) {
+            assertFalse(url, ReaderConfig.allowsNavigation(url, configured));
+        }
+    }
 }

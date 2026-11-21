@@ -45,3 +45,10 @@ export function assertPassTypeName(name: string): void {
 export function assertRevokeReason(reason: string): void {
   if (reason !== 'compromised') refuse('Revoke only for reason compromised.');
 }
+
+/** Platform certificate work is owner-run (docs/operations.md), never an RPC: the provisioner does not trust the main Worker's limits. */
+export function assertOrderable(identifier: string): void {
+  assertManagedIdentifier(identifier);
+  if (PLATFORM_IDENTIFIERS.has(identifier))
+    refuse('Platform pass type certificates are ordered by the owner only.');
+}

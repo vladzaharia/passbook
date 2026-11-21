@@ -6,10 +6,10 @@ The app opens `https://passbook.mobile/scan`. Pair it in Admin → Scanning, tap
 
 ## Install
 
-Install `dist/passbook-reader-0.2.3.apk` on the P400. Allow this installation source when Android asks, or use:
+Install `dist/passbook-reader-<version>.apk` on the P400. Allow this installation source when Android asks, or use:
 
 ```sh
-adb install -r android/dist/passbook-reader-0.2.3.apk
+adb install -r android/dist/passbook-reader-<version>.apk
 adb shell am start -n im.plrs.passbook.reader/.MainActivity
 ```
 
@@ -58,3 +58,20 @@ The API 35 toolchain and dependencies are pinned for the P400 pilot. Lint fails 
 `tools/release.py` checks the app, signs with the existing update identity, verifies the release APK and writes checksums. It refuses a missing signing key. It never uploads anything. The signing key and password are under the repository's ignored `.secrets/android-reader/`, mode 700/600. Back them up securely: future updates require this same key and an increased `versionCode`.
 
 GitHub builds debug APKs on Android changes. Tags `android-v<versionName>` from main build signed pilot releases at [GitHub Releases](https://github.com/vladzaharia/passbook/releases). The release job requires `ANDROID_READER_KEYSTORE_B64` and `ANDROID_READER_SIGNING_PASSWORD` repository secrets; it never creates an update key. `dist/` stays ignored.
+
+## Distribution
+
+Install page: <https://vladzaharia.github.io/passbook/>. Everything below is built by the `Apps feeds` workflow from the GitHub releases.
+
+| Channel | Where |
+| --- | --- |
+| GitHub Releases | Signed APK, AAB and `SHA256SUMS` for each `android-v*` tag |
+| F-Droid, Droid-ify | `https://vladzaharia.github.io/passbook/fdroid/repo`, fingerprint `B1487911B4DCC4D9B797DE9E7A1500245FD27171A90C807A1AB0FF352ABD2425` |
+| Obtainium | `https://github.com/vladzaharia/passbook`, source GitHub |
+| Google Play | Internal testing; link on the install page once `PLAY_INTERNAL_URL` is set |
+
+Add the F-Droid repo from the install page (link or QR), or by hand: Settings, Repositories, add the URL, check the fingerprint. Install **PassBook Reader**. Every channel ships the same key, so a build from one updates a build from another; F-Droid keeps all versions in the repo.
+
+The `android-v*` release job also builds a signed AAB (`bundleRelease`, same key). When the `PLAY_SERVICE_ACCOUNT_JSON` secret exists it uploads the AAB to the internal track; without it the step prints a notice and is skipped. Set the `PLAY_RELEASE_STATUS` variable to `draft` until the app has had its first completed release.
+
+Owner steps for Play are in `docs/operations.md`, App distribution.

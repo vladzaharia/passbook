@@ -28,6 +28,8 @@ export interface GoogleTokenOptions {
   fetcher?: typeof fetch;
   /** Reuse tokens per isolate for this account revision. Omit to always mint. */
   cacheKey?: GoogleTokenCacheKey;
+  /** Another OAuth scope (the IAM API's); such a token is never cached. Default: the Wallet scope. */
+  scope?: string;
 }
 
 interface CachedToken extends GoogleAccessToken {
@@ -58,7 +60,8 @@ export async function getGoogleAccessToken(
 ): Promise<GoogleAccessToken> {
   if (!options) throw new GoogleWalletError('invalid_input', 'oauth');
   const issuedAt = googleIssuedAt(options.issuedAt);
-  const cacheKey = options.cacheKey;
+  const scope = options.scope ?? GOOGLE_WALLET_SCOPE;
+  const cacheKey = scope === GOOGLE_WALLET_SCOPE ? options.cacheKey : undefined;
   if (cacheKey) {
     const cached = tokenCache.get(cacheKey.accountId);
     if (
@@ -72,7 +75,7 @@ export async function getGoogleAccessToken(
   }
   const assertion = await signGoogleJwt(account, {
     iss: account.serviceAccountEmail,
-    scope: GOOGLE_WALLET_SCOPE,
+    scope,
     aud: TOKEN_ENDPOINT,
     iat: issuedAt,
     exp: issuedAt + 300,
@@ -109,7 +112,7 @@ export async function getGoogleAccessToken(
     !Number.isSafeInteger(token.expires_in) ||
     token.expires_in <= 0 ||
     issuedAt > Number.MAX_SAFE_INTEGER - token.expires_in ||
-    (token.scope !== undefined && token.scope !== GOOGLE_WALLET_SCOPE)
+    (token.scope !== undefined && token.scope !== scope)
   ) {
     throw new GoogleWalletError('invalid_response', 'oauth');
   }

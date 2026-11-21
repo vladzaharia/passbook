@@ -4,24 +4,19 @@ import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 
 const own = {
   id: 'i-own',
+  provider: 'apple',
   orgId: 'o1',
   label: 'North signing',
-  passTypeIdentifier: 'pass.com.north',
-  teamIdentifier: 'TEAM123',
-  source: 'db',
-  certSha256: 'ab',
-  certSubject: null,
-  certSerial: null,
+  identifier: 'pass.mobile.passbook.north',
+  kind: 'managed',
+  status: 'active',
   notBefore: 1_600_000_000_000,
   notAfter: Date.now() + 100 * 86_400_000,
-  daysRemaining: 100,
-  apnsBinding: null,
-  apnsAvailable: true,
-  pushMethod: 'certificate',
-  pushKey: null,
-  apnsHealth: 'healthy',
-  nfcEnabled: false,
+  rotation: 'auto',
+  nextRotationAt: Date.UTC(2027, 9, 1, 12),
+  issuing: true,
   isDefault: false,
+  passCount: 0,
   createdAt: 1_600_000_000_000,
 };
 const enrolments = () =>
@@ -48,15 +43,16 @@ describe('wallet accounts per scope', () => {
       session: 'user',
       memberships: [north],
       handlers: {
-        '/api/v1/identities': () => json({ items: [own], nextCursor: null }),
+        '/api/v1/wallet-identities': () => json({ items: [own], nextCursor: null }),
         '/api/v1/orgs/o1/wallet-enrolments': enrolments,
         '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [], nextCursor: null }),
       },
     });
     expect(await screen.findByRole('heading', { name: 'Wallet accounts', level: 1 })).toBeVisible();
-    expect(await screen.findByText('North signing')).toBeInTheDocument();
+    expect(await screen.findByText('pass.mobile.passbook.north')).toBeInTheDocument();
+    expect(screen.getByText(/Managed · Oct 1, 2027/)).toBeInTheDocument();
     const calls = fetchMock.mock.calls.map(([url]) => new URL(String(url), 'http://localhost'));
-    const identities = calls.filter((url) => url.pathname === '/api/v1/identities');
+    const identities = calls.filter((url) => url.pathname === '/api/v1/wallet-identities');
     expect(identities.length).toBeGreaterThan(0);
     expect(identities.every((url) => url.searchParams.get('orgId') === 'o1')).toBe(true);
     await waitFor(() => {
@@ -71,29 +67,38 @@ describe('wallet accounts per scope', () => {
       session: 'user',
       memberships: [north],
       handlers: {
-        '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+        '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
         '/api/v1/orgs/o1/wallet-enrolments': enrolments,
         '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [], nextCursor: null }),
       },
     });
-    expect(await screen.findByText("Signs with PassBook's identity.")).toBeInTheDocument();
+    expect(await screen.findByText("Signs with PassBook's ID")).toBeInTheDocument();
   });
 
   it('lists every identity on the platform page, which names no scope in its labels', async () => {
     await renderApp('/admin/platform/wallet-accounts', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities': () =>
+        '/api/v1/wallet-identities': () =>
           json({
-            items: [own, { ...own, id: 'i-2', label: 'Platform', orgId: null }],
+            items: [
+              own,
+              {
+                ...own,
+                id: 'i-2',
+                identifier: 'pass.im.plrs.wallet',
+                kind: 'platform',
+                orgId: null,
+              },
+            ],
             nextCursor: null,
           }),
         '/api/v1/orgs': () => json({ items: [], nextCursor: null }),
       },
     });
     expect(await screen.findByRole('heading', { name: 'Wallet accounts', level: 1 })).toBeVisible();
-    expect(await screen.findByText('North signing')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Platform' })).toBeInTheDocument();
+    expect(await screen.findByText('pass.mobile.passbook.north')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'pass.im.plrs.wallet' })).toBeInTheDocument();
     expect(screen.queryByText(/Platform-wide/)).toBeNull();
     expect(screen.queryByRole('region', { name: 'Google Wallet' })).toBeNull();
   });

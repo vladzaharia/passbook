@@ -8,6 +8,54 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
+    "class": "additive",
+    "operationId": "identities.deleteIdentitiesByIdPushKey",
+    "op": "DELETE /api/v1/identities/{id}/push-key",
+    "change": "200.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "DELETE /api/v1/identities/{id}/push-key 200.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.deleteIdentitiesByIdPushKey",
+    "op": "DELETE /api/v1/identities/{id}/push-key",
+    "change": "200.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "DELETE /api/v1/identities/{id}/push-key 200.kind: field added",
+    "class": "additive",
+    "operationId": "identities.deleteIdentitiesByIdPushKey",
+    "op": "DELETE /api/v1/identities/{id}/push-key",
+    "change": "200.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "DELETE /api/v1/identities/{id}/push-key 200.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.deleteIdentitiesByIdPushKey",
+    "op": "DELETE /api/v1/identities/{id}/push-key",
+    "change": "200.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "DELETE /api/v1/identities/{id}/push-key 200.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.deleteIdentitiesByIdPushKey",
+    "op": "DELETE /api/v1/identities/{id}/push-key",
+    "change": "200.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "DELETE /api/v1/identities/{id}/push-key 200.status: field added",
+    "class": "additive",
+    "operationId": "identities.deleteIdentitiesByIdPushKey",
+    "op": "DELETE /api/v1/identities/{id}/push-key",
+    "change": "200.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
     "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
@@ -30,6 +78,126 @@
     "op": "GET /api/v1/developer/resolve",
     "change": "new operation",
     "note": "Names a pasted request or object id in your sandbox, for the portal search. Session or try token only."
+  },
+  {
+    "key": "GET /api/v1/identities 200|0.items[].handle: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentities",
+    "op": "GET /api/v1/identities",
+    "change": "200|0.items[].handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities 200|0.items[].issuing: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentities",
+    "op": "GET /api/v1/identities",
+    "change": "200|0.items[].issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities 200|0.items[].kind: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentities",
+    "op": "GET /api/v1/identities",
+    "change": "200|0.items[].kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities 200|0.items[].nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentities",
+    "op": "GET /api/v1/identities",
+    "change": "200|0.items[].nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities 200|0.items[].rotation: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentities",
+    "op": "GET /api/v1/identities",
+    "change": "200|0.items[].rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities 200|0.items[].status: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentities",
+    "op": "GET /api/v1/identities",
+    "change": "200|0.items[].status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities/{id} 200.handle: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentitiesById",
+    "op": "GET /api/v1/identities/{id}",
+    "change": "200.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities/{id} 200.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentitiesById",
+    "op": "GET /api/v1/identities/{id}",
+    "change": "200.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities/{id} 200.kind: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentitiesById",
+    "op": "GET /api/v1/identities/{id}",
+    "change": "200.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities/{id} 200.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentitiesById",
+    "op": "GET /api/v1/identities/{id}",
+    "change": "200.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities/{id} 200.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentitiesById",
+    "op": "GET /api/v1/identities/{id}",
+    "change": "200.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities/{id} 200.status: field added",
+    "class": "additive",
+    "operationId": "identities.getIdentitiesById",
+    "op": "GET /api/v1/identities/{id}",
+    "change": "200.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "GET /api/v1/identities/{id}/certificates new operation",
+    "class": "additive",
+    "operationId": "identities.getIdentitiesByIdCertificates",
+    "op": "GET /api/v1/identities/{id}/certificates",
+    "change": "new operation",
+    "note": "Lists an identity's certificate history."
+  },
+  {
+    "key": "GET /api/v1/identity-runs new operation",
+    "class": "additive",
+    "operationId": "identity-runs.getIdentityRuns",
+    "op": "GET /api/v1/identity-runs",
+    "change": "new operation",
+    "note": "Lists provisioning runs."
+  },
+  {
+    "key": "GET /api/v1/identity-runs/{id} new operation",
+    "class": "additive",
+    "operationId": "identity-runs.getIdentityRunsById",
+    "op": "GET /api/v1/identity-runs/{id}",
+    "change": "new operation",
+    "note": "Reads one provisioning run and its steps."
   },
   {
     "key": "GET /api/v1/metrics/platform/developer new operation",
@@ -72,6 +240,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
+    "class": "notable",
+    "operationId": "entitlements.getOrgsByIdEntitlements",
+    "op": "GET /api/v1/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"identity.managed\" added",
+    "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/workspace 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgsByIdWorkspace",
@@ -86,6 +262,38 @@
     "op": "GET /api/v1/orgs/{id}/workspace",
     "change": "200.personalOwner: field added",
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
+  },
+  {
+    "key": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/managed new operation",
+    "class": "additive",
+    "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged",
+    "op": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/managed",
+    "change": "new operation",
+    "note": "Lists the org's managed Google issuers."
+  },
+  {
+    "key": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
+    "class": "additive",
+    "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleShared",
+    "op": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
+    "change": "new operation",
+    "note": "Lists the org's shared Google issuers."
+  },
+  {
+    "key": "GET /api/v1/platform/apple-calls new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.getPlatformAppleCalls",
+    "op": "GET /api/v1/platform/apple-calls",
+    "change": "new operation",
+    "note": "Lists recorded Apple provisioning calls."
+  },
+  {
+    "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
+    "class": "notable",
+    "operationId": "entitlements.getPlatformOrgsByIdEntitlements",
+    "op": "GET /api/v1/platform/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"identity.managed\" added",
+    "note": "New entitlement identity.managed gates managed Apple identities."
   },
   {
     "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.hardware: field added",
@@ -112,12 +320,84 @@
     "note": "An email-link session still inside the console grace window reports when it ends; null otherwise."
   },
   {
+    "key": "GET /api/v1/wallet-identities new operation",
+    "class": "additive",
+    "operationId": "wallet-identities.getWalletIdentities",
+    "op": "GET /api/v1/wallet-identities",
+    "change": "new operation",
+    "note": "Lists wallet identities across Apple and Google."
+  },
+  {
     "key": "PATCH /api/v1/brand 200.personal: field added",
     "class": "additive",
     "operationId": "brand.patchBrand",
     "op": "PATCH /api/v1/brand",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} 200.handle: field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "200.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} 200.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "200.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} 200.kind: field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "200.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} 200.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "200.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} 200.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "200.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} 200.status: field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "200.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} body.issuing: optional input field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "body.issuing: optional input field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt. PATCH accepts issuing and rotation."
+  },
+  {
+    "key": "PATCH /api/v1/identities/{id} body.rotation: optional input field added",
+    "class": "additive",
+    "operationId": "identities.patchIdentitiesById",
+    "op": "PATCH /api/v1/identities/{id}",
+    "change": "body.rotation: optional input field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt. PATCH accepts issuing and rotation."
   },
   {
     "key": "PATCH /api/v1/orgs/{id} 200.personal: field added",
@@ -142,6 +422,134 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/identities 201.handle: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.kind: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.status: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/renew new operation",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRenew",
+    "op": "POST /api/v1/identities/{id}/renew",
+    "change": "new operation",
+    "note": "Starts a certificate renewal run."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/revoke-certificate new operation",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRevokeCertificate",
+    "op": "POST /api/v1/identities/{id}/revoke-certificate",
+    "change": "new operation",
+    "note": "Revokes one certificate of an identity."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.handle: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.kind: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.status: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identity-runs/{id}/cancel new operation",
+    "class": "additive",
+    "operationId": "identity-runs.postIdentityRunsByIdCancel",
+    "op": "POST /api/v1/identity-runs/{id}/cancel",
+    "change": "new operation",
+    "note": "Cancels an open provisioning run."
+  },
+  {
+    "key": "POST /api/v1/identity-runs/{id}/retry new operation",
+    "class": "additive",
+    "operationId": "identity-runs.postIdentityRunsByIdRetry",
+    "op": "POST /api/v1/identity-runs/{id}/retry",
+    "change": "new operation",
+    "note": "Retries a failed or cancelled provisioning run."
   },
   {
     "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",
@@ -176,12 +584,76 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",
+    "class": "additive",
+    "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
+    "op": "POST /api/v1/orgs/{orgId}/identities/apple",
+    "change": "new operation",
+    "note": "Starts provisioning a managed Apple identity."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed new operation",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleManaged",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed",
+    "change": "new operation",
+    "note": "Starts provisioning a managed Google issuer."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
+    "change": "new operation",
+    "note": "Attaches an existing Google issuer shared with the platform."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
+  },
+  {
     "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
     "class": "additive",
     "operationId": "organization-memberships.postOrgsInvitationsAccept",
     "op": "POST /api/v1/orgs/invitations/accept",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
+    "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed",
+    "change": "new operation",
+    "note": "Starts a managed Google issuer for an org."
+  },
+  {
+    "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete",
+    "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete",
+    "change": "new operation",
+    "note": "Completes a managed Google issuer once Google has approved it."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRotateKey",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key",
+    "change": "new operation",
+    "note": "Starts a service account key rotation."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
@@ -256,11 +728,83 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.handle: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.kind: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.status: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
     "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.putOrgsByIdBrandingBySlot",
     "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+    "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
+    "class": "notable",
+    "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
+    "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"identity.managed\" added",
+    "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
+    "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.putPlatformWalletCredentials",
+    "op": "PUT /api/v1/platform/wallet-credentials",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
   }
 ]
