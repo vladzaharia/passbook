@@ -39,8 +39,11 @@ export type RouteAuth =
       human: true;
       requestMode?: boolean;
       feature?: FeatureRule;
-      /** Deny by default: a session needs a strong sign-in (Polaris ID). `any` also admits an email link (holder features). */
-      signIn?: 'any';
+      /**
+       * Deny by default: a session needs a strong sign-in (Polaris ID), or an email link inside the console
+       * grace. `any` admits an email link (holder features); `strict` takes no grace.
+       */
+      signIn?: 'any' | 'strict';
     }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
   | { platform: PlatformScope };

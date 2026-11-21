@@ -171,7 +171,7 @@ export function withSignIn(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
         )
         .map((r) => signInLevelOf(r.handler));
       Object.assign(op as object, {
-        'x-sign-in': levels.includes('idp') || !levels.includes('any') ? 'idp' : 'any',
+        'x-sign-in': levels.some((l) => l !== 'any') || !levels.includes('any') ? 'idp' : 'any',
       });
     }
   }

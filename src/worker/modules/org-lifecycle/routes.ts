@@ -11,7 +11,7 @@ import {
   OrgLifecycleParamsSchema,
   OrgLifecycleSchema,
 } from '../../../shared/contracts/org-lifecycle.ts';
-import { requireAdmin } from '../../platform/auth.ts';
+import { requireAdmin, requireStrictSession } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -51,6 +51,8 @@ orgLifecycleRoutes.use('*', async (c, next) => {
   c.header('cache-control', 'no-store');
 });
 orgLifecycleRoutes.use('/:orgId/reopen', requireAdmin);
+// Closing an org is a strong sign-in with no email-link grace, so the refusal names Polaris ID.
+orgLifecycleRoutes.use('/:orgId/close', requireStrictSession);
 
 register(
   orgLifecycleRoutes,

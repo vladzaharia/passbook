@@ -10,8 +10,11 @@ export const STRONG_AMR = ['oidc', 'breakglass'] as const;
 export const isStrongAmr = (amr: string): boolean =>
   (STRONG_AMR as readonly string[]).includes(amr);
 
-/** What a route needs: a strong session (`idp`) or any signed-in one (`any`). */
-export type SignInLevel = 'idp' | 'any';
+/**
+ * What a route needs: a strong session or an email one in its grace window (`idp`), any signed-in
+ * one (`any`), or a strong session with no grace (`strict`: credentials, sandboxes, joining an org).
+ */
+export type SignInLevel = 'idp' | 'any' | 'strict';
 
 /**
  * Whether a session may use the console and developer tools at `now`: strong, or an email session

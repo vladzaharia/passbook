@@ -8,9 +8,14 @@ import {
   type Mode,
   type RoleSchema,
 } from '../../shared/contracts/common.ts';
-import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
 import type { SignInAmr, SignInLevel } from '../../shared/sign-in.ts';
-import { scopeExercises } from './api-scopes.ts';
+import {
+  authorityUnproven,
+  capabilityState,
+  proveCapability,
+  verifiedScopeOf,
+  verifiedScopes,
+} from './auth-capability.ts';
 import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
@@ -147,10 +152,14 @@ const sessionGuard = (level: SignInLevel): MiddlewareHandler<AppBindings> =>
 /** Cookie session with a strong sign-in (Polaris ID). State-changing requests also pass the CSRF check. */
 export const requireSession = sessionGuard('idp');
 
+/** A strong session with no grace for an email link: minting credentials, sandboxes, joining an org. */
+export const requireStrictSession = sessionGuard('strict');
+
 /** Any signed-in session, an email link included: holder features only (my passes, account). */
 export const requireHolderSession = sessionGuard('any');
 
 knownGuards.add(requireSession);
+knownGuards.add(requireStrictSession);
 knownGuards.add(requireHolderSession);
 
 /** Cookie session with the admin role. */
@@ -187,33 +196,7 @@ export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeR
 }
 
 export type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
-
-// Only requireCaller tags the scope it verified, so a handler can trust it.
-const verifiedScopes = new WeakMap<AuthContext, ApiScope>();
-
-/** The scope `requireCaller` checked on this key principal; undefined for anything else. */
-export function verifiedScopeOf(auth: AuthContext): ApiScope | undefined {
-  return verifiedScopes.get(auth);
-}
-
-// A declared `capability` is a promise the handler proves with tenantAuthorityOf. The state hangs
-// on the principal object requireCaller puts in the context, which is fresh for every request.
-const capabilityState = new WeakMap<AuthContext, { capability: OrgCapability; proven: boolean }>();
-
-/** Called by tenantAuthorityOf once membership (or the key's scope) is proven for `capability`. */
-export function proveCapability(auth: AuthContext, capability: OrgCapability): void {
-  const state = capabilityState.get(auth);
-  if (!state) return;
-  const scope = verifiedScopes.get(auth);
-  if (state.capability === capability || (scope && scopeExercises(scope, capability)))
-    state.proven = true;
-}
-
-/** True when the route declared a capability and its handler never proved it. */
-export function authorityUnproven(auth: AuthContext | undefined): boolean {
-  const state = auth ? capabilityState.get(auth) : undefined;
-  return state !== undefined && !state.proven;
-}
+export { authorityUnproven, proveCapability, verifiedScopeOf };
 
 const isRead = (c: Context) => c.req.method === 'GET' || c.req.method === 'HEAD';
 
@@ -251,7 +234,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const tillKey = 'scope' in auth && auth.tillKey === true;
   const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
   const sessionKind = sessionKindOf(auth);
-  const level: SignInLevel = 'human' in auth && auth.signIn === 'any' ? 'any' : 'idp';
+  const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
     if (rule && token) {
