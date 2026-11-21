@@ -55,6 +55,18 @@ export async function listRuns(
   };
 }
 
+/** What provisioning needs, for a first start and a retry alike: an active org, the feature, no identity yet. */
+async function assertCanProvision(ctx: ServiceContext, orgId: string): Promise<void> {
+  const org = await getOrgRow(ctx.env.DB, orgId);
+  if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  await requireEntitled(ctx, orgId, 'identity.managed');
+  if ((await managedIdentityOf(ctx.env.DB, orgId))?.cert_pem)
+    throw new ConflictError(
+      'This organization already has a managed identity.',
+      'IDENTITY_ALREADY_PROVISIONED',
+    );
+}
+
 /** Starts the managed identity of an org, or returns the run already open for it. */
 export async function startManagedIdentity(
   ctx: ServiceContext,
@@ -62,19 +74,12 @@ export async function startManagedIdentity(
   orgId: string,
   handle: string | undefined,
 ): Promise<IdentityRunDto> {
-  const org = await getOrgRow(ctx.env.DB, orgId);
-  if (org?.status !== 'active') throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  await requireEntitled(ctx, orgId, 'identity.managed');
+  await assertCanProvision(ctx, orgId);
   if (handle && RESERVED_HANDLES.has(handle))
     throw new ValidationError(
       'This handle is reserved. Choose another.',
       [],
       'IDENTITY_HANDLE_RESERVED',
-    );
-  if ((await managedIdentityOf(ctx.env.DB, orgId))?.cert_pem)
-    throw new ConflictError(
-      'This organization already has a managed identity.',
-      'IDENTITY_ALREADY_PROVISIONED',
     );
   const started = await startProvision(ctx, {
     orgId,
@@ -117,6 +122,7 @@ export async function retryRun(
   const createdBy = actor.type === 'user' ? actor.id : null;
   let started: StartedRun;
   if (run.kind === 'provision') {
+    await assertCanProvision(ctx, run.target_id);
     const ref = run.external_ref
       ? (JSON.parse(run.external_ref) as { requestedHandle?: string })
       : {};
