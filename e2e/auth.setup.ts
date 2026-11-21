@@ -8,6 +8,7 @@ for (const [role, landing] of [
   ['admin', '/admin'],
   ['user', '/'],
   ['reviewer', '/'],
+  ['developer', '/'],
 ] as [Role, string][]) {
   setup(`sign in as ${role}`, async ({ page }) => {
     await signInAs(page, role, landing);

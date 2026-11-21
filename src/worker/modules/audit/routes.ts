@@ -1,5 +1,5 @@
 import { AuditListSchema, AuditQuerySchema } from '../../../shared/contracts/index.ts';
-import { requireAdmin, requireSession } from '../../platform/auth.ts';
+import { requireAdmin, requireConsoleSession } from '../../platform/auth.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -8,7 +8,7 @@ import { enforceExportLimit } from './export-limit.ts';
 import { listPlatformAudit, listTenantAudit } from './service.ts';
 
 export const auditRoutes = createRouter();
-guard(auditRoutes, requireSession);
+guard(auditRoutes, requireConsoleSession);
 auditRoutes.use('/platform', requireAdmin);
 auditRoutes.use('/platform/*', requireAdmin);
 

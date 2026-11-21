@@ -23,6 +23,7 @@ const DECLARED: Record<string, { status: number; module: string }> = {
   SANDBOX_PREVIEW_ONLY: { status: 409, module: 'sandbox' },
   // Thrown through classes whose code is not a literal at the `new` site (platform/errors-denial.ts).
   IDP_SIGN_IN_REQUIRED: { status: 403, module: 'platform' },
+  STEP_UP_REQUIRED: { status: 403, module: 'platform' },
   PASSKEY_REQUIRED: { status: 403, module: 'sign-in' },
   IDP_EMAIL_NOT_PRIMARY: { status: 403, module: 'sign-in' },
   STAFF_NAME_REQUIRED: { status: 409, module: 'scan' },
