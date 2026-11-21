@@ -1,5 +1,7 @@
 import AVFoundation
+import CoreHaptics
 import Foundation
+import GameController
 import UIKit
 import ProximityReader
 
@@ -12,6 +14,15 @@ final class ScannerHardware {
     var tagsEnabled = false
     private(set) var readingNFC = false
 
+    init() {
+        // A wedge scanner appears as a hardware keyboard; report it when it connects or goes away.
+        for name in [NSNotification.Name.GCKeyboardDidConnect, .GCKeyboardDidDisconnect] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in self?.onChange?() }
+            }
+        }
+    }
+
     var capabilities: [String: Any] {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         return [
@@ -23,8 +34,24 @@ final class ScannerHardware {
             "vas": ["deviceSupported": PaymentCardReader.isSupported, "available": false, "reader": "proximityReader", "reason": "Wallet VAS needs Apple reader entitlement, a supported payment provider, and server verification."],
             "externalReader": ["mode": "keyboard", "connected": NSNull()],
             "customerDisplay": ["supported": false, "available": false, "active": false],
-            "haptics": true
+            "haptics": true,
+            "hardware": HardwareMap.entries(hardwareInput(permission(status)))
         ]
+    }
+
+    private func hardwareInput(_ cameraPermission: String) -> HardwareMap.Input {
+        let types: [AVCaptureDevice.DeviceType] = [.builtInWideAngleCamera, .builtInUltraWideCamera,
+                                                   .builtInTelephotoCamera, .external]
+        let cameras = AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: .unspecified)
+            .devices.map { device in
+                let facing = device.deviceType == .external ? "external"
+                    : device.position == .front ? "front" : device.position == .back ? "back" : "external"
+                return HardwareMap.Camera(facing: facing, name: device.localizedName)
+            }
+        let keyboard = GCKeyboard.coalesced.map { $0.vendorName ?? "Keyboard" }
+        return HardwareMap.Input(cameras: cameras, cameraPermission: cameraPermission, nfcAvailable: NFCReader.available,
+                                 nfcReading: readingNFC, keyboardNames: keyboard.map { [$0] } ?? [],
+                                 haptics: CHHapticEngine.capabilitiesForHardware().supportsHaptics, speaker: true)
     }
 
     private var nfcFormats: [String] {
