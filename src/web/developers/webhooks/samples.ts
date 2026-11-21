@@ -1,3 +1,4 @@
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import type { Lang } from '../model/highlight.ts';
 
 export interface VerifySample {
@@ -11,7 +12,7 @@ export interface VerifySample {
  * Verification in five forms. Every one reads the raw body and checks `HMAC-SHA256(<timestamp>.<body>)`
  * against `v1=<hex>`; snippets.test.ts runs the ones it can against docs/api/webhook-vectors.json.
  */
-export const VERIFY_SAMPLES: VerifySample[] = [
+const ALL_VERIFY_SAMPLES: VerifySample[] = [
   {
     id: 'ts',
     label: 'TypeScript',
@@ -84,3 +85,8 @@ export function verify(raw, headers, secret, now = Date.now() / 1000) {
 printf '%s.%s' "$TS" "$BODY" | openssl dgst -sha256 -r -hmac "$PASSBOOK_WEBHOOK_SECRET" | awk '{print "v1=" $1}'`,
   },
 ];
+
+/** The form that imports the SDK waits for the SDK. */
+export const VERIFY_SAMPLES = ALL_VERIFY_SAMPLES.filter(
+  (s) => s.id !== 'ts' || SDK_STATUS.typescript,
+);

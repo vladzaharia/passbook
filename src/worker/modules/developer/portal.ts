@@ -3,9 +3,9 @@
  * writes them and a manifest), served under the app's host policy and a portal-only CSP. Only what
  * the manifest lists is served; the asset layer's SPA fallback never answers for a portal URL.
  */
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { SearchMissSchema } from '../../../shared/contracts/developer.ts';
-import { DEVELOPERS_INDEXABLE, PATHS } from '../../../shared/developers.ts';
+import { DEVELOPERS_INDEXABLE, NOT_FOUND_FILE, PATHS } from '../../../shared/developers.ts';
 import { missTerm } from '../../../shared/developers-search.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -22,14 +22,26 @@ import { developerBeaconRoutes } from './beacon.ts';
 
 type Manifest = Record<string, { asset: string; type: string }>;
 
-/** One read per isolate and asset binding; a missing manifest (a build without the portal) is an empty one. */
-const manifests = new WeakMap<object, Promise<Manifest>>();
+interface Index {
+  manifest: Manifest;
+  /** Lower-case path to the path as built, for a URL typed in the wrong case (error codes are upper case). */
+  canonical: Map<string, string>;
+}
 
-async function manifestOf(assets: Fetcher, origin: string): Promise<Manifest> {
+/** One read per isolate and asset binding; a missing manifest (a build without the portal) is an empty one. */
+const manifests = new WeakMap<object, Promise<Index>>();
+
+async function indexOf(assets: Fetcher, origin: string): Promise<Index> {
   const res = await assets.fetch(new Request(new URL('/developers/manifest.json', origin)));
   const type = res.headers.get('content-type') ?? '';
-  return res.ok && type.includes('json') ? ((await res.json()) as Manifest) : {};
+  const manifest = res.ok && type.includes('json') ? ((await res.json()) as Manifest) : {};
+  const canonical = new Map<string, string>();
+  for (const key of Object.keys(manifest)) canonical.set(key.toLowerCase(), key);
+  return { manifest, canonical };
 }
+
+/** A page route has no file extension; `.md`, `.json` and the like are files, and keep their problem+json. */
+const isPageRoute = (path: string) => !(path.split('/').pop() ?? '').includes('.');
 
 export const developerPortalRoutes = new Hono<AppBindings>();
 // The one write the portal makes: a funnel step. Ahead of the catch-all, which only reads files.
@@ -68,6 +80,22 @@ function parseMiss(text: string) {
   }
 }
 
+/** The portal's own page for an address it does not have: 404, never indexed, never cached. */
+async function notFoundPage(c: Context<AppBindings>, manifest: Manifest, origin: string) {
+  const entry = manifest[NOT_FOUND_FILE];
+  const res = entry ? await c.env.ASSETS.fetch(new Request(new URL(entry.asset, origin))) : null;
+  if (!res?.ok) return asBrowserPage(c, notFoundHandler(c));
+  return new Response(c.req.method === 'HEAD' ? null : res.body, {
+    status: 404,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex, nofollow',
+      'content-security-policy': developersContentSecurityPolicy(),
+    },
+  });
+}
+
 developerPortalRoutes.get('/*', async (c) => {
   const url = new URL(c.req.url);
   const key = url.pathname.replace(/\/+$/, '') || '/developers';
@@ -82,19 +110,33 @@ developerPortalRoutes.get('/*', async (c) => {
         return Response.json({ error: 'unavailable' }, { status: 503, headers });
       }
     });
-  let manifest = manifests.get(c.env.ASSETS);
-  if (!manifest) {
-    manifest = manifestOf(c.env.ASSETS, url.origin);
-    manifests.set(c.env.ASSETS, manifest);
+  const reading = c.req.method === 'GET' || c.req.method === 'HEAD';
+  // One URL per page: a trailing slash is the page without it.
+  if (reading && url.pathname !== key && url.pathname.endsWith('/'))
+    return c.redirect(`${key}${url.search}`, 308);
+  let pending = manifests.get(c.env.ASSETS);
+  if (!pending) {
+    pending = indexOf(c.env.ASSETS, url.origin);
+    manifests.set(c.env.ASSETS, pending);
   }
-  const entry = Object.hasOwn(await manifest, key) ? (await manifest)[key] : undefined;
+  const { manifest, canonical } = await pending;
+  const entry = Object.hasOwn(manifest, key) ? manifest[key] : undefined;
   const res = entry
     ? await c.env.ASSETS.fetch(new Request(new URL(entry.asset, url.origin)))
     : null;
-  if (!entry || !res?.ok) return asBrowserPage(c, notFoundHandler(c));
+  if (!entry || !res?.ok) {
+    // Error codes are case-sensitive in the files; `/errors/invalid_input` goes to `/errors/INVALID_INPUT`.
+    const right = canonical.get(key.toLowerCase());
+    if (reading && right && right !== key) return c.redirect(`${right}${url.search}`, 308);
+    if (reading && isPageRoute(key)) return notFoundPage(c, manifest, url.origin);
+    return asBrowserPage(c, notFoundHandler(c));
+  }
   const headers = new Headers({
     'content-type': entry.type,
-    'cache-control': 'public, max-age=300',
+    // no-transform keeps the edge from injecting Cloudflare's analytics beacon, which the CSP refuses.
+    'cache-control': entry.type.startsWith('text/html')
+      ? 'public, max-age=300, no-transform'
+      : 'public, max-age=300',
     'x-robots-tag': DEVELOPERS_INDEXABLE ? 'index, follow' : 'noindex, nofollow',
   });
   const etag = res.headers.get('etag');
@@ -108,7 +150,7 @@ developerPortalRoutes.get('/*', async (c) => {
     );
   }
   if (key === PATHS.status) {
-    headers.set('cache-control', 'public, max-age=30');
+    headers.set('cache-control', 'public, max-age=30, no-transform');
     headers.delete('etag');
     const shell = await res.text();
     return cachedPublic(

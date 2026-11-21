@@ -18,7 +18,7 @@ import type { Json } from './types.ts';
 const LONE_SURROGATE_OR_SLASH = /(?<!\\)(?:\\\\)*\\(?:ud[89a-f][0-9a-f]{2}|\/)|\ufeff/i;
 
 const BASE = 'https://passbook.mobile/api/v1';
-const sampleOf = (input: Json) =>
+const sampleOf = (input: Json, published = true) =>
   Object.fromEntries(
     samplesFor(
       {
@@ -33,6 +33,7 @@ const sampleOf = (input: Json) =>
         sample: { body: { templateId: 'baked:starter-store-card', input }, query: {}, headers: {} },
       },
       BASE,
+      { typescript: published, python: published, go: published },
     ).map((s) => [s.lang, s.code]),
   ) as Record<'ts' | 'curl' | 'py' | 'go', string>;
 
@@ -76,7 +77,10 @@ describe('code literals', () => {
   });
 });
 
-describe('samples built from hostile values', () => {
+describe.each([
+  ['SDK', true],
+  ['plain HTTP', false],
+])('%s samples built from hostile values', (_variant, published) => {
   const benign: Json = {
     name: 'Casey River',
     note: 'plain',
@@ -85,7 +89,10 @@ describe('samples built from hostile values', () => {
     tags: ['a', 'b'],
   };
   const shapes = Object.fromEntries(
-    Object.entries(sampleOf(benign)).map(([lang, code]) => [lang, shapeOf(lang as 'ts', code)]),
+    Object.entries(sampleOf(benign, published)).map(([lang, code]) => [
+      lang,
+      shapeOf(lang as 'ts', code),
+    ]),
   );
   const hostile = (text: string): Json => ({
     name: text,
@@ -98,7 +105,7 @@ describe('samples built from hostile values', () => {
   it.each(Object.entries(PAYLOADS))(
     '%s in a value: same program, the value stays data',
     async (_name, text) => {
-      const code = sampleOf(hostile(text));
+      const code = sampleOf(hostile(text), published);
       // 1. Outside its string literals each sample is the sample of a harmless value.
       for (const lang of ['ts', 'curl', 'py', 'go'] as const)
         expect(shapeOf(lang, code[lang]), lang).toBe(shapes[lang]);
@@ -131,8 +138,8 @@ describe('samples built from hostile values', () => {
   it('a hostile key is data too', async () => {
     const key = PAYLOADS.ts;
     const input: Json = { [key]: 1, 'a b': 2 };
-    const code = sampleOf(input);
-    const quoted = sampleOf({ 'x y': 1, 'a b': 2 });
+    const code = sampleOf(input, published);
+    const quoted = sampleOf({ 'x y': 1, 'a b': 2 }, published);
     for (const lang of ['ts', 'curl', 'py', 'go'] as const)
       expect(shapeOf(lang, code[lang]), lang).toBe(shapeOf(lang, quoted[lang]));
     const calls = await runTs(code.ts, 'SECRET-KEY');

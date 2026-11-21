@@ -1,5 +1,6 @@
 import { runOp } from '../console/run-spec.ts';
 import { buildChangelog } from './changelog.ts';
+import { errorStatuses } from './error-status.ts';
 import { minimalExample } from './example.ts';
 import { GROUP_ORDER, groupOf, labelOf, slugOf } from './resources.ts';
 import { bodyFields, paramFields, refName, resolve } from './schema.ts';
@@ -30,7 +31,7 @@ export interface Inputs {
   reference: Record<string, ReferenceEntry>;
   changelog: RawChangeFile[];
   versions: ApiVersion[];
-  /** docs/api/errors.json (PX4): `[{code,status}]` or `{code: {status}}`. Absent until PX4. */
+  /** docs/api/errors.json (PX4): `{codes: [{code,statuses}]}`, `[{code,status}]` or `{code: {status}}`. Absent until PX4. */
   errors?: unknown;
   /** docs/api/error-guide.json (PX4): `{code: {title,when,fix,retryable}}`. */
   guide?: Record<string, Dict>;
@@ -54,17 +55,6 @@ const isConsoleOnly = (op: RawOp) =>
   op['x-sdk'] !== undefined &&
   op['x-sdk'].sdk !== false &&
   !op['x-sdk'].resource.startsWith('platform');
-
-/** Status and code rows from the PX4 catalog, whichever of the two shapes it takes. */
-function statusByCode(errors: unknown): Map<string, number> {
-  const out = new Map<string, number>();
-  const rows: Dict[] = Array.isArray(errors)
-    ? errors.map((e) => asDict(e))
-    : Object.entries(asDict(errors)).map(([code, e]) => ({ code, ...asDict(e) }));
-  for (const r of rows)
-    if (typeof r.code === 'string' && typeof r.status === 'number') out.set(r.code, r.status);
-  return out;
-}
 
 function errorRows(
   op: RawOp,
@@ -210,7 +200,7 @@ function webhookEvents(doc: RawDoc): WebhookEvent[] {
 
 export function buildSite(inputs: Inputs): Site {
   const { doc } = inputs;
-  const status = statusByCode(inputs.errors);
+  const status = errorStatuses(inputs.errors);
   const pages = new Map<string, ResourcePage>();
   const consoleOps = new Map<string, ConsoleOp[]>();
   const protocols: ProtocolOp[] = [];

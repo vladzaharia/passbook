@@ -1,0 +1,134 @@
+import { DEV_COPY } from '../../../shared/copy/developers.ts';
+import { LOGS_COPY, STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
+import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
+import { PATHS, twin } from '../../../shared/developers.ts';
+import { operations } from './dates.ts';
+import { pagePath } from './markdown.ts';
+import type { ErrorEntry, Site } from './types.ts';
+
+/** Markdown twins of the pages markdown.ts has no generator for (the reference pages, home and guides have theirs). */
+
+const end = (lines: string[]) => `${lines.join('\n')}\n`;
+const cell = (text: string) => text.replaceAll('|', '\\|').replaceAll('\n', ' ');
+const note = (title: string, line: string, hint: string) => end([`# ${title}`, '', line, '', hint]);
+
+export function referenceIndexMarkdown(site: Site): string {
+  const out = [`# ${DEV_COPY.reference.title}`, '', DEV_COPY.reference.lede, ''];
+  for (const g of site.groups) {
+    out.push(`## ${g.label}`, '');
+    for (const p of g.pages)
+      out.push(`- [${p.label}](${twin(pagePath(p))}): ${operations(p.ops.length)}`);
+    out.push('');
+  }
+  out.push(
+    '## More',
+    '',
+    `- [Errors](${twin(PATHS.errors)})`,
+    `- [Protocols](${twin(PATHS.protocols)})`,
+    `- [Console](${twin(PATHS.console)})`,
+  );
+  return end(out);
+}
+
+export function protocolsMarkdown(site: Site): string {
+  const out = ['# Protocols', '', 'Called by devices and wallets, not by integrations.', ''];
+  for (const p of site.protocols)
+    out.push(`- \`${p.method.toUpperCase()} ${p.path}\`: ${p.reason || p.title}`);
+  return end(out);
+}
+
+export function errorsIndexMarkdown(site: Site): string {
+  const out = ['# Errors', '', 'Branch on code, not on the message.', ''];
+  if (site.errors.length > 0) out.push('| Code | Status | Fix |', '| --- | --- | --- |');
+  for (const e of site.errors)
+    out.push(
+      `| [\`${e.code}\`](${twin(`${PATHS.errors}/${e.code}`)}) | ${e.status ?? ''} | ${cell(e.fix || e.title)} |`,
+    );
+  return end(out);
+}
+
+export function errorMarkdown(e: ErrorEntry): string {
+  const out = [`# ${e.code}`, ''];
+  const facts = [
+    ...(e.status ? [`Status ${e.status}`] : []),
+    ...(e.retryable === null ? [] : [e.retryable ? 'Retry' : 'Do not retry']),
+  ];
+  if (facts.length > 0) out.push(`${facts.join('. ')}.`, '');
+  if (e.title !== e.code) out.push(e.title, '');
+  if (e.fix) out.push('## Fix', '', e.fix, '');
+  if (e.when) out.push('## When', '', e.when, '');
+  if (e.usedBy.length > 0) {
+    out.push('## Returned by', '');
+    for (const u of e.usedBy)
+      out.push(`- [${u.title}](${PATHS.reference}/${u.slug}.md#${u.anchor})`);
+  }
+  return end(out);
+}
+
+export function webhooksMarkdown(site: Site): string {
+  const out = [
+    '# Webhook tester',
+    '',
+    'Capture signed webhooks in your sandbox, verify them and replay them. Sign in to use the tester.',
+    '',
+    '## Events',
+    '',
+    'Signed events, one POST per delivery. Verify x-passbook-signature over the raw body, and dedupe on x-passbook-event-id.',
+    '',
+  ];
+  for (const e of site.webhookEvents) out.push(`- \`${e.type}\`: ${e.summary}`);
+  out.push(
+    '',
+    `Endpoints are managed with the [webhook endpoints](${twin(`${PATHS.reference}/webhook-endpoints`)}) API.`,
+  );
+  return end(out);
+}
+
+export function changelogMarkdown(site: Site): string {
+  const out = [
+    '# Changelog',
+    '',
+    'Send `PassBook-Version` to opt in to a dated version; without it nothing changes.',
+    '',
+  ];
+  for (const v of site.versions)
+    out.push(`- \`PassBook-Version: ${v.date}\`: ${v.summary} ${v.migration}`);
+  let day = '';
+  for (const e of site.changelog) {
+    if (e.date !== day) out.push('', `## ${e.date}`, '');
+    day = e.date;
+    out.push(`- ${e.kind}${e.breaking ? ' (breaking)' : ''}: ${e.text}`);
+  }
+  return end(out);
+}
+
+export function quickstartMarkdown(): string {
+  const s = QS_COPY.steps;
+  return end([
+    `# ${QS_COPY.title}`,
+    '',
+    QS_COPY.lede,
+    '',
+    `1. **${s.signIn.title}.** ${s.signIn.line}`,
+    `2. **${s.sandbox.title}.** ${s.sandbox.line} ${s.sandbox.keyOnce}`,
+    `3. **${s.run.title}.** \`POST /api/v1/passes\` with the template id and its fields. Expect \`201\`.`,
+    `4. **${s.change.title}.** \`PATCH /api/v1/passes/{id}\` with \`If-Match\` set to the version you read.`,
+    `5. **${s.home.title}.** ${s.home.line}`,
+    '',
+    'Every step runs in your own sandbox; a sandbox never issues a real pass.',
+  ]);
+}
+
+/** Pages that run in the browser: the twin says what the page is and where its data comes from. */
+export const appTwins = {
+  playground: () =>
+    note(
+      DEV_COPY.slots.playground.title,
+      DEV_COPY.slots.playground.line,
+      `The API is described in the [reference](${twin(PATHS.reference)}).`,
+    ),
+  console: () =>
+    note(DEV_COPY.console.title, DEV_COPY.console.line, 'Sign in to run requests in your sandbox.'),
+  logs: () => note(LOGS_COPY.title, LOGS_COPY.lede, 'Sign in to see your sandbox requests.'),
+  status: () => note(STATUS_COPY.title, STATUS_COPY.lede, `Live data: ${PATHS.statusJson}`),
+};

@@ -2,14 +2,16 @@ import { Copy, Inbox, Send } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
+import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import type { ApiProblem, TesterApi, TesterAuth } from './client.ts';
 import { Deliveries, type ListenState } from './deliveries.tsx';
 import { Detail } from './detail.tsx';
 import { VERIFY_SAMPLES } from './samples.ts';
 import { Samples } from './samples-tabs.tsx';
 
-export const POLL_MS = 3000;
 const CLI = 'npx @passbook/cli listen --forward-to localhost:3000/hooks';
+
+export const POLL_MS = 3000;
 
 const SIGN_IN = '/login?next=%2Fdevelopers%2Fwebhooks';
 
@@ -164,21 +166,23 @@ function Workspace({ api, types }: { api: TesterApi; types: readonly string[] })
             listen={listen}
             now={now}
           />
-          <div className="card card-b stack g2">
-            <div className="xs muted">Forward to your machine</div>
-            <div className="cmd">
-              <span className="p">$</span>
-              <code>{CLI}</code>
-              <button
-                type="button"
-                className="iconbtn copy push"
-                data-copy
-                aria-label="Copy command"
-              >
-                <Copy className="lucide" aria-hidden="true" />
-              </button>
+          {SDK_STATUS.cli ? (
+            <div className="card card-b stack g2">
+              <div className="xs muted">Forward to your machine</div>
+              <div className="cmd">
+                <span className="p">$</span>
+                <code>{CLI}</code>
+                <button
+                  type="button"
+                  className="iconbtn copy push"
+                  data-copy
+                  aria-label="Copy command"
+                >
+                  <Copy className="lucide" aria-hidden="true" />
+                </button>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
         <div className="stack g4">
           {selected ? (

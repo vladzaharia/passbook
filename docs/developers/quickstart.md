@@ -6,7 +6,7 @@ Your first pass in five steps. About five minutes. The page is `/developers/quic
 2. **Create your sandbox.** One click. You get a test organization, the `Quickstart ticket` template released in Test, a capture endpoint for webhooks and a 30-day `pbp_test_` key. The key is shown once: copy it as `.env`.
 3. **Run your first request.** `POST /api/v1/passes` with the template id and the ticket's fields. Expect `201`. The pass shows in Apple, Google, Samsung and paper under the TEST band, with a link and QR for the test preview page. Run again sends the same `Idempotency-Key`, so the same pass comes back.
 4. **Change it live.** `PATCH /api/v1/passes/{id}` with `If-Match` set to the version you read and a new `admission`. The card changes; your capture endpoint receives `pass.updated`.
-5. **Take it home.** Copy the `.env` (`PASSBOOK_KEY`, `PASSBOOK_TEMPLATE_ID`), `npm i @passbook/sdk` and the request as a file.
+5. **Take it home.** Copy the `.env` (`PASSBOOK_KEY`, `PASSBOOK_TEMPLATE_ID`) and the request as a file.
 
 ## What the page shows
 
