@@ -7,7 +7,8 @@ import type { NextKind } from './next-action.ts';
 export function ReleasePrimary({
   kind,
   label,
-  design,
+  templateId,
+  orgId,
   onTry,
   onRelease,
   onReview,
@@ -15,7 +16,8 @@ export function ReleasePrimary({
 }: {
   kind: Exclude<NextKind, 'pass'>;
   label: string;
-  design: { params: { templateId: string }; search: { orgId: string | undefined } };
+  templateId: string;
+  orgId: string | undefined;
   onTry: () => void;
   onRelease: () => void;
   onReview: () => void;
@@ -25,7 +27,7 @@ export function ReleasePrimary({
   if (kind === 'design')
     return (
       <Button asChild className="whitespace-nowrap" iconStart={<Smartphone aria-hidden />}>
-        <Link to="/admin/templates/$templateId/design" {...design}>
+        <Link to="/admin/templates/$templateId/design" params={{ templateId }} search={{ orgId }}>
           {label}
         </Link>
       </Button>

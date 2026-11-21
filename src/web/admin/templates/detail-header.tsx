@@ -69,11 +69,6 @@ export function TemplateDetailHeader({
   const next = archived || !t.release ? null : nextAction(t.release.next, draftName);
   const primary = next && isPrimary(next) ? next : null;
   const showNewPass = !archived && canOperate;
-  const designLink = {
-    to: '/admin/templates/$templateId/design',
-    params: { templateId: t.id },
-    search: { orgId: scopeOrgId },
-  } as const;
   const newPassItem =
     showNewPass && primary ? (
       <DropdownMenuItem asChild>
@@ -124,7 +119,8 @@ export function TemplateDetailHeader({
             <ReleasePrimary
               kind={primary.kind}
               label={primary.label}
-              design={designLink}
+              templateId={t.id}
+              orgId={scopeOrgId}
               onTry={onTry}
               onRelease={onRelease}
               onReview={onReview}
@@ -148,14 +144,24 @@ export function TemplateDetailHeader({
               className="whitespace-nowrap max-md:hidden"
               iconStart={<ACTION_ICON.design aria-hidden />}
             >
-              <Link {...designLink}>Design</Link>
+              <Link
+                to="/admin/templates/$templateId/design"
+                params={{ templateId: t.id }}
+                search={{ orgId: scopeOrgId }}
+              >
+                Design
+              </Link>
             </Button>
           )}
           {hasMenu ? (
             <MoreMenu>
               {canDesign && !archived && primary?.kind !== 'design' ? (
                 <DropdownMenuItem asChild className="md:hidden">
-                  <Link {...designLink}>
+                  <Link
+                    to="/admin/templates/$templateId/design"
+                    params={{ templateId: t.id }}
+                    search={{ orgId: scopeOrgId }}
+                  >
                     <ACTION_ICON.design aria-hidden />
                     Design
                   </Link>
