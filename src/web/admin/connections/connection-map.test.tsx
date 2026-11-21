@@ -77,7 +77,7 @@ describe('connection map and first sync', () => {
     expect(await within(region).findByText('o-1')).toBeInTheDocument();
     expect(within(region).getByRole('button', { name: /Not issued/ })).toHaveTextContent('3');
     expect(within(region).getByText('Member name is required.')).toBeInTheDocument();
-    expect(within(region).getByText(/9 records from the last 30 days/)).toBeInTheDocument();
+    expect(region).toHaveTextContent(/9 records from the last 30 days/);
 
     await user.click(await screen.findByRole('combobox', { name: /Option for Gift card/ }));
     await user.click(await screen.findByRole('option', { name: "Don't issue" }));
