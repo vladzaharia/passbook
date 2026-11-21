@@ -13,6 +13,7 @@ import {
   RESET_ACTION,
   RESETS_PER_DAY,
   reopenSandbox,
+  reserveKey,
   restartTrack,
 } from './repo-grants-reset.ts';
 import {
@@ -20,7 +21,8 @@ import {
   closeReasonOf,
   deleteSlice,
   importObjectKeys,
-  openKeyCount,
+  keysSince,
+  lastClaimAt,
   orgHeld,
   type ResetTable,
   reopenWindow,
@@ -120,17 +122,27 @@ async function purgeRows(
     ['idempotency_keys', 'other'],
   ];
   for (const [table, into] of order) {
-    if (table === 'pass_imports') {
-      const keys = await importObjectKeys(ctx.env.DB, orgId);
-      if (keys.length > 0 && (await claimStands(ctx.env.DB, orgId, userId, stamp)))
-        await deleteObjects(ctx.env.BUCKET, keys);
-    }
+    // Import files go after their rows: those whose row is gone now (the others wait for a resume).
+    const files =
+      table === 'pass_imports' ? await importObjectKeys(ctx.env.DB, orgId, userId, stamp) : [];
+    let stopped = false;
     for (;;) {
       const n = await deleteSlice(ctx.env.DB, table, orgId, userId, stamp);
       tally[into] += n;
       if (n < SLICE_ROWS) break;
-      if (expired()) return true;
+      if (expired()) {
+        stopped = true;
+        break;
+      }
     }
+    if (files.length > 0) {
+      const left = new Set(await importObjectKeys(ctx.env.DB, orgId, userId, stamp));
+      await deleteObjects(
+        ctx.env.BUCKET,
+        files.filter((k) => !left.has(k)),
+      );
+    }
+    if (stopped) return true;
   }
   return false;
 }
@@ -144,12 +156,31 @@ async function purge(
   budgetMs: number,
 ): Promise<{ tally: Tally; more: boolean }> {
   const tally: Tally = { passes: 0, kept: 0, captures: 0, calls: 0, other: 0 };
-  const until = Date.now() + budgetMs;
-  const expired: Expired = () => Date.now() >= until;
+  const until = ctx.clock.now() + budgetMs;
+  const expired: Expired = () => ctx.clock.now() >= until;
   if (await purgePasses(ctx, sandbox, userId, stamp, tally, expired)) return { tally, more: true };
   if (expired()) return { tally, more: true };
   tally.captures = await deleteCaptures(ctx, sandbox, userId, stamp);
   return { tally, more: await purgeRows(ctx, sandbox.orgId, userId, stamp, tally, expired) };
+}
+
+/**
+ * Reserves the key first (one batch, so racing resumes cannot both pass), then mints it. The loser of a race
+ * is refused with a conflict and shows nothing.
+ */
+async function mintOnce(
+  ctx: ServiceContext,
+  sandbox: { id: string; orgId: string },
+  test: SessionAuth,
+  stamp: number,
+) {
+  try {
+    await reserveKey(ctx, sandbox, { userId: test.userId, sessionIdHash: test.sessionId }, stamp);
+  } catch (error) {
+    if (!(error instanceof AppError) || error.code !== 'SANDBOX_CONFLICT') throw error;
+    throw new ConflictError('The sandbox was reset just now. Reload.', 'SANDBOX_CONFLICT');
+  }
+  return mintSandboxKey(ctx, test, sandbox.orgId);
 }
 
 /**
@@ -176,9 +207,12 @@ export async function resetSandbox(
   if (await orgHeld(ctx.env.DB, orgId))
     throw new ConflictError('A legal hold stands on this sandbox.', 'ORG_HELD');
   const prev = await trackStartRaw(ctx.env.DB, orgId);
+  // Unfinished: a claim exists and its reset minted no key (revoked or not) at or after its stamp.
+  const claimedAt = await lastClaimAt(ctx.env.DB, orgId, RESET_ACTION);
   const unfinished =
     prev !== null &&
-    (await openKeyCount(ctx.env.DB, orgId, session.userId, SANDBOX_KEY_NAME)) === 0;
+    claimedAt !== null &&
+    (await keysSince(ctx.env.DB, orgId, session.userId, SANDBOX_KEY_NAME, claimedAt)).length === 0;
   let stamp: number;
   let used = await resetsUsed(ctx, orgId);
   if (unfinished && prev !== null) {
@@ -227,7 +261,7 @@ export async function resetSandbox(
   const templateId = more
     ? await quickstartTemplateOf(ctx.env.DB, orgId, SANDBOX_TEMPLATE_NAME)
     : await quickstartTemplate(ctx, test, orgId);
-  const key = more ? null : await mintSandboxKey(ctx, test, orgId);
+  const key = more ? null : await mintOnce(ctx, sandbox, test, stamp);
   return {
     sandbox: dto(row, templateId),
     key,

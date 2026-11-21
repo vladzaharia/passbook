@@ -24,6 +24,7 @@ const TABLES = {
   'platform.job.developer_sandbox.funnel': ['developer_sandboxes'],
   'platform.job.developer_sandbox.restart': ['developer_sandboxes', 'api_keys'],
   'platform.job.developer_sandbox.reset_rows': ['webhook_captures'],
+  'platform.job.developer_sandbox.reset_key': ['developer_sandboxes'],
   'platform.job.developer_sandbox.reopen': ['orgs', 'developer_sandboxes'],
 } as const;
 
@@ -42,6 +43,7 @@ export function developerSandboxGrant(
     | 'platform.job.developer_sandbox.funnel'
     | 'platform.job.developer_sandbox.restart'
     | 'platform.job.developer_sandbox.reset_rows'
+    | 'platform.job.developer_sandbox.reset_key'
     | 'platform.job.developer_sandbox.reopen',
   checks: Check[],
   orgId?: string,

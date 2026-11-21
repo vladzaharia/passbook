@@ -275,4 +275,79 @@ describe('reset: completeness and resume', () => {
     expect(body.more).toBe(false);
     expect((await t.call('/passes', { headers: bearer(body.key?.secret ?? '') })).status).toBe(200);
   }, 120_000);
+
+  it('a key revoked after a finished reset does not make it unfinished: the next reset is a real one', async () => {
+    const d = await t.developer();
+    await onePass(d);
+    t.kit.clock.advance(1000);
+    const first = await resetSandbox(t.ctx(), (await fresh(d)).auth);
+    expect(first.key).not.toBeNull();
+    await run(db(), 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+      t.kit.clock.now(),
+      first.key?.id ?? '',
+    ]);
+    t.kit.clock.advance(1000);
+    const second = await resetSandbox(t.ctx(), (await fresh(d)).auth);
+    expect(second.more).toBe(false);
+    expect(second.resetsLeft).toBe(1);
+    expect(await count('audit_log', d.made.orgId, "AND action = 'developer_sandbox.reset'")).toBe(
+      2,
+    );
+    const rows = await all<{ t: number }>(
+      db(),
+      'SELECT track_started_at AS t FROM developer_sandboxes WHERE org_id = ?',
+      [d.made.orgId],
+    );
+    expect(rows[0]?.t).toBeGreaterThan(t.kit.clock.now() - 3000);
+  }, 120_000);
+
+  it('two resumes at once mint one key', async () => {
+    const d = await t.developer();
+    await onePass(d);
+    t.kit.clock.advance(1000);
+    const stopped = await resetSandbox(t.ctx(), (await fresh(d)).auth, { budgetMs: 0 });
+    expect(stopped.key).toBeNull();
+    t.kit.clock.advance(1000);
+    const [a, b] = await Promise.allSettled([
+      resetSandbox(t.ctx(), (await fresh(d)).auth),
+      resetSandbox(t.ctx(), (await fresh(d)).auth),
+    ]);
+    const keys = [a, b].filter((r) => r.status === 'fulfilled' && r.value.key !== null);
+    expect(keys.length).toBe(1);
+    const open = await all<{ id: string }>(
+      db(),
+      "SELECT id FROM api_keys WHERE org_id = ? AND name = 'Sandbox key' AND revoked_at IS NULL",
+      [d.made.orgId],
+    );
+    expect(open.length).toBe(1);
+    expect(await count('audit_log', d.made.orgId, "AND action = 'developer_sandbox.reset'")).toBe(
+      1,
+    );
+  }, 120_000);
+
+  it('a resume never removes rows made after the claim', async () => {
+    const d = await t.developer();
+    const org = d.made.orgId;
+    await onePass(d);
+    t.kit.clock.advance(1000);
+    await resetSandbox(t.ctx(), (await fresh(d)).auth, { budgetMs: 0 });
+    const stamp =
+      (
+        await first<{ t: number }>(
+          db(),
+          'SELECT track_started_at AS t FROM developer_sandboxes WHERE org_id = ?',
+          [org],
+        )
+      )?.t ?? 0;
+    // A request-log row and a capture newer than the claim.
+    await run(
+      db(),
+      "INSERT INTO request_log (id, org_id, key_id, via, mode, request_id, method, route, path, query, status, code, duration_ms, at, has_bodies) VALUES ('newer', ?, NULL, NULL, 'test', 'rn', 'GET', NULL, '/x', NULL, 200, NULL, 1, ?, 0)",
+      [org, stamp + 500],
+    );
+    t.kit.clock.advance(1000);
+    const done = await resetSandbox(t.ctx(), (await fresh(d)).auth);
+    expect(done.more).toBe(false);
+    expect(await count('request_log', org, "AND id = 'newer'")).toBe(1);
+  }, 120_000);
 });

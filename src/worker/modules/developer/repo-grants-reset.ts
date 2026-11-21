@@ -1,7 +1,7 @@
 import { SANDBOX_KEY_NAME } from '../../../shared/copy/developer.ts';
 import { developerSandboxGrant } from '../../jobs/developer-sandbox.ts';
 import { rawCheck } from '../../platform/authority-checks.ts';
-import { condCheck, exists, notExists } from '../../platform/authority-cond.ts';
+import { condCheck, exists, notExists, tenantSql } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { STRONG_AMR_SQL } from '../../platform/repo-session-strength-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -172,7 +172,56 @@ export async function deleteCaptures(
     ],
     sandbox.orgId,
   );
-  g.delete('webhook_captures', { where: { org_id: sandbox.orgId }, returning: ['id'] });
+  g.delete('webhook_captures', {
+    where: { org_id: sandbox.orgId },
+    when: [tenantSql('{row}.created_at <= ?', [stamp])],
+    returning: ['id'],
+  });
   const [removed] = await g.commit();
   return removed?.results.length ?? 0;
+}
+
+export const RESET_KEY_ACTION = 'developer_sandbox.reset_key';
+/** A reservation to mint holds this long: a mint that died frees the slot for the next resume. */
+const RESERVE_MS = 60_000;
+
+/**
+ * `platform.job.developer_sandbox.reset_key`: reserves the right to mint the reset's key. One batch checks the
+ * person's live session, an open sandbox whose track still started at `stamp`, and that no reservation for this reset's stamp was made
+ * in the last minute, then writes the reservation (an audit row). D1 batches run one at a time, so two racing
+ * resumes cannot both pass: the loser throws `SANDBOX_CONFLICT`.
+ */
+export async function reserveKey(
+  ctx: ServiceContext,
+  sandbox: { id: string; orgId: string },
+  by: { userId: string; sessionIdHash: string },
+  stamp: number,
+): Promise<void> {
+  const now = ctx.clock.now();
+  const claim = rawCheck(
+    'config',
+    'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ? AND d.closed_at IS NULL AND d.track_started_at = ?)',
+    [sandbox.id, by.userId, stamp],
+  );
+  const free = rawCheck(
+    'config',
+    "NOT EXISTS (SELECT 1 FROM audit_log au WHERE au.target_type = 'org' AND au.target_id = ? AND au.action = ? AND au.at > ? AND json_extract(au.detail, '$.stamp') = ?)",
+    [sandbox.orgId, RESET_KEY_ACTION, now - RESERVE_MS, stamp],
+  );
+  const g = developerSandboxGrant(
+    ctx,
+    'platform.job.developer_sandbox.reset_key',
+    [liveSession(by, now), claim, free],
+    sandbox.orgId,
+  );
+  grantedAudit(g, ctx, {
+    orgId: sandbox.orgId,
+    actorType: 'user',
+    actorId: by.userId,
+    action: RESET_KEY_ACTION,
+    targetType: 'org',
+    targetId: sandbox.orgId,
+    detail: { stamp },
+  });
+  await g.commit();
 }

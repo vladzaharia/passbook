@@ -25,14 +25,20 @@ export const RESET_TABLES = {
   idempotent_requests: { where: 'created_at <= ?3 AND status IS NOT NULL', rowid: false },
   idempotency_keys: { where: 'created_at <= ?3 AND resource_id IS NOT NULL', rowid: false },
   captured_emails: {
-    where: `NOT EXISTS (SELECT 1 FROM sandbox_forwards f WHERE f.capture_id = captured_emails.id
+    where: `created_at <= ?3 AND NOT EXISTS (SELECT 1 FROM sandbox_forwards f WHERE f.capture_id = captured_emails.id
       AND f.state IN ('sending', 'unknown'))`,
     rowid: true,
   },
-  bundles: { where: `mode = 'test' AND ${UNRESERVED_BUNDLE}`, rowid: true },
-  pass_imports: { where: "mode = 'test' AND state <> 'committing'", rowid: true },
-  broadcasts: { where: "mode = 'test' AND state <> 'sending'", rowid: true },
-  message_rules: { where: "mode = 'test'", rowid: true },
+  bundles: { where: `created_at <= ?3 AND mode = 'test' AND ${UNRESERVED_BUNDLE}`, rowid: true },
+  pass_imports: {
+    where: "created_at <= ?3 AND mode = 'test' AND state <> 'committing'",
+    rowid: true,
+  },
+  broadcasts: {
+    where: "created_at <= ?3 AND mode = 'test' AND state <> 'sending'",
+    rowid: true,
+  },
+  message_rules: { where: "created_at <= ?3 AND mode = 'test'", rowid: true },
 } as const;
 
 export type ResetTable = keyof typeof RESET_TABLES;
@@ -66,30 +72,41 @@ export async function deleteSlice(
 
 export const SLICE_ROWS = SLICE;
 
-/** The uploaded files of the sandbox's Test imports: removed with their rows. */
-export const importObjectKeys = async (db: D1Database, orgId: string): Promise<string[]> =>
+/**
+ * The uploaded files of the Test imports a reset is about to delete: the same condition as their rows, under the
+ * claim. The files go after their rows.
+ */
+export const importObjectKeys = async (
+  db: D1Database,
+  orgId: string,
+  userId: string,
+  stamp: number,
+): Promise<string[]> =>
   (
     await all<{ object_key: string }>(
       db,
-      "SELECT object_key FROM pass_imports WHERE org_id = ? AND mode = 'test' AND object_key IS NOT NULL",
-      [orgId],
+      `SELECT object_key FROM pass_imports WHERE org_id = ?1 AND object_key IS NOT NULL
+         AND ${RESET_TABLES.pass_imports.where} AND ${RESETTING}`,
+      [orgId, userId, stamp],
     )
   ).map((r) => r.object_key);
 
-/** How many of the person's sandbox keys are still open: none means the last reset has not minted its key. */
-export const openKeyCount = async (
+/**
+ * Sandbox keys the person's reset minted at or after `stamp`, revoked or not, oldest first. A reset is finished when
+ * there is one; a person revoking it later does not make the reset unfinished.
+ */
+export const keysSince = (
   db: D1Database,
   orgId: string,
   userId: string,
   name: string,
-): Promise<number> =>
-  (
-    await first<{ n: number }>(
-      db,
-      "SELECT count(*) AS n FROM api_keys WHERE org_id = ? AND created_by = ? AND name = ? AND kind = 'personal' AND revoked_at IS NULL",
-      [orgId, userId, name],
-    )
-  )?.n ?? 0;
+  stamp: number,
+) =>
+  all<{ id: string }>(
+    db,
+    "SELECT id FROM api_keys WHERE org_id = ? AND created_by = ? AND name = ? AND kind = 'personal' AND created_at >= ? ORDER BY created_at, id",
+    [orgId, userId, name, stamp],
+  );
 
 /** `track_started_at` as stored: null until the first reset. */
 export const trackStartRaw = async (db: D1Database, orgId: string): Promise<number | null> =>
@@ -170,3 +187,17 @@ export const closeReasonOf = async (db: D1Database, orgId: string): Promise<stri
       [orgId],
     )
   )?.close_reason ?? null;
+
+/** When the sandbox's last reset claimed (its audit row): keys minted at or after it belong to that reset. */
+export const lastClaimAt = async (
+  db: D1Database,
+  orgId: string,
+  action: string,
+): Promise<number | null> =>
+  (
+    await first<{ t: number | null }>(
+      db,
+      "SELECT max(at) AS t FROM audit_log WHERE org_id = ? AND action = ? AND target_type = 'org'",
+      [orgId, action],
+    )
+  )?.t ?? null;
