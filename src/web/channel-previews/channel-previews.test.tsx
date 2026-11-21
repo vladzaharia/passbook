@@ -136,12 +136,12 @@ describe('ChannelPreviews', () => {
     expect(read()).toEqual(first);
   });
 
-  it('shows the empty state and its action when no channel is on', () => {
+  it('shows the empty state and its action when no channel is on', async () => {
     show({
       channels: channels({ apple: off, google: off, samsung: off, mobile: off, paper: off }),
       emptyAction: <a href="#channels">Channels</a>,
     });
-    expect(screen.getByText('No channel is on')).toBeInTheDocument();
+    expect(await screen.findByText('No channel is on')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Channels' })).toBeInTheDocument();
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
   });

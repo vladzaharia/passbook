@@ -4,7 +4,6 @@ import { channelReasonText } from '@/shared/copy/channels.ts';
 import { PREVIEW_COPY, PREVIEW_LABEL } from '@/shared/copy/previews.ts';
 import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
-import { EmptyState } from '../ui/empty-state.tsx';
 import { SegmentedControl } from '../ui/segmented-control.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
 import './channel-switch.css';
@@ -29,6 +28,11 @@ export interface ChannelPreviewsProps {
 
 /** The narrow-column menu pulls Radix's popper and dialog; a wide column never needs it. */
 const Select = lazy(() => import('../ui/select.tsx').then((m) => ({ default: m.Select })));
+
+/** Its art registry is only needed when no channel is on. */
+const EmptyState = lazy(() =>
+  import('../ui/empty-state.tsx').then((m) => ({ default: m.EmptyState })),
+);
 
 /** Both pull the router (and, for Mobile, the portal) with them: loaded only when their channel opens. */
 const WalletChannel = lazy(() =>
@@ -66,7 +70,11 @@ export function ChannelPreviews({
   const menu = options.map((o) => (o.reason ? { ...o, disabled: true, title: o.reason } : o));
   const wallets = useWalletPreviews(source, current === 'google' || current === 'samsung');
   if (!current)
-    return <EmptyState inline art="wallet" title={PREVIEW_COPY.nothing} action={emptyAction} />;
+    return (
+      <Suspense fallback={<Skeleton className="h-32 w-full rounded-md" />}>
+        <EmptyState inline art="wallet" title={PREVIEW_COPY.nothing} action={emptyAction} />
+      </Suspense>
+    );
   return (
     <div ref={measure} className={cn('flex w-full min-w-0 flex-col items-center gap-4', className)}>
       {value ? null : compact ? (
