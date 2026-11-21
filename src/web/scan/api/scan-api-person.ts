@@ -64,7 +64,8 @@ export function personCalls(request: ScanRequest) {
         'DELETE',
         `/passes/${encodeURIComponent(passId)}/notes/${encodeURIComponent(noteId)}`,
         null,
-        undefined,
+        // An object body is where `request` puts an admin's `scope`.
+        {},
         call,
       ),
   };

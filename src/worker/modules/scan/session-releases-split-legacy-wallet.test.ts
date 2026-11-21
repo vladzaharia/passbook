@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { first, run } from '../../platform/db.ts';
 import { ICON_PNG } from '../passes/pass-test-fixtures.ts';
 import { activeRelease } from '../templates/releases.ts';
@@ -33,10 +34,12 @@ describe('scanner session approved releases', () => {
 
     let changedRevision = 0;
     const race = duringTemplateRead(kit, id, 'v1', async () => {
-      await run(kit.env.DB, 'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?', [
-        `${identity.pass_type_identifier}.changed`,
-        identity.id,
-      ]);
+      await withoutTrigger(kit.env.DB, 'signing_identities_pti_immutable', () =>
+        run(kit.env.DB, 'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?', [
+          `${identity.pass_type_identifier}.changed`,
+          identity.id,
+        ]),
+      );
       const changed = await first<{ revision: number }>(
         kit.env.DB,
         'SELECT revision FROM signing_identities WHERE id = ?',
@@ -45,10 +48,12 @@ describe('scanner session approved releases', () => {
       if (!changed) throw new Error('Expected the changed signing identity');
       changedRevision = changed.revision;
       expect(changedRevision).toBeGreaterThan(identity.revision);
-      await run(kit.env.DB, 'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?', [
-        identity.pass_type_identifier,
-        identity.id,
-      ]);
+      await withoutTrigger(kit.env.DB, 'signing_identities_pti_immutable', () =>
+        run(kit.env.DB, 'UPDATE signing_identities SET pass_type_identifier = ? WHERE id = ?', [
+          identity.pass_type_identifier,
+          identity.id,
+        ]),
+      );
     });
     let result: Awaited<ReturnType<typeof session>>;
     try {

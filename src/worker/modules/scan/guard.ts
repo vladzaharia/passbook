@@ -291,7 +291,8 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       throw new ForbiddenError('Sign in to act.', 'STAFF_REQUIRED');
     if (
       actor.scanningSession &&
-      c.req.method === 'POST' &&
+      (c.req.method === 'POST' ||
+        (/^(PATCH|DELETE)$/.test(c.req.method) && /\/notes\/[^/]+$/.test(c.req.path))) &&
       !/\/(device|mark-out|unpair|open-now|batch)$/.test(c.req.path)
     ) {
       if (actor.scanningSession.status !== 'active')
