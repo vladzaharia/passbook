@@ -151,7 +151,6 @@ export function HolderPassView(props: HolderPassViewProps) {
         {printable ? (
           <section className="wl-presentation" aria-label={HOLDER_COPY.printTitle}>
             <h2>{HOLDER_COPY.printTitle}</h2>
-            <p>{HOLDER_COPY.printLine}</p>
             <a className={OUTLINE_ACTION_CLASS} href={props.printHref}>
               {HOLDER_COPY.print}
             </a>
