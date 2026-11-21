@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
@@ -44,20 +44,24 @@ import { versionName, versionNumber, vOf } from './versions.ts';
 import { VersionsPanel } from './versions-panel.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
+const ReviewDialog = lazy(() => import('./releases/review-dialog.tsx'));
 type Tab = NonNullable<z.infer<typeof templateDetailSearchSchema>['tab']>;
 
 export function TemplateDetailContent({
   template: t,
   tab,
+  review,
   crumbs,
 }: {
   template: Template;
   tab: Tab;
+  /** The version under review: the review dialog is open on it. */
+  review?: string | undefined;
   crumbs: Crumb[];
 }) {
   const navigate = useNavigate();
   const scope = useOrgScope();
-  const { isAdmin, authed } = useSession();
+  const { isAdmin } = useSession();
   const mode = useMode();
   const canAuthor = scope.membership?.capabilities.includes('templates:author') ?? false;
   const canEdit = canAuthor && (t.orgId !== null || isAdmin);
@@ -174,7 +178,7 @@ export function TemplateDetailContent({
         draftName={draftName}
         onTry={() => void controls.tryVersion(draftHash)}
         onRelease={() => controls.release(draftHash)}
-        onReview={() => void navigate({ to: '.', search: { tab: 'versions' }, replace: true })}
+        onReview={() => void navigate({ to: '.', search: { review: draftHash } })}
         tryPending={controls.trying}
       />
       {state && !archived ? (
@@ -243,7 +247,6 @@ export function TemplateDetailContent({
                 mode={mode}
                 versions={t.versions}
                 capabilities={scope.membership.capabilities}
-                currentUserId={authed?.user.id ?? null}
                 release={state}
               />
             ) : null}
@@ -300,6 +303,19 @@ export function TemplateDetailContent({
       ) : null}
       {life.dialogs}
       {controls.dialog}
+      {review && scope.orgId && t.versions.some((v) => v.version === review) ? (
+        <Suspense fallback={null}>
+          <ReviewDialog
+            templateId={t.id}
+            orgId={scope.orgId}
+            version={review}
+            name={(hash) => vOf(t, hash)}
+            requestedBy={state?.review.state === 'open' ? state.review.by : null}
+            canPublish={canPublish}
+            onClose={() => void navigate({ to: '.', search: {}, replace: true })}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 }
