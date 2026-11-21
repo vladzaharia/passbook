@@ -66,7 +66,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         onClick={() => setPaletteOpen(true)}
       />
     ),
-    controls: org ? <ModeSwitch /> : null,
+    controls: org && !membership?.testOnly ? <ModeSwitch /> : null,
     account: <UserMenu />,
   };
   return (

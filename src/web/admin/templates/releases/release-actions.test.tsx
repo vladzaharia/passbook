@@ -410,7 +410,7 @@ describe('release review dialog', () => {
       expect(within(impact).getByRole('region', { name: group })).toBeInTheDocument();
     expect(within(impact).queryByRole('region', { name: 'Images' })).not.toBeInTheDocument();
     expect(within(impact).getByText('A1 → B2')).toBeInTheDocument();
-    expect(within(impact).getByText('— → QR')).toBeInTheDocument();
+    expect(within(impact).getByText('QR')).toBeInTheDocument();
     expect(within(impact).getByText('#000000 → #ffffff')).toBeInTheDocument();
     const get = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/impact'),

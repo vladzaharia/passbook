@@ -279,7 +279,6 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
               org={displayOrg?.name ?? 'Unknown organization'}
               mode={mode}
               template={name}
-              templateVersion={version}
               release={
                 release
                   ? {

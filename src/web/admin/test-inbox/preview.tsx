@@ -99,7 +99,8 @@ function Details({
 
 /**
  * An image the frame's policy does not load: a remote `src` or `background` attribute, a `srcset` with a
- * remote candidate, or a CSS `url()`. Notice text only; the policy is what blocks them.
+ * remote candidate, or a CSS `url()`. This app's own images load, so its origin is not remote. Notice
+ * text only; the policy is what blocks them.
  */
 const REMOTE_IMAGE =
   /\b(?:src|background)\s*=\s*["']?\s*(?:https?:)?\/\/|\bsrcset\s*=\s*["']?[^"'>]*(?:https?:)?\/\/|url\(\s*["']?\s*(?:https?:)?\/\//i;
@@ -116,7 +117,7 @@ function Message({ email, orgId, view }: { email: Email; orgId: string; view: Vi
   // canvas email is designed for, whatever the viewer's theme.
   return (
     <>
-      {REMOTE_IMAGE.test(email.html) ? (
+      {REMOTE_IMAGE.test(email.html.replaceAll(location.origin, '')) ? (
         <p className="text-sm text-fg-muted">Remote images hidden in preview</p>
       ) : null}
       <iframe

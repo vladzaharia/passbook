@@ -202,11 +202,9 @@ export function LoadedPassDetail({
             {p.mode === 'live' && foreign ? <Badge tone="warning">Live</Badge> : null}
             <StatusPill status={removed ? 'removed' : p.status} />
             <StatusPill status={p.holderState} />
-            <span className="tabular-nums">v{p.version}</span>
-            <span>{devices(p.deviceCount)}</span>
-            {lastSent(p).map((line) => (
-              <span key={line}>{line}</span>
-            ))}
+            <span className="min-w-0 tabular-nums">
+              {[`v${p.version}`, devices(p.deviceCount), ...lastSent(p)].join(' · ')}
+            </span>
           </>
         }
         actions={<HeaderActionsView runner={runner} />}

@@ -89,6 +89,24 @@ describe('Test inbox', () => {
     expect(screen.getByTitle('Email preview')).toBeInTheDocument();
   });
 
+  it('does not warn for images served by this app', async () => {
+    setMode('test');
+    await renderApp('/admin/test-inbox?email=e1', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        ...handlers,
+        '/api/v1/test-inbox/e1': () =>
+          json({
+            ...detail(),
+            html: `<img src="${location.origin}/email-assets/apple-wallet-badge.svg">`,
+          }),
+      },
+    });
+    expect(await screen.findByTitle('Email preview')).toBeInTheDocument();
+    expect(screen.queryByText('Remote images hidden in preview')).not.toBeInTheDocument();
+  });
+
   it('does not warn for inline images', async () => {
     setMode('test');
     await renderApp('/admin/test-inbox?email=e1', {
