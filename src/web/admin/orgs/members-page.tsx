@@ -11,7 +11,7 @@ export function MembersPage() {
       {membership ? (
         <AccessCard
           key={membership.orgId}
-          org={{ id: membership.orgId, name: membership.orgName }}
+          org={{ id: membership.orgId, name: membership.orgName, personal: membership.personal }}
         />
       ) : (
         <SkeletonDetail label="Loading members" />

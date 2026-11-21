@@ -1,11 +1,13 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
+import { PERSONAL_ORG_COPY } from '@/shared/copy/personal-org.ts';
 import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { formatCount, formatDay } from '@/web/lib/format.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import {
+  Badge,
   Button,
   CountLink,
   DataTable,
@@ -69,9 +71,12 @@ const columnsFor = (isMember: (orgId: string) => boolean): DataColumnDef<Org, ne
       <div className="flex min-h-10 min-w-0 items-center gap-3">
         <EntityAvatar kind="org" id={row.original.id} name={row.original.name} />
         <div className="min-w-0">
-          <RowLink to="/admin/orgs/$orgId" params={{ orgId: row.original.id }}>
-            {row.original.name}
-          </RowLink>
+          <div className="flex min-w-0 items-center gap-2">
+            <RowLink to="/admin/orgs/$orgId" params={{ orgId: row.original.id }}>
+              {row.original.name}
+            </RowLink>
+            {row.original.personal ? <Badge>{PERSONAL_ORG_COPY.label}</Badge> : null}
+          </div>
           <span className="block truncate font-mono text-xs text-fg-muted">
             {row.original.slug}
           </span>

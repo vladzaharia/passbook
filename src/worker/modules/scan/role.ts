@@ -1,7 +1,7 @@
 import type { ScanRoleChange } from '../../../shared/contracts/scan-role.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
-import { ScanDeviceCapabilitiesSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import { surfaceFor } from '../../../shared/scan-surfaces.ts';
+import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
 import { AppError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
@@ -116,9 +116,9 @@ export async function changeRole(
   }
   if (scanner.deviceRole !== to) {
     const device = await scanningDeviceRow(ctx.env.DB, actor.orgId, scanner.id);
-    const caps = device?.capabilities
-      ? ScanDeviceCapabilitiesSchema.parse(JSON.parse(device.capabilities))
-      : null;
+    const caps = readStoredCapabilities(device?.capabilities ?? null, (issue) =>
+      ctx.log.warn('scan.device_caps_unreadable', { code: 'SCAN_DEVICE_CAPS_UNREADABLE', issue }),
+    );
     const surface = to === 'customer' ? 'customer' : surfaceFor('auto', caps);
     const epochs = scannerEpochsOf(scanner);
     try {

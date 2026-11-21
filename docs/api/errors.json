@@ -2272,6 +2272,15 @@
       ]
     },
     {
+      "code": "ORG_PERSONAL_SINGLE_MEMBER",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "ORG_PURGING",
       "statuses": [
         409
@@ -2303,6 +2312,15 @@
         "passes",
         "scan",
         "templates"
+      ]
+    },
+    {
+      "code": "ORG_SLUG_RESERVED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {

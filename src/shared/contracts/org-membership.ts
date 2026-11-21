@@ -47,6 +47,8 @@ export const OrgMembershipSchema = z.object({
   orgId: IdSchema,
   orgName: z.string(),
   orgSlug: z.string(),
+  /** The org is a personal org. Its owner sees it named "Personal" in their own list. */
+  personal: z.boolean().default(false),
   userId: IdSchema,
   roles: OrgRolesSchema,
   capabilities: z.array(OrgCapabilitySchema),

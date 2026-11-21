@@ -4,6 +4,7 @@ import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { managedSession } from '../../admin/scanning/sessions/test-fixtures.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { sessionFixture } from '../boot/session.test-support.ts';
+import type { RawRead } from '../input/types.ts';
 import { fixtureCounts } from '../machine/fixtures.test-support.ts';
 import { localOutcome } from '../machine/outcome.ts';
 import { clearNativeCapabilities, setNativeCapabilities } from './native-capabilities.ts';
@@ -19,12 +20,23 @@ const ports = vi.hoisted(() => ({
     customerBranding: vi.fn(),
     dispose: vi.fn(),
     capabilities: undefined as ((value: Record<string, unknown>) => void) | undefined,
+    read: undefined as ((read: RawRead) => string | null) | undefined,
+  },
+  cameraEmit: undefined as ((read: RawRead) => void) | undefined,
+}));
+vi.mock('../camera/controller.ts', () => ({
+  createCamera: (_video: unknown, _formats: unknown, emit: (read: RawRead) => void) => {
+    ports.cameraEmit = emit;
+    return ports.camera;
   },
 }));
-vi.mock('../camera/controller.ts', () => ({ createCamera: () => ports.camera }));
 vi.mock('../input/native-reader.ts', () => ({
-  connectNativeReader: (options: { capabilities?: (value: Record<string, unknown>) => void }) => {
+  connectNativeReader: (options: {
+    capabilities?: (value: Record<string, unknown>) => void;
+    read: (read: RawRead) => string | null;
+  }) => {
     ports.native.capabilities = options.capabilities;
+    ports.native.read = options.read;
     return ports.native;
   },
 }));
@@ -68,6 +80,31 @@ async function start(surface: 'phone' | 'operator') {
   runtime.start();
   return { runtime, announce };
 }
+describe('hardware test hold', () => {
+  it('keeps every source away from check-in while held', async () => {
+    const api = {
+      stats: vi.fn().mockResolvedValue(fixtureCounts()),
+      resolve: vi.fn().mockResolvedValue(localOutcome('system', 'server', fixtureCounts())),
+    } as unknown as ScanApi;
+    runtime = await createRuntime(session('operator', 'choose'), api, () => null, vi.fn());
+    runtime.start();
+    runtime.hold(true);
+    expect(runtime.emit({ method: 'wedge', code: 'SERIAL-1' })).toBeNull();
+    expect(ports.native.read?.({ method: 'camera', code: 'NATIVE-1' })).toBeNull();
+    ports.cameraEmit?.({ method: 'camera', code: 'CAM-1', format: 'qr' });
+    const scanned = vi.fn();
+    window.addEventListener('passbook:wedge-scan', scanned);
+    for (const [key, code] of [...'ABCDE'].map((k) => [k, `Key${k}`]).concat([['Enter', 'Enter']]))
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true }));
+    window.removeEventListener('passbook:wedge-scan', scanned);
+    expect(scanned).toHaveBeenCalledTimes(1);
+    await Promise.resolve();
+    expect(api.resolve).not.toHaveBeenCalled();
+    runtime.hold(false);
+    expect(runtime.emit({ method: 'wedge', code: 'SERIAL-2' })).toBeTruthy();
+  });
+});
+
 describe('live scanner runtime configuration', () => {
   it('starts an Operator device without opening a camera and updates it without another Start', async () => {
     const { runtime, announce } = await start('operator');

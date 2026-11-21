@@ -1,4 +1,5 @@
 import { EPOCH_TABLES } from './authority-columns.ts';
+import { PERSONAL_ORG_PURPOSE } from './authority-personal.ts';
 
 /** A declared foreign key from an org-less child to a parent that carries the org (and mode). */
 export interface Edge {
@@ -213,6 +214,7 @@ export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   wallet_credential_checks: ['platform.job.wallet.credential_check'],
   org_entitlements: [
     'platform.org.create',
+    PERSONAL_ORG_PURPOSE,
     'platform.job.template_sync',
     'platform.job.developer_sandbox.create',
     'platform.org.entitlements_set',
@@ -234,6 +236,7 @@ const INSERT_ONLY_PURPOSES: Readonly<Record<string, readonly string[]>> = {
     'platform.job.template_sync',
     'platform.job.developer_sandbox.create',
     'platform.org.create',
+    PERSONAL_ORG_PURPOSE,
   ],
 };
 

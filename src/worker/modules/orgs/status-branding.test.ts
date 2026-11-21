@@ -140,6 +140,7 @@ describe('org status', () => {
       id: org.id,
       name: org.name,
       slug: org.slug,
+      personal: false,
       createdAt: expect.any(Number),
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 },
       countsCapped: false,

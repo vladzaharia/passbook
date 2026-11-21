@@ -114,6 +114,7 @@ export async function createPassRowWithRelease(
   const artifact = await buildArtifact(ctx, {
     orgId: p.orgId,
     orgName: org.name,
+    personal: org.personal,
     branding: org.branding,
     passId: id,
     scanCode,

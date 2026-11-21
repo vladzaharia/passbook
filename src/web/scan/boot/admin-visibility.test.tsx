@@ -19,6 +19,7 @@ const manager: OrgMembership = {
   orgId: 'o1',
   orgName: 'Northwind',
   orgSlug: 'northwind',
+  personal: false,
   userId: 'u1',
   roles: ['org_admin'],
   capabilities: ['scanning:read', 'scanning:manage'],

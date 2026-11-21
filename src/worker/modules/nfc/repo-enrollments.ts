@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import { ScanDeviceCapabilitiesSchema } from '../../../shared/contracts/scanning-sessions.ts';
+import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { all, first } from '../../platform/db.ts';
 import { rolesGranting } from '../orgs/access.ts';
@@ -218,17 +218,10 @@ function parse(raw: string | null): z.infer<typeof SettingsSchema> | null {
 }
 
 function hasTagReading(raw: string | null): boolean {
-  if (raw === null) return false;
-  try {
-    const c = ScanDeviceCapabilitiesSchema.safeParse(JSON.parse(raw));
-    const nfc = c.success ? c.data.native?.nfc : undefined;
-    return (
-      !!nfc?.available && nfc.reading && nfc.formats.some((f) => f === 'tag-uid' || f === 'tag-sun')
-    );
-  } catch (error) {
-    if (error instanceof SyntaxError) return false;
-    throw error;
-  }
+  const nfc = readStoredCapabilities(raw)?.native?.nfc;
+  return (
+    !!nfc?.available && nfc.reading && nfc.formats.some((f) => f === 'tag-uid' || f === 'tag-sun')
+  );
 }
 
 /** The org's scan-role devices in a mode with what an enrollment needs to know of each. */

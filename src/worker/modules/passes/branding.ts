@@ -68,19 +68,23 @@ export function tenantDescription(description: unknown, orgName: string): string
   return `${orgName} ${lowerFirst(kind)}`;
 }
 
-/** The template's pass.json with the tenant's name, description and colours applied. */
+/**
+ * The template's pass.json with the tenant's name, description and colours applied. A personal org
+ * keeps the template's own logoText and description (see `issuerName`); its colours still apply.
+ */
 export function tenantPassJson(
   base: PassJson,
   orgName: string,
   branding: TenantBranding,
+  personal = false,
 ): PassJson {
   const pass: PassJson = { ...base };
-  for (const key of ['logoText', 'eventLogoText'] as const) {
+  for (const key of personal ? [] : (['logoText', 'eventLogoText'] as const)) {
     if (typeof pass[key] !== 'string') continue;
     if (branding.logoHasName) delete pass[key];
     else pass[key] = orgName;
   }
-  const description = tenantDescription(pass.description, orgName);
+  const description = personal ? undefined : tenantDescription(pass.description, orgName);
   if (description) pass.description = description;
   if (branding.colors?.background) pass.backgroundColor = branding.colors.background;
   if (branding.colors?.foreground) pass.foregroundColor = branding.colors.foreground;

@@ -143,5 +143,9 @@ export function checkFromName(raw: unknown, platformName: string = PLATFORM_NAME
 
 /** What the recipient sees: the org's part, then the platform's attribution (never dropped). */
 export function displayFromName(orgPart: string, platformName?: string | null): string {
-  return `${orgPart} via ${platformName?.trim() || PLATFORM_NAME}`;
+  const platform = platformName?.trim() || PLATFORM_NAME;
+  // The platform writing under its own name (a personal org's email) is not "PassBook via PassBook".
+  return orgPart.trim().toLowerCase() === platform.toLowerCase()
+    ? platform
+    : `${orgPart} via ${platform}`;
 }
