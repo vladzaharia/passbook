@@ -210,7 +210,9 @@ describe('event capacity independent of the action gate scope', () => {
         const newcomer = await kit.scanPass(template);
         expect(await action(scanner, existing)).toMatchObject({ kind: 'ok' });
         const repeated = await action(scanner, existing);
-        expect(repeated).toMatchObject(reason ? { kind: 'heads_up', reason } : { kind: 'ok' });
+        // A re-entry event is a place: a pass inside is Already in, whatever the action's own gate.
+        if (reentry) expect(repeated).toMatchObject({ kind: 'heads_up', reason: 'still_inside' });
+        else expect(repeated).toMatchObject(reason ? { kind: 'heads_up', reason } : { kind: 'ok' });
         expect(await action(scanner, newcomer)).toMatchObject({
           kind: 'heads_up',
           reason: 'capacity_full',
@@ -251,7 +253,7 @@ describe('event capacity independent of the action gate scope', () => {
         if (repeat === 'daily')
           expect(await action(scanner, firstPass)).toMatchObject({
             kind: 'heads_up',
-            reason: 'already_done',
+            reason: reentry ? 'still_inside' : 'already_done',
           });
         expect(await action(scanner, next)).toMatchObject({
           kind: 'heads_up',
@@ -274,10 +276,12 @@ describe('event capacity independent of the action gate scope', () => {
       const pass = await kit.scanPass(templateId);
       const next = await kit.scanPass(templateId);
       expect(await action(scanner, pass)).toMatchObject({ kind: 'ok' });
-      expect(await action(scanner, pass)).toMatchObject({
-        kind: 'ok',
-        counts: { event: { arrived: 1, inside: reentry ? 1 : null } },
-      });
+      // A re-entry event holds a pass that is inside; capacity never counts it twice.
+      expect(await action(scanner, pass)).toMatchObject(
+        reentry
+          ? { kind: 'heads_up', reason: 'still_inside' }
+          : { kind: 'ok', counts: { event: { arrived: 1, inside: null } } },
+      );
       expect(await action(scanner, next)).toMatchObject({
         kind: 'heads_up',
         reason: 'capacity_full',
@@ -297,7 +301,9 @@ describe('event capacity independent of the action gate scope', () => {
       expect(await action(scanner, firstPass)).toMatchObject({ kind: 'ok' });
       expect(await action(scanner, second)).toMatchObject({ kind: 'ok' });
       await run(kit.env.DB, 'UPDATE scan_events SET capacity=1 WHERE id=?', [event.id]);
-      expect(await action(scanner, firstPass)).toMatchObject({ kind: 'ok' });
+      expect(await action(scanner, firstPass)).toMatchObject(
+        reentry ? { kind: 'heads_up', reason: 'still_inside' } : { kind: 'ok' },
+      );
       expect(await action(scanner, next)).toMatchObject({
         kind: 'heads_up',
         reason: 'capacity_full',

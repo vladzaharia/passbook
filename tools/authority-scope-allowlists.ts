@@ -46,12 +46,12 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'users:16004e2ec149',
       'users:21bde5076000',
       'users:c3b10ce30da0',
-      'users:df81eec8157d',
+      'users:6cc984774c7b',
     ],
   },
   'src/worker/modules/me/repo.ts': {
     reason: 'a user edits their own primary email under their own session',
-    writes: ['users:51de1c632ee3'],
+    writes: ['users:5cbb5673e06f'],
   },
   'src/worker/modules/orgs/repo-members.ts': {
     reason:
@@ -65,7 +65,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/users/repo.ts': {
     reason:
       'primary-email change and email removal behind the admin route (requireAdmin session); status changes are platform.user.* grants',
-    writes: ['users:e671e1014430'],
+    writes: ['users:cad0f516f74f'],
   },
   'src/worker/modules/channels/repo.ts': {
     reason:

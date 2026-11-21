@@ -192,8 +192,11 @@ export function writeGate(g: Grant, w: GateWrite, when: GrantCond[]): GrantedSta
   });
 }
 
-/** Presence follows the gate: written only when this scan holds it. */
-export function writePresence(
+/**
+ * An admission record (not occupancy: Who's in never shows it): a non-re-entry event, scope `''` or a
+ * day scope. It follows the gate, written only when this scan holds it. Places use the builder.
+ */
+export function writeAdmissionRecord(
   g: Grant,
   gate: { passId: string; actionId: string; scope: string },
   scanId: string,

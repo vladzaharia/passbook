@@ -300,7 +300,8 @@ describe("a monitor's Let in checks in at the refused scan's place", () => {
       ).json()) as { kind: string; reason: string | null; scanId: string | null };
     expect((await scan()).kind).toBe('ok');
     const hold = await scan();
-    expect(hold).toMatchObject({ kind: 'heads_up', reason: 'already_done' });
+    // A re-entry event is a place: the card is Already in, and a monitor may still let it in.
+    expect(hold).toMatchObject({ kind: 'heads_up', reason: 'still_inside' });
     return { event, pass, hold };
   }
 

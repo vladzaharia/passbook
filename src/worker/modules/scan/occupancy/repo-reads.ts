@@ -3,6 +3,7 @@
 import { type AfterRead, afterRead } from '../../../platform/authority-after.ts';
 import { all, type SqlValue, stmt } from '../../../platform/db.ts';
 import type { PresenceRow } from '../admission-types.ts';
+import { eventOccupancySql } from '../repo-event-attendance.ts';
 import { HOLD_HORIZON_MS } from '../roll-call/hold.ts';
 import { LIVE, marks, VIA_JOIN, VIA_SQL } from './repo.ts';
 
@@ -33,19 +34,30 @@ export const rowsRead = (orgId: string, passId: string, places: readonly string[
     [orgId, passId, ...places],
   );
 
-/** In now per place: live in rows of passes of this mode. */
+/**
+ * In now per place. A zone counts its live in rows; an event counts who is inside by the scanner's
+ * own definition (signed witnesses and retained deletions), so Who's in and the scan agree.
+ */
 export const countsRead = (
   orgId: string,
   mode: string,
   places: readonly string[],
   now: number,
-): AfterRead =>
-  afterRead(
-    `SELECT x.scope AS place, count(*) AS n FROM scan_presence x
-     WHERE x.org_id = ? AND x.mode = ? AND x.scope IN (${marks(places.length)}) AND ${LIVE}
-     GROUP BY x.scope`,
-    [orgId, mode, ...places, now],
-  );
+): AfterRead => {
+  const events = places.filter((p) => p.startsWith('event:'));
+  const zones = places.filter((p) => !p.startsWith('event:'));
+  const zoneSql = `SELECT x.scope AS place, count(*) AS n FROM scan_presence x
+     WHERE x.org_id = ? AND x.mode = ? AND x.scope IN (${marks(zones.length)}) AND ${LIVE}
+     GROUP BY x.scope`;
+  const eventSql = `SELECT 'event:' || e.id AS place,
+       ${eventOccupancySql('e.org_id', 'e.mode', 'e.id', true)} AS n
+     FROM scan_events e WHERE e.org_id = ? AND e.mode = ? AND e.id IN (${marks(events.length)})`;
+  const zoneParams: SqlValue[] = [orgId, mode, ...zones, now];
+  const eventParams: SqlValue[] = [orgId, mode, ...events.map((p) => p.slice(6))];
+  if (events.length === 0) return afterRead(zoneSql, zoneParams);
+  if (zones.length === 0) return afterRead(eventSql, eventParams);
+  return afterRead(`${zoneSql} UNION ALL ${eventSql}`, [...zoneParams, ...eventParams]);
+};
 
 export const revsRead = (orgId: string, mode: string, places: readonly string[]): AfterRead =>
   afterRead(
