@@ -49,12 +49,14 @@ export async function closeOrgRow(
     where: by.kind === 'platform' ? { id: before.id, status: before.status } : { status: 'active' },
     returning: ['id'],
   });
-  // A developer sandbox records the close too; the statement runs only when the org moved above.
-  g.update('developer_sandboxes', {
-    set: { closed_at: now, close_reason: by.kind === 'platform' ? 'admin' : 'user' },
-    where: { org_id: before.id, closed_at: null },
-    when: [exists('orgs', { id: before.id, status: 'deleted' })],
-  });
+  // A developer sandbox records the close too. An owner cannot close a developer org, so only the platform branch syncs it;
+  // the statement runs only when the org moved above.
+  if (by.kind === 'platform')
+    g.update('developer_sandboxes', {
+      set: { closed_at: now, close_reason: 'admin' },
+      where: { org_id: before.id, closed_at: null },
+      when: [exists('orgs', { id: before.id, status: 'deleted' })],
+    });
   const [result] = await g.commit();
   return (result?.results.length ?? 0) > 0;
 }
