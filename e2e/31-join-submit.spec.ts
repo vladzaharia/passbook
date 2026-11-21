@@ -75,7 +75,10 @@ async function joinLinkPath(admin: Api, orgId: string, name: string, lookup: boo
   return new URL(put.link.url, BASE).pathname;
 }
 
-/** A visitor submits the join form in Chromium; the token stays out of Referer and the POST names its origin. Returns the card path. */
+/**
+ * A visitor submits the join form in Chromium; the token stays out of Referer and the POST names its origin.
+ * A new and a known address get the same answer, so the card arrives by email only.
+ */
 async function submitJoin(browser: Browser, joinPath: string, email: string) {
   const visitor = await browser.newContext();
   const page = await visitor.newPage();
@@ -88,11 +91,28 @@ async function submitJoin(browser: Browser, joinPath: string, email: string) {
   await expect(page.locator('input[name="cf-turnstile-response"]')).not.toHaveValue('');
   await page.getByRole('button', { name: 'Get my card' }).click();
   expect((await post).headers().origin).toBe(BASE);
-  await page.waitForURL((u) => u.pathname.startsWith('/p/'));
-  await expect(page.getByText('Ada').first()).toBeVisible();
-  const cardPath = new URL(page.url()).pathname;
+  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
   await visitor.close();
-  return cardPath;
+}
+
+/** The card's public path, read through the admin API once the issue behind the join has landed. */
+async function cardPathOf(admin: Api, orgId: string, email: string): Promise<string> {
+  let id = '';
+  await expect
+    .poll(
+      async () => {
+        const list = await admin.get(
+          `/api/v1/passes?orgId=${encodeURIComponent(orgId)}&holderEmail=${encodeURIComponent(email)}`,
+        );
+        id = list.items?.[0]?.id ?? '';
+        return id;
+      },
+      { timeout: 30_000 },
+    )
+    .not.toBe('');
+  const pass = await admin.get(`/api/v1/passes/${id}`);
+  const url = pass.publicUrl as string;
+  return new URL(url, BASE).pathname;
 }
 
 test('a join form submits in Chromium, and the card is in My passes after sign-in', async ({
@@ -125,7 +145,8 @@ test('a joined card on a lookup template is in My passes after sign-in, and the 
   const email = `${uid('joiner')}@example.test`;
   try {
     const joinPath = await joinLinkPath(admin, readSeed().org.id, name, true);
-    const cardPath = await submitJoin(browser, joinPath, email);
+    await submitJoin(browser, joinPath, email);
+    const cardPath = await cardPathOf(admin, readSeed().org.id, email);
     const holder = await browser.newContext();
     const portal = await holder.newPage();
     await signInHolder(portal, email);
