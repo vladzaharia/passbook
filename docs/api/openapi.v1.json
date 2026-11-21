@@ -3474,6 +3474,24 @@
               "null"
             ]
           },
+          "matched": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "input",
+                "value"
+              ]
+            }
+          },
           "externalId": {
             "type": [
               "string",
@@ -3810,6 +3828,86 @@
         },
         "additionalProperties": false
       },
+      "BulkRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "void",
+              "send_email",
+              "remove"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "done",
+              "stopped",
+              "failed"
+            ]
+          },
+          "total": {
+            "type": "integer"
+          },
+          "done": {
+            "type": "integer"
+          },
+          "skipped": {
+            "type": "integer"
+          },
+          "skippedBy": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "stopRequested": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "finishedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "action",
+          "state",
+          "total",
+          "done",
+          "skipped",
+          "skippedBy",
+          "stopRequested",
+          "createdAt",
+          "finishedAt",
+          "code"
+        ]
+      },
       "PassDetail": {
         "type": "object",
         "properties": {
@@ -3850,6 +3948,24 @@
               "string",
               "null"
             ]
+          },
+          "matched": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "input",
+                "value"
+              ]
+            }
           },
           "externalId": {
             "type": [
@@ -18966,7 +19082,7 @@
           "input"
         ]
       },
-      "PassesReplaceViewsParams": {
+      "PassViewsReplaceParams": {
         "type": "object",
         "properties": {
           "items": {
@@ -19005,6 +19121,51 @@
         "required": [
           "items"
         ]
+      },
+      "BulkRunsStartParams": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "void",
+              "send_email",
+              "remove"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "selection": {
+            "type": "object",
+            "properties": {
+              "filter": {
+                "$ref": "#/components/schemas/PassFilter"
+              },
+              "expectCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20000
+              }
+            },
+            "required": [
+              "filter",
+              "expectCount"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "action",
+          "selection"
+        ],
+        "additionalProperties": false
       },
       "PassesUpdateParams": {
         "type": "object",
@@ -19295,7 +19456,7 @@
                   "expectCount": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 50000
+                    "maximum": 20000
                   }
                 },
                 "required": [
@@ -52238,6 +52399,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -52303,7 +52467,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -52493,6 +52657,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -52558,7 +52725,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -52625,8 +52792,8 @@
         },
         "operationId": "passes.getPassesViews",
         "x-sdk": {
-          "resource": "passes",
-          "method": "listViews"
+          "resource": "passViews",
+          "method": "list"
         },
         "description": "The saved views of the passes list.",
         "security": [
@@ -52647,6 +52814,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -52712,7 +52882,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -52742,7 +52912,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PassesReplaceViewsParams"
+                "$ref": "#/components/schemas/PassViewsReplaceParams"
               },
               "example": {
                 "items": []
@@ -52777,8 +52947,8 @@
         },
         "operationId": "passes.putPassesViews",
         "x-sdk": {
-          "resource": "passes",
-          "method": "replaceViews"
+          "resource": "passViews",
+          "method": "replace"
         },
         "description": "Replaces the saved views (at most 20).",
         "security": [
@@ -52799,6 +52969,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -52864,7 +53037,539 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/bulk-runs": {
+      "post": {
+        "summary": "Void, email or remove every pass a filter matches, in the background",
+        "tags": [
+          "passes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkRunsStartParams"
+              },
+              "example": {
+                "action": "void",
+                "selection": {
+                  "filter": {
+                    "status": "active"
+                  },
+                  "expectCount": 442
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRun"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "action": "void",
+                  "state": "running",
+                  "total": 442,
+                  "done": 124,
+                  "skipped": 0,
+                  "skippedBy": {},
+                  "stopRequested": false,
+                  "createdAt": 1764000000000,
+                  "finishedAt": null,
+                  "code": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesBulkRuns",
+        "x-sdk": {
+          "resource": "bulkRuns",
+          "method": "start"
+        },
+        "description": "Voids, emails or removes every pass a filter matches, in the background. The matching passes are fixed when the run starts; `expectCount` must equal the count then, or it answers 409 `SELECTION_CHANGED`. One run at a time per organization and mode.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/bulk-runs/{id}": {
+      "get": {
+        "summary": "Get the progress of a bulk run",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRun"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "action": "void",
+                  "state": "running",
+                  "total": 442,
+                  "done": 124,
+                  "skipped": 0,
+                  "skippedBy": {},
+                  "stopRequested": false,
+                  "createdAt": 1764000000000,
+                  "finishedAt": null,
+                  "code": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.getPassesBulkRunsById",
+        "x-sdk": {
+          "resource": "bulkRuns",
+          "method": "retrieve"
+        },
+        "description": "The progress of a bulk run.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/bulk-runs/{id}/stop": {
+      "post": {
+        "summary": "Stop a bulk run after its current chunk",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRun"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "action": "void",
+                  "state": "running",
+                  "total": 442,
+                  "done": 124,
+                  "skipped": 0,
+                  "skippedBy": {},
+                  "stopRequested": true,
+                  "createdAt": 1764000000000,
+                  "finishedAt": null,
+                  "code": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesBulkRunsByIdStop",
+        "x-sdk": {
+          "resource": "bulkRuns",
+          "method": "stop"
+        },
+        "description": "Stops a running bulk run after its current chunk. Passes already handled stay handled.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -53025,6 +53730,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -53091,7 +53799,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -53188,6 +53896,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -53254,7 +53965,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -53432,6 +54143,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -53498,7 +54212,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -53593,6 +54307,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -53659,7 +54376,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -53768,6 +54485,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -53834,7 +54554,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -53943,6 +54663,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54009,7 +54732,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54109,6 +54832,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54175,7 +54901,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54276,6 +55002,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54342,7 +55071,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54437,6 +55166,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54503,7 +55235,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54630,6 +55362,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54696,7 +55431,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54795,6 +55530,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54861,7 +55599,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54977,6 +55715,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55043,7 +55784,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55189,6 +55930,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55255,7 +55999,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55383,6 +56127,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55449,7 +56196,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55551,6 +56298,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55617,7 +56367,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55740,6 +56490,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55806,7 +56559,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55937,6 +56690,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56003,7 +56759,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56134,6 +56890,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56200,7 +56959,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56321,6 +57080,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56387,7 +57149,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56464,6 +57226,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56530,7 +57295,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56649,6 +57414,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56714,7 +57482,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57005,6 +57773,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57071,7 +57842,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57370,6 +58141,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57436,7 +58210,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57530,6 +58304,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57596,7 +58373,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57690,6 +58467,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57756,7 +58536,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57872,6 +58652,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57937,7 +58720,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -58027,6 +58810,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -58092,7 +58878,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -58329,6 +59115,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -58394,7 +59183,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -58925,6 +59714,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -58991,7 +59783,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -59530,6 +60322,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -59596,7 +60391,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -59714,6 +60509,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -59779,7 +60577,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -59904,6 +60702,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -59970,7 +60771,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60057,6 +60858,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -60123,7 +60927,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60262,6 +61066,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -60328,7 +61135,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60471,6 +61278,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -60537,7 +61347,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60681,6 +61491,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -60747,7 +61560,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60824,6 +61637,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -60890,7 +61706,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60967,6 +61783,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61033,7 +61852,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61119,6 +61938,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61185,7 +62007,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61437,6 +62259,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61503,7 +62328,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61746,6 +62571,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61812,7 +62640,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61934,6 +62762,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -62000,7 +62831,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -62109,6 +62940,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -62175,7 +63009,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -63007,6 +63841,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -63072,7 +63909,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -63930,6 +64767,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -63995,7 +64835,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -64827,6 +65667,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -64893,7 +65736,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -64997,6 +65840,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -65063,7 +65909,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -65905,6 +66751,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -65971,7 +66820,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -66813,6 +67662,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -66879,7 +67731,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -67137,6 +67989,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -67203,7 +68058,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -67291,6 +68146,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -67357,7 +68215,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -67445,6 +68303,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -67511,7 +68372,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -67648,6 +68509,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -67712,7 +68576,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -67838,6 +68702,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -67904,7 +68771,7 @@
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
           "SELECTION_CHANGED",
-          "SELECTION_TOO_LARGE",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",

@@ -294,10 +294,10 @@
     "retryable": false
   },
   "BULK_RUN_ACTIVE": {
-    "title": "Bulk run active",
-    "when": "Another bulk run on these passes is still in progress.",
-    "fix": "Wait for the running job to finish, then start the new one.",
-    "retryable": false
+    "title": "A bulk run is going",
+    "when": "Another bulk run is still going for this organization and mode.",
+    "fix": "Wait for it to finish, or stop it.",
+    "retryable": true
   },
   "BUNDLE_DUPLICATE_PASS": {
     "title": "Duplicate pass in bundle",
@@ -3151,20 +3151,38 @@
   },
   "MATCH_TOO_BROAD": {
     "title": "Too many passes match",
-    "when": "A selection by filter matches more than 50,000 passes.",
+    "when": "A selection by filter matches more than 20,000 passes.",
     "fix": "Narrow the filter and send the request again.",
     "retryable": false
   },
   "SELECTION_CHANGED": {
     "title": "Selection changed",
-    "when": "The number of passes the filter matches moved more than 2% from expectCount.",
-    "fix": "List the passes again and send the new count as expectCount.",
+    "when": "The number of passes the filter matches is not expectCount.",
+    "fix": "Check the new count in the message, then send it as expectCount.",
     "retryable": false
   },
-  "SELECTION_TOO_LARGE": {
-    "title": "Too many passes at once",
-    "when": "A selection by filter matches more passes than one request acts on (200).",
-    "fix": "Narrow the filter, or send ids in batches of 100.",
+  "SELECTION_USE_RUN": {
+    "title": "Use a bulk run",
+    "when": "POST /passes/bulk was given a filter that matches more than 100 passes.",
+    "fix": "Send the same selection to POST /passes/bulk-runs.",
     "retryable": false
+  },
+  "BULK_RUN_ENDED": {
+    "title": "The run has ended",
+    "when": "The bulk run is done, stopped or failed.",
+    "fix": "Start a new run if passes are left.",
+    "retryable": false
+  },
+  "BULK_RUN_NOT_FOUND": {
+    "title": "Run not found",
+    "when": "No bulk run with this id exists in this organization and mode.",
+    "fix": "Check the id, organization and mode.",
+    "retryable": false
+  },
+  "BULK_RUN_START": {
+    "title": "The run did not start",
+    "when": "The background run could not be created.",
+    "fix": "Try again.",
+    "retryable": true
   }
 }

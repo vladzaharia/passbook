@@ -2,12 +2,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { BUNDLE_MAX_PASSES } from '@/shared/contracts/bundles.ts';
-import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
+import { FILTER_RUN_MAX, type PassFilter } from '@/shared/contracts/pass-selection.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
-import { errorMessage, UserMessageError } from '../../lib/errors.ts';
+import { errorMessage, isApiError, UserMessageError } from '../../lib/errors.ts';
 import { formatCount } from '../../lib/format.ts';
 import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
 import { sessionQuery } from '../../lib/session.ts';
@@ -25,6 +25,7 @@ import { BulkChannelsDialog } from './bulk-channels-dialog.tsx';
 import { BulkPrintAction } from './bulk-print.tsx';
 import { BundleDialog } from './bundle-dialog.tsx';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
+import { useStartBulkRun } from './find-api.ts';
 import { canonical } from './find-query.ts';
 import { fingerprint, newKey } from './format.ts';
 
@@ -46,6 +47,7 @@ export function SelectionBar({
   onClear,
   onExport,
   all,
+  onRun,
 }: {
   /** The selected rows: what each action touches is counted from them. */
   picked: PassSummaryDto[];
@@ -57,8 +59,11 @@ export function SelectionBar({
   onExport: () => void;
   /** Every pass the filter matches is selected, not just the loaded rows. */
   all?: { filter: PassFilter; count: number } | undefined;
+  /** A filter run too big to do inline started in the background: show its progress. */
+  onRun?: ((id: string) => void) | undefined;
 }) {
   const bulk = useBulkPassAction();
+  const start = useStartBulkRun();
   const queryClient = useQueryClient();
   const [ask, setAsk] = useState<'void' | 'send_email' | 'remove' | null>(null);
   const [sharing, setSharing] = useState(false);
@@ -85,6 +90,23 @@ export function SelectionBar({
       const current = queryClient.getQueryData<SessionResponse>(sessionQuery.queryKey);
       return current?.authenticated === true && current.user.id === userId;
     };
+    if (all && all.count > FILTER_RUN_MAX && orgId) {
+      const run = await start
+        .mutateAsync({
+          action,
+          ...(message ? { message } : {}),
+          orgId,
+          selection: { filter: all.filter, expectCount: all.count },
+        })
+        .catch(async (error: unknown) => {
+          await queryClient.invalidateQueries({ queryKey: passKeys.all });
+          throw error;
+        });
+      if (!stillCurrent()) return;
+      onRun?.(run.id);
+      onClear();
+      return;
+    }
     const fp = fingerprint(all ? [canonical(all)] : [...ids].sort());
     if (emailKey.current.fp !== fp) emailKey.current = { fp, key: newKey() };
     const result = await bulk
@@ -99,6 +121,9 @@ export function SelectionBar({
         if (!stillCurrent()) return undefined;
         await queryClient.invalidateQueries({ queryKey: passKeys.all });
         if (!stillCurrent()) return undefined;
+        // Nothing ran: the count moved, and the message already says what to check.
+        if (isApiError(error) && error.code === 'SELECTION_CHANGED')
+          throw new UserMessageError(error.message);
         throw new UserMessageError(
           `${errorMessage(error)} Some selected passes may already have been processed. Check their status before retrying.`,
         );

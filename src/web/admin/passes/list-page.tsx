@@ -19,9 +19,11 @@ import {
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
 import { usePassList } from './api.ts';
+import { BulkRunCard } from './bulk-run-card.tsx';
 import { downloadText, toCsv } from './csv.ts';
+import { useFindFields } from './find-fields.ts';
 import { allChips, chipFilter, toPassFilter } from './find-query.ts';
-import { SelectAllBanner } from './find-select.tsx';
+import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
 import { PassFindToolbar } from './find-toolbar.tsx';
 import { PassListContext, passColumns } from './list-columns.tsx';
 import { CLEARED, type ListSearch } from './list-filters.tsx';
@@ -57,6 +59,8 @@ export function PassesListPage({
   const chips = useMemo(() => allChips(search), [search]);
   const list = usePassList({ ...search, ...chipFilter(chips), orgId });
   const templates = useTemplates({ orgId });
+  const fields = useFindFields(templates.data?.items ?? [], search.templateId, orgId);
+  const fieldLabels = useMemo(() => new Map(fields.map((f) => [f.key, f.label])), [fields]);
   const orgs = useOrgOptions(!orgId);
   const rows = useMemo(
     () =>
@@ -68,6 +72,7 @@ export function PassesListPage({
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [allMatching, setAllMatching] = useState(false);
+  const [runId, setRunId] = useState<string>();
   const count = list.data?.pages[0]?.count ?? rows.length;
   const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
   const truth = !list.isPending && !filtered && rows.length === 0;
@@ -131,6 +136,7 @@ export function PassesListPage({
       allSelected,
       onToggle: toggle,
       onToggleAll: toggleAll,
+      find: { chips, labels: fieldLabels },
     }),
     [
       orgId,
@@ -143,6 +149,8 @@ export function PassesListPage({
       allSelected,
       toggle,
       toggleAll,
+      chips,
+      fieldLabels,
     ],
   );
 
@@ -186,6 +194,9 @@ export function PassesListPage({
   return (
     <div className={selected.size > 0 || allMatching ? 'pb-20' : undefined}>
       <PageHeader title="Passes" actions={canOperate && !truth ? create('primary') : undefined} />
+      {runId ? (
+        <BulkRunCard id={runId} orgId={orgId} onDismiss={() => setRunId(undefined)} />
+      ) : null}
       <PassListContext.Provider value={context}>
         {list.isError ? (
           <ErrorState error={list.error} onRetry={() => void list.refetch()} />
@@ -208,6 +219,9 @@ export function PassesListPage({
                   canOperate={canOperate}
                   onChange={onSearch}
                 />
+                {canOperate && !allSelected && rows.length > 0 ? (
+                  <SelectAllPhone onSelect={toggleAll} />
+                ) : null}
                 {canOperate && allSelected ? (
                   <SelectAllBanner
                     count={count}
@@ -260,6 +274,7 @@ export function PassesListPage({
           setSelected(new Set());
         }}
         onExport={exportCsv}
+        onRun={setRunId}
         all={allMatching ? { filter: toPassFilter({ ...search, chips }), count } : undefined}
       />
     </div>

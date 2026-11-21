@@ -1267,15 +1267,6 @@ func (r *PassesResource) List(ctx context.Context, query *PassesListQuery, opts 
 	return newPager[PassSummary](r.c, call{method: "GET", path: "/api/v1/passes", query: queryValues(query)}, "cursor", opts)
 }
 
-// ListViews List the saved views of the passes list `GET /api/v1/passes/views`
-func (r *PassesResource) ListViews(ctx context.Context, opts ...RequestOption) (*PassesListViewsResult, error) {
-	var out PassesListViewsResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/views"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 // MatchPhotos Match photo file names to passes by External ID or serial `POST /api/v1/passes/photos/match`
 func (r *PassesResource) MatchPhotos(ctx context.Context, body *PassesMatchPhotosBody, opts ...RequestOption) (*PassesMatchPhotosResult, error) {
 	var out PassesMatchPhotosResult
@@ -1307,15 +1298,6 @@ func (r *PassesResource) Remove(ctx context.Context, id string, body *PassesRemo
 func (r *PassesResource) Renew(ctx context.Context, id string, body *PassesRenewBody, opts ...RequestOption) (*PassesRenewResult, error) {
 	var out PassesRenewResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/" + pathEscape(id) + "/renew", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// ReplaceViews Replace the saved views of the passes list `PUT /api/v1/passes/views`
-func (r *PassesResource) ReplaceViews(ctx context.Context, body *PassesReplaceViewsBody, opts ...RequestOption) (*PassesReplaceViewsResult, error) {
-	var out PassesReplaceViewsResult
-	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/passes/views", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -1430,6 +1412,71 @@ func (r *PrintJobsResource) DownloadPDF(ctx context.Context, jobId string, opts 
 func (r *PrintJobsResource) Retrieve(ctx context.Context, jobId string, opts ...RequestOption) (*PrintJobsRetrieveResult, error) {
 	var out PrintJobsRetrieveResult
 	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/bulk-print/" + pathEscape(jobId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type BulkRunsResource struct {
+	c *core
+}
+
+func newBulkRunsResource(c *core) *BulkRunsResource {
+	return &BulkRunsResource{
+		c: c,
+	}
+}
+
+// Retrieve Get the progress of a bulk run `GET /api/v1/passes/bulk-runs/{id}`
+func (r *BulkRunsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*BulkRunsRetrieveResult, error) {
+	var out BulkRunsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/bulk-runs/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Start Void, email or remove every pass a filter matches, in the background `POST /api/v1/passes/bulk-runs`
+func (r *BulkRunsResource) Start(ctx context.Context, body *BulkRunsStartBody, opts ...RequestOption) (*BulkRunsStartResult, error) {
+	var out BulkRunsStartResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/bulk-runs", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Stop Stop a bulk run after its current chunk `POST /api/v1/passes/bulk-runs/{id}/stop`
+func (r *BulkRunsResource) Stop(ctx context.Context, id string, opts ...RequestOption) (*BulkRunsStopResult, error) {
+	var out BulkRunsStopResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/bulk-runs/" + pathEscape(id) + "/stop"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PassViewsResource struct {
+	c *core
+}
+
+func newPassViewsResource(c *core) *PassViewsResource {
+	return &PassViewsResource{
+		c: c,
+	}
+}
+
+// List List the saved views of the passes list `GET /api/v1/passes/views`
+func (r *PassViewsResource) List(ctx context.Context, opts ...RequestOption) (*PassViewsListResult, error) {
+	var out PassViewsListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/views"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Replace Replace the saved views of the passes list `PUT /api/v1/passes/views`
+func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceBody, opts ...RequestOption) (*PassViewsReplaceResult, error) {
+	var out PassViewsReplaceResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/passes/views", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -2128,6 +2175,8 @@ type Resources struct {
 	PassImports      *PassImportsResource
 	Passes           *PassesResource
 	PrintJobs        *PrintJobsResource
+	BulkRuns         *BulkRunsResource
+	PassViews        *PassViewsResource
 	RollCalls        *RollCallsResource
 	ScanSetups       *ScanSetupsResource
 	Terminal         *TerminalResource
@@ -2158,6 +2207,8 @@ func newResources(c *core) Resources {
 		PassImports:      newPassImportsResource(c),
 		Passes:           newPassesResource(c),
 		PrintJobs:        newPrintJobsResource(c),
+		BulkRuns:         newBulkRunsResource(c),
+		PassViews:        newPassViewsResource(c),
 		RollCalls:        newRollCallsResource(c),
 		ScanSetups:       newScanSetupsResource(c),
 		Terminal:         newTerminalResource(c),

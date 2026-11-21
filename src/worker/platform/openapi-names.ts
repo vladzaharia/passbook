@@ -9,6 +9,7 @@ import {
 } from '../../shared/contracts/api-keys.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
+import { BulkRunSchema } from '../../shared/contracts/pass-bulk-runs.ts';
 import { PassFilterSchema } from '../../shared/contracts/pass-selection.ts';
 import { PassViewListSchema } from '../../shared/contracts/pass-views.ts';
 import {
@@ -132,6 +133,7 @@ const names = {
   PassDevice: PassDeviceSchema,
   PassPage: PassListSchema,
   PassViews: PassViewListSchema,
+  BulkRun: BulkRunSchema,
   PassFilter: PassFilterSchema,
   ApiKeyCurrent: ApiKeyMeSchema,
   ApiKeyMinted: MintedApiKeySchema,

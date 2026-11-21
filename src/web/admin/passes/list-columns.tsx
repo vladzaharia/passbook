@@ -5,6 +5,8 @@ import { formatDay } from '../../lib/format.ts';
 import type { Swatch } from '../../lib/swatches.ts';
 import { Checkbox, RowLink, StatusIcon, StatusPill } from '../../ui/index.ts';
 import { ModePill } from '../../ui/layout/mode-pill.tsx';
+import type { FindChip } from './find-query.ts';
+import { MatchHint } from './match-hint.tsx';
 import { PassRowMenu } from './row-menu.tsx';
 
 export type { Swatch };
@@ -22,6 +24,8 @@ export interface ListContextValue {
   allSelected: boolean;
   onToggle: (id: string) => void;
   onToggleAll: () => void;
+  /** The query bar's chips and input labels: the matched value shows under the name. */
+  find?: { chips: readonly FindChip[]; labels: ReadonlyMap<string, string> };
 }
 
 export const PassListContext = createContext<ListContextValue | null>(null);
@@ -84,20 +88,25 @@ function ActionsCell({ pass }: { pass: PassSummaryDto }) {
 function TitleCell({ pass: p }: { pass: PassSummaryDto }) {
   const o = useList();
   return (
-    <span className="flex min-w-0 max-w-72 items-center gap-3 contain-inline-size">
-      <PassChip swatch={o.swatches.get(p.templateId)} voided={p.status === 'voided'} />
-      <RowLink
-        to="/admin/passes/$passId"
-        params={{ passId: p.id }}
-        inactive={p.status === 'voided'}
-      >
-        {nameOf(p)}
-      </RowLink>
-      <ModePill mode={p.mode} compact />
-      {p.status === 'voided' ? <StatusPill status="voided" /> : null}
-      {p.removedAt !== null ? <StatusIcon status="removed" /> : null}
-      {o.showSubtitles && p.subtitle ? (
-        <span className="min-w-12 truncate text-sm text-fg-muted">{p.subtitle}</span>
+    <span className="flex min-w-0 max-w-72 flex-col gap-0.5 contain-inline-size">
+      <span className="flex min-w-0 items-center gap-3">
+        <PassChip swatch={o.swatches.get(p.templateId)} voided={p.status === 'voided'} />
+        <RowLink
+          to="/admin/passes/$passId"
+          params={{ passId: p.id }}
+          inactive={p.status === 'voided'}
+        >
+          {nameOf(p)}
+        </RowLink>
+        <ModePill mode={p.mode} compact />
+        {p.status === 'voided' ? <StatusPill status="voided" /> : null}
+        {p.removedAt !== null ? <StatusIcon status="removed" /> : null}
+        {o.showSubtitles && p.subtitle ? (
+          <span className="min-w-12 truncate text-sm text-fg-muted">{p.subtitle}</span>
+        ) : null}
+      </span>
+      {o.find && p.matched?.length ? (
+        <MatchHint matched={p.matched} chips={o.find.chips} labels={o.find.labels} />
       ) : null}
     </span>
   );

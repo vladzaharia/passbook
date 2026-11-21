@@ -1,4 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BulkRunSchema } from '@/shared/contracts/pass-bulk-runs.ts';
 import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
 import { type PassView, PassViewListSchema } from '@/shared/contracts/pass-views.ts';
 import { PassListSchema } from '@/shared/contracts/passes.ts';
@@ -63,4 +64,41 @@ export function useViewCounts(
   return new Map(
     results.map((r, i) => [i === 0 ? 'all' : (shown[i - 1]?.id ?? ''), r.data?.count]),
   );
+}
+
+const runKey = (id: string) => ['admin', 'passes', 'bulk-run', id] as const;
+
+/** A bulk run's progress; polls while it is going. */
+export function useBulkRun(id: string | undefined, orgId: string | undefined) {
+  return useQuery({
+    queryKey: runKey(id ?? ''),
+    queryFn: ({ signal }) =>
+      api.get(`/api/v1/passes/bulk-runs/${id}`, BulkRunSchema, { query: { orgId }, signal }),
+    enabled: Boolean(id && orgId),
+    refetchInterval: (query) => {
+      const state = query.state.data?.state;
+      return state === 'queued' || state === 'running' ? 2000 : false;
+    },
+  });
+}
+
+/** Starts a bulk run over every pass a filter matches. */
+export function useStartBulkRun() {
+  return useMutation({
+    mutationFn: (body: {
+      action: 'void' | 'send_email' | 'remove';
+      message?: string;
+      orgId: string;
+      selection: { filter: PassFilter; expectCount: number };
+    }) => api.post('/api/v1/passes/bulk-runs', BulkRunSchema, body),
+  });
+}
+
+export function useStopBulkRun(orgId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.post(`/api/v1/passes/bulk-runs/${id}/stop`, BulkRunSchema, {}, { query: { orgId } }),
+    onSuccess: (run) => qc.setQueryData(runKey(run.id), run),
+  });
 }

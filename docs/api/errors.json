@@ -540,6 +540,33 @@
       ]
     },
     {
+      "code": "BULK_RUN_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_START",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "BUNDLE_DUPLICATE_PASS",
       "statuses": [
         422
@@ -4144,7 +4171,7 @@
       ]
     },
     {
-      "code": "SELECTION_TOO_LARGE",
+      "code": "SELECTION_USE_RUN",
       "statuses": [
         422
       ],

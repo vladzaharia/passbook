@@ -16,14 +16,14 @@ func main() {
 		panic(err)
 	}
 
-	var body passbook.PassesReplaceViewsBody
+	var body passbook.PassViewsReplaceBody
 	if err := json.Unmarshal([]byte(`{
   "items": []
 }`), &body); err != nil {
 		panic(err)
 	}
 
-	result, err := pb.Passes.ReplaceViews(ctx, &body)
+	result, err := pb.PassViews.Replace(ctx, &body)
 	if err != nil {
 		panic(err)
 	}

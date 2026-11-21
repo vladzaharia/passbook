@@ -1,4 +1,5 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -38,7 +39,7 @@ export async function listPassSummaries(
   query: Parameters<typeof listPasses>[1],
 ) {
   const page = await listPasses(ctx.env.DB, query);
-  return { items: page.items.map(toSummary), nextCursor: page.nextCursor };
+  return { items: page.items.map((p) => toSummary(p, query.match)), nextCursor: page.nextCursor };
 }
 
 export interface PassPatch {
@@ -227,6 +228,7 @@ async function setStatus(
   status: 'active' | 'voided',
   scope: ScopeArg,
   authority?: TenantPassWrite,
+  extraChecks?: readonly Check[],
 ) {
   const current = await getPassForWrite(ctx.env.DB, passId, scope);
   if (current.removedAt !== null)
@@ -237,6 +239,7 @@ async function setStatus(
     cause: causeOf(actor),
     actor,
     ...(authority ? { authority } : {}),
+    ...(extraChecks ? { extraChecks } : {}),
     mutate: () => ({ status }),
   });
   // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.
@@ -265,7 +268,8 @@ export const voidPass = (
   id: string,
   scope: ScopeArg,
   authority?: TenantPassWrite,
-) => setStatus(ctx, actor, id, 'voided', scope, authority);
+  extraChecks?: readonly Check[],
+) => setStatus(ctx, actor, id, 'voided', scope, authority, extraChecks);
 export const unvoidPass = (
   ctx: ServiceContext,
   actor: Actor,

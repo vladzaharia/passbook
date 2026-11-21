@@ -75,38 +75,40 @@ export async function assertMatchUnambiguous(
 }
 
 /**
- * The ids a filter selection names, after checking the admin's count still holds (409
- * `SELECTION_CHANGED` when it moved more than 2%). Newest first.
+ * The passes a filter selection names (id and version), after checking the admin's count still holds:
+ * any difference answers 409 `SELECTION_CHANGED` with the new number. Newest first. `inline` refuses
+ * more than the inline limit (`SELECTION_USE_RUN`: start a bulk run instead).
  */
-export async function resolveFilterIds(
+export async function resolveFilterPasses(
   ctx: ServiceContext,
   scope: { orgId: string; mode: NonNullable<PassListFilter['mode']> },
   filter: PassFilter,
   expectCount: number,
-): Promise<string[]> {
+  inline: boolean,
+): Promise<{ id: string; version: number }[]> {
   const list = listFilterOf(ctx, scope, filter);
   if (filter.match && !filter.templateId)
     await assertMatchUnambiguous(ctx, scope.orgId, scope.mode, filter.match);
   const count = list ? await countPasses(ctx.env.DB, list) : 0;
-  if (!list || selectionDrifted(expectCount, count))
-    throw new ConflictError(
-      'The matching passes changed. Review the selection and try again.',
-      'SELECTION_CHANGED',
-    );
+  const changed = (n: number) =>
+    new ConflictError(`The selection changed to ${n}. Check and try again.`, 'SELECTION_CHANGED');
+  if (!list || selectionDrifted(expectCount, count)) throw changed(count);
   if (count > PASS_SELECTION_MAX)
     throw new ValidationError('Too many passes match. Narrow the filter.', [], 'MATCH_TOO_BROAD');
-  if (count > FILTER_RUN_MAX)
+  if (inline && count > FILTER_RUN_MAX)
     throw new ValidationError(
-      `Select at most ${FILTER_RUN_MAX} passes at a time. Narrow the filter.`,
+      `More than ${FILTER_RUN_MAX} passes match. Start a bulk run instead.`,
       [],
-      'SELECTION_TOO_LARGE',
+      'SELECTION_USE_RUN',
     );
-  const ids: string[] = [];
+  const out: { id: string; version: number }[] = [];
   let cursor: string | undefined;
   do {
     const page = await listPasses(ctx.env.DB, { ...list, ...(cursor ? { cursor } : {}) });
-    ids.push(...page.items.map((p) => p.id));
+    for (const p of page.items) out.push({ id: p.id, version: p.version });
     cursor = page.nextCursor ?? undefined;
-  } while (cursor && ids.length <= FILTER_RUN_MAX);
-  return ids.slice(0, FILTER_RUN_MAX);
+  } while (cursor && out.length <= PASS_SELECTION_MAX);
+  // Passes came or went while the list was read: the same refusal as a changed count.
+  if (selectionDrifted(expectCount, out.length)) throw changed(out.length);
+  return out;
 }

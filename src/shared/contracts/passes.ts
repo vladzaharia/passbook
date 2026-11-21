@@ -45,6 +45,8 @@ export const PassSummarySchema = z.object({
   serial: z.string(),
   title: z.string().nullable(),
   subtitle: z.string().nullable(),
+  /** With a `match` filter: the value of each input it names, for the list to show under the name. */
+  matched: z.array(z.object({ input: z.string(), value: z.string() })).optional(),
   externalId: z.string().nullable(),
   status: PassStatusSchema,
   mode: ModeSchema.default('live'),

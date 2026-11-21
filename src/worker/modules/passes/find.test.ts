@@ -74,7 +74,7 @@ describe('bulk by filter', () => {
     });
 
   it('refuses a count that drifted, and changes nothing', async () => {
-    const res = await bulk(40);
+    const res = await bulk(3);
     await expectProblem(res, 409, 'SELECTION_CHANGED');
     expect(
       (

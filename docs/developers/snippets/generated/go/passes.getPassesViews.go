@@ -15,7 +15,7 @@ func main() {
 		panic(err)
 	}
 
-	result, err := pb.Passes.ListViews(ctx)
+	result, err := pb.PassViews.List(ctx)
 	if err != nil {
 		panic(err)
 	}

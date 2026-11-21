@@ -15,7 +15,7 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction, selectBulkPasses } from './bulk-actions.ts';
-import { resolveFilterIds } from './find.ts';
+import { resolveFilterPasses } from './find.ts';
 import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
 import { getPass } from './repo-read-pass.ts';
 
@@ -67,12 +67,15 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
       const authority = await tenantAuthorityOf(ctx, authOf(c), orgId, 'passes:operate');
       const authorizedScope = { ...scope, orgId: authority.orgId };
       if (filterRun)
-        ids = await resolveFilterIds(
-          ctx,
-          { orgId: authority.orgId, mode: scope.mode },
-          filterRun.filter,
-          filterRun.expectCount,
-        );
+        ids = (
+          await resolveFilterPasses(
+            ctx,
+            { orgId: authority.orgId, mode: scope.mode },
+            filterRun.filter,
+            filterRun.expectCount,
+            true,
+          )
+        ).map((p) => p.id);
       const body = { ...rest, ids };
       let selection: Awaited<ReturnType<typeof selectBulkPasses>>;
       try {

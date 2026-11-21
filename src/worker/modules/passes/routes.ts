@@ -38,6 +38,7 @@ import { countPasses } from './repo-list.ts';
 import { registerActionRoutes } from './routes-actions.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
+import { registerBulkRunRoutes } from './routes-bulk-runs.ts';
 import { registerCheckInRoutes } from './routes-check-in.ts';
 import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
 import { registerPhotoImportRoutes } from './routes-photo-import.ts';
@@ -115,6 +116,7 @@ register(
 );
 
 registerViewRoutes(passesRoutes);
+registerBulkRunRoutes(passesRoutes);
 
 register(
   passesRoutes,

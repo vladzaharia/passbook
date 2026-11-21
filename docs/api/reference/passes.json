@@ -447,5 +447,65 @@
     "response": {
       "items": []
     }
+  },
+  "passes.postPassesBulkRuns": {
+    "description": "Voids, emails or removes every pass a filter matches, in the background. The matching passes are fixed when the run starts; `expectCount` must equal the count then, or it answers 409 `SELECTION_CHANGED`. One run at a time per organization and mode.",
+    "request": {
+      "action": "void",
+      "selection": {
+        "filter": {
+          "status": "active"
+        },
+        "expectCount": 442
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "action": "void",
+      "state": "running",
+      "total": 442,
+      "done": 124,
+      "skipped": 0,
+      "skippedBy": {},
+      "stopRequested": false,
+      "createdAt": 1764000000000,
+      "finishedAt": null,
+      "code": null
+    }
+  },
+  "passes.getPassesBulkRunsById": {
+    "description": "The progress of a bulk run.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "action": "void",
+      "state": "running",
+      "total": 442,
+      "done": 124,
+      "skipped": 0,
+      "skippedBy": {},
+      "stopRequested": false,
+      "createdAt": 1764000000000,
+      "finishedAt": null,
+      "code": null
+    }
+  },
+  "passes.postPassesBulkRunsByIdStop": {
+    "description": "Stops a running bulk run after its current chunk. Passes already handled stay handled.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "action": "void",
+      "state": "running",
+      "total": 442,
+      "done": 124,
+      "skipped": 0,
+      "skippedBy": {},
+      "stopRequested": true,
+      "createdAt": 1764000000000,
+      "finishedAt": null,
+      "code": null
+    }
   }
 }

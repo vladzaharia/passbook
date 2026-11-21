@@ -1042,8 +1042,8 @@
     "method": "retrieve"
   },
   "passes.getPassesViews": {
-    "resource": "passes",
-    "method": "listViews"
+    "resource": "passViews",
+    "method": "list"
   },
   "passes.patchPassesById": {
     "resource": "passes",
@@ -1146,8 +1146,8 @@
     "method": "upload"
   },
   "passes.putPassesViews": {
-    "resource": "passes",
-    "method": "replaceViews"
+    "resource": "passViews",
+    "method": "replace"
   },
   "public.getBByToken": {
     "resource": "public.bundles",
@@ -2288,5 +2288,17 @@
     "method": "resolve",
     "sdk": false,
     "reason": "Developer portal search: a signed-in person in a browser, not an integration."
+  },
+  "passes.postPassesBulkRuns": {
+    "resource": "bulkRuns",
+    "method": "start"
+  },
+  "passes.getPassesBulkRunsById": {
+    "resource": "bulkRuns",
+    "method": "retrieve"
+  },
+  "passes.postPassesBulkRunsByIdStop": {
+    "resource": "bulkRuns",
+    "method": "stop"
   }
 }

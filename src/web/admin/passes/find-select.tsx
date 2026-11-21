@@ -1,10 +1,10 @@
-import { FILTER_RUN_MAX } from '@/shared/contracts/pass-selection.ts';
+import { PASS_SELECTION_MAX } from '@/shared/contracts/pass-selection.ts';
 import { formatCount as n } from '../../lib/format.ts';
 import { Button } from '../../ui/index.ts';
 
 /**
  * Under the bar once every row on screen is ticked and more match: offers all of them. Past the
- * most one request acts on, it says to narrow instead.
+ * most one run covers, it says to narrow instead.
  */
 export function SelectAllBanner({
   count,
@@ -39,15 +39,26 @@ export function SelectAllBanner({
     >
       <span>
         {n(shown)} selected.{' '}
-        {count > FILTER_RUN_MAX
-          ? `${n(count)} match. Narrow to ${FILTER_RUN_MAX} to select all.`
+        {count > PASS_SELECTION_MAX
+          ? `${n(count)} match. Narrow to ${n(PASS_SELECTION_MAX)} to select all.`
           : null}
       </span>
-      {count <= FILTER_RUN_MAX ? (
+      {count <= PASS_SELECTION_MAX ? (
         <Button variant="link" onClick={onAll}>
           Select all {n(count)} matching
         </Button>
       ) : null}
     </p>
+  );
+}
+
+/** On a phone the table has no header checkbox: this ticks every row on screen, then the banner offers all. */
+export function SelectAllPhone({ onSelect }: { onSelect: () => void }) {
+  return (
+    <div className="mb-3 md:hidden">
+      <Button variant="outline" className="w-full" onClick={onSelect}>
+        Select all
+      </Button>
+    </div>
   );
 }

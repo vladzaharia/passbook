@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { FILTER_RUN_MAX } from '@/shared/contracts/pass-selection.ts';
+import { PASS_SELECTION_MAX } from '@/shared/contracts/pass-selection.ts';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import {
   ORG,
@@ -87,20 +87,72 @@ describe('find passes', () => {
     );
   });
 
-  it('asks to narrow when more match than one request can act on', async () => {
+  it('asks to narrow when more match than one run covers', async () => {
     const user = userEvent.setup();
     await renderApp('/admin/passes', {
       session: 'admin',
       ...orgScope,
       handlers: handlers({
         '/api/v1/passes': () =>
-          json({ items: [passSummary()], nextCursor: 'c', count: FILTER_RUN_MAX + 1 }),
+          json({ items: [passSummary()], nextCursor: 'c', count: PASS_SELECTION_MAX + 1 }),
       }),
     });
     await user.click(
       await screen.findByRole('checkbox', { name: 'Select all passes on this page' }),
     );
-    expect(await screen.findByText(/Narrow to 200 to select all/)).toBeInTheDocument();
+    expect(await screen.findByText(/Narrow to 20,000 to select all/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /matching$/ })).toBeNull();
+  });
+
+  it('runs a big selection in the background and shows its progress with Stop', async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    let stopped = false;
+    const run = (state: string, done: number) => ({
+      id: 'run1',
+      orgId: ORG.id,
+      action: 'void',
+      state,
+      total: 150,
+      done,
+      skipped: 0,
+      skippedBy: {},
+      stopRequested: stopped,
+      createdAt: 1,
+      finishedAt: null,
+      code: null,
+    });
+    await renderApp('/admin/passes', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers({
+        '/api/v1/passes': () => json({ items: [passSummary()], nextCursor: 'c', count: 150 }),
+        '/api/v1/passes/bulk-runs': (_u, init) => {
+          bodies.push(JSON.parse(String(init?.body)));
+          return json(run('queued', 0), 202);
+        },
+        '/api/v1/passes/bulk-runs/run1': () => json(run('running', 40)),
+        '/api/v1/passes/bulk-runs/run1/stop': () => {
+          stopped = true;
+          return json(run('running', 40));
+        },
+      }),
+    });
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Select all passes on this page' }),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Select all 150 matching' }));
+    const bar = screen.getByRole('region', { name: 'Selection' });
+    await user.click(within(bar).getByRole('button', { name: 'Void' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Void 150 passes?' });
+    await user.click(within(ask).getByRole('button', { name: 'Void' }));
+    await waitFor(() =>
+      expect(bodies).toEqual([
+        { action: 'void', orgId: ORG.id, selection: { filter: {}, expectCount: 150 } },
+      ]),
+    );
+    expect(await screen.findByText('Voiding 40 of 150')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(await screen.findByRole('button', { name: 'Stopping' })).toBeDisabled();
   });
 });

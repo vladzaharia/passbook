@@ -3479,6 +3479,103 @@
   }
  },
  {
+  "id": "passes.postPassesBulkRuns",
+  "call": "bulk_runs.start",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-runs",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "action": "void",
+   "selection": {
+    "filter": {},
+    "expectCount": 0
+   }
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
+  "id": "passes.getPassesBulkRunsById",
+  "call": "bulk_runs.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-runs/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
+  "id": "passes.postPassesBulkRunsByIdStop",
+  "call": "bulk_runs.stop",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-runs/{id}/stop",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
   "id": "passes.postPassesBulkChannels",
   "call": "passes.bulk_update_channels",
   "http": "POST",
@@ -3536,7 +3633,7 @@
  },
  {
   "id": "passes.getPassesViews",
-  "call": "passes.list_views",
+  "call": "pass_views.list",
   "http": "GET",
   "path": "/api/v1/passes/views",
   "pathParams": [],
@@ -3557,7 +3654,7 @@
  },
  {
   "id": "passes.putPassesViews",
-  "call": "passes.replace_views",
+  "call": "pass_views.replace",
   "http": "PUT",
   "path": "/api/v1/passes/views",
   "pathParams": [],

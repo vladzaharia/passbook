@@ -364,6 +364,31 @@ export type BroadcastsUpdateParams = {
   clearAfter?: number | null;
 };
 
+export type BulkRun = {
+  id: string;
+  orgId: string;
+  action: "void" | "send_email" | "remove";
+  state: "queued" | "running" | "done" | "stopped" | "failed";
+  total: number;
+  done: number;
+  skipped: number;
+  skippedBy: Record<string, number>;
+  stopRequested: boolean;
+  createdAt: number;
+  finishedAt: number | null;
+  code: string | null;
+};
+
+export type BulkRunsStartParams = {
+  action: "void" | "send_email" | "remove";
+  message?: string;
+  orgId?: string;
+  selection: {
+    filter: PassFilter;
+    expectCount: number;
+  };
+};
+
 export type BundlesCreateParams = {
   orgId: string;
   passIds: Array<string>;
@@ -977,6 +1002,10 @@ export type PassDetail = {
   serial: string;
   title: string | null;
   subtitle: string | null;
+  matched?: Array<{
+    input: string;
+    value: string;
+  }>;
   externalId: string | null;
   status: "active" | "voided";
   mode?: "live" | "test";
@@ -1396,6 +1425,10 @@ export type PassSummary = {
   serial: string;
   title: string | null;
   subtitle: string | null;
+  matched?: Array<{
+    input: string;
+    value: string;
+  }>;
   externalId: string | null;
   status: "active" | "voided";
   mode?: "live" | "test";
@@ -1478,6 +1511,15 @@ export type PassViews = {
     name: string;
     filter: PassFilter;
   }>;
+};
+
+export type PassViewsReplaceParams = {
+  items: Array<{
+    id: string;
+    name: string;
+    filter: PassFilter;
+  }>;
+  orgId?: string;
 };
 
 export type PassVoidedEvent = {
@@ -1593,15 +1635,6 @@ export type PassesRemoveParams = {
 };
 
 export type PassesRenewParams = Record<string, unknown>;
-
-export type PassesReplaceViewsParams = {
-  items: Array<{
-    id: string;
-    name: string;
-    filter: PassFilter;
-  }>;
-  orgId?: string;
-};
 
 export type PassesSendEmailParams = {
   to?: string;
