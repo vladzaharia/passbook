@@ -22,9 +22,21 @@ export interface InvitationEmailInput {
   inviter?: string | null;
 }
 
-/** The invitation on the shared email shell; names the organization, never the token elsewhere. */
-export function invitationEmail(input: InvitationEmailInput) {
-  const subject = `Join ${input.orgName} on PassBook`;
+const NAME_MAX = 40;
+
+/** The organization chooses its name and PassBook sends the mail: control characters out, long names cut. */
+export function mailOrgName(name: string): string {
+  const clean = name
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clean.length > NAME_MAX ? `${clean.slice(0, NAME_MAX - 1).trimEnd()}…` : clean;
+}
+
+/** The invitation on the shared email shell; names the organization in the body only, never the token elsewhere. */
+export function invitationEmail(rawInput: InvitationEmailInput) {
+  const input = { ...rawInput, orgName: mailOrgName(rawInput.orgName) };
+  const subject = 'You are invited to PassBook';
   const expiry = 'Expires in seven days. Ignore this email if you did not expect it.';
   const alt = Boolean(input.acceptLink);
   const line = inviteLine(input.orgName, input.roles, input.inviter);

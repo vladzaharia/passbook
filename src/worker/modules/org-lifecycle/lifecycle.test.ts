@@ -8,7 +8,15 @@ import { serialsSince } from '../apple/repo.ts';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
 import { dailyOrgLifecycle } from './jobs.ts';
 import { fakeStep, populateOrg } from './lifecycle-test-fixtures.ts';
-import { closeOrg, exportLink, openExport, reopenOrg, requestExport } from './service.ts';
+import {
+  closeOrg,
+  exportLink,
+  listExports,
+  openExport,
+  readLifecycle,
+  reopenOrg,
+  requestExport,
+} from './service.ts';
 
 const DAY = 86_400_000;
 const actor = { type: 'system' as const, id: null };
@@ -133,6 +141,11 @@ describe('export', () => {
   it('archives exactly the org: its rows, no secrets, nothing of another org', async () => {
     const a = await populateOrg(rk, 'exp-a');
     const b = await populateOrg(rk, 'exp-b');
+    await run(
+      kit.env.DB,
+      "UPDATE users SET primary_email = 'private-' || id || '@elsewhere.test' WHERE id IN (SELECT user_id FROM org_memberships WHERE org_id = ?)",
+      [a.orgId],
+    );
     const row = await requestExport(kit.ctx, actor, a.orgId, await platform());
     expect(row.state).toBe('queued');
     expect(started.at(-1)?.params).toEqual({ orgId: a.orgId, exportId: row.id });
@@ -173,6 +186,14 @@ describe('export', () => {
         .map((m) => m.user_id)
         .sort(),
     ).toEqual((await members(a.orgId)).map((m) => m.user_id).sort());
+    const primaries = await all<{ primary_email: string }>(
+      kit.env.DB,
+      'SELECT u.primary_email FROM users u JOIN org_memberships m ON m.user_id = u.id WHERE m.org_id = ?',
+      [a.orgId],
+    );
+    expect(primaries.length).toBeGreaterThan(0);
+    for (const u of primaries) expect(text['members.ndjson']).not.toContain(u.primary_email);
+    expect(text['members.ndjson']).not.toContain('@elsewhere.test');
     expect(rows('templates').map((t) => t.id)).toEqual([a.templateId]);
     expect(
       Object.keys(text).some((k) => k.startsWith('template-files/') && k.endsWith('icon.png')),
@@ -248,7 +269,7 @@ describe('export', () => {
     ).toBeNull();
   });
 
-  it('a link opens the archive for a day, for that export only', async () => {
+  it('a link opens the archive once, for that export only', async () => {
     const org = await populateOrg(rk, 'link');
     const row = await requestExport(kit.ctx, actor, org.orgId, await platform());
     await expect(
@@ -277,8 +298,73 @@ describe('export', () => {
     await expect(open(expiresAt, query.get('sig') ?? '', 'other')).rejects.toMatchObject({
       code: 'EXPORT_NOT_FOUND',
     });
-    kit.clock.advance(DAY + 1);
     await expect(open(expiresAt, query.get('sig') ?? '')).rejects.toMatchObject({
+      code: 'EXPORT_NOT_FOUND',
+    });
+  });
+
+  it("a personal organization's export is its owner's, not another platform admin's", async () => {
+    const org = await populateOrg(rk, 'personal-exp');
+    // The marker is fixed at insert by a trigger; lift it for the fixture and put it back.
+    await run(kit.env.DB, 'DROP TRIGGER orgs_personal_fixed');
+    await run(kit.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
+      org.adminUserId,
+      org.orgId,
+    ]);
+    await run(
+      kit.env.DB,
+      `CREATE TRIGGER orgs_personal_fixed BEFORE UPDATE OF personal_user_id ON orgs
+       WHEN NEW.personal_user_id IS NOT OLD.personal_user_id
+       BEGIN SELECT RAISE(ABORT, 'orgs personal marker is immutable'); END`,
+    );
+    const admin = await platform();
+    await expect(requestExport(kit.ctx, actor, org.orgId, admin)).rejects.toMatchObject({
+      code: 'ORG_NOT_FOUND',
+    });
+    await expect(listExports(kit.ctx, org.orgId, admin)).rejects.toMatchObject({
+      code: 'ORG_NOT_FOUND',
+    });
+    const owner = { kind: 'owner' as const, userId: org.adminUserId, sessionId: 'unused' };
+    await expect(requestExport(kit.ctx, actor, org.orgId, owner)).rejects.not.toMatchObject({
+      code: 'ORG_NOT_FOUND',
+    });
+    await expect(exportLink(kit.ctx, actor, org.orgId, 'x', admin)).rejects.toMatchObject({
+      code: 'ORG_NOT_FOUND',
+    });
+    expect((await readLifecycle(kit.ctx, org.orgId, admin)).status).toBe('active');
+  });
+
+  it('a link lasts an hour and one download; a newer link replaces it', async () => {
+    const org = await populateOrg(rk, 'link-once');
+    const row = await requestExport(kit.ctx, actor, org.orgId, await platform());
+    await runExport(org.orgId, row.id);
+    const mint = async () => {
+      const { url, expiresAt } = await exportLink(
+        kit.ctx,
+        actor,
+        org.orgId,
+        row.id,
+        await platform(),
+      );
+      return { exp: expiresAt, sig: new URL(url).searchParams.get('sig') ?? '' };
+    };
+    const first_ = await mint();
+    expect(first_.exp - kit.clock.now()).toBe(60 * 60_000);
+    await openExport(kit.ctx, row.id, first_.exp, first_.sig);
+    await expect(openExport(kit.ctx, row.id, first_.exp, first_.sig)).rejects.toMatchObject({
+      code: 'EXPORT_NOT_FOUND',
+    });
+    kit.clock.advance(1000);
+    const older = await mint();
+    kit.clock.advance(1000);
+    const newer = await mint();
+    await expect(openExport(kit.ctx, row.id, older.exp, older.sig)).rejects.toMatchObject({
+      code: 'EXPORT_NOT_FOUND',
+    });
+    await openExport(kit.ctx, row.id, newer.exp, newer.sig);
+    const late = await mint();
+    kit.clock.advance(60 * 60_000 + 1);
+    await expect(openExport(kit.ctx, row.id, late.exp, late.sig)).rejects.toMatchObject({
       code: 'EXPORT_NOT_FOUND',
     });
   });

@@ -48,6 +48,13 @@ export async function rotateLink(
   return { publicUrl, downloadUrl };
 }
 
+/** A pass or bundle link is a credential: sending it to an address other than the holder's takes an org admin. */
+export function mayMailElsewhere(actor: Actor, authority?: TenantPassWrite): boolean {
+  return (
+    actor.type === 'user' && authority?.kind === 'session' && authority.roles.includes('org_admin')
+  );
+}
+
 export async function resendEmail(
   ctx: ServiceContext,
   actor: Actor,
@@ -61,8 +68,8 @@ export async function resendEmail(
     throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
   const to = input.to ?? pass.holderEmail;
   if (!to) throw new ValidationError('The pass has no holder email.', [], 'NO_RECIPIENT');
-  // API keys may not turn resend into a mail relay.
-  if (actor.type !== 'user' && to.toLowerCase() !== pass.holderEmail?.toLowerCase())
+  // Only an organization admin may send the pass link to another address; keys and operators send to the holder.
+  if (to.toLowerCase() !== pass.holderEmail?.toLowerCase() && !mayMailElsewhere(actor, authority))
     throw new ValidationError('Only the holder email can be used.', [], 'RECIPIENT_NOT_HOLDER');
   await enqueuePassEmail(ctx, {
     passId,

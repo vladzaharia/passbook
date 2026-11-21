@@ -153,7 +153,7 @@ describe('scan actor authority: epochs and grant checks', () => {
       const s = await makeScanner(f, { orgId });
       const { refused, scannerId } = await act(s.headers);
       await runOne(env.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [
-        clock.now() - 31 * 86_400_000,
+        clock.now() - 91 * 86_400_000,
         scannerId,
       ]);
       expect(await refused()).toEqual([401, 'SCANNER_REPAIR']);

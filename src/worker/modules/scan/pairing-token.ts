@@ -7,6 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { deviceLabel } from './dto-console.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
+import { DEVICE_MAX_MS } from './repo-device.ts';
 import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
 import {
   addAdminCredential,
@@ -17,7 +18,6 @@ import { setupMeta } from './repo-setups.ts';
 import { nameTaken } from './scanner-name.ts';
 
 const DAY = 86_400_000;
-export const DEVICE_MAX_MS = 180 * DAY;
 export const TERMINAL_TTL_MS = 365 * DAY;
 
 const PAIR_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;

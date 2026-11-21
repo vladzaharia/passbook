@@ -31,7 +31,7 @@ export const EXPORT_ENTITIES: readonly ExportEntity[] = [
   {
     name: 'members',
     select: page(
-      'm.id, m.user_id, u.name, u.primary_email AS email, m.roles, m.created_at, m.revoked_at',
+      "m.id, m.user_id, u.name, COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS email, m.roles, m.created_at, m.revoked_at",
       'org_memberships m JOIN users u ON u.id = m.user_id',
       'm.org_id = ?1',
       'm.rowid',
