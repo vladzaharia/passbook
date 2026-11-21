@@ -99,7 +99,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors; bottom sheets <640 |
 | Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024, the pass sticky at the left; account cards cap at 48rem |
 | Login and SSR auth pages | `max-w-sm` card, centred |
-| Public pass page | `max-w-5xl` like the portal; the portal's header and pass view (`HolderHeading`, `HolderPassView`): one column, two at ≥1024 (pass left; notice, add block, help right) |
+| Public pass page | `max-w-5xl` like the portal; the portal's header and pass view (`HolderHeading`, `HolderPassView`): one column, two at ≥1024 (pass left; right: notice, the one lead card, the other ways as a quiet list, the details, help). No section labels, one card per job, no card flip (the details list is the one details) |
 
 - `FormGrid` (container query on its own width): 1 column; 2 at ≥40rem; 3 short fields at
   ≥64rem. Long fields (textarea, URL, JSON, lists) span all columns. With an aside the grid drops
@@ -533,7 +533,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   `More` (Show QR, Remove) as badge-sized outline icon buttons. `In Wallet` pill for registered
   passes. No `Updated` line. Tile radius 18 px (the pass's ~14). Show QR opens `Add to Apple
   Wallet` over the pass's name with the pass page's scan (`portal/add/scan.tsx`): the buddy on the
-  QR's sign, `On your iPhone` / `Scan with the camera.` beside it, under it in the bottom sheet.
+  QR's tile, `Scan with your iPhone camera.` beside it, under it in the bottom sheet.
 - **Portal pass detail** and **`/p`** are one header and one view (`portal/holder-heading.tsx`,
   `portal/holder-pass-view.tsx`; `/p` renders them to static markup with the same CSS, `npm run
   gen`).
@@ -543,15 +543,27 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
     the tab title are the whole description. Actions at the right: `Refresh` and `More` (Copy
     link, Open public page in a new tab, Remove); `/p` has one quiet link, `Open in My passes`
     (sign-in first).
-  - Body: the card left, sticky from 1024; right, the voided or expired notice (voided names the
-    org's support: `Contact <org>`), the add block, the portal's Details card, the org's help.
-  - Add block (`portal/add/`): it only adds, and the buddy holds it. Off the phone the QR sits on
-    a sign drawn like the buddy (its line, fill and stitching), the buddy (M) on its top edge;
-    beside it `On your iPhone` / `Scan with the camera.` and, on a Mac, `On this Mac` with the
-    badge under a hairline. On the iPhone the badge's card (the buddy S on it) comes before the
-    pass, so the badge is on the first screen. In Apple Wallet already: `In Apple Wallet` /
-    `Updates arrive on their own.` under the happy buddy, and `Show QR` (`Add to this iPhone`)
-    opens adding again. Voided or expired: the buddy sits on the notice, sad.
+  - Body: the card left, sticky from 1024 (no Front/Details flip: the details list is the one
+    details); right, the voided or expired notice (voided names the org's support: `Contact
+    <org>`), the lead, the other ways, the details card, the org's help. Under 1024 the iPhone's
+    lead comes before the pass, so the badge is on the first screen; the other ways and the
+    details follow the pass.
+  - Lead (`portal/add/`, `portal/wallet-choice.tsx`): one raised card for the way that fits this
+    device (`shared/wallet-choice.ts`), the buddy (S) on its top edge at the end on a short foil
+    ledge, clear of any code, looking at the badge or button when it is pointed at. Off the phone
+    (Mac, Windows, iPad) the QR on a white tile, one hairline, no frame, and one line beside it:
+    `Scan with your iPhone camera.`; a Mac adds `Or on this Mac` and the badge under a hairline,
+    elsewhere no badge (it would download a file nothing opens). iPhone: the badge alone. Android:
+    Google or Samsung's badge, else `Show barcode` (primary). Paper only: `Print`. In Apple Wallet
+    already: `In Apple Wallet` beside the happy buddy and `Show QR` (`Add to this iPhone`).
+    Voided or expired: no lead; the buddy sits on the notice, sad.
+  - Other ways: one unlabelled list under the lead (`aria-label` Other ways), hairlines between
+    rows, each a whole link with icon and chevron: `Show barcode`, the other wallets' badges side
+    by side, Apple's line on Android (`For Apple Wallet, open this page on an iPhone.`), `Print`,
+    and on `/p` `Email me this pass again` (the portal has it in More). Rows rise one after
+    another after the card.
+  - Details: one card, no title; the state pill alone, the org's notes above a hairline, every
+    front field, Expires, upcoming events.
   - The badge has no padding of its own: the gaps are its clear space. No `.pkpass` download.
 - **Portal details**: format values by the pass field's date/number style; never ISO strings.
   Labels in sentence case.
