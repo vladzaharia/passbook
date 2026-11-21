@@ -1,14 +1,30 @@
 import { AscError, type CallRow } from './types.ts';
 
-export const LIMITS = { perMinute: 30, perDay: 200, revokePerHour: 1 } as const;
+export const LIMITS = {
+  perMinute: 30,
+  perDay: 200,
+  revokePerHour: 1,
+  ordersPerTypePer30Days: 2,
+  revokesPerTypePerWeek: 1,
+} as const;
+/** A superseded certificate may be revoked only after its replacement has been out this long and reported active. */
+export const REVOKE_COOL_OFF = 24 * 3_600_000;
 const MINUTE = 60_000;
 const HOUR = 3_600_000;
 const DAY = 86_400_000;
+const WEEK = 7 * DAY;
+const MONTH = 30 * DAY;
 
 export interface Allowed {
   identifier: string;
   ascId: string | null;
   name: string | null;
+}
+
+/** The provisioner's own alert channel: one JSON line with a stable `code` for Workers Logs alerting. */
+export function alert(level: 'warn' | 'error', code: string, data: Record<string, unknown>): void {
+  // biome-ignore lint/suspicious/noConsole: the single place the provisioner logs leave the process
+  console[level](JSON.stringify({ code, ...data }));
 }
 
 /** Writes a refusal row; callers then throw. */
@@ -48,11 +64,22 @@ export async function reserve(
        SELECT ?1, 'start', ?2, ?3, ?4, ?5
        WHERE ${counted(MINUTE)} < ${LIMITS.perMinute}
          AND ${counted(DAY)} < ${LIMITS.perDay}
-         AND (?2 <> 'revokeCertificate' OR ${counted(HOUR)} < ${LIMITS.revokePerHour})`,
+         AND (?2 <> 'revokeCertificate' OR ${counted(HOUR)} < ${LIMITS.revokePerHour})
+         AND (?2 <> 'createCertificate' OR (SELECT count(*) FROM asc_calls WHERE phase = 'start' AND method = ?2 AND target = ?3 AND at > ?5 - ${MONTH}) < ${LIMITS.ordersPerTypePer30Days})`,
     )
     .bind(callId, method, target, caller, at)
     .run();
-  if (res.meta.changes === 1) return;
+  if (res.meta.changes === 1) {
+    const day = await db
+      .prepare(
+        "SELECT count(*) AS n FROM asc_calls WHERE phase = 'start' AND method = ? AND at > ? - 86400000",
+      )
+      .bind(method, at)
+      .first<{ n: number }>();
+    if ((day?.n ?? 0) > LIMITS.perDay / 2)
+      alert('error', 'provisioner.budget_high', { method, day: day?.n });
+    return;
+  }
   await db
     .prepare(
       "INSERT INTO asc_calls (call_id, phase, method, target, caller, status, at) VALUES (?, 'budget', ?, ?, ?, 'ASC_BUDGET', ?)",
@@ -124,4 +151,66 @@ export async function rememberPassType(
     )
     .bind(identifier, ascId, name, source, at)
     .run();
+}
+
+/** Records a certificate the provisioner ordered. */
+export async function rememberCertificate(
+  db: D1Database,
+  certId: string,
+  passTypeAscId: string,
+  at: number,
+): Promise<void> {
+  await db
+    .prepare(
+      'INSERT OR IGNORE INTO asc_certificates (cert_id, pass_type_asc_id, ordered_at) VALUES (?, ?, ?)',
+    )
+    .bind(certId, passTypeAscId, at)
+    .run();
+}
+
+export async function markActive(db: D1Database, certId: string, at: number): Promise<void> {
+  await db
+    .prepare(
+      'UPDATE asc_certificates SET activated_at = ? WHERE cert_id = ? AND activated_at IS NULL',
+    )
+    .bind(at, certId)
+    .run();
+}
+
+/** True when another certificate of the type, newer than `certId`, was ordered 24 hours ago or more and is active. */
+export async function hasSettledReplacement(
+  db: D1Database,
+  passTypeAscId: string,
+  certId: string,
+  at: number,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT 1 AS ok FROM asc_certificates n
+       WHERE n.pass_type_asc_id = ?1 AND n.cert_id <> ?2 AND n.activated_at IS NOT NULL
+         AND n.ordered_at <= ?3 - ${REVOKE_COOL_OFF}
+         AND n.ordered_at > COALESCE((SELECT ordered_at FROM asc_certificates WHERE cert_id = ?2), 0)
+       LIMIT 1`,
+    )
+    .bind(passTypeAscId, certId, at)
+    .first();
+  return row !== null;
+}
+
+/** Takes the pass type's weekly revoke slot in one statement. False when it is already used. */
+export async function takeRevokeSlot(
+  db: D1Database,
+  certId: string,
+  passTypeAscId: string,
+  at: number,
+): Promise<boolean> {
+  const res = await db
+    .prepare(
+      `INSERT OR IGNORE INTO asc_revocations (cert_id, pass_type_asc_id, at)
+       SELECT ?1, ?2, ?3
+       WHERE (SELECT count(*) FROM asc_revocations WHERE pass_type_asc_id = ?2 AND at > ?3 - ${WEEK}) < ${LIMITS.revokesPerTypePerWeek}`,
+    )
+    .bind(certId, passTypeAscId, at)
+    .run();
+  return res.meta.changes === 1;
 }

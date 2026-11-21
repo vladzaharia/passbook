@@ -13,6 +13,9 @@ export class AppleProvisioner extends WorkerEntrypoint<ProvisionerEnv> implement
   createCertificate(...a: Parameters<AppleRpc['createCertificate']>) {
     return api(this.env).createCertificate(...a);
   }
+  reportCertificateActive(...a: Parameters<AppleRpc['reportCertificateActive']>) {
+    return api(this.env).reportCertificateActive(...a);
+  }
   listCertificates(...a: Parameters<AppleRpc['listCertificates']>) {
     return api(this.env).listCertificates(...a);
   }

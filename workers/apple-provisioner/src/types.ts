@@ -61,6 +61,8 @@ export interface AppleRpc {
     nfc: boolean,
     runId?: string,
   ): Promise<CertificateInfo>;
+  /** The main Worker calls this once a certificate is live; a revoke of its predecessor waits for it. */
+  reportCertificateActive(certAscId: string, runId?: string): Promise<void>;
   listCertificates(passTypeAscId: string, runId?: string): Promise<CertificateInfo[]>;
   revokeCertificate(certAscId: string, reason: 'compromised', runId?: string): Promise<void>;
   findPassType(identifier: string, runId?: string): Promise<PassTypeRef | null>;

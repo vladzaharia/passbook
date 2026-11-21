@@ -123,7 +123,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
 
 ## Apple provisioner
 
-`workers/apple-provisioner` is a separate Worker that holds the App Store Connect key. The main Worker reaches it only through the `APPLE` service binding; it has no route and no `workers.dev` host. Its D1 holds the allowlist (`asc_pass_types`) and the append-only call ledger (`asc_calls`). Limits: 30 calls a minute and 200 a day per method, one revoke an hour, all fail closed (`ASC_BUDGET`).
+`workers/apple-provisioner` is a separate Worker that holds the App Store Connect key. The main Worker reaches it only through the `APPLE` service binding; it has no route and no `workers.dev` host. Its D1 holds the allowlist (`asc_pass_types`) and the append-only call ledger (`asc_calls`). Limits: 30 calls a minute and 200 a day per method, one revoke an hour, at most 2 certificate orders per pass type in 30 days and 1 revoke per pass type in 7 days, all fail closed (`ASC_BUDGET`). It logs `provisioner.cert_ordered`, `provisioner.cert_revoked` and, past half the daily budget, `provisioner.budget_high` (error); alert on the last two.
 
 One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
 
@@ -143,7 +143,9 @@ One-time setup (owner; managed IDs live in team 48H7CLBV8Y):
    Until then `ascClient` reports `ASC_UNAVAILABLE`.
 6. Seed the allowlist with the platform pass type: `node tools/apple-provisioner-seed.ts --apply --remote`. Without `--apply` it prints the command. The first `findPassType('pass.im.plrs.wallet')` call fills in Apple's id.
 
-Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any certificate of `pass.im.plrs.wallet` or `pass.mobile.passbook.wallet` (revoke those by hand in the developer portal). The main Worker may ask only for a superseded certificate after a reissue (design 5.1).
+Platform certificates: the provisioner never orders or revokes for `pass.im.plrs.wallet`, `pass.mobile.passbook.wallet` or any identifier outside `pass.mobile.passbook.<handle>`. Order and renew those yourself in the developer portal (or Xcode) with your own Apple ID, then upload the result as `SIGNER_PLATFORM_*`. Nothing the main Worker can call does this.
+
+Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any platform certificate (revoke those by hand in the developer portal). It revokes a certificate only when a newer one of the same pass type was ordered at least 24 hours earlier and the main Worker has since called `reportCertificateActive` for it, and at most once per pass type in 7 days. The main Worker calls `reportCertificateActive` after it activates a new certificate.
 
 Trust boundary: the service binding, not the lint rule (`tools/check-apple-binding.ts`), is the boundary. Anyone who can deploy Workers in the account can bind to or redeploy the provisioner, so scope Cloudflare API tokens and never give CI a token that can deploy `apple-provisioner`.
 
