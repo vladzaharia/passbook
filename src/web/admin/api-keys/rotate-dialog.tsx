@@ -89,7 +89,7 @@ export function RotateDialog({
       <DialogContent
         size="sm"
         title="Rotate key"
-        description="Makes a new key with the same access. The new key works at once."
+        description="Same access. The new key works at once."
         footer={
           <>
             <Button variant="outline" onClick={close}>

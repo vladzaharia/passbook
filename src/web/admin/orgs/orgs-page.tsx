@@ -162,7 +162,7 @@ export function OrgsPage({
       <PageHeader
         title="Organizations"
         breadcrumbs={[{ label: 'Platform', to: '/admin' }, { label: 'Organizations' }]}
-        actions={create(empty ? 'outline' : 'primary')}
+        actions={empty ? undefined : create('primary')}
       />
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
