@@ -17,7 +17,7 @@ export interface QuickState {
   currency: string | undefined;
   setGoal: (goal: number | undefined) => void;
   setCurrency: (code: string | undefined) => void;
-  logo: { asset: DraftAsset; url: string; name: string } | null;
+  logo: { asset: DraftAsset; url: string; name: string; file: File } | null;
   color: Rgb | undefined;
   swatches: Rgb[];
   problem: string | undefined;
@@ -44,7 +44,7 @@ export function useQuickFields(): QuickState {
     const placed = await placeLogo(file);
     if (!placed.ok) return setProblem(placed.message);
     const found = await logoColors(file);
-    setLogo({ asset: placed.asset, url: objectUrl(file), name: file.name });
+    setLogo({ asset: placed.asset, url: objectUrl(file), name: file.name, file });
     setSwatches(found);
     if (found[0]) setColor(found[0]);
   }

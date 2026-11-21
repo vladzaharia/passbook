@@ -1,6 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
-import type { UseBlueprintRequest } from '@/shared/contracts/index.ts';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
@@ -8,10 +7,10 @@ import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Button, Dialog, DialogContent, FormField, Input, Select } from '../../ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
-import { assetsPayload } from '../templates/designer/images.ts';
-import { useBlueprintVersion, useLoadBlueprintVersion, useUseBlueprint } from './api.ts';
+import { useBlueprintVersion, useUseBlueprint } from './api.ts';
 import { QuickFields, useQuickFields } from './quick-fields.tsx';
-import { brandDoc, choicesOf, docOfVersion } from './quick-setup.ts';
+import { choicesOf, docOfVersion } from './quick-setup.ts';
+import { useBlueprintRequest } from './use-request.ts';
 
 type Blueprint = Pick<TemplateSummaryDto, 'id' | 'name' | 'activeVersion'>;
 
@@ -41,7 +40,7 @@ export function UseBlueprintDialog({
   const [name, setName] = useState(blueprint.name);
   const [error, setError] = useState<{ org?: string; name?: string; form?: string }>({});
   const create = useUseBlueprint(blueprint.id);
-  const load = useLoadBlueprintVersion();
+  const request = useBlueprintRequest();
   const quick = useQuickFields();
   const version = useBlueprintVersion(blueprint.id, blueprint.activeVersion);
   const choices = useMemo(
@@ -71,31 +70,11 @@ export function UseBlueprintDialog({
     });
   }
 
-  /** The request: an exact copy, or the draft with the logo and colour put in. */
-  async function request(input: { orgId: string; name: string }): Promise<UseBlueprintRequest> {
-    if (!quick.touched || !blueprint.activeVersion) return input;
-    const doc = brandDoc(docOfVersion(await load(blueprint.id, blueprint.activeVersion)), {
-      name: input.name,
-      color: quick.color,
-      logo: quick.logo?.asset,
-      goal: quick.goal,
-      currency: quick.currency,
-    });
-    return {
-      ...input,
-      version: {
-        passJson: doc.passJson,
-        manifest: doc.manifest as never,
-        assets: assetsPayload(doc.assets),
-      },
-    };
-  }
-
   async function submit() {
     const input = check();
     if (!input) return;
     try {
-      const made = await create.mutateAsync(await request(input));
+      const made = await create.mutateAsync(await request(blueprint, input, quick));
       markMinted(`template:${made.id}`);
       markCreated(`template:${made.id}`, 'fromBlueprint');
       onOpenChange(false);
