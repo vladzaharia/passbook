@@ -132,6 +132,7 @@
   "message-rules.putMessageRulesById",
   "metrics.getMetricsActivity",
   "metrics.getMetricsOverview",
+  "metrics.getMetricsPlatformDeveloper",
   "metrics.getMetricsPlatformOverview",
   "nfc-keysets.getNfcKeysets",
   "nfc-keysets.postNfcKeysets",

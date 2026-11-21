@@ -27882,6 +27882,10 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 4096
+                  },
+                  "viewedAt": {
+                    "type": "integer",
+                    "minimum": 0
                   }
                 },
                 "required": [
@@ -87543,6 +87547,109 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/metrics/platform/developer": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:status",
+        "summary": "Developer quickstart funnel: sandboxes by step and time to first pass (30 days)",
+        "tags": [
+          "metrics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "windowDays": {
+                      "type": "integer"
+                    },
+                    "sandboxes": {
+                      "type": "integer"
+                    },
+                    "viewed": {
+                      "type": "integer"
+                    },
+                    "called": {
+                      "type": "integer"
+                    },
+                    "passed": {
+                      "type": "integer"
+                    },
+                    "previewed": {
+                      "type": "integer"
+                    },
+                    "completion": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "ttfpP50Ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "ttfpP90Ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "ttfpSamples": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "windowDays",
+                    "sandboxes",
+                    "viewed",
+                    "called",
+                    "passed",
+                    "previewed",
+                    "completion",
+                    "ttfpP50Ms",
+                    "ttfpP90Ms",
+                    "ttfpSamples"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "metrics.getMetricsPlatformDeveloper",
+        "x-sdk": {
+          "resource": "platform.metrics",
+          "method": "retrieveDeveloper",
+          "sdk": false,
+          "reason": "Platform admin console card; needs an admin's session."
+        },
+        "x-codes": [
+          "FORBIDDEN",
+          "METRICS_NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
         ]
       }
     },

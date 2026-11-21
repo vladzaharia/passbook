@@ -621,6 +621,12 @@
     "resource": "metrics",
     "method": "retrieveOverview"
   },
+  "metrics.getMetricsPlatformDeveloper": {
+    "resource": "platform.metrics",
+    "method": "retrieveDeveloper",
+    "sdk": false,
+    "reason": "Platform admin console card; needs an admin's session."
+  },
   "metrics.getMetricsPlatformOverview": {
     "resource": "platform.metrics",
     "method": "retrieveOverview"
