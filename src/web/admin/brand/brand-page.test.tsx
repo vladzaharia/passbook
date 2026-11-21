@@ -201,6 +201,20 @@ describe('Brand and channels', () => {
     );
   });
 
+  it('shows no account tiles for a wallet that is not released', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = await setup(viewOf(readyFacts()));
+    const channels = await screen.findByRole('region', { name: 'Channels' });
+    await user.click(within(channels).getByRole('button', { name: /^Google Wallet/ }));
+    await user.click(within(channels).getByRole('button', { name: /^Samsung Wallet/ }));
+    expect(screen.queryByRole('radio', { name: /Managed by PassBook/ })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /Share your issuer/ })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Google Wallet' })).toBeNull();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('google/managed'))).toBe(
+      false,
+    );
+  });
+
   it('sends Wallet accounts to the Channels card', async () => {
     const { router } = await renderApp('/admin/o/o1/wallet-accounts', {
       session: 'user',
