@@ -82171,7 +82171,8 @@
                       "type": "string",
                       "enum": [
                         "identity",
-                        "org"
+                        "org",
+                        "wallet_credential"
                       ]
                     },
                     "targetId": {
@@ -82575,7 +82576,8 @@
                       "type": "string",
                       "enum": [
                         "identity",
-                        "org"
+                        "org",
+                        "wallet_credential"
                       ]
                     },
                     "targetId": {
@@ -82820,7 +82822,8 @@
                             "type": "string",
                             "enum": [
                               "identity",
-                              "org"
+                              "org",
+                              "wallet_credential"
                             ]
                           },
                           "targetId": {
@@ -82990,7 +82993,8 @@
                       "type": "string",
                       "enum": [
                         "identity",
-                        "org"
+                        "org",
+                        "wallet_credential"
                       ]
                     },
                     "targetId": {
@@ -83148,7 +83152,8 @@
                       "type": "string",
                       "enum": [
                         "identity",
-                        "org"
+                        "org",
+                        "wallet_credential"
                       ]
                     },
                     "targetId": {
@@ -83306,7 +83311,8 @@
                       "type": "string",
                       "enum": [
                         "identity",
-                        "org"
+                        "org",
+                        "wallet_credential"
                       ]
                     },
                     "targetId": {
@@ -83725,7 +83731,8 @@
                       "type": "string",
                       "enum": [
                         "identity",
-                        "org"
+                        "org",
+                        "wallet_credential"
                       ]
                     },
                     "targetId": {

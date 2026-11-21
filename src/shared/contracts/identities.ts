@@ -146,7 +146,7 @@ export const IdentityRunSchema = z.object({
   id: IdSchema,
   orgId: IdSchema.nullable(),
   kind: IdentityRunKindSchema,
-  targetType: z.enum(['identity', 'org']),
+  targetType: z.enum(['identity', 'org', 'wallet_credential']),
   targetId: IdSchema,
   state: IdentityRunStateSchema,
   step: z.string().nullable(),
