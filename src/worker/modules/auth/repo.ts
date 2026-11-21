@@ -1,4 +1,4 @@
-import { UNVERIFIED_EMAIL_SUFFIX } from '../../../shared/email.ts';
+import { normalizeEmail, UNVERIFIED_EMAIL_SUFFIX } from '../../../shared/email.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { pruneCounters } from '../../platform/counters.ts';
 import { all, first, run } from '../../platform/db.ts';
@@ -13,6 +13,8 @@ export interface UserRow {
   created_at: number;
   last_login_at: number | null;
   last_roles: string;
+  /** The session strength that last moved the primary email; null: never moved. */
+  primary_set_amr: 'oidc' | 'magic_link' | 'breakglass' | null;
 }
 
 export interface IdentityRow {
@@ -32,7 +34,7 @@ export const findUserByEmail = (db: Db, email: string) =>
   );
 
 export const findUserByPrimaryEmail = (db: Db, email: string) =>
-  first<UserRow>(db, 'SELECT * FROM users WHERE primary_email = ?', [email]);
+  first<UserRow>(db, 'SELECT * FROM users WHERE lower(primary_email) = ?', [normalizeEmail(email)]);
 
 /**
  * Stands in for a primary email nobody has proven (an account an identity provider created). It
@@ -43,6 +45,11 @@ export const unverifiedPrimaryEmail = (userId: string) => `${userId}${UNVERIFIED
 /** The account signs in through an identity provider (anything but the break-glass token). */
 const hasExternalIdentity = async (db: Db, userId: string) =>
   (await first(db, "SELECT 1 FROM auth_identities WHERE user_id = ? AND provider <> 'breakglass'", [
+    userId,
+  ])) !== null;
+
+const hasMembership = async (db: Db, userId: string) =>
+  (await first(db, 'SELECT 1 FROM org_memberships WHERE user_id = ? AND revoked_at IS NULL', [
     userId,
   ])) !== null;
 
@@ -59,8 +66,15 @@ export async function findUserByProvenEmail(
   // `primaryOnly`: a Polaris ID subject links only by the address the account signed up with. An
   // address added later through /me was proven to that account's own session, which may be an email
   // link, so it never names the owner of a console account to a new Polaris ID subject.
-  const byPrimary = await findUserByPrimaryEmail(db, email);
-  const verified = await findUserByEmail(db, email);
+  let byPrimary = await findUserByPrimaryEmail(db, email);
+  // A member's primary that an email session moved is not the address they signed up with.
+  if (
+    options.primaryOnly &&
+    byPrimary?.primary_set_amr === 'magic_link' &&
+    (await hasMembership(db, byPrimary.id))
+  )
+    byPrimary = null;
+  const verified = await findUserByEmail(db, normalizeEmail(email));
   if (verified && (!options.primaryOnly || verified.id === byPrimary?.id)) return verified;
   return byPrimary && !(await hasExternalIdentity(db, byPrimary.id)) ? byPrimary : null;
 }
@@ -97,12 +111,19 @@ export async function releaseUnprovenPrimary(
 }
 
 /** An account with a placeholder primary email takes the first address it proves. */
-export async function adoptPrimaryEmail(db: Db, userId: string, email: string): Promise<void> {
+export async function adoptPrimaryEmail(
+  db: Db,
+  userId: string,
+  email: string,
+  amr: 'oidc' | 'magic_link',
+): Promise<void> {
+  // Same rule as moving the primary through /me: an email session never moves a member's.
   await run(
     db,
-    `UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?
-       AND NOT EXISTS (SELECT 1 FROM users WHERE primary_email = ?)`,
-    [email, userId, unverifiedPrimaryEmail(userId), email],
+    `UPDATE users SET primary_email = ?, primary_set_amr = ? WHERE id = ? AND primary_email = ?
+       AND NOT EXISTS (SELECT 1 FROM users WHERE primary_email = ?)
+       AND (? = 'oidc' OR NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.user_id = users.id AND m.revoked_at IS NULL))`,
+    [email, amr, userId, unverifiedPrimaryEmail(userId), email, amr],
   );
 }
 

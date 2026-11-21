@@ -148,12 +148,17 @@ export async function removeEmail(db: Db, userId: string, email: string): Promis
 }
 
 /** Sign-in emails go to `email`, which must be one of the user's verified addresses. */
-export async function setPrimaryEmail(db: Db, userId: string, email: string): Promise<boolean> {
+export async function setPrimaryEmail(
+  db: Db,
+  userId: string,
+  email: string,
+  amr: string,
+): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE users SET primary_email = ?
+    `UPDATE users SET primary_email = ?, primary_set_amr = ?
      WHERE id = ? AND EXISTS (SELECT 1 FROM user_emails WHERE user_id = ? AND email = ?)`,
-    [email, userId, userId, email],
+    [email, amr, userId, userId, email],
   );
   return changes > 0;
 }

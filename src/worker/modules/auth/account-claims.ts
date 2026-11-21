@@ -1,4 +1,5 @@
-import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
+import { knownEmail, maskEmail } from '../../../shared/email.ts';
+import { ConflictError, ForbiddenError, IdpEmailNotPrimaryError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import * as repo from './repo.ts';
@@ -11,6 +12,27 @@ export async function createUser(ctx: ServiceContext, email: string, name: strin
   // Another request took the address between our lookup and insert: do not sign into its account.
   if (user.id !== id) throw new ConflictError('Email conflict.', 'EMAIL_CONFLICT');
   return user;
+}
+
+/**
+ * A Polaris ID email that matches an account only through a secondary address (or a primary an email
+ * session moved) creates and binds nothing: the person fixes the email in Polaris ID.
+ */
+export async function refuseNonPrimaryOwner(ctx: ServiceContext, email: string): Promise<void> {
+  const db = ctx.env.DB;
+  if (await repo.findUserByProvenEmail(db, email, { primaryOnly: true })) return;
+  const owner = await repo.findUserByEmail(db, email);
+  if (!owner) return;
+  ctx.log.warn('auth.oidc_email_not_primary', { code: 'IDP_EMAIL_NOT_PRIMARY', userId: owner.id });
+  await recordAudit(ctx, {
+    actorType: 'system',
+    action: 'auth.oidc_email_not_primary',
+    targetType: 'user',
+    targetId: owner.id,
+    detail: { code: 'IDP_EMAIL_NOT_PRIMARY' },
+  });
+  const primary = knownEmail(owner.primary_email);
+  throw new IdpEmailNotPrimaryError(primary ? maskEmail(primary) : 'your main email');
 }
 
 /** The browser's current session, as far as a claim on an address cares. */
@@ -107,6 +129,6 @@ export async function accountProvenByMail(
   if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
   const { ownerId } = await repo.addUserEmail(db, email, user.id, 'magic_link', ctx.clock.now());
   if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
-  await repo.adoptPrimaryEmail(db, user.id, email);
+  await repo.adoptPrimaryEmail(db, user.id, email, 'magic_link');
   return user;
 }

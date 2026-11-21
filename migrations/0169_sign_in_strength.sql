@@ -18,6 +18,10 @@ WHERE EXISTS (SELECT 1 FROM console_email_grace);
 -- A sign-in link mailed with an invitation no longer joins an org (joining needs Polaris ID): end them.
 UPDATE magic_links SET expires_at = created_at WHERE invitation_id IS NOT NULL AND consumed_at IS NULL;
 
+-- How the session that last moved an account's primary email signed in; NULL: never moved.
+-- A Polaris ID subject links by primary email, except where an email session moved it.
+ALTER TABLE users ADD COLUMN primary_set_amr TEXT CHECK (primary_set_amr IS NULL OR primary_set_amr IN ('oidc', 'magic_link', 'breakglass'));
+
 -- How the key's creator signed in; NULL for keys made before this migration or by another key.
 ALTER TABLE api_keys ADD COLUMN created_amr TEXT CHECK (created_amr IS NULL OR created_amr IN ('oidc', 'magic_link', 'breakglass'));
 CREATE TRIGGER api_keys_created_amr_immutable BEFORE UPDATE OF created_amr ON api_keys

@@ -1319,6 +1319,15 @@
       ]
     },
     {
+      "code": "IDP_EMAIL_NOT_PRIMARY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "sign-in"
+      ]
+    },
+    {
       "code": "IDP_SIGN_IN_REQUIRED",
       "statuses": [
         403

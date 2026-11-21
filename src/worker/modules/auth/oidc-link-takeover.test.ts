@@ -2,12 +2,14 @@
 // address must not land on that account: only the account's own primary email links.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtures, makeOrg, makeUser } from '../../../../test/helpers/index.ts';
-import { first } from '../../platform/db.ts';
+import { maskEmail } from '../../../shared/email.ts';
+import { first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { makeMyEmailPrimary } from '../me/service-account.ts';
 import { grantScanMembership } from '../scan/test-kit.ts';
 import { resetOidcClientCaches } from './oidc-client.ts';
 import { setOidcTrust } from './oidc-trust-test-fixtures.ts';
+import { adoptPrimaryEmail, unverifiedPrimaryEmail } from './repo.ts';
 import { linkIdentityByMail, verifyEmailForUser } from './service.ts';
 import { oidcSignIn } from './test-oidc.ts';
 import { harness, ISSUER, type TestHarness } from './test-support.ts';
@@ -45,37 +47,103 @@ async function victimWithAddedAddress() {
   return { victim, added };
 }
 
-describe('Polaris ID link by an address added through an email session', () => {
-  it('trust on: a fresh subject with that address gets its own account, not the victim', async () => {
-    const { victim, added } = await victimWithAddedAddress();
-    await setOidcTrust(h.env.DB, true);
-    const attacker = {
-      sub: `sub-${uniq()}`,
-      email: added,
-      name: 'Attacker',
-      groups: ['wallet-users'],
-    };
-    await oidcSignIn(h, new Map(), attacker);
-    const owner = await linkedUser(attacker.sub);
-    expect(owner).not.toBe(victim.id);
+const refusedFor = async (trust: boolean, email: string) => {
+  await setOidcTrust(h.env.DB, trust);
+  const subject = { sub: `sub-${uniq()}`, email, name: 'Someone', groups: ['wallet-users'] };
+  const { res } = await oidcSignIn(h, new Map(), subject);
+  return { res, subject };
+};
+const noTrace = async (subject: string, email: string) => {
+  expect(await linkedUser(subject)).toBeNull();
+  expect(await first(h.env.DB, 'SELECT 1 FROM users WHERE primary_email = ?', [email])).toBeNull();
+};
+
+describe('Polaris ID email that is only a secondary address', () => {
+  it.each([true, false])(
+    'trust %s: refused with IDP_EMAIL_NOT_PRIMARY, nothing created or bound',
+    async (trust) => {
+      const { victim, added } = await victimWithAddedAddress();
+      const { res, subject } = await refusedFor(trust, added);
+      expect(res.status).toBe(403);
+      const html = await res.text();
+      expect(html).toContain('Wrong email');
+      expect(html).toContain('main email');
+      expect(html).toContain(maskEmail(victim.primaryEmail));
+      await noTrace(subject.sub, added);
+      const audit = await first(
+        h.env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'auth.oidc_email_not_primary' AND target_id = ?",
+        [victim.id],
+      );
+      expect(audit).not.toBeNull();
+    },
+  );
+
+  it('the mail-proof link path refuses too', async () => {
+    const { added } = await victimWithAddedAddress();
+    const subject = `sub-${uniq()}`;
+    await expect(
+      linkIdentityByMail(
+        ctx(),
+        added,
+        {
+          provider: 'pocketid',
+          subject,
+          emailClaim: added,
+          emailVerified: true,
+          groups: ['wallet-users'],
+        },
+        sign,
+      ),
+    ).rejects.toMatchObject({ code: 'IDP_EMAIL_NOT_PRIMARY' });
+    await noTrace(subject, added);
   });
 
-  it('trust off: the mailed proof does not link the subject to the victim either', async () => {
-    const { victim, added } = await victimWithAddedAddress();
-    const subject = `sub-${uniq()}`;
-    await linkIdentityByMail(
-      ctx(),
-      added,
-      {
-        provider: 'pocketid',
-        subject,
-        emailClaim: added,
-        emailVerified: true,
-        groups: ['wallet-users'],
-      },
-      sign,
-    ).catch(() => undefined);
-    expect(await linkedUser(subject)).not.toBe(victim.id);
+  it('a member whose primary an email session moved is not linked by it', async () => {
+    const victim = await makeUser(fixtures(h.env));
+    const org = await makeOrg(fixtures(h.env));
+    await grantScanMembership(fixtures(h.env), org.id, victim.id, ['pass_operator']);
+    await run(h.env.DB, "UPDATE users SET primary_set_amr = 'magic_link' WHERE id = ?", [
+      victim.id,
+    ]);
+    const { res, subject } = await refusedFor(true, victim.primaryEmail);
+    expect(res.status).toBe(403);
+    expect(await linkedUser(subject.sub)).toBeNull();
+  });
+
+  it('adopting a primary from an email session is refused for a member', async () => {
+    const victim = await makeUser(fixtures(h.env));
+    const org = await makeOrg(fixtures(h.env));
+    await grantScanMembership(fixtures(h.env), org.id, victim.id, ['pass_operator']);
+    const placeholder = unverifiedPrimaryEmail(victim.id);
+    await run(h.env.DB, 'UPDATE users SET primary_email = ? WHERE id = ?', [
+      placeholder,
+      victim.id,
+    ]);
+    await adoptPrimaryEmail(h.env.DB, victim.id, `new-${uniq()}@example.test`, 'magic_link');
+    const row = await first<{ primary_email: string }>(
+      h.env.DB,
+      'SELECT primary_email FROM users WHERE id = ?',
+      [victim.id],
+    );
+    expect(row?.primary_email).toBe(placeholder);
+  });
+
+  it('matches the primary email case-insensitively', async () => {
+    const victim = await makeUser(fixtures(h.env));
+    await run(h.env.DB, 'UPDATE users SET primary_email = ? WHERE id = ?', [
+      victim.primaryEmail.toUpperCase(),
+      victim.id,
+    ]);
+    await setOidcTrust(h.env.DB, true);
+    const person = {
+      sub: `sub-${uniq()}`,
+      email: victim.primaryEmail,
+      name: 'V',
+      groups: ['wallet-users'],
+    };
+    await oidcSignIn(h, new Map(), person);
+    expect(await linkedUser(person.sub)).toBe(victim.id);
   });
 
   it('still links by the primary email the account signed up with', async () => {

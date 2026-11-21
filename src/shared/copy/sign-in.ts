@@ -17,6 +17,9 @@ export const IDP_SIGN_IN_REQUIRED_MESSAGE = 'Sign in with Polaris ID to continue
 export const INVITE_SIGN_IN_LINE = 'Sign in with Polaris ID to join {org}.';
 /** The admin shell's line for an email session still inside the console grace window. */
 export const graceLine = (date: string) => `Use Polaris ID by ${date} to keep Admin access.`;
+/** A Polaris ID email that is only a secondary address of a PassBook account; `masked` is its main email. */
+export const idpEmailNotPrimaryLine = (masked: string) =>
+  `This Polaris ID email isn't your PassBook account's main email. Change it in Polaris ID to ${masked}.`;
 export const PASSKEY_REQUIRED_MESSAGE = 'Sign in to Polaris ID with your passkey, not a code.';
 
 export const INVALID_EMAIL = EMAIL_INVALID_MESSAGE;
@@ -41,6 +44,7 @@ export type SignInErrorCode =
   | 'EMAIL_TAKEN'
   | 'MAGIC_LINK_DISABLED'
   | 'PASSKEY_REQUIRED'
+  | 'IDP_EMAIL_NOT_PRIMARY'
   | 'RATE_LIMITED'
   | 'VALIDATION';
 
@@ -81,6 +85,10 @@ export const SIGN_IN_ERROR_COPY: Record<SignInErrorCode, { title: string; messag
   EMAIL_TAKEN: { title: 'Email in use', message: 'That address belongs to another account.' },
   MAGIC_LINK_DISABLED: { title: 'Email sign-in is off', message: 'Sign in another way.' },
   PASSKEY_REQUIRED: { title: 'Use your passkey', message: PASSKEY_REQUIRED_MESSAGE },
+  IDP_EMAIL_NOT_PRIMARY: {
+    title: 'Wrong email',
+    message: idpEmailNotPrimaryLine('your main email'),
+  },
   RATE_LIMITED: { title: STATE_COPY.rateLimited, message: waitLine() },
   VALIDATION: { title: 'Sign-in failed', message: 'The request was incomplete. Start again.' },
 };

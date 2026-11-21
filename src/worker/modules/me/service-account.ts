@@ -85,7 +85,7 @@ export async function makeMyEmailPrimary(
   if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
   if (!isStrongAmr(amr) && (await repo.hasActiveMembership(ctx.env.DB, userId)))
     throw new IdpSignInRequiredError('/auth/oidc/start?next=%2Faccount');
-  if (!(await repo.setPrimaryEmail(ctx.env.DB, userId, email))) {
+  if (!(await repo.setPrimaryEmail(ctx.env.DB, userId, email, amr))) {
     throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
   }
   await recordAudit(ctx, {

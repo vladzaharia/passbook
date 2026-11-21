@@ -6,7 +6,12 @@ import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
-import { accountProvenByMail, createUser, releaseClaimOtherThan } from './account-claims.ts';
+import {
+  accountProvenByMail,
+  createUser,
+  refuseNonPrimaryOwner,
+  releaseClaimOtherThan,
+} from './account-claims.ts';
 import * as repo from './repo.ts';
 import { bumpCounter } from './repo-magic.ts';
 import { createSession, hashSessionCookie, type NewSession, revokeOne } from './sessions.ts';
@@ -160,6 +165,7 @@ export async function linkIdentityByMail(
   pending: PendingIdentity,
   sign: SignInContext,
 ): Promise<void> {
+  await refuseNonPrimaryOwner(ctx, email);
   const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: true });
   const linked = await repo.insertIdentity(ctx.env.DB, {
     ...pending,
@@ -191,7 +197,7 @@ export async function verifyEmailForUser(
   if (ownerId !== userId) {
     throw new ForbiddenError('That address belongs to another account.', 'EMAIL_TAKEN');
   }
-  await repo.adoptPrimaryEmail(ctx.env.DB, userId, email);
+  await repo.adoptPrimaryEmail(ctx.env.DB, userId, email, 'magic_link');
   await recordAudit(ctx, {
     actorType: 'user',
     actorId: userId,

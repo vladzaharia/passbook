@@ -218,7 +218,12 @@ export async function callbackOidc(c: Context<AppBindings>) {
       const keep = safeNext(next);
       return c.redirect(`/auth/no-access${keep ? `?next=${encodeURIComponent(keep)}` : ''}`, 303);
     }
-    const page = signInErrorPage(c.var.nonce, cause.code, { next }, requestTheme(c));
+    const page = signInErrorPage(
+      c.var.nonce,
+      cause.code,
+      { next, ...(cause.code === 'IDP_EMAIL_NOT_PRIMARY' ? { message: cause.message } : {}) },
+      requestTheme(c),
+    );
     return c.html(page.html, page.status);
   }
 }
