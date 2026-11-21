@@ -31,7 +31,7 @@ export function assertSessionReadAuthority(
   if (authority.kind === 'api_key') {
     // An org-bound key with `scan-setup:read`: its counts come from the key's own read fence.
     if (
-      authority.scope !== 'scan-setup:read' ||
+      (authority.scope !== 'scan-setup:read' && authority.scope !== 'scanning:write') ||
       authority.keyOrgId === null ||
       countAuthority.key !== true ||
       countAuthority.tenant !== undefined ||
@@ -62,6 +62,21 @@ export function assertSessionWriteCountAuthority(
   authority: TenantPassWrite,
   countAuthority: SessionReadAuthority,
 ): void {
+  if (authority.kind === 'api_key') {
+    // An org-bound `scanning:write` key; its answer is read under the key's own fence.
+    if (
+      authority.scope !== 'scanning:write' ||
+      authority.keyId !== userId ||
+      authority.keyOrgId === null ||
+      countAuthority.key !== true ||
+      countAuthority.tenant !== undefined ||
+      countAuthority.sessionId !== undefined ||
+      authority.mode !== countAuthority.mode ||
+      authority.orgId !== countAuthority.orgId
+    )
+      throw new ForbiddenError();
+    return;
+  }
   if (
     authority.kind !== 'session' ||
     authority.capability !== 'scanning:manage' ||

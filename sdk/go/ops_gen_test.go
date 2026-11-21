@@ -1309,6 +1309,39 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanningSessions.update", "PATCH", "/api/v1/scanning-sessions/id1", false,
+		`{}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanningSessionsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanningSessions.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanningSessions.devices.update", "PATCH", "/api/v1/scanning-sessions/id1/devices/id2", false,
+		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanningSessionsDevicesUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanningSessions.Devices.Update(ctx, "id1", "id2", &b)
+		},
+	},
+	{
+		"scanningSessions.overrideHours", "POST", "/api/v1/scanning-sessions/id1/hold", false,
+		`{"action":"close"}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanningSessionsOverrideHoursBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanningSessions.OverrideHours(ctx, "id1", &b)
+		},
+	},
+	{
 		"scans.list", "GET", "/api/v1/scans", false,
 		"", `{"items":[{"id":"x","at":0,"outcome":"ok","reason":"not_found","kind":"check_in","actionId":"x","actionLabel":"x","direction":"in","passId":"x","passTitle":"x","templateId":"x","templateName":"x","eventId":"x","eventName":"x","scannerId":"x","scannerName":"x","staffId":"x","staffName":"x","approvedBy":"x","method":"camera","amount":0,"passVersion":0,"override":false,"offline":false,"actor":{"type":"scanner","id":"x"},"undoneAt":0,"undoneBy":"x","undoes":"x"}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

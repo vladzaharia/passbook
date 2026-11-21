@@ -17,7 +17,7 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import { verifyApproval } from './approval.ts';
 import type { ScanActor } from './guard.ts';
 import { kickScreen } from './live.ts';
-import { adminGrant, audited, sessionEpoch } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited, sessionEpoch } from './repo-admin-grant.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import { addScanningSessionUpdate, type ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { liveActorGuard } from './repo-tags-bind.ts';
@@ -128,8 +128,7 @@ export async function holdScanningSession(
   g.add(
     audited(g, ctx, {
       orgId: row.org_id,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: AUDIT_ACTION[input.action],
       targetType: 'scanning_session',
       targetId: id,

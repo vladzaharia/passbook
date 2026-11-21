@@ -992,13 +992,17 @@ __all__ = [
     "ScanningSessionsCreateParamsSettingsTags",
     "ScanningSessionsDevicesCreateParams",
     "ScanningSessionsDevicesCreateParamsOverrides",
+    "ScanningSessionsDevicesUpdateBody",
     "ScanningSessionsDevicesUpdateParams",
     "ScanningSessionsDevicesUpdateParamsOverrides",
+    "ScanningSessionsDevicesUpdateResult",
     "ScanningSessionsListResult",
+    "ScanningSessionsOverrideHoursBody",
     "ScanningSessionsOverrideHoursParams",
     "ScanningSessionsOverrideHoursParams1",
     "ScanningSessionsOverrideHoursParams2",
     "ScanningSessionsOverrideHoursParams3",
+    "ScanningSessionsOverrideHoursResult",
     "ScanningSessionsRetrieveResult",
     "ScanningSessionsSetupBody",
     "ScanningSessionsSetupParams",
@@ -1020,6 +1024,7 @@ __all__ = [
     "ScanningSessionsSetupParamsPlacesItem2",
     "ScanningSessionsSetupParamsStaffItem",
     "ScanningSessionsSetupResult",
+    "ScanningSessionsUpdateBody",
     "ScanningSessionsUpdateParams",
     "ScanningSessionsUpdateParamsAccepts1",
     "ScanningSessionsUpdateParamsAccepts2",
@@ -1028,6 +1033,7 @@ __all__ = [
     "ScanningSessionsUpdateParamsSettingsCheckIn",
     "ScanningSessionsUpdateParamsSettingsCustomer",
     "ScanningSessionsUpdateParamsSettingsTags",
+    "ScanningSessionsUpdateResult",
     "ScansListResult",
     "ScansListResult1",
     "ScansListResult2",
@@ -9442,13 +9448,25 @@ ScanZonesCreateBody = ScanZonesCreateParams
 
 ScanZonesUpdateBody = ScanZonesUpdateParams
 
+ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
+
+ScanningSessionsDevicesUpdateResult = ScanningDevice
+
 ScanningSessionsOverrideHoursParams = ScanningSessionsOverrideHoursParams1 | ScanningSessionsOverrideHoursParams2 | ScanningSessionsOverrideHoursParams3
+
+ScanningSessionsOverrideHoursBody = ScanningSessionsOverrideHoursParams
+
+ScanningSessionsOverrideHoursResult = ScanningSessionDetail
 
 ScanningSessionsRetrieveResult = ScanningSessionDetail
 
 ScanningSessionsSetupBody = ScanningSessionsSetupParams
 
 ScanningSessionsSetupResult = ScanSetupAnswer
+
+ScanningSessionsUpdateBody = ScanningSessionsUpdateParams
+
+ScanningSessionsUpdateResult = ScanningSessionDetail
 
 ScansListResult = ScansListResult1 | ScansListResult2
 

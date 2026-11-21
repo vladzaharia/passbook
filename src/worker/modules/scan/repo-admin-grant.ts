@@ -49,6 +49,8 @@ const KEY_PURPOSES: ReadonlySet<string> = new Set([
   'org_mode.scan.event.update',
   'org_mode.scan.session.create',
   'org_mode.scan.session.update',
+  'org_mode.scan.session.hold',
+  'org_mode.scan.device.update',
   SETUP_APPLY,
   'org.scan.zone.create',
   'org.scan.zone.update',

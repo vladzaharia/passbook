@@ -7134,6 +7134,8 @@ type ScanningSessionsDevicesCreateParamsOverrides struct {
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
 
+type ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
+
 type ScanningSessionsDevicesUpdateParams struct {
 	Name      *string                                       `json:"name,omitempty"`
 	Surface   *string                                       `json:"surface,omitempty"`
@@ -7149,10 +7151,14 @@ type ScanningSessionsDevicesUpdateParamsOverrides struct {
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
 
+type ScanningSessionsDevicesUpdateResult = ScanningDevice
+
 type ScanningSessionsListQuery struct {
 	Cursor *string `json:"cursor,omitempty"`
 	Limit  *int64  `json:"limit,omitempty"`
 }
+
+type ScanningSessionsOverrideHoursBody = ScanningSessionsOverrideHoursParams
 
 type ScanningSessionsOverrideHoursParams = any
 
@@ -7171,6 +7177,8 @@ type ScanningSessionsOverrideHoursParams3 struct {
 	Action   string `json:"action"`
 	Revision *int64 `json:"revision,omitempty"`
 }
+
+type ScanningSessionsOverrideHoursResult = ScanningSessionDetail
 
 type ScanningSessionsRetrieveResult = ScanningSessionDetail
 
@@ -7327,6 +7335,8 @@ type ScanningSessionsSetupQuery struct {
 
 type ScanningSessionsSetupResult = ScanSetupAnswer
 
+type ScanningSessionsUpdateBody = ScanningSessionsUpdateParams
+
 type ScanningSessionsUpdateParams struct {
 	Name          *string                               `json:"name,omitempty"`
 	TimeZone      *string                               `json:"timeZone,omitempty"`
@@ -7399,6 +7409,8 @@ type ScanningSessionsUpdateParamsSettingsTags struct {
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
+
+type ScanningSessionsUpdateResult = ScanningSessionDetail
 
 type ScansListQuery struct {
 	Cursor        *string `json:"cursor,omitempty"`

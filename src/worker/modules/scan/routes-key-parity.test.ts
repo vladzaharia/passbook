@@ -143,3 +143,47 @@ describe('reads by scan-setup:read key', () => {
     });
   });
 });
+
+describe('session and device writes by scanning:write key', () => {
+  it('edits a session, holds it and configures a device as the key, audited by the key', async () => {
+    const session = await fixture.parent('Key write');
+    const device = await fixture.device(session.id, 'Key device');
+    const k = await keyOf(['scanning:write']);
+    const edit = await send('PATCH', `/scanning-sessions/${session.id}`, k.headers, {
+      name: 'Key renamed',
+    });
+    expect(edit.status).toBe(200);
+    expect(((await edit.json()) as { name: string }).name).toBe('Key renamed');
+    expect(await audit('scanning.session_update', session.id)).toEqual({
+      t: 'api_key',
+      a: k.id,
+    });
+    const hold = await send('POST', `/scanning-sessions/${session.id}/hold`, k.headers, {
+      action: 'clear',
+    });
+    expect(hold.status).toBe(200);
+    const dev = await send(
+      'PATCH',
+      `/scanning-sessions/${session.id}/devices/${device.id}`,
+      k.headers,
+      { name: 'Key device 2' },
+    );
+    expect(dev.status).toBe(200);
+    expect(await audit('scanning.device_update', device.id)).toEqual({ t: 'api_key', a: k.id });
+  });
+
+  it('refuses a read-only key, a test key and another org', async () => {
+    const session = await fixture.parent('Key write refused');
+    const body = { name: 'No' };
+    const path = `/scanning-sessions/${session.id}`;
+    const read = await keyOf(['scan-setup:read']);
+    expect((await send('PATCH', path, read.headers, body)).status).toBe(403);
+    const test = await keyOf(['scanning:write'], 'test');
+    expect((await send('PATCH', path, test.headers, body)).status).toBe(404);
+    const other = await makeApiKey(fixture.kit.fx, {
+      orgId: '0193a1b2-7c00-7000-8000-00000000ffff',
+      scopes: ['scanning:write'],
+    }).catch(() => null);
+    if (other) expect((await send('PATCH', path, other.headers, body)).status).toBe(404);
+  });
+});

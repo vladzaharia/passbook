@@ -1572,9 +1572,25 @@ class TerminalResource:
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
 
+class ScanningSessionsDevicesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def update(
+        self,
+        id: str,
+        device_id: str,
+        body: m.ScanningSessionsDevicesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsDevicesUpdateResult:
+        """Configure one device `PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}`"""
+        return self._core.request("PATCH", f"/api/v1/scanning-sessions/{_p(id)}/devices/{_p(device_id)}", body=body, result=m.ScanningSessionsDevicesUpdateResult, **opts)
+
+
 class ScanningSessionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.devices = ScanningSessionsDevicesResource(core)
 
     def list(
         self,
@@ -1585,6 +1601,15 @@ class ScanningSessionsResource:
     ) -> Page[m.ScanningSession]:
         """Scanning sessions `GET /api/v1/scanning-sessions`"""
         return self._core.paginate("GET", "/api/v1/scanning-sessions", query={"cursor": cursor, "limit": limit}, result=m.ScanningSessionsListResult, cursor_param="cursor", **opts)
+
+    def override_hours(
+        self,
+        id: str,
+        body: m.ScanningSessionsOverrideHoursBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsOverrideHoursResult:
+        """Close now, open now or go back to the session hours `POST /api/v1/scanning-sessions/{id}/hold`"""
+        return self._core.request("POST", f"/api/v1/scanning-sessions/{_p(id)}/hold", body=body, result=m.ScanningSessionsOverrideHoursResult, **opts)
 
     def retrieve(
         self,
@@ -1603,6 +1628,15 @@ class ScanningSessionsResource:
     ) -> m.ScanningSessionsSetupResult:
         """Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup`"""
         return self._core.request("POST", "/api/v1/scanning-sessions/setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.ScanningSessionsSetupResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanningSessionsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsUpdateResult:
+        """Update shared session rules `PATCH /api/v1/scanning-sessions/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scanning-sessions/{_p(id)}", body=body, result=m.ScanningSessionsUpdateResult, **opts)
 
 
 class ScansResource:

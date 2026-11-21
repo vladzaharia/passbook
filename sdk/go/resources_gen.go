@@ -1695,19 +1695,49 @@ func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBod
 	return &out, nil
 }
 
-type ScanningSessionsResource struct {
+type ScanningSessionsDevicesResource struct {
 	c *core
+}
+
+func newScanningSessionsDevicesResource(c *core) *ScanningSessionsDevicesResource {
+	return &ScanningSessionsDevicesResource{
+		c: c,
+	}
+}
+
+// Update Configure one device `PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}`
+func (r *ScanningSessionsDevicesResource) Update(ctx context.Context, id string, deviceId string, body *ScanningSessionsDevicesUpdateBody, opts ...RequestOption) (*ScanningSessionsDevicesUpdateResult, error) {
+	var out ScanningSessionsDevicesUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scanning-sessions/" + pathEscape(id) + "/devices/" + pathEscape(deviceId), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ScanningSessionsResource struct {
+	c       *core
+	Devices *ScanningSessionsDevicesResource
 }
 
 func newScanningSessionsResource(c *core) *ScanningSessionsResource {
 	return &ScanningSessionsResource{
-		c: c,
+		c:       c,
+		Devices: newScanningSessionsDevicesResource(c),
 	}
 }
 
 // List Scanning sessions `GET /api/v1/scanning-sessions`
 func (r *ScanningSessionsResource) List(ctx context.Context, query *ScanningSessionsListQuery, opts ...RequestOption) *Pager[ScanningSession] {
 	return newPager[ScanningSession](r.c, call{method: "GET", path: "/api/v1/scanning-sessions", query: queryValues(query)}, "cursor", opts)
+}
+
+// OverrideHours Close now, open now or go back to the session hours `POST /api/v1/scanning-sessions/{id}/hold`
+func (r *ScanningSessionsResource) OverrideHours(ctx context.Context, id string, body *ScanningSessionsOverrideHoursBody, opts ...RequestOption) (*ScanningSessionsOverrideHoursResult, error) {
+	var out ScanningSessionsOverrideHoursResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/" + pathEscape(id) + "/hold", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // Retrieve Session rules and devices `GET /api/v1/scanning-sessions/{id}`
@@ -1724,6 +1754,15 @@ func (r *ScanningSessionsResource) Setup(ctx context.Context, body *ScanningSess
 	var out ScanningSessionsSetupResult
 	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/setup", query: queryValues(query), body: body, idempotent: true}, &out, opts)
 	return out, err
+}
+
+// Update Update shared session rules `PATCH /api/v1/scanning-sessions/{id}`
+func (r *ScanningSessionsResource) Update(ctx context.Context, id string, body *ScanningSessionsUpdateBody, opts ...RequestOption) (*ScanningSessionsUpdateResult, error) {
+	var out ScanningSessionsUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scanning-sessions/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 type ScansResource struct {

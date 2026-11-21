@@ -174,7 +174,7 @@ export function withSessionRow<A extends ScanReadAuthority>(
 }
 
 /**
- * The read fence of an org-bound key that holds `scan-setup:read` for its org: the key row is live, holds
+ * The read fence of an org-bound key that holds `scan-setup:read` (or `scanning:write`, for the answer to its own write) for its org: the key row is live, holds
  * the scope (by its scopes or a role's preset) and its org is active, re-derived inside each statement.
  * Rows are the key's org and mode. A platform key (no bound org) has no fence here.
  */
@@ -182,7 +182,10 @@ export function keyScanReadAuthority(
   authority: Extract<TenantPassWrite, { kind: 'api_key' }>,
   now: number,
 ): StrictReadAuthority {
-  if (authority.keyOrgId === null || authority.scope !== 'scan-setup:read')
+  if (
+    authority.keyOrgId === null ||
+    (authority.scope !== 'scan-setup:read' && authority.scope !== 'scanning:write')
+  )
     throw new ForbiddenError();
   const { ctes, params } = authorityPredicate(tenantPrincipal(authority), {
     scope: 'org_mode',
