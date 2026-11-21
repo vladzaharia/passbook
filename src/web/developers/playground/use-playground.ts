@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { loadSession } from '../console/session.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { decodeHash, encodeHash, type PlaygroundState } from './hash.ts';
 import { type Built, type Connection, type Created, connect, type LiveClient } from './live.ts';
@@ -27,7 +28,8 @@ const remember = (on: boolean) => {
 };
 
 export type Link =
-  | { kind: 'anonymous' }
+  /** `signedIn`: a session exists, but the visitor has not chosen to edit in their sandbox yet. */
+  | { kind: 'anonymous'; signedIn?: boolean }
   | { kind: 'connecting' }
   | { kind: 'no-sandbox' }
   | { kind: 'live'; client: LiveClient; orgSlug: string }
@@ -125,6 +127,10 @@ export function usePlayground(data: BlueprintPreviews) {
     started.current = true;
     // A link to your own template cannot open anonymously; the hint is the one thing that connects unasked.
     if (remembered()) void attach(false);
+    void loadSession().then((session) => {
+      if (session.kind !== 'out')
+        setLink((l) => (l.kind === 'anonymous' ? { ...l, signedIn: true } : l));
+    });
   }, [attach]);
 
   // Live: every pause in editing renders the real pass.json. Anonymous: the starter's own sample.

@@ -1,3 +1,4 @@
+import { loadSession } from '../console/session.ts';
 import { type ExampleKind, type Personal, personalize } from '../model/ids.ts';
 
 interface Sandbox {
@@ -8,6 +9,8 @@ interface Sandbox {
 /** The signed-in reader's sandbox, or null: signed out, or no sandbox yet. */
 async function mySandbox(): Promise<Personal | null> {
   try {
+    // Signed out or no sandbox: nothing to ask for, and no 401 in the console.
+    if ((await loadSession()).kind !== 'ready') return null;
     const res = await fetch('/api/v1/developer/sandbox', {
       headers: { accept: 'application/json' },
       credentials: 'same-origin',
