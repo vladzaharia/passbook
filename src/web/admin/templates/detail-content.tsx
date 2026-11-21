@@ -32,6 +32,7 @@ import { useTemplateChannels } from './channels/api.ts';
 import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
+import { RolloutCard } from './releases/rollout-card.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
 import type { templateDetailSearchSchema } from './search.ts';
 import { DuplicateDialog, OrgDialog } from './template-dialogs.tsx';
@@ -246,6 +247,19 @@ export function TemplateDetailContent({
             <TemplateOverview template={t} canAssign={canAssign} />
           </TabsContent>
           <TabsContent value="versions">
+            {scope.orgId && scope.membership ? (
+              <RolloutCard
+                key={`rollout:${scope.orgId}:${mode}`}
+                templateId={t.id}
+                orgId={scope.orgId}
+                mode={mode}
+                versions={t.versions}
+                canTell={
+                  scope.membership.capabilities.includes('messages:manage') &&
+                  scope.membership.capabilities.includes('passes:operate')
+                }
+              />
+            ) : null}
             {scope.orgId && scope.membership ? (
               <TemplateReleasesPanel
                 key={`${scope.orgId}:${mode}`}
