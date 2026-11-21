@@ -1,27 +1,19 @@
 /* Responsive steps; loads last. */
 /* ---------- Responsive ---------- */
 @media (max-width: 1180px) {
-  .hero {
-    grid-template-columns: 1fr;
+  .dev-nav {
+    display: none;
   }
-  .two {
-    grid-template-columns: 1fr;
+  [data-menubar] .dev-menu-btn {
+    display: inline-flex;
   }
-  .docs {
-    grid-template-columns: 13rem minmax(0, 1fr);
+  /* From 640 px the search is a field; here it is the icon only. */
+  [data-menubar] button[data-search]:not([aria-label]) {
+    display: none;
   }
-  .docs.no-side {
-    grid-template-columns: minmax(0, 1fr);
+  [data-menubar] button[data-search][aria-label] {
+    display: inline-flex;
   }
-  .op {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 24px;
-  }
-  .rail-pane {
-    position: static;
-  }
-}
-@media (max-width: 900px) {
   .docs,
   .docs.no-side {
     grid-template-columns: minmax(0, 1fr);
@@ -41,11 +33,29 @@
   .sidenav .menu-only {
     display: flex;
   }
+  .sidenav a {
+    min-height: 44px;
+    font-size: 15px;
+  }
   :root[data-menu="open"] .sidenav {
     display: flex;
+    animation: dev-sheet-in var(--wl-dur-indicator, 180ms) var(--wl-ease-move, ease-out);
   }
   :root[data-menu="open"] body {
     overflow: hidden;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .op {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .rail-pane {
+    position: static;
   }
 }
 @media (max-width: 720px) {
@@ -123,6 +133,11 @@
   }
   .trybar .btn {
     flex: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-menu="open"] .sidenav {
+    animation: none;
   }
 }
 @media (pointer: coarse) {

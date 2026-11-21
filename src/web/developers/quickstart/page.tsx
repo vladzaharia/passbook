@@ -1,7 +1,7 @@
-import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
+import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { NAV_PATH } from '../pages/layout.tsx';
+import { MenuSections } from '../pages/layout.tsx';
 import { EmptyStage, Layout, Progress, Step, Tag } from './parts.tsx';
 
 const C = QS_COPY.steps;
@@ -11,21 +11,13 @@ const SIGN_IN_HERE = `/login?next=${encodeURIComponent(PATHS.quickstart)}`;
 export function QuickstartSide() {
   return (
     <nav className="sidenav" id="dev-menu" aria-label="Quickstart">
-      <div className="menu-only stack">
-        <h4>Developers</h4>
-        {DEV_COPY.nav.map((n) => (
-          <a key={n.key} href={NAV_PATH[n.key]}>
-            {n.label}
-          </a>
-        ))}
-      </div>
+      <MenuSections />
       <div className="stack">
         <h4>Start</h4>
         <a href={PATHS.quickstart} aria-current="page">
           {QS_COPY.nav}
         </a>
         <a href={PATHS.playground}>Playground</a>
-        <a href={PATHS.console}>Console</a>
         <a href={PATHS.webhooks}>Webhook tester</a>
       </div>
       <div className="stack">

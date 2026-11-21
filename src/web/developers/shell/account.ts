@@ -1,5 +1,7 @@
 import { canUseSpace, type SignInMethod, SPACE_HOME, SPACES } from '../../../shared/spaces.ts';
+import { loadSession } from '../console/session.ts';
 import type { MountedUser } from './account-island.tsx';
+import { fillMenuSheet } from './menu-sheet.ts';
 
 interface SessionBody {
   authenticated?: boolean;
@@ -51,6 +53,12 @@ export async function mountAccount(host: HTMLElement): Promise<() => void> {
     href: SPACE_HOME[space],
     current: space === 'developers',
   }));
+  fillMenuSheet(document, { spaces });
+  // The sandbox's name arrives with its own call; the Spaces group does not wait for it.
+  void loadSession().then((session) => {
+    if (session.kind === 'ready')
+      fillMenuSheet(document, { spaces, sandbox: session.sandbox.orgSlug });
+  });
   const { mountMenu } = await import('./account-island.tsx');
   return mountMenu(host, {
     user: me.user,
