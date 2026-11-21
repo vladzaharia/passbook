@@ -1,6 +1,6 @@
 import { Copy } from 'lucide-react';
 import { useState } from 'react';
-import { highlight } from '../model/highlight.ts';
+import { CodeView } from '../ui/code-view.tsx';
 import type { VerifySample } from './samples.ts';
 
 /** Language tabs, one panel at a time; the portal's copy handler reads the visible lines. */
@@ -28,13 +28,7 @@ export function Samples({ samples }: { samples: readonly VerifySample[] }) {
         </button>
       </div>
       <div className="panel" data-panel={shown.id}>
-        {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable code region */}
-        <section className="region" tabIndex={0} aria-label={`${shown.label} sample`}>
-          <pre className="src num">
-            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: our own sample, escaped per token by highlight() */}
-            <code dangerouslySetInnerHTML={{ __html: highlight(shown.code, shown.lang) }} />
-          </pre>
-        </section>
+        <CodeView code={shown.code} lang={shown.lang} label={`${shown.label} sample`} num />
       </div>
     </div>
   );
