@@ -425,6 +425,7 @@ export type ErrorCode =
   | 'TAG_CARD_AMBIGUOUS'
   | 'TAG_CHECK_FAILED'
   | 'TAG_HOLDER_CHANGED'
+  | 'TAG_ID_INVALID'
   | 'TAG_INVALID'
   | 'TAG_KEY_UNREADABLE'
   | 'TAG_LIMIT'

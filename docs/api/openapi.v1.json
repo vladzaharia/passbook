@@ -23103,6 +23103,67 @@
         ],
         "additionalProperties": false
       },
+      "NfcTagsAssignParams": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "hex",
+                  "reversed",
+                  "decimal"
+                ]
+              },
+              "binding": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "user"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "id",
+              "binding"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tagId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "binding": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "user"
+                ]
+              }
+            },
+            "required": [
+              "tagId",
+              "binding"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
       "NfcTagTypesCreateParams": {
         "type": "object",
         "properties": {
@@ -125292,65 +125353,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 40
-                      },
-                      "format": {
-                        "type": "string",
-                        "enum": [
-                          "hex",
-                          "reversed",
-                          "decimal"
-                        ]
-                      },
-                      "binding": {
-                        "type": "string",
-                        "enum": [
-                          "pass",
-                          "user"
-                        ]
-                      },
-                      "label": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 40
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "binding"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tagId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
-                      },
-                      "binding": {
-                        "type": "string",
-                        "enum": [
-                          "pass",
-                          "user"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tagId",
-                      "binding"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
+                "$ref": "#/components/schemas/NfcTagsAssignParams"
               }
             }
           }
@@ -125638,6 +125641,10 @@
           }
         },
         "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "assign"
+        },
         "security": [
           {
             "session": []
