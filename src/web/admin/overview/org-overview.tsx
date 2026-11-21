@@ -141,7 +141,6 @@ export function OrgOverviewPage({
       <PageHeader
         title="Overview"
         breadcrumbs={[{ label: membership?.orgName ?? 'Organization' }, { label: 'Overview' }]}
-        meta={`${mode === 'test' ? 'Test' : 'Live'} mode`}
         actions={empty ? undefined : picker}
       />
       <div className="flex flex-col gap-6">

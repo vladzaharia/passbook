@@ -169,11 +169,9 @@ export function GetStarted({
   return (
     <Card>
       <CardBody>
-        <p className="mb-3 text-xs text-fg-muted">
-          {organization
-            ? `Organization setup · Live passes and emails for ${organization}`
-            : 'Platform setup'}
-        </p>
+        {organization ? (
+          <p className="mb-3 text-xs text-fg-muted">Live passes and emails for {organization}</p>
+        ) : null}
         <Checklist
           title="Get started"
           onDismiss={onDismiss}

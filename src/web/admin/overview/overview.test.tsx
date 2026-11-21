@@ -84,6 +84,8 @@ describe('overview page', () => {
     const totals = await screen.findByRole('list', { name: 'Totals' });
     const directories = screen.getByRole('region', { name: 'Platform directories' });
     expect(within(directories).getByText('2')).toBeInTheDocument();
+    expect(within(directories).getByText('7')).toBeInTheDocument();
+    expect(within(directories).getByText('4')).toBeInTheDocument();
     expect(within(directories).getByRole('link', { name: 'View organizations' })).toHaveAttribute(
       'href',
       '/admin/platform/orgs',
@@ -96,7 +98,6 @@ describe('overview page', () => {
       'href',
       '/admin/platform/wallet-accounts',
     );
-    expect(screen.getByText('Metrics: All organizations')).toBeInTheDocument();
     expect(screen.queryByText('All modes')).toBeNull();
     expect(await screen.findAllByText(/Ada · Platform$/)).toHaveLength(2);
     expect(within(totals).getByText('1,200')).toBeInTheDocument();
@@ -242,6 +243,19 @@ describe('overview page', () => {
     expect(await screen.findByText('Box office feed')).toBeInTheDocument();
   });
 
+  it('shows each directory count, and says so when a count is missing', async () => {
+    const { directory: _omit, ...withoutDirectory } = overview();
+    await renderApp('/admin', {
+      session: 'admin',
+      handlers: { ...ok, '/api/v1/metrics/platform/overview': () => json(withoutDirectory) },
+    });
+    const directories = await screen.findByRole('region', { name: 'Platform directories' });
+    await waitFor(() =>
+      expect(within(directories).getAllByText('Count unavailable')).toHaveLength(2),
+    );
+    expect(within(directories).getByText('2')).toBeInTheDocument();
+  });
+
   it('shows unknown health and the activity art when there is no data', async () => {
     const { container } = await renderApp('/admin', {
       session: 'admin',
@@ -292,7 +306,6 @@ describe('overview page', () => {
         },
       },
     });
-    expect(await screen.findByText('Metrics: All organizations')).toBeInTheDocument();
     expect(await screen.findByRole('list', { name: 'Totals' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: /Pass voided/ })).toBeInTheDocument();
     const activityHeader = screen.getByRole('heading', { name: 'Recent activity' }).parentElement!;
@@ -369,15 +382,12 @@ describe('overview page', () => {
         },
       },
     });
-    expect(await screen.findByText('Metrics: South')).toBeInTheDocument();
     const directories = await screen.findByRole('region', { name: 'Platform directories' });
     expect(
       within(directories).getByRole('heading', { name: 'Organizations · filtered' }),
     ).toBeInTheDocument();
     expect(await within(directories).findByText('1')).toBeInTheDocument();
-    expect(
-      await screen.findByText('Organization setup · Live passes and emails for South'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Live passes and emails for South')).toBeInTheDocument();
     const checklist = screen.getByRole('region', { name: 'Get started' });
     const send = new URL(
       within(checklist).getByRole('link', { name: 'Send email' }).getAttribute('href')!,
@@ -417,7 +427,6 @@ describe('overview page', () => {
         },
       },
     });
-    expect(await screen.findByText('Metrics: Numeric organization')).toBeInTheDocument();
     await screen.findByRole('list', { name: 'Totals' });
     expect(requests[0]?.searchParams.get('orgId')).toBe(id);
     const user = userEvent.setup();
@@ -494,7 +503,7 @@ describe('overview page', () => {
     expect(screen.queryByRole('list', { name: 'Totals' })).toBeNull();
     expect(screen.queryByRole('link', { name: /Pass voided/ })).toBeNull();
     const directories = screen.getByRole('region', { name: 'Platform directories' });
-    expect(within(directories).getByText('Loading count…')).toBeInTheDocument();
+    expect(within(directories).getAllByText('Loading count…')).toHaveLength(3);
     nextMetrics.resolve(
       json(
         overview({
@@ -526,7 +535,6 @@ describe('overview page', () => {
         ),
       ).toBe(true),
     );
-    expect(screen.getByText('Metrics: All organizations')).toBeInTheDocument();
   });
 });
 
@@ -569,7 +577,6 @@ describe('get started', () => {
     expect(within(totals).getByText('42')).toBeInTheDocument();
     expect(modes.length).toBeGreaterThan(0);
     expect(modes.every((mode) => mode === null)).toBe(true);
-    expect(screen.getByText('Metrics: All organizations')).toBeInTheDocument();
     expect(screen.queryByText(/Test mode/)).toBeNull();
     expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull();
   });
