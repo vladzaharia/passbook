@@ -154,7 +154,9 @@ export async function activateCertificate(db: D1Database, a: Activation): Promis
       [a.expectedCredentialId, a.pendingCredentialId, a.identityId, a.pendingCredentialId],
     ),
   ]);
-  return results[2]?.meta.changes === 1;
+  // Step 2 and the identity swap share one guard inside one transaction; the swap's own count
+  // includes trigger writes, so the history row is the signal.
+  return results[1]?.meta.changes === 1;
 }
 
 /** Pending to failed; the unused key is deleted. */
