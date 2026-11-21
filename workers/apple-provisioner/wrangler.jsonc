@@ -14,7 +14,7 @@
       "binding": "DB",
       "database_name": "apple-provisioner",
       // Placeholder until `wrangler d1 create apple-provisioner` (docs/operations.md, Apple provisioner).
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "9159226c-8d6c-4458-ab15-1856ae7f6593",
       "migrations_dir": "migrations"
     }
   ],
