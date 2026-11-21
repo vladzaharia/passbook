@@ -10,6 +10,7 @@ import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { idempotentJson, principalOf } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { authOf } from '../passes/http.ts';
 import {
@@ -126,7 +127,7 @@ register(
     body: StartManagedIdentitySchema,
     status: 202,
     response: IdentityRunSchema,
-    auth: { ...HUMAN, feature: 'identity.managed' },
+    auth: { ...HUMAN, feature: 'identity.managed', stepUp: { maxAgeSec: STEP_UP_SECONDS } },
   },
   async (c) => {
     const ctx = serviceContext(c);

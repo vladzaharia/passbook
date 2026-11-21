@@ -47,7 +47,7 @@ export async function tryKit() {
   /** A person with a sandbox and a signed-in browser session (cookie, CSRF, Origin). */
   async function developer() {
     const user = await makeUser(kit.f);
-    const session = await makeSession(kit.f, { userId: user.id });
+    const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
     const browser = { ...session.headers, ...BROWSER };
     const res = await app.request(
       `${ORIGIN}/api/v1/developer/sandbox`,

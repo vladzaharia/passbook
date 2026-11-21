@@ -8,7 +8,7 @@ afterEach(() => restore?.());
 
 async function setup() {
   const oidc = await createMockOidc({ issuer, clientId: 'wallet' });
-  oidc.addUser({ sub: 'u1', email: 'a@example.com', groups: ['wallet-admins'] });
+  oidc.addUser({ sub: 'u1', email: 'a@example.com', groups: ['wallet_admins'] });
   restore = oidc.install().restore;
   return oidc;
 }
@@ -64,7 +64,7 @@ describe('mock oidc', () => {
       sub: 'u1',
       email: 'a@example.com',
       nonce: 'n1',
-      groups: ['wallet-admins'],
+      groups: ['wallet_admins'],
       azp: 'wallet',
     });
     expect(oidc.clientId).toBe('wallet');

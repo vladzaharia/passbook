@@ -13,6 +13,7 @@ import {
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { authOf } from '../passes/http.ts';
 import { managedIssuerStatus, requestManagedIssuer } from './google-managed-service.ts';
 import { completeManualIssuer, startManagedIssuer } from './issuer-provision.ts';
@@ -100,6 +101,11 @@ register(
 
 /** Mounted inside the platform wallet routes (`/api/v1/platform`, platform admins). */
 export const googleManagedPlatformRoutes = createRouter();
+// Rotating a service-account key replaces what signs for Google Wallet: a recent sign-in.
+googleManagedPlatformRoutes.post(
+  '/wallet-credentials/:id/rotate-key',
+  requireStepUp(STEP_UP_SECONDS),
+);
 
 register(
   googleManagedPlatformRoutes,

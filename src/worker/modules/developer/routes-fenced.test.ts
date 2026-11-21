@@ -99,7 +99,11 @@ describe('/me add all', () => {
   async function owned(orgId: string) {
     const user = await makeUser(kit.fx);
     await makePass(kit.fx, { orgId, template: kit.template, ownerUserId: user.id, mode: 'test' });
-    return { user, headers: (await makeSession(kit.fx, { userId: user.id })).headers };
+    return {
+      user,
+      headers: (await makeSession(kit.fx, { userId: user.id, roles: ['user', 'developer'] }))
+        .headers,
+    };
   }
 
   it('packages nothing for a developer pass', async () => {
