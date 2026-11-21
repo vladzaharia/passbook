@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import type { Api } from './api.ts';
 import { receiverUrl } from './forward.ts';
 import { listen } from './listen.ts';
+import { passesCommand } from './passes.ts';
 import { inputTypeFile, typeName } from './types-gen.ts';
 
 export const HELP = `passbook <command>
@@ -10,6 +11,11 @@ export const HELP = `passbook <command>
       [--endpoint <id>] [--interval <ms>] [--from-start] [--once]
   types <templateId>          Print the TypeScript type of a template's pass input.
       [--name <TypeName>] [--out <file>]
+  passes create               Issue a pass. Body from --file <json|-> (- is stdin) and flags.
+      [--template <id>] [--email <e>] [--external-id <id>] [--serial <s>] [--send-email]
+      [--set key=value]... [--idempotency-key <k>]
+  passes update <passId>      Change a pass's input. Same body sources.
+      [--external-id <id>] [--template-version <v>] [--notify] [--set key=value]... [--idempotency-key <k>]
 
 PASSBOOK_KEY holds a pb_test_ key. PASSBOOK_BASE_URL overrides https://passbook.mobile.`;
 
@@ -20,6 +26,8 @@ export interface Io {
   writeFile: (path: string, text: string) => Promise<void>;
   /** Builds the API client for a key; bin.ts passes `new PassBook(...)`. */
   makeClient: (options: { apiKey: string; baseUrl?: string }) => Api;
+  readFile?: (path: string) => Promise<string>;
+  readStdin?: () => Promise<string>;
   fetch?: typeof fetch;
   signal?: AbortSignal;
 }
@@ -88,9 +96,23 @@ export async function run(argv: string[], io: Io): Promise<number> {
       else io.out(text.trimEnd());
       return 0;
     }
+    if (command === 'passes') {
+      await passesCommand(
+        api,
+        rest,
+        {
+          readFile: io.readFile ?? (async () => Promise.reject(new Error('Cannot read files.'))),
+          readStdin: io.readStdin ?? (async () => Promise.reject(new Error('Cannot read stdin.'))),
+        },
+        io.out,
+      );
+      return 0;
+    }
     throw new Error(`Unknown command "${command}". Run passbook --help.`);
   } catch (e) {
-    io.err(e instanceof Error ? e.message : String(e));
+    const { code, detail } = e as { code?: unknown; detail?: unknown };
+    if (typeof code === 'string' && typeof detail === 'string') io.err(`${code}: ${detail}`);
+    else io.err(e instanceof Error ? e.message : String(e));
     return 1;
   }
 }
