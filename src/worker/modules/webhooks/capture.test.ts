@@ -87,7 +87,7 @@ const call = async (
 /** A person with a sandbox, whose Test key calls the API as a server would. */
 async function sandbox() {
   const user = await makeUser(kit.f);
-  const session = await makeSession(kit.f, { userId: user.id });
+  const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
   const res = await send('POST', '/developer/sandbox', session.headers, { turnstileToken: 'ok' });
   expect(res.status, await res.clone().text()).toBe(201);
   const made = (await res.json()) as { orgId: string; templateId: string; key: { secret: string } };

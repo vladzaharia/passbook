@@ -1,4 +1,4 @@
-import type { Mode } from '../../../shared/contracts/common.ts';
+import { type Mode, RoleSchema } from '../../../shared/contracts/common.ts';
 import { type ScanActor, type ScanTenantAuthority, tenantScanRole } from './actor.ts';
 
 export interface LiveAttachmentTenant {
@@ -60,7 +60,7 @@ export function tenantReadAuthority(a: LiveAttachmentTenant): ScanTenantAuthorit
       authority.amr !== 'breakglass') ||
     !Array.isArray(authority.sessionRoles) ||
     authority.sessionRoles.length === 0 ||
-    !authority.sessionRoles.every((role) => role === 'admin' || role === 'user') ||
+    !authority.sessionRoles.every((role) => RoleSchema.safeParse(role).success) ||
     !Array.isArray(authority.roles) ||
     !authority.roles.every((role) => typeof role === 'string') ||
     !tenantScanRole(authority)

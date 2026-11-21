@@ -136,7 +136,7 @@ describe('detail', () => {
     await run(
       h.env.DB,
       `INSERT INTO auth_identities (provider, subject, user_id, email_claim, email_verified, groups, created_at)
-       VALUES ('pocketid', ?, ?, ?, 1, '["wallet-users"]', 0)`,
+       VALUES ('pocketid', ?, ?, ?, 1, '["wallet_users"]', 0)`,
       [`s-${tag()}`, user.id, user.primaryEmail],
     );
     await makeSession(f1, { userId: user.id });
@@ -165,7 +165,7 @@ describe('detail', () => {
       recentAudit: { action: string }[];
     };
     expect(body.emails.map((e) => e.email)).toEqual([user.primaryEmail]);
-    expect(body.identities[0]).toMatchObject({ provider: 'pocketid', groups: ['wallet-users'] });
+    expect(body.identities[0]).toMatchObject({ provider: 'pocketid', groups: ['wallet_users'] });
     expect(body.sessions).toHaveLength(1);
     expect(body.sessions[0]?.revokedAt).not.toBeNull();
     expect(body.passes.map((p) => p.id)).toEqual([pass.id]);

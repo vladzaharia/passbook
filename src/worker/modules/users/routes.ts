@@ -17,6 +17,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { makePrimaryEmail, removeEmail, requestEmailProof } from './emails.ts';
 import { getUserDetail, listUsers, setUserStatus } from './service.ts';
 import { revokeUserSession, revokeUserSessions } from './sessions.ts';
@@ -27,6 +28,8 @@ const ownSession = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessio
 
 export const usersRoutes = createRouter();
 guard(usersRoutes, requireAdmin);
+// Adding an email to someone's account is how it is taken over: a recent sign-in.
+usersRoutes.post('/:id/emails', requireStepUp(STEP_UP_SECONDS));
 usersRoutes.use('*', limitBody(64 * 1024));
 
 register(

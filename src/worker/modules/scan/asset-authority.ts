@@ -1,3 +1,4 @@
+import { RoleSchema } from '../../../shared/contracts/common.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
 import { toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -127,7 +128,7 @@ export async function assetActorScope(ctx: ServiceContext, actor: ScanActor, pas
       authority?.kind !== 'session' ||
       !Array.isArray(authority.sessionRoles) ||
       authority.sessionRoles.length === 0 ||
-      !authority.sessionRoles.every((role) => role === 'admin' || role === 'user') ||
+      !authority.sessionRoles.every((role) => RoleSchema.safeParse(role).success) ||
       !['oidc', 'magic_link', 'breakglass'].includes(authority.amr) ||
       typeof authority.sessionCsrfProof !== 'string' ||
       !/^[A-Za-z0-9_-]{43}$/.test(authority.sessionCsrfProof) ||
