@@ -1,4 +1,4 @@
-import { BadgeCheck, Check, ShieldCheck } from 'lucide-react';
+import { BadgeCheck, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
@@ -9,6 +9,7 @@ import { Button } from '@/web/ui/index.ts';
 import { NewManagedIdentityDialog } from '../wallet-accounts/apple/new-managed-dialog.tsx';
 import { OrgAppleHistory } from '../wallet-accounts/org-apple-history.tsx';
 import './brand.css';
+import { RunSteps } from './run-steps.tsx';
 
 const COPY = PASS_SETUP_COPY.channelsCard;
 const KINDS = PASS_SETUP_COPY.identityKinds;
@@ -22,46 +23,6 @@ function stepIndex(step: string | null): number {
   if (/cert|csr|issue/.test(step)) return 2;
   if (/type|identifier|create/.test(step)) return 1;
   return 0;
-}
-
-function RunSteps({ step, failed }: { step: string | null; failed: boolean }) {
-  const at = stepIndex(step);
-  return (
-    <ol aria-label="Apple ID setup" className="wl-stagger m-0 flex list-none flex-col gap-2 p-0">
-      {COPY.runSteps.map((label, i) => {
-        const done = i < at;
-        const now = i === at;
-        return (
-          <li
-            key={label}
-            style={{ '--i': i } as never}
-            className={cn(
-              'flex items-center gap-2 text-sm',
-              done || now ? 'text-fg' : 'text-fg-muted',
-            )}
-          >
-            <span
-              aria-hidden
-              className={cn(
-                'inline-flex size-5 items-center justify-center rounded-full border text-xs',
-                done
-                  ? 'wl-step-done border-success-border bg-success-subtle text-success'
-                  : now && !failed
-                    ? 'border-accent text-accent-fg'
-                    : 'border-border-strong',
-              )}
-            >
-              {done ? <Check className="size-3" /> : i + 1}
-            </span>
-            {label}
-            {now ? (
-              <span className="sr-only">{failed ? COPY.runFailed : 'In progress'}</span>
-            ) : null}
-          </li>
-        );
-      })}
-    </ol>
-  );
 }
 
 /** What the Apple row signs with: the shared ID, a run in progress, or the org's own managed ID. */
@@ -120,7 +81,9 @@ export function AppleIdentity({
           ) : null}
         </div>
       </div>
-      {running || failed ? <RunSteps step={run?.step ?? null} failed={failed} /> : null}
+      {running || failed ? (
+        <RunSteps labels={COPY.runSteps} at={stepIndex(run?.step ?? null)} failed={failed} />
+      ) : null}
       <NewManagedIdentityDialog open={creating} onOpenChange={setCreating} orgId={orgId} />
       <OrgAppleHistory
         orgId={orgId}

@@ -74,7 +74,7 @@ describe('Brand and channels', () => {
     expect(within(row('Mobile')).getByRole('switch')).toBeChecked();
   });
 
-  it('opens a row to its chain, templates and Ask PassBook, and a locked preview tab', async () => {
+  it('opens a row to its chain, templates and Ask PassBook', async () => {
     const user = userEvent.setup();
     await setup(viewOf(readyFacts()));
     const channels = await screen.findByRole('region', { name: 'Channels' });
@@ -87,11 +87,6 @@ describe('Brand and channels', () => {
     const chain = await within(channels).findAllByRole('list', { name: 'Chain' });
     expect(within(chain[0] as HTMLElement).getByText('Templates 2/2')).toBeInTheDocument();
     expect(within(channels).getByText('pass.mobile.passbook.acmefitness')).toBeInTheDocument();
-    const tabs = screen.getByRole('radiogroup', { name: 'Preview' });
-    expect(within(tabs).getByRole('radio', { name: /Google/ })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
   });
 
   it('stages a block, reviews it with the dry run, and saves with the revision', async () => {
@@ -174,6 +169,36 @@ describe('Brand and channels', () => {
     expect(screen.getByLabelText(/^Name/)).toBeDisabled();
     expect(screen.queryByRole('region', { name: 'Unsaved changes' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Add logo' })).toBeNull();
+  });
+
+  it('greys a plan-locked preview under its reason with Ask PassBook, and draws Paper otherwise', async () => {
+    const user = userEvent.setup();
+    await setup(viewOf(readyFacts()));
+    const tabs = await screen.findByRole('radiogroup', { name: 'Preview' });
+    await user.click(within(tabs).getByRole('radio', { name: /Paper/ }));
+    const stage = screen.getByRole('region', { name: 'Preview' });
+    expect(within(stage).getByText('Paper: Not in your plan')).toBeInTheDocument();
+    expect(within(stage).getByText('Plan stops it')).toBeInTheDocument();
+    expect(within(stage).getByRole('link', { name: 'Ask PassBook' })).toBeInTheDocument();
+    await user.click(within(tabs).getByRole('radio', { name: /Google/ }));
+    expect(within(stage).getByText('Google Wallet: Not available yet')).toBeInTheDocument();
+    expect(within(stage).queryByRole('link', { name: 'Ask PassBook' })).toBeNull();
+  });
+
+  it('opens the holder page in a dialog and offers the request and the audit log in More', async () => {
+    const user = userEvent.setup();
+    await setup(viewOf(readyFacts()));
+    await user.click(await screen.findByRole('button', { name: 'Preview as holder' }));
+    expect(await screen.findByRole('dialog', { name: 'Preview as holder' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(
+      await screen.findByRole('menuitem', { name: 'Copy as API request' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Audit log' })).toHaveAttribute(
+      'href',
+      '/admin/o/o1/audit',
+    );
   });
 
   it('sends Wallet accounts to the Channels card', async () => {

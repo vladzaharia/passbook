@@ -8,6 +8,7 @@ import { useMode } from '@/web/lib/mode.ts';
 import { Badge, Card, CardHeader } from '@/web/ui/index.ts';
 import { OrgProviderCard } from '../wallet-accounts/org-provider-card.tsx';
 import { useOrgCredentials, useOrgEnrolments } from '../wallet-accounts/queries.ts';
+import { AccountTiles } from './account-tiles.tsx';
 import { AppleIdentity } from './apple-identity.tsx';
 import { AskPassbook, ChannelRow } from './channel-row.tsx';
 import type { Draft } from './draft.ts';
@@ -33,7 +34,14 @@ function ProviderAccount({
   const own = credentials.data?.items.find(
     (c) => c.provider === provider && c.scope === 'org' && c.mode === mode && c.revokedAt === null,
   );
-  return <OrgProviderCard orgId={orgId} enrolment={enrolment} own={own} canManage={canManage} />;
+  return (
+    <div className="flex flex-col gap-4">
+      {provider === 'google' && enrolment.source === null && own === undefined ? (
+        <AccountTiles orgId={orgId} canManage={canManage} />
+      ) : null}
+      <OrgProviderCard orgId={orgId} enrolment={enrolment} own={own} canManage={canManage} />
+    </div>
+  );
 }
 
 /**

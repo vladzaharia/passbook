@@ -18,6 +18,16 @@ async function webLogoPng(file: File): Promise<string> {
   return toBase64(bytes);
 }
 
+/** A data URL, because a pass preview only draws https, same-origin or data images. */
+function dataUrl(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 /** Checks a PNG, stages it on the server, and returns it with a local URL to draw until the save. */
 export async function stageImage(orgId: string, slot: ImageSlot, file: File): Promise<StagedImage> {
   const body =
@@ -29,5 +39,5 @@ export async function stageImage(orgId: string, slot: ImageSlot, file: File): Pr
           ...(p.x2 ? { x2: p.x2 } : {}),
         }));
   const staged = await stageBrandAsset(orgId, body);
-  return { sha: staged.sha, w: staged.w, h: staged.h, url: URL.createObjectURL(file) };
+  return { sha: staged.sha, w: staged.w, h: staged.h, url: await dataUrl(file) };
 }

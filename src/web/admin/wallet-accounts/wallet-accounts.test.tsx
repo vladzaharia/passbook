@@ -254,6 +254,85 @@ describe('organization wallet accounts', () => {
   });
 });
 
+describe('Google account tiles', () => {
+  const run = (state: string) => ({
+    runId: 'r1',
+    state,
+    step: null,
+    waitingFor: null,
+    errorCode: null,
+    issuerId: null,
+    updatedAt: 1,
+  });
+
+  it('starts a managed issuer in Live and shows the run', async () => {
+    setMode('live');
+    const user = userEvent.setup();
+    const posts: unknown[] = [];
+    await renderOrgAccounts({
+      memberships: [member(MANAGE)],
+      handlers: {
+        ...orgHandlers([
+          enrolment({ mode: 'live' }),
+          enrolment({ provider: 'samsung', mode: 'live' }),
+        ]),
+        '/api/v1/orgs/o1/wallet-accounts/google/managed': (_u, init) => {
+          if (init?.method === 'POST') {
+            posts.push(JSON.parse(String(init.body)));
+            return json(run('running'), 202);
+          }
+          return json({ run: posts.length ? run('running') : null });
+        },
+      },
+    });
+    const google = await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(screen.getByRole('radio', { name: /Managed by PassBook/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Share your issuer/ })).toBeInTheDocument();
+    expect(within(google).getByText('Own credentials')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Create the issuer' }));
+    await waitFor(() => expect(posts).toEqual([{ mode: 'live' }]));
+    expect(await screen.findByRole('list', { name: 'Setup steps' })).toBeInTheDocument();
+  });
+
+  it('shares an own issuer with the service account address', async () => {
+    setMode('live');
+    const user = userEvent.setup();
+    const posts: unknown[] = [];
+    await renderOrgAccounts({
+      memberships: [member(MANAGE)],
+      handlers: {
+        ...orgHandlers([
+          enrolment({ mode: 'live' }),
+          enrolment({ provider: 'samsung', mode: 'live' }),
+        ]),
+        '/api/v1/orgs/o1/wallet-accounts/google/managed': () => json({ run: null }),
+        '/api/v1/orgs/o1/wallet-accounts/google/shared': (_u, init) => {
+          if (init?.method === 'POST') {
+            posts.push(JSON.parse(String(init.body)));
+            return json({ credential: credential(), serviceAccountEmail: 'sa@passbook.iam' });
+          }
+          return json({ serviceAccountEmail: 'sa@passbook.iam' });
+        },
+      },
+    });
+    await user.click(await screen.findByRole('radio', { name: /Share your issuer/ }));
+    expect(await screen.findByText('sa@passbook.iam')).toBeInTheDocument();
+    const connect = screen.getByRole('button', { name: 'Connect' });
+    expect(connect).toBeDisabled();
+    await user.type(screen.getByLabelText('Issuer ID'), '3388000000012345');
+    await user.click(connect);
+    await waitFor(() => expect(posts).toEqual([{ issuerId: '3388000000012345' }]));
+  });
+
+  it('leaves the choice to those who can manage accounts', async () => {
+    await renderOrgAccounts({
+      memberships: [member(READ)],
+      handlers: orgHandlers([enrolment(), enrolment({ provider: 'samsung' })]),
+    });
+    expect(await screen.findByRole('radio', { name: /Managed by PassBook/ })).toBeDisabled();
+  });
+});
+
 describe('platform wallet accounts', () => {
   const handlers = (
     items = [

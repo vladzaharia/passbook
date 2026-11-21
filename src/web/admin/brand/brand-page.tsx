@@ -1,15 +1,19 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Copy, ScrollText } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
 import type { PassSetup, PassSetupPatch } from '@/shared/contracts/pass-setup.ts';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
 import { orgSetupChecks } from '@/shared/org-setup-checks.ts';
+import { copyText } from '@/web/lib/clipboard.ts';
 import { cn } from '@/web/lib/cn.ts';
 import {
   Badge,
   Callout,
+  DropdownMenuItem,
   detailError,
+  MoreMenu,
   PageHeader,
   SaveBar,
   SkeletonDetail,
@@ -35,7 +39,8 @@ import {
   shownValues,
 } from './draft.ts';
 import { runFix } from './fixes.ts';
-import { PreviewStage } from './preview-stage.tsx';
+import { HolderPreview } from './holder-preview.tsx';
+import { PreviewStage, useSample } from './preview-stage.tsx';
 import { ReviewDialog } from './review-dialog.tsx';
 import { SupportCard } from './support-card.tsx';
 
@@ -106,22 +111,22 @@ function BrandForm({
     return () => publishUnsaved(`org:${orgId}`, 'brand', null);
   }, [orgId, draft.supportEmail, draft.supportUrl]);
 
-  const logo = draft.images?.logo;
-  const icon = draft.images?.icon;
-  const logoUrl =
-    logo === null
-      ? undefined
-      : (logo?.url ??
-        (view.brand.logo.value
-          ? brandingUrl(orgId, 'logo', view.brand.logo.value.sha)
-          : undefined));
-  const iconUrl =
-    icon === null
-      ? undefined
-      : (icon?.url ??
-        (view.brand.icon.value
-          ? brandingUrl(orgId, 'icon', view.brand.icon.value.sha)
-          : undefined));
+  const image = (slot: 'logo' | 'icon') => {
+    const staged = draft.images?.[slot];
+    if (staged === null) return undefined;
+    if (staged) return { url: staged.url, w: staged.w, h: staged.h };
+    const saved = view.brand[slot].value;
+    return saved ? { url: brandingUrl(orgId, slot, saved.sha), w: saved.w, h: saved.h } : undefined;
+  };
+  const sample = useSample(view, draft, image('logo'), image('icon'));
+  const request = () => {
+    const url = `${window.location.origin}/api/v1/orgs/${encodeURIComponent(orgId)}/pass-setup`;
+    const auth = "-H 'authorization: Bearer $PASSBOOK_API_KEY'";
+    const text = patch
+      ? `curl -X PATCH '${url}' ${auth} -H 'content-type: application/json' -d '${JSON.stringify(patch)}'`
+      : `curl '${url}' ${auth}`;
+    void copyText(text, 'request');
+  };
 
   function onReview() {
     const bad = document.querySelector<HTMLElement>('#main [aria-invalid="true"]');
@@ -159,6 +164,25 @@ function BrandForm({
               : scanLine(COPY.page.passes, { n: view.passCount })}
           </span>
         }
+        actions={
+          <>
+            <HolderPreview source={sample.source} title={COPY.page.previewHolder} />
+            <MoreMenu>
+              <DropdownMenuItem onSelect={request}>
+                <Copy aria-hidden />
+                {COPY.page.copyRequest}
+              </DropdownMenuItem>
+              {caps.includes('audit:read') ? (
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/o/$orgId/audit" params={{ orgId }}>
+                    <ScrollText aria-hidden />
+                    {COPY.page.auditLog}
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
+            </MoreMenu>
+          </>
+        }
       />
       {canEdit ? null : (
         <Callout tone="info" className="mb-6">
@@ -191,8 +215,7 @@ function BrandForm({
               view={view}
               draft={draft}
               draftFacts={draftFacts}
-              logoUrl={logoUrl}
-              iconUrl={iconUrl}
+              sample={sample}
               saves={saves}
             />
           </>

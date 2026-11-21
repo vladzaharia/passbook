@@ -1,5 +1,5 @@
 import type { PassJson, Personalization } from '@/passkit/types.ts';
-import type { PreviewSource } from '@/web/channel-previews/types.ts';
+import type { PreviewAsset, PreviewSource } from '@/web/channel-previews/types.ts';
 import { HEX } from '../orgs/branding.ts';
 
 /** PassBook's blueprint blue: what a pass shows while the org has set no colours. Pass art, not UI. */
@@ -43,14 +43,58 @@ export function samplePassJson(d: SampleInput): PassJson {
   } as unknown as PassJson;
 }
 
-/** What the wallet, page and paper previews draw from. Images are not wired: colours and name only. */
-export function sampleSource(passJson: PassJson): PreviewSource {
+/** The least a manifest needs for the wallet compilers: used while the org has no template. */
+const SAMPLE_MANIFEST = { name: 'Sample', inputs: {}, bindings: [] };
+
+export interface SampleImage {
+  url: string;
+  /** Pixels at @3x. */
+  w: number;
+  h: number;
+}
+
+/** A logo and an icon as file names, URLs and sizes: what a pass view and the wallet compilers read. */
+function imageFiles(logo?: SampleImage, icon?: SampleImage) {
+  const urls: Record<string, string> = {};
+  const assets: PreviewAsset[] = [];
+  for (const [slot, img] of [
+    ['logo', logo],
+    ['icon', icon],
+  ] as const) {
+    if (!img) continue;
+    for (const scale of [2, 3] as const) {
+      const name = `${slot}@${scale}x.png`;
+      urls[name] = img.url;
+      assets.push({
+        name,
+        slot,
+        scale,
+        width: Math.round((img.w * scale) / 3),
+        height: Math.round((img.h * scale) / 3),
+      });
+    }
+  }
+  return { urls, assets };
+}
+
+/**
+ * What the wallet, page and paper previews draw from: the sample pass with the org's logo and
+ * icon by URL (a saved image's path, or a staged one as a data URL). A template supplies its
+ * manifest and sample values for Paper.
+ */
+export function sampleSource(
+  passJson: PassJson,
+  images: { logo?: SampleImage | undefined; icon?: SampleImage | undefined } = {},
+  template?: { manifest: Record<string, unknown>; sample: Personalization },
+): PreviewSource {
+  const { urls, assets } = imageFiles(images.logo, images.icon);
   return {
     passJson: passJson as unknown as Record<string, unknown>,
     assetBaseUrl: '/',
-    assetNames: [],
-    manifest: {},
-    assets: [],
-    input: {} as Personalization,
+    assetNames: Object.keys(urls),
+    assetUrls: urls,
+    manifest: template?.manifest ?? SAMPLE_MANIFEST,
+    assets,
+    input: template?.sample ?? ({} as Personalization),
   };
 }
