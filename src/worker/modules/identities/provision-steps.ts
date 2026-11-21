@@ -12,9 +12,21 @@ import { generateCsr } from './csr.ts';
 import { intermediatePem } from './env-identity.ts';
 import { passTypeOf } from './handles.ts';
 import { openPendingKey, sealPendingKey } from './pending-key.ts';
-import { auditOnce, beginStep, type LoadedRun, loadRun, patchRef } from './provision-run.ts';
+import {
+  auditOnce,
+  beginStep,
+  type LoadedRun,
+  loadRun,
+  patchRef,
+  type RunRef,
+} from './provision-run.ts';
 import { getIdentityRow, type IdentityRow } from './repo.ts';
-import { getCertificateRow, listCertificateRows } from './repo-certificates.ts';
+import {
+  getCertificateRow,
+  issuedPending,
+  listCertificateRows,
+  markCertificateIssued,
+} from './repo-certificates.ts';
 import {
   getManagedState,
   identityByPassType,
@@ -25,7 +37,7 @@ import {
   setNextRotation,
   setOrgDefaultIdentity,
 } from './repo-provision.ts';
-import { patchRunRef, type RunRow } from './repo-runs.ts';
+import { patchRunRef, type RunRow, runByCert } from './repo-runs.ts';
 
 const DAY = 86_400_000;
 /** Rotation starts this long before expiry (design 5.1). */
@@ -63,6 +75,11 @@ export async function stepLoad(
     if (!row) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
     if (row.org_id !== run.org_id)
       throw new ConflictError('The identity changed owner.', 'IDENTITY_CHANGED');
+    if (row.rotation !== 'auto' || row.cert_pem === null)
+      throw new ConflictError(
+        'This identity does not rotate automatically.',
+        'IDENTITY_NOT_ROTATABLE',
+      );
   }
   return { kind: run.kind, done: false };
 }
@@ -72,6 +89,7 @@ export async function recordPassType(
   ctx: ServiceContext,
   runId: string,
   passType: { ascId: string },
+  outcome: 'found' | 'created' = 'found',
 ): Promise<void> {
   const loaded = await loadRun(ctx, runId);
   await patchRef(ctx, runId, { ascPassTypeId: passType.ascId });
@@ -83,7 +101,7 @@ export async function recordPassType(
     ctx,
     loaded,
     'identity.pass_type_created',
-    { passTypeIdentifier: passTypeOf(loaded.ref.handle ?? '') },
+    { passTypeIdentifier: passTypeOf(loaded.ref.handle ?? ''), outcome },
     null,
   );
 }
@@ -165,6 +183,25 @@ export async function stepKey(ctx: ServiceContext, runId: string): Promise<void>
 
   // Rotation, or a provision whose identity row exists but whose run lost its CSR: start a fresh key.
   const row = await identityOf(await loadRun(ctx, runId), ctx);
+  // An earlier run got a certificate issued and failed after: keep its key and adopt, never order again.
+  const carried = await issuedPending(db, row.id);
+  const prev = carried ? await runByCert(db, carried.id) : null;
+  if (carried && prev?.external_ref && prev.csr_pubkey_sha256) {
+    const old = JSON.parse(prev.external_ref) as RunRef;
+    await patchRunRef(
+      db,
+      runId,
+      {
+        certId: carried.id,
+        csrDerB64: old.csrDerB64,
+        ascCertificateId: carried.asc_certificate_id ?? undefined,
+        certDerB64: old.certDerB64,
+      },
+      ctx.clock.now(),
+      prev.csr_pubkey_sha256,
+    );
+    return;
+  }
   // A half-built identity's own pending key stays until activation replaces it.
   for (const stale of await listCertificateRows(db, row.id))
     if (
@@ -213,6 +250,8 @@ export async function recordIssued(
 ): Promise<void> {
   if (!cert.der) throw new UpstreamError('Apple returned no certificate.', 'ASC_CERT_MISSING');
   await patchRef(ctx, runId, { ascCertificateId: cert.ascId, certDerB64: toBase64(cert.der) });
+  const { ref } = await loadRun(ctx, runId);
+  if (ref.certId) await markCertificateIssued(ctx.env.DB, ref.certId, cert.ascId);
   await auditOnce(ctx, await loadRun(ctx, runId), 'identity.certificate_issued', {
     ascCertificateId: cert.ascId,
   });
@@ -269,6 +308,10 @@ export async function stepDefault(ctx: ServiceContext, runId: string): Promise<v
   const { run, ref } = await beginStep(ctx, runId, 'default');
   if (!ref.identityId)
     throw new UpstreamError('The run has no identity.', 'IDENTITY_RUN_INCOMPLETE');
+  // Only the identity this run created and activated becomes the default.
+  const cert = ref.certId ? await getCertificateRow(ctx.env.DB, ref.certId) : null;
+  if (cert?.state !== 'active' || cert.identity_id !== ref.identityId)
+    throw new ConflictError('The identity was not activated by this run.', 'IDENTITY_CHANGED');
   await openIdentity(ctx.env.DB, ref.identityId);
   await setOrgDefaultIdentity(ctx, run.target_id, ref.identityId);
 }

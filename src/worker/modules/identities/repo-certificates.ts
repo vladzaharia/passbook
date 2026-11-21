@@ -1,4 +1,4 @@
-import { all, batch, first, stmt } from '../../platform/db.ts';
+import { all, batch, first, run, stmt } from '../../platform/db.ts';
 import type { NewIdentity } from './repo.ts';
 
 export interface CertificateRow {
@@ -183,4 +183,40 @@ export async function failPendingCertificate(
       [now, certId],
     ),
   ]);
+}
+
+/** Records Apple's id on the pending row, so a failed run keeps the key of a certificate Apple already issued. */
+export async function markCertificateIssued(
+  db: D1Database,
+  certId: string,
+  ascCertificateId: string,
+) {
+  await run(
+    db,
+    "UPDATE identity_certificates SET asc_certificate_id = ? WHERE id = ? AND state = 'pending'",
+    [ascCertificateId, certId],
+  );
+}
+
+/** The newest pending Apple row whose certificate was issued and whose key is still held. */
+export function issuedPending(db: D1Database, identityId: string): Promise<CertificateRow | null> {
+  return first<CertificateRow>(
+    db,
+    `SELECT ${COLUMNS} FROM identity_certificates
+     WHERE identity_id = ? AND origin = 'asc' AND state = 'pending'
+       AND asc_certificate_id IS NOT NULL AND credential_id IS NOT NULL
+     ORDER BY created_at DESC, id DESC LIMIT 1`,
+    [identityId],
+  );
+}
+
+/** Certificates Apple issued for the identity since `since`, whatever became of them. */
+export async function countAscIssued(db: D1Database, identityId: string, since: number) {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM identity_certificates
+     WHERE identity_id = ? AND origin = 'asc' AND asc_certificate_id IS NOT NULL AND created_at >= ?`,
+    [identityId, since],
+  );
+  return row?.n ?? 0;
 }

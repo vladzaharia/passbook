@@ -4,7 +4,7 @@ import type { AppleRpc } from '../../../workers/apple-provisioner/src/types.ts';
 import { ascClient } from '../modules/identities/asc-client.ts';
 import { adoptByPubkey } from '../modules/identities/cert-history.ts';
 import { passTypeOf } from '../modules/identities/handles.ts';
-import { failRun, postCheck } from '../modules/identities/provision-finish.ts';
+import { assertIssueBudget, failRun, postCheck } from '../modules/identities/provision-finish.ts';
 import { stepHandle } from '../modules/identities/provision-handle.ts';
 import { beginStep } from '../modules/identities/provision-run.ts';
 import {
@@ -70,6 +70,7 @@ export async function runIdentityProvision(
 
   const guarded = <T>(name: string, fn: () => Promise<T>): Promise<T> =>
     step.do(name, RETRY, async () => {
+      failure = undefined;
       try {
         return (await fn()) as never;
       } catch (error) {
@@ -136,14 +137,13 @@ async function resolvePassType(ctx: ServiceContext, rpc: AppleRpc, runId: string
     return recordPassType(ctx, runId, found);
   }
   if (!ref.handle) throw new UnavailableError('The run has no handle.', 'IDENTITY_RUN_INCOMPLETE');
-  const identifier = passTypeOf(ref.handle);
-  const found = await rpc.findPassType(identifier, runId);
-  if (found) return recordPassType(ctx, runId, found);
+  const _identifier = passTypeOf(ref.handle);
   const orgName = await orgNameOf(ctx, run.target_id);
   return recordPassType(
     ctx,
     runId,
     await rpc.createPassType(ref.handle, `${orgName} (PassBook)`, runId),
+    'created',
   );
 }
 
@@ -152,7 +152,8 @@ async function issue(ctx: ServiceContext, rpc: AppleRpc, runId: string): Promise
   const input = await issueInput(ctx, runId);
   if (!input) return;
   const listed = await rpc.listCertificates(input.ascPassTypeId, runId);
-  const adopted = await adoptByPubkey(listed, input.pubkeySha256);
+  const adopted = await adoptByPubkey(listed, input.pubkeySha256, ctx.log);
+  if (!adopted) await assertIssueBudget(ctx, runId);
   const cert =
     adopted ?? (await rpc.createCertificate(input.ascPassTypeId, input.csrDer, input.nfc, runId));
   await recordIssued(ctx, runId, cert);

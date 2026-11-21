@@ -169,3 +169,13 @@ export async function reserveHandleRow(db: D1Database, handle: string, orgId: st
     [handle, orgId, now],
   );
 }
+
+/** The newest run that worked on this certificate row. */
+export function runByCert(db: D1Database, certId: string) {
+  return first<{ external_ref: string | null; csr_pubkey_sha256: string | null }>(
+    db,
+    `SELECT external_ref, csr_pubkey_sha256 FROM identity_runs
+     WHERE json_extract(external_ref, '$.certId') = ? ORDER BY created_at DESC, id DESC LIMIT 1`,
+    [certId],
+  );
+}

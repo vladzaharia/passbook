@@ -14,6 +14,12 @@ CREATE TRIGGER identity_handles_no_reassign BEFORE UPDATE ON identity_handles
 BEGIN
   SELECT RAISE(ABORT, 'IDENTITY_HANDLE_RESERVED');
 END;
+-- INSERT OR REPLACE fires no delete trigger: turn a replace of a held handle into a no-op.
+CREATE TRIGGER identity_handles_no_replace BEFORE INSERT ON identity_handles
+WHEN EXISTS (SELECT 1 FROM identity_handles WHERE handle = NEW.handle)
+BEGIN
+  SELECT RAISE(IGNORE);
+END;
 INSERT INTO identity_handles (handle, org_id, reserved_at) VALUES
   ('wallet', NULL, 0), ('test', NULL, 0), ('demo', NULL, 0), ('platform', NULL, 0),
   ('passbook', NULL, 0), ('apple', NULL, 0), ('google', NULL, 0), ('samsung', NULL, 0),
@@ -56,3 +62,10 @@ CREATE UNIQUE INDEX identity_runs_one_open ON identity_runs (target_type, target
 CREATE INDEX identity_runs_org ON identity_runs (org_id, created_at);
 CREATE INDEX identity_runs_target ON identity_runs (target_type, target_id, created_at);
 CREATE INDEX identity_runs_created_by ON identity_runs (created_by) WHERE created_by IS NOT NULL;
+
+-- Any change of an auto identity's certificate (rotation run or manual upload) moves its next rotation to 60 days before expiry.
+CREATE TRIGGER signing_identities_next_rotation AFTER UPDATE OF cert_sha256 ON signing_identities
+WHEN NEW.rotation = 'auto' AND NEW.not_after IS NOT NULL AND NEW.cert_sha256 IS NOT OLD.cert_sha256
+BEGIN
+  UPDATE signing_identities SET next_rotation_at = NEW.not_after - 5184000000 WHERE id = NEW.id;
+END;

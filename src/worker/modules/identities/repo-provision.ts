@@ -78,7 +78,7 @@ export function managedIdentityOf(
   return first(
     db,
     `SELECT id, pass_type_identifier, cert_pem FROM signing_identities
-     WHERE org_id = ? AND provenance = 'managed' ORDER BY created_at, id LIMIT 1`,
+     WHERE org_id = ? AND provenance = 'managed' ORDER BY cert_pem IS NULL, created_at, id LIMIT 1`,
     [orgId],
   );
 }
@@ -178,4 +178,14 @@ export async function platformAdminEmails(db: D1Database): Promise<string[]> {
      ORDER BY primary_email`,
   );
   return rows.map((r) => r.primary_email);
+}
+
+/** The handle an org already holds: one managed pass type per org. */
+export async function handleOfOrg(db: D1Database, orgId: string): Promise<string | null> {
+  const row = await first<{ handle: string }>(
+    db,
+    'SELECT handle FROM identity_handles WHERE org_id = ? ORDER BY reserved_at, handle LIMIT 1',
+    [orgId],
+  );
+  return row?.handle ?? null;
 }

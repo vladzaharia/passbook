@@ -1,4 +1,4 @@
-import { NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getManagedState } from './repo-provision.ts';
 import { findOpenRun, finishRun, insertRun, type RunKind, type RunRow } from './repo-runs.ts';
@@ -81,6 +81,11 @@ export async function startRotation(
 ): Promise<StartedRun> {
   const row = await getManagedState(ctx.env.DB, input.identityId);
   if (!row) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
+  if (row.rotation !== 'auto' || row.cert_pem === null)
+    throw new ConflictError(
+      'This identity does not rotate automatically.',
+      'IDENTITY_NOT_ROTATABLE',
+    );
   return startRun(ctx, {
     kind: 'rotate',
     targetType: 'identity',

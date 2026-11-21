@@ -41,7 +41,7 @@ async function expectProvisioned(h: Harness, runId: string) {
   const id = await identityId(h);
   const certs = await listCertificateRows(h.env.DB, id);
   expect(certs.map((c) => c.state)).toEqual(['active']);
-  expect(h.apple.count('createPassType')).toBe(1);
+  expect(h.apple.passTypes.size).toBe(1);
   expect(h.apple.count('createCertificate')).toBe(1);
   expect(
     (
@@ -82,7 +82,6 @@ describe('adopt on retry', () => {
     const { runId } = await startProvision(h.kit.ctx, { orgId: h.org.id, createdBy: null });
     expect(await h.start(runId)).toEqual({ state: 'succeeded' });
     await expectProvisioned(h, runId);
-    expect(h.apple.count('findPassType')).toBe(2);
   });
 
   it('adopts the certificate when the response of the create was lost', async () => {
