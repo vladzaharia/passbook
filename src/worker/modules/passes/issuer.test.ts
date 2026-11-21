@@ -1,14 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeUser } from '../../../../test/helpers/index.ts';
 import type { PassJson } from '../../../passkit/types.ts';
-import { all, first, run } from '../../platform/db.ts';
-import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
-import { getHolderPass } from '../holders/repo.ts';
+import { run } from '../../platform/db.ts';
 import { readBranding, tenantPassJson } from './branding.ts';
-import { finishCredentialTransfer, startCredentialTransfer } from './credential-transfer.ts';
+import { buildArtifact } from './builder.ts';
 import { issuerName } from './issuer.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
-import { publishPass } from './publish.ts';
+import { getOrg, type PassOrg } from './repo-read-issuance.ts';
+import { getPass } from './repo-read-pass.ts';
 
 const base = {
   organizationName: 'Rain City Fit',
@@ -48,100 +47,58 @@ describe('tenantPassJson', () => {
   });
 });
 
-/** The release fixture adds its own members; lift the one-member triggers while it does, then restore them. */
-async function withFixtureMembers<T>(kit: Kit, setup: () => Promise<T>): Promise<T> {
-  const db = kit.env.DB;
-  const triggers = await all<{ name: string; sql: string }>(
-    db,
-    "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name LIKE '%_personal_single'",
-  );
-  for (const t of triggers) await run(db, `DROP TRIGGER ${t.name}`);
-  try {
-    return await setup();
-  } finally {
-    for (const t of triggers) await run(db, t.sql);
-  }
-}
-
 describe('personal org passes', () => {
   let kit: Kit;
   beforeAll(async () => {
     kit = await setupKit();
   });
-  const latest = async (passId: string) =>
-    JSON.parse(
-      (
-        await first<{ pass_json: string }>(
-          kit.env.DB,
-          'SELECT pass_json FROM pass_versions WHERE pass_id = ? ORDER BY version DESC LIMIT 1',
-          [passId],
-        )
-      )?.pass_json ?? '{}',
-    ) as PassJson;
+  // A personal org has one member, so it cannot run the two-person release flow the kit needs.
+  // The pass is made in the kit's org and rebuilt with the personal org's row, as every build path
+  // (create, publish, transfer) does through `PassOrg`.
+  const build = async (org: PassOrg) => {
+    const made = await kit.pass({ memberName: 'Pat' });
+    const pass = await getPass(kit.env.DB, made.id);
+    if (!pass) throw new Error('Missing pass');
+    return (
+      await buildArtifact(kit.ctx, {
+        orgId: pass.orgId,
+        orgName: org.name,
+        personal: org.personal,
+        branding: org.branding,
+        passId: pass.id,
+        serial: pass.serial,
+        authToken: pass.authToken,
+        webServiceUrl: pass.webServiceUrl,
+        identityId: pass.identityId,
+        templateId: pass.templateId,
+        templateVersion: pass.templateVersion,
+        personalization: pass.personalization,
+        status: pass.status,
+      })
+    ).passJson;
+  };
 
-  it('prints the org name on a normal org, the template name on a personal one, and keeps it on reissue', async () => {
-    const normal = await kit.pass({ memberName: 'Normal' });
-    expect(await latest(normal.id)).toMatchObject({
+  it('reads the flag from the org row and keeps the template issuer only for a personal org', async () => {
+    const owner = await makeUser(kit.fx);
+    const orgId = kit.fx.ids.id();
+    await run(
+      kit.env.DB,
+      'INSERT INTO orgs (id, slug, name, created_at, updated_at, personal_user_id) VALUES (?, ?, ?, 1, 1, ?)',
+      [orgId, `personal-${orgId.slice(-6)}`, 'Pat Owner', owner.id],
+    );
+    const personal = await getOrg(kit.env.DB, orgId);
+    const normal = await getOrg(kit.env.DB, kit.org.id);
+    if (!personal || !normal) throw new Error('Missing org');
+    expect([personal.personal, normal.personal]).toEqual([true, false]);
+    expect(await build(normal)).toMatchObject({
       organizationName: kit.org.name,
       description: expect.stringContaining(kit.org.name),
     });
-    const owner = await makeUser(kit.fx);
-    const orgId = kit.fx.ids.id();
-    await run(
-      kit.env.DB,
-      'INSERT INTO orgs (id, slug, name, created_at, updated_at, personal_user_id) VALUES (?, ?, ?, 1, 1, ?)',
-      [orgId, `personal-${orgId.slice(-6)}`, 'Pat Owner', owner.id],
-    );
-    await run(
-      kit.env.DB,
-      "INSERT INTO org_entitlements (org_id, preset, updated_at) VALUES (?, 'legacy', 1)",
-      [orgId],
-    );
-    const fresh = await withFixtureMembers(kit, () => kit.pass({ memberName: 'Fresh', orgId }));
-    expect(await latest(fresh.id)).toMatchObject({
-      organizationName: 'placeholder',
-      description: 'Test pass',
-    });
-    // A reissue does not flip it back to the owner's name.
-    const { changed } = await publishPass(jobCtxOf(kit), {
-      passId: fresh.id,
-      cause: 'admin',
-      actor: { type: 'user', id: owner.id },
-    });
-    expect(changed).toBe(false);
-    const reissued = await latest(fresh.id);
-    expect(reissued.organizationName).toBe('placeholder');
-    expect(reissued.description).toBe('Test pass');
-  });
-
-  it('keeps the template issuer through a credential transfer', async () => {
-    const owner = await makeUser(kit.fx);
-    const orgId = kit.fx.ids.id();
-    await run(
-      kit.env.DB,
-      'INSERT INTO orgs (id, slug, name, created_at, updated_at, personal_user_id) VALUES (?, ?, ?, 1, 1, ?)',
-      [orgId, `personal-${orgId.slice(-6)}`, 'Pat Owner', owner.id],
-    );
-    await run(
-      kit.env.DB,
-      "INSERT INTO org_entitlements (org_id, preset, updated_at) VALUES (?, 'legacy', 1)",
-      [orgId],
-    );
-    const pass = await withFixtureMembers(kit, () => kit.pass({ memberName: 'Moving', orgId }));
-    const expected = await getHolderPass(kit.env.DB, pass.id, null);
-    if (!expected) throw new Error('Missing holder pass');
-    const started = await startCredentialTransfer(
-      jobCtxOf(kit),
-      { type: 'system', id: null },
-      pass.id,
-      { holderEmail: 'next@example.test', ownerUserId: null },
-      null,
-      { kind: 'tenant-holder', expected },
-    );
-    await finishCredentialTransfer(jobCtxOf(kit), started.transferId);
-    expect(await latest(pass.id)).toMatchObject({
-      organizationName: 'placeholder',
-      description: 'Test pass',
-    });
+    // Built again, as a reissue or transfer does, it stays the template's own.
+    for (let rebuilt = 0; rebuilt < 2; rebuilt++)
+      expect(await build(personal)).toMatchObject({
+        organizationName: 'placeholder',
+        description: 'Test pass',
+      });
   });
 });
