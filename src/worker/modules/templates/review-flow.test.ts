@@ -226,6 +226,20 @@ const inbox = async (org: OrgRow, by: Actor) => {
   return TemplateReviewListSchema.parse(await res.json()).items;
 };
 
+const approvals = (templateId: string) =>
+  all<{ id: string }>(
+    env.DB,
+    `SELECT a.id FROM template_approvals a JOIN template_candidates c ON c.id = a.candidate_id
+     WHERE c.template_id = ?`,
+    [templateId],
+  );
+const heads = (templateId: string) =>
+  all<{ mode: string; version: string; generation: number }>(
+    env.DB,
+    'SELECT mode, version, generation FROM template_releases WHERE template_id = ? ORDER BY mode',
+    [templateId],
+  );
+
 const emailOf = async (userId: string) =>
   (
     await all<{ e: string }>(env.DB, 'SELECT primary_email AS e FROM users WHERE id = ?', [userId])
@@ -333,14 +347,33 @@ describe('review', () => {
       await send(`/${t.templateId}/review`, body, await key(org.id, reviewer.userId)),
     );
     expect(result.approved).toEqual(['test']);
-    // release:true under a key checks the publish step's own scope, not the review one.
-    const again = await send(
-      `/${t.templateId}/review`,
-      { ...body, release: true },
-      await key(org.id, reviewer.userId),
-    );
-    expect([200, 403]).toContain(again.status);
-    expect((await again.clone().text()).includes('You do not have access')).toBe(false);
     expect(await inbox(org, reviewer)).toHaveLength(1);
+  });
+
+  it('releases with release:true when the key also holds publish, and refuses it before approving when not', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const reviewer = await member(org.id, ['template_reviewer', 'template_publisher']);
+    const t = await uploaded('Key Release Flow', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    const body = { version: t.version, release: true };
+    await expectProblem(
+      await send(
+        `/${t.templateId}/review`,
+        body,
+        await key(org.id, reviewer.userId, 'test', ['templates:publish']),
+      ),
+      403,
+      'MISSING_SCOPE',
+    );
+    expect(await approvals(t.templateId)).toEqual([]);
+    const result = await ok(
+      await send(`/${t.templateId}/review`, body, await key(org.id, reviewer.userId)),
+    );
+    expect(result.approved).toEqual(['test']);
+    expect(result.release?.modes.test).toMatchObject({ outcome: 'released', approvalKind: 'peer' });
+    expect(await heads(t.templateId)).toEqual([
+      { mode: 'test', version: t.version, generation: 1 },
+    ]);
   });
 });
