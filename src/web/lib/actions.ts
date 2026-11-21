@@ -33,6 +33,7 @@ import {
 import { ACTION_ICON } from './action-icons.ts';
 import { AUTH_ACTIONS } from './actions-auth.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
+import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -158,8 +159,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass_import.email_rest': a('Import passes emailed', ENTITY.pass.icon, 'info'),
   'pass_import.finish': a('Import finished', CircleCheck, 'success'),
   'pass_import.remove_created': a('Import passes removed', I.removeFromWallet, 'warning'),
-  'pass_import.undo': a('Import undone', I.removeFromWallet, 'warning'),
-  'pass_import.undo_failed': a('Import undo failed', I.removeFromWallet, 'danger'),
   'pass_import.results_export': a('Import results exported', ENTITY.pass.icon, 'info'),
   'retention.hold.place': a('Legal hold placed', Lock, 'warning'),
   'retention.hold.release': a('Legal hold released', ShieldCheck, 'info'),
@@ -286,6 +285,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'join_link.rotate': a('Join link replaced', I.rotate, 'info'),
   'join_link.update': a('Join link changed', I.edit, 'info'),
   ...IDENTITY_RUN_ACTIONS,
+  ...IMPORT_UNDO_ACTIONS,
   'identity.push_key_remove': a('Push key removed', I.pushKey, 'warning'),
   'identity.push_key_rotate': a('Push key rotated', I.rotate, 'info'),
   'identity.push_key_set': a('Push key set', I.pushKey, 'success'),
