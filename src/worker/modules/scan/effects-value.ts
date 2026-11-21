@@ -5,6 +5,7 @@ import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import { currencyOf, isCurrencyInput } from '../../../passkit/template/scan-actions.ts';
 import type { Json, Personalization, TemplateManifest } from '../../../passkit/types.ts';
 import { digitsMessage, fromMinor, minorDigits, toMinor } from '../../../shared/money.ts';
+import { schemaFor } from '../../../shared/safe-pattern.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { PassStatus } from '../passes/repo-map.ts';
 
@@ -127,7 +128,7 @@ export function valueRequestIssue(
     const valid =
       value !== undefined &&
       schema !== null &&
-      new Validator(schema as never, '2020-12', false).validate(value as Json).valid;
+      new Validator(schemaFor(schema, value), '2020-12', false).validate(value as Json).valid;
     return valid ? null : { code: 'SCAN_VALUE_INVALID', message: 'That value does not fit.' };
   }
   return null;

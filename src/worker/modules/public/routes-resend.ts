@@ -1,6 +1,11 @@
 import { sameOriginOnly } from '../../platform/csrf.ts';
 import { createRouter } from '../../platform/openapi.ts';
-import { ASSET_MISSES_PER_MINUTE, gateMisses, rateLimit } from '../../platform/rate-limit.ts';
+import {
+  ASSET_MISSES_PER_MINUTE,
+  gateMisses,
+  rateLimit,
+  tokenBucket,
+} from '../../platform/rate-limit.ts';
 import { assertRecipientBudget } from '../me/service-help.ts';
 import { svc } from '../passes/http.ts';
 import { isTokenShape, passForToken } from './service.ts';
@@ -12,7 +17,7 @@ resendRoutes.use('/:token/resend', gateMisses(ASSET_MISSES_PER_MINUTE));
 resendRoutes.use('/:token/resend', rateLimit('RL_PUBLIC'));
 resendRoutes.use(
   '/:token/resend',
-  rateLimit('RL_REFRESH', (c) => `resend:${c.req.param('token')}`),
+  rateLimit('RL_REFRESH', async (c) => `resend:${await tokenBucket(c.req.param('token') ?? '')}`),
 );
 resendRoutes.post('/:token/resend', async (c) => {
   const token = c.req.param('token');

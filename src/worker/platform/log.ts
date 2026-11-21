@@ -12,10 +12,10 @@ export interface Logger {
 const SENSITIVE_KEY =
   /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download|scan[-_]?code|barcode)/i;
 
-/** Capability URLs: /p/<token>, /b/<token>, ?t=<token>, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`) and try tokens (`pbtry_`), PEM blocks. */
+/** Capability URLs: /p/, /b/, /j/ and /preview/ values, ?t= and ?sig= values, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`) and try tokens (`pbtry_`), PEM blocks. */
 const VALUE_PATTERNS: [RegExp, string][] = [
-  [/(\/[pb]\/)[A-Za-z0-9_-]{16,}/g, '$1[redacted]'],
-  [/([?&](?:t|token|code|key|state)=)[^&\s]+/gi, '$1[redacted]'],
+  [/(\/(?:[pbj]|preview)\/)[A-Za-z0-9_.-]{16,}/g, '$1[redacted]'],
+  [/([?&](?:t|token|code|key|state|sig|exp)=)[^&\s]+/gi, '$1[redacted]'],
   [/(ApplePass|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, '$1 [redacted]'],
   [/(wlt|pbp|pbo)_[A-Za-z0-9_-]+/g, '$1_[redacted]'],
   [/pbtry_[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?/g, 'pbtry_[redacted]'],

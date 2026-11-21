@@ -54,6 +54,33 @@ function assertFixedConfig(
   }
 }
 
+const storedConfig = (def: ReturnType<typeof requireConnector>, conn: ConnectionRow) =>
+  def.configSchema.parse(
+    conn.connectorVersion !== def.version && def.migrate
+      ? def.migrate(conn.connectorVersion, conn.config)
+      : conn.config,
+  );
+
+const originsOf = (urls: string[]) => new Set(urls.map((u) => new URL(u).origin));
+
+/** A stored credential is bound to the origins it was entered for; a new origin needs a new credential. */
+function assertCredentialOrigin(
+  def: ReturnType<typeof requireConnector>,
+  conn: ConnectionRow,
+  next: Record<string, unknown>,
+  secrets: UpdateInput['secrets'],
+): void {
+  if (!conn.credentialId || !def.urls) return;
+  if (secrets !== undefined && Object.keys(secrets).length > 0) return;
+  const known = originsOf(def.urls(storedConfig(def, conn) as never));
+  const moved = [...originsOf(def.urls(next as never))].some((o) => !known.has(o));
+  if (moved) {
+    throw new ValidationError('Enter the credential again to use a new host.', [
+      { path: 'secrets', message: 'Required when the host changes.' },
+    ]);
+  }
+}
+
 export async function update(
   sctx: ServiceContext,
   actor: Actor,
@@ -84,6 +111,7 @@ export async function update(
     const config = parseWith(def.configSchema, input.config, 'config');
     assertFixedConfig(def, conn, config);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
+    assertCredentialOrigin(def, conn, config, input.secrets);
     patch.config = config;
     patch.connectorVersion = def.version;
     patch.cursor = null;
@@ -228,7 +256,15 @@ export async function update(
     action: 'connection.update',
     targetType: 'connection',
     targetId: id,
-    detail: { changed: [...changed] },
+    detail: {
+      changed: [...changed],
+      ...(input.config !== undefined && def.urls
+        ? {
+            from: [...originsOf(def.urls(storedConfig(def, conn) as never))],
+            to: [...originsOf(def.urls(patch.config as never))],
+          }
+        : {}),
+    },
   });
   const fresh = await requireConnection(sctx, id);
   return { ...toDto(sctx.env, fresh), ...(generated ? { webhookSecret: generated } : {}) };

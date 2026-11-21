@@ -55,8 +55,10 @@ export interface HostedPageInput {
   nonce: string;
   /** The visitor's theme choice (requestTheme); undefined follows the OS. */
   theme?: PageTheme;
-  /** `<title>` and the card's h1. */
+  /** The card's h1, and the `<title>` unless `headTitle` says otherwise. */
   title: string;
+  /** A capability page's tab and link-preview title, when `title` can carry a holder's name; it also drops the manifest link. */
+  headTitle?: string;
   /** The scene's art and state beat (CSS only, static after load). */
   art: HostedArt;
   /** At most one short line under the h1, already escaped. */
@@ -120,5 +122,5 @@ export function hostedPage(input: HostedPageInput): string {
   const { brand } = input;
   const sheet = brand ? `${ORG_SHELL_CSS}\n${brandCss(brand)}` : '';
   const suffix = brand ? brand.name : 'PassBook';
-  return `${documentStart(input.theme)}${appPageHead(input.title)}${refresh}<title>${escapeHtml(input.title)} · ${escapeHtml(suffix)}</title><style nonce="${input.nonce}">${HOSTED_CSS}${sheet}${input.css ?? ''}</style>${input.head ?? ''}</head><body><main class="hosted${input.wide ? ' wide' : ''}"><div class="band"><div class="brand">${brand ? orgLogoHtml(brand) : wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section>${orgMarkHtml(brand)}</main>${input.replay === false ? '' : REPLAY_SCRIPT}${input.after ?? ''}</body></html>`;
+  return `${documentStart(input.theme)}${appPageHead(input.headTitle ?? input.title, { manifest: input.headTitle === undefined })}${refresh}<title>${escapeHtml(input.headTitle ?? input.title)} · ${escapeHtml(suffix)}</title><style nonce="${input.nonce}">${HOSTED_CSS}${sheet}${input.css ?? ''}</style>${input.head ?? ''}</head><body><main class="hosted${input.wide ? ' wide' : ''}"><div class="band"><div class="brand">${brand ? orgLogoHtml(brand) : wordmarkHtml()}</div><div class="scene" aria-hidden="true">${art}</div></div><section class="card" data-state="${input.art}"><div class="body"><div><h1>${escapeHtml(input.title)}</h1>${lede}</div>${error}${input.body}</div>${footer}</section>${orgMarkHtml(brand)}</main>${input.replay === false ? '' : REPLAY_SCRIPT}${input.after ?? ''}</body></html>`;
 }

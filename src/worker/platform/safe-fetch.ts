@@ -86,8 +86,12 @@ export function isPrivateIp(ip: string): boolean {
   // ::ffff:a.b.c.d (mapped) and ::a.b.c.d (compatible) carry an IPv4 address.
   if (h0 === 0 && h1 === 0 && h2 === 0 && h3 === 0 && h4 === 0 && (h5 === 0xffff || h5 === 0))
     return h5 === 0 && h6 === 0 && h7 <= 1 ? true : isPrivateIp(embedded);
+  // ::ffff:0:a.b.c.d (RFC 2765 IPv4-translated) carries an IPv4 address too.
+  if (h0 === 0 && h1 === 0 && h2 === 0 && h3 === 0 && h4 === 0xffff && h5 === 0)
+    return isPrivateIp(embedded);
   return (
     (h0 & 0xffc0) === 0xfe80 || // fe80::/10 link-local
+    (h0 & 0xffc0) === 0xfec0 || // fec0::/10 site-local (deprecated)
     (h0 & 0xfe00) === 0xfc00 || // fc00::/7 unique local
     (h0 & 0xff00) === 0xff00 || // ff00::/8 multicast
     (h0 === 0x64 && h1 === 0xff9b) || // 64:ff9b::/96 and 64:ff9b:1::/48 NAT64
@@ -257,6 +261,7 @@ export function createSafeFetch(options: SafeFetchOptions = {}): SafeFetch {
     const hops = Math.min(Math.max(options.maxRedirects ?? 0, 0), MAX_REDIRECTS);
     const blocked = () =>
       new UpstreamError('The upstream redirected the request.', 'REDIRECT_BLOCKED');
+    // The DNS check below is best effort (the edge resolves the name again); `global_fetch_strictly_public` is the backstop.
     let current = url;
     let headers = init.headers;
     let response: Response;

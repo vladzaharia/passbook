@@ -18,6 +18,7 @@ import { assertTemplateAuthority, authorizeTemplateWrite } from './access.ts';
 import { LIMITS } from './package/unzip.ts';
 import { getOrgName } from './repo.ts';
 import { queueTemplateUpload, recordUploadStartFailure } from './repo-upload.ts';
+import { enforceTemplateBudget } from './upload-budget.ts';
 
 /** Multipart framing on top of the 15 MB archive. */
 export const UPLOAD_BODY_LIMIT = LIMITS.archiveBytes + 64 * 1024;
@@ -30,6 +31,7 @@ export async function acceptUpload(
 ): Promise<z.infer<typeof UploadTemplateResponseSchema>> {
   const orgId = query.orgId ?? null;
   const authority = await authorizeTemplateWrite(ctx, auth, orgId, 'templates:author');
+  await enforceTemplateBudget(ctx, auth, orgId);
   if (orgId && !(await getOrgName(ctx.env.DB, orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const archive = await archiveBytes();

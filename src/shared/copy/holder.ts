@@ -49,6 +49,8 @@ export const HOLDER_COPY = {
   /** The wallet choice: the way that fits this device, then the rest (a list's accessible name). */
   otherWays: 'Other ways',
   showBarcode: 'Show barcode',
+  /** The barcode page's tab and link preview: the pass title can be a holder's name. */
+  barcodeTitle: 'Barcode',
   /** The paper channel: a link to the print page. */
   print: 'Print',
   /** Every channel is off for this pass. */
