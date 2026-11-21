@@ -1,7 +1,7 @@
 import { normalizeEmail, UNVERIFIED_EMAIL_SUFFIX } from '../../../shared/email.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { pruneCounters } from '../../platform/counters.ts';
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -30,7 +30,7 @@ export const findUserByEmail = (db: Db, email: string) =>
   first<UserRow>(
     db,
     'SELECT u.* FROM user_emails e JOIN users u ON u.id = e.user_id WHERE e.email = ?',
-    [email],
+    [normalizeEmail(email)],
   );
 
 export const findUserByPrimaryEmail = (db: Db, email: string) =>
@@ -102,10 +102,10 @@ export async function releaseUnprovenPrimary(
 ): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE users SET primary_email = ? WHERE id = ? AND primary_email = ?
+    `UPDATE users SET primary_email = ? WHERE id = ? AND lower(primary_email) = ?
        AND EXISTS (SELECT 1 FROM auth_identities a WHERE a.user_id = users.id AND a.provider <> 'breakglass')
        AND NOT EXISTS (SELECT 1 FROM user_emails e WHERE e.email = ?)`,
-    [unverifiedPrimaryEmail(holderId), holderId, email, email],
+    [unverifiedPrimaryEmail(holderId), holderId, normalizeEmail(email), normalizeEmail(email)],
   );
   return changes > 0;
 }
@@ -121,9 +121,9 @@ export async function adoptPrimaryEmail(
   await run(
     db,
     `UPDATE users SET primary_email = ?, primary_set_amr = ? WHERE id = ? AND primary_email = ?
-       AND NOT EXISTS (SELECT 1 FROM users WHERE primary_email = ?)
+       AND NOT EXISTS (SELECT 1 FROM users WHERE lower(primary_email) = ?)
        AND (? = 'oidc' OR NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.user_id = users.id AND m.revoked_at IS NULL))`,
-    [email, amr, userId, unverifiedPrimaryEmail(userId), email, amr],
+    [email, amr, userId, unverifiedPrimaryEmail(userId), normalizeEmail(email), amr],
   );
 }
 
@@ -169,24 +169,24 @@ export const findIdentity = (db: Db, provider: string, subject: string) =>
     [provider, subject],
   );
 
-/** True when the identity was linked now; false when the subject was already linked. */
-export async function insertIdentity(
-  db: Db,
-  row: {
-    provider: string;
-    subject: string;
-    userId: string;
-    emailClaim: string | null;
-    emailVerified: boolean;
-    groups: string[];
-    now: number;
-  },
-): Promise<boolean> {
-  const { changes } = await run(
+interface NewIdentityRow {
+  provider: string;
+  subject: string;
+  userId: string;
+  emailClaim: string | null;
+  emailVerified: boolean;
+  groups: string[];
+  now: number;
+}
+
+/** `onlyIfNone`: link only while the account has no identity (one statement, race-safe). */
+export function insertIdentityStmt(db: Db, row: NewIdentityRow, onlyIfNone = false) {
+  return stmt(
     db,
     `INSERT OR IGNORE INTO auth_identities
        (provider, subject, user_id, email_claim, email_verified, groups, created_at, last_used_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?
+     WHERE ? = 0 OR NOT EXISTS (SELECT 1 FROM auth_identities WHERE user_id = ?)`,
     [
       row.provider,
       row.subject,
@@ -196,9 +196,19 @@ export async function insertIdentity(
       JSON.stringify(row.groups),
       row.now,
       row.now,
+      onlyIfNone ? 1 : 0,
+      row.userId,
     ],
   );
-  return changes > 0;
+}
+
+export const IDENTITY_LINKED_SQL =
+  'changes() = 1 AND EXISTS (SELECT 1 FROM auth_identities WHERE provider = ? AND subject = ? AND user_id = ?)';
+
+/** True when the identity was linked now; false when the subject was already linked. */
+export async function insertIdentity(db: Db, row: NewIdentityRow, onlyIfNone = false) {
+  const { meta } = await insertIdentityStmt(db, row, onlyIfNone).run();
+  return (meta.changes ?? 0) > 0;
 }
 
 export async function updateIdentity(

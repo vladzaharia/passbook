@@ -1,6 +1,9 @@
 import {
   CHANNELS,
+  type ChainLevel,
   type Channel,
+  type ChannelLevel,
+  type ChannelLevelState,
   type ChannelReason,
   type ChannelSource,
   type EffectiveChannels,
@@ -94,6 +97,23 @@ function statusOf(i: ChannelInputs, c: Channel): EffectiveChannels[Channel] {
   if (override === 'off') return off('pass', 'pass_off');
   return state === 'on' ? { on: true, source: 'template' } : off('template', 'template_off');
 }
+
+/** The chain level of an effective status: an entitlement refusal is `plan`, other platform stops `passbook`. */
+export function chainLevelOf(source: ChannelSource, reason?: ChannelReason): ChainLevel {
+  if (source === 'platform') return reason === 'not_included' ? 'plan' : 'passbook';
+  return source;
+}
+
+/** How a level reads when `reason` stops it there; no reason is `ok`. One rule for every chain. */
+export function levelState(level: ChainLevel, reason?: ChannelReason): ChannelLevelState {
+  if (!reason) return 'ok';
+  if (level === 'passbook' || level === 'plan') return 'locked';
+  return reason === 'not_enrolled' ? 'needs' : 'off';
+}
+
+/** The level that stops the channel: the first one not `ok` or `partial`; null when it goes through. */
+export const stoppingLevel = (levels: readonly ChannelLevel[]): ChannelLevel | null =>
+  levels.find((l) => l.state !== 'ok' && l.state !== 'partial') ?? null;
 
 /** The feature of the organization's plan each delivery channel needs; the rest are not plan-gated. */
 const CHANNEL_FEATURE: Partial<Record<Channel, { key: EntitlementKey; want?: string }>> = {

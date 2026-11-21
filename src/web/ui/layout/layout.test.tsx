@@ -93,7 +93,7 @@ describe('route guards in the app', () => {
     expect(router.state.location.pathname).toBe('/admin/platform/users');
     // One reachable scope: a label, not a menu; and no Test mode outside an organization.
     expect(screen.queryByRole('combobox', { name: /^Scope:/ })).toBeNull();
-    expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull();
   });
 
   it('shows the Test mode switch only inside an organization', async () => {
@@ -104,11 +104,11 @@ describe('route guards in the app', () => {
       handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
     });
     await screen.findByRole('heading', { name: 'Passes', level: 1 });
-    expect(screen.getByRole('switch', { name: 'Test mode' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Mode' })).toBeInTheDocument();
     await act(async () => {
       await router.navigate({ to: '/admin/platform/status' });
     });
-    await waitFor(() => expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull());
   });
 
   it('labels a single organization as a link into it, not a menu, from a platform page', async () => {

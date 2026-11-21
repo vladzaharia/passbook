@@ -15,7 +15,7 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   const release = await requireActiveTemplateRelease(admin, orgId, seedTemplateId(), 'test');
 
   await page.goto(`/admin/passes?orgId=${encodeURIComponent(orgId)}`);
-  const toggle = page.getByRole('switch', { name: 'Test mode' });
+  const toggle = page.getByRole('radio', { name: 'Test' });
   await toggle.click();
   await expect(toggle).toBeChecked();
   const band = page.getByRole('status').filter({ hasText: 'Test mode' });
@@ -72,7 +72,7 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   expect(outbox.items.map((e: { kind: string }) => e.kind)).toContain('email.captured');
 
   await page.goto(search);
-  await page.getByRole('switch', { name: 'Test mode' }).click();
+  await page.getByRole('radio', { name: 'Live' }).click();
   await expect(band).toBeHidden();
   await expect(page.getByText('No passes match')).toBeVisible();
   await expect(page.getByRole('row').filter({ hasText: name })).toHaveCount(0);

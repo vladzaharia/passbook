@@ -9,6 +9,11 @@ export const AUTH_ACTIONS = {
   'auth.breakglass_used': a('Break-glass sign-in', ShieldAlert, 'warning'),
   'auth.denied': a('Access denied', ShieldX, 'warning'),
   'auth.identity_linked': a('Sign-in method linked', Link2, 'info'),
+  'auth.identity_linked_moved_primary': a(
+    'Polaris ID linked after email change',
+    ShieldAlert,
+    'warning',
+  ),
   'auth.primary_email_unproven': a('Unproven email released', ShieldAlert, 'warning'),
   'auth.oidc_email_not_primary': a('Polaris ID email not primary', ShieldAlert, 'warning'),
 };

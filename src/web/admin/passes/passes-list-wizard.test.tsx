@@ -509,7 +509,9 @@ describe('new pass wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('heading', { name: 'Template' })).toBeInTheDocument();
     expect(screen.getByText('Choose a template.')).toBeInTheDocument();
-    await waitFor(() => expect(document.activeElement).toBe(screen.getAllByRole('radio')[0]));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole('radio', { name: /Copper card/ })),
+    );
     expect(await screen.findByText('1 field needs attention')).toBeInTheDocument();
     await toDetails(user);
     // Details with a required field empty: focus moves to it.

@@ -107,6 +107,10 @@ const EXEMPT: Record<string, Exempt> = {
   'src/worker/modules/delivery/apns.ts': {
     reason: 'the transport itself: every send site is fenced',
   },
+  'src/worker/modules/auth/account-claims.ts': {
+    reason:
+      "tells a person's own verified addresses that Polaris ID was linked to their account: no org or pass is involved",
+  },
   'src/worker/modules/delivery/mailer.ts': {
     reason: 'the mailer itself: every send site is fenced',
   },
