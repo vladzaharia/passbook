@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ACCOUNT_COPY } from '@/shared/copy/account.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { removeWithTransition } from '../lib/motion.ts';
@@ -156,6 +157,7 @@ export function EmailsSection({
               onMakePrimary={(email) => setConfirm({ kind: 'primary', email })}
               busyEmail={busy}
               addError={addError}
+              onlyOneHint={ACCOUNT_COPY.addAnotherFirst}
             />
           ) : null}
         </div>

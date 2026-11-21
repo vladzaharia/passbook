@@ -85,11 +85,44 @@ describe('account page', () => {
     });
     expect(await screen.findByText('work@example.com')).toBeInTheDocument();
     expect(await screen.findByText('This device')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Revoke Safari on iOS' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign out Safari on iOS' })).toBeInTheDocument();
     const rows = within(screen.getByRole('list', { name: 'Sessions' })).getAllByRole('listitem');
     for (const row of rows) expect(row.querySelector('svg')).not.toBeNull();
     expect(screen.queryByText(/^Name/)).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('names the sign-in method in a pill, lists This device first', async () => {
+    await renderApp('/account', {
+      handlers: {
+        '/api/v1/me/emails': () => json(emails()),
+        '/api/v1/me/sessions': () =>
+          json({ items: [...sessions().items].reverse(), nextCursor: null }),
+      },
+    });
+    const rows = within(await screen.findByRole('list', { name: 'Sessions' })).getAllByRole(
+      'listitem',
+    );
+    expect(rows[0]).toHaveTextContent('This device');
+    expect(screen.queryByText('Signed in with')).toBeNull();
+    expect(screen.getByText(/^(Email link|Polaris ID)$/)).toBeInTheDocument();
+  });
+
+  it('disables Remove on the only email and says why', async () => {
+    await renderApp('/account', {
+      handlers: {
+        '/api/v1/me/emails': () =>
+          json({
+            items: [
+              { email: 'test@example.com', verifiedAt: 1, verifiedVia: 'oidc', primary: true },
+            ],
+            nextCursor: null,
+          }),
+        '/api/v1/me/sessions': () => json(sessions()),
+      },
+    });
+    expect(await screen.findByText('Add another email first.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeDisabled();
   });
 
   it('adds an email as a pending row with Resend and Cancel, then sees it verified', async () => {
@@ -499,8 +532,10 @@ describe('account page', () => {
         },
       },
     });
-    await user.click(await screen.findByRole('button', { name: 'Revoke Safari on iOS' }));
-    await waitFor(() => expect(screen.queryByRole('button', { name: /^Revoke / })).toBeNull());
+    await user.click(await screen.findByRole('button', { name: 'Sign out Safari on iOS' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /^Sign out Safari/ })).toBeNull(),
+    );
     expect(revoked).toBe(true);
   });
 

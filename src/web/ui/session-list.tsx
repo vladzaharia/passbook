@@ -22,6 +22,8 @@ export interface SessionListProps {
   onRevoke: (id: string) => void;
   /** The id being revoked. */
   revoking?: string;
+  /** The button's word: Revoke on a console, Sign out on the person's own devices. */
+  revokeLabel?: string;
   className?: string;
 }
 
@@ -30,7 +32,13 @@ export interface SessionListProps {
  * The This device pill sits exactly where Revoke sits on the other rows. Callers drop a revoked
  * row inside removeWithTransition (lib/motion.ts) so it leaves with a transition.
  */
-export function SessionList({ items, onRevoke, revoking, className }: SessionListProps) {
+export function SessionList({
+  items,
+  onRevoke,
+  revoking,
+  revokeLabel = 'Revoke',
+  className,
+}: SessionListProps) {
   const fresh = useInsertHighlight(items.map((s) => s.id));
   const now = Date.now();
   return (
@@ -57,10 +65,10 @@ export function SessionList({ items, onRevoke, revoking, className }: SessionLis
                   className="text-danger"
                   loading={revoking === s.id}
                   iconStart={<ACTION_ICON.signOut aria-hidden />}
-                  aria-label={`Revoke ${label}`}
+                  aria-label={`${revokeLabel} ${label}`}
                   onClick={() => onRevoke(s.id)}
                 >
-                  Revoke
+                  {revokeLabel}
                 </Button>
               )
             }
