@@ -7,6 +7,15 @@ const O = OrgSettingsSchema.shape;
 
 export const ORG_FIELDS: readonly SettingField[] = [
   {
+    key: 'org.timeZone',
+    group: 'General',
+    label: 'Time zone',
+    kind: 'zone',
+    optional: true,
+    help: 'The clock for sites without their own time zone.',
+    schema: O['org.timeZone'],
+  },
+  {
     key: 'branding.accent',
     label: 'Accent color',
     kind: 'color',

@@ -1,6 +1,6 @@
 import type { ZodType } from 'zod';
 
-export type FieldKind = 'boolean' | 'text' | 'int' | 'color';
+export type FieldKind = 'boolean' | 'text' | 'int' | 'color' | 'zone';
 
 export interface SettingField {
   key: string;
