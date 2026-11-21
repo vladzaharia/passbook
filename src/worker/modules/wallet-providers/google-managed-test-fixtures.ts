@@ -15,6 +15,10 @@ export interface GoogleStub {
   aggregator: boolean;
   /** The next N token exchanges answer 400. */
   failTokenTimes: number;
+  /** Owner emails by issuer id (`permissions.get`). */
+  owners: Map<string, string[]>;
+  /** The next N `keys.delete` calls answer 503. */
+  failDeleteTimes: number;
   /** After `keys.create`, the next N token exchanges answer 400 (the new key does not work yet). */
   failTokenAfterCreate: number;
   /** Key names the service account holds. */
@@ -37,6 +41,8 @@ export function installGoogleStub(): GoogleStub {
     aggregator: true,
     failTokenTimes: 0,
     failTokenAfterCreate: 0,
+    owners: new Map(),
+    failDeleteTimes: 0,
     keys: [],
     created: [],
     insertStatus: null,
@@ -55,6 +61,16 @@ export function installGoogleStub(): GoogleStub {
       return json({ access_token: 'ya29.stub', token_type: 'Bearer', expires_in: 3600 });
     }
     if (url.hostname === 'walletobjects.googleapis.com') {
+      const owned = url.pathname.split('/permissions/')[1];
+      if (owned !== undefined) {
+        if (!stub.issuers.has(owned)) return json({}, 403);
+        return json({
+          permissions: (stub.owners.get(owned) ?? []).map((emailAddress) => ({
+            emailAddress,
+            role: 'OWNER',
+          })),
+        });
+      }
       const id = url.pathname.split('/issuer/')[1];
       if (method === 'GET' && id === undefined) {
         if (stub.listStatus) return json({}, stub.listStatus);
@@ -92,6 +108,10 @@ export function installGoogleStub(): GoogleStub {
         });
       }
       if (method === 'DELETE') {
+        if (stub.failDeleteTimes > 0) {
+          stub.failDeleteTimes -= 1;
+          return json({}, 503);
+        }
         const name = decodeURIComponent(url.pathname.replace('/v1/', ''));
         if (!stub.keys.includes(name)) return json({}, 404);
         stub.keys = stub.keys.filter((k) => k !== name);

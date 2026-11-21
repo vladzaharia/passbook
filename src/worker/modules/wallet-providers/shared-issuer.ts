@@ -1,4 +1,5 @@
 import type { WalletCredential } from '../../../shared/contracts/wallet-providers.ts';
+import { normalizeEmail } from '../../../shared/email.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import {
   ConflictError,
@@ -8,19 +9,15 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
-import { credentialIdentityHash } from './account-credential-source.ts';
 import { credentialDto, orgWriter, save } from './credential-service.ts';
 import { readGoogleSecret } from './credential-system-save.ts';
 import { isGoogleIssuerId } from './google-credentials.ts';
 import { GoogleWalletError } from './google-errors.ts';
-import { getGoogleIssuer } from './google-issuer-rest.ts';
+import { getGoogleIssuer, getGoogleIssuerOwners } from './google-issuer-rest.ts';
 import { managedDeps } from './google-managed-deps.ts';
 import { platformAccess } from './google-platform-access.ts';
-import {
-  activeOrgGoogle,
-  activePlatformGoogle,
-  issuerClaimedElsewhere,
-} from './repo-google-managed.ts';
+import { claimIssuer, issuerHash } from './issuer-claims.ts';
+import { activeOrgGoogle, activePlatformGoogle, orgAdminEmails } from './repo-google-managed.ts';
 
 function sessionOf(auth: SessionAuth): SessionAuth {
   if (auth?.kind !== 'session') throw new ForbiddenError();
@@ -73,9 +70,7 @@ export async function shareGoogleIssuer(
     throw new UpstreamError('Google did not answer. Try again.', 'GOOGLE_UNAVAILABLE');
   }
   const secret = { ...access.credentials, issuerId };
-  const hash = await credentialIdentityHash({ provider: 'google', credentials: secret });
-  if (await issuerClaimedElsewhere(ctx.env.DB, hash, mode, orgId))
-    throw new ConflictError('Another organization uses this issuer.', 'WALLET_ISSUER_CLAIMED');
+  const hash = await issuerHash(issuerId);
   const current = await activeOrgGoogle(ctx.env.DB, orgId, mode);
   if (current) {
     if (current.signer_ref !== access.credential.id || current.identity_hash !== hash)
@@ -85,6 +80,8 @@ export async function shareGoogleIssuer(
       );
     return { credential: credentialDto(current), serviceAccountEmail: email };
   }
+  await proveOwnership(ctx, access.accessToken, orgId, issuerId);
+  await claimIssuer(ctx, { issuerId, orgId, origin: 'shared', owned: true });
   const row = await save(
     ctx,
     w,
@@ -93,4 +90,37 @@ export async function shareGoogleIssuer(
     { provenance: 'own', signerRef: access.credential.id },
   );
   return { credential: credentialDto(row), serviceAccountEmail: email };
+}
+
+/**
+ * `issuer.get` proves only that PassBook can act for the issuer. The claim needs one more proof: an OWNER
+ * of the issuer (its `permissions`) is a verified address of an admin of the claiming org.
+ */
+async function proveOwnership(
+  ctx: ServiceContext,
+  accessToken: string,
+  orgId: string,
+  issuerId: string,
+): Promise<void> {
+  let owners: string[];
+  try {
+    owners = await getGoogleIssuerOwners(
+      { accessToken, fetcher: managedDeps().fetcher() },
+      issuerId,
+    );
+  } catch (error) {
+    if (
+      error instanceof GoogleWalletError &&
+      (error.code === 'forbidden' || error.code === 'not_found')
+    )
+      owners = [];
+    else throw new UpstreamError('Google did not answer. Try again.', 'GOOGLE_UNAVAILABLE');
+  }
+  const admins = new Set((await orgAdminEmails(ctx.env.DB, orgId)).map(normalizeEmail));
+  if (!owners.some((email) => admins.has(email)))
+    throw new ValidationError(
+      'An owner of this issuer must be a verified email of an admin of this organization.',
+      [],
+      'GOOGLE_ISSUER_NOT_OWNED',
+    );
 }

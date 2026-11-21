@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { first } from '../../platform/db.ts';
+import { first, run as sql } from '../../platform/db.ts';
 import { listOrgCredentials } from './credential-service.ts';
 import { readGoogleSecret } from './credential-system-save.ts';
 import { setManagedDeps } from './google-managed-deps.ts';
@@ -54,9 +54,14 @@ describe('managed Google issuer', () => {
     expect(posts()).toHaveLength(before);
   });
 
-  it('adopts the issuer an earlier attempt made instead of inserting again', async () => {
+  it('adopts an issuer its claim says PassBook made for this org, instead of inserting again', async () => {
     const org = await m.org('Adopt Co');
     m.stub.issuers.set('5550001', 'Adopt Co via PassBook');
+    await sql(
+      m.k.env.DB,
+      "INSERT INTO wallet_google_issuers (issuer_id, org_id, origin, claimed_at) VALUES ('5550001', ?, 'created', 1)",
+      [org.id],
+    );
     const { run: started } = await startManagedIssuer(m.ctx, { orgId: org.id, createdBy: null });
     const before = posts().length;
     await runManagedIssuer(m.ctx, started.runId);
@@ -64,6 +69,40 @@ describe('managed Google issuer', () => {
     expect((await run(started.runId))?.state).toBe('succeeded');
     expect((await latestManagedRun(m.ctx, org.id))?.issuerId).toBe('5550001');
     expect((await activeOrgGoogle(m.k.env.DB, org.id, 'live'))?.identity_hint).toBe('0001');
+  });
+
+  it('records the claim as soon as Google answers; never adopts by name, even after a rename', async () => {
+    const a = await m.org('Claimed Name');
+    const ra = await startManagedIssuer(m.ctx, { orgId: a.id, createdBy: null });
+    await runManagedIssuer(m.ctx, ra.run.runId);
+    const issuerA = (await latestManagedRun(m.ctx, a.id))?.issuerId ?? '';
+    expect(
+      await first<{ org_id: string; origin: string }>(
+        m.k.env.DB,
+        'SELECT org_id, origin FROM wallet_google_issuers WHERE issuer_id = ?',
+        [issuerA],
+      ),
+    ).toEqual({ org_id: a.id, origin: 'created' });
+    // B takes A's name while A's issuer sits unheld in Google: B gets a new issuer of its own.
+    const b = await m.org('Claimed Name');
+    await sql(m.k.env.DB, 'UPDATE orgs SET name = ? WHERE id = ?', ['Claimed Name', b.id]);
+    const before = posts().length;
+    const rb = await startManagedIssuer(m.ctx, { orgId: b.id, createdBy: null });
+    await runManagedIssuer(m.ctx, rb.run.runId);
+    expect(posts()).toHaveLength(before + 1);
+    expect((await latestManagedRun(m.ctx, b.id))?.issuerId).not.toBe(issuerA);
+  });
+
+  it('one delivery at a time: two jobs for one run insert once', async () => {
+    const org = await m.org('Racing');
+    const { run: started } = await startManagedIssuer(m.ctx, { orgId: org.id, createdBy: null });
+    const before = posts().length;
+    await Promise.all([
+      runManagedIssuer(m.ctx, started.runId),
+      runManagedIssuer(m.ctx, started.runId),
+    ]);
+    expect(posts()).toHaveLength(before + 1);
+    expect((await run(started.runId))?.state).toBe('succeeded');
   });
 
   it('does not adopt a same-named issuer another org already holds', async () => {
@@ -107,6 +146,18 @@ describe('managed Google issuer', () => {
     await expect(
       completeManualIssuer(m.ctx, { orgId: other.id, issuerId: '9001', adminId: admin.user.id }),
     ).rejects.toMatchObject({ code: 'WALLET_ISSUER_NOT_WAITING' });
+
+    // An issuer another org holds is refused.
+    const holder = await m.org('Holder');
+    m.stub.issuers.set('9005', 'Held');
+    await sql(
+      m.k.env.DB,
+      "INSERT INTO wallet_google_issuers (issuer_id, org_id, origin, claimed_at) VALUES ('9005', ?, 'created', 1)",
+      [holder.id],
+    );
+    await expect(
+      completeManualIssuer(m.ctx, { orgId: org.id, issuerId: '9005', adminId: admin.user.id }),
+    ).rejects.toMatchObject({ code: 'WALLET_ISSUER_CLAIMED' });
 
     m.stub.issuers.set('9001', 'Console made');
     const sentBefore = m.sent.length;

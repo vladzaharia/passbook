@@ -81,3 +81,21 @@ export async function getGoogleIssuer(
 export async function insertGoogleIssuer(c: GoogleIssuerCall, name: string): Promise<GoogleIssuer> {
   return issuerOf(await call(c, 'issuer insert', ISSUER_API, 'POST', { name }), 'issuer insert');
 }
+
+/** `permissions.get`: the emails that hold OWNER on the issuer (lower-cased). */
+export async function getGoogleIssuerOwners(
+  c: GoogleIssuerCall,
+  issuerId: string,
+): Promise<string[]> {
+  if (!/^[0-9]{1,32}$/.test(issuerId))
+    throw new GoogleWalletError('invalid_input', 'permissions get');
+  const json = (await call(
+    c,
+    'permissions get',
+    `https://walletobjects.googleapis.com/walletobjects/v1/permissions/${issuerId}`,
+    'GET',
+  )) as { permissions?: { emailAddress?: unknown; role?: unknown }[] } | null;
+  return (json?.permissions ?? [])
+    .filter((p) => p.role === 'OWNER' && typeof p.emailAddress === 'string')
+    .map((p) => String(p.emailAddress).trim().toLowerCase().normalize('NFC'));
+}
