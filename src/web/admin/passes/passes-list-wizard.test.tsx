@@ -721,7 +721,7 @@ describe('new pass wizard', () => {
     );
     expect(screen.getByText('Monthly')).toBeInTheDocument();
     expect(screen.getByText(/Jan 1, 2030/)).toBeInTheDocument();
-    expect(screen.getByText('Generation 2')).toBeInTheDocument();
+    expect(screen.queryByText(/Generation/)).toBeNull();
     expect(screen.queryByText(/2030-01-01T/)).toBeNull();
   });
 });

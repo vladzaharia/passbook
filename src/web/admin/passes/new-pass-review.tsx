@@ -59,7 +59,6 @@ export function ReviewStep({
     { label: 'Organization', value: org, ...(steps.org !== undefined ? { step: steps.org } : {}) },
     { label: 'Mode', value: mode === 'test' ? 'Test' : 'Live' },
     { label: 'Template', value: template, step: steps.template },
-    ...(release ? [{ label: 'Release', value: `Generation ${release.generation}` }] : []),
     ...(release ? [{ label: 'Wallet provider', value: 'Apple Wallet' }] : []),
     ...fields.map((f) => ({ label: f.label, value: shown(input[f.key], f), step: steps.details })),
     { label: 'Holder', value: email.trim() || 'No holder yet', step: steps.holder },
