@@ -1,48 +1,71 @@
-import { useMemo } from 'react';
-import { Card, CardBody, CardHeader, ErrorState, SkeletonRows } from '@/web/ui/index.ts';
-import { ApnsPill, ExpiryPill } from './apple/expiry.tsx';
-import { useOrgIdentities } from './apple/queries.ts';
+import { useMemo, useState } from 'react';
+import { MANAGED_PREFIX } from '@/shared/identity-handle.ts';
+import { Button, Card, CardBody, CardHeader, ErrorState, SkeletonRows } from '@/web/ui/index.ts';
+import { IdentityStatusPill, KIND_LABEL, renewalText } from './apple/identity-status.tsx';
+import { useOrgWalletIdentities } from './apple/managed-queries.ts';
+import { NewManagedIdentityDialog } from './apple/new-managed-dialog.tsx';
+import { OrgAppleHistory } from './org-apple-history.tsx';
 
-/** The organization's own Apple identity, read-only here: PassBook's platform identity signs otherwise. */
-export function OrgAppleCard({ orgId }: { orgId: string }) {
-  const query = useOrgIdentities(orgId);
-  const now = useMemo(() => Date.now(), []);
+/** The organization's Apple identity: one line, and its history. */
+export function OrgAppleCard({ orgId, canManage }: { orgId: string; canManage: boolean }) {
+  const query = useOrgWalletIdentities(orgId);
+  const [creating, setCreating] = useState(false);
+  const [history, setHistory] = useState(false);
+  const identity = useMemo(
+    () => query.data?.items.find((i) => i.kind !== 'platform'),
+    [query.data],
+  );
   return (
     <Card>
-      <CardHeader title="Apple" />
-      <CardBody className="flex flex-col gap-3">
+      <CardHeader
+        title="Apple"
+        actions={
+          <Button size="sm" variant="ghost" onClick={() => setHistory(true)}>
+            History
+          </Button>
+        }
+      />
+      <CardBody className="flex flex-wrap items-center justify-between gap-3">
         {query.isPending ? (
-          <SkeletonRows rows={2} label="Loading Apple identity" />
+          <SkeletonRows rows={1} label="Loading Apple identity" />
         ) : query.isError ? (
           <ErrorState
             subject="Apple identity"
             error={query.error}
             onRetry={() => query.refetch()}
           />
-        ) : query.data.items.length === 0 ? (
-          <p className="text-sm text-fg-muted">Signs with PassBook's identity.</p>
+        ) : identity ? (
+          <>
+            <p className="min-w-0 break-all text-sm">
+              <span className="font-mono">{identity.identifier}</span>
+              <span className="text-fg-muted">
+                {' · '}
+                {KIND_LABEL[identity.kind]}
+                {' · '}
+                {renewalText(identity)}
+              </span>
+            </p>
+            <IdentityStatusPill status={identity.status} />
+          </>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {query.data.items.map((identity) => (
-              <li
-                key={identity.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3"
-              >
-                <div className="min-w-0 text-sm">
-                  <p className="break-words font-medium text-fg-strong">{identity.label}</p>
-                  <p className="break-all font-mono text-xs text-fg-muted">
-                    {identity.passTypeIdentifier}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <ExpiryPill identity={identity} now={now} />
-                  <ApnsPill identity={identity} />
-                </div>
-              </li>
-            ))}
-          </ul>
+          <>
+            <p className="text-sm text-fg-muted">Signs with PassBook's ID</p>
+            {canManage ? (
+              <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+                Get a managed ID
+              </Button>
+            ) : null}
+          </>
         )}
       </CardBody>
+      <NewManagedIdentityDialog open={creating} onOpenChange={setCreating} orgId={orgId} />
+      <OrgAppleHistory
+        orgId={orgId}
+        identityId={identity?.id}
+        identifier={identity?.identifier ?? `${MANAGED_PREFIX}…`}
+        open={history}
+        onOpenChange={setHistory}
+      />
     </Card>
   );
 }

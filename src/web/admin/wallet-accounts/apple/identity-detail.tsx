@@ -25,6 +25,13 @@ import { CreatedCallout, useCreated } from '../../passes/created.tsx';
 import { attentionTone, expiryPhrase } from './attention.ts';
 import { remainingDays, WARN_DAYS } from './expiry.tsx';
 import { CertificateCard, OverviewCard, SettingsCard } from './identity-cards.tsx';
+import { HistoryCards } from './identity-history.tsx';
+import {
+  isManaged,
+  ManagedMenuItems,
+  RenewButton,
+  StopNewPassesDialog,
+} from './managed-actions.tsx';
 import { PushCard } from './push-card.tsx';
 import { useDeleteIdentity, useIdentity, useResignIdentityPasses } from './queries.ts';
 import { RotateIdentityDialog } from './rotate-dialog.tsx';
@@ -40,6 +47,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
   const resign = useResignIdentityPasses(identityId);
   const created = useCreated(`identity:${identityId}`);
   const [confirm, setConfirm] = useState<'delete' | 'resign'>();
+  const [stopping, setStopping] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [pushKeyOpen, setPushKeyOpen] = useState(false);
   const crumbs = [
@@ -101,33 +109,39 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
           </>
         }
         actions={
-          <MoreMenu>
-            <DropdownMenuItem
-              onSelect={() => void copyText(identity.passTypeIdentifier, 'pass type ID')}
-            >
-              <Copy aria-hidden />
-              Copy pass type ID
-            </DropdownMenuItem>
-            {uploaded ? (
-              <DropdownMenuItem onSelect={() => setRotating(true)}>
-                <ACTION_ICON.rotate aria-hidden />
-                Replace certificate
+          <>
+            {isManaged(identity) ? <RenewButton identity={identity} /> : null}
+            <MoreMenu>
+              {isManaged(identity) ? (
+                <ManagedMenuItems identity={identity} onStopNewPasses={() => setStopping(true)} />
+              ) : null}
+              <DropdownMenuItem
+                onSelect={() => void copyText(identity.passTypeIdentifier, 'pass type ID')}
+              >
+                <Copy aria-hidden />
+                Copy pass type ID
               </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem
-              disabled={identity.passCount === 0}
-              onSelect={() => setConfirm('resign')}
-            >
-              <FileSignature aria-hidden />
-              Re-sign {passes(identity.passCount)}
-            </DropdownMenuItem>
-            {uploaded ? (
-              <DropdownMenuItem destructive onSelect={() => setConfirm('delete')}>
-                <ACTION_ICON.delete aria-hidden />
-                Delete
+              {uploaded ? (
+                <DropdownMenuItem onSelect={() => setRotating(true)}>
+                  <ACTION_ICON.rotate aria-hidden />
+                  Replace certificate
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem
+                disabled={identity.passCount === 0}
+                onSelect={() => setConfirm('resign')}
+              >
+                <FileSignature aria-hidden />
+                Re-sign {passes(identity.passCount)}
               </DropdownMenuItem>
-            ) : null}
-          </MoreMenu>
+              {uploaded ? (
+                <DropdownMenuItem destructive onSelect={() => setConfirm('delete')}>
+                  <ACTION_ICON.delete aria-hidden />
+                  Delete
+                </DropdownMenuItem>
+              ) : null}
+            </MoreMenu>
+          </>
         }
       />
       {lifecycleTitle ? (
@@ -179,6 +193,13 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
           />
         ) : null}
         <CertificateCard identity={identity} now={Date.now()} />
+        {isManaged(identity) ? (
+          <HistoryCards
+            identityId={identity.id}
+            identifier={identity.passTypeIdentifier}
+            canAdmin
+          />
+        ) : null}
         <PushCard
           identity={identity}
           dialogOpen={pushKeyOpen}
@@ -189,6 +210,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
           identity={identity}
         />
       </TwoPane>
+      <StopNewPassesDialog identity={identity} open={stopping} onOpenChange={setStopping} />
       <RotateIdentityDialog identityId={identityId} open={rotating} onOpenChange={setRotating} />
       <ConfirmDialog
         open={confirm === 'resign'}

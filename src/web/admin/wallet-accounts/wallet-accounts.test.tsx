@@ -23,7 +23,7 @@ function orgHandlers(
   creds: ReturnType<typeof credential>[] = [],
 ) {
   return {
-    '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+    '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/orgs/o1/wallet-enrolments': () => json({ items: enrolments, nextCursor: null }),
     '/api/v1/orgs/o1/wallet-credentials': () => json({ items: creds, nextCursor: null }),
   };
@@ -293,7 +293,7 @@ describe('platform wallet accounts', () => {
       }),
     ],
   ) => ({
-    '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+    '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials': () =>
       json({
         items: [credential({ scope: 'platform', orgId: null, mode: 'live' })],

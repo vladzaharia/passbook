@@ -3,6 +3,13 @@ import { attentionTone, expiryPhrase, identityAttention } from './attention.ts';
 
 const DAY = 86_400_000;
 const NOW = 1_800_000_000_000;
+interface Cert {
+  id: string;
+  label: string;
+  notBefore: number;
+  notAfter: number;
+  daysRemaining: number;
+}
 const cert = (days: number, over: Record<string, unknown> = {}) =>
   ({
     id: `i${days}`,
@@ -11,7 +18,7 @@ const cert = (days: number, over: Record<string, unknown> = {}) =>
     notAfter: NOW + days * DAY + DAY / 2,
     daysRemaining: days,
     ...over,
-  }) as never;
+  }) as Cert;
 
 describe('attention severity', () => {
   it('is red at seven days or fewer, amber up to thirty', () => {
