@@ -208,20 +208,22 @@ describe('live scanner runtime configuration', () => {
       ...managedSession.devices[0]!.capabilities!.native!,
       layout: { posture: 'unfolded' as const, division: null },
     };
-    setNativeCapabilities(native);
+    await setNativeCapabilities(native);
     const api = { stats: vi.fn().mockResolvedValue(fixtureCounts()) } as unknown as ScanApi;
     const announce = vi.fn();
     runtime = await createRuntime(duo, api, () => null, announce);
     runtime.start();
     ports.native.capabilities?.(JSON.parse(JSON.stringify(native)));
+    await vi.waitFor(() =>
+      expect(announce).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: 'Wallet pass verification is unavailable. Scan the barcode.',
+          polite: false,
+        }),
+      ),
+    );
     expect(runtime.store.getSnapshot().state.camera).not.toBe('disabled');
     expect(ports.camera.start).toHaveBeenCalled();
-    expect(announce).toHaveBeenCalledWith(
-      expect.objectContaining({
-        text: 'Wallet pass verification is unavailable. Scan the barcode.',
-        polite: false,
-      }),
-    );
   });
   it('keeps the iOS camera active when no native barcode reader is available', async () => {
     const base = session('phone');
@@ -232,7 +234,7 @@ describe('live scanner runtime configuration', () => {
         settings: { ...base.scanner!.settings, reader: 'barcode' as const },
       },
     };
-    setNativeCapabilities(managedSession.devices[0]!.capabilities!.native);
+    await setNativeCapabilities(managedSession.devices[0]!.capabilities!.native);
     const api = { stats: vi.fn().mockResolvedValue(fixtureCounts()) } as unknown as ScanApi;
     runtime = await createRuntime(barcode, api, () => null, vi.fn());
     runtime.start();
