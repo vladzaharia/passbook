@@ -19,15 +19,18 @@ function Host() {
     };
   }, []);
   // Closing hands focus back to where it was; opened from the page body (⌘K, "/"), that is the Search button.
+  // The dialog leaves the DOM after its exit animation, so wait for that before looking at focus.
   useEffect(() => {
     if (open) return;
-    const t = setTimeout(() => {
+    const timer = setInterval(() => {
+      if (document.querySelector('[role="dialog"]')) return;
+      clearInterval(timer);
       if (document.activeElement && document.activeElement !== document.body) return;
       const back =
         from.current?.isConnected && from.current !== document.body ? from.current : null;
       (back ?? document.querySelector<HTMLElement>('[data-search]'))?.focus();
-    }, 0);
-    return () => clearTimeout(t);
+    }, 30);
+    return () => clearInterval(timer);
   }, [open]);
   return <SearchPalette open={open} onOpenChange={setOpen} />;
 }
