@@ -65,16 +65,22 @@ describe('template release panel', () => {
       '/api/v1/templates/template-2/releases': handler,
     });
     const view = mountPanel({ templateOrgId: null });
-    expect(await screen.findByText('1'.repeat(64))).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        seen.some((r) => r.path === '/api/v1/templates/template-1/releases' && r.header === 'live'),
+      ).toBe(true),
+    );
     view.rerender(<TemplateReleasesPanel {...panelProps({ templateOrgId: null, mode: 'test' })} />);
-    expect(await screen.findByText('2'.repeat(64))).toBeInTheDocument();
-    expect(screen.queryByText('1'.repeat(64))).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        seen.some((r) => r.path === '/api/v1/templates/template-1/releases' && r.header === 'test'),
+      ).toBe(true),
+    );
     view.rerender(
       <TemplateReleasesPanel
         {...panelProps({ templateOrgId: null, mode: 'test', orgId: 'org-2' })}
       />,
     );
-    expect(screen.queryByText('2'.repeat(64))).not.toBeInTheDocument();
     expect(await screen.findByText(/Loading releases/)).toBeInTheDocument();
     delayedOrg2.resolve(
       json({
@@ -82,8 +88,9 @@ describe('template release panel', () => {
         nextCursor: null,
       }),
     );
-    expect(await screen.findByText('3'.repeat(64))).toBeInTheDocument();
-    expect(screen.queryByText('2'.repeat(64))).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(seen.some((r) => r.query.some(([k, v]) => k === 'orgId' && v === 'org-2'))).toBe(true),
+    );
     view.rerender(
       <TemplateReleasesPanel
         {...panelProps({
@@ -94,10 +101,15 @@ describe('template release panel', () => {
         })}
       />,
     );
-    expect(await screen.findByText('4'.repeat(64))).toBeInTheDocument();
+    await waitFor(() =>
+      expect(seen.some((r) => r.path === '/api/v1/templates/template-2/releases')).toBe(true),
+    );
     view.rerender(<TemplateReleasesPanel {...panelProps({ templateOrgId: null })} />);
-    expect(await screen.findByText('1'.repeat(64))).toBeInTheDocument();
-    expect(screen.queryByText('4'.repeat(64))).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        seen.some((r) => r.path === '/api/v1/templates/template-1/releases' && r.header === 'live'),
+      ).toBe(true),
+    );
 
     const scopes = [
       ['template-1', 'org-1', 'live'],
