@@ -4,10 +4,8 @@ import { hasErrors } from '@/shared/scan-setup-checks.ts';
 import { zoneLabel, zoneOptions } from '@/web/lib/timezones.ts';
 import { ErrorState, FormField, Select, Skeleton } from '@/web/ui/index.ts';
 import { CheckList } from './check-list.tsx';
-import { issueText } from './copy.ts';
 import { DoorSummary } from './door-summary.tsx';
 import type { StepId } from './draft.ts';
-import { SetupIssuesError } from './local-plan.ts';
 import type { SummaryLine } from './summary.ts';
 import type { SetupPreview } from './types.ts';
 
@@ -58,9 +56,7 @@ export function ReviewStep({
           <ErrorState
             inline
             error={preview.error}
-            {...(preview.error instanceof SetupIssuesError
-              ? { title: preview.error.issues.map(issueText).join(' ') }
-              : { subject: 'the plan' })}
+            subject="the plan"
             onRetry={() => preview.refetch()}
           />
         ) : preview.isPending ? (

@@ -4,9 +4,7 @@ import {
   type ScanSetupResult,
   ScanSetupResultSchema,
 } from '@/shared/contracts/scan-setup-intent.ts';
-import type { SetupPlanContext } from '@/shared/scan-setup-plan-types.ts';
 import { api } from '@/web/lib/api.ts';
-import { localPreview } from './local-plan.ts';
 import type { SetupPreview } from './types.ts';
 
 const PATH = '/api/v1/scanning-sessions/setup';
@@ -23,22 +21,14 @@ export function applySetup(
   });
 }
 
-/**
- * The plan the server would make, writing nothing. While the route is missing (S3) this plans
- * locally instead; see local-plan.ts.
- */
+/** The plan the server would make, writing nothing. */
 export async function dryRunSetup(
   intent: ScanSetupIntent,
-  ctx: SetupPlanContext,
   signal?: AbortSignal,
 ): Promise<SetupPreview> {
-  try {
-    const plan = await api.post(PATH, ScanSetupPlanSchema, intent, {
-      query: { dryRun: true },
-      ...(signal ? { signal } : {}),
-    });
-    return { plan, source: 'server' };
-  } catch (error) {
-    return localPreview(error, intent, ctx);
-  }
+  const plan = await api.post(PATH, ScanSetupPlanSchema, intent, {
+    query: { dryRun: true },
+    ...(signal ? { signal } : {}),
+  });
+  return { plan, source: 'server' };
 }

@@ -12,9 +12,6 @@ export function checkText(check: ScanSetupCheck): string {
   return text ? fillCopy(text, check.params) : check.message;
 }
 
-export const issueText = (issue: SetupIssue): string =>
-  fillCopy(SCAN_SETUP_COPY.issues[issue.code], issue.params);
-
 /** The button on a check: names the device or person when the fix has one. */
 export function fixLabel(fix: ScanSetupFix, names: { device?: string; person?: string }): string {
   switch (fix.kind) {

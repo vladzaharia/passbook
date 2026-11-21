@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type FetchHandler, json, renderApp } from '@/web/lib/test-utils.tsx';
-import { appliedResult, appOptions, factHandlers, pairing } from './test-fixtures.ts';
+import { appliedResult, appOptions, factHandlers, pairing, setupRoute } from './test-fixtures.ts';
 
 beforeEach(() => {
   window.scrollTo = vi.fn();
@@ -15,10 +15,7 @@ async function reachDone(handlers: Record<string, FetchHandler>) {
     ...appOptions,
     handlers: {
       ...factHandlers,
-      '/api/v1/scanning-sessions/setup': (url) =>
-        String(url).includes('dryRun')
-          ? new Response('{}', { status: 404, headers: { 'content-type': 'application/json' } })
-          : json(appliedResult()),
+      '/api/v1/scanning-sessions/setup': setupRoute(),
       ...handlers,
     },
   });
@@ -83,27 +80,26 @@ describe('Done', () => {
   it('asks for a new code once one is spent', async () => {
     let made = 0;
     const { user } = await reachDone({
-      '/api/v1/scanning-sessions/setup': (url) =>
-        String(url).includes('dryRun')
-          ? new Response('{}', { status: 404, headers: { 'content-type': 'application/json' } })
-          : json(
-              appliedResult({
-                sessions: [
+      '/api/v1/scanning-sessions/setup': setupRoute(() =>
+        json(
+          appliedResult({
+            sessions: [
+              {
+                id: 's-new',
+                ref: 'door-1',
+                name: 'Front desk',
+                devices: [
                   {
-                    id: 's-new',
-                    ref: 'door-1',
-                    name: 'Front desk',
-                    devices: [
-                      {
-                        id: 'dev-1',
-                        name: 'Front desk 1',
-                        pairing: pairing('ABCDEFGHJK', Date.now() - 1),
-                      },
-                    ],
+                    id: 'dev-1',
+                    name: 'Front desk 1',
+                    pairing: pairing('ABCDEFGHJK', Date.now() - 1),
                   },
                 ],
-              }),
-            ),
+              },
+            ],
+          }),
+        ),
+      ),
       '/api/v1/scanners/dev-1/pairing': (_url, i) => {
         if (i?.method === 'POST') {
           made++;

@@ -83,7 +83,7 @@ function Body({
   const lines = doorLines(draft, ctx, local);
   const id = STEPS[step]?.id ?? 'where';
   const onReview = id === 'review';
-  const preview = useSetupPreview(intent, ctx, phase === 'build' && onReview);
+  const preview = useSetupPreview(intent, phase === 'build' && onReview);
   const checks = preview.data?.plan.checks ?? [];
   const problem = stepProblem(draft, id);
 

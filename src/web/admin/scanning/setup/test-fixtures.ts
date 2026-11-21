@@ -1,5 +1,12 @@
 import { vi } from 'vitest';
-import { json, membershipFixture, type RenderAppOptions } from '@/web/lib/test-utils.tsx';
+import { planScanSetup } from '@/shared/scan-setup-plan.ts';
+import {
+  type FetchHandler,
+  json,
+  membershipFixture,
+  problem,
+  type RenderAppOptions,
+} from '@/web/lib/test-utils.tsx';
 
 const eligible = (templateId: string, name: string) => ({
   templateId,
@@ -82,3 +89,27 @@ export const appliedResult = (over: Record<string, unknown> = {}) => ({
   checks: [],
   ...over,
 });
+
+/**
+ * The setup route: the dry run answers like the server (the shared planner over the fixture
+ * facts), anything else is the apply.
+ */
+export const setupRoute =
+  (apply: FetchHandler = () => json(appliedResult())): FetchHandler =>
+  (url, init) => {
+    if (!String(url).includes('dryRun')) return apply(url, init);
+    const result = planScanSetup(JSON.parse(String(init?.body)), {
+      mode: 'live',
+      orgTimeZone: 'UTC',
+      templates: ['t1', 't2'].map((id) => ({
+        id,
+        name: id,
+        plans: null,
+        issued: { live: 1, test: 1 },
+      })),
+      zones: [],
+      events: [],
+      staff: [],
+    });
+    return result.ok ? json(result.plan) : problem(422, 'validation_failed', 'Fix the answers.');
+  };

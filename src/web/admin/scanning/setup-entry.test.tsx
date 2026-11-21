@@ -36,7 +36,7 @@ describe('Scanning with nothing set up', () => {
     expect(screen.queryByText('Create a session')).toBeNull();
     // Start blank is today's New session.
     await user.click(screen.getByRole('button', { name: 'Start blank' }));
-    expect(await screen.findByRole('dialog', { name: 'New scanning session' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'New session' })).toBeInTheDocument();
   });
 
   it("opens the wizard with the tile's answers", async () => {
@@ -56,7 +56,7 @@ describe('Scanning with nothing set up', () => {
     });
     expect(await screen.findByRole('link', { name: 'Set up scanning' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Event night/ })).toBeNull();
-    expect(screen.getByRole('button', { name: 'New scanning session' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New session' })).toBeInTheDocument();
   });
 
   it('shows a read-only member no setup', async () => {

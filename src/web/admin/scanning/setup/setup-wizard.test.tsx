@@ -2,7 +2,13 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type FetchHandler, json, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { appliedResult, appOptions, factHandlers, stubDesktop } from './test-fixtures.ts';
+import {
+  appliedResult,
+  appOptions,
+  factHandlers,
+  setupRoute,
+  stubDesktop,
+} from './test-fixtures.ts';
 
 beforeEach(() => {
   window.scrollTo = vi.fn();
@@ -12,7 +18,7 @@ afterEach(() => vi.unstubAllGlobals());
 const start = (preset: string, extra: Record<string, FetchHandler> = {}) =>
   renderApp(`/admin/o/o1/scanning/setup?preset=${preset}`, {
     ...appOptions,
-    handlers: { ...factHandlers, ...extra },
+    handlers: { ...factHandlers, '/api/v1/scanning-sessions/setup': setupRoute(), ...extra },
   });
 const summary = () => screen.findByRole('complementary', { name: 'Door' });
 const next = (user: ReturnType<typeof userEvent.setup>, name = 'Next') =>
@@ -88,7 +94,7 @@ describe('Set up scanning', () => {
     expect(document.querySelector('[data-skipped]')).toHaveTextContent('When');
   });
 
-  it('Review plans locally while the server route is missing, and a fix edits the answers', async () => {
+  it('Review shows the server plan, and a fix edits the answers', async () => {
     const user = userEvent.setup();
     const { fetchMock } = await start('front_desk');
     await screen.findByRole('textbox', { name: /Door name/ });
@@ -177,7 +183,9 @@ describe('Set up scanning', () => {
 
   it('shows the error state, not a crash, when apply fails with a 404', async () => {
     const user = userEvent.setup();
-    await start('event_night');
+    await start('event_night', {
+      '/api/v1/scanning-sessions/setup': setupRoute(() => problem(404, 'not_found', 'Not found.')),
+    });
     await screen.findByRole('textbox', { name: /Door name/ });
     await next(user);
     await user.click(await screen.findByRole('switch', { name: 'Any pass type' }));
@@ -194,14 +202,13 @@ describe('Set up scanning', () => {
     const user = userEvent.setup();
     const seen: { key: string | null; body: unknown }[] = [];
     await start('event_night', {
-      '/api/v1/scanning-sessions/setup': (_url, i) => {
-        if (String(_url).includes('dryRun')) return problem(404, 'not_found', 'Not found.');
+      '/api/v1/scanning-sessions/setup': setupRoute((_url, i) => {
         seen.push({
           key: new Headers(i?.headers).get('Idempotency-Key'),
           body: JSON.parse(String(i?.body)),
         });
         return json(appliedResult());
-      },
+      }),
     });
     await screen.findByRole('textbox', { name: /Door name/ });
     await next(user);
