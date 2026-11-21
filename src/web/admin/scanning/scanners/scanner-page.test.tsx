@@ -231,9 +231,7 @@ describe('Scanner page', () => {
     const user = userEvent.setup();
     const toggle = await screen.findByRole('checkbox', { name: 'Ask staff for their PIN' });
     expect(toggle).toBeEnabled();
-    expect(
-      screen.getByText(/Staff accounts are shared by live and test/i),
-    ).toBeVisible();
+    expect(screen.getByText(/Staff accounts are shared by live and test/i)).toBeVisible();
     await user.click(toggle);
     await user.click(await screen.findByRole('button', { name: /Save/ }));
     await waitFor(() => expect(patch?.settings).toMatchObject({ staffSignIn: true }));
