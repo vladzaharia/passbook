@@ -80,16 +80,14 @@ describe('event totals keep a deleted pass the builder moved', () => {
     expect(await t.act(inDoor, b)).toMatchObject({ reason: 'capacity_full' });
   });
 
-  it('a voided holder who is inside keeps the place until they tap out (OC4)', async () => {
+  it('a voided holder who is inside keeps the place until staff mark them out (OC4)', async () => {
     const e = await t.event({ capacity: 1 });
-    const inDoor = await t.door(e.id, 'in');
-    const outDoor = await t.door(e.id, 'out');
+    const door = await t.door(e.id, 'in');
     const [a, b] = [await t.pass(), await t.pass()];
-    await t.act(inDoor, a);
+    await t.act(door, a);
     await run(t.kit.env.DB, "UPDATE passes SET status='voided' WHERE id=?", [a.id]);
-    expect(await t.act(inDoor, b)).toMatchObject({ reason: 'capacity_full' });
-    // Leaving is never refused: the voided pass taps out and frees the place.
-    expect((await t.act(outDoor, a)).kind).toBe('ok');
-    expect((await t.act(inDoor, b)).kind).toBe('ok');
+    expect(await t.act(door, b)).toMatchObject({ reason: 'capacity_full' });
+    expect(await t.row(a, e.id)).toMatchObject({ state: 'in' });
+    expect(await t.inside(e.id)).toBe(1);
   });
 });

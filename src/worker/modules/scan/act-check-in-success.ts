@@ -1,11 +1,16 @@
 import type { ScanOutcome, ScanReason } from '../../../shared/contracts/scan.ts';
 import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
-import { exists, not, notExists } from '../../platform/authority-cond.ts';
+import { not, notExists } from '../../platform/authority-cond.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { scanAccessOf, waiveOf } from './access.ts';
 import { commitConditions, credentialFacts, lostReason } from './act-check-in-facts.ts';
 import { checkInFinalizer, planCheckInDisplay } from './act-check-in-finalize.ts';
-import { occupancyAfter, occupancyReads, planOccupancyCommit } from './act-check-in-occupancy.ts';
+import {
+  eventPlaceInputs,
+  occupancyAfter,
+  occupancyReads,
+  planOccupancyCommit,
+} from './act-check-in-occupancy.ts';
 import { finishCheckInResult } from './act-check-in-result.ts';
 import { addCheckInStatements, type HeldVariant } from './act-check-in-statements.ts';
 import { checkInVariants, signVariants } from './act-check-in-variants.ts';
@@ -16,7 +21,7 @@ import { StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight } from './act-preflight.ts';
 import { deferTermStart } from './act-term-stamp.ts';
 import type { ScanActor } from './actor.ts';
-import { localDayStart, planCommitCounts } from './counts.ts';
+import { planCommitCounts } from './counts.ts';
 import type { LedgerFacts } from './ledger.ts';
 import type { PreparedPhotoGrant } from './member-photo.ts';
 import { viaName } from './occupancy/admission.ts';
@@ -68,25 +73,14 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   const access = found.access && gate.actionId === ACCESS_GATE ? found.access : null;
   const overrideOf = req.overrideOf ?? null;
   const occupancy = found.occupancy ?? null;
-  const isEvent = occupancy?.spec.kind === 'event';
-  const entering = occupancy?.direction === 'in';
-  const eventLimit =
-    isEvent && entering && presencePlan?.limited
-      ? admissionConds(gate.passId, presencePlan, effect.presenceBefore)
-      : [];
-  const presence = { pass_id: gate.passId, scope: occupancy?.place ?? '' };
-  const cas = effect.presenceBefore
-    ? exists('scan_presence', { ...presence, last_scan_id: effect.presenceBefore.lastScanId })
-    : notExists('scan_presence', presence);
-  const zoneOfEvent = occupancy?.spec.kind === 'event' ? occupancy.spec.event.timeZone : null;
-  const repeat =
-    !isEvent || !entering
-      ? null
-      : action.repeat === 'daily' && zoneOfEvent
-        ? { kind: 'daily' as const, dayStart: localDayStart(now, zoneOfEvent) }
-        : action.repeat === 'cooldown'
-          ? { kind: 'cooldown' as const, ms: (action.cooldownMinutes ?? 5) * 60_000 }
-          : null;
+  const eventIn = eventPlaceInputs(
+    occupancy,
+    gate.passId,
+    presencePlan,
+    effect.presenceBefore,
+    action,
+    now,
+  );
   const occ = occupancy
     ? planOccupancyCommit(occupancy, {
         passId: found.pass.id,
@@ -96,8 +90,7 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
         override: claim.authority.override?.reason ?? null,
         open: overrideOf ? [overrideOpen(overrideOf)] : [],
         // A re-entry event keeps the admission's single or daily limit as a condition of the entry.
-        limit: eventLimit,
-        ...(isEvent ? { cas, repeat } : {}),
+        ...eventIn,
         // A first exit inserts its gate (insert or nothing): no other gate row may appear first.
         gateAsRead: effect.gateBefore
           ? null
@@ -138,11 +131,11 @@ export async function commitCheckInSuccess(input: CheckInSuccessInput): Promise<
   // At an event place the builder holds in and out; only a limit's own conditions repeat here.
   const admitted = commitConditions(
     gate.passId,
-    occupancy ? (eventLimit.length ? presencePlan : undefined) : presencePlan,
+    occupancy ? (eventIn.limit?.length ? presencePlan : undefined) : presencePlan,
     effect.presenceBefore,
     overrideOf,
   );
-  if (eventLimit.length) admitted.reason = 'already_done';
+  if (eventIn.limit?.length) admitted.reason = 'already_done';
   // Each way a scan that did not get in closes, the first that applies: another scan admitted the
   // pass, the event is full, or a rule of its place failed (step 15's order). One ledger row per reason.
   const why: Omit<HeldVariant, 'variant'>[] = [

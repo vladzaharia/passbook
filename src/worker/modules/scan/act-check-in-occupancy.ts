@@ -1,9 +1,12 @@
 import type { ScanOccupancy, ScanReason } from '../../../shared/contracts/scan.ts';
+import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { Grant } from '../../platform/authority.ts';
 import type { AfterRead } from '../../platform/authority-after.ts';
-import { type GrantCond, not } from '../../platform/authority-cond.ts';
+import { exists, type GrantCond, not, notExists } from '../../platform/authority-cond.ts';
 import { waiveOf } from './access.ts';
 import type { FoundAccess } from './access-types.ts';
+import type { AdmissionPlan } from './admission-types.ts';
+import { localDayStart } from './counts.ts';
 import { type FoundOccupancy, occupancyView, occupancyWaivers } from './occupancy/admission.ts';
 import { eventEntryPlan, eventExitPlan, hardLimited } from './occupancy/place.ts';
 import { insideOf, roomIn, waitedSince } from './occupancy/repo.ts';
@@ -28,7 +31,7 @@ import { capacityFullPredicate } from './repo-gates.ts';
 import type { ScanPresenceSnapshot } from './repo-scan-effect.ts';
 import { presenceSnapshot } from './repo-scan-effect-snapshots.ts';
 import { capacityOpen } from './scan-write-grant.ts';
-import { allOf } from './scan-write-statements.ts';
+import { admissionConds, allOf } from './scan-write-statements.ts';
 
 /** One reason a scan that did not move its place is held, and the condition that held it back. */
 interface OccupancyHold {
@@ -37,6 +40,8 @@ interface OccupancyHold {
   /** True while this rule lets the entry through. */
   holds: GrantCond;
 }
+
+type EventRepeat = { kind: 'daily'; dayStart: number } | { kind: 'cooldown'; ms: number } | null;
 
 /** A check-in at a tracked zone, planned from what the scan read (SA §20.4). */
 export interface OccupancyCommit {
@@ -74,7 +79,7 @@ export function planOccupancyCommit(
     /** At an event: the presence row is still the one the scan read and signed (no ABA). */
     cas?: GrantCond;
     /** At an event: the action's own repeat rule, which the place does not carry. */
-    repeat?: { kind: 'daily'; dayStart: number } | { kind: 'cooldown'; ms: number } | null;
+    repeat?: EventRepeat;
   },
 ): OccupancyCommit | null {
   const { passId, scanId, now } = i;
@@ -267,5 +272,33 @@ export function occupancyAfter(
     }),
     lost: why?.reason ?? null,
     hard: hardLimited(o.spec),
+  };
+}
+
+/** What an event place's entry repeats from the scan: the limit, the row it read and the action's rule. */
+export function eventPlaceInputs(
+  o: FoundOccupancy | null,
+  passId: string,
+  plan: AdmissionPlan | undefined,
+  before: ScanPresenceSnapshot | null,
+  action: Pick<ResolvedScanAction, 'repeat' | 'cooldownMinutes'>,
+  now: number,
+): { limit?: GrantCond[]; cas?: GrantCond; repeat?: EventRepeat } {
+  if (o?.spec.kind !== 'event') return {};
+  const entering = o.direction === 'in';
+  const row = { pass_id: passId, scope: o.place };
+  const tz = o.spec.event.timeZone;
+  return {
+    limit: entering && plan?.limited ? admissionConds(passId, plan, before) : [],
+    cas: before
+      ? exists('scan_presence', { ...row, last_scan_id: before.lastScanId })
+      : notExists('scan_presence', row),
+    repeat: !entering
+      ? null
+      : action.repeat === 'daily'
+        ? { kind: 'daily', dayStart: localDayStart(now, tz) }
+        : action.repeat === 'cooldown'
+          ? { kind: 'cooldown', ms: (action.cooldownMinutes ?? 5) * 60_000 }
+          : null,
   };
 }
