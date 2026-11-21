@@ -621,6 +621,8 @@ The console, the developer tools and every API key mint need a Polaris ID sign-i
 
 ### Staff PIN tags
 
+A device's day lock on wrong named PINs (100 a day) clears when the device is re-paired; a person's own lock (50 a day) clears with Unlock or a PIN reset.
+
 A staff PIN tag is `HMAC(scan-pin-tag.v1, orgId:pin)` under MAC root 1, so root 1 plus the database recovers every PIN (a 10^6 search per org). If root 1 is compromised, reset every PIN (Staff tab, "Reset untagged PINs" after clearing the tags, or an admin reset each) and move to a `scan-pin-tag.v2` label in `staff-pin-hash.ts`.
 
 ### Closing and purging an organization

@@ -68,6 +68,11 @@ export async function countNamedMiss(
   if (org === PIN_NAMED_MISSES_ALERT_ORG_DAY) {
     await entry('scan.pin_named_org_cap', 'org', orgId).run();
     ctx.log.error('scan.pin_named_org_cap', { orgId, scannerId, code: 'PIN_NAMED_ORG_CAP' });
-    await mailPinOrgCap(ctx, orgId);
+    // After the answer: the 300th wrong PIN is still a wrong PIN if the mail path fails.
+    ctx.waitUntil(
+      mailPinOrgCap(ctx, orgId).catch((error: unknown) =>
+        ctx.log.error('scan.pin_org_cap_mail_failed', { orgId, code: 'PIN_ORG_CAP_MAIL', error }),
+      ),
+    );
   }
 }

@@ -10,6 +10,7 @@ import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
 import type { ScanState } from '../machine/types.ts';
 import { keepSession, keptSession } from '../offline/shell.ts';
+import { syncBeforeOnline } from '../offline/sync-gate.ts';
 import { takePairCode, watchPairLink } from './pair-link.ts';
 
 /** A sync holds session polls this long at most. */
@@ -94,6 +95,8 @@ export function useScanSession(
   const query = useQuery({
     queryKey: KEY,
     queryFn: async () => {
+      // Reads queued offline go up first: this poll is an online contact that would date them later.
+      if ((pendingRef.current ?? 0) > 0) await syncBeforeOnline();
       try {
         const session = await api.session(undefined, undefined, pendingRef.current);
         csrf.set(session.csrfToken);

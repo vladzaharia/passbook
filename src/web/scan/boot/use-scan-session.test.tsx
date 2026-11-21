@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createScanApi } from '../api/scan-api.ts';
 import { fixtureState, states } from '../machine/fixtures.test-support.ts';
+import { registerSync } from '../offline/sync-gate.ts';
 import { resetPairLink } from './pair-link.ts';
 import { sessionFixture } from './session.test-support.ts';
 import { createCsrfHolder, needsSessionRefetch, useScanSession } from './use-scan-session.ts';
@@ -112,6 +113,26 @@ describe('useScanSession (against a stub server)', () => {
       expect(fetchFn.mock.calls.length).toBeGreaterThan(before);
     } finally {
       vi.useRealTimers();
+    }
+  });
+
+  it('sends the queue before a session poll when reads are queued, even with no offline event', async () => {
+    const order: string[] = [];
+    registerSync(async () => {
+      order.push('sync');
+    });
+    try {
+      const fetchFn = vi.fn(async () => {
+        order.push('session');
+        return json(sessionFixture());
+      });
+      const holder = createCsrfHolder();
+      const api = createScanApi({ fetch: fetchFn as unknown as typeof fetch, csrf: holder.get });
+      renderHook(() => useScanSession(api, holder, syncing(false)), { wrapper: wrapper() });
+      await waitFor(() => expect(order).toContain('session'));
+      expect(order[0]).toBe('sync');
+    } finally {
+      registerSync(null);
     }
   });
 

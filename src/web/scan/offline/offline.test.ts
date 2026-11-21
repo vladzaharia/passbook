@@ -336,6 +336,25 @@ describe('controller', () => {
     c.dispose();
   });
 
+  it('syncNow sends the queue and waits for it; an empty queue or no link returns at once', async () => {
+    const h = await rosterHash('TICKET-0006');
+    const t = harness('list', [{ h, status: 'active', state: null }]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await c.syncNow();
+    expect(t.api.batch).not.toHaveBeenCalled();
+    t.setOnline(false);
+    await c.decide('k1', input('TICKET-0006'), false);
+    await c.syncNow();
+    expect(t.api.batch).not.toHaveBeenCalled();
+    t.setOnline(true);
+    await c.syncNow();
+    expect(t.api.batch).toHaveBeenCalledOnce();
+    c.dispose();
+  });
+
   it('a list cut for another session or config is stale at once', async () => {
     const h = await rosterHash('TICKET-0003');
     const t = harness('list', [{ h, status: 'active', state: null }]);
