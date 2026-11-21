@@ -73,3 +73,24 @@ Unit tests need no device:
 
     xcodebuild test -project PassBookScanner.xcodeproj -scheme PassBookScanner \
       -destination 'platform=iOS Simulator,name=iPhone 18 Pro' CODE_SIGNING_ALLOWED=NO
+
+## Distribution
+
+Install page: <https://vladzaharia.github.io/passbook/>.
+
+| Channel | Where |
+| --- | --- |
+| AltStore | Add source `https://vladzaharia.github.io/passbook/altstore/source.json` |
+| SideStore | Same source, `sidestore://source?url=https://vladzaharia.github.io/passbook/altstore/source.json` |
+| TestFlight | Internal and external groups, see above; public link on the install page once `TESTFLIGHT_PUBLIC_URL` is set |
+| GitHub Releases | Unsigned `PassBookScanner-<version>.ipa` and `SHA256SUMS` for each `ios-v*` tag |
+
+Tag `ios-vX.Y.Z` on main, or run **Actions, iOS AltStore** from main with the version. It archives with `CODE_SIGNING_ALLOWED=NO`, checks the archive, zips `Payload/PassBookScanner.app` and attaches the IPA to the `ios-vX.Y.Z` release. The `Apps feeds` workflow then adds it to the source.
+
+Install: open the install page on the iPhone, tap **Add source** for AltStore or SideStore, then **Free** on PassBook Scanner. AltStore or SideStore signs the IPA with your Apple ID.
+
+Free Apple ID limits:
+
+- The app expires after 7 days. AltStore or SideStore refreshes it while it can reach AltServer or the SideStore VPN.
+- A free account can have 3 sideloaded apps active.
+- Re-signing drops the NFC Tag Reading entitlement that Apple grants to team 48H7CLBV8Y, so Tap to read may be unavailable. Camera and keyboard scanning work. Use TestFlight when you need NFC.

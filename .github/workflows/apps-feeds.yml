@@ -1,0 +1,159 @@
+name: Apps feeds
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+  # Releases made with the workflow token don't start `release` runs, so follow the release workflows instead.
+  workflow_run:
+    workflows: ['Android Reader', 'iOS AltStore']
+    types: [completed]
+permissions: {}
+concurrency:
+  group: apps-feeds
+  cancel-in-progress: false
+env:
+  PAGES_URL: https://vladzaharia.github.io/passbook
+  ANDROID_APP_ID: im.plrs.passbook.reader
+jobs:
+  build:
+    if: >-
+      github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && (
+      startsWith(github.event.workflow_run.head_branch, 'android-v') ||
+      startsWith(github.event.workflow_run.head_branch, 'ios-v') ||
+      github.event.workflow_run.name == 'iOS AltStore'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FDROID_KEY_ALIAS: ${{ vars.FDROID_KEY_ALIAS }}
+      FDROID_REPO_FINGERPRINT: ${{ vars.FDROID_REPO_FINGERPRINT }}
+      TESTFLIGHT_PUBLIC_URL: ${{ vars.TESTFLIGHT_PUBLIC_URL }}
+      PLAY_INTERNAL_URL: ${{ vars.PLAY_INTERNAL_URL }}
+    steps:
+      # The feeds tooling lives on main; old release tags don't have it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools'
+      - name: Install build tools
+        run: |
+          sdkmanager 'build-tools;35.0.0'
+          echo "$ANDROID_HOME/build-tools/35.0.0" >> "$GITHUB_PATH"
+      - name: Install fdroidserver and segno
+        run: python3 -m pip install 'fdroidserver==2.4.5' 'segno==1.6.6'
+      - name: Check the configuration
+        run: |
+          echo "FDROID_KEYSTORE=$RUNNER_TEMP/fdroid-repo.p12" >> "$GITHUB_ENV"
+          [[ -n "$FDROID_KEY_ALIAS" ]] || { echo "::error::Set the FDROID_KEY_ALIAS repository variable."; exit 1; }
+          [[ -n "$FDROID_REPO_FINGERPRINT" ]] || { echo "::error::Set the FDROID_REPO_FINGERPRINT repository variable."; exit 1; }
+      - name: Download the releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .feeds/assets
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate | jq -s 'add | map(select(.draft | not))' > .feeds/releases.json
+          # APKs, checksums, notes and release.json from every release; the IPAs and AABs stay on GitHub.
+          for tag in $(jq -r '.[].tag_name | select(test("^(android|ios)-v"))' .feeds/releases.json); do
+            mkdir -p ".feeds/assets/$tag"
+            gh release download "$tag" --repo "$GITHUB_REPOSITORY" --dir ".feeds/assets/$tag" --clobber \
+              --pattern '*.apk' --pattern SHA256SUMS --pattern release.json --pattern RELEASE-NOTES.md
+          done
+          ls .feeds/assets
+      - name: Build the F-Droid repo
+        env:
+          KEYSTORE_B64: ${{ secrets.FDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
+        run: |
+          fd=.feeds/fdroid
+          mkdir -p "$fd/repo" "$fd/metadata/$ANDROID_APP_ID/en-US/changelogs"
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$FDROID_KEYSTORE"
+          python3 - "$fd/config.yml" <<'PY'
+          import json, os, sys
+          settings = {
+              "repo_url": os.environ["PAGES_URL"] + "/fdroid/repo",
+              "repo_name": "PassBook",
+              "repo_description": "Scanner apps for PassBook.",
+              "archive_older": 0,
+              "make_current_version_link": False,
+              "keystore": os.environ["FDROID_KEYSTORE"],
+              "repo_keyalias": os.environ["FDROID_KEY_ALIAS"],
+              "keystorepass": os.environ["KEYSTORE_PASS"],
+              "keypass": os.environ["KEYSTORE_PASS"],
+              "keydname": "CN=PassBook F-Droid, O=PassBook",
+          }
+          with open(sys.argv[1], "w") as out:
+              out.writelines(f"{key}: {json.dumps(value)}\n" for key, value in settings.items())
+          PY
+          node tools/apps-fdroid.ts metadata "$fd/metadata/$ANDROID_APP_ID.yml"
+          # Only APKs that match their release checksums go in, with that release's notes as the changelog.
+          for dir in .feeds/assets/android-v*/; do
+            for apk in "$dir"*.apk; do
+              [[ -f "$apk" ]] || continue
+              name="$(basename "$apk")"
+              expected="$(grep -F "  $name" "$dir/SHA256SUMS" | cut -d' ' -f1)"
+              actual="$(sha256sum "$apk" | cut -d' ' -f1)"
+              [[ -n "$expected" && "$expected" == "$actual" ]] || { echo "::error::$name does not match SHA256SUMS."; exit 1; }
+              cp "$apk" "$fd/repo/$name"
+              code="$(aapt dump badging "$apk" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" | head -n1)"
+              [[ -n "$code" && -f "$dir/RELEASE-NOTES.md" ]] \
+                && node tools/apps-fdroid.ts changelog "$dir/RELEASE-NOTES.md" "$fd/metadata/$ANDROID_APP_ID/en-US/changelogs/$code.txt"
+            done
+          done
+          ls "$fd/repo"
+          (cd "$fd" && fdroid update --create-metadata)
+          actual="$(keytool -exportcert -alias "$FDROID_KEY_ALIAS" -keystore "$FDROID_KEYSTORE" -storepass:env KEYSTORE_PASS | sha256sum | cut -d' ' -f1)"
+          expected="$(printf '%s' "$FDROID_REPO_FINGERPRINT" | tr -d ':' | tr 'a-f' 'A-F')"
+          [[ "${actual^^}" == "$expected" ]] || { echo "::error::The repo key does not match the FDROID_REPO_FINGERPRINT variable."; exit 1; }
+      - name: Build the site
+        run: |
+          mkdir -p _site/altstore _site/fdroid
+          cp -R .feeds/fdroid/repo _site/fdroid/repo
+          [[ -d .feeds/fdroid/archive ]] && cp -R .feeds/fdroid/archive _site/fdroid/archive
+          node tools/apps-altstore.ts --releases .feeds/releases.json --assets .feeds/assets \
+            --pages-url "$PAGES_URL" --out _site/altstore/source.json
+          cp ios/PassBookScanner/Assets.xcassets/AppIcon.appiconset/AppIcon.png _site/altstore/icon.png
+          cp public/favicon.svg _site/favicon.svg
+          fingerprint="$(printf '%s' "$FDROID_REPO_FINGERPRINT" | tr -d ':' | tr 'a-f' 'A-F')"
+          python3 - "$fingerprint" .feeds/qr.svg <<'PY'
+          import os, sys
+          import segno
+          url = f"{os.environ['PAGES_URL']}/fdroid/repo?fingerprint={sys.argv[1]}"
+          segno.make(url, error="m").save(sys.argv[2], scale=4, border=2, xmldecl=False)
+          PY
+          node tools/apps-index.ts --qr .feeds/qr.svg --out _site/index.html
+          find _site -maxdepth 3 | sort
+      - name: Remove the signing key
+        if: always()
+        run: rm -f "$FDROID_KEYSTORE" .feeds/fdroid/config.yml
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
