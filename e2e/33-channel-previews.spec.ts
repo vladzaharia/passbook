@@ -45,18 +45,27 @@ test('the template page and the designer show unavailable channels as disabled t
   const seed = readSeed();
   const org = encodeURIComponent(seed.org.id);
   const id = encodeURIComponent(seed.template.id);
-  for (const [url, scope] of [
-    [`/admin/o/${org}/templates/${id}`, column(page)],
-    [`/admin/o/${org}/templates/${id}/design`, page.locator('.dz-stage')],
+  // Google and Samsung are withheld for this organization; Paper is off on the template only,
+  // so the designer, which edits every channel's design, keeps it open.
+  for (const [url, scope, disabled, open] of [
+    [`/admin/o/${org}/templates/${id}`, column(page), ['Google', 'Samsung', 'Paper'], []],
+    [
+      `/admin/o/${org}/templates/${id}/design`,
+      page.locator('.dz-stage'),
+      ['Google', 'Samsung'],
+      ['Paper'],
+    ],
   ] as const) {
     await page.goto(url);
     const tabs = tabsOf(scope);
     await expect(tabs).toHaveCount(5);
-    // Google, Samsung and Paper are not available for this organization here.
-    for (const name of ['Google', 'Samsung', 'Paper']) {
+    for (const name of disabled) {
       const off = tabs.filter({ hasText: name });
       await expect(off).toHaveAttribute('aria-disabled', 'true');
       await expect(off).not.toHaveAccessibleDescription('');
+    }
+    for (const name of open) {
+      await expect(tabs.filter({ hasText: name })).not.toHaveAttribute('aria-disabled', 'true');
     }
     await expect(tabs.filter({ hasText: 'Apple' })).toBeChecked();
   }
