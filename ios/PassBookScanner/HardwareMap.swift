@@ -40,6 +40,18 @@ enum HardwareMap {
         return Array(out.prefix(maxEntries))
     }
 
+    /// The contract counts UTF-16 units, not graphemes; cut on a character boundary within that.
+    static func clip(_ name: String) -> String {
+        var out = ""
+        var units = 0
+        for character in name {
+            units += character.utf16.count
+            if units > maxName { break }
+            out.append(character)
+        }
+        return out
+    }
+
     static func cameraState(_ permission: String) -> String {
         switch permission {
         case "granted": "ready"
@@ -53,7 +65,7 @@ enum HardwareMap {
         var item: [String: Any] = ["kind": kind, "id": String(id.prefix(64)), "builtIn": builtIn,
                                    "connected": true, "state": state]
         if let name = name?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
-            item["name"] = String(name.prefix(maxName))
+            item["name"] = clip(name)
         }
         if let facing { item["facing"] = facing }
         if state == "unavailable" && kind == "camera" { item["reason"] = "Camera is blocked or unavailable" }

@@ -55,4 +55,15 @@ final class TagRecordParserTests: XCTestCase {
         XCTAssertNil(text(payload + [0x61]))
         XCTAssertNotNil(text(payload + [0x61], max: 2048))
     }
+
+    func testUriSuffixIsUTF8() {
+        XCTAssertEqual(uri([0x04] + Array("example.com/caf\u{E9}".utf8)), .init(type: "U", value: "https://example.com/caf\u{E9}"))
+    }
+
+    func testUTF16TextHonoursTheStatusBit() {
+        let be: [UInt8] = [0x82, 0x65, 0x6E, 0x00, 0x68, 0x00, 0x69]
+        XCTAssertEqual(text(be), .init(type: "T", value: "hi"))
+        let le: [UInt8] = [0x82, 0x65, 0x6E, 0xFF, 0xFE, 0x68, 0x00, 0x69, 0x00]
+        XCTAssertEqual(text(le), .init(type: "T", value: "hi"))
+    }
 }
