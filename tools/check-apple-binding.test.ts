@@ -35,4 +35,16 @@ describe('findAppleBinding', () => {
     expect(findAppleBinding('src/worker/modules/identities/asc-client.ts', text)).toEqual([]);
     expect(findAppleBinding('src/worker/modules/identities/asc-client.test.ts', text)).toEqual([]);
   });
+
+  it('lets the ledger reader name the binding, but only to read `calls`', () => {
+    const ledger = 'src/worker/modules/identities/asc-ledger.ts';
+    expect(findAppleBinding(ledger, 'const rpc = env.APPLE; await rpc.calls(0);')).toEqual([]);
+    expect(findAppleBinding(ledger, 'await env.APPLE.revokeCertificate(a, b);')).toEqual([
+      `${ledger}:1`,
+    ]);
+    expect(findAppleBinding(ledger, 'await rpc.createCertificate(a);')).toEqual([`${ledger}:1`]);
+    expect(findAppleBinding(ledger, "import { ascClient } from './asc-client.ts';")).toEqual([
+      `${ledger}:1`,
+    ]);
+  });
 });

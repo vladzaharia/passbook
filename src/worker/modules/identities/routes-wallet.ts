@@ -8,7 +8,7 @@ import { ValidationError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { isPlatformAdmin, requireOrgAccess } from './access.ts';
-import { listAppleCalls } from './asc-client.ts';
+import { listAppleCalls } from './asc-ledger.ts';
 import { listWalletIdentities } from './wallet-list.ts';
 
 /** Mount at /api/v1/wallet-identities. */
