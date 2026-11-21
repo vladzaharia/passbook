@@ -33229,6 +33229,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
@@ -33254,6 +33258,7 @@
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
           "SETTINGS_CHANGED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39056,6 +39061,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39068,6 +39077,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39175,6 +39185,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39187,6 +39201,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39468,6 +39483,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39480,6 +39499,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39559,6 +39579,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39571,6 +39595,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39966,11 +39991,16 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -78709,6 +78739,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -78726,6 +78760,7 @@
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -79802,6 +79837,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -79820,6 +79859,7 @@
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -80950,6 +80990,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -80968,6 +81012,7 @@
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -82350,6 +82395,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -82369,6 +82418,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -82582,6 +82632,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -82602,6 +82656,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -82792,6 +82847,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -82812,6 +82871,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -83497,6 +83557,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -83517,6 +83581,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -85209,6 +85274,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -85259,6 +85328,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -86578,6 +86648,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -86629,6 +86703,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -87146,6 +87221,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -87197,6 +87276,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -88171,6 +88251,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -88222,6 +88306,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -89333,11 +89418,16 @@
           "method": "startManaged"
         },
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -91705,6 +91795,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
@@ -91716,6 +91810,7 @@
           "RATE_LIMITED",
           "SELF_DISABLE",
           "SESSION_NOT_FOUND",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION"
@@ -92829,6 +92924,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -92852,6 +92951,7 @@
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -92985,6 +93085,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -93009,6 +93113,7 @@
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -93849,6 +93954,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -93872,6 +93981,7 @@
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -94348,6 +94458,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -94355,6 +94469,7 @@
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "SETTINGS_CHANGED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -139072,6 +139187,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
@@ -139093,6 +139212,7 @@
           "SCANNER_NO_TAGS",
           "SCANNER_OFFLINE",
           "SCANNER_REQUESTS_OFF",
+          "STEP_UP_REQUIRED",
           "TAGS_OFF",
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
