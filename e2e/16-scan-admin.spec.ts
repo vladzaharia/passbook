@@ -6,7 +6,7 @@ import { readSeed } from './helpers/seed.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
 
-test('event setup, scanner assignment and scan history undo', async ({ page }) => {
+test('event setup, session assignment and scan history undo', async ({ page }) => {
   const api = await apiAs('admin');
   const orgId = readSeed().org.id;
   const name = uid('Door event');
@@ -20,7 +20,7 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     template.id,
     template.versions[0].version,
   );
-  const scannerName = uid('Event scanner');
+  const sessionName = uid('Event session');
   const pass = await createPass(api, orgId, {
     holder: 'Admin Door Guest',
     templateId: template.id,
@@ -28,12 +28,11 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     memberId: uid('ADMINDOOR'),
   });
   try {
-    await api.send('POST', '/api/v1/scan-setups', {
+    await api.send('POST', '/api/v1/scanning-sessions', {
       orgId,
-      name: scannerName,
+      name: sessionName,
       accepts: { templateIds: [template.id] },
       timeZone: 'UTC',
-      settings: { reader: 'barcode', direction: 'in' },
     });
     await page.goto(`/admin/scanning?orgId=${orgId}&tab=events`);
     await page.getByRole('button', { name: 'New event', exact: true }).click();
@@ -51,15 +50,12 @@ test('event setup, scanner assignment and scan history undo', async ({ page }) =
     await expect(page.getByText('22/140')).toBeVisible();
     await page.getByRole('button', { name: 'Create event', exact: true }).click();
     await page.getByRole('link', { name, exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Readiness' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();
     await expect(page.getByText('Check the ticket name.')).toBeVisible();
-    await page.getByRole('button', { name: 'Assign scanners', exact: true }).click();
-    await page.getByRole('checkbox', { name: scannerName, exact: true }).check();
-    await page
-      .getByRole('dialog')
-      .getByRole('button', { name: 'Assign scanners', exact: true })
-      .click();
-    await expect(page.getByText('0 of 1 scanner paired')).toBeVisible();
+    await page.getByRole('button', { name: 'Add to a session', exact: true }).click();
+    await page.getByRole('checkbox', { name: sessionName, exact: true }).check();
+    await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByRole('link', { name: sessionName, exact: true })).toBeVisible();
     await page.screenshot({ path: 'test-results/scanner-event-admin.png', fullPage: true });
     const outcome = await api.send('POST', '/api/v1/scan/actions', {
       scope: { orgId, timeZone: 'UTC' },

@@ -57,7 +57,7 @@ describe('session administration', () => {
     expect(
       await screen.findByRole('heading', { name: 'Membership desk', level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Session rules' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'More rules' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add device' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Scan as Admin' })).not.toBeInTheDocument();
@@ -74,10 +74,10 @@ describe('session administration', () => {
     expect(
       await screen.findByRole('heading', { name: 'Membership desk', level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Session rules' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'More rules' })).toBeInTheDocument();
     expect(screen.getByTestId('session-device')).toHaveTextContent('Admin phone');
     expect(screen.getByTestId('session-device')).toHaveTextContent('390 × 844');
-    expect(screen.getByText('In / out')).toBeInTheDocument();
+    expect(screen.getByText('In and out, no zone')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
   it('hides a session from another selected organization, including deep-linked device actions', async () => {
@@ -301,23 +301,32 @@ describe('session administration', () => {
   });
 
   it.each([
-    { staffSignIn: true, role: 'desk', pin: 'Required', access: 'Desk staff' },
-    { staffSignIn: false, role: 'door', pin: 'Not required', access: 'Check-in staff' },
+    { lookup: true, photo: undefined, offline: 'stop', rows: ['Stop', 'On', 'On'] },
+    { lookup: false, photo: false, offline: 'list', rows: ['Offline list', 'Off', 'Off'] },
   ] as const)(
-    'describes PIN and principal-specific access accurately',
-    ({ staffSignIn, role, pin, access }) => {
+    'summarises the rules the setup rows leave out',
+    ({ lookup, photo, offline, rows }) => {
       render(
         <SessionSummary
           session={{
             ...session,
-            settings: { ...session.settings, staffSignIn, roleWithoutSignIn: role },
+            settings: {
+              ...session.settings,
+              lookup,
+              whenOffline: offline,
+              ...(photo === undefined ? {} : { showPhoto: photo }),
+            },
           }}
           onEdit={vi.fn()}
         />,
       );
-      expect(screen.getByText('Staff PIN').parentElement).toHaveTextContent(pin);
-      expect(screen.getByText('Without a PIN').parentElement).toHaveTextContent(access);
-      expect(screen.queryByText(/Staff PINs apply/i)).not.toBeInTheDocument();
+      for (const [label, value] of [
+        ['Offline', rows[0]],
+        ['Lookup', rows[1]],
+        ['Photos', rows[2]],
+      ] as const)
+        expect(screen.getByText(label).parentElement).toHaveTextContent(value);
+      expect(screen.getByText('Time zone')).toBeInTheDocument();
     },
   );
   it('allows the operator layout on a phone and protects unsaved device settings', async () => {

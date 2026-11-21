@@ -185,7 +185,12 @@ async function openCode(ctx: ServiceContext, ip: string | null, raw: string) {
 /** Consumes nothing: the confirm card shows what the code is for. */
 export async function previewPairing(ctx: ServiceContext, ip: string | null, raw: string) {
   const { hit } = await openCode(ctx, ip, raw);
-  return { scannerName: hit.name, orgName: hit.orgName, mode: hit.mode };
+  return {
+    scannerName: hit.name,
+    sessionName: hit.sessionName,
+    orgName: hit.orgName,
+    mode: hit.mode,
+  };
 }
 
 export interface Paired extends Issued {

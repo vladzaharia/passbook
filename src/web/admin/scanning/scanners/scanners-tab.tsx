@@ -7,8 +7,8 @@ import { Button, DataTable, EmptyState, ErrorState, LoadMore } from '@/web/ui/in
 import { useNow } from '../../../ui/rel-time.tsx';
 import { useScannerPages } from '../queries.ts';
 import { useScanEvents } from '../scanner-api.ts';
+import { useScanningSessions } from '../sessions/api.ts';
 import { scannerColumns } from './scanner-columns.tsx';
-import { PairDialog, RevokeDialog } from './scanner-dialogs.tsx';
 
 type Pages = ReturnType<typeof useScannerPages>;
 export const flatScanners = (q: Pages): ScannerDto[] => q.data?.pages.flatMap((p) => p.items) ?? [];
@@ -19,13 +19,18 @@ export const flatScanners = (q: Pages): ScannerDto[] => q.data?.pages.flatMap((p
  */
 export function ScannersTab({ live, newButton }: { live: Pages; newButton: ReactNode }) {
   const { orgId, membership } = useOrgScope();
-  const canManage = Boolean(orgId && membership?.capabilities.includes('scanning:manage'));
+  const _canManage = Boolean(orgId && membership?.capabilities.includes('scanning:manage'));
   const now = useNow();
   const events = useScanEvents(orgId, Boolean(orgId));
   const [showRevoked, setShowRevoked] = useState(false);
   const revokedList = useScannerPages(orgId, true, Boolean(orgId));
-  const [pairing, setPairing] = useState<ScannerDto>();
-  const [revoking, setRevoking] = useState<ScannerDto>();
+  const sessions = useScanningSessions(orgId);
+  const sessionOf = useMemo(() => {
+    const byId = new Map(
+      (sessions.data?.pages.flatMap((p) => p.items) ?? []).map((s) => [s.id, s]),
+    );
+    return (id: string | undefined) => (id ? byId.get(id) : undefined);
+  }, [sessions.data]);
   const eventName = useMemo(() => {
     const names = new Map(
       (events.data?.items ?? []).filter((e) => e.orgId === orgId).map((e) => [e.id, e.name]),
@@ -33,17 +38,8 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
     return (id: string) => names.get(id);
   }, [events.data, orgId]);
   const columns = useMemo(
-    () =>
-      scannerColumns(
-        {
-          onPair: setPairing,
-          onRevoke: setRevoking,
-        },
-        now,
-        eventName,
-        canManage,
-      ),
-    [now, eventName, canManage],
+    () => scannerColumns(now, eventName, sessionOf),
+    [now, eventName, sessionOf],
   );
 
   const liveRows = flatScanners(live).filter((s) => s.orgId === orgId && s.status !== 'revoked');
@@ -56,46 +52,36 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
   }
   const more = revokedList.hasNextPage ? '+' : '';
   return (
-    <>
-      <DataTable
-        caption="Scanners"
-        loading={live.isPending}
-        fetching={live.isFetching && !live.isFetchingNextPage}
-        data={rows}
-        getRowId={(s) => s.id}
-        empty={<EmptyState art="phone" title="No devices yet" action={newButton} />}
-        footer={
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <LoadMore query={live} shown={liveRows.length} noun={['device', 'devices']} scoped />
-            {revoked.length > 0 ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-3"
-                aria-expanded={showRevoked}
-                iconEnd={
-                  <ChevronDown
-                    aria-hidden
-                    className={cn('transition-transform', showRevoked && 'rotate-180')}
-                  />
-                }
-                onClick={() => setShowRevoked((v) => !v)}
-              >
-                {showRevoked ? 'Hide revoked' : `Show revoked (${revoked.length}${more})`}
-              </Button>
-            ) : null}
-          </div>
-        }
-        columns={columns}
-      />
-      {canManage &&
-      (!pairing || pairing.orgId === orgId) &&
-      (!revoking || revoking.orgId === orgId) ? (
-        <>
-          <PairDialog key={pairing?.id} scanner={pairing} onClose={() => setPairing(undefined)} />
-          <RevokeDialog scanner={revoking} onClose={() => setRevoking(undefined)} />
-        </>
-      ) : null}
-    </>
+    <DataTable
+      caption="Scanners"
+      loading={live.isPending}
+      fetching={live.isFetching && !live.isFetchingNextPage}
+      data={rows}
+      getRowId={(s) => s.id}
+      empty={<EmptyState art="phone" title="No devices yet" action={newButton} />}
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <LoadMore query={live} shown={liveRows.length} noun={['device', 'devices']} scoped />
+          {revoked.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-3"
+              aria-expanded={showRevoked}
+              iconEnd={
+                <ChevronDown
+                  aria-hidden
+                  className={cn('transition-transform', showRevoked && 'rotate-180')}
+                />
+              }
+              onClick={() => setShowRevoked((v) => !v)}
+            >
+              {showRevoked ? 'Hide revoked' : `Show revoked (${revoked.length}${more})`}
+            </Button>
+          ) : null}
+        </div>
+      }
+      columns={columns}
+    />
   );
 }

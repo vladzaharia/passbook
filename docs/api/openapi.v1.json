@@ -96114,6 +96114,13 @@
                     "scannerName": {
                       "type": "string"
                     },
+                    "sessionName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
+                    },
                     "orgName": {
                       "type": "string"
                     },
