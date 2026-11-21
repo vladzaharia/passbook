@@ -122,7 +122,7 @@ describe('Scanners tab', () => {
       handlers: { '/api/v1/scan-setups': none, '/api/v1/scan-events': none },
     });
     expect(await screen.findByText('No devices yet')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'New session' })).toHaveLength(1);
   });
 });
 
@@ -134,7 +134,7 @@ describe('device creation from Devices', () => {
       selectedOrg: 'o1',
       handlers: handlers(),
     });
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     expect(within(dialog).getByRole('tab', { name: 'Passes' })).toBeInTheDocument();
     expect(within(dialog).getByRole('tab', { name: 'Admission' })).toBeInTheDocument();
     expect(within(dialog).getByRole('tab', { name: 'Device defaults' })).toBeInTheDocument();

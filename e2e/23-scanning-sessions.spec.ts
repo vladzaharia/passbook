@@ -26,8 +26,8 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     contexts.push(admin);
     const page = await admin.newPage();
     await page.goto(`/admin/scanning?orgId=${orgId}&tab=devices`);
-    await page.getByRole('button', { name: 'New scanning session', exact: true }).first().click();
-    const dialog = page.getByRole('dialog', { name: 'New scanning session', exact: true });
+    await page.getByRole('button', { name: 'New session', exact: true }).first().click();
+    const dialog = page.getByRole('dialog', { name: 'New session', exact: true });
     const name = uid('Shared membership');
     await dialog.getByRole('textbox', { name: 'Session name', exact: true }).fill(name);
     await dialog.getByRole('tab', { name: 'Admission', exact: true }).click();

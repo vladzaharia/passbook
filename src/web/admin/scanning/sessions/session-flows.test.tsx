@@ -82,55 +82,9 @@ describe('session configuration flows', () => {
     await waitFor(() => expect(saved).toMatchObject({ status: 'active' }));
   });
 
-  it('keeps the session picker open and clears tenant-specific selections when it changes scope', async () => {
+  it('duplicates into the page’s organization with no Organization select', async () => {
     const s = setup();
-    const { router } = await renderApp('/admin/scanning?orgId=o1', {
-      session: 'admin',
-      memberships: [northwind, harbor],
-      selectedOrg: 'o1',
-      handlers: {
-        ...s.handlers,
-        '/api/v1/templates/eligible': () =>
-          json({
-            items: [
-              eligibleTemplateFixture(),
-              eligibleTemplateFixture({
-                templateId: 't2',
-                templateOrgId: 'o2',
-                name: 'Harbor ticket',
-              }),
-            ],
-            nextCursor: null,
-          }),
-      },
-    });
-    const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'New scanning session' }));
-    const dialog = screen.getByRole('dialog', { name: 'New scanning session' });
-    await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Entry');
-    await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
-    await user.click(await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }));
-    await user.click(within(dialog).getByRole('combobox', { name: 'Organization' }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
-    expect(screen.getByRole('dialog', { name: 'New scanning session' })).toBeInTheDocument();
-    expect(within(dialog).getByRole('textbox', { name: 'Session name' })).toHaveValue('Entry');
-    expect(within(dialog).queryByRole('checkbox', { name: 'Gala ticket' })).not.toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Create session' })).toBeDisabled();
-    await user.click(await within(dialog).findByRole('checkbox', { name: 'Harbor ticket' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
-    await waitFor(() =>
-      expect(s.saved()).toMatchObject({
-        orgId: 'o2',
-        name: 'Entry',
-        accepts: { templateIds: ['t2'] },
-      }),
-    );
-  });
-
-  it('keeps duplicate creation available after choosing another manageable organization', async () => {
-    const s = setup();
-    const { router } = await renderApp('/admin/scanning/sessions/session-1?orgId=o1', {
+    await renderApp('/admin/scanning/sessions/session-1?orgId=o1', {
       session: 'admin',
       memberships: [northwind, harbor],
       selectedOrg: 'o1',
@@ -140,15 +94,15 @@ describe('session configuration flows', () => {
     await user.click(await screen.findByRole('button', { name: 'More' }));
     await user.click(screen.getByRole('menuitem', { name: 'Duplicate session' }));
     const dialog = await screen.findByRole('dialog', { name: 'Duplicate session' });
-    await user.click(within(dialog).getByRole('combobox', { name: 'Organization' }));
-    await user.click(await screen.findByRole('option', { name: 'Harbor' }));
-    await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe('o2'));
+    expect(
+      within(dialog).queryByRole('combobox', { name: 'Organization' }),
+    ).not.toBeInTheDocument();
     expect(await within(dialog).findByRole('textbox', { name: 'Session name' })).toHaveValue(
       'Membership desk copy',
     );
     await user.click(within(dialog).getByRole('button', { name: 'Create session' }));
     await waitFor(() =>
-      expect(s.saved()).toMatchObject({ orgId: 'o2', name: 'Membership desk copy' }),
+      expect(s.saved()).toMatchObject({ orgId: 'o1', name: 'Membership desk copy' }),
     );
   });
 
@@ -196,8 +150,8 @@ describe('session configuration flows', () => {
       },
     });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'New scanning session' }));
-    const dialog = screen.getByRole('dialog', { name: 'New scanning session' });
+    await user.click(await screen.findByRole('button', { name: 'New session' }));
+    const dialog = screen.getByRole('dialog', { name: 'New session' });
     await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
     expect(
       await within(dialog).findByRole('checkbox', { name: 'Gala ticket' }),
@@ -227,8 +181,8 @@ describe('session configuration flows', () => {
       handlers: s.handlers,
     });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'New scanning session' }));
-    const dialog = screen.getByRole('dialog', { name: 'New scanning session' });
+    await user.click(await screen.findByRole('button', { name: 'New session' }));
+    const dialog = screen.getByRole('dialog', { name: 'New session' });
     await user.type(within(dialog).getByRole('textbox', { name: 'Session name' }), 'Evening entry');
     await user.click(within(dialog).getByRole('tab', { name: 'Admission' }));
     expect(within(dialog).getByText('Staff access')).toBeInTheDocument();

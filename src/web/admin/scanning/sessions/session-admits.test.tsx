@@ -124,7 +124,7 @@ function setup({
 
 async function open() {
   const user = userEvent.setup();
-  const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+  const dialog = await screen.findByRole('dialog', { name: 'New session' });
   await user.type(await within(dialog).findByRole('textbox', { name: 'Session name' }), 'Entry');
   await user.click(within(dialog).getByRole('switch', { name: 'Any pass type' }));
   return { user, dialog };

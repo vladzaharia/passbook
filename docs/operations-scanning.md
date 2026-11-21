@@ -2,7 +2,7 @@
 
 ## Set up a device
 
-1. Open **Scanning → New scanning session**.
+1. Open **Scanning → New session**.
 2. Choose the organization, accepted passes, time zone and admission rules.
 3. Choose **Add device**, then select **Scanner**, **Operator** or **Customer display**. All three views
    are available on every screen size; **Automatic** chooses Scanner on smaller screens and Operator

@@ -121,10 +121,10 @@ describe('Scanning page', () => {
       },
     });
     expect(await screen.findByRole('link', { name: 'Membership desk' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New session' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Scan as Admin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('dialog', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'New session' })).not.toBeInTheDocument();
   });
 
   it('keeps scanner and event lists readable without management controls', async () => {
@@ -142,7 +142,7 @@ describe('Scanning page', () => {
     expect(within(table).getByText('Front door')).toBeInTheDocument();
     expect(within(table).queryByRole('button', { name: 'Pair' })).not.toBeInTheDocument();
     expect(within(table).queryByRole('button', { name: /Actions for/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New session' })).not.toBeInTheDocument();
     await act(async () => {
       await router.navigate({ to: '/admin/scanning', search: { orgId: 'o1', tab: 'events' } });
     });
@@ -244,7 +244,7 @@ describe('Scanning page', () => {
     await userEvent.setup().click(within(row as HTMLElement).getByRole('button'));
     const sheet = await screen.findByRole('dialog', { name: 'Scan' });
     expect(within(sheet).getByRole('button', { name: 'Undo check-in' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New session' })).not.toBeInTheDocument();
   });
 
   it('shows the empty sessions tab without a header action', async () => {
@@ -257,7 +257,7 @@ describe('Scanning page', () => {
     expect(await screen.findByRole('heading', { name: 'Scanning', level: 1 })).toBeInTheDocument();
     expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.queryByRole('button', { name: 'New scanning session' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'New session' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 

@@ -36,7 +36,7 @@ describe('session pickers', () => {
         ...extra,
       },
     });
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     return { dialog, writes, user: userEvent.setup() };
   }
 

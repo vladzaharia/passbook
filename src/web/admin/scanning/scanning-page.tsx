@@ -138,7 +138,7 @@ function ScopedScanningPage({
         iconStart={<Plus aria-hidden />}
         onClick={() => setCreatingSession({})}
       >
-        New scanning session
+        New session
       </Button>
     ) : null;
   const setTab = (next: string) =>
