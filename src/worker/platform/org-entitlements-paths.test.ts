@@ -16,6 +16,7 @@ const sources = import.meta.glob('../**/*.ts', {
 const ORG_INSERTS = [
   '../modules/developer/repo-grants.ts', // developer sandbox (preset developer)
   '../modules/orgs/repo-org-writes.ts', // platform create (preset chosen, default standard)
+  '../modules/orgs/repo-personal.ts', // an admin's personal org (preset standard)
   '../modules/templates/repo-sync-writes.ts', // baked sync (legacy)
 ];
 
