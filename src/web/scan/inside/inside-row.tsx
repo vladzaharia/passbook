@@ -1,8 +1,8 @@
 import { Clock, LogOut } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { SCAN_COPY } from '../../../shared/copy/scan.ts';
+import { EntityAvatar } from '../../ui/avatar.tsx';
 import { Button } from '../../ui/button.tsx';
-import { EntityAvatar } from '../../ui/entity.tsx';
 import { stayText } from '../machine/access-view.ts';
 import { fill } from '../ui/copy.ts';
 import { ACCESS_COPY } from '../ui/copy-access.ts';
