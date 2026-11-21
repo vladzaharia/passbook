@@ -131,6 +131,7 @@ sends every later message with that version.
 
 - `hello` may carry `features:string[]`. The web sends `['scanAck']` when it
   posts `{version, op:'scanAck', id}` as soon as it receives a native `scan`.
+- The app advertises `features:['scanAck']` as a top-level field of `ready` and `capabilities`, outside `capabilities`. The web sends `scanAck` only when it saw it.
 - The app answers every `hello` with `ready` (current snapshot), also a repeat
   one on the same page. The version and features are those of the latest
   `hello`.

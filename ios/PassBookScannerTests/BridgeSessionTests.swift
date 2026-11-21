@@ -55,6 +55,15 @@ final class BridgeHandshakeTests: XCTestCase {
         XCTAssertFalse(handshake.scanAck)
     }
 
+    func testAdvertisesScanAckAndKeepsLegacyGateWithoutItInTheHello() {
+        XCTAssertEqual(BridgeHandshake.advertisedFeatures, ["scanAck"])
+        var handshake = BridgeHandshake()
+        handshake.hello(version: 2, versions: [1, 2], features: nil)
+        var gate = ScanGate()
+        gate.ackEnabled = handshake.scanAck
+        XCTAssertEqual(gate.holdLimit, ScanGate.resultLimit)
+    }
+
     func testResetReturnsToTheStateBeforeHello() {
         var handshake = BridgeHandshake()
         handshake.hello(version: 2, versions: [1, 2], features: ["scanAck"])

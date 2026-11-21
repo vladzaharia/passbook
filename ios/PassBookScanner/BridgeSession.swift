@@ -6,6 +6,9 @@ import Foundation
 struct BridgeHandshake: Equatable {
     enum Outgoing: Equatable { case ready, capabilities }
 
+    /// Sent as a top-level `features` field of `ready` and `capabilities`, outside the snapshot object.
+    static let advertisedFeatures = ["scanAck"]
+
     private(set) var ready = false
     private(set) var wireVersion = 1
     private(set) var scanAck = false

@@ -103,6 +103,7 @@ final class ScannerViewController: UIViewController, WKNavigationDelegate, WKUID
         var message: [String: Any] = [
             "event": kind == .ready ? "ready" : "capabilities",
             "capabilities": capabilities,
+            "features": BridgeHandshake.advertisedFeatures,
         ]
         if kind == .ready {
             let nfc = capabilities["nfc"] as? [String: Any]
