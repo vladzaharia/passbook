@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 describe('template release actions', () => {
-  it('shows the active release by version and publisher, with ids under technical details', async () => {
+  it('lists the release by version and publisher, with ids under technical details', async () => {
     const user = userEvent.setup();
     const active = release({
       id: 'active-release-id',
@@ -37,28 +37,26 @@ describe('template release actions', () => {
     });
     releaseServer({ active, history: [active] });
     mountPanel({ mode: 'test' });
-    const facts = (await screen.findByText('Published by')).closest('dl');
-    if (!facts) throw new Error('Active release facts were not rendered');
-    for (const value of ['Version 2', 'Pia Publisher'])
-      expect(within(facts).getByText(value)).toBeVisible();
-    const card = facts.closest('div.grid');
-    if (!(card instanceof HTMLElement)) throw new Error('Active release card missing');
-    const disclosure = within(card).getAllByText('Technical details')[0];
-    if (!disclosure) throw new Error('Technical details missing');
+    const timeline = await screen.findByRole('list', { name: 'Releases' });
+    const row = within(timeline).getAllByRole('listitem')[0];
+    if (!row) throw new Error('Release row missing');
+    expect(row).toHaveTextContent('v2');
+    expect(row).toHaveTextContent('Pia Publisher');
+    const disclosure = within(row).getByText('Technical details');
     const details = disclosure.closest('details');
     expect(details).not.toHaveAttribute('open');
     await user.click(disclosure);
     expect(details).toHaveAttribute('open');
-    for (const value of ['active-release-id', '4', 'version-2', 'org-1', OLD_HASH])
-      expect(within(card).getAllByText(value).length).toBeGreaterThan(0);
+    for (const value of ['4', OLD_HASH])
+      expect(within(row).getAllByText(value).length).toBeGreaterThan(0);
   });
 
   it('names an unknown publisher plainly, never by id', async () => {
     const active = release({ createdBy: 'user-uuid', createdByName: null });
     releaseServer({ active, history: [active] });
     mountPanel();
-    await screen.findByText('Published by');
-    expect(screen.getAllByText('Unknown user').length).toBeGreaterThan(0);
+    const timeline = await screen.findByRole('list', { name: 'Releases' });
+    expect(within(timeline).getAllByText(/Someone/).length).toBeGreaterThan(0);
     expect(screen.queryByText('user-uuid')).not.toBeInTheDocument();
   });
 
@@ -130,7 +128,6 @@ describe('template release actions', () => {
     ];
     const server = releaseServer({ candidates: [candidate()], active: null, history });
     mountPanel();
-    expect(await screen.findByText(/No active release for this organization/)).toBeInTheDocument();
     const approve = await screen.findByRole('button', { name: 'Approve candidate for Version 2' });
     expect(screen.getByRole('button', { name: 'Publish candidate for Version 2' })).toBeDisabled();
     await user.click(approve);
@@ -151,7 +148,7 @@ describe('template release actions', () => {
     expect(within(dialog).getByText(CANDIDATE_HASH)).toBeInTheDocument();
     expect(within(dialog).getByText('approval-1')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Confirm publish' }));
-    expect(await screen.findByText(/Generation 8 · Version 2/)).toBeInTheDocument();
+    expect(await screen.findByText('v2')).toBeInTheDocument();
     const publishPost = server.requests.find(
       (request) => request.method === 'POST' && request.url.pathname.endsWith('/releases'),
     );
@@ -182,7 +179,7 @@ describe('template release actions', () => {
     expect(within(dialog).getByText('0')).toBeInTheDocument();
     expect(within(dialog).getByText('1')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Confirm publish' }));
-    expect(await screen.findByText(/Generation 1 · Version 2/)).toBeInTheDocument();
+    expect(await screen.findByText('v2')).toBeInTheDocument();
     const post = server.requests.find((request) => request.method === 'POST');
     expect(post?.body).toEqual({
       ...SCOPE,
@@ -270,16 +267,14 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', version: 'version-2', generation: 5 });
     const server = releaseServer({ active: head, history: [earlier, head] });
     mountPanel();
-    await user.click(
-      await screen.findByRole('button', { name: 'Roll back to Version 1 (generation 2)' }),
-    );
-    const dialog = await screen.findByRole('dialog', { name: 'Roll back release' });
+    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Restore Version 1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     expect(reason).toBeRequired();
     expect(reason).toHaveAttribute('maxlength', '500');
     expect(within(dialog).getByText('5')).toBeInTheDocument();
     expect(within(dialog).getByText('6')).toBeInTheDocument();
-    const confirm = within(dialog).getByRole('button', { name: 'Confirm rollback' });
+    const confirm = within(dialog).getByRole('button', { name: 'Restore' });
     expect(confirm).toBeDisabled();
     await user.type(reason, '   ');
     expect(confirm).toBeDisabled();
@@ -288,7 +283,7 @@ describe('template release actions', () => {
     await user.type(reason, '  Barcode regression  ');
     await user.click(confirm);
 
-    expect(await screen.findByText(/Generation 6 · Version 1/)).toBeInTheDocument();
+    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );
@@ -330,13 +325,11 @@ describe('template release actions', () => {
         ),
     });
     mountPanel();
-    await user.click(
-      await screen.findByRole('button', { name: 'Roll back to Version 1 (generation 1)' }),
-    );
-    const dialog = await screen.findByRole('dialog', { name: 'Roll back release' });
+    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Restore Version 1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     await user.type(reason, 'Restore the previous build');
-    await user.click(within(dialog).getByRole('button', { name: 'Confirm rollback' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
     expect(await within(dialog).findByRole('alert')).toHaveTextContent(
       'The template release changed. Reload and retry.',
     );
@@ -356,16 +349,14 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', generation: 5 });
     const server = releaseServer({ active: null, history: [head] });
     mountPanel({ templateStatus: 'archived' });
-    await user.click(
-      await screen.findByRole('button', { name: 'Roll back to Version 1 (generation 5)' }),
-    );
-    const dialog = await screen.findByRole('dialog', { name: 'Roll back release' });
+    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Restore Version 1' });
     await user.type(
       within(dialog).getByRole('textbox', { name: /Reason/ }),
       'Restore the archived template',
     );
-    await user.click(within(dialog).getByRole('button', { name: 'Confirm rollback' }));
-    expect(await screen.findByText(/Generation 6 · Version 1/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
+    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );

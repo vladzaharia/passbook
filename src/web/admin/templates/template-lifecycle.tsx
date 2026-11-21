@@ -140,7 +140,7 @@ export function TemplateCreatedCallout({
       : how === 'version'
         ? `${versionLabel ?? 'Version'} imported`
         : how === 'fromBlueprint'
-          ? `Template created · Version 1, from the ${t.fromBlueprint?.name ?? ''} blueprint. Release it to issue passes.`
+          ? 'Template created'
           : 'Template imported';
   const title = what;
   return (
@@ -150,11 +150,6 @@ export function TemplateCreatedCallout({
       actions={
         how === 'fromBlueprint' ? (
           <>
-            <Button size="sm" variant="outline" asChild>
-              <Link to="." search={{ tab: 'versions', orgId }}>
-                Review release
-              </Link>
-            </Button>
             {onScanPasses ? (
               <Button size="sm" variant="outline" loading={scanPending} onClick={onScanPasses}>
                 Scan passes

@@ -85,7 +85,7 @@ export function ReleaseDialog({
       }}
     >
       <DialogContent
-        title={rollback ? 'Roll back release' : 'Publish release'}
+        title={rollback ? `Restore ${versionLabel(versions, version)}` : 'Publish release'}
         footer={
           <>
             <Button variant="outline" disabled={busy} onClick={onClose}>
@@ -97,7 +97,7 @@ export function ReleaseDialog({
               loading={busy}
               disabled={!available || stale || (rollback && !reason.trim())}
             >
-              {rollback ? 'Confirm rollback' : 'Confirm publish'}
+              {rollback ? 'Restore' : 'Confirm publish'}
             </Button>
           </>
         }
