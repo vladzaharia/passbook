@@ -42,9 +42,7 @@ function handlers(poll: () => Response = () => json(enrollmentFixture())) {
 describe('Assign tag dialog', () => {
   it('offers Works with, defaulting to the person, and lists scanners with reasons', async () => {
     renderTags(dialog(), handlers());
-    expect(
-      await screen.findByRole('dialog', { name: TAG_COPY.dialog.title }),
-    ).toHaveAccessibleDescription('To Maya Okafor');
+    await screen.findByRole('dialog', { name: TAG_COPY.dialog.title });
     // Checked state lands a tick after the dialog under coverage; wait for it, not the node.
     await waitFor(() =>
       expect(screen.getByRole('radio', { name: /All of Maya Okafor's passes/ })).toBeChecked(),

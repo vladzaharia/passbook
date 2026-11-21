@@ -118,11 +118,10 @@ describe('join card: readiness', () => {
     expect(screen.queryByRole('spinbutton', { name: JOIN_COPY.card.dailyLimit })).toBeNull();
   });
 
-  it('says Test in a test-mode line and shows the test note', async () => {
+  it('says Test in a test-mode line', async () => {
     server(stateOf(null, { ready: false, issues: [{ code: 'no_release' }] }));
     await card({ mode: 'test' });
     expect(screen.getByText(/Release this template in Test/)).toBeInTheDocument();
-    expect(screen.getByText(JOIN_COPY.card.testNote)).toBeInTheDocument();
   });
 });
 

@@ -124,7 +124,6 @@ describe('join page form', () => {
     const both = render(form({ askEmail: true }));
     expect(both).toContain('type="email"');
     expect(both).toMatch(/autocomplete="email"/i);
-    expect(both).toContain(JOIN_COPY.page.emailHelp);
     expect(both).toContain(JOIN_COPY.page.keepsWithEmail.replace('{org}', 'Dos Olas'));
     expect(name).toContain(JOIN_COPY.page.keeps.replace('{org}', 'Dos Olas'));
   });

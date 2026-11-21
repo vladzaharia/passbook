@@ -9,7 +9,6 @@ import {
   Button,
   Card,
   CardBody,
-  CardHeader,
   EmptyState,
   ErrorState,
   PageHeader,
@@ -25,7 +24,6 @@ import { STATE_LABEL, STATE_TONE } from './state-tone.ts';
 function Checking() {
   return (
     <Card>
-      <CardHeader title={C.match.checking} />
       <CardBody className="flex items-center gap-4">
         <Buddy scene="inspect" size="sm" className="shrink-0" />
         <p role="status" className="text-sm text-fg-muted">

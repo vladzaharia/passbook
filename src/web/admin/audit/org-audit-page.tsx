@@ -33,14 +33,7 @@ export function OrgAuditPage({
   const filtered = Object.entries(filters).some(([key, v]) => v !== undefined && key !== 'orgId');
   const patch = (next: AuditSearch) => onSearch({ ...filters, ...next });
   if (!allowed) {
-    return (
-      <EmptyState
-        heading
-        art="building"
-        title="Choose an organization"
-        description="The audit log is per organization."
-      />
-    );
+    return <EmptyState heading art="building" title="Choose an organization" />;
   }
   const actions =
     filters.action && !ACTION_OPTIONS.some((o) => o.value === filters.action)

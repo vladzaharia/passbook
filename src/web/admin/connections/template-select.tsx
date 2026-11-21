@@ -31,9 +31,7 @@ export function TemplateSelect({
         Browse blueprints
       </Link>
     </>
-  ) : (
-    'Passes are built from it.'
-  );
+  ) : undefined;
   return (
     <FormField label="Template" help={help}>
       {(c) => (

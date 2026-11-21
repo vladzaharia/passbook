@@ -82,7 +82,6 @@ export function SessionsSection() {
         open={confirmAll}
         onOpenChange={setConfirmAll}
         title="Sign out everywhere?"
-        description="Every session, including this one, ends."
         confirmLabel="Sign out"
         destructive
         onConfirm={async () => {

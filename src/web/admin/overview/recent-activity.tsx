@@ -27,15 +27,7 @@ export function RecentActivity({ orgId }: { orgId: string | undefined }) {
   // Refetch on every visit: what just happened is the point of this card.
   const log = usePlatformAuditLog({ filterOrgId: orgId, excludeAction: 'auth.' }, 6, 0);
   const orgName = useOrgNames();
-  return (
-    <RecentCard
-      log={log}
-      orgLabel={orgName}
-      auditSearch={{ filterOrgId: orgId }}
-      // Platform pages carry no mode words; the organization page's log spans both modes.
-      note={orgId ? 'Selected organization' : undefined}
-    />
-  );
+  return <RecentCard log={log} orgLabel={orgName} auditSearch={{ filterOrgId: orgId }} />;
 }
 
 /** A member's view: their organization's log, which needs `audit:read`. */

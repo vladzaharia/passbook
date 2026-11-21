@@ -35,11 +35,7 @@ function OrgZones({ orgId, canManage }: { orgId: string; canManage: boolean }) {
 
   if (active.isError) {
     return zonesUnavailable(active.error) ? (
-      <EmptyState
-        art="building"
-        title="Zones are unavailable"
-        description="Try again after the next update."
-      />
+      <EmptyState art="building" title="Zones are unavailable" />
     ) : (
       <ErrorState error={active.error} subject="zones" onRetry={() => active.refetch()} />
     );

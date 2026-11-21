@@ -15,11 +15,9 @@ export const OPERATOR_COPY = {
   },
   ready: {
     line: 'Ready to scan',
-    anywhere: 'Scans land here from anywhere',
     offline: 'Name search needs a connection',
     paused: 'Scanning is paused',
     move: '{keys} to move · {open} to open',
-    typing: 'Names, emails and codes',
   },
   tabs: {
     activity: 'Activity',
@@ -29,7 +27,7 @@ export const OPERATOR_COPY = {
   },
   activity: {
     heading: 'Today · all doors',
-    empty: 'Check-ins appear here.',
+    empty: 'No check-ins yet.',
     unavailable: 'Activity unavailable. Retrying.',
     unknown: 'Unknown code',
     manual: 'manual',
@@ -58,7 +56,6 @@ export const OPERATOR_COPY = {
     none: 'No matches',
     noneHint: 'Check the spelling, or use the full email.',
     walkIn: 'Add a walk-in',
-    walkInHint: 'Issue a day pass or guest pass',
     clears: 'Esc clears',
     voided: 'Voided',
     removed: 'Removed',
@@ -69,7 +66,6 @@ export const OPERATOR_COPY = {
   idle: {
     last: 'Last check-in · {ago}',
     none: 'No check-ins yet',
-    noneHint: 'Scan a pass or search by name.',
     open: 'Open',
     undo: 'Undo',
     today: 'Today',
@@ -115,7 +111,6 @@ export const OPERATOR_COPY = {
     title: 'Keyboard shortcuts',
     close: 'Close',
     open: 'Shortcuts',
-    scan: 'A scan lands from anywhere. It never types into a field or fires a shortcut.',
   },
   record: {
     preview: 'Found by name. Nothing changed yet.',
@@ -205,7 +200,6 @@ export const OPERATOR_COPY = {
   },
   notes: {
     heading: 'Notes',
-    aside: 'Staff only',
     add: 'Add a note',
     label: 'Note',
     placeholder: 'One line, staff only',

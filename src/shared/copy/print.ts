@@ -69,7 +69,6 @@ export const PRINT_COPY = {
   inkMono: 'Mono',
   inkMonoNote: 'Printed mono: the pass colours are too light for black and white.',
   buddyLabel: 'PassBook buddy',
-  buddyHelp: 'Small, beside Issued with PassBook.',
   foldLabel: 'Fold marks',
   bringLabel: 'Bring',
   bringHelp: 'Extra lines, separated by semicolons.',

@@ -117,15 +117,6 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
       <h1 id="scan-result-heading" tabIndex={-1} className="scan-assign-headline">
         <Headline a={a} ctx={ctx} />
       </h1>
-      {a.step === 'tag' &&
-      !a.waiting &&
-      ctx.reader.kind !== 'sheet' &&
-      ctx.reader.kind !== 'wedge' ? (
-        <p className="scan-assign-sub">{c.tag.holdSub}</p>
-      ) : null}
-      {a.step === 'tag' && ctx.reader.kind === 'wedge' ? (
-        <p className="scan-assign-sub">{c.tag.usbSub}</p>
-      ) : null}
       {a.step === 'tag' && ctx.readerNote ? (
         <p className="scan-assign-note" role="status">
           {ctx.readerNote === 'cancelled' ? c.tag.cancelled : c.tag.noRead}

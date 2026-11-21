@@ -31,10 +31,10 @@ describe('renderSignInEmail', () => {
     expect(mail.html).toContain('lang="en"');
   });
 
-  it('says which address the sign-in is for', () => {
+  it('does not repeat the recipient address', () => {
     const mail = signIn({ to: 'ada@example.test' });
-    expect(mail.text).toContain('For ada@example.test.');
-    expect(mail.html).toContain('For ada@example.test.');
+    expect(mail.text).not.toContain('ada@example.test');
+    expect(mail.html).not.toContain('ada@example.test');
   });
 
   it('uses the shared fluid shell with a title and color-scheme meta', () => {

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ScanLine } from 'lucide-react';
+import { Pencil, ScanLine } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
@@ -28,6 +28,7 @@ export function TemplateDetailHeader({
   canOperate,
   lifecycleMenu,
   onDuplicate,
+  onChangeOrg,
   onScanPasses,
   scanPending = false,
 }: {
@@ -40,6 +41,8 @@ export function TemplateDetailHeader({
   canOperate: boolean;
   lifecycleMenu: ReactNode;
   onDuplicate: () => void;
+  /** Set for a platform admin: reassigns the template to another organization. */
+  onChangeOrg?: (() => void) | undefined;
   /** Set when the template can be scanned and the viewer manages scanning. */
   onScanPasses?: (() => void) | undefined;
   scanPending?: boolean;
@@ -48,7 +51,7 @@ export function TemplateDetailHeader({
   const archived = t.status === 'archived';
   const canDesign = canEdit || (baked && canAuthor);
   const hasLifecycle = canPublish && !baked && (!archived || t.passCount === 0);
-  const mobileOnlyMenu = !hasLifecycle && !(canEdit && !baked && !archived);
+  const mobileOnlyMenu = !hasLifecycle && !onChangeOrg && !(canEdit && !baked && !archived);
   const orgId = t.orgId ?? scopeOrgId;
   const newPass = { ...(orgId ? { orgId } : {}), templateId: t.id };
 
@@ -117,7 +120,7 @@ export function TemplateDetailHeader({
             </Button>
           ) : null}
           {/* Phones keep Design and Duplicate in the menu. */}
-          {canAuthor || hasLifecycle ? (
+          {canAuthor || hasLifecycle || onChangeOrg ? (
             <div className={mobileOnlyMenu ? 'contents md:hidden' : 'contents'}>
               <MoreMenu>
                 {canDesign && !archived ? (
@@ -151,6 +154,12 @@ export function TemplateDetailHeader({
                       </Link>
                     </DropdownMenuItem>
                   </>
+                ) : null}
+                {onChangeOrg ? (
+                  <DropdownMenuItem onSelect={onChangeOrg}>
+                    <Pencil aria-hidden />
+                    Change organization
+                  </DropdownMenuItem>
                 ) : null}
                 {hasLifecycle ? (
                   <>
