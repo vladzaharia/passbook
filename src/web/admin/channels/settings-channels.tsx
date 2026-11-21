@@ -154,7 +154,6 @@ export function PlatformChannelsCards() {
         </CardBody>
       </Card>
       <Card>
-        <CardHeader title={CHANNEL_COPY.appleTap} />
         <CardBody>
           <ChannelList>
             <ChannelRow

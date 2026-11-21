@@ -206,7 +206,7 @@ export function TemplatesListPage({
       <PageHeader
         title="Templates"
         actions={
-          canAuthor ? (
+          canAuthor && !truth ? (
             <>
               {upload('outline')}
               {blueprints('New template')}

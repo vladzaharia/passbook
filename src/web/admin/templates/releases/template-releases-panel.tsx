@@ -152,7 +152,6 @@ function ScopedPanel({
         : `No active release for this organization and mode, so issuing passes is blocked. ${nextStep}`;
   return (
     <div className="grid gap-4">
-      <p className="text-sm text-fg-muted">{PROVIDER[provider]}</p>
       <WalletRows
         templateId={templateId}
         orgId={orgId}
