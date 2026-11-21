@@ -10,6 +10,11 @@ import {
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import {
+  PassSetupResultSchema,
+  PassSetupSchema,
+  StagedBrandAssetSchema,
+} from '../../shared/contracts/pass-setup.ts';
+import {
   PassDetailSchema,
   PassDeviceSchema,
   PassListSchema,
@@ -156,6 +161,9 @@ const names = {
   ScanSetupAnswer: ScanSetupAnswerSchema,
   ReleaseTemplate: ReleaseTemplateSchema,
   ReleaseResponse: ReleaseResponseSchema,
+  PassSetup: PassSetupSchema,
+  PassSetupResult: PassSetupResultSchema,
+  StagedBrandAsset: StagedBrandAssetSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

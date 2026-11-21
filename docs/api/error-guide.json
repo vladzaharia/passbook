@@ -203,6 +203,12 @@
     "fix": "Create a template from the blueprint with POST /api/v1/templates/{id}/use, then set up scanning on it.",
     "retryable": false
   },
+  "BRAND_ASSET_NOT_FOUND": {
+    "title": "Upload not staged",
+    "when": "The pass-setup save names an image sha that was never staged for that slot, or that expired after 24 hours.",
+    "fix": "Stage the PNG again with POST /api/v1/orgs/{orgId}/brand-assets and name the new sha.",
+    "retryable": false
+  },
   "BRAND_IMAGE_NOT_FOUND": {
     "title": "Brand image not found",
     "when": "The organization has no stored image for this slot or hash.",
@@ -1197,6 +1203,18 @@
     "title": "Pass removed",
     "when": "The pass was removed from the holder's wallet.",
     "fix": "Restore it with POST /api/v1/passes/{id}/restore, then send the request again.",
+    "retryable": false
+  },
+  "PASS_SETUP_CHANGED": {
+    "title": "Setup changed",
+    "when": "Another request changed the organization's setup, or its wallet account, after your read.",
+    "fix": "Fetch it again with GET /api/v1/orgs/{orgId}/pass-setup and send your change with the new revision.",
+    "retryable": true
+  },
+  "PASS_SETUP_EMPTY": {
+    "title": "Nothing to change",
+    "when": "The pass-setup change has no brand or channels entry.",
+    "fix": "Send at least one field in brand or channels.",
     "retryable": false
   },
   "PASS_TRANSFER_NOT_FOUND": {

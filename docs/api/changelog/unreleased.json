@@ -1046,5 +1046,29 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "GET /api/v1/orgs/{orgId}/pass-setup new operation",
+    "class": "additive",
+    "operationId": "pass-setup.getOrgsByOrgIdPassSetup",
+    "op": "GET /api/v1/orgs/{orgId}/pass-setup",
+    "change": "new operation",
+    "note": "Read an organization's brand, channels and accounts in one call, with the chain of levels that stops each channel. Needs org:read or brand:manage."
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{orgId}/pass-setup new operation",
+    "class": "additive",
+    "operationId": "pass-setup.patchOrgsByOrgIdPassSetup",
+    "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
+    "change": "new operation",
+    "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff and impact. Needs org:write, or brand:manage for the brand kit."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
+    "class": "additive",
+    "operationId": "pass-setup.postOrgsByOrgIdBrandAssets",
+    "op": "POST /api/v1/orgs/{orgId}/brand-assets",
+    "change": "new operation",
+    "note": "Stage a logo, icon or web logo PNG for a pass-setup save to name by sha; unused uploads are deleted after 24 hours. Needs org:write or brand:manage."
   }
 ]

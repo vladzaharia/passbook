@@ -942,6 +942,12 @@ export type OrgsCloseParams = {
   confirmSlug?: string;
 };
 
+export type OrgsStageBrandAssetParams = {
+  slot: "logo" | "icon" | "webLogo";
+  png: string;
+  x2?: string;
+};
+
 export type OrgsUpdateParams = {
   slug?: string;
   name?: string;
@@ -949,6 +955,47 @@ export type OrgsUpdateParams = {
   branding?: OrgBranding;
   status?: "active" | "suspended";
   configRevision?: number;
+};
+
+export type OrgsUpdatePassSetupParams = {
+  expectedRevision: string;
+  brand?: {
+    name?: string;
+    logo?: {
+      sha: string;
+    } | null;
+    icon?: {
+      sha: string;
+    } | null;
+    webLogo?: {
+      sha: string;
+    } | null;
+    webLogoSameAsLogo?: boolean;
+    passColors?: {
+      background: string;
+      foreground: string;
+      label: string;
+    } | null;
+    logoHasName?: boolean;
+    accent?: string | null;
+    mark?: "full" | "small" | "none";
+    support?: {
+      email?: string | null;
+      url?: string | null;
+    };
+    email?: {
+      fromName?: string | null;
+      buddy?: boolean;
+    };
+  };
+  channels?: {
+    mobile?: "allowed" | "blocked";
+    apple?: "allowed" | "blocked";
+    google?: "allowed" | "blocked";
+    samsung?: "allowed" | "blocked";
+    paper?: "allowed" | "blocked";
+    nfc?: "allowed" | "blocked";
+  };
 };
 
 export type PassChannelsChangedEvent = {
@@ -1349,6 +1396,440 @@ export type PassScannedEvent = {
     amount?: number;
   };
   sample?: true;
+};
+
+export type PassSetup = {
+  orgId: string;
+  mode: "live" | "test";
+  revision: string;
+  passCount: number;
+  brand: {
+    name: {
+      value: string | null;
+      source: "passbook" | "plan" | "org" | "template" | "pass";
+    };
+    logo: {
+      value: {
+        sha: string;
+        w: number;
+        h: number;
+      } | null;
+      source: "passbook" | "plan" | "org" | "template" | "pass";
+      templatesOwn: number;
+    };
+    icon: {
+      value: {
+        sha: string;
+        w: number;
+        h: number;
+      } | null;
+      source: "passbook" | "plan" | "org" | "template" | "pass";
+      templatesOwn: number;
+    };
+    webLogo: {
+      value: {
+        sha: string;
+        w: number;
+        h: number;
+      } | null;
+      source: "passbook" | "plan" | "org" | "template" | "pass";
+      sameAsLogo: boolean;
+    };
+    passColors: {
+      value: {
+        background: string;
+        foreground: string;
+        label: string;
+      } | null;
+      source: "passbook" | "plan" | "org" | "template" | "pass";
+      templatesOwn: number;
+    };
+    logoHasName: {
+      value: boolean | null;
+      source: "passbook" | "plan" | "org" | "template" | "pass";
+    };
+    accent: {
+      value: string | null;
+      source: "passbook" | "plan" | "org" | "template" | "pass";
+    };
+    mark: {
+      chosen: "full" | "small" | "none";
+      effective: "full" | "small" | "none";
+      allowed: Array<"full" | "small" | "none">;
+    };
+    support: {
+      email: {
+        value: string | null;
+        source: "passbook" | "plan" | "org" | "template" | "pass";
+      };
+      url: {
+        value: string | null;
+        source: "passbook" | "plan" | "org" | "template" | "pass";
+      };
+    };
+    email: {
+      fromName: {
+        value: string | null;
+        source: "passbook" | "plan" | "org" | "template" | "pass";
+      };
+      buddy: boolean;
+    };
+  };
+  channels: {
+    mobile?: {
+      on: boolean;
+      allowed: boolean;
+      levels: Array<{
+        level: "passbook" | "plan" | "org" | "template" | "pass";
+        state: "ok" | "partial" | "off" | "needs" | "locked";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        canChange: boolean;
+      }>;
+      templates: {
+        on: number;
+        off: number;
+        never: number;
+        total: number;
+      };
+      account?: {
+        mode: "live" | "test";
+        provider: "google" | "samsung";
+        accountId: string | null;
+        source: "platform" | "org" | null;
+        platformAvailable: boolean;
+        state: "absent" | "off" | "on" | "held" | "revoked";
+        enrolmentRevision: number;
+        prerequisites: {
+          check: boolean;
+          roundTrip: boolean | null;
+        };
+        hold: {
+          at: number;
+          reason: string;
+        } | null;
+        issuance: {
+          state: "disabled";
+          reason: "not_released";
+        } | {
+          state: "enabled";
+        };
+      };
+    };
+    apple?: {
+      on: boolean;
+      allowed: boolean;
+      levels: Array<{
+        level: "passbook" | "plan" | "org" | "template" | "pass";
+        state: "ok" | "partial" | "off" | "needs" | "locked";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        canChange: boolean;
+      }>;
+      templates: {
+        on: number;
+        off: number;
+        never: number;
+        total: number;
+      };
+      account?: {
+        mode: "live" | "test";
+        provider: "google" | "samsung";
+        accountId: string | null;
+        source: "platform" | "org" | null;
+        platformAvailable: boolean;
+        state: "absent" | "off" | "on" | "held" | "revoked";
+        enrolmentRevision: number;
+        prerequisites: {
+          check: boolean;
+          roundTrip: boolean | null;
+        };
+        hold: {
+          at: number;
+          reason: string;
+        } | null;
+        issuance: {
+          state: "disabled";
+          reason: "not_released";
+        } | {
+          state: "enabled";
+        };
+      };
+    };
+    google?: {
+      on: boolean;
+      allowed: boolean;
+      levels: Array<{
+        level: "passbook" | "plan" | "org" | "template" | "pass";
+        state: "ok" | "partial" | "off" | "needs" | "locked";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        canChange: boolean;
+      }>;
+      templates: {
+        on: number;
+        off: number;
+        never: number;
+        total: number;
+      };
+      account?: {
+        mode: "live" | "test";
+        provider: "google" | "samsung";
+        accountId: string | null;
+        source: "platform" | "org" | null;
+        platformAvailable: boolean;
+        state: "absent" | "off" | "on" | "held" | "revoked";
+        enrolmentRevision: number;
+        prerequisites: {
+          check: boolean;
+          roundTrip: boolean | null;
+        };
+        hold: {
+          at: number;
+          reason: string;
+        } | null;
+        issuance: {
+          state: "disabled";
+          reason: "not_released";
+        } | {
+          state: "enabled";
+        };
+      };
+    };
+    samsung?: {
+      on: boolean;
+      allowed: boolean;
+      levels: Array<{
+        level: "passbook" | "plan" | "org" | "template" | "pass";
+        state: "ok" | "partial" | "off" | "needs" | "locked";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        canChange: boolean;
+      }>;
+      templates: {
+        on: number;
+        off: number;
+        never: number;
+        total: number;
+      };
+      account?: {
+        mode: "live" | "test";
+        provider: "google" | "samsung";
+        accountId: string | null;
+        source: "platform" | "org" | null;
+        platformAvailable: boolean;
+        state: "absent" | "off" | "on" | "held" | "revoked";
+        enrolmentRevision: number;
+        prerequisites: {
+          check: boolean;
+          roundTrip: boolean | null;
+        };
+        hold: {
+          at: number;
+          reason: string;
+        } | null;
+        issuance: {
+          state: "disabled";
+          reason: "not_released";
+        } | {
+          state: "enabled";
+        };
+      };
+    };
+    paper?: {
+      on: boolean;
+      allowed: boolean;
+      levels: Array<{
+        level: "passbook" | "plan" | "org" | "template" | "pass";
+        state: "ok" | "partial" | "off" | "needs" | "locked";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        canChange: boolean;
+      }>;
+      templates: {
+        on: number;
+        off: number;
+        never: number;
+        total: number;
+      };
+      account?: {
+        mode: "live" | "test";
+        provider: "google" | "samsung";
+        accountId: string | null;
+        source: "platform" | "org" | null;
+        platformAvailable: boolean;
+        state: "absent" | "off" | "on" | "held" | "revoked";
+        enrolmentRevision: number;
+        prerequisites: {
+          check: boolean;
+          roundTrip: boolean | null;
+        };
+        hold: {
+          at: number;
+          reason: string;
+        } | null;
+        issuance: {
+          state: "disabled";
+          reason: "not_released";
+        } | {
+          state: "enabled";
+        };
+      };
+    };
+    nfc?: {
+      on: boolean;
+      allowed: boolean;
+      levels: Array<{
+        level: "passbook" | "plan" | "org" | "template" | "pass";
+        state: "ok" | "partial" | "off" | "needs" | "locked";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        canChange: boolean;
+      }>;
+      templates: {
+        on: number;
+        off: number;
+        never: number;
+        total: number;
+      };
+      account?: {
+        mode: "live" | "test";
+        provider: "google" | "samsung";
+        accountId: string | null;
+        source: "platform" | "org" | null;
+        platformAvailable: boolean;
+        state: "absent" | "off" | "on" | "held" | "revoked";
+        enrolmentRevision: number;
+        prerequisites: {
+          check: boolean;
+          roundTrip: boolean | null;
+        };
+        hold: {
+          at: number;
+          reason: string;
+        } | null;
+        issuance: {
+          state: "disabled";
+          reason: "not_released";
+        } | {
+          state: "enabled";
+        };
+      };
+    };
+  };
+  apple: {
+    identity: {
+      id: string;
+      provider: "apple";
+      orgId: string | null;
+      label: string;
+      identifier: string;
+      kind: "platform" | "managed" | "own";
+      status: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+      notBefore: number | null;
+      notAfter: number | null;
+      rotation: "auto" | "csr" | "manual";
+      nextRotationAt: number | null;
+      issuing: boolean;
+      isDefault: boolean;
+      passCount: number;
+      createdAt: number;
+    } | null;
+    sharedIdentifier: string;
+    push: "unknown" | "healthy" | "failing";
+    run: {
+      id: string;
+      orgId: string | null;
+      kind: "provision" | "rotate" | "revoke";
+      targetType: "identity" | "org" | "wallet_credential";
+      targetId: string;
+      state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+      step: string | null;
+      attempt: number;
+      waitingFor: string | null;
+      errorCode: string | null;
+      createdAt: number;
+      updatedAt: number;
+      finishedAt: number | null;
+    } | null;
+    managedAllowed: boolean;
+    passesOnShared: number;
+  };
+  templates: Array<{
+    id: string;
+    name: string;
+    ownBrand: Array<"colors" | "logo" | "icon">;
+    placeholders: Array<"logo" | "icon">;
+    channels: {
+      mobile?: {
+        on: boolean;
+        source: "pass" | "template" | "org" | "platform";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        retiredAt?: number;
+        retiredCause?: "pass" | "template";
+      };
+      apple?: {
+        on: boolean;
+        source: "pass" | "template" | "org" | "platform";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        retiredAt?: number;
+        retiredCause?: "pass" | "template";
+      };
+      google?: {
+        on: boolean;
+        source: "pass" | "template" | "org" | "platform";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        retiredAt?: number;
+        retiredCause?: "pass" | "template";
+      };
+      samsung?: {
+        on: boolean;
+        source: "pass" | "template" | "org" | "platform";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        retiredAt?: number;
+        retiredCause?: "pass" | "template";
+      };
+      paper?: {
+        on: boolean;
+        source: "pass" | "template" | "org" | "platform";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        retiredAt?: number;
+        retiredCause?: "pass" | "template";
+      };
+      nfc?: {
+        on: boolean;
+        source: "pass" | "template" | "org" | "platform";
+        reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+        retiredAt?: number;
+        retiredCause?: "pass" | "template";
+      };
+    };
+  }>;
+  checks: Array<{
+    code: "BRAND_LOGO" | "BRAND_ICON" | "BRAND_COLORS" | "BRAND_CONTRAST" | "ACCENT_CONTRAST" | "SUPPORT_MISSING" | "APPLE_SHARED_ID" | "APPLE_ID_FAILED" | "APPLE_ID_EXPIRING" | "APPLE_PUSH" | "WALLET_ACCOUNT" | "NO_CHANNEL" | "TEMPLATE_BRAND_OWN";
+    level: "error" | "warn" | "info";
+    area: "brand" | "support" | "channels";
+    message: string;
+    channel?: "mobile" | "apple" | "google" | "samsung" | "paper" | "nfc";
+    templateIds?: Array<string>;
+    fix: {
+      action: "upload_logo" | "upload_icon" | "use_logo_colors" | "edit_colors" | "fix_contrast" | "fix_accent" | "edit_support" | "start_apple_managed" | "retry_identity_run" | "renew_identity" | "replace_certificate" | "check_push" | "setup_wallet_account" | "allow_channel" | "review_template";
+      target?: string;
+    };
+  }>;
+};
+
+export type PassSetupResult = {
+  dryRun: boolean;
+  view: PassSetup;
+  diff: Array<{
+    field: "brand.name" | "brand.logo" | "brand.icon" | "brand.webLogo" | "brand.webLogoSameAsLogo" | "brand.passColors" | "brand.logoHasName" | "brand.accent" | "brand.mark" | "brand.support.email" | "brand.support.url" | "brand.email.fromName" | "brand.email.buddy" | "channels.mobile" | "channels.apple" | "channels.google" | "channels.samsung" | "channels.paper" | "channels.nfc";
+    before?: unknown;
+    after?: unknown;
+  }>;
+  impact: {
+    passesToUpdate: number;
+    channelStops: Array<{
+      channel: "mobile" | "apple" | "google" | "samsung" | "paper" | "nfc";
+      templates: number;
+      passes: number;
+    }>;
+    enrolments: Array<"google" | "samsung">;
+  };
 };
 
 export type PassSummary = {
@@ -3936,6 +4417,14 @@ export type SettingsUpdateParams = {
   scope?: "platform" | string;
   values: Record<string, unknown>;
   configRevision?: number;
+};
+
+export type StagedBrandAsset = {
+  slot: "logo" | "icon" | "webLogo";
+  sha: string;
+  w: number;
+  h: number;
+  expiresAt: number;
 };
 
 export type TemplateDetail = {

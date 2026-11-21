@@ -955,6 +955,18 @@
     "resource": "passImports",
     "method": "removeCreated"
   },
+  "pass-setup.getOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "retrievePassSetup"
+  },
+  "pass-setup.patchOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "updatePassSetup"
+  },
+  "pass-setup.postOrgsByOrgIdBrandAssets": {
+    "resource": "orgs",
+    "method": "stageBrandAsset"
+  },
   "passes.deletePassesById": {
     "resource": "passes",
     "method": "delete"

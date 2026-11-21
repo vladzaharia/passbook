@@ -1,0 +1,869 @@
+{
+  "pass-setup.getOrgsByOrgIdPassSetup": {
+    "description": "An organization's brand, channels and accounts in the caller's mode. Each channel carries its chain of levels (PassBook, Plan, Organization, Template), the first of which that is not ok stops it. checks lists what to fix, each with a stable fix action. Send revision back as expectedRevision.",
+    "response": {
+      "orgId": "org_1",
+      "mode": "live",
+      "revision": "r1",
+      "passCount": 412,
+      "brand": {
+        "name": {
+          "value": "Acme Fitness",
+          "source": "org"
+        },
+        "logo": {
+          "value": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "w": 480,
+            "h": 150
+          },
+          "source": "org",
+          "templatesOwn": 0
+        },
+        "icon": {
+          "value": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "w": 114,
+            "h": 114
+          },
+          "source": "org",
+          "templatesOwn": 0
+        },
+        "webLogo": {
+          "value": null,
+          "source": "passbook",
+          "sameAsLogo": true
+        },
+        "passColors": {
+          "value": {
+            "background": "#0f172a",
+            "foreground": "#ffffff",
+            "label": "#fbbf24"
+          },
+          "source": "org",
+          "templatesOwn": 0
+        },
+        "logoHasName": {
+          "value": false,
+          "source": "org"
+        },
+        "accent": {
+          "value": "#2563eb",
+          "source": "org"
+        },
+        "mark": {
+          "chosen": "full",
+          "effective": "full",
+          "allowed": [
+            "full",
+            "small"
+          ]
+        },
+        "support": {
+          "email": {
+            "value": "help@acme.test",
+            "source": "org"
+          },
+          "url": {
+            "value": null,
+            "source": "passbook"
+          }
+        },
+        "email": {
+          "fromName": {
+            "value": "Acme Fitness via PassBook",
+            "source": "passbook"
+          },
+          "buddy": false
+        }
+      },
+      "channels": {
+        "mobile": {
+          "on": true,
+          "allowed": true,
+          "levels": [
+            {
+              "level": "passbook",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "plan",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "org",
+              "state": "ok",
+              "canChange": true
+            },
+            {
+              "level": "template",
+              "state": "ok",
+              "canChange": true
+            }
+          ],
+          "templates": {
+            "on": 2,
+            "off": 0,
+            "never": 0,
+            "total": 2
+          }
+        },
+        "apple": {
+          "on": true,
+          "allowed": true,
+          "levels": [
+            {
+              "level": "passbook",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "plan",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "org",
+              "state": "ok",
+              "canChange": true
+            },
+            {
+              "level": "template",
+              "state": "ok",
+              "canChange": true
+            }
+          ],
+          "templates": {
+            "on": 2,
+            "off": 0,
+            "never": 0,
+            "total": 2
+          }
+        },
+        "google": {
+          "on": false,
+          "allowed": true,
+          "levels": [
+            {
+              "level": "passbook",
+              "state": "locked",
+              "reason": "not_released",
+              "canChange": false
+            },
+            {
+              "level": "plan",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "org",
+              "state": "ok",
+              "canChange": true
+            },
+            {
+              "level": "template",
+              "state": "ok",
+              "canChange": true
+            }
+          ],
+          "templates": {
+            "on": 2,
+            "off": 0,
+            "never": 0,
+            "total": 2
+          },
+          "account": {
+            "mode": "live",
+            "provider": "google",
+            "accountId": null,
+            "source": null,
+            "platformAvailable": false,
+            "state": "absent",
+            "enrolmentRevision": 0,
+            "prerequisites": {
+              "check": false,
+              "roundTrip": false
+            },
+            "hold": null,
+            "issuance": {
+              "state": "disabled",
+              "reason": "not_released"
+            }
+          }
+        },
+        "samsung": {
+          "on": false,
+          "allowed": true,
+          "levels": [
+            {
+              "level": "passbook",
+              "state": "locked",
+              "reason": "not_released",
+              "canChange": false
+            },
+            {
+              "level": "plan",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "org",
+              "state": "ok",
+              "canChange": true
+            },
+            {
+              "level": "template",
+              "state": "ok",
+              "canChange": true
+            }
+          ],
+          "templates": {
+            "on": 2,
+            "off": 0,
+            "never": 0,
+            "total": 2
+          },
+          "account": {
+            "mode": "live",
+            "provider": "samsung",
+            "accountId": null,
+            "source": null,
+            "platformAvailable": false,
+            "state": "absent",
+            "enrolmentRevision": 0,
+            "prerequisites": {
+              "check": false,
+              "roundTrip": false
+            },
+            "hold": null,
+            "issuance": {
+              "state": "disabled",
+              "reason": "not_released"
+            }
+          }
+        },
+        "paper": {
+          "on": false,
+          "allowed": true,
+          "levels": [
+            {
+              "level": "passbook",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "plan",
+              "state": "locked",
+              "reason": "not_included",
+              "canChange": false
+            },
+            {
+              "level": "org",
+              "state": "ok",
+              "canChange": true
+            },
+            {
+              "level": "template",
+              "state": "ok",
+              "canChange": true
+            }
+          ],
+          "templates": {
+            "on": 2,
+            "off": 0,
+            "never": 0,
+            "total": 2
+          }
+        },
+        "nfc": {
+          "on": true,
+          "allowed": true,
+          "levels": [
+            {
+              "level": "passbook",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "plan",
+              "state": "ok",
+              "canChange": false
+            },
+            {
+              "level": "org",
+              "state": "ok",
+              "canChange": true
+            },
+            {
+              "level": "template",
+              "state": "ok",
+              "canChange": true
+            }
+          ],
+          "templates": {
+            "on": 2,
+            "off": 0,
+            "never": 0,
+            "total": 2
+          }
+        }
+      },
+      "apple": {
+        "identity": {
+          "id": "idn_1",
+          "provider": "apple",
+          "orgId": "org_1",
+          "label": "Acme Fitness",
+          "identifier": "pass.mobile.passbook.acmefitness",
+          "kind": "managed",
+          "status": "active",
+          "notBefore": 1792627200000,
+          "notAfter": 1821139200000,
+          "rotation": "auto",
+          "nextRotationAt": 1818547200000,
+          "issuing": true,
+          "isDefault": true,
+          "passCount": 375,
+          "createdAt": 1792627200000
+        },
+        "sharedIdentifier": "pass.mobile.passbook.wallet",
+        "push": "healthy",
+        "run": null,
+        "managedAllowed": true,
+        "passesOnShared": 37
+      },
+      "templates": [
+        {
+          "id": "tpl_gym",
+          "name": "tpl_gym",
+          "ownBrand": [],
+          "placeholders": [],
+          "channels": {
+            "mobile": {
+              "on": true,
+              "source": "template"
+            },
+            "apple": {
+              "on": true,
+              "source": "template"
+            },
+            "google": {
+              "on": true,
+              "source": "template"
+            },
+            "samsung": {
+              "on": true,
+              "source": "template"
+            },
+            "paper": {
+              "on": true,
+              "source": "template"
+            },
+            "nfc": {
+              "on": true,
+              "source": "template"
+            }
+          }
+        },
+        {
+          "id": "tpl_day",
+          "name": "tpl_day",
+          "ownBrand": [],
+          "placeholders": [],
+          "channels": {
+            "mobile": {
+              "on": true,
+              "source": "template"
+            },
+            "apple": {
+              "on": true,
+              "source": "template"
+            },
+            "google": {
+              "on": true,
+              "source": "template"
+            },
+            "samsung": {
+              "on": true,
+              "source": "template"
+            },
+            "paper": {
+              "on": true,
+              "source": "template"
+            },
+            "nfc": {
+              "on": true,
+              "source": "template"
+            }
+          }
+        }
+      ],
+      "checks": []
+    }
+  },
+  "pass-setup.patchOrgsByOrgIdPassSetup": {
+    "description": "Change the brand, support, email and which channels the organization allows, in one write against the revision you read. ?dryRun=true answers with the same shape and writes nothing. Absent leaves a value, null clears it. Name an image by the sha POST /orgs/{orgId}/brand-assets answered. Allowing Google or Samsung also turns on the enrolment when the platform has released the provider and the account is ready; blocking never removes copies. A stale expectedRevision is 409 PASS_SETUP_CHANGED.",
+    "request": {
+      "expectedRevision": "r1",
+      "brand": {
+        "logo": {
+          "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "passColors": {
+          "background": "#0f172a",
+          "foreground": "#ffffff",
+          "label": "#fbbf24"
+        },
+        "support": {
+          "email": "help@acme.test"
+        }
+      },
+      "channels": {
+        "mobile": "blocked"
+      }
+    },
+    "response": {
+      "dryRun": true,
+      "view": {
+        "orgId": "org_1",
+        "mode": "live",
+        "revision": "r1",
+        "passCount": 412,
+        "brand": {
+          "name": {
+            "value": "Acme Fitness",
+            "source": "org"
+          },
+          "logo": {
+            "value": {
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "w": 480,
+              "h": 150
+            },
+            "source": "org",
+            "templatesOwn": 0
+          },
+          "icon": {
+            "value": {
+              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "w": 114,
+              "h": 114
+            },
+            "source": "org",
+            "templatesOwn": 0
+          },
+          "webLogo": {
+            "value": null,
+            "source": "passbook",
+            "sameAsLogo": true
+          },
+          "passColors": {
+            "value": {
+              "background": "#0f172a",
+              "foreground": "#ffffff",
+              "label": "#fbbf24"
+            },
+            "source": "org",
+            "templatesOwn": 0
+          },
+          "logoHasName": {
+            "value": false,
+            "source": "org"
+          },
+          "accent": {
+            "value": "#2563eb",
+            "source": "org"
+          },
+          "mark": {
+            "chosen": "full",
+            "effective": "full",
+            "allowed": [
+              "full",
+              "small"
+            ]
+          },
+          "support": {
+            "email": {
+              "value": "help@acme.test",
+              "source": "org"
+            },
+            "url": {
+              "value": null,
+              "source": "passbook"
+            }
+          },
+          "email": {
+            "fromName": {
+              "value": "Acme Fitness via PassBook",
+              "source": "passbook"
+            },
+            "buddy": false
+          }
+        },
+        "channels": {
+          "mobile": {
+            "on": true,
+            "allowed": true,
+            "levels": [
+              {
+                "level": "passbook",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "plan",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "org",
+                "state": "ok",
+                "canChange": true
+              },
+              {
+                "level": "template",
+                "state": "ok",
+                "canChange": true
+              }
+            ],
+            "templates": {
+              "on": 2,
+              "off": 0,
+              "never": 0,
+              "total": 2
+            }
+          },
+          "apple": {
+            "on": true,
+            "allowed": true,
+            "levels": [
+              {
+                "level": "passbook",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "plan",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "org",
+                "state": "ok",
+                "canChange": true
+              },
+              {
+                "level": "template",
+                "state": "ok",
+                "canChange": true
+              }
+            ],
+            "templates": {
+              "on": 2,
+              "off": 0,
+              "never": 0,
+              "total": 2
+            }
+          },
+          "google": {
+            "on": false,
+            "allowed": true,
+            "levels": [
+              {
+                "level": "passbook",
+                "state": "locked",
+                "reason": "not_released",
+                "canChange": false
+              },
+              {
+                "level": "plan",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "org",
+                "state": "ok",
+                "canChange": true
+              },
+              {
+                "level": "template",
+                "state": "ok",
+                "canChange": true
+              }
+            ],
+            "templates": {
+              "on": 2,
+              "off": 0,
+              "never": 0,
+              "total": 2
+            },
+            "account": {
+              "mode": "live",
+              "provider": "google",
+              "accountId": null,
+              "source": null,
+              "platformAvailable": false,
+              "state": "absent",
+              "enrolmentRevision": 0,
+              "prerequisites": {
+                "check": false,
+                "roundTrip": false
+              },
+              "hold": null,
+              "issuance": {
+                "state": "disabled",
+                "reason": "not_released"
+              }
+            }
+          },
+          "samsung": {
+            "on": false,
+            "allowed": true,
+            "levels": [
+              {
+                "level": "passbook",
+                "state": "locked",
+                "reason": "not_released",
+                "canChange": false
+              },
+              {
+                "level": "plan",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "org",
+                "state": "ok",
+                "canChange": true
+              },
+              {
+                "level": "template",
+                "state": "ok",
+                "canChange": true
+              }
+            ],
+            "templates": {
+              "on": 2,
+              "off": 0,
+              "never": 0,
+              "total": 2
+            },
+            "account": {
+              "mode": "live",
+              "provider": "samsung",
+              "accountId": null,
+              "source": null,
+              "platformAvailable": false,
+              "state": "absent",
+              "enrolmentRevision": 0,
+              "prerequisites": {
+                "check": false,
+                "roundTrip": false
+              },
+              "hold": null,
+              "issuance": {
+                "state": "disabled",
+                "reason": "not_released"
+              }
+            }
+          },
+          "paper": {
+            "on": false,
+            "allowed": true,
+            "levels": [
+              {
+                "level": "passbook",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "plan",
+                "state": "locked",
+                "reason": "not_included",
+                "canChange": false
+              },
+              {
+                "level": "org",
+                "state": "ok",
+                "canChange": true
+              },
+              {
+                "level": "template",
+                "state": "ok",
+                "canChange": true
+              }
+            ],
+            "templates": {
+              "on": 2,
+              "off": 0,
+              "never": 0,
+              "total": 2
+            }
+          },
+          "nfc": {
+            "on": true,
+            "allowed": true,
+            "levels": [
+              {
+                "level": "passbook",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "plan",
+                "state": "ok",
+                "canChange": false
+              },
+              {
+                "level": "org",
+                "state": "ok",
+                "canChange": true
+              },
+              {
+                "level": "template",
+                "state": "ok",
+                "canChange": true
+              }
+            ],
+            "templates": {
+              "on": 2,
+              "off": 0,
+              "never": 0,
+              "total": 2
+            }
+          }
+        },
+        "apple": {
+          "identity": {
+            "id": "idn_1",
+            "provider": "apple",
+            "orgId": "org_1",
+            "label": "Acme Fitness",
+            "identifier": "pass.mobile.passbook.acmefitness",
+            "kind": "managed",
+            "status": "active",
+            "notBefore": 1792627200000,
+            "notAfter": 1821139200000,
+            "rotation": "auto",
+            "nextRotationAt": 1818547200000,
+            "issuing": true,
+            "isDefault": true,
+            "passCount": 375,
+            "createdAt": 1792627200000
+          },
+          "sharedIdentifier": "pass.mobile.passbook.wallet",
+          "push": "healthy",
+          "run": null,
+          "managedAllowed": true,
+          "passesOnShared": 37
+        },
+        "templates": [
+          {
+            "id": "tpl_gym",
+            "name": "tpl_gym",
+            "ownBrand": [],
+            "placeholders": [],
+            "channels": {
+              "mobile": {
+                "on": true,
+                "source": "template"
+              },
+              "apple": {
+                "on": true,
+                "source": "template"
+              },
+              "google": {
+                "on": true,
+                "source": "template"
+              },
+              "samsung": {
+                "on": true,
+                "source": "template"
+              },
+              "paper": {
+                "on": true,
+                "source": "template"
+              },
+              "nfc": {
+                "on": true,
+                "source": "template"
+              }
+            }
+          },
+          {
+            "id": "tpl_day",
+            "name": "tpl_day",
+            "ownBrand": [],
+            "placeholders": [],
+            "channels": {
+              "mobile": {
+                "on": true,
+                "source": "template"
+              },
+              "apple": {
+                "on": true,
+                "source": "template"
+              },
+              "google": {
+                "on": true,
+                "source": "template"
+              },
+              "samsung": {
+                "on": true,
+                "source": "template"
+              },
+              "paper": {
+                "on": true,
+                "source": "template"
+              },
+              "nfc": {
+                "on": true,
+                "source": "template"
+              }
+            }
+          }
+        ],
+        "checks": []
+      },
+      "diff": [
+        {
+          "field": "brand.support.email",
+          "before": null,
+          "after": "help@acme.test"
+        },
+        {
+          "field": "channels.mobile",
+          "before": "allowed",
+          "after": "blocked"
+        }
+      ],
+      "impact": {
+        "passesToUpdate": 412,
+        "channelStops": [
+          {
+            "channel": "mobile",
+            "templates": 2,
+            "passes": 412
+          }
+        ],
+        "enrolments": []
+      }
+    }
+  },
+  "pass-setup.postOrgsByOrgIdBrandAssets": {
+    "description": "Stage a PNG for a logo, icon or web logo. Nothing about the organization changes: a pass-setup save that names the sha keeps the file, and an unused one is deleted after 24 hours. The logo and icon are the @3x; send the @2x as x2 or let it be derived.",
+    "request": {
+      "slot": "logo",
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    },
+    "response": {
+      "slot": "logo",
+      "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "w": 480,
+      "h": 150,
+      "expiresAt": 1764086400000
+    }
+  }
+}
