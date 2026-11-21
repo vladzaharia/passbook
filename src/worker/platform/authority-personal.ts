@@ -1,6 +1,7 @@
 // platform.org.personal: the one grant that creates a personal org. It is held by a live platform-admin
 // session and writes only the signing-in admin's own org: the marker, the entitlements row, an accepted
 // invitation and the org_admin membership, all for the principal's user id (authority-epochs.md section 1.2).
+// Children are accepted only after the same grant inserted the `orgs` row (which fails on an existing id).
 import { AuthorityError } from './authority-error.ts';
 
 export const PERSONAL_ORG_PURPOSE = 'platform.org.personal';
@@ -19,16 +20,24 @@ interface Holder {
   orgId?: string;
 }
 
+/** What the grant has inserted so far: children must follow their org and invitation. */
+export interface PersonalState {
+  org: boolean;
+  invitations: Set<string>;
+}
+const states = new WeakMap<object, PersonalState>();
+
 const refuse = (message: string) => new AuthorityError('GRANT_SCOPE_OVERRIDE', message);
 
 /** Inserts of a personal-org grant: every row names the grant's org and the principal's own user. */
 export function personalOrgInsert(
-  { purpose, principal, target }: { purpose: string; principal: Holder; target?: string },
+  input: { purpose: string; principal: Holder; target?: string },
   table: string,
   columns: string[],
   values: readonly unknown[],
   copies: boolean,
 ): void {
+  const { purpose, principal, target } = input;
   if (purpose !== PERSONAL_ORG_PURPOSE) return;
   if (
     principal.kind !== 'platform' ||
@@ -38,16 +47,35 @@ export function personalOrgInsert(
   )
     throw refuse(`${purpose} is held by a platform admin session and names the new org as target.`);
   if (copies) throw refuse(`${purpose} copies no rows.`);
+  const state = states.get(input) ?? { org: false, invitations: new Set<string>() };
+  states.set(input, state);
   const at = (c: string) => values[columns.indexOf(c)];
   const t = table.toLowerCase();
   if (!(PERSONAL_ORG_TABLES as readonly string[]).includes(t))
     throw refuse(`${purpose} does not write ${table}.`);
   const orgColumn = t === 'orgs' ? 'id' : 'org_id';
   if (at(orgColumn) !== target) throw refuse(`${t}.${orgColumn} must be the grant's org.`);
-  if (t === 'orgs' && at('personal_user_id') !== principal.userId)
-    throw refuse('A personal org belongs to the grant principal.');
-  if (t === 'org_memberships' && at('user_id') !== principal.userId)
-    throw refuse('A personal org gives membership to the grant principal only.');
+  if (t !== 'orgs' && !state.org) throw refuse(`${t} follows the orgs row of the same grant.`);
+  if (t === 'orgs') {
+    if (at('personal_user_id') !== principal.userId)
+      throw refuse('A personal org belongs to the grant principal.');
+    if ((at('status') ?? 'active') !== 'active' || (at('kind') ?? 'standard') !== 'standard')
+      throw refuse('A personal org is an active standard org.');
+    state.org = true;
+  }
+  if (t === 'org_entitlements' && at('preset') !== 'standard')
+    throw refuse('A personal org has the standard preset.');
+  if (t === 'org_invitations') {
+    if (typeof at('accepted_at') !== 'number')
+      throw refuse('The invitation of a personal org is already accepted.');
+    state.invitations.add(String(at('id')));
+  }
+  if (t === 'org_memberships') {
+    if (at('user_id') !== principal.userId)
+      throw refuse('A personal org gives membership to the grant principal only.');
+    if (!state.invitations.has(String(at('invitation_id'))))
+      throw refuse('The membership follows the invitation of the same grant.');
+  }
   if ((t === 'org_memberships' || t === 'org_invitations') && at('roles') !== ADMIN_ROLES)
     throw refuse('A personal org grants org_admin only.');
 }

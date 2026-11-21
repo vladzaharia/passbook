@@ -126,7 +126,7 @@ Abridged: `0052` also restricts the holder purposes to a `holder` principal. `le
 **Scope by purpose:**
 - `org_mode`: pass, scan, delivery, connection and bundle writes.
 - `org`: settings, org profile, memberships, invitations, org-bound API keys, template authoring and release approval.
-- `platform`: org create, status and delete; `platform.org.personal` (an admin's own personal org: org, entitlements, accepted invitation and `org_admin` membership, insert-only, every row for the principal's user id); template reassignment between orgs; null-org API keys; platform settings.
+- `platform`: org create, status and delete; `platform.org.personal` (an admin's own personal org: org, `standard` entitlements, accepted invitation and `org_admin` membership, insert-only; children only after the grant's own `orgs` insert, the membership only for that grant's invitation, every row for the principal's user id; an active standard org); template reassignment between orgs; null-org API keys; platform settings.
 - A `platform` grant's CTEs check every org the batch touches (for example, both orgs in a reassignment).
 
 **Invariant (corrected).**

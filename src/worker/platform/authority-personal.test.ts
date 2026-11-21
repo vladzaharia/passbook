@@ -30,9 +30,14 @@ async function personalGrant(label: string, roles: ('admin' | 'user')[]) {
   return { g, user, other, orgId, s };
 }
 
-const invitation = (id: string, orgId: string, roles = '["org_admin"]') => [
+const invitation = (
+  id: string,
+  orgId: string,
+  roles = '["org_admin"]',
+  email = 'x@example.com',
+) => [
   ['id', 'org_id', 'email', 'roles', 'token_hash', 'created_at', 'expires_at', 'accepted_at'],
-  [id, orgId, 'x@example.com', roles, `${id}-hash`, 1, 1, 1],
+  [id, orgId, email, roles, `${id}-hash`, 1, 1, 1],
 ];
 
 describe('platform.org.personal', () => {
@@ -41,7 +46,7 @@ describe('platform.org.personal', () => {
     const slug = `personal-${orgId.slice(0, 8)}`;
     g.insertSelect('orgs', ORG_COLUMNS, [orgId, slug, 'Ada', 1, 1, user.id]);
     g.insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], [orgId, 'standard', 1]);
-    const [cols, vals] = invitation('inv-ok', orgId);
+    const [cols, vals] = invitation('inv-ok', orgId, '["org_admin"]', user.primaryEmail);
     g.insertSelect('org_invitations', cols as string[], vals as never);
     g.insertSelect(
       'org_memberships',
@@ -52,6 +57,55 @@ describe('platform.org.personal', () => {
     expect(
       await first(env.DB, 'SELECT id FROM orgs WHERE personal_user_id = ?', [user.id]),
     ).toMatchObject({ id: orgId });
+  });
+
+  it('refuses children of an org this grant did not insert, an open invitation and a non-standard preset', async () => {
+    const { g, user, orgId } = await personalGrant('personal-children', ['admin', 'user']);
+    const [cols, vals] = invitation('inv-c', orgId);
+    expect(() => g.insertSelect('org_invitations', cols as string[], vals as never)).toThrow(
+      /follows the orgs row/,
+    );
+    expect(() =>
+      g.insertSelect(
+        'org_memberships',
+        ['id', 'org_id', 'user_id', 'invitation_id', 'roles', 'created_at'],
+        ['m', orgId, user.id, 'inv-c', '["org_admin"]', 1],
+      ),
+    ).toThrow(/follows the orgs row/);
+    g.insertSelect('orgs', ORG_COLUMNS, [orgId, 'personal-c', 'C', 1, 1, user.id]);
+    expect(() =>
+      g.insertSelect('org_entitlements', ['org_id', 'preset', 'updated_at'], [orgId, 'trial', 1]),
+    ).toThrow(/standard preset/);
+    const open = [...(vals as unknown[])];
+    open[7] = null;
+    expect(() => g.insertSelect('org_invitations', cols as string[], open as never)).toThrow(
+      /already accepted/,
+    );
+    expect(() =>
+      g.insertSelect(
+        'org_memberships',
+        ['id', 'org_id', 'user_id', 'invitation_id', 'roles', 'created_at'],
+        ['m', orgId, user.id, 'unknown-invitation', '["org_admin"]', 1],
+      ),
+    ).toThrow(/same grant/);
+  });
+
+  it('refuses a non-standard org kind or status', async () => {
+    const { g, user, orgId } = await personalGrant('personal-kind', ['admin', 'user']);
+    expect(() =>
+      g.insertSelect(
+        'orgs',
+        [...ORG_COLUMNS, 'kind'],
+        [orgId, 'personal-k', 'K', 1, 1, user.id, 'developer'],
+      ),
+    ).toThrow(/standard org/);
+    expect(() =>
+      g.insertSelect(
+        'orgs',
+        [...ORG_COLUMNS, 'status'],
+        [orgId, 'personal-k', 'K', 1, 1, user.id, 'suspended'],
+      ),
+    ).toThrow(/standard org/);
   });
 
   it('cannot create a personal org for a different user', async () => {
@@ -74,6 +128,8 @@ describe('platform.org.personal', () => {
       'user',
     ]);
     const cols = ['id', 'org_id', 'user_id', 'invitation_id', 'roles', 'created_at'];
+    g.insertSelect('orgs', ORG_COLUMNS, [orgId, 'personal-m', 'M', 1, 1, user.id]);
+    g.insertSelect('org_invitations', ...(invitation('i', orgId) as [string[], never]));
     expect(() =>
       g.insertSelect('org_memberships', cols, ['m', orgId, other.id, 'i', '["org_admin"]', 1]),
     ).toThrow(/principal only/);
