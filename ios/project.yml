@@ -20,7 +20,6 @@ targets:
         CODE_SIGN_ENTITLEMENTS: PassBookScanner/PassBookScanner.entitlements
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_STRICT_CONCURRENCY: complete
-        ENABLE_APP_SANDBOX: YES
         SUPPORTS_MACCATALYST: NO
         CODE_SIGN_STYLE: Automatic
         MARKETING_VERSION: "1.0"

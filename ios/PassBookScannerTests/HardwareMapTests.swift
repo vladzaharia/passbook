@@ -56,4 +56,12 @@ final class HardwareMapTests: XCTestCase {
         XCTAssertEqual(out.count, 16)
         XCTAssertTrue(out.allSatisfy { ($0["id"] as? String ?? "").count <= 64 })
     }
+
+    func testLongNamesAreCutByUTF16UnitsNotGraphemes() {
+        let name = String(repeating: "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}", count: 40) // 8 units each
+        let clipped = HardwareMap.clip(name)
+        XCTAssertLessThanOrEqual(clipped.utf16.count, HardwareMap.maxName)
+        XCTAssertEqual(clipped.count, 10)
+        XCTAssertEqual(HardwareMap.clip("Front"), "Front")
+    }
 }
