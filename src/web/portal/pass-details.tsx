@@ -1,13 +1,15 @@
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { Upcoming } from '../pass-card/back.tsx';
-import { Card, CardBody, CardHeader } from '../ui/card-base.tsx';
+import { Card, CardBody } from '../ui/card-base.tsx';
 import { KeyValue } from '../ui/key-value.tsx';
 import { StatusPill } from '../ui/status-pill-base.tsx';
 import { fieldRows, noteRows } from './pass-fields.ts';
 
 /**
- * The pass's front fields in the Apple pass's order, its expiry, then its upcoming events. One
- * card for the portal and /p: the card face is a designed layout, this list is every field.
+ * The pass's state, the org's notes, its front fields in the Apple pass's order, its expiry, then
+ * its upcoming events: the page's one details, for the portal and /p. The card face is a designed
+ * layout, this list is every field. No title and no Status label: the pill and the rows say what
+ * they are.
  */
 export function PassDetails({
   passJson,
@@ -37,10 +39,10 @@ export function PassDetails({
   const notes = noteRows(passJson);
   return (
     <Card>
-      <CardHeader title="Details" />
-      <CardBody className="flex flex-col gap-4">
+      <CardBody className="flex flex-col items-start gap-4">
+        <StatusPill status={state} />
         {notes.length ? (
-          <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-page p-4">
+          <div className="flex w-full flex-col gap-3 border-y border-border py-4">
             {notes.map((n) => (
               <div key={n.id} className="flex flex-col gap-0.5 text-sm">
                 <span className="text-fg-muted">{n.label}</span>
@@ -51,9 +53,9 @@ export function PassDetails({
             ))}
           </div>
         ) : null}
-        <KeyValue items={[{ label: 'Status', value: <StatusPill status={state} /> }, ...rows]} />
+        {rows.length ? <KeyValue items={rows} className="w-full" /> : null}
         {view.upcoming.length ? (
-          <div className="pc-flat">
+          <div className="pc-flat w-full">
             <Upcoming events={view.upcoming} />
           </div>
         ) : null}

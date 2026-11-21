@@ -186,7 +186,6 @@ describe('my passes', () => {
     const buddy = qr.closest('.wl-sign')?.querySelector(':scope > [data-buddy]');
     expect(buddy).toHaveAttribute('data-scene', 'nudge');
     expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-size', 'lg');
-    expect(within(dialog).getByText(HOLDER_COPY.iphone)).toBeInTheDocument();
     expect(within(dialog).getByText(HOLDER_COPY.scanLine)).toBeInTheDocument();
     expect((await axe(dialog)).violations).toEqual([]);
   });

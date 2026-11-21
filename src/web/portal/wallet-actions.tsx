@@ -53,7 +53,7 @@ export function AddLine({ className }: { className?: string }) {
 }
 
 /**
- * The pass page's scan in a dialog: the buddy on the QR's sign, On your iPhone beside it, stacked
+ * The pass page's scan in a dialog: the buddy on the QR's tile, the scan line beside it, stacked
  * in the bottom sheet. The page's buddy steps aside while it is open (art-wallet.css).
  */
 export function QrDialog({

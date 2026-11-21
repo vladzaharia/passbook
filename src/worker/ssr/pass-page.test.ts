@@ -74,22 +74,27 @@ describe('/p renders the portal HolderPassView', () => {
     expect(b).toMatch(PORTAL_LINK);
   });
 
-  it('leads with the QR off Apple devices and keeps the Apple badge accessible', () => {
+  it('leads with the QR on a computer, the buddy on its card clear of the code, no badge', () => {
     const b = body(page());
     expect(b).toMatch(
-      /<div class="wl-sign"><span [^>]*data-scene="nudge"[^>]*data-run="load"[\s\S]*?<img src="data:image\/svg\+xml/,
+      /<div class="wl-hero wl-hero-scan"><span [^>]*data-scene="nudge"[^>]*data-run="load"[\s\S]*?<div class="wl-sign"><span[^>]*><img src="data:image\/svg\+xml/,
     );
     expect(b).toContain(HOLDER_COPY.scanLine);
-    expect(b).toContain('data-awb');
-    expect(b).toContain(HOLDER_COPY.openOnApple);
+    // The badge would download a file nothing on this computer opens.
+    expect(b).not.toContain('data-awb');
+    expect(b).not.toContain(HOLDER_COPY.openOnApple);
     expect(b).toMatch(/class="wl-holder-help [^"]*"><p class="[^"]*">Help:/);
     // A click replays the scene, as on the hosted pages.
     expect(page()).toContain(REPLAY_SCRIPT);
   });
 
-  it('puts the Apple badge beside the QR on a Mac without hiding it on touch screens', () => {
+  it('puts the Apple badge under the scan line on a Mac, as the quiet second way', () => {
     const b = body(page({ device: { device: 'mac', inApp: false } }));
-    expect(b).toMatch(/<div class="wl-way">[\s\S]*?Apple Wallet[\s\S]*?data-awb=""/);
+    expect(b).toMatch(
+      new RegExp(
+        `${HOLDER_COPY.scanLine}[\\s\\S]*?wl-way-here[\\s\\S]*?${HOLDER_COPY.onThisMac}[\\s\\S]*?data-awb=""`,
+      ),
+    );
     expect(page()).not.toContain('wl-mac-only');
   });
 
@@ -106,7 +111,7 @@ describe('/p renders the portal HolderPassView', () => {
     const html = page({ device, walletOffers });
     const b = body(html);
     expect(html).toContain('property="og:description" content="Add it to your wallet."');
-    expect(b).toContain('href="/p/t/pass.pkpass"');
+    if (device.device !== 'other') expect(b).toContain('href="/p/t/pass.pkpass"');
     expect(b).toContain('href="/p/t/wallet/google"');
     expect(b).toContain('href="/p/t/wallet/samsung"');
     expect(b).toContain(
@@ -118,24 +123,33 @@ describe('/p renders the portal HolderPassView', () => {
     expect(b).not.toMatch(/(?:Google|Samsung) Wallet (?:installed|removed)/i);
   });
 
-  it('recommends the browser barcode off Apple devices, with Apple still reachable and no script needed', () => {
-    const html = page({ barcodeHref: '/p/t/barcode' });
-    const b = body(html);
-    expect(b.indexOf(HOLDER_COPY.bestForDevice)).toBeLessThan(b.indexOf(HOLDER_COPY.browserTitle));
-    expect(b.indexOf(HOLDER_COPY.browserTitle)).toBeLessThan(b.indexOf(HOLDER_COPY.otherWays));
-    expect(b.indexOf(HOLDER_COPY.otherWays)).toBeLessThan(b.indexOf('data-awb'));
-    expect(b).toContain('href="/p/t/barcode"');
-    expect(b).toContain('href="/p/t/pass.pkpass"');
+  it('leads with the QR on a computer, the browser barcode a quiet row after it, no script', () => {
+    const b = body(page({ barcodeHref: '/p/t/barcode' }));
+    expect(b.indexOf('wl-hero-scan')).toBeLessThan(
+      b.indexOf(`aria-label="${HOLDER_COPY.otherWays}"`),
+    );
+    expect(b).toMatch(
+      /<ul class="wl-others" aria-label="Other ways"><li[^>]*><a class="wl-other" href="\/p\/t\/barcode">/,
+    );
     expect(b).not.toContain('<script');
+  });
+
+  it('labels neither the lead nor the other ways', () => {
+    const b = body(
+      page({ barcodeHref: '/p/t/barcode', device: { device: 'iphone', inApp: false } }),
+    );
+    expect(b).not.toContain('Best for this device');
+    expect(b).not.toContain('>Other ways<');
   });
 
   it('recommends Apple on an iPhone, the browser barcode after it', () => {
     const b = body(
       page({ barcodeHref: '/p/t/barcode', device: { device: 'iphone', inApp: false } }),
     );
-    expect(b.indexOf(HOLDER_COPY.bestForDevice)).toBeLessThan(b.indexOf('data-awb'));
-    expect(b.indexOf('data-awb')).toBeLessThan(b.indexOf(HOLDER_COPY.otherWays));
-    expect(b.indexOf(HOLDER_COPY.otherWays)).toBeLessThan(b.indexOf(HOLDER_COPY.browserTitle));
+    expect(b.indexOf('data-awb')).toBeLessThan(b.indexOf(`aria-label="${HOLDER_COPY.otherWays}"`));
+    expect(b.indexOf(`aria-label="${HOLDER_COPY.otherWays}"`)).toBeLessThan(
+      b.indexOf('href="/p/t/barcode"'),
+    );
   });
 
   it('leads with the badge on a phone and shows the QR only off the phone', () => {
@@ -196,7 +210,7 @@ describe('/p renders the portal HolderPassView', () => {
     const b = body(page({ device: { device: 'iphone', inApp: false } }));
     expect(b).toContain('<div class="wl-holder" data-lead="add"');
     expect(b).toMatch(
-      /<div class="wl-add-here [^"]*"><span [^>]*data-scene="nudge"[\s\S]*?data-awb=""/,
+      /<div class="wl-hero wl-hero-phone"><span [^>]*data-scene="nudge"[\s\S]*?data-awb=""/,
     );
     expect(b).not.toContain('wl-sign');
   });
@@ -216,8 +230,11 @@ describe('/p renders the portal HolderPassView', () => {
       expect(b).not.toContain('wl-add-scan');
       expect(b).not.toContain('/apple/badge/');
       expect(b).toContain('href="/p/t/barcode"');
-      expect(b.split(HOLDER_COPY.openOnApple)).toHaveLength(2);
-      expect(b.indexOf(HOLDER_COPY.browserTitle)).toBeLessThan(b.indexOf(HOLDER_COPY.openOnApple));
+      expect(b.split(HOLDER_COPY.appleElsewhere)).toHaveLength(2);
+      expect(b).not.toContain(HOLDER_COPY.openOnApple);
+      // The barcode leads; Apple's line is a row of the other ways.
+      expect(b).toMatch(/<a class="wl-hero-action" href="\/p\/t\/barcode">/);
+      expect(b.indexOf('wl-hero-action')).toBeLessThan(b.indexOf(HOLDER_COPY.appleElsewhere));
     },
   );
 

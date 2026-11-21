@@ -141,7 +141,6 @@ function PassBody(props: PassPageProps) {
               glow={active}
               dim={!active}
               removed={state === 'removed'}
-              toggleId="pc-flip"
             />
           }
           passTitle={props.passTitle}

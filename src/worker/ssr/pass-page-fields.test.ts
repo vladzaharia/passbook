@@ -40,7 +40,7 @@ function detailsOf(passJson: PassJson, timeZone?: string): string {
     voided: false,
     device: { device: 'iphone', inApp: false },
   });
-  const at = html.indexOf('>Details</h2>');
+  const at = html.indexOf('class="wl-holder-details"');
   expect(at).toBeGreaterThan(-1);
   return html.slice(at).replace(/<[^>]+>/g, ' ');
 }
@@ -74,12 +74,13 @@ describe('/p lists every front field of the pass', () => {
     expect(text).toContain('Boards');
   });
 
-  it('shows Status once: the badge, not a pass field of the same label', () => {
+  it('shows the state once, as the pill: no Status label, no pass field of that label', () => {
     const passJson = starter('starter-boarding-pass');
     const block = passJson.boardingPass as { auxiliaryFields: unknown[] };
     block.auxiliaryFields.push({ key: 'status', label: 'Status', value: 'On time' });
     const text = detailsOf(passJson);
-    expect(text.match(/Status/g)).toHaveLength(1);
+    expect(text).not.toMatch(/Status/);
+    expect(text).toContain('Active');
     expect(text).not.toContain('On time');
   });
 

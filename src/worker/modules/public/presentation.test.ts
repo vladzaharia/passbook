@@ -600,7 +600,7 @@ describe('presentation barcode', () => {
     expect(html).toContain(ALT_TEXT);
     expect(html).toContain(qrDataUri(toSvg, `${ORIGIN}${page}`));
     expect(html).not.toContain(qrDataUri(toSvg, PRIMARY));
-    expect(html).toContain('Scan with the camera.');
+    expect(html).toContain('Scan with your iPhone camera.');
   });
 
   it('offers Save for offline on the bearer page only, with one nonced script and no credential in it', async () => {

@@ -44,17 +44,18 @@ describe('pass page header', () => {
 });
 
 describe('pass page add block', () => {
-  it('Mac: the buddy on the QR’s sign points at it; the badge adds beside it', async () => {
+  it('Mac: the buddy on the lead’s card, clear of the QR; the badge a quiet second way', async () => {
     await open(MAC);
-    const sign = (await qrImage()).closest('.wl-sign') as HTMLElement;
-    const buddy = sign.querySelector('[data-buddy]');
-    // M on the sign, at its end, pointing at the code.
+    const qr = await qrImage();
+    // No buddy on the code's tile: S on the card's edge, at its end, pointing at the code.
+    expect(qr.closest('.wl-sign')?.querySelector('[data-buddy]')).toBeNull();
+    const buddy = qr.closest('.wl-hero')?.querySelector(':scope > [data-buddy]');
     expect(buddy).toHaveAttribute('data-scene', 'nudge');
-    expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-size', 'lg');
+    expect(buddy?.querySelector('[data-art="wallet"]')).toHaveAttribute('data-size', 'sm');
     const add = screen.getByRole('region', { name: HOLDER_COPY.addTitle });
     expect(within(add).getByText(HOLDER_COPY.scanLine)).toBeVisible();
     const badge = within(add).getByRole('link', { name: 'Add to Apple Wallet' });
-    expect(badge.closest('.wl-way')).toHaveTextContent('Apple Wallet');
+    expect(badge.closest('.wl-way-here')).toHaveTextContent(HOLDER_COPY.onThisMac);
     expect(buddies()).toHaveLength(1);
   });
 
@@ -91,11 +92,11 @@ describe('pass page add block', () => {
     expect(add).toHaveTextContent(HOLDER_COPY.openInSafari);
   });
 
-  it('in Apple Wallet: a quiet line under the happy buddy; Show QR opens adding again', async () => {
+  it('in Apple Wallet: one line beside the happy buddy; Show QR opens adding again', async () => {
     const user = userEvent.setup();
     await open(MAC, { inWallet: true });
     const add = screen.getByRole('region', { name: HOLDER_COPY.added });
-    expect(within(add).getByText(HOLDER_COPY.addedLine)).toBeVisible();
+    expect(within(add).getByText(HOLDER_COPY.added)).toBeVisible();
     expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
     const show = within(add).getByRole('button', { name: HOLDER_COPY.showQr });
     expect(show).toHaveAttribute('aria-expanded', 'false');
@@ -106,7 +107,7 @@ describe('pass page add block', () => {
       'aria-expanded',
       'true',
     );
-    // The happy buddy stays on the line; the sign comes back without one.
+    // The happy buddy stays on the line; the QR comes back without one.
     expect(buddies().map((b) => b.dataset.scene)).toEqual(['count']);
   });
 

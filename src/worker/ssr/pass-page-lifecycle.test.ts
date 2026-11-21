@@ -52,11 +52,11 @@ function page(json: PassJson, over: Record<string, unknown> = {}): string {
     ...over,
   });
 }
-const details = (html: string) => html.slice(html.indexOf('>Details</h2>'));
+const details = (html: string) => html.slice(html.indexOf('class="wl-holder-details"'));
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
 describe('/p tells the holder what the org wrote', () => {
-  it('shows the latest message and the note in Details, not the terms', () => {
+  it('shows the latest message and the note in the details, not the terms', () => {
     const body = text(details(page(passJson('Pool closed Monday for cleaning.'))));
     expect(body).toContain('Message Pool closed Monday for cleaning.');
     expect(body).toContain('Note Upgraded to Pro.');
@@ -69,19 +69,20 @@ describe('/p tells the holder what the org wrote', () => {
 });
 
 describe('/p never says Active beside a void', () => {
-  it('states Voided in Details and on the card, with the void date and next step', () => {
+  it('states Voided in the details and on the card, with the void date and next step', () => {
     const html = page(passJson(), {
       voided: true,
       endedOn: 'Nov 18, 2026',
       support: { email: 'desk@northwind.test', url: null },
     });
-    expect(text(details(html))).toContain('Status Voided');
+    // The pill alone: the list says what it is.
+    expect(text(details(html))).toMatch(/^[^>]*> Voided /);
     expect(text(html)).not.toMatch(/Status\s+Active/i);
     expect(text(html)).toContain('This pass was voided on Nov 18, 2026. It no longer works.');
     expect(text(html)).toContain('Contact Northwind');
   });
 
   it('keeps Active for a live pass', () => {
-    expect(text(details(page(passJson())))).toContain('Status Active');
+    expect(text(details(page(passJson())))).toMatch(/^[^>]*> Active /);
   });
 });

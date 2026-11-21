@@ -14,11 +14,10 @@ import { AppleWalletBadge } from '../ui/apple-wallet-badge.tsx';
 import { BuddyArt } from '../ui/art/buddy-art.tsx';
 import { Callout } from '../ui/callout.tsx';
 import { AddBlock } from './add/add-block.tsx';
-import { OUTLINE_ACTION_CLASS } from './add/added.tsx';
 import { type AddAreaProps, addMode } from './add/area.ts';
 import type { RenderBuddy } from './add/scan.tsx';
 import { Help, type HolderSupport, Notice, SendAgain } from './holder-parts.tsx';
-import { WalletChoices } from './wallet-choice.tsx';
+import { OtherWays, WalletLead } from './wallet-choice.tsx';
 import './holder-pass.css';
 
 export type { HolderSupport } from './holder-parts.tsx';
@@ -72,8 +71,8 @@ const ssrBuddy: RenderBuddy = (p) => <BuddyArt {...p} playOnLoad />;
 /**
  * The holder's pass page under its header, one composition for the portal (/passes/:id) and the
  * public link (/p, rendered to static markup with the same CSS): the card (sticky at the left
- * from 1024), then the notice and the add block, the portal's details and the org's help. The
- * header above carries Refresh and More, so the add block only adds.
+ * from 1024), then a notice, the one lead for this device, the other ways as a quiet list, the
+ * details and the org's help. The header above carries Refresh and More, so the lead only adds.
  */
 export function HolderPassView(props: HolderPassViewProps) {
   const { state, device, publicUrl, support } = props;
@@ -88,10 +87,12 @@ export function HolderPassView(props: HolderPassViewProps) {
           device,
           publicUrl,
           qrLabel: HOLDER_COPY.qrAlt(props.passTitle),
-          // The gaps around the badge are its clear space.
-          badge: props.downloadHref ? (
-            <AppleWalletBadge href={props.downloadHref} onClick={props.onAdd} className="p-0" />
-          ) : null,
+          // The gaps around the badge are its clear space. Beside the QR only a Mac adds too;
+          // elsewhere off the phone the badge downloads a file nothing opens.
+          badge:
+            props.downloadHref && (device.device !== 'other' || mode !== 'scan') ? (
+              <AppleWalletBadge href={props.downloadHref} onClick={props.onAdd} className="p-0" />
+            ) : null,
           // Apple's guidance accompanies the badge on every device.
           line: addLine(device),
         };
@@ -102,12 +103,14 @@ export function HolderPassView(props: HolderPassViewProps) {
     offers: state === 'active' ? props.walletOffers : [],
     ...(props.issuance ? { issuance: props.issuance } : {}),
   });
-  const printable = state === 'active' && props.printHref;
+  const printable = state === 'active' ? props.printHref : undefined;
   const nothing = state === 'active' && choices.length === 0 && !printable;
   const help =
     state !== 'voided' && !support?.platform && (support?.email || support?.url) ? support : null;
   // On the iPhone the badge's card leads, so it is on the first screen; the pass follows it.
   const lead = mode === 'phone' && device.device === 'iphone';
+  const apple = area ? <AddBlock {...area} buddy={buddy} /> : null;
+  const [first, ...rest] = choices;
   return (
     <div
       className="wl-holder"
@@ -142,19 +145,8 @@ export function HolderPassView(props: HolderPassViewProps) {
             />
           </div>
         )}
-        {state === 'active' || area ? (
-          <WalletChoices
-            choices={choices}
-            apple={area ? <AddBlock {...area} buddy={buddy} /> : null}
-          />
-        ) : null}
-        {printable ? (
-          <section className="wl-presentation" aria-label={HOLDER_COPY.printTitle}>
-            <h2>{HOLDER_COPY.printTitle}</h2>
-            <a className={OUTLINE_ACTION_CLASS} href={props.printHref}>
-              {HOLDER_COPY.print}
-            </a>
-          </section>
+        {state === 'active' ? (
+          <WalletLead choice={first} apple={apple} buddy={buddy} printHref={printable} />
         ) : null}
         {nothing ? (
           <div role="status">
@@ -163,10 +155,21 @@ export function HolderPassView(props: HolderPassViewProps) {
             </Callout>
           </div>
         ) : null}
-        {state === 'active' && props.resend ? (
-          <SendAgain action={props.resend.action} again={props.resend.again} />
-        ) : null}
       </div>
+      {state === 'active' ? (
+        <div className="wl-holder-more">
+          <OtherWays
+            choices={rest}
+            apple={apple}
+            printHref={first ? printable : undefined}
+            extra={
+              props.resend ? (
+                <SendAgain action={props.resend.action} again={props.resend.again} />
+              ) : null
+            }
+          />
+        </div>
+      ) : null}
       {props.details ? <div className="wl-holder-details">{props.details}</div> : null}
       {help ? (
         <div className="wl-holder-help border-t border-border pt-4">

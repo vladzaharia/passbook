@@ -72,7 +72,7 @@ describe('device rule (shared/device.ts)', () => {
     expect(screen.queryByText(HOLDER_COPY.scanLine)).not.toBeInTheDocument();
   });
 
-  it('leads with the QR off Apple devices and keeps the Apple badge available', async () => {
+  it('leads with the QR on a computer, with no badge that would download a dead file', async () => {
     as(WINDOWS);
     await renderApp('/passes/p1', {
       handlers: { '/api/v1/me/passes/p1': () => json(passFixture({ id: 'p1' })) },
@@ -80,8 +80,8 @@ describe('device rule (shared/device.ts)', () => {
     // The image, not the encoder's placeholder it replaces.
     expect(await screen.findByAltText(HOLDER_COPY.qrAlt('Gym membership'))).toBeVisible();
     expect(screen.getByText(HOLDER_COPY.scanLine)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Add to Apple Wallet' })).toBeVisible();
-    expect(screen.getByText(HOLDER_COPY.openOnApple)).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Add to Apple Wallet' })).toBeNull();
+    expect(screen.queryByText(HOLDER_COPY.openOnApple)).toBeNull();
   });
 });
 
