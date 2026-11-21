@@ -149,6 +149,6 @@ test('shots', async ({ browser }) => {
   await rev.getByRole('dialog').getByRole('button', { name: 'Approve', exact: true }).click();
   await expect(rev.getByText(/^Approved v/)).toBeVisible();
   await author.reload();
-  await expect(author.getByRole('button', { name: /^Release v/ }).first()).toBeVisible();
+  await expect(strip.getByRole('button', { name: 'Release', exact: true })).toBeVisible();
   await shoot(author, 'r5-author-approved');
 });

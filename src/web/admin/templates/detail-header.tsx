@@ -108,6 +108,9 @@ export function TemplateDetailHeader({
             <Badge>{originLabel(t.origin)}</Badge>
           )}
           {archived ? <StatusPill status="archived" /> : null}
+          {!archived && t.release?.review.state === 'open' && primary?.kind !== 'wait' ? (
+            <Badge tone="warning">In review</Badge>
+          ) : null}
           <span>
             {t.passCount} {t.passCount === 1 ? 'pass' : 'passes'}
           </span>

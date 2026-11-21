@@ -102,11 +102,13 @@ export function TemplateDetailContent({
   const draftName = draftHash ? vOf(t, draftHash) : '';
   const controls = useReleaseControls(t.id, scope.orgId, (hash) => vOf(t, hash));
   const alt =
-    state?.next === 'try'
-      ? 'release'
-      : state?.next === 'release' && state.test?.version !== draftHash
-        ? 'try'
-        : null;
+    state?.review.state === 'open'
+      ? null
+      : state?.next === 'try'
+        ? 'release'
+        : state?.next === 'release' && state.test?.version !== draftHash
+          ? 'try'
+          : null;
   const scanning = useScanPasses(t);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
@@ -204,7 +206,9 @@ export function TemplateDetailContent({
           state={state}
           name={(hash) => vOf(t, hash)}
           alt={alt}
-          releaseLabel={state.alone ? 'Release' : 'Request review'}
+          releaseLabel={
+            state.alone || state.review.state === 'approved' ? 'Release' : 'Request review'
+          }
           onTry={() => void controls.tryVersion(draftHash)}
           onRelease={() => controls.release(draftHash)}
         />
