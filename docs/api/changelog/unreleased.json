@@ -544,6 +544,14 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /b/{token}/{passId}/open new operation",
+    "class": "additive",
+    "operationId": "public.getBByTokenByPassIdOpen",
+    "op": "GET /b/{token}/{passId}/open",
+    "change": "new operation",
+    "note": "A bundle page's peek opens that pass's own page. The pass link stays out of the bundle's HTML."
+  },
+  {
     "key": "PATCH /api/v1/brand 200.kind: field added",
     "class": "additive",
     "operationId": "brand.patchBrand",

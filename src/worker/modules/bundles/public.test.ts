@@ -59,7 +59,7 @@ const events = (kind: string, passId: string) =>
   );
 
 describe('GET /b/:token', () => {
-  it('renders every pass with its own add link and the add-all badge', async () => {
+  it('renders the stack with one add-all badge and a link to each other pass', async () => {
     const { passes, token } = await bundleWith(3);
     const res = await get(`/b/${token}`, {
       'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1',
@@ -71,8 +71,12 @@ describe('GET /b/:token', () => {
     // The pass page's lead, no heading over it: the badge says it.
     expect(html).toContain('aria-label="Add to Apple Wallet"');
     expect(html).toContain(`href="/b/${token}/passes.pkpasses"`);
-    for (const p of passes) expect(html).toContain(`href="/b/${token}/${p.id}/pass.pkpass"`);
-    expect(html).toContain('3 passes');
+    expect(html).toContain('All passes (3)');
+    // One count, no badge per pass; the other two are peeks, plain links to their own pages.
+    for (const p of passes) expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
+    expect(html.match(/class="wl-peek"/g)).toHaveLength(2);
+    expect(html.match(/href="\/b\/[^/"]+\/[^/"]+\/open"/g)).toHaveLength(2);
+    expect(html).not.toContain('Open in My passes');
     // The pass tokens never reach the page.
     for (const p of passes) expect(html).not.toContain(p.downloadToken);
     expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
@@ -87,7 +91,7 @@ describe('GET /b/:token', () => {
     expect(html).toContain('<svg');
   });
 
-  it('gives Android a Show barcode row per pass and no Apple badge', async () => {
+  it('gives Android Show at the door on the front pass and no Apple badge', async () => {
     const { passes, token } = await bundleWith(2);
     const html = await (
       await get(`/b/${token}`, {
@@ -95,14 +99,27 @@ describe('GET /b/:token', () => {
           'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36',
       })
     ).text();
-    for (const p of passes) {
-      expect(html).toContain(`href="/b/${token}/${p.id}/barcode"`);
-      expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
-    }
-    expect(html.match(/Show barcode/g)).toHaveLength(2);
+    for (const p of passes) expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
+    expect(html.match(/Show at the door/g)).toHaveLength(1);
+    expect(html.match(/href="\/b\/[^/"]+\/[^/"]+\/barcode"/g)).toHaveLength(1);
+    expect(html.match(/class="wl-peek"/g)).toHaveLength(1);
     expect(html).not.toContain('aria-label="Add to Apple Wallet"');
     expect(html).not.toContain('data-awb=');
     expect(html).toContain('For Apple Wallet, open this page on an iPhone.');
+  });
+
+  it('opens a member on its own page from the bundle link, and nothing outside the bundle', async () => {
+    const { passes, token } = await bundleWith(2);
+    const res = await get(`/b/${token}/${passes[0]?.id}/open`);
+    expect(res.status).toBe(302);
+    const location = res.headers.get('location') ?? '';
+    expect(location).toMatch(/^\/p\/[A-Za-z0-9_-]{43}$/);
+    expect((await get(location)).status).toBe(200);
+    expect(res.headers.get('cache-control')).toContain('no-store');
+    expect(res.headers.get('referrer-policy')).toBe('no-referrer');
+    const other = await makePass();
+    expect((await get(`/b/${token}/${other.id}/open`)).status).toBe(404);
+    expect((await get(`/b/${'a'.repeat(43)}/${passes[0]?.id}/open`)).status).toBe(404);
   });
 
   it('serves a member barcode page under the bundle token, with nothing to save', async () => {

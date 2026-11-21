@@ -45,12 +45,13 @@ export const HOLDER_COPY = {
   /** The org's support contacts under the add block. */
   help: 'Help',
   /** /b's quiet way to the holder's page (H7 moves it): through sign-in. */
-  openInPortal: 'Open in My passes',
   /** /p's other ways, a pass with a holder email: the holder's page in the portal, through sign-in. */
   myPassesRow: 'My passes',
   /** The wallet choice: the way that fits this device, then the rest (a list's accessible name). */
   otherWays: 'Other ways',
   showBarcode: 'Show barcode',
+  showAtDoor: 'Show at the door',
+  allPasses: (n: number) => `All passes (${n})`,
   /** The barcode page's tab and link preview: the pass title can be a holder's name. */
   barcodeTitle: 'Barcode',
   /** The paper channel: a link to the print page. */

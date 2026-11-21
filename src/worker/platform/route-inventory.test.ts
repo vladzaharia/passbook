@@ -38,6 +38,7 @@ const PUBLIC = [
   'GET /b/:token',
   'GET /b/:token/:passId/assets/:name',
   'GET /b/:token/:passId/barcode',
+  'GET /b/:token/:passId/open',
   'GET /b/:token/:passId/pass.pkpass',
   'GET /b/:token/:passId/wallet/:provider',
   'GET /b/:token/passes.pkpasses',

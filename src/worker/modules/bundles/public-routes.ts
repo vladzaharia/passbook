@@ -6,8 +6,7 @@ import {
   PublicBundlePassParamSchema,
 } from '../../../shared/contracts/bundles.ts';
 import { passDevice } from '../../../shared/device.ts';
-import { distinguishingLine, normalize } from '../../../shared/pass-view/index.ts';
-import { stateWordOption } from '../../../shared/state-word.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -28,6 +27,7 @@ import { svc } from '../passes/http.ts';
 import { presentationForPass } from '../public/presentation.ts';
 import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { isTokenShape, openPublicAsset, supportContacts } from '../public/service.ts';
+import { bundleItems } from './public-items.ts';
 import {
   addablePass,
   assertBundleMember,
@@ -39,7 +39,7 @@ import {
   fenceBundleStream,
   recordBundleEvents,
 } from './public-service.ts';
-import { bundleWalletHref, bundleWalletLocation, bundleWalletProviders } from './wallet-links.ts';
+import { bundleWalletLocation, bundleWalletProviders } from './wallet-links.ts';
 
 /** /b: bearer-link bundle page, its .pkpasses and per-pass files. No sign-in. */
 export const bundlePublicRoutes = createRouter();
@@ -54,6 +54,7 @@ bundlePublicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/passes.pkpasses', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/pass.pkpass', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/barcode', rateLimit('RL_PUBLIC'));
+bundlePublicRoutes.use('/:token/:passId/open', rateLimit('RL_PUBLIC'));
 bundlePublicRoutes.use('/:token/:passId/wallet/:provider', rateLimit('RL_PUBLIC'));
 
 register(
@@ -79,38 +80,7 @@ register(
       const wallets = await Promise.all(
         members.map(({ pass }) => bundleWalletProviders(ctx, pass)),
       );
-      const items = members.map(({ pass, model }, index) => {
-        const view = normalize(model.passJson, {
-          assets: model.assets,
-          locale: lang,
-          now,
-          timeZone: zone,
-          ...stateWordOption(pass),
-        });
-        const title = pass.displayTitle ?? view.description ?? model.orgName;
-        return {
-          id: pass.id,
-          view,
-          title,
-          detail: distinguishingLine(model.passJson, title),
-          state:
-            pass.removedAt !== null
-              ? ('removed' as const)
-              : pass.status === 'voided' || view.voided
-                ? ('voided' as const)
-                : ('active' as const),
-          downloadHref: model.channels.effective.apple.on
-            ? `/b/${token}/${pass.id}/pass.pkpass`
-            : null,
-          barcodeHref: model.channels.effective.mobile.on
-            ? `/b/${token}/${pass.id}/barcode`
-            : undefined,
-          walletOffers: (wallets[index] ?? []).map((provider) => ({
-            provider,
-            href: bundleWalletHref(token, pass.id, provider),
-          })),
-        };
-      });
+      const items = bundleItems(token, members, wallets, { lang, now, zone });
       const org = members[0]?.model.orgName ?? '';
       const html = renderBundlePage({
         nonce,
@@ -280,6 +250,36 @@ register(
       }
       throw error;
     }
+  },
+);
+
+register(
+  bundlePublicRoutes,
+  'public',
+  {
+    method: 'get',
+    path: '/{token}/{passId}/open',
+    summary: 'Open one pass of the bundle on its own page',
+    params: PublicBundlePassParamSchema,
+    status: 302,
+  },
+  async (c) => {
+    const ctx = svc(c);
+    const p = c.req.valid('param');
+    const bundle = await bundleForToken(ctx, p.token);
+    // Any state: an ended member's page is its way back. The pass link stays out of the bundle's HTML.
+    const pass = await bundlePass(ctx, bundle, p.passId);
+    const token = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
+    await assertBundleMember(ctx, bundle, pass);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'cache-control': 'private, no-store',
+        'referrer-policy': 'no-referrer',
+        'x-robots-tag': 'noindex, nofollow',
+        location: `/p/${token}`,
+      },
+    });
   },
 );
 

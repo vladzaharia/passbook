@@ -261,6 +261,7 @@
   "public.getBByToken",
   "public.getBByTokenByPassIdAssetsByName",
   "public.getBByTokenByPassIdBarcode",
+  "public.getBByTokenByPassIdOpen",
   "public.getBByTokenByPassIdPassPkpass",
   "public.getBByTokenByPassIdWalletByProvider",
   "public.getBByTokenPassesPkpasses",
