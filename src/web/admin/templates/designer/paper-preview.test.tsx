@@ -70,7 +70,7 @@ describe('designer Paper tab', () => {
     await waitFor(() => expect(container.querySelector('.pp-cr80')).not.toBeNull());
   });
 
-  it('gives the reason and no ticket when paper is blocked for the platform', async () => {
+  it('disables the Paper tab with its reason when paper is blocked for the platform', async () => {
     const user = userEvent.setup();
     const { container } = renderTags(stage(), {
       '/api/v1/templates/t1/channels': channels({
@@ -79,10 +79,10 @@ describe('designer Paper tab', () => {
         reason: 'printing_off',
       }),
     });
-    await user.click(await screen.findByRole('radio', { name: 'Paper' }));
-    expect(
-      await screen.findByText('Paper: printing off for all organizations'),
-    ).toBeInTheDocument();
+    const paper = await screen.findByRole('radio', { name: 'Paper' });
+    await waitFor(() => expect(paper).toHaveAttribute('aria-disabled', 'true'));
+    expect(paper).toHaveAccessibleDescription('Printing off for all organizations');
+    await user.click(paper);
     expect(container.querySelector('.pp-sheet')).toBeNull();
     expect(screen.queryByRole('radiogroup', { name: 'Paper size' })).toBeNull();
   });

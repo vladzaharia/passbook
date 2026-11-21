@@ -1,14 +1,15 @@
 // A scan's place and direction (SA §20.3, step 9a): the session's first tracked zone, Auto from the
 // pass's row there, the turnaround hold, and what the answer says about the place.
 import type { ScanOccupancy } from '../../../../shared/contracts/scan.ts';
+import type { ScanEventRow } from '../repo-scope.ts';
+import { type PlaceSpec, specCapacity, specPlace } from './place.ts';
 import type { PlaceRow } from './repo-reads.ts';
 import { liveIn, type OccZone, scanDirection, type Waivers, zonePlace } from './rules.ts';
 
 /** Where a scan counts and which way, as read before its batch. */
 export interface FoundOccupancy {
-  /** The org's zones as read: the entry and exit plans are made from these. */
-  zones: OccZone[];
-  zone: OccZone;
+  /** The zone with the org's zones as read (the plans are made from these), or the event. */
+  spec: PlaceSpec;
   place: string;
   direction: 'in' | 'out';
   auto: boolean;
@@ -58,14 +59,46 @@ export function planOccupancy(i: {
   });
   return {
     found: {
-      zones: i.zones,
-      zone,
+      spec: { kind: 'zone', zones: i.zones, zone },
       place,
       direction: d.direction,
       auto: d.auto,
       row,
       inside,
       orgTimeZone: i.orgTimeZone,
+    },
+    turnaround: d.turnaround,
+  };
+}
+
+/**
+ * A re-entry event is a place of its own: any pass inside it taps out, plain tickets included. Same
+ * direction rules as a zone; an event never falls due, so an in row is always live.
+ */
+export function planEventOccupancy(i: {
+  event: ScanEventRow;
+  row: PlaceRow | null;
+  setting: 'in' | 'out' | 'both';
+  requested: 'in' | 'out' | undefined;
+  now: number;
+}): { found: FoundOccupancy; turnaround: 'in' | 'out' | null } {
+  const inside = liveIn(i.row, i.now);
+  const d = scanDirection({
+    setting: i.setting,
+    requested: i.requested,
+    inside,
+    lastChangeAt: i.row?.changed_at ?? null,
+    now: i.now,
+  });
+  return {
+    found: {
+      spec: { kind: 'event', event: i.event },
+      place: specPlace({ kind: 'event', event: i.event }),
+      direction: d.direction,
+      auto: d.auto,
+      row: i.row,
+      inside,
+      orgTimeZone: null,
     },
     turnaround: d.turnaround,
   };
@@ -95,11 +128,14 @@ export function occupancyView(
   turnaround: 'in' | 'out' | null = null,
 ): ScanOccupancy {
   return {
-    place: { kind: 'zone', id: o.zone.id, name: o.zone.name },
+    place:
+      o.spec.kind === 'zone'
+        ? { kind: 'zone', id: o.spec.zone.id, name: o.spec.zone.name }
+        : { kind: 'event', id: o.spec.event.id, name: o.spec.event.name },
     direction: o.direction,
     auto: o.auto,
     ...at,
-    capacity: o.zone.capacity,
+    capacity: specCapacity(o.spec),
     turnaround,
   };
 }

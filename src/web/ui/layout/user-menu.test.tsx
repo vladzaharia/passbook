@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderApp } from '../../lib/test-utils.tsx';
+import { membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import { THEME_COLOR, THEME_KEY } from '../../lib/theme.tsx';
 
 function memoryStorage() {
@@ -49,11 +49,11 @@ const items = (menu: HTMLElement) =>
     .map((i) => i.textContent);
 
 describe('account menu', () => {
-  it('is one menu: identity, faces, theme, Sign out; the console face is checked', async () => {
+  it('is one menu: identity, spaces, theme, Sign out; the console is checked', async () => {
     const user = userEvent.setup();
     await renderApp('/admin', { session: 'admin' });
     const menu = await openMenu(user);
-    expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Sign out']);
+    expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Developers', 'Sign out']);
     expect(within(menu).getByText('test@example.com')).toBeInTheDocument();
     expect(within(menu).getByRole('menuitem', { name: 'Admin' })).toHaveAttribute(
       'aria-current',
@@ -62,11 +62,16 @@ describe('account menu', () => {
     expect(within(menu).getByRole('menuitem', { name: 'My passes' })).not.toHaveAttribute(
       'aria-current',
     );
+    // Developers is another document: a plain link, a full page load.
+    expect(within(menu).getByRole('menuitem', { name: 'Developers' })).toHaveAttribute(
+      'href',
+      '/developers',
+    );
     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(3);
     expect(within(menu).getAllByRole('separator')).toHaveLength(3);
   });
 
-  it('gives holders the same menu without Admin, with the theme', async () => {
+  it('gives a holder the holder spaces and the theme', async () => {
     const user = userEvent.setup();
     await renderApp('/', { session: 'user' });
     const menu = await openMenu(user);
@@ -76,6 +81,55 @@ describe('account menu', () => {
       'page',
     );
     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(3);
+  });
+
+  it('adds Admin for an organization member', async () => {
+    const user = userEvent.setup();
+    await renderApp('/', { session: 'user', memberships: [membershipFixture('o1')] });
+    await waitFor(async () => {
+      const menu = await openMenu(user);
+      expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Sign out']);
+    });
+  });
+
+  it('gives an email-link session only the holder spaces', async () => {
+    const user = userEvent.setup();
+    await renderApp('/', {
+      session: 'admin',
+      amr: 'magic_link',
+      memberships: [membershipFixture('o1')],
+    });
+    const menu = await openMenu(user);
+    expect(items(menu)).toEqual(['My passes', 'Account', 'Sign out']);
+  });
+
+  it('gives a break-glass session Admin and not Developers', async () => {
+    const user = userEvent.setup();
+    await renderApp('/', { session: 'admin', amr: 'breakglass' });
+    const menu = await openMenu(user);
+    expect(items(menu)).toEqual(['My passes', 'Account', 'Admin', 'Sign out']);
+  });
+
+  it('offers Sign in in place of the avatar when signed out', async () => {
+    await renderApp('/nope', { session: 'anon' });
+    await screen.findByRole('heading', { name: 'Page not found', level: 1 });
+    const links = await screen.findAllByRole('link', { name: 'Sign in' });
+    const inBar = links.filter((l) => l.closest('[data-menubar]'));
+    expect(inBar).toHaveLength(1);
+    expect(inBar[0]).toHaveAttribute('href', '/login');
+    expect(screen.queryByRole('button', { name: 'Account menu' })).toBeNull();
+  });
+
+  it('shows an email-link session Sign in with Polaris ID at the console, not the console', async () => {
+    await renderApp('/admin', { session: 'admin', amr: 'magic_link' });
+    expect(
+      await screen.findByRole('heading', { name: 'Admin needs Polaris ID.', level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in with Polaris ID' })).toHaveAttribute(
+      'href',
+      '/auth/oidc/start?next=%2Fadmin%2Fplatform',
+    );
+    expect(screen.queryByRole('navigation', { name: 'Admin' })).toBeNull();
   });
 
   it('opens Account inside the console when opened from the console', async () => {

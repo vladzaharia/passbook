@@ -1,5 +1,6 @@
 import { first, stmt } from '../../platform/db.ts';
 import type { AdmissionHistory, PresenceRow } from './admission-types.ts';
+import { VIA_JOIN, VIA_SQL } from './occupancy/repo.ts';
 import type { ScanEventRow } from './repo-scope.ts';
 
 /** A configured but absent event uses the same unscoped admission history as before. */
@@ -49,8 +50,11 @@ export async function admissionReads(
     stmt(
       db,
       `WITH selected_event(id) AS (SELECT ${selectedEventSql})
-      SELECT * FROM scan_presence WHERE org_id=? AND pass_id=?
-        AND scope=COALESCE('event:'||(SELECT id FROM selected_event),'')`,
+      SELECT x.*, CASE WHEN x.state='in' THEN x.entered_at ELSE s.at END AS changed_at, ${VIA_SQL} AS via
+      FROM scan_presence x LEFT JOIN scans s ON s.id=x.last_scan_id AND s.org_id=x.org_id
+      ${VIA_JOIN}
+      WHERE x.org_id=? AND x.pass_id=?
+        AND x.scope=COALESCE('event:'||(SELECT id FROM selected_event),'')`,
       [knownEvent ? 1 : 0, eventId, eventId, orgId, orgId, passId],
     ),
     ...(needsEventRead

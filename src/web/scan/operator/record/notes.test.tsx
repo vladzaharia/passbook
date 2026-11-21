@@ -44,7 +44,7 @@ describe('staff notes on the record', () => {
     await screen.findByText('Waiver unsigned');
     rerender(<Notes api={api} passId="p1" openSignal={1} manager={false} onAdded={onAdded} />);
     const field = await screen.findByLabelText('Note');
-    expect(document.activeElement).toBe(field);
+    await waitFor(() => expect(document.activeElement).toBe(field));
     type('  Ask Maya about Chidi  ');
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await screen.findByText('Ask Maya about Chidi');
@@ -54,7 +54,7 @@ describe('staff notes on the record', () => {
     );
     expect(onAdded).toHaveBeenCalled();
     expect(screen.queryByLabelText('Note')).toBeNull();
-    expect(document.activeElement).toBe(screen.getByTestId('op-note-add'));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('op-note-add')));
   });
 
   it('keeps the same key when a failed save is sent again, and a new one for new text', async () => {

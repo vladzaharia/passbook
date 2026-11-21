@@ -5,6 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AdmissionPlan } from './admission-types.ts';
 import { localDayStart } from './counts.ts';
 import type { ScanActor } from './guard.ts';
+import { type FoundOccupancy, planEventOccupancy } from './occupancy/admission.ts';
 import { admissionReads } from './repo-admission.ts';
 import { presenceSnapshot } from './repo-scan-effect.ts';
 import type { Found } from './resolve.ts';
@@ -72,7 +73,14 @@ export async function planAdmission(
     stmts: D1PreparedStatement[];
     finish(results: readonly D1Result[]): Promise<void>;
   },
-): Promise<{ plan: AdmissionPlan; reason: ScanReason | null; at: number | null; flags: string[] }> {
+): Promise<{
+  plan: AdmissionPlan;
+  reason: ScanReason | null;
+  at: number | null;
+  flags: string[];
+  /** A re-entry event is a place: the builder decides in and out, so the place reasons are skipped. */
+  place: { found: FoundOccupancy; turnaround: 'in' | 'out' | null } | null;
+}> {
   const passRule = passRulesOf(found);
   const scannerRule = actor.settings.checkIn ?? {};
   const rules = [passRule, scannerRule];
@@ -119,11 +127,32 @@ export async function planAdmission(
     today_at: rawHistory.last_at !== null && rawHistory.last_at >= day ? rawHistory.last_at : null,
   };
   if (extraReads) await extraReads.finish(additional);
-  const tracked = mode === 'in_out';
-  const inside = presence?.tracking === 1 && presence.state === 'in';
-  const setupDirection = actor.settings.direction ?? (tracked ? 'both' : 'in');
-  const direction =
-    setupDirection === 'both' ? (requested ?? (tracked && inside ? 'out' : 'in')) : setupDirection;
+  const setupDirection = actor.settings.direction ?? (mode === 'in_out' ? 'both' : 'in');
+  const place =
+    event?.reentry &&
+    event.archivedAt === null &&
+    event.mode === actor.mode &&
+    actor.event?.id === event.id
+      ? planEventOccupancy({
+          event,
+          row: presence && {
+            ...presence,
+            due_at: null,
+            changed_at: presence.changed_at ?? null,
+            via: presence.via ?? null,
+          },
+          setting: setupDirection,
+          requested,
+          now,
+        })
+      : null;
+  const tracked = !!place || mode === 'in_out';
+  const inside = place ? place.found.inside : presence?.tracking === 1 && presence.state === 'in';
+  const direction = place
+    ? place.found.direction
+    : setupDirection === 'both'
+      ? (requested ?? (tracked && inside ? 'out' : 'in'))
+      : setupDirection;
   const from = rules.flatMap((p) => (p.validFrom == null ? [] : [p.validFrom]));
   const until = rules.flatMap((p) => (p.validUntil == null ? [] : [p.validUntil]));
   if (event && rules.some((p) => p.eventId)) {
@@ -166,7 +195,7 @@ export async function planAdmission(
       mode,
       direction,
       inside,
-      enteredAt: inside ? presence.entered_at : null,
+      enteredAt: inside ? (presence?.entered_at ?? null) : null,
       firstAt: presence?.first_at ?? history?.first_at ?? null,
       validFrom,
       validUntil,
@@ -183,11 +212,12 @@ export async function planAdmission(
   else if (direction === 'out' && !tracked) {
     reason = 'not_accepted';
     flags.push('This pass does not allow check-out.');
-  } else if (tracked && direction === 'out' && !inside) reason = 'not_inside';
-  else if (tracked && direction === 'in' && inside) {
+  } else if (!place && tracked && direction === 'out' && !inside) reason = 'not_inside';
+  else if (!place && tracked && direction === 'in' && inside) {
     reason = 'still_inside';
-    at = presence.entered_at;
+    at = presence?.entered_at ?? null;
   } else if (
+    !place &&
     tracked &&
     direction === 'in' &&
     presence?.tracking === 1 &&
@@ -211,5 +241,5 @@ export async function planAdmission(
     reason = 'already_done';
     at = presence?.last_entry_at ?? history?.last_at ?? null;
   }
-  return { plan, reason, at, flags };
+  return { plan, reason, at, flags, place };
 }

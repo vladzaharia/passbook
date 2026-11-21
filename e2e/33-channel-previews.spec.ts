@@ -36,26 +36,42 @@ test('a blueprint previews Apple, Google, Samsung, Mobile and Paper from sample 
   await expect(phone.getByRole('link', { name: /Apple Wallet/ })).toBeVisible();
 });
 
-test('the template page and the designer share the switcher', async ({ page }) => {
+const tabsOf = (scope: import('@playwright/test').Locator) =>
+  scope.getByRole('radiogroup', { name: 'Channel' }).getByRole('radio');
+
+test('the template page and the designer show unavailable channels as disabled tabs', async ({
+  page,
+}) => {
   const seed = readSeed();
   const org = encodeURIComponent(seed.org.id);
   const id = encodeURIComponent(seed.template.id);
-  await page.goto(`/admin/o/${org}/templates/${id}`);
-  await column(page).getByRole('radio', { name: 'Google', exact: true }).click();
-  await expect(column(page).getByTestId('google-preview')).toBeVisible();
-
-  await page.goto(`/admin/o/${org}/templates/${id}/design`);
-  const stage = page.locator('.dz-stage');
-  await stage.getByRole('radio', { name: 'Samsung', exact: true }).click();
-  await expect(stage.getByTestId('samsung-preview')).toBeVisible();
-  // The Paper tab keeps its place in the same switcher.
-  await stage.getByRole('radio', { name: 'Paper', exact: true }).click();
-  await expect(page.getByTestId('designer-paper')).toBeVisible();
+  // Google and Samsung are withheld for this organization; Paper is off on the template only,
+  // so the designer, which edits every channel's design, keeps it open.
+  for (const [url, scope, disabled, open] of [
+    [`/admin/o/${org}/templates/${id}`, column(page), ['Google', 'Samsung', 'Paper'], []],
+    [
+      `/admin/o/${org}/templates/${id}/design`,
+      page.locator('.dz-stage'),
+      ['Google', 'Samsung'],
+      ['Paper'],
+    ],
+  ] as const) {
+    await page.goto(url);
+    const tabs = tabsOf(scope);
+    await expect(tabs).toHaveCount(5);
+    for (const name of disabled) {
+      const off = tabs.filter({ hasText: name });
+      await expect(off).toHaveAttribute('aria-disabled', 'true');
+      await expect(off).not.toHaveAccessibleDescription('');
+    }
+    for (const name of open) {
+      await expect(tabs.filter({ hasText: name })).not.toHaveAttribute('aria-disabled', 'true');
+    }
+    await expect(tabs.filter({ hasText: 'Apple' })).toBeChecked();
+  }
 });
 
-test('a pass previews only its effective channels and says why the others are off', async ({
-  page,
-}) => {
+test('a pass shows its channels that are off as disabled tabs with why', async ({ page }) => {
   const seed = readSeed();
   const api = await apiAs('admin');
   let passId: string;
@@ -63,20 +79,16 @@ test('a pass previews only its effective channels and says why the others are of
     const pass = (await createPass(api, seed.org.id)) as { id: string };
     passId = pass.id;
     await api.send('PUT', `/api/v1/passes/${passId}/channels`, {
-      channels: { google: 'off' },
+      channels: { mobile: 'off' },
       notify: false,
     });
   } finally {
     await api.dispose();
   }
   await page.goto(`/admin/o/${encodeURIComponent(seed.org.id)}/passes/${passId}`);
-  const stage = column(page);
-  // Samsung and Paper are off for the organization here; Google is this pass's own override.
-  await expect(stage.getByRole('radiogroup', { name: 'Channel' }).getByRole('radio')).toHaveText([
-    'Apple',
-    'Mobile',
-  ]);
-  await expect(
-    stage.getByRole('region', { name: 'Off for this pass' }).getByText(/^Google Wallet:/),
-  ).toBeVisible();
+  const tabs = tabsOf(column(page));
+  await expect(tabs).toHaveCount(5);
+  await expect(tabs.filter({ hasText: 'Mobile' })).toHaveAttribute('aria-disabled', 'true');
+  await expect(tabs.filter({ hasText: 'Mobile' })).toHaveAccessibleDescription('Off for this pass');
+  await expect(tabs.filter({ hasText: 'Apple' })).not.toHaveAttribute('aria-disabled');
 });

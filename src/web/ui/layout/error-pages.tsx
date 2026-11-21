@@ -11,7 +11,7 @@ import { Button } from '../button.tsx';
 import { EmptyState } from '../empty-state.tsx';
 import { ErrorState, isChunkLoadError } from '../error-state.tsx';
 import { AppShell } from './app-shell.tsx';
-import { PortalBar } from './portal-layout.tsx';
+import { PORTAL_BAR } from './portal-layout.tsx';
 
 // Words, art and action weights match the SSR pages (worker/ssr/error-page.tsx): outline ways back.
 
@@ -186,7 +186,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
  */
 export function StandaloneError(props: ErrorComponentProps) {
   return (
-    <AppShell bar={<PortalBar />} width="holder" holder>
+    <AppShell bar={PORTAL_BAR} width="holder" holder>
       <RouteError {...props} />
     </AppShell>
   );
