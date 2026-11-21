@@ -13,14 +13,16 @@ function FixCell({
   onSave,
   onCancel,
   label,
+  start,
 }: {
   field: InputField | undefined;
   busy: boolean;
   onSave: (value: string) => void;
   onCancel: () => void;
   label: string;
+  start: string;
 }) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(start);
   const key = (e: KeyboardEvent) => {
     if (e.key === 'Escape') onCancel();
     if (e.key === 'Enter' && value.trim()) onSave(value.trim());
@@ -109,6 +111,11 @@ export function FixTable({
               <th scope="col" className="px-3 py-2 font-medium max-sm:hidden">
                 {C.results.column}
               </th>
+              {editable ? (
+                <th scope="col" className="px-3 py-2 font-medium max-sm:hidden">
+                  {C.check.value}
+                </th>
+              ) : null}
               <th scope="col" className="px-3 py-2 font-medium">
                 {C.results.problem}
               </th>
@@ -127,6 +134,15 @@ export function FixTable({
                 <tr key={id} style={{ '--i': i } as CSSProperties}>
                   <td className="px-4 py-3 tabular-nums text-fg-strong">{p.row}</td>
                   <td className="px-3 py-3 text-fg-muted max-sm:hidden">{p.column ?? ''}</td>
+                  {editable ? (
+                    <td className="px-3 py-3 max-sm:hidden">
+                      {p.value ? (
+                        <code className="rounded bg-danger-subtle px-1.5 font-mono text-xs text-danger">
+                          {p.value}
+                        </code>
+                      ) : null}
+                    </td>
+                  ) : null}
                   <td
                     className="px-3 py-3 break-words text-danger data-[note]:text-fg"
                     data-note={editable ? undefined : ''}
@@ -141,6 +157,7 @@ export function FixTable({
                             field={p.field ? fields.get(p.field) : undefined}
                             busy={busy}
                             label={C.check.fixCell(p.row, p.column ?? '')}
+                            start={p.value ?? ''}
                             onCancel={() => setEditing(undefined)}
                             onSave={(v) => {
                               onFix(p.row, pointer, v);

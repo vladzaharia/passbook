@@ -135,6 +135,7 @@ export const IMPORT_COPY = {
     fix: 'Fix',
     fixCell: (row: number, column: string) => `Fix ${column} on row ${row}`,
     empty: 'empty',
+    value: 'Value',
     fieldsChanged: (n: number) => `${n} ${n === 1 ? 'field' : 'fields'}`,
     showAllN: (n: number) => `Show all ${n}`,
     sameNote: (n: number) =>
@@ -171,6 +172,8 @@ export const IMPORT_COPY = {
     tally: (removed: number, restored: number, cancelled: number) =>
       `Removed ${removed} · Restored ${restored} · ${cancelled} ${cancelled === 1 ? 'email' : 'emails'} cancelled`,
     failed: 'The undo did not finish. Try again.',
+    running: 'An undo is running. Wait for it to finish.',
+    undoing: 'Undoing',
     unrevertable: (n: number) => `${n} ${n === 1 ? 'update' : 'updates'} can't be undone.`,
     gone: 'This import was undone.',
     kept: (n: number) => `Kept ${n}, changed since.`,

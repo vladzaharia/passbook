@@ -5,7 +5,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { z } from 'zod';
+import type { z } from 'zod';
 import {
   type PassImportDto,
   PassImportRowsPageSchema,
@@ -17,19 +17,14 @@ import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { api, buildUrl } from '../../../lib/api.ts';
 import { ApiError, problemToError, UserMessageError } from '../../../lib/errors.ts';
 import { modeHeaders, useMode } from '../../../lib/mode.ts';
-import { importKeys, removeCreated } from './api.ts';
+import { importKeys } from './api.ts';
 import type { ImportPlan } from './match-model.ts';
 
 const BASE = '/api/v1/pass-imports';
 const UNDO_POLL_MS = 2000;
 const UNDO_POLLS = 90;
 
-/** The undo answer with what the server adds on top of the contract: a failed run and the updates it cannot restore. */
-const UndoAnswerSchema = PassImportUndoResultSchema.extend({
-  state: z.enum(['running', 'done', 'failed']),
-  unrevertable: z.number().int().nonnegative().optional(),
-});
-export type UndoResult = z.infer<typeof UndoAnswerSchema>;
+export type UndoResult = z.infer<typeof PassImportUndoResultSchema>;
 
 /** The import was undone: it takes no more checks, commits or discards. */
 export const isUndone = (e: unknown): boolean =>
@@ -44,24 +39,13 @@ export const HOLD_CHOICES = [
   { value: '1h', label: 'After 1 hour', holdMs: 60 * 60_000 },
 ] as const;
 
-/**
- * The commit body. `now` stays the boolean the server reads today; the held form is the
- * `email: { send: 'held', holdMs }` of the undo window (I4).
- */
-export function commitBody(skipInvalid: boolean, email: EmailSend) {
-  return {
-    skipInvalid,
-    email: email === false ? false : email.send === 'now' ? true : email,
-  };
-}
-
 /** Commit once per click: the key makes a repeat of the same click harmless. */
 export function useCommitRun(id: string, orgId: string | undefined) {
   const qc = useQueryClient();
   const mode = useMode();
   return useMutation({
     mutationFn: (body: { skipInvalid: boolean; email: EmailSend }) =>
-      api.post(`${BASE}/${id}/commit`, PassImportSchema, commitBody(body.skipInvalid, body.email), {
+      api.post(`${BASE}/${id}/commit`, PassImportSchema, body, {
         query: { orgId },
         headers: { 'idempotency-key': crypto.randomUUID() },
       }),
@@ -90,7 +74,6 @@ export function useCheckRows(id: string, orgId: string | undefined, enabled: boo
 /**
  * Undo: removes created passes that were not touched, restores updated ones, cancels held email.
  * The server may answer `running` (a workflow): the same call is repeated until it is done.
- * Until the undo route ships (I4), the remove-created alias does the removal.
  */
 export async function undoImport(
   qc: QueryClient,
@@ -100,25 +83,28 @@ export async function undoImport(
 ): Promise<UndoResult> {
   let result: UndoResult;
   try {
-    result = await api.post(`${BASE}/${id}/undo`, UndoAnswerSchema, {}, { query: { orgId } });
+    result = await api.post(
+      `${BASE}/${id}/undo`,
+      PassImportUndoResultSchema,
+      {},
+      { query: { orgId } },
+    );
     if (result.state === 'failed') throw new UserMessageError(C.undo.failed);
     for (let i = 0; result.state === 'running' && i < UNDO_POLLS; i += 1) {
       onTally?.(result);
       await new Promise((r) => setTimeout(r, UNDO_POLL_MS));
-      result = await api.post(`${BASE}/${id}/undo`, UndoAnswerSchema, {}, { query: { orgId } });
+      result = await api.post(
+        `${BASE}/${id}/undo`,
+        PassImportUndoResultSchema,
+        {},
+        { query: { orgId } },
+      );
       if (result.state === 'failed') throw new UserMessageError(C.undo.failed);
     }
   } catch (e) {
-    if (!(e instanceof ApiError) || e.status !== 404) throw e;
-    const r = await removeCreated(qc, id, orgId);
-    result = {
-      state: 'done',
-      removed: r.removed,
-      restored: 0,
-      keptTotal: r.skipped,
-      kept: [],
-      emailsCancelled: 0,
-    };
+    if (e instanceof ApiError && e.code === 'IMPORT_UNDO_RUNNING')
+      throw new UserMessageError(C.undo.running);
+    throw e;
   }
   await qc.invalidateQueries({ queryKey: importKeys.all });
   await qc.invalidateQueries({ queryKey: ['admin', 'passes'] });

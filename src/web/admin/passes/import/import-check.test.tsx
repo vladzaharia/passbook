@@ -64,6 +64,7 @@ describe('check', () => {
     expect(previews[0]).toMatchObject({ input: { name: 'Maya' }, version: 'a1b2c3d4e5f6a7b8' });
     const table = screen.getByRole('table', { name: 'Problems' });
     expect(within(table).getByText('Email is not valid.')).toBeTruthy();
+    expect(within(table).getByText('bad@')).toBeTruthy();
     const diff = await screen.findByText('M-200');
     expect(diff).toBeTruthy();
     expect(screen.getByText('Copper')).toBeTruthy();
@@ -82,7 +83,10 @@ describe('check', () => {
       },
     });
     await user.click(await screen.findByRole('button', { name: 'Fix Email on row 14' }));
-    await user.type(screen.getByRole('textbox', { name: 'Fix Email on row 14' }), 'a@b.co{Enter}');
+    const box = screen.getByRole('textbox', { name: 'Fix Email on row 14' });
+    expect((box as HTMLInputElement).value).toBe('bad@');
+    await user.clear(box);
+    await user.type(box, 'a@b.co{Enter}');
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ plan: { overrides: { 14: { '/Email': 'a@b.co' } } } });
   });
@@ -180,7 +184,7 @@ describe('check', () => {
     await user.click(screen.getByRole('combobox', { name: /Send/ }));
     await user.click(await screen.findByRole('option', { name: 'Now' }));
     await user.click(screen.getByRole('button', { name: 'Create 120 and update 40' }));
-    await waitFor(() => expect(posts).toEqual([{ skipInvalid: false, email: true }]));
+    await waitFor(() => expect(posts).toEqual([{ skipInvalid: false, email: { send: 'now' } }]));
   });
 
   it('shows no email switch when nobody has an email', async () => {

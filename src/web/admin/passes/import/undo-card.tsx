@@ -31,6 +31,7 @@ export function UndoSummary({ result }: { result: UndoResult }) {
   return (
     <div className="flex flex-col gap-1 rounded-md border border-border bg-surface-sunken p-4 text-sm">
       <p role="status" className="font-medium text-fg-strong">
+        {result.state === 'running' ? `${C.undo.undoing}. ` : ''}
         {C.undo.tally(result.removed, result.restored, result.emailsCancelled)}
       </p>
       {result.unrevertable ? (
@@ -121,6 +122,7 @@ export function UndoCard({
         ) : (
           C.undo.window
         )}
+        {imp.unrevertable ? ` ${C.undo.unrevertable(imp.unrevertable)}` : ''}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Button

@@ -260,18 +260,27 @@ describe('progress and results', () => {
     expect(await screen.findByText("3 updates can't be undone.")).toBeTruthy();
   });
 
-  it('removes through the remove-created alias while the undo route is missing', async () => {
-    const user = userEvent.setup();
-    await open(finished({ finishedAt: Date.now() }), {
-      '/api/v1/pass-imports/imp1/undo': () =>
-        json({ type: 'about:blank', title: 'Not found', status: 404, detail: 'Not found.' }, 404),
-      '/api/v1/pass-imports/imp1/remove-created': () =>
-        json({ removed: 120, skipped: [], nextCursor: null }),
-    });
-    await user.click(await screen.findByRole('button', { name: 'Undo import' }));
-    const dialog = await screen.findByRole('alertdialog', { name: 'Undo this import?' });
-    await user.click(within(dialog).getByRole('button', { name: 'Undo import' }));
-    expect(await screen.findByText(/Removed 120 · Restored 0/)).toBeTruthy();
+  it('shows an undo the server already ran, from the import itself', async () => {
+    await open(
+      finished({
+        finishedAt: Date.now(),
+        undo: {
+          state: 'done',
+          removed: 7,
+          restored: 2,
+          keptTotal: 0,
+          kept: [],
+          emailsCancelled: 5,
+        },
+      }),
+    );
+    expect(await screen.findByText(/Removed 7 · Restored 2 · 5 emails cancelled/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Undo import' })).toBeNull();
+  });
+
+  it('names updates that cannot be undone before the undo', async () => {
+    await open(finished({ finishedAt: Date.now(), unrevertable: 4 }));
+    expect(await screen.findByText(/4 updates can't be undone\./)).toBeTruthy();
   });
 
   it('counts down to the held emails, with Send now', async () => {

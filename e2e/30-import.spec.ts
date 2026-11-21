@@ -54,12 +54,11 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
   await tile('Needs a fix', 0);
   const first = page.url();
 
-  // 2. Commit with email sent now; the run card counts what it did.
+  // 2. Commit with the email held for the default five minutes; the run card counts what it did.
   await page.getByRole('switch', { name: 'Email new holders' }).click();
-  await page.getByRole('combobox', { name: /Send/ }).click();
-  await page.getByRole('option', { name: 'Now' }).click();
   await page.getByRole('button', { name: 'Create 3 passes', exact: true }).click();
   await expect(page.getByText('3 done')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/until 3 emails go out/)).toBeVisible();
   const created = await admin.get<{ items: { id: string }[] }>(
     `/api/v1/passes?orgId=${org.id}&q=${encodeURIComponent(refs[0] as string)}`,
   );
@@ -86,7 +85,7 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
     .getByRole('alertdialog', { name: 'Undo this import?' })
     .getByRole('button', { name: 'Undo import' })
     .click();
-  await expect(page.getByText(/Removed 3/)).toBeVisible();
+  await expect(page.getByText(/Removed 3 · Restored 0 · 3 emails cancelled/)).toBeVisible();
   const detail = await admin.get<{ removedAt: number | null }>(
     `/api/v1/passes/${created.items[0]?.id}`,
   );
@@ -94,9 +93,6 @@ test('import a sheet: fix in place, commit, re-import as unchanged, undo', async
 
   await admin.dispose();
 });
-
-const SAMPLE_BUG =
-  'I2 sample.csv: example values for uri-format and pattern fields (Website, Phone, Renew link) fail the check';
 
 async function importSample(page: Page) {
   const { org, template } = readSeed();
@@ -122,9 +118,7 @@ test('the template sample file maps in full', async ({ page }) => {
   await expect(page.getByText('All fields ready')).toBeVisible();
 });
 
-// Remove `test.fail` when I2's sample row passes its own check.
 test('the template sample file checks with no errors', async ({ page }) => {
-  test.fail(true, SAMPLE_BUG);
   await importSample(page);
   await page.getByRole('button', { name: /^Check/ }).click();
   await expect(page.getByRole('button', { name: /^1\s*New/ })).toBeVisible();

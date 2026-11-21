@@ -29,7 +29,9 @@ export function ImportResults({
   onSource: () => void;
 }) {
   const qc = useQueryClient();
-  const [undo, setUndo] = useState<UndoResult>();
+  const [local, setUndo] = useState<UndoResult>();
+  // The server keeps the undo: a reload shows it, and a run in progress polls.
+  const undo = local ?? (imp.undo?.state === 'failed' ? undefined : imp.undo);
   const [mailing, setMailing] = useState(false);
   const [confirmMail, setConfirmMail] = useState(false);
   const p = imp.progress;
