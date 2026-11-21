@@ -1,12 +1,8 @@
 import type { Personalization } from '../../../passkit/types.ts';
-import type { PassSource } from '../../../shared/contracts/passes.ts';
-import type { Check } from '../../platform/authority-checks.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
-import { recordPassEvent } from '../events/record.ts';
-import { dropPrintPdfs } from '../prints/pdf-drop.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
 import { assertExternalIdFree, externalIdUpdateGuard } from './external-id.ts';
@@ -20,7 +16,6 @@ import {
   listPasses,
   softDeletePass,
 } from './repo.ts';
-import type { Pass } from './repo-map.ts';
 import { softDeletePassGranted } from './repo-pass-grants.ts';
 import { captureConnectionTransferPending, connectionForPass } from './repo-read-connection.ts';
 import { getPass, pendingPushId } from './repo-read-pass.ts';
