@@ -34857,6 +34857,35 @@
           {
             "schema": {
               "type": "string",
+              "enum": [
+                "key",
+                "try",
+                "all"
+              ],
+              "default": "all",
+              "description": "key: calls with a sandbox key; try: Run here; all: both."
+            },
+            "required": false,
+            "description": "key: calls with a sandbox key; try: Run here; all: both.",
+            "name": "source",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Only calls newer than this log id: the listener cursor."
+            },
+            "required": false,
+            "description": "Only calls newer than this log id: the listener cursor.",
+            "name": "after",
+            "in": "query",
+            "deprecated": true
+          },
+          {
+            "schema": {
+              "type": "string",
               "maxLength": 512
             },
             "required": false,
@@ -35535,6 +35564,771 @@
           "method": "retrieve",
           "sdk": false,
           "reason": "Developer portal access: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/developer/home": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Your workbench: sandbox, quickstart track, usage, keys, latest calls, webhooks, passes and Live orgs",
+        "operationId": "developer.getHome",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "now": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Server time. Count clocks from it, not the device clock."
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "open",
+                        "closed"
+                      ]
+                    },
+                    "sandbox": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "orgSlug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "templateId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "description": "The quickstart ticket, released in Test."
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "test"
+                          ],
+                          "description": "A sandbox holds Test only."
+                        },
+                        "previewOnly": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "closedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "Set when the sandbox closed."
+                        },
+                        "closeReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "idle",
+                            "admin",
+                            "user",
+                            null
+                          ]
+                        },
+                        "reopenUntil": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "Closed: the end of the window in which it can reopen. Null while open."
+                        },
+                        "limits": {
+                          "type": "object",
+                          "properties": {
+                            "passes": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            },
+                            "templates": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            },
+                            "endpoints": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            },
+                            "keys": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "passes",
+                            "templates",
+                            "endpoints",
+                            "keys"
+                          ],
+                          "description": "The sandbox plan's caps; null when the plan sets none."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "orgId",
+                        "orgSlug",
+                        "name",
+                        "templateId",
+                        "mode",
+                        "previewOnly",
+                        "createdAt",
+                        "closedAt",
+                        "closeReason",
+                        "reopenUntil",
+                        "limits"
+                      ]
+                    },
+                    "progress": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "startedAt": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "When the clock started: the last reset, else the quickstart view, else the sandbox."
+                        },
+                        "restartedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "The last reset."
+                        },
+                        "sandboxAt": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "The sandbox was made, or last reset."
+                        },
+                        "keyCallAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "First call below 400 with any sandbox key, not Run here."
+                        },
+                        "passAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "First Test pass, from a terminal or Run here."
+                        },
+                        "changeAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "First change to a Test pass."
+                        },
+                        "webhookAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "First event captured."
+                        },
+                        "doneAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "When the last of pass, change and webhook landed."
+                        },
+                        "doneMs": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "doneAt minus startedAt."
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "sandbox",
+                            "call",
+                            "change",
+                            "webhook",
+                            null
+                          ],
+                          "description": "The first step not done; null when done."
+                        }
+                      },
+                      "required": [
+                        "startedAt",
+                        "restartedAt",
+                        "sandboxAt",
+                        "keyCallAt",
+                        "passAt",
+                        "changeAt",
+                        "webhookAt",
+                        "doneAt",
+                        "doneMs",
+                        "next"
+                      ]
+                    },
+                    "usage": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "calls24h": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errors24h": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Calls answered 400 or above."
+                        },
+                        "captures24h": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "passes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Test passes held, as the pass limit counts them."
+                        },
+                        "series": {
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "Start of the first hour."
+                            },
+                            "calls": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "errors": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "calls",
+                            "errors"
+                          ],
+                          "description": "Calls and errors per hour, oldest first."
+                        }
+                      },
+                      "required": [
+                        "calls24h",
+                        "errors24h",
+                        "captures24h",
+                        "passes",
+                        "series"
+                      ]
+                    },
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "secretPrefix": {
+                            "type": "string",
+                            "description": "The start of the secret. The rest is never stored."
+                          },
+                          "scopes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "passes:read",
+                                "passes:write",
+                                "holders:write",
+                                "templates:read",
+                                "messages:write",
+                                "scans:read",
+                                "scans:write",
+                                "connections:read",
+                                "connections:write",
+                                "webhooks:manage",
+                                "templates:write",
+                                "templates:review",
+                                "templates:publish",
+                                "messages:read",
+                                "scanning:write",
+                                "scan-setup:read",
+                                "scan-setup:write",
+                                "scanning:admin",
+                                "nfc:read",
+                                "nfc:write",
+                                "wallet:read",
+                                "wallet:write",
+                                "api-keys:write",
+                                "org:read",
+                                "org:write",
+                                "members:read",
+                                "members:write",
+                                "audit:read",
+                                "platform:orgs",
+                                "platform:users",
+                                "platform:identities",
+                                "platform:wallet",
+                                "platform:settings",
+                                "platform:status",
+                                "platform:templates",
+                                "platform:audit",
+                                "brand:manage"
+                              ]
+                            }
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "expiresAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "description": "Null: never."
+                          },
+                          "lastUsedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "description": "Last call."
+                          },
+                          "retireAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "description": "Set while a roll overlaps: the key stops then."
+                          },
+                          "sandboxKey": {
+                            "type": "boolean",
+                            "description": "The key the sandbox made."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "secretPrefix",
+                          "scopes",
+                          "createdAt",
+                          "expiresAt",
+                          "lastUsedAt",
+                          "retireAt",
+                          "sandboxKey"
+                        ]
+                      },
+                      "description": "Not revoked and not retired, newest first."
+                    },
+                    "calls": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "requestId": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "method": {
+                            "type": "string"
+                          },
+                          "route": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "query": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "status": {
+                            "type": "integer"
+                          },
+                          "code": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "durationMs": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "keyId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "live",
+                              "test"
+                            ]
+                          },
+                          "via": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "try"
+                            ]
+                          },
+                          "hasBodies": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "requestId",
+                          "at",
+                          "method",
+                          "route",
+                          "path",
+                          "query",
+                          "status",
+                          "code",
+                          "durationMs",
+                          "keyId",
+                          "mode",
+                          "via",
+                          "hasBodies"
+                        ]
+                      },
+                      "description": "The 8 latest calls, any source. The first id is the listener cursor (`after`)."
+                    },
+                    "endpoints": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "target": {
+                            "type": "string",
+                            "enum": [
+                              "capture",
+                              "url"
+                            ],
+                            "description": "capture: stored here, never sent."
+                          },
+                          "url": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Null for the capture endpoint."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "paused",
+                              "disabled"
+                            ]
+                          },
+                          "eventTypes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "lastAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "description": "Last capture or delivery attempt."
+                          },
+                          "lastOk": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ],
+                            "description": "Whether that one succeeded."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "target",
+                          "url",
+                          "status",
+                          "eventTypes",
+                          "lastAt",
+                          "lastOk"
+                        ]
+                      },
+                      "description": "The capture endpoint first."
+                    },
+                    "passes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "templateId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "title": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "subtitle": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "voided"
+                            ]
+                          },
+                          "version": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "modifiedAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "previewUrl": {
+                            "type": "string",
+                            "description": "The TEST preview page: public, never installable."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "templateId",
+                          "title",
+                          "subtitle",
+                          "status",
+                          "version",
+                          "createdAt",
+                          "modifiedAt",
+                          "previewUrl"
+                        ]
+                      },
+                      "description": "The 3 latest Test passes."
+                    },
+                    "liveOrgs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "orgId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "roles": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "org_admin",
+                                "integration_admin",
+                                "template_author",
+                                "template_reviewer",
+                                "template_publisher",
+                                "pass_operator",
+                                "read_only"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 7
+                          },
+                          "canMintLive": {
+                            "type": "boolean",
+                            "description": "Can make a Live personal key there, in Admin."
+                          }
+                        },
+                        "required": [
+                          "orgId",
+                          "name",
+                          "slug",
+                          "roles",
+                          "canMintLive"
+                        ]
+                      },
+                      "description": "Your organizations that hold Live: where Live keys come from."
+                    }
+                  },
+                  "required": [
+                    "now",
+                    "state",
+                    "sandbox",
+                    "progress",
+                    "usage",
+                    "keys",
+                    "calls",
+                    "endpoints",
+                    "passes",
+                    "liveOrgs"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.home",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Developer portal workbench: a signed-in person in a browser, not an integration."
         },
         "x-sign-in": "idp",
         "x-codes": [
