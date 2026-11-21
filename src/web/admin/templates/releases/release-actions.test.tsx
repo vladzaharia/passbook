@@ -10,9 +10,9 @@ import {
   CANDIDATE_HASH,
   CONTENT_HASH,
   candidate,
-  IMPACT,
   mountPanel,
   OLD_HASH,
+  PLAN,
   panelProps,
   release,
   releaseServer,
@@ -393,24 +393,15 @@ describe('release review dialog', () => {
 
   it('shows affected passes and the grouped before and after diff', async () => {
     const { server, dialog } = await open();
-    const impact = await within(dialog).findByRole('region', { name: 'Impact' });
-    expect(within(impact).getByText('Passes to update').nextElementSibling).toHaveTextContent('12');
-    expect(within(impact).queryByText(/Live passes|Test passes/)).not.toBeInTheDocument();
-    expect(within(impact).queryByText(/more$/)).not.toBeInTheDocument();
-    for (const group of ['Fields', 'Barcode', 'Colours'])
-      expect(within(impact).getByRole('region', { name: group })).toBeInTheDocument();
-    expect(within(impact).queryByRole('region', { name: 'Images' })).not.toBeInTheDocument();
-    expect(within(impact).getByText('A1 → B2')).toBeInTheDocument();
-    expect(within(impact).getByText('QR')).toBeInTheDocument();
-    expect(within(impact).getByText('#000000 → #ffffff')).toBeInTheDocument();
-    const get = server.requests.find((request) =>
-      request.url.pathname.endsWith('/releases/impact'),
-    );
-    expect(Object.fromEntries(get?.url.searchParams ?? [])).toEqual({
-      ...SCOPE,
-      version: 'version-2',
-    });
-    expect(get?.headers.get('x-passbook-mode')).toBe('live');
+    expect(await within(dialog).findByText('12')).toBeVisible();
+    expect(dialog).toHaveTextContent('12 passes update · 9 on phones');
+    for (const group of ['Colours', 'Front'])
+      expect(within(dialog).getByRole('region', { name: group })).toBeInTheDocument();
+    expect(within(dialog).getByText('#ffffff')).toBeInTheDocument();
+    expect(within(dialog).getByText('and 3 more')).toBeVisible();
+    const post = server.plans[0];
+    expect(post?.url.searchParams.get('dryRun')).toBe('true');
+    expect(post?.body).toEqual({ orgId: 'org-1', version: 'version-2', modes: ['live'] });
   });
 
   it('names people and keeps ids and hashes behind technical details', async () => {
@@ -428,59 +419,37 @@ describe('release review dialog', () => {
     expect(within(dialog).getByText('approval-1')).toBeVisible();
   });
 
-  it('shows a capped count with a thousands separator and the changes beyond the list', async () => {
+  it('shows a capped count with a thousands separator', async () => {
     const { dialog } = await open({
-      impact: () =>
+      plan: () =>
         json({
-          ...IMPACT,
-          passes: { count: 10000, capped: true },
-          more: { ...IMPACT.more, fields: 1200 },
+          ...PLAN,
+          modes: {
+            live: {
+              ...PLAN.modes.live,
+              impact: { ...PLAN.modes.live.impact, passes: { count: 10000, capped: true } },
+            },
+          },
         }),
     });
-    const impact = await within(dialog).findByRole('region', { name: 'Impact' });
-    expect(await within(impact).findByText('10,000+')).toBeVisible();
-    expect(within(impact).getByText('and 1,200 more')).toBeVisible();
+    expect(await within(dialog).findByText('10,000')).toBeVisible();
   });
 
-  it('formats an uncapped count with a thousands separator', async () => {
-    const { dialog } = await open({
-      impact: () => json({ ...IMPACT, passes: { count: 1234, capped: false } }),
-    });
-    expect(await within(dialog).findByText('1,234')).toBeVisible();
-  });
-
-  it('says there are no changes when the diff is empty', async () => {
-    const empty = { fields: [], images: [], barcode: [], colors: [] };
-    const { dialog } = await open({
-      impact: () =>
-        json({
-          fromVersion: null,
-          toVersion: 'version-2',
-          passes: { count: 0, capped: false },
-          diff: empty,
-          more: { fields: 0, images: 0, barcode: 0, colors: 0 },
-        }),
-    });
-    expect(await within(dialog).findByText('No changes from the current release.')).toBeVisible();
-  });
-
-  it('shows an impact error with Retry and recovers', async () => {
+  it('shows a plan error with Retry and recovers', async () => {
     let fail = true;
     const { user, dialog } = await open({
-      impact: () =>
-        fail
-          ? problem(409, 'IMPACT_UNAVAILABLE', 'The impact could not be computed.')
-          : json(IMPACT),
+      plan: () =>
+        fail ? problem(409, 'PLAN_UNAVAILABLE', 'The changes could not be computed.') : json(PLAN),
     });
-    expect(await within(dialog).findByText(/The impact could not be computed/)).toBeVisible();
+    expect(await within(dialog).findByText(/The changes could not be computed/)).toBeVisible();
     fail = false;
     await user.click(within(dialog).getByRole('button', { name: /Retry/ }));
-    expect(await within(dialog).findByText('A1 → B2')).toBeInTheDocument();
+    expect(await within(dialog).findByText('#ffffff')).toBeInTheDocument();
   });
 
-  it('shows a loading state while the impact is pending and keeps confirm enabled', async () => {
-    const { dialog } = await open({ impact: () => new Promise<Response>(() => {}) as never });
-    expect(within(dialog).getByText('Loading impact')).toBeInTheDocument();
+  it('shows a loading state while the plan is pending and keeps confirm enabled', async () => {
+    const { dialog } = await open({ plan: () => new Promise<Response>(() => {}) as never });
+    expect(within(dialog).getByText('Loading changes')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Confirm publish' })).toBeEnabled();
   });
 

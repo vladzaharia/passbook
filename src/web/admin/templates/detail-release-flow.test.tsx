@@ -128,3 +128,28 @@ it('hides the release primary from a viewer with nothing to do', async () => {
   await screen.findByRole('heading', { name: 'Copper card' });
   expect(screen.queryByRole('button', { name: /^Release/ })).toBeNull();
 });
+
+it('previews the draft, with a Live and Draft toggle once a newer draft exists', async () => {
+  const user = userEvent.setup();
+  const requested: unknown[] = [];
+  await renderApp('/admin/templates/tpl1', {
+    session: 'admin',
+    memberships: [member],
+    selectedOrg: ORG.id,
+    handlers: {
+      '/api/v1/templates/tpl1': () => json(detail(state())),
+      '/api/v1/templates/previews': previewsHandler,
+      '/api/v1/templates/tpl1/preview': (_url, init) => {
+        requested.push(JSON.parse(String(init?.body ?? '{}')));
+        return json({ passJson: {}, assetBaseUrl: '/a', assetNames: [] });
+      },
+    },
+  });
+  const draft = await screen.findByRole('radio', { name: 'Draft' });
+  expect(draft).toBeChecked();
+  await waitFor(() =>
+    expect(requested).toContainEqual(expect.objectContaining({ version: DRAFT })),
+  );
+  await user.click(screen.getByRole('radio', { name: 'Live' }));
+  expect(screen.getByRole('radio', { name: 'Live' })).toBeChecked();
+});

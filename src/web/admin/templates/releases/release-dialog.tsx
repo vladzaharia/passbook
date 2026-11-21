@@ -11,12 +11,15 @@ import {
   Callout,
   Dialog,
   DialogContent,
+  ErrorState,
   FormField,
   KeyValue,
+  Skeleton,
   TechnicalDetails,
   Textarea,
 } from '../../../ui/index.ts';
-import { ReleaseImpact } from './release-details.tsx';
+import { useReleasePlan } from './flow-api.ts';
+import { PlanSummary } from './plan-summary.tsx';
 import { type ReleaseVersion, versionShort } from './types.ts';
 
 export type ReleaseOperation =
@@ -57,6 +60,7 @@ export function ReleaseDialog({
   const stale = operation.generation !== currentGeneration;
   const rollback = operation.kind === 'rollback';
   const version = rollback ? operation.release.version : operation.candidate.version;
+  const plan = useReleasePlan(templateId, scope.orgId, version, [scope.mode]);
   const hash = rollback ? operation.release.candidateHash : operation.candidate.candidateHash;
   const id = rollback ? operation.release.id : operation.candidate.id;
   const people = rollback
@@ -113,7 +117,21 @@ export function ReleaseDialog({
           <KeyValue
             items={[{ label: 'Version', value: versionShort(versions, version) }, ...people]}
           />
-          <ReleaseImpact templateId={templateId} scope={scope} version={version} />
+          {plan.data ? (
+            <PlanSummary plan={plan.data} templateId={templateId} orgId={scope.orgId} />
+          ) : plan.isError ? (
+            <ErrorState
+              inline
+              subject="the changes"
+              error={plan.error}
+              onRetry={() => plan.refetch()}
+            />
+          ) : (
+            <div role="status" aria-busy>
+              <span className="sr-only">Loading changes</span>
+              <Skeleton className="h-16 w-full" />
+            </div>
+          )}
           {rollback ? (
             <FormField label="Reason" required help="Recorded in the audit log.">
               {(control) => (

@@ -1,12 +1,8 @@
 import { ArrowRight, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
-import type {
-  ReleaseDiffValue,
-  ReleaseModePlan,
-} from '@/shared/contracts/template-release-flow.ts';
+import type { ReleaseModePlan } from '@/shared/contracts/template-release-flow.ts';
 import { errorMessage } from '../../../lib/errors.ts';
-import { formatCount } from '../../../lib/format.ts';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import {
   Button,
@@ -20,7 +16,7 @@ import {
 import { PassPreview } from '../../passes/pass-preview.tsx';
 import { useTemplatePreview } from '../api.ts';
 import { useReleaseFlow, useReleasePlan } from './flow-api.ts';
-import { ReleaseDiff } from './release-diff.tsx';
+import { PlanSummary } from './plan-summary.tsx';
 import './release-strip.css';
 
 const MODES: Mode[] = ['test', 'live'];
@@ -90,7 +86,6 @@ export default function ReleaseFlowDialog({
   const [error, setError] = useState<string>();
   const modes = MODES.filter((m) => plan.data?.modes[m]);
   const review = modes.some((m) => plan.data?.modes[m]?.outcome === 'review_required');
-  const impact = (plan.data?.modes.live ?? plan.data?.modes.test)?.impact;
   const busy = flow.isPending || done;
 
   useEffect(() => {
@@ -111,13 +106,10 @@ export default function ReleaseFlowDialog({
     }
   }
   const chipState = done ? 'done' : flow.isPending ? 'filling' : 'idle';
-  const image = (v: Extract<ReleaseDiffValue, { type: 'image' }>) =>
-    `/api/v1/templates/${encodeURIComponent(templateId)}/versions/${encodeURIComponent(v.version)}/assets/${encodeURIComponent(v.asset)}?orgId=${encodeURIComponent(orgId)}`;
-
   return (
     <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
       <DialogContent
-        title={`Release ${to}`}
+        title={review ? `Request review of ${to}` : `Release ${to}`}
         footer={
           <>
             <Button variant="outline" disabled={busy} onClick={onClose}>
@@ -172,29 +164,8 @@ export default function ReleaseFlowDialog({
                 )}
                 <p className="text-sm font-medium text-fg-strong">First release</p>
               </div>
-            ) : (
-              <ReleaseDiff groups={plan.data.diff} image={image} />
-            )}
-            {impact ? (
-              <p className="text-sm text-fg-muted">
-                {impact.passes.count === 0 ? (
-                  'No passes yet'
-                ) : (
-                  <>
-                    <b className="text-fg-strong">{formatCount(impact.passes.count)}</b>
-                    {impact.passes.capped ? '+' : ''}{' '}
-                    {impact.passes.count === 1 ? 'pass updates' : 'passes update'}
-                    {impact.devices.count > 0 ? (
-                      <>
-                        {' · '}
-                        <b className="text-fg-strong">{formatCount(impact.devices.count)}</b> on
-                        phones
-                      </>
-                    ) : null}
-                  </>
-                )}
-              </p>
             ) : null}
+            <PlanSummary plan={plan.data} templateId={templateId} orgId={orgId} diff={!first} />
             {error ? <Callout tone="danger">{error}</Callout> : null}
           </div>
         )}
