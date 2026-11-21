@@ -21,6 +21,8 @@ const SCOPES = [
   'templates:review',
   'templates:publish',
   'scanning:write',
+  'scan-setup:read',
+  'scan-setup:write',
   'passes:read',
   'passes:write',
   'messages:write',

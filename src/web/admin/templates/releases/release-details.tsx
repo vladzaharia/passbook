@@ -3,7 +3,7 @@ import type {
   TemplateReleaseImpact,
   TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
-import { formatCount } from '../../../lib/format.ts';
+import { formatCount, formatExpiry } from '../../../lib/format.ts';
 import { Badge, ErrorState, KeyValue, Skeleton } from '../../../ui/index.ts';
 import { useReleaseImpact } from './api.ts';
 
@@ -17,16 +17,34 @@ const GROUPS = [
 const passCount = ({ count, capped }: TemplateReleaseImpact['passes']) =>
   capped ? '10,000+' : formatCount(count);
 
+const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/;
+const plain = (value: string) => (ISO.test(value) ? formatExpiry(value) || value : value);
+
+/** Only the side that exists: an added line has no "before", a removed one no "after". */
+function changeText({ kind, from, to }: ReleaseChange): string {
+  if (kind === 'added') return plain(to ?? '');
+  if (kind === 'removed') return plain(from ?? '');
+  return `${plain(from ?? '')} → ${plain(to ?? '')}`;
+}
+
 const KIND = { added: 'Added', removed: 'Removed', changed: 'Changed' } as const;
+
+export function ChangeList({ changes }: { changes: readonly ReleaseChange[] }) {
+  return (
+    <ul className="grid gap-1.5">
+      {changes.map((change) => (
+        <Change key={`${change.kind}:${change.label}`} change={change} />
+      ))}
+    </ul>
+  );
+}
 
 function Change({ change }: { change: ReleaseChange }) {
   return (
     <li className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
       <Badge tone={change.kind === 'removed' ? 'warning' : 'neutral'}>{KIND[change.kind]}</Badge>
       <span className="font-medium text-fg-strong">{change.label}</span>
-      <span className="min-w-0 break-words text-fg-muted">
-        {change.from ?? '—'} → {change.to ?? '—'}
-      </span>
+      <span className="min-w-0 break-words text-fg-muted">{changeText(change)}</span>
     </li>
   );
 }
@@ -40,11 +58,7 @@ function ImpactBody({ impact }: { impact: TemplateReleaseImpact }) {
         groups.map(([key, title]) => (
           <section key={key} aria-label={title} className="grid gap-1.5 text-sm">
             <h4 className="font-semibold text-fg-strong">{title}</h4>
-            <ul className="grid gap-1.5">
-              {impact.diff[key].map((change) => (
-                <Change key={`${change.kind}:${change.label}`} change={change} />
-              ))}
-            </ul>
+            <ChangeList changes={impact.diff[key]} />
             {impact.more[key] > 0 ? (
               <p className="text-fg-muted">and {formatCount(impact.more[key])} more</p>
             ) : null}

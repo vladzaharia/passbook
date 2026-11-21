@@ -28,9 +28,11 @@ import {
   StaffResetDialog,
   StaffStatusDialog,
 } from './staff-dialogs.tsx';
+import { StaffPinOnlyNotice } from './staff-pin-only-notice.tsx';
 
 const StaffListSchema = z.object({
   items: z.array(ScanStaffSchema),
+  pinOnlyOff: z.literal(true).optional(),
   hasMore: z.boolean().optional(),
   nextCursor: z.string().nullish(),
 });
@@ -51,10 +53,25 @@ export function StaffTab() {
   }
   // Changing organizations closes all dialogs, including any one-time PIN reveal.
   const canManage = membership?.capabilities.includes('scanning:manage') ?? false;
-  return <OrganizationStaff key={`${orgId}:${canManage}`} orgId={orgId} canManage={canManage} />;
+  return (
+    <OrganizationStaff
+      key={`${orgId}:${canManage}`}
+      orgId={orgId}
+      canManage={canManage}
+      canTurnOnPinOnly={membership?.capabilities.includes('org:manage') ?? false}
+    />
+  );
 }
 
-function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boolean }) {
+function OrganizationStaff({
+  orgId,
+  canManage,
+  canTurnOnPinOnly,
+}: {
+  orgId: string;
+  canManage: boolean;
+  canTurnOnPinOnly: boolean;
+}) {
   const client = useQueryClient();
   const mode = useMode();
   const now = useNow();
@@ -193,6 +210,9 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
     [];
   return (
     <div className="grid gap-4">
+      {staff.data?.pages[0]?.pinOnlyOff ? (
+        <StaffPinOnlyNotice orgId={orgId} canTurnOn={canTurnOnPinOnly} onTurnedOn={refresh} />
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-surface-raised p-4">
         <p className="text-sm text-fg-muted">
           Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans since each

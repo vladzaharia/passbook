@@ -9,10 +9,10 @@ import {
   UpdateScannerSetupSchema,
 } from '../../../shared/contracts/scan-setups.ts';
 import { ScannerListQuerySchema } from '../../../shared/contracts/scanners.ts';
-import { currentUserId, modeOf } from '../../platform/auth.ts';
+import { currentUserId, methodScope, modeOf } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { authOf, requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
 import { loadScanner } from './scanner-views.ts';
 import { startAdminSetup } from './scanning-sessions.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
@@ -21,7 +21,10 @@ import { createSetup, updateSetup } from './setups.ts';
 import { scannerAuthority } from './target-authority.ts';
 
 export const scanSetupsRoutes = createRouter();
-guard(scanSetupsRoutes, requireTenantSession);
+guard(
+  scanSetupsRoutes,
+  requireTenantSessionOrApiKey(methodScope({ read: 'scan-setup:read', write: 'scan-setup:write' })),
+);
 register(
   scanSetupsRoutes,
   'scanners',
@@ -49,6 +52,7 @@ register(
     method: 'post',
     path: '/',
     summary: 'Create a managed scanner or screen',
+    auth: { human: true },
     body: CreateScannerSetupSchema,
     response: CreatedScannerSetupSchema,
     status: 201,
@@ -80,6 +84,7 @@ register(
     method: 'post',
     path: '/admin-session',
     summary: 'Create or reuse this admin’s scanner setup',
+    auth: { human: true },
     body: StartAdminScannerSchema,
     response: AdminScannerStartedSchema,
   },
@@ -126,6 +131,7 @@ register(
     method: 'patch',
     path: '/{id}',
     summary: 'Update a managed scanner or screen',
+    auth: { human: true },
     params: IdParamSchema,
     body: UpdateScannerSetupSchema,
     response: ScannerSetupSchema,

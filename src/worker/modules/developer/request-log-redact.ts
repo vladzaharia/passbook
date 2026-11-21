@@ -11,6 +11,7 @@ export const BODY_READ_MAX_BYTES = 16 * 1024;
  * pairing, `message`, `notes`, an input field), is `[redacted]`. Objects and arrays keep their shape, so a bad
  * field is still readable. This replaces a list of what to hide: a field nobody thought of is hidden by default.
  */
+/** Cursors and OAuth-style `state` values are left out: a cursor may be a name, a `state` a secret. */
 const SAFE_EXACT = new Set([
   'id',
   'ids',
@@ -26,12 +27,9 @@ const SAFE_EXACT = new Set([
   'count',
   'total',
   'hasMore',
-  'nextCursor',
-  'cursor',
   'requestId',
   'field',
   'path',
-  'state',
   'provider',
   'format',
   'sort',
@@ -100,9 +98,6 @@ export function redactBody(text: string, contentType: string | null, bytes: numb
 /** Query parameters that hold no secret or person; any other value is blanked. */
 const QUERY_SAFE = new Set([
   'limit',
-  'cursor',
-  'after',
-  'before',
   'status',
   'mode',
   'type',
@@ -114,7 +109,6 @@ const QUERY_SAFE = new Set([
   'since',
   'until',
   'page',
-  'state',
   'provider',
 ]);
 

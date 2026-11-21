@@ -30,15 +30,25 @@ enum TagRecordParser {
         let kind: String
         let value: Data
         if type == Data([0x54]) {
-            let languageLength = Int(payload[payload.startIndex] & 0x3f)
+            let status = payload[payload.startIndex]
+            let languageLength = Int(status & 0x3f)
             guard payload.count > 1 + languageLength else { return nil }
             kind = "T"
-            value = payload.subdata(in: (payload.startIndex + 1 + languageLength)..<payload.endIndex)
+            let body = payload.subdata(in: (payload.startIndex + 1 + languageLength)..<payload.endIndex)
+            // Bit 7 marks UTF-16, big endian unless a byte order mark says otherwise.
+            if status & 0x80 != 0 {
+                let hasBOM = body.starts(with: [0xFF, 0xFE]) || body.starts(with: [0xFE, 0xFF])
+                guard let text = String(data: body, encoding: hasBOM ? .utf16 : .utf16BigEndian),
+                      let utf8 = text.data(using: .utf8) else { return nil }
+                value = utf8
+            } else {
+                value = body
+            }
         } else if type == Data([0x55]) {
             let prefix = Int(payload[payload.startIndex])
             guard prefix < uriPrefixes.count else { return nil }
-            let suffix = payload.dropFirst().map { String(UnicodeScalar($0)) }.joined()
-            guard let data = (uriPrefixes[prefix] + suffix).data(using: .utf8) else { return nil }
+            guard let suffix = String(data: payload.dropFirst(), encoding: .utf8),
+                  let data = (uriPrefixes[prefix] + suffix).data(using: .utf8) else { return nil }
             kind = "U"
             value = data
         } else { return nil }

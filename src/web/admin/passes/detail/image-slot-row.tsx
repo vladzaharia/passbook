@@ -56,7 +56,7 @@ export function ImageSlotRow(props: ImageSlotRowProps) {
       }}
       onDragLeave={() => setOver(false)}
       onDrop={drop}
-      className="wl-slot relative flex min-w-0 items-center gap-3 rounded-lg border border-border bg-surface-raised p-3"
+      className="wl-slot relative flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-surface-raised p-3"
     >
       <div
         style={ground ? { background: ground } : undefined}
@@ -76,23 +76,10 @@ export function ImageSlotRow(props: ImageSlotRowProps) {
           />
         ) : null}
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="flex min-w-0 items-center gap-2 text-sm text-fg-strong">
-          <span className="truncate">{label}</span>
-          {badge}
-        </p>
-        <p className="text-xs text-fg-muted tabular-nums">
-          {detail ? `${detail} · ` : ''}
-          {needs}
-        </p>
-        {error ? (
-          <p role="alert" className="mt-1 text-xs text-danger">
-            {error}
-          </p>
-        ) : warning ? (
-          <p className="mt-1 text-xs text-warning">{warning}</p>
-        ) : null}
-      </div>
+      <p className="flex min-w-0 flex-1 items-center gap-2 text-sm text-fg-strong">
+        <span className="truncate">{label}</span>
+        {badge}
+      </p>
       <div className="flex shrink-0 items-center gap-1">
         <input
           ref={input}
@@ -117,6 +104,19 @@ export function ImageSlotRow(props: ImageSlotRowProps) {
           <span className="max-sm:sr-only">{props.action}</span>
         </Button>
         {props.trailing}
+      </div>
+      <div className="min-w-0 basis-full">
+        <p className="text-xs text-fg-muted tabular-nums">
+          {detail ? `${detail} · ` : ''}
+          {needs}
+        </p>
+        {error ? (
+          <p role="alert" className="mt-1 text-xs text-danger">
+            {error}
+          </p>
+        ) : warning ? (
+          <p className="mt-1 text-xs text-warning">{warning}</p>
+        ) : null}
       </div>
       {props.children}
     </li>

@@ -76,6 +76,12 @@ export const ApiScopeSchema = z.enum([
   'templates:publish',
   'messages:read',
   'scanning:write',
+  /** Reads the org's managed scanner and screen setups (`/api/v1/scan-setups`). */
+  'scan-setup:read',
+  /** Reserved: setup writes need a user creator, so no key route accepts it yet. */
+  'scan-setup:write',
+  /** Staff PINs and paired devices (codes shown once) in the one-call setup: org-bound, live keys only. */
+  'scanning:admin',
   'nfc:read',
   'nfc:write',
   'wallet:read',

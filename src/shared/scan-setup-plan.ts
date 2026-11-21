@@ -207,6 +207,7 @@ export function planScanSetup(input: ScanSetupIntent, ctx: SetupPlanContext): Se
   const refs = registerRefs(intent, issues);
   const zones = planZones(intent, ctx, refs, issues);
   const events = planEvents(intent, ctx, refs, timeZone, issues);
+  if (events.length > 10) issues.push({ code: 'SETUP_TOO_MANY_NEW_EVENTS', path: ['events'] });
   const staff = intent.staff.map((s, i) => ({ ref: `staff-${i + 1}`, name: s.name, role: s.role }));
   const sessions: PlannedSession[] = intent.doors.map((door, i) =>
     planDoor(door, i, { intent, ctx, refs, events, issues }),

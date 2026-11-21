@@ -32,7 +32,7 @@ describe('the door after a joined card attaches', () => {
     await run(t.kit.env.DB, "DELETE FROM counters WHERE key = 'join:platform'");
     const email = `door-${Math.random().toString(36).slice(2)}@example.test`;
     const l = await t.link({ askEmail: true });
-    expect((await t.post(l, { email })).status).toBe(303);
+    expect((await t.post(l, { email })).status).toBe(200);
     const row = await t.kit.env.DB.prepare('SELECT id FROM passes WHERE holder_email = ?')
       .bind(email)
       .first<{ id: string }>();

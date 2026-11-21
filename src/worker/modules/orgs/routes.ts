@@ -275,7 +275,7 @@ register(
       'content-type': 'text/html; charset=utf-8',
       // Inline styles, as in a mail client; no script. Only the console may frame it.
       'content-security-policy':
-        "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+        "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
       'x-frame-options': 'SAMEORIGIN',
     });
   },

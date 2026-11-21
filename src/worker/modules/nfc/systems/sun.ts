@@ -93,8 +93,6 @@ export async function verifySunTap(
   const keyset = await keysetBySlug(ctx.env.DB, tap.slug);
   if (!keyset || keyset.orgId !== orgId || keyset.disabledAt !== null)
     return refuse('TAG_SUN_KEYSET');
-  if (keyset.mode !== mode)
-    return refuse('TAG_SUN_MODE', mode === 'live' ? 'test_pass' : 'live_pass');
   const lookup = keyset.perTag ? tagKeyLookup(ctx, keyset) : null;
   for (const key of await verifyingKeys(ctx, keyset)) {
     const verified = await verifySun(
@@ -103,6 +101,9 @@ export async function verifySunTap(
       tap.m,
     );
     if (!verified.ok) continue;
+    // Said only once the MAC holds: an unproven slug learns nothing about the org's other mode.
+    if (keyset.mode !== mode)
+      return refuse('TAG_SUN_MODE', mode === 'live' ? 'test_pass' : 'live_pass');
     const { ref, hint } = await tagRef(ctx.env, orgId, mode, verified.read.uid);
     return {
       ok: true,

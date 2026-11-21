@@ -47,7 +47,7 @@ export const QS_COPY = {
     },
     home: {
       title: 'Take it home',
-      line: 'Copy the file, the install line and your key into your project.',
+      line: 'Copy the file and your key into your project.',
       env: '.env',
       install: 'Install',
       file: 'create-pass.ts',

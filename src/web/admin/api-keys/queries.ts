@@ -111,6 +111,8 @@ export const SCOPE_LABEL: Record<string, string> = {
   'webhooks:manage': 'Manage webhooks',
   'brand:manage': 'Manage brand kit',
   'scanning:write': 'Set up scanning',
+  'scan-setup:read': 'Read scanner setups',
+  'scanning:admin': 'Set up scanning with staff and devices',
   'api-keys:write': 'Manage its own child keys',
 };
 

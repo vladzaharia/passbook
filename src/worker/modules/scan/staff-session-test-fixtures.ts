@@ -15,6 +15,15 @@ export function staffSessionFixture() {
   let kit: ScanKit;
   let fake: FakeAuth;
   let call: (method: string, path: string, headers: Headers, body?: unknown) => Promise<Response>;
+  /** Work the app deferred with `waitUntil`; `settle` waits for it. */
+  const deferred: Promise<unknown>[] = [];
+  const settle = async () => {
+    await Promise.all(deferred.splice(0));
+  };
+  const executionCtx = {
+    waitUntil: (p: Promise<unknown>) => void deferred.push(p),
+    passThroughOnException: () => undefined,
+  } as unknown as ExecutionContext;
   let managerTemplate: string;
   let deskTemplate: string;
 
@@ -36,6 +45,7 @@ export function staffSessionFixture() {
             ...(body === undefined ? {} : { body: JSON.stringify(body) }),
           },
           kit.env,
+          executionCtx,
         ),
       );
     managerTemplate = await kit.scanTemplate('Manager check-in', {
@@ -101,6 +111,8 @@ export function staffSessionFixture() {
 
   return {
     setup,
+    settle,
+    deferred,
     get kit() {
       return kit;
     },

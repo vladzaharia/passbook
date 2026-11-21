@@ -31,3 +31,7 @@ export function getPointer(root: unknown, pointer: string): Json | undefined {
   }
   return current as Json | undefined;
 }
+
+/** The pointer of a top-level key, e.g. a CSV header: `/` plus the RFC 6901-escaped name. */
+export const pointerOfKey = (key: string): string =>
+  `/${key.replaceAll('~', '~0').replaceAll('/', '~1')}`;

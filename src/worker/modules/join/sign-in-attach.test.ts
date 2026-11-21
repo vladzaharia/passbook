@@ -24,7 +24,7 @@ const address = () => `joined-${Math.random().toString(36).slice(2)}@example.tes
 async function joinWith(email: string) {
   const l = await t.link({ askEmail: true });
   const res = await t.post(l, { email });
-  expect(res.status).toBe(303);
+  expect(res.status).toBe(200);
   const row = await first<{ id: string }>(
     t.kit.env.DB,
     'SELECT id FROM passes WHERE holder_email = ? ORDER BY id DESC LIMIT 1',

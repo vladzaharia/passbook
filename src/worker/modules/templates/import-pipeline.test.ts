@@ -287,7 +287,7 @@ describe('TemplateImport pipeline', () => {
       const manifest = JSON.stringify({
         schema: 1,
         name: 'X',
-        inputs: { type: 'object', properties: { a: { type: 'string', pattern: '(a+)+$' } } },
+        inputs: { type: 'object', properties: { a: { type: 'string', pattern: '(a)\\1' } } },
         sample: {},
         bindings: [],
         display: { title: 'x' },

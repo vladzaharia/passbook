@@ -101,7 +101,7 @@
 /* The buddy has its own row above the notice, clear of the notice's edge. */
 .wl-add-seat {
   position: relative;
-  margin-top: 3.5rem;
+  margin-top: 4.25rem;
 }
 
 /* It watches the badge while it is pointed at or focused: down and left on the badge's card, down
@@ -140,7 +140,7 @@
 /* The lead: one raised card, a short foil ledge on its top edge under the buddy's feet. */
 .wl-hero {
   position: relative;
-  margin-top: 3.25rem;
+  margin-top: 4rem;
   padding: 1.25rem;
   border: 1px solid var(--pk-border-subtle);
   border-radius: var(--pk-radius-xl);

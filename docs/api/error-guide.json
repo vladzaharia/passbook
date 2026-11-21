@@ -1085,16 +1085,16 @@
     "fix": "Check orgId with GET /api/v1/orgs.",
     "retryable": false
   },
-  "ORG_REQUIRED": {
-    "title": "Organization required",
-    "when": "The request spans organizations and does not name one.",
-    "fix": "Send orgId with the request, or use a key scoped to one organization.",
-    "retryable": false
-  },
   "ORG_PERSONAL_SINGLE_MEMBER": {
     "title": "Personal organization has one member",
     "when": "You invited a member to, or revoked the owner of, a personal organization.",
     "fix": "Use a regular organization to work with others.",
+    "retryable": false
+  },
+  "ORG_REQUIRED": {
+    "title": "Organization required",
+    "when": "The request spans organizations and does not name one.",
+    "fix": "Send orgId with the request, or use a key scoped to one organization.",
     "retryable": false
   },
   "ORG_SLUG_RESERVED": {
@@ -1113,6 +1113,12 @@
     "title": "Status change must be alone",
     "when": "The update changes the status and other fields together.",
     "fix": "Send the status change in its own request, then the other edits.",
+    "retryable": false
+  },
+  "ORG_TEST_ONLY": {
+    "title": "Organization is test-only",
+    "when": "A Live request named a developer sandbox organization, which never holds Live.",
+    "fix": "Send the request in Test mode, or use an organization with live access.",
     "retryable": false
   },
   "PAIRING_INVALID": {
@@ -1595,6 +1601,12 @@
     "fix": "Resume the session, then scan again.",
     "retryable": false
   },
+  "SCANNING_SESSION_REMOVE_DEVICES": {
+    "title": "Devices stay",
+    "when": "removeDevices was sent without ending the session.",
+    "fix": "Set status to ended, or leave removeDevices out.",
+    "retryable": false
+  },
   "SCANNING_SESSION_SCOPE_INVALID": {
     "title": "Session scope invalid",
     "when": "The session's scope or settings are invalid, so devices cannot be added.",
@@ -1781,10 +1793,58 @@
     "fix": "Correct the settings named in issues, then retry.",
     "retryable": false
   },
+  "SCAN_SETUP_ADMIN_SCOPE": {
+    "title": "Staff need scanning:admin",
+    "when": "A key without scanning:admin named new staff.",
+    "fix": "Use a scanning:admin key, or leave staff out.",
+    "retryable": false
+  },
+  "SCAN_SETUP_CHANGED": {
+    "title": "Setup changed",
+    "when": "Something the setup relies on changed while it ran. Nothing was written.",
+    "fix": "Send the setup again.",
+    "retryable": true
+  },
+  "SCAN_SETUP_CHECKS_FAILED": {
+    "title": "Setup has problems",
+    "when": "A check with level error stops the setup.",
+    "fix": "Fix what the issues name, then send it again.",
+    "retryable": false
+  },
   "SCAN_SETUP_CONFLICT": {
     "title": "Template already scanned",
     "when": "Another session already scans this template.",
     "fix": "Remove the template from the other session, or reuse that session.",
+    "retryable": true
+  },
+  "SCAN_SETUP_INVALID": {
+    "title": "Setup needs changes",
+    "when": "The setup names something that does not exist or breaks a rule.",
+    "fix": "Fix the paths in issues, then send it again.",
+    "retryable": false
+  },
+  "SCAN_SETUP_KEY_REQUIRED": {
+    "title": "Idempotency-Key missing",
+    "when": "A setup that writes needs an Idempotency-Key header.",
+    "fix": "Send one, or add dryRun=true to only see the plan.",
+    "retryable": false
+  },
+  "SCAN_SETUP_KEY_REUSED": {
+    "title": "Key used for another setup",
+    "when": "This Idempotency-Key went with a different body.",
+    "fix": "Use a new key for a different setup.",
+    "retryable": false
+  },
+  "SCAN_SETUP_LIVE_ONLY": {
+    "title": "Live key needed",
+    "when": "Places and staff are shared with live mode, so a test key cannot make them.",
+    "fix": "Use a live key.",
+    "retryable": false
+  },
+  "SCAN_SETUP_NAME_TAKEN": {
+    "title": "Name taken meanwhile",
+    "when": "A name or key was taken while the setup ran. Nothing was written.",
+    "fix": "Send the setup again.",
     "retryable": true
   },
   "SCAN_STAFF_CHANGED": {
@@ -2003,6 +2063,12 @@
     "fix": "Fetch the tag and send the request again.",
     "retryable": false
   },
+  "TAG_ID_INVALID": {
+    "title": "Tag ID not valid",
+    "when": "The typed tag ID is not 4, 7 or 10 bytes in the chosen format.",
+    "fix": "Check the ID against the reader or the supplier's list.",
+    "retryable": false
+  },
   "TAG_KEY_UNREADABLE": {
     "title": "Tag key unreadable",
     "when": "A stored tag key could not be decrypted.",
@@ -2068,6 +2134,12 @@
     "when": "The session or tag type takes Secure tags and this one is Basic.",
     "fix": "Use a Secure (SUN) tag, or lower the session's tag level.",
     "retryable": false
+  },
+  "TAG_SUN_RATE_LIMITED": {
+    "title": "Tag reads limited",
+    "when": "This device failed too many tag signature checks in the window.",
+    "fix": "Wait for Retry-After seconds, then scan again. Check the tag is one of the org’s own.",
+    "retryable": true
   },
   "TAG_SUN_REPLAY": {
     "title": "Tag read replayed",
@@ -2145,12 +2217,6 @@
     "title": "Tag type is for another tag system",
     "when": "The tag type is for Basic tags and the tag is Secure, or the reverse.",
     "fix": "Choose a tag type for this tag's system.",
-    "retryable": false
-  },
-  "TAG_ID_INVALID": {
-    "title": "Tag ID not valid",
-    "when": "The typed tag ID is not 4, 7 or 10 bytes in the chosen format.",
-    "fix": "Check the ID against the reader or the supplier's list.",
     "retryable": false
   },
   "TAG_UID_RANDOM": {
@@ -2313,6 +2379,12 @@
     "title": "Approved release required",
     "when": "The template has no approved release available in this mode.",
     "fix": "Approve a release with POST /api/v1/templates/{id}/candidates/{candidateId}/approve.",
+    "retryable": false
+  },
+  "TEMPLATE_REVIEW_REQUIRED": {
+    "title": "Review required",
+    "when": "Another reviewer must approve this version before it is released in Live.",
+    "fix": "Request review with request: true, or have another reviewer approve it.",
     "retryable": false
   },
   "TEMPLATE_SELF_APPROVAL": {

@@ -100,6 +100,15 @@ const EXPIRY = new Map<string, Intl.DateTimeFormat>();
 export function formatExpiry(iso: string, timeZone?: string): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
+  // A date with no time is a calendar day: formatted in UTC it never moves to the day before.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return new Intl.DateTimeFormat(LOCALE, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(at);
+  }
   const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? 'UTC';
   const named = timeZone === undefined;
   const key = `${zone}|${named}`;

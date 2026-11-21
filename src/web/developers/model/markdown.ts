@@ -1,4 +1,6 @@
+import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS, twin } from '../../../shared/developers.ts';
+import type { Guide } from '../guide/model.ts';
 import { operations } from './dates.ts';
 import { samplesFor } from './samples.ts';
 import type { Field, OpView, ResourcePage, Site } from './types.ts';
@@ -93,8 +95,14 @@ export function homeMarkdown(site: Site): string {
   return `${out.join('\n')}\n`;
 }
 
+export function guidesIndexMarkdown(guides: Guide[]): string {
+  const out = [`# ${DEV_COPY.slots.guides.title}`, '', DEV_COPY.slots.guides.line, ''];
+  for (const g of guides) out.push(`- [${g.meta.title}](${twin(g.url)}): ${g.meta.line}`);
+  return `${out.join('\n')}\n`;
+}
+
 /** https://llmstxt.org: a title, a summary and links to the markdown twins. */
-export function llmsTxt(site: Site): string {
+export function llmsTxt(site: Site, guides: Guide[] = []): string {
   const out = [
     '# PassBook API',
     '',
@@ -114,6 +122,19 @@ export function llmsTxt(site: Site): string {
       );
     out.push('');
   }
-  out.push('## Optional', '', `- [Overview](${site.baseUrl}${twin(PATHS.home)})`);
+  out.push(
+    '## Guides',
+    '',
+    `- [Quickstart](${site.baseUrl}${twin(PATHS.quickstart)}): your first pass in five steps`,
+    ...guides.map((g) => `- [${g.meta.title}](${site.baseUrl}${twin(g.url)}): ${g.meta.line}`),
+    '',
+    '## Optional',
+    '',
+    `- [Overview](${site.baseUrl}${twin(PATHS.home)})`,
+    `- [Errors](${site.baseUrl}${twin(PATHS.errors)}): every error code, with its status and fix; each code has its own page, add \`.md\``,
+    `- [Webhooks](${site.baseUrl}${twin(PATHS.webhooks)})`,
+    `- [Changelog](${site.baseUrl}${twin(PATHS.changelog)})`,
+    `- [Protocols](${site.baseUrl}${twin(PATHS.protocols)})`,
+  );
   return `${out.join('\n')}\n`;
 }

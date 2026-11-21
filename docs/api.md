@@ -43,7 +43,9 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
+| `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, rate limited. Only `org_admin` can mint it |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
+| `scan-setup:read` | `GET /scan-setups` and `GET /scan-setups/{id}`: read the org's managed scanner and screen setups. Needs `scanning:read` to delegate. Reaches nothing else; another org's setup is a 404 |
 
 ### Token types
 
@@ -374,6 +376,36 @@ approved head; that also creates a new generation. An archived template with no 
 `POST /templates/{id}/restore` (`restorable` on the detail). Candidate-only, Test-only and legacy history do
 not block it; a shared template needs a platform administrator. There is no activate route. A released candidate cannot be republished
 directly; use rollback or a new reviewed candidate. Uploads and version edits remain drafts.
+
+### Release state
+
+`GET /templates/{id}` returns `release` for an uploaded template the caller's org can release
+(not for baked templates, blueprints or staged uploads). The server computes it; clients read it
+rather than deriving it from candidates and releases.
+
+```json
+{ "live": { "version": "v1", "at": 1763700000000, "by": "Alex Kim" },
+  "test": { "version": "v2", "at": 1763710000000, "state": "ahead" },
+  "draft": { "version": "v2", "at": 1763705000000 },
+  "review": { "state": "open", "version": "v2", "by": "Sam Rivera", "at": 1763706000000 },
+  "alone": false, "next": "review" }
+```
+
+- `live` and `test` are the Apple heads. `test.state` is `ahead` when Test holds a newer version
+  than Live (a Try), otherwise `following`.
+- `draft` is the newest valid saved version when it is newer than Live.
+- `review` covers the draft in Live: `open` is an unreleased candidate with no independent
+  approval, `approved` has one.
+- `alone` is the sole-approval rule for the caller: they author, review and publish, are the org's
+  only review-capable member, and no reviewer was removed in the last 7 days. The database still
+  decides at commit.
+- `next` is the caller's step: `design`, `try` (no Live head and Test lacks the draft), `release`,
+  `request_review`, `review`, `wait` (in review, or approved for someone else to publish), or
+  `null` (nothing newer than Live, or no template capability).
+
+`POST /templates/{id}/candidates` returns the existing unreleased candidate when the same author
+already sealed the same version, content and release policy in that scope, with its approvals,
+instead of creating a duplicate.
 
 ## Google and Samsung Wallet providers
 
@@ -814,7 +846,7 @@ feed takes `?apiVersion=` and defaults to the newest.
 
 ## Scanner console
 
-Console routes need a session and `scanning:manage`. They act on the console mode (`x-passbook-mode`); a scanner, setup or event of the other mode is a 404. The one exception is `POST /templates/{id}/scan-setup`, which a key with `scanning:write` also calls: it acts in the key's org and mode, its events and session have no user creator, and the audit rows name the key.
+Console routes need a session and `scanning:manage`; `GET /scan-setups` and `GET /scan-setups/{id}` also take a key with `scan-setup:read`. Setup writes stay session-only (`scan-setup:write` is reserved and cannot be minted). They act on the console mode (`x-passbook-mode`); a scanner, setup or event of the other mode is a 404. The one exception is `POST /templates/{id}/scan-setup`, which a key with `scanning:write` also calls: it acts in the key's org and mode, its events and session have no user creator, and the audit rows name the key.
 
 - `POST /scanners/{id}/pairing`, `/pair-here`, `/token` on a removed scanner answer 409 `SCANNER_REVOKED`. Send `?restore=true` to restore it; the audit log records `scanner.restore`.
 - `GET /scan-staff?orgId=&q=&limit=&cursor=` returns `items`, and `hasMore` with `nextCursor` when there are more. Pass `nextCursor` as `cursor` for the next page.
@@ -822,7 +854,7 @@ Console routes need a session and `scanning:manage`. They act on the console mod
 
 ## Scanning setup in one call
 
-`POST /scanning-sessions/setup` (coming) makes the zones, events, staff, sessions and devices for a set of doors in one batch. It takes a console session with `scanning:manage` or a key with `scanning:write`, acts in the caller's mode, and needs an `Idempotency-Key`. `?dryRun=true` returns the plan without writing. The body is `ScanSetupIntentSchema` (`src/shared/contracts/scan-setup-intent.ts`):
+`POST /scanning-sessions/setup` makes the zones, events, staff, sessions and devices for a set of doors in one batch. It takes a console session with `scanning:manage` or a key with `scanning:write`, acts in the caller's mode, and needs an `Idempotency-Key` (400 `SCAN_SETUP_KEY_REQUIRED`; not needed with `dryRun`). `?dryRun=true` returns the plan without writing. The body is `ScanSetupIntentSchema` (`src/shared/contracts/scan-setup-intent.ts`):
 
 - `places`: zones to make (`ref`, `name`, optional `key`, `inside` a ref or zone id, `max`, `count`, `tapOut`, `maxStayMinutes`, `clearAt`) or `{ zoneId }` to reuse. At most 8; three levels below a root.
 - `events`: new events (`ref`, `name`, `templateIds`, `opensAt`, `closesAt`, `max`, `reentry`), `{ eventId }`, or `{ fromTemplate, ref? }` for a template's upcoming events. At most 10.
@@ -834,6 +866,17 @@ Console routes need a session and `scanning:manage`. They act on the console mod
 Defaults: a counted place or a re-entry event sets the door to In and out with Track in / out; a barcode reader there scans In. A place with a max tracks, with a 12 h max stay and clear-at at the last closing time. A door with no place and no re-entry gets no direction. Hours are only what the body says.
 
 A ref (`^[a-z][a-z0-9-]{0,23}$`) names something made in the same call; an unknown, duplicate or wrong-kind ref, a zone cycle or a fourth level is 422 with the field path. The answer, and the dry run, carry `checks` (`code`, `level`, `message`, optional `fix`); any `error` check stops the write. Codes: `NO_EXIT`, `NO_MANAGER`, `NO_STAFF`, `PLAN_MISSES_PLACE`, `HOURS_DIFFER`, `EVENT_NO_PASSES`, `READER_BOTH`, `PLACE_ON_EVENT`, `DIRECTION_NEEDS_TRACKING`, `TEST_ONLY`.
+
+The call writes everything in one batch: a failure writes nothing. Names that are taken get the lowest free number after them (`Gym 2`); the answer has the names made. The answer (`ScanSetupResultSchema`) lists each session with its devices and pairing codes, the zones and events made or reused, staff with their PINs, and `checks`. PINs and codes appear once and are never stored or logged.
+
+- **Replay.** The same `Idempotency-Key` and body returns the same ids with `replayed: true` and no PINs or codes. A device that was never paired and whose code ran out gets a new one, and `pairingReissued` is true. The same key with another body is 409 `SCAN_SETUP_KEY_REUSED`.
+- **Errors.** A plan problem is 422 `SCAN_SETUP_INVALID`, an `error` check 422 `SCAN_SETUP_CHECKS_FAILED`; both carry `issues` with a path. A name or key taken during the call is 409 `SCAN_SETUP_NAME_TAKEN`: send it again. A key for another org gets 404.
+- **Keys.** `scanning:write` makes events, sessions, new places (live keys only) and devices with no pairing code; its rows have no user creator and the audit row names the key. `scanning:admin` (org-bound, live keys only, refused at mint otherwise as 422 `API_KEY_SCANNING_ADMIN_LIVE_ORG`; only `org_admin` can mint it) also makes staff and gives PINs and pairing codes once, up to 10 such setups an hour and 100 PINs and codes a day per key (429 `RATE_LIMITED`). Without it, staff are 403 `SCAN_SETUP_ADMIN_SCOPE`; places or staff from a test key are 403 `SCAN_SETUP_LIVE_ONLY`. The grant itself refuses the tables a key's scope does not cover. Test mode: places and staff are shared with live.
+- **Replay and pairing.** A replay reissues expired codes for a console session only, one commit per device: two replays at once can each mint a code, and the later one wins.
+- **Offline.** `event_night` gives a door the offline list only when it needs no exits (no tracked place, no re-entry, no direction). An explicit list on a door that needs exits is the error check `OFFLINE_LIST_BLOCKED`.
+- **Limits.** At most 10 new events in all, counting each `fromTemplate` entry's events (422 `SCAN_SETUP_INVALID`).
+- **Devices.** `name` is optional on `POST /scanning-sessions/{id}/devices`: the session's name and the next free number.
+- **End.** `PATCH /scanning-sessions/{id}` with `{ "status": "ended", "removeDevices": true }` revokes every device of the session in the same write. It defaults to false and needs a console session.
 
 ## Scanner device actions
 

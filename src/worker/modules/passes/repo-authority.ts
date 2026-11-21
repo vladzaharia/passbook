@@ -158,6 +158,14 @@ export async function tenantPassAuthorityValid(
   return row !== null;
 }
 
+/** A developer sandbox: it never holds Live. */
+export async function isDeveloperOrg(db: D1Database, orgId: string): Promise<boolean> {
+  return (
+    (await first(db, "SELECT 1 AS x FROM orgs WHERE id = ? AND kind = 'developer'", [orgId])) !==
+    null
+  );
+}
+
 /**
  * The org's `access_revision`. It moves only with the org status, so a branding or settings save
  * does not invalidate authority captured earlier. The name is kept for existing callers.

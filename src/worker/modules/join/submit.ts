@@ -1,17 +1,11 @@
 import { PassBuildError } from '../../../passkit/build.ts';
-import {
-  JOIN_NAME_MESSAGE,
-  type JoinCode,
-  JoinSubmitSchema,
-} from '../../../shared/contracts/join.ts';
+import { JOIN_NAME_MESSAGE, JoinSubmitSchema } from '../../../shared/contracts/join.ts';
 import { JOIN_COPY } from '../../../shared/copy/join.ts';
 import { EMAIL_INVALID_MESSAGE } from '../../../shared/email.ts';
 import { TURNSTILE_JOIN_ACTION } from '../../../shared/turnstile.ts';
-import { writeEvent } from '../../platform/analytics.ts';
-import { revealToken, tokenKeys } from '../../platform/capability-token.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { Refusal } from '../../ssr/join-page.tsx';
 import { verifyTurnstile } from '../auth/turnstile.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import {
@@ -25,30 +19,15 @@ import {
 } from './caps.ts';
 import { deviceKeyOf, fieldsHashOf, ipKeyOf } from './cookie.ts';
 import { assembleInput, createJoinCard, type OpenRelease, openRelease } from './issue.ts';
-import { activeCardFor, deviceIssue, linkByToken, type PublicLink } from './repo-issues.ts';
-import { queueResend } from './resend.ts';
+import type { JoinOutcome } from './outcome.ts';
+import { deviceIssue, type PublicLink } from './repo-issues.ts';
+import { afterRefusal, issueForEmail, lookupLink, refuse } from './submit-after.ts';
 
 const MINUTE = 60 * 1000;
 /** A double tap or the back button: the same device with the same fields gets its card again. */
 const REPLAY_MS = 10 * MINUTE;
 /** Cloudflare's documented maximum for a Turnstile response. */
 const TURNSTILE_TOKEN_MAX = 2048;
-const TOKEN_SHAPE = /^[A-Za-z0-9_-]{22}$/;
-
-export type JoinOutcome =
-  | { kind: 'card'; token: string; device: string }
-  | { kind: 'check_email'; link: PublicLink; email: string }
-  | {
-      kind: 'form';
-      link: PublicLink;
-      /** Whether the form asks for a name: decided from the release, as the page is. */
-      askName: boolean;
-      error: string;
-      values: { name: string; email: string };
-      /** 403 for a failed Turnstile check; else 422. */
-      status?: 403;
-    }
-  | { kind: 'refused'; reason: Refusal; link: PublicLink | null };
 
 export interface SubmitRequest {
   token: string;
@@ -59,35 +38,6 @@ export interface SubmitRequest {
   prefix: string;
   /** The device cookie value, when the browser sent one this server made. */
   device: string | undefined;
-}
-
-/** A link a presented token names, or null for an unknown or rotated token. */
-export async function lookupLink(ctx: ServiceContext, token: string): Promise<PublicLink | null> {
-  if (!TOKEN_SHAPE.test(token)) return null;
-  return linkByToken(ctx.env.DB, await tokenKeys(ctx.env, 'join', token));
-}
-
-/** One refusal: a stable code in the log and in analytics, no name, address, token or network. */
-export function refuse(
-  ctx: ServiceContext,
-  link: PublicLink | null,
-  code: JoinCode,
-  level: 'warn' | 'error' = 'warn',
-): void {
-  ctx.log[level]('join.refused', {
-    code,
-    ...(link ? { linkId: link.id, orgId: link.orgId, mode: link.mode } : {}),
-  });
-  writeEvent(
-    ctx.env,
-    {
-      event: 'join.refused',
-      orgId: link?.orgId ?? null,
-      outcome: code,
-      mode: link?.mode ?? 'live',
-    },
-    ctx.log,
-  );
 }
 
 /** Why a link takes no new cards right now, or null when it is open. */
@@ -149,34 +99,6 @@ async function cardOf(ctx: ServiceContext, passId: string): Promise<string | nul
     throw error;
   }
 }
-
-/** The address already has a card here: mail it (within the address's daily budget) and tell the browser nothing more. */
-async function resendDuplicate(
-  ctx: ServiceContext,
-  link: PublicLink,
-  passId: string,
-  mail: boolean,
-): Promise<void> {
-  ctx.log.info('join.duplicate', {
-    code: 'JOIN_DUPLICATE',
-    linkId: link.id,
-    orgId: link.orgId,
-    mode: link.mode,
-  });
-  if (mail) await queueResend(ctx, passId, link.id);
-  else refuse(ctx, link, 'JOIN_EMAIL_CAPPED');
-}
-
-/** The grant's own refusals, as the design maps them (refusals that are the caller's own bug stay errors). */
-const CLOSED_CODES = new Set([
-  'JOIN_NOT_READY',
-  'TEMPLATE_RELEASE_REQUIRED',
-  'TEMPLATE_RELEASE_CONFLICT',
-  'TEMPLATE_NOT_FOUND',
-  'ORG_ACCESS_CHANGED',
-  'ORG_NOT_FOUND',
-  'CREATE_STALE',
-]);
 
 /**
  * POST /j/:token after the request-level checks (rate limit, origin, body). The order is the design's:
@@ -251,15 +173,8 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
     refuse(ctx, link, 'JOIN_PLATFORM_CAP', 'error');
     return { kind: 'refused', reason: 'closed', link };
   }
-  // One mail slot per request, spent here whether the address gets a re-sent card or a new one.
+  // One mail slot per request, spent whether the address already has a card or not.
   const mail = email !== undefined ? await mailWithinBudget(ctx, email) : false;
-  if (email !== undefined) {
-    const existing = await activeCardFor(env.DB, link, email);
-    if (existing) {
-      await resendDuplicate(ctx, link, existing, mail);
-      return { kind: 'check_email', link, email };
-    }
-  }
   // Both caps are read before the card is built; the grant's checks stay the exact fence.
   if (!(await withinCaps(ctx, link, limits.orgDailyCap))) {
     refuse(ctx, link, 'JOIN_LIMIT');
@@ -272,6 +187,20 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
     if (error instanceof PassBuildError && error.code === 'INVALID_INPUT')
       return { kind: 'form', link, askName, error: JOIN_NAME_MESSAGE, values: form.raw };
     throw error;
+  }
+  if (email !== undefined) {
+    // Known and new addresses get one answer; the card or the re-sent mail follows by email only.
+    const keys = { ipKey, deviceKey: await deviceKeyOf(env, ctx.ids.token(32)), fieldsHash };
+    ctx.waitUntil(
+      issueForEmail(ctx, link, open, input, {
+        token: req.token,
+        email,
+        mail,
+        orgDailyCap: limits.orgDailyCap,
+        keys,
+      }),
+    );
+    return { kind: 'check_email', link, email };
   }
   const device = req.device ?? ctx.ids.token(32);
   try {
@@ -286,43 +215,5 @@ export async function submitJoin(ctx: ServiceContext, req: SubmitRequest): Promi
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
     return afterRefusal(ctx, link, req.token, email, mail, error);
-  }
-}
-
-/** A refusal of the create batch: the grant's reason says what the visitor sees. */
-async function afterRefusal(
-  ctx: ServiceContext,
-  link: PublicLink,
-  token: string,
-  email: string | undefined,
-  mail: boolean,
-  error: AppError,
-): Promise<JoinOutcome> {
-  switch (error.code) {
-    case 'JOIN_LINK_CLOSED':
-      // Switched off since the lookup: closed. Rotated or deleted: the token no longer finds a link.
-      refuse(ctx, link, 'JOIN_LINK_CLOSED');
-      return {
-        kind: 'refused',
-        reason: (await lookupLink(ctx, token)) ? 'closed' : 'expired',
-        link,
-      };
-    case 'JOIN_LIMIT':
-      refuse(ctx, link, 'JOIN_LIMIT');
-      return { kind: 'refused', reason: 'daily_limit', link };
-    case 'JOIN_DUPLICATE': {
-      // An equal address committed first: the same answer as the duplicate check.
-      const existing = email ? await activeCardFor(ctx.env.DB, link, email) : null;
-      if (email && existing) {
-        await resendDuplicate(ctx, link, existing, mail);
-        return { kind: 'check_email', link, email };
-      }
-      refuse(ctx, link, 'JOIN_LINK_CLOSED');
-      return { kind: 'refused', reason: 'closed', link };
-    }
-    default:
-      if (!CLOSED_CODES.has(error.code)) throw error;
-      refuse(ctx, link, 'JOIN_NOT_READY', 'error');
-      return { kind: 'refused', reason: 'closed', link };
   }
 }

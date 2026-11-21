@@ -12,8 +12,10 @@ const op = (key: string, anchor: string) => {
   if (!found) throw new Error(`${key}.${anchor} is missing`);
   return found;
 };
-const code = (key: string, anchor: string, lang: string) =>
-  samplesFor(op(key, anchor), site.baseUrl).find((s) => s.lang === lang)?.code ?? '';
+const SDKS = { typescript: true, python: true, go: true };
+const PLAIN = { typescript: false, python: false, go: false };
+const code = (key: string, anchor: string, lang: string, sdk = SDKS) =>
+  samplesFor(op(key, anchor), site.baseUrl, sdk).find((s) => s.lang === lang)?.code ?? '';
 
 describe('snippets', () => {
   it('writes TypeScript through the SDK, with ids first and the body after', () => {
@@ -23,18 +25,34 @@ describe('snippets', () => {
     expect(ts).toContain('process.env.PASSBOOK_KEY');
   });
 
+  it('writes plain HTTP while an SDK is unpublished, and never names a package', () => {
+    const update = (lang: string) => code('passes', 'update', lang, PLAIN);
+    expect(update('ts')).toContain(`fetch('${site.baseUrl}/api/v1/passes/${EXAMPLE_IDS.passId}'`);
+    expect(update('py')).toContain('import requests');
+    expect(update('go')).toContain('net/http');
+    for (const lang of ['ts', 'py', 'go'])
+      expect(update(lang), lang).not.toMatch(/@passbook\/sdk|from passbook|vladzaharia/);
+  });
+
+  it('switches each language on its own flag', () => {
+    const mixed = { typescript: true, python: false, go: false };
+    expect(code('passes', 'update', 'ts', mixed)).toContain('@passbook/sdk');
+    expect(code('passes', 'update', 'py', mixed)).toContain('requests');
+  });
+
   it('walks every page of a list and sends the cursor and page size as the API takes them', () => {
     expect(code('passes', 'list', 'ts')).toContain('for await (const item of pb.passes.list(');
     expect(code('passes', 'list', 'curl')).toContain('/api/v1/passes?limit=25');
   });
 
   it('never carries a key, personalized or not', () => {
-    for (const page of site.pages)
-      for (const o of page.ops)
-        for (const s of samplesFor(o, site.baseUrl)) {
-          expect(s.code, `${o.operationId} ${s.lang}`).not.toMatch(/\b(pb|wlt)_/);
-          expect(s.code, `${o.operationId} ${s.lang}`).toContain('PASSBOOK_KEY');
-        }
+    for (const flags of [SDKS, PLAIN])
+      for (const page of site.pages)
+        for (const o of page.ops)
+          for (const s of samplesFor(o, site.baseUrl, flags)) {
+            expect(s.code, `${o.operationId} ${s.lang}`).not.toMatch(/\b(pb|wlt)_/);
+            expect(s.code, `${o.operationId} ${s.lang}`).toContain('PASSBOOK_KEY');
+          }
   });
 
   it('swaps the example ids for the reader and refuses a key as a value', () => {

@@ -2935,6 +2935,7 @@ type Org struct {
 	Name              string      `json:"name"`
 	Status            string      `json:"status"`
 	Personal          *bool       `json:"personal,omitempty"`
+	Kind              *string     `json:"kind,omitempty"`
 	DefaultIdentityID *string     `json:"defaultIdentityId"`
 	Branding          OrgBranding `json:"branding"`
 	CreatedAt         int64       `json:"createdAt"`
@@ -2985,6 +2986,7 @@ type OrgSummary struct {
 	Name              string           `json:"name"`
 	Status            string           `json:"status"`
 	Personal          *bool            `json:"personal,omitempty"`
+	Kind              *string          `json:"kind,omitempty"`
 	DefaultIdentityID *string          `json:"defaultIdentityId"`
 	Branding          OrgBranding      `json:"branding"`
 	CreatedAt         int64            `json:"createdAt"`
@@ -3254,12 +3256,46 @@ type PassImportsCheckResult struct {
 	CommittedAt       *int64                               `json:"committedAt"`
 	FinishedAt        *int64                               `json:"finishedAt"`
 	ExpiresAt         int64                                `json:"expiresAt"`
+	Mapping           *PassImportsCheckResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                               `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsCheckResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsCheckResultMapping struct {
+	Fields  []PassImportsCheckResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsCheckResultMappingUnusedItem `json:"unused"`
+	Columns int64                                     `json:"columns"`
+	Used    int64                                     `json:"used"`
+	Missing []string                                  `json:"missing"`
+}
+
+type PassImportsCheckResultMappingFieldsItem struct {
+	Role       string                                              `json:"role"`
+	Target     string                                              `json:"target"`
+	Label      string                                              `json:"label"`
+	Required   bool                                                `json:"required"`
+	From       []string                                            `json:"from"`
+	Confidence *string                                             `json:"confidence"`
+	MatchBy    bool                                                `json:"matchBy"`
+	Entry      map[string]any                                      `json:"entry"`
+	Values     []PassImportsCheckResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                      `json:"date"`
+}
+
+type PassImportsCheckResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsCheckResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsCheckResultPreviewsItem struct {
@@ -3318,12 +3354,46 @@ type PassImportsCommitResult struct {
 	CommittedAt       *int64                                `json:"committedAt"`
 	FinishedAt        *int64                                `json:"finishedAt"`
 	ExpiresAt         int64                                 `json:"expiresAt"`
+	Mapping           *PassImportsCommitResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsCommitResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsCommitResultMapping struct {
+	Fields  []PassImportsCommitResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsCommitResultMappingUnusedItem `json:"unused"`
+	Columns int64                                      `json:"columns"`
+	Used    int64                                      `json:"used"`
+	Missing []string                                   `json:"missing"`
+}
+
+type PassImportsCommitResultMappingFieldsItem struct {
+	Role       string                                               `json:"role"`
+	Target     string                                               `json:"target"`
+	Label      string                                               `json:"label"`
+	Required   bool                                                 `json:"required"`
+	From       []string                                             `json:"from"`
+	Confidence *string                                              `json:"confidence"`
+	MatchBy    bool                                                 `json:"matchBy"`
+	Entry      map[string]any                                       `json:"entry"`
+	Values     []PassImportsCommitResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                       `json:"date"`
+}
+
+type PassImportsCommitResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsCommitResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsCommitResultPreviewsItem struct {
@@ -3413,12 +3483,46 @@ type PassImportsCreateResult struct {
 	CommittedAt       *int64                                `json:"committedAt"`
 	FinishedAt        *int64                                `json:"finishedAt"`
 	ExpiresAt         int64                                 `json:"expiresAt"`
+	Mapping           *PassImportsCreateResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsCreateResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsCreateResultMapping struct {
+	Fields  []PassImportsCreateResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsCreateResultMappingUnusedItem `json:"unused"`
+	Columns int64                                      `json:"columns"`
+	Used    int64                                      `json:"used"`
+	Missing []string                                   `json:"missing"`
+}
+
+type PassImportsCreateResultMappingFieldsItem struct {
+	Role       string                                               `json:"role"`
+	Target     string                                               `json:"target"`
+	Label      string                                               `json:"label"`
+	Required   bool                                                 `json:"required"`
+	From       []string                                             `json:"from"`
+	Confidence *string                                              `json:"confidence"`
+	MatchBy    bool                                                 `json:"matchBy"`
+	Entry      map[string]any                                       `json:"entry"`
+	Values     []PassImportsCreateResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                       `json:"date"`
+}
+
+type PassImportsCreateResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsCreateResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsCreateResultPreviewsItem struct {
@@ -3474,12 +3578,46 @@ type PassImportsListItem struct {
 	CommittedAt       *int64                            `json:"committedAt"`
 	FinishedAt        *int64                            `json:"finishedAt"`
 	ExpiresAt         int64                             `json:"expiresAt"`
+	Mapping           *PassImportsListItemMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                            `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsListItemColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsListItemMapping struct {
+	Fields  []PassImportsListItemMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsListItemMappingUnusedItem `json:"unused"`
+	Columns int64                                  `json:"columns"`
+	Used    int64                                  `json:"used"`
+	Missing []string                               `json:"missing"`
+}
+
+type PassImportsListItemMappingFieldsItem struct {
+	Role       string                                           `json:"role"`
+	Target     string                                           `json:"target"`
+	Label      string                                           `json:"label"`
+	Required   bool                                             `json:"required"`
+	From       []string                                         `json:"from"`
+	Confidence *string                                          `json:"confidence"`
+	MatchBy    bool                                             `json:"matchBy"`
+	Entry      map[string]any                                   `json:"entry"`
+	Values     []PassImportsListItemMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                   `json:"date"`
+}
+
+type PassImportsListItemMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsListItemMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsListItemPreviewsItem struct {
@@ -3540,12 +3678,46 @@ type PassImportsRetrieveResult struct {
 	CommittedAt       *int64                                  `json:"committedAt"`
 	FinishedAt        *int64                                  `json:"finishedAt"`
 	ExpiresAt         int64                                   `json:"expiresAt"`
+	Mapping           *PassImportsRetrieveResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                                  `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsRetrieveResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsRetrieveResultMapping struct {
+	Fields  []PassImportsRetrieveResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsRetrieveResultMappingUnusedItem `json:"unused"`
+	Columns int64                                        `json:"columns"`
+	Used    int64                                        `json:"used"`
+	Missing []string                                     `json:"missing"`
+}
+
+type PassImportsRetrieveResultMappingFieldsItem struct {
+	Role       string                                                 `json:"role"`
+	Target     string                                                 `json:"target"`
+	Label      string                                                 `json:"label"`
+	Required   bool                                                   `json:"required"`
+	From       []string                                               `json:"from"`
+	Confidence *string                                                `json:"confidence"`
+	MatchBy    bool                                                   `json:"matchBy"`
+	Entry      map[string]any                                         `json:"entry"`
+	Values     []PassImportsRetrieveResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                         `json:"date"`
+}
+
+type PassImportsRetrieveResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsRetrieveResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsRetrieveResultPreviewsItem struct {
@@ -3574,15 +3746,24 @@ type PassImportsRetrieveResultSource struct {
 }
 
 type PassImportsRowsListItem struct {
-	Row        int64   `json:"row"`
-	Action     string  `json:"action"`
-	State      string  `json:"state"`
-	Result     *string `json:"result"`
-	PassID     *string `json:"passId"`
-	ExternalID *string `json:"externalId"`
-	Code       *string `json:"code"`
-	Message    *string `json:"message"`
-	Emailed    bool    `json:"emailed"`
+	Row        int64                                `json:"row"`
+	Action     string                               `json:"action"`
+	State      string                               `json:"state"`
+	Result     *string                              `json:"result"`
+	PassID     *string                              `json:"passId"`
+	ExternalID *string                              `json:"externalId"`
+	Code       *string                              `json:"code"`
+	Message    *string                              `json:"message"`
+	Emailed    bool                                 `json:"emailed"`
+	Changes    []PassImportsRowsListItemChangesItem `json:"changes,omitempty"`
+	WouldBe    *string                              `json:"wouldBe,omitempty"`
+}
+
+type PassImportsRowsListItemChangesItem struct {
+	Key   string  `json:"key"`
+	Label string  `json:"label"`
+	From  *string `json:"from"`
+	To    *string `json:"to"`
 }
 
 type PassImportsRowsListQuery struct {
@@ -5292,6 +5473,280 @@ type ScanSessionTemplatesItemActionsItem struct {
 	Kind  string `json:"kind"`
 }
 
+type ScanSetupAnswer = any
+
+type ScanSetupAnswer1 struct {
+	Replayed        bool                           `json:"replayed"`
+	Mode            string                         `json:"mode"`
+	Sessions        []ScanSetupAnswer1SessionsItem `json:"sessions"`
+	PairingReissued *bool                          `json:"pairingReissued,omitempty"`
+	Zones           []ScanSetupAnswer1ZonesItem    `json:"zones"`
+	Events          []ScanSetupAnswer1EventsItem   `json:"events"`
+	Staff           []ScanSetupAnswer1StaffItem    `json:"staff"`
+	Checks          []ScanSetupAnswer1ChecksItem   `json:"checks"`
+}
+
+type ScanSetupAnswer1ChecksItem struct {
+	Code    string                             `json:"code"`
+	Level   string                             `json:"level"`
+	Message string                             `json:"message"`
+	Params  map[string]string                  `json:"params,omitempty"`
+	Door    *string                            `json:"door,omitempty"`
+	Subject *ScanSetupAnswer1ChecksItemSubject `json:"subject,omitempty"`
+	Fix     any                                `json:"fix,omitempty"`
+}
+
+type ScanSetupAnswer1ChecksItemFix1 struct {
+	Kind      string `json:"kind"`
+	Device    string `json:"device"`
+	Direction string `json:"direction"`
+}
+
+type ScanSetupAnswer1ChecksItemFix2 struct {
+	Kind      string `json:"kind"`
+	Session   string `json:"session"`
+	Direction string `json:"direction"`
+}
+
+type ScanSetupAnswer1ChecksItemFix3 struct {
+	Kind string `json:"kind"`
+	Role string `json:"role"`
+}
+
+type ScanSetupAnswer1ChecksItemFix4 struct {
+	Kind    string `json:"kind"`
+	Session string `json:"session"`
+}
+
+type ScanSetupAnswer1ChecksItemFix5 struct {
+	Kind    string `json:"kind"`
+	Session string `json:"session"`
+}
+
+type ScanSetupAnswer1ChecksItemFix6 struct {
+	Kind       string `json:"kind"`
+	TemplateID string `json:"templateId"`
+}
+
+type ScanSetupAnswer1ChecksItemSubject struct {
+	Kind string `json:"kind"`
+	Ref  string `json:"ref"`
+}
+
+type ScanSetupAnswer1EventsItem struct {
+	ID      string  `json:"id"`
+	Ref     *string `json:"ref"`
+	Name    string  `json:"name"`
+	Created bool    `json:"created"`
+}
+
+type ScanSetupAnswer1SessionsItem struct {
+	ID      string                                    `json:"id"`
+	Ref     string                                    `json:"ref"`
+	Name    string                                    `json:"name"`
+	Devices []ScanSetupAnswer1SessionsItemDevicesItem `json:"devices"`
+}
+
+type ScanSetupAnswer1SessionsItemDevicesItem struct {
+	ID      string         `json:"id"`
+	Name    string         `json:"name"`
+	Pairing map[string]any `json:"pairing"`
+}
+
+type ScanSetupAnswer1StaffItem struct {
+	ID   string  `json:"id"`
+	Name string  `json:"name"`
+	Role string  `json:"role"`
+	PIN  *string `json:"pin"`
+}
+
+type ScanSetupAnswer1ZonesItem struct {
+	ID      string  `json:"id"`
+	Ref     *string `json:"ref"`
+	Name    string  `json:"name"`
+	Created bool    `json:"created"`
+}
+
+type ScanSetupAnswer2 struct {
+	Mode     string                         `json:"mode"`
+	TimeZone string                         `json:"timeZone"`
+	Preset   *string                        `json:"preset"`
+	Zones    []ScanSetupAnswer2ZonesItem    `json:"zones"`
+	Events   []ScanSetupAnswer2EventsItem   `json:"events"`
+	Staff    []ScanSetupAnswer2StaffItem    `json:"staff"`
+	Sessions []ScanSetupAnswer2SessionsItem `json:"sessions"`
+	Checks   []ScanSetupAnswer2ChecksItem   `json:"checks"`
+}
+
+type ScanSetupAnswer2ChecksItem struct {
+	Code    string                             `json:"code"`
+	Level   string                             `json:"level"`
+	Message string                             `json:"message"`
+	Params  map[string]string                  `json:"params,omitempty"`
+	Door    *string                            `json:"door,omitempty"`
+	Subject *ScanSetupAnswer2ChecksItemSubject `json:"subject,omitempty"`
+	Fix     any                                `json:"fix,omitempty"`
+}
+
+type ScanSetupAnswer2ChecksItemFix1 struct {
+	Kind      string `json:"kind"`
+	Device    string `json:"device"`
+	Direction string `json:"direction"`
+}
+
+type ScanSetupAnswer2ChecksItemFix2 struct {
+	Kind      string `json:"kind"`
+	Session   string `json:"session"`
+	Direction string `json:"direction"`
+}
+
+type ScanSetupAnswer2ChecksItemFix3 struct {
+	Kind string `json:"kind"`
+	Role string `json:"role"`
+}
+
+type ScanSetupAnswer2ChecksItemFix4 struct {
+	Kind    string `json:"kind"`
+	Session string `json:"session"`
+}
+
+type ScanSetupAnswer2ChecksItemFix5 struct {
+	Kind    string `json:"kind"`
+	Session string `json:"session"`
+}
+
+type ScanSetupAnswer2ChecksItemFix6 struct {
+	Kind       string `json:"kind"`
+	TemplateID string `json:"templateId"`
+}
+
+type ScanSetupAnswer2ChecksItemSubject struct {
+	Kind string `json:"kind"`
+	Ref  string `json:"ref"`
+}
+
+type ScanSetupAnswer2EventsItem struct {
+	Ref         string         `json:"ref"`
+	Name        string         `json:"name"`
+	TemplateIds []string       `json:"templateIds"`
+	Match       map[string]any `json:"match"`
+	OpensAt     int64          `json:"opensAt"`
+	ClosesAt    int64          `json:"closesAt"`
+	TimeZone    string         `json:"timeZone"`
+	Capacity    *int64         `json:"capacity"`
+	Reentry     bool           `json:"reentry"`
+}
+
+type ScanSetupAnswer2SessionsItem struct {
+	Ref      string                                    `json:"ref"`
+	Name     string                                    `json:"name"`
+	TimeZone string                                    `json:"timeZone"`
+	Accepts  map[string]any                            `json:"accepts"`
+	Zones    []any                                     `json:"zones"`
+	Hours    map[string]any                            `json:"hours"`
+	Settings ScanSetupAnswer2SessionsItemSettings      `json:"settings"`
+	Devices  []ScanSetupAnswer2SessionsItemDevicesItem `json:"devices"`
+}
+
+type ScanSetupAnswer2SessionsItemDevicesItem struct {
+	Name      string                                           `json:"name"`
+	Surface   string                                           `json:"surface"`
+	Overrides ScanSetupAnswer2SessionsItemDevicesItemOverrides `json:"overrides"`
+	Ref       string                                           `json:"ref"`
+	Role      string                                           `json:"role"`
+}
+
+type ScanSetupAnswer2SessionsItemDevicesItemOverrides struct {
+	Flow      *string `json:"flow,omitempty"`
+	Reader    *string `json:"reader,omitempty"`
+	Direction *string `json:"direction,omitempty"`
+	Lookup    *bool   `json:"lookup,omitempty"`
+	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+}
+
+type ScanSetupAnswer2SessionsItemSettings struct {
+	CheckIn            *ScanSetupAnswer2SessionsItemSettingsCheckIn  `json:"checkIn,omitempty"`
+	Direction          *string                                       `json:"direction,omitempty"`
+	ShowPhoto          *bool                                         `json:"showPhoto,omitempty"`
+	AcceptAllTemplates *bool                                         `json:"acceptAllTemplates,omitempty"`
+	Flow               *string                                       `json:"flow,omitempty"`
+	DefaultActionID    *string                                       `json:"defaultActionId,omitempty"`
+	RoleWithoutSignIn  *string                                       `json:"roleWithoutSignIn,omitempty"`
+	StaffSignIn        *bool                                         `json:"staffSignIn,omitempty"`
+	LetInAgain         *string                                       `json:"letInAgain,omitempty"`
+	Reader             *string                                       `json:"reader,omitempty"`
+	Lookup             *bool                                         `json:"lookup,omitempty"`
+	Offline            *bool                                         `json:"offline,omitempty"`
+	WhenOffline        *string                                       `json:"whenOffline,omitempty"`
+	DailyAmount        *int64                                        `json:"dailyAmount,omitempty"`
+	DeskActions        *bool                                         `json:"deskActions,omitempty"`
+	HardLimit          *bool                                         `json:"hardLimit,omitempty"`
+	Approvals          *string                                       `json:"approvals,omitempty"`
+	Tags               *ScanSetupAnswer2SessionsItemSettingsTags     `json:"tags,omitempty"`
+	Customer           *ScanSetupAnswer2SessionsItemSettingsCustomer `json:"customer,omitempty"`
+}
+
+type ScanSetupAnswer2SessionsItemSettingsCheckIn struct {
+	Mode            *string `json:"mode,omitempty"`
+	EventID         *string `json:"eventId,omitempty"`
+	ValidFrom       *int64  `json:"validFrom,omitempty"`
+	ValidUntil      *int64  `json:"validUntil,omitempty"`
+	DurationMinutes *int64  `json:"durationMinutes,omitempty"`
+	DurationFrom    *string `json:"durationFrom,omitempty"`
+	Days            *int64  `json:"days,omitempty"`
+}
+
+type ScanSetupAnswer2SessionsItemSettingsCustomer struct {
+	Welcome     *string `json:"welcome,omitempty"`
+	RefusedLine *string `json:"refusedLine,omitempty"`
+	Greet       *bool   `json:"greet,omitempty"`
+	ShowReady   *bool   `json:"showReady,omitempty"`
+	ShowDraft   *bool   `json:"showDraft,omitempty"`
+}
+
+type ScanSetupAnswer2SessionsItemSettingsTags struct {
+	Assign       *string  `json:"assign,omitempty"`
+	AssignAll    *string  `json:"assignAll,omitempty"`
+	Level        *string  `json:"level,omitempty"`
+	Types        []string `json:"types,omitempty"`
+	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
+}
+
+type ScanSetupAnswer2SessionsItemZonesItem1 struct {
+	Ref string `json:"ref"`
+}
+
+type ScanSetupAnswer2SessionsItemZonesItem2 struct {
+	ID string `json:"id"`
+}
+
+type ScanSetupAnswer2StaffItem struct {
+	Ref  string `json:"ref"`
+	Name string `json:"name"`
+	Role string `json:"role"`
+}
+
+type ScanSetupAnswer2ZonesItem struct {
+	Occupancy      string  `json:"occupancy"`
+	Capacity       *int64  `json:"capacity"`
+	MaxStayMinutes *int64  `json:"maxStayMinutes"`
+	HardLimit      *bool   `json:"hardLimit,omitempty"`
+	ClearAt        *string `json:"clearAt"`
+	Ref            string  `json:"ref"`
+	Key            string  `json:"key"`
+	Name           string  `json:"name"`
+	Parent         any     `json:"parent"`
+	TimeZone       *string `json:"timeZone"`
+}
+
+type ScanSetupAnswer2ZonesItemParent1 struct {
+	Ref string `json:"ref"`
+}
+
+type ScanSetupAnswer2ZonesItemParent2 struct {
+	ID string `json:"id"`
+}
+
 type ScanSetupsCreateParams struct {
 	OrgID       string                          `json:"orgId"`
 	Name        string                          `json:"name"`
@@ -5349,6 +5804,90 @@ type ScanSetupsCreateParamsSettingsTags struct {
 	Level        *string  `json:"level,omitempty"`
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
+}
+
+type ScanSetupsListItem struct {
+	ID           string          `json:"id"`
+	OrgID        string          `json:"orgId"`
+	Mode         string          `json:"mode"`
+	Kind         string          `json:"kind"`
+	DeviceRole   string          `json:"deviceRole"`
+	Name         string          `json:"name"`
+	Accepts      any             `json:"accepts"`
+	Settings     ScannerSettings `json:"settings"`
+	TimeZone     string          `json:"timeZone"`
+	Status       string          `json:"status"`
+	Online       bool            `json:"online"`
+	PairedAt     *int64          `json:"pairedAt"`
+	PairedLabel  *string         `json:"pairedLabel"`
+	LastSeenAt   *int64          `json:"lastSeenAt"`
+	ExpiresAt    *int64          `json:"expiresAt"`
+	Staff        map[string]any  `json:"staff"`
+	Today        int64           `json:"today"`
+	CreatedAt    int64           `json:"createdAt"`
+	SessionID    *string         `json:"sessionId,omitempty"`
+	AdminSession *bool           `json:"adminSession,omitempty"`
+	AdminUser    map[string]any  `json:"adminUser"`
+	Watch        map[string]any  `json:"watch"`
+}
+
+type ScanSetupsListItemAccepts1 struct {
+	TemplateIds []string `json:"templateIds"`
+	EventIds    []string `json:"eventIds"`
+}
+
+type ScanSetupsListItemAccepts2 struct {
+	EventID string `json:"eventId"`
+}
+
+type ScanSetupsListItemAccepts3 struct {
+	TemplateIds []string `json:"templateIds"`
+}
+
+type ScanSetupsListQuery struct {
+	Cursor  *string `json:"cursor,omitempty"`
+	Limit   *int64  `json:"limit,omitempty"`
+	Status  *string `json:"status,omitempty"`
+	EventID *string `json:"eventId,omitempty"`
+	Q       *string `json:"q,omitempty"`
+}
+
+type ScanSetupsRetrieveResult struct {
+	ID           string          `json:"id"`
+	OrgID        string          `json:"orgId"`
+	Mode         string          `json:"mode"`
+	Kind         string          `json:"kind"`
+	DeviceRole   string          `json:"deviceRole"`
+	Name         string          `json:"name"`
+	Accepts      any             `json:"accepts"`
+	Settings     ScannerSettings `json:"settings"`
+	TimeZone     string          `json:"timeZone"`
+	Status       string          `json:"status"`
+	Online       bool            `json:"online"`
+	PairedAt     *int64          `json:"pairedAt"`
+	PairedLabel  *string         `json:"pairedLabel"`
+	LastSeenAt   *int64          `json:"lastSeenAt"`
+	ExpiresAt    *int64          `json:"expiresAt"`
+	Staff        map[string]any  `json:"staff"`
+	Today        int64           `json:"today"`
+	CreatedAt    int64           `json:"createdAt"`
+	SessionID    *string         `json:"sessionId,omitempty"`
+	AdminSession *bool           `json:"adminSession,omitempty"`
+	AdminUser    map[string]any  `json:"adminUser"`
+	Watch        map[string]any  `json:"watch"`
+}
+
+type ScanSetupsRetrieveResultAccepts1 struct {
+	TemplateIds []string `json:"templateIds"`
+	EventIds    []string `json:"eventIds"`
+}
+
+type ScanSetupsRetrieveResultAccepts2 struct {
+	EventID string `json:"eventId"`
+}
+
+type ScanSetupsRetrieveResultAccepts3 struct {
+	TemplateIds []string `json:"templateIds"`
 }
 
 type ScanSetupsUpdateParams struct {
@@ -6024,7 +6563,7 @@ type ScanningSessionsCreateParamsSettingsTags struct {
 }
 
 type ScanningSessionsDevicesCreateParams struct {
-	Name      string                                        `json:"name"`
+	Name      *string                                       `json:"name,omitempty"`
 	Surface   *string                                       `json:"surface,omitempty"`
 	Overrides *ScanningSessionsDevicesCreateParamsOverrides `json:"overrides,omitempty"`
 }
@@ -6070,15 +6609,169 @@ type ScanningSessionsOverrideHoursParams3 struct {
 	Revision *int64 `json:"revision,omitempty"`
 }
 
+type ScanningSessionsSetupBody = ScanningSessionsSetupParams
+
+type ScanningSessionsSetupParams struct {
+	OrgID    string                                 `json:"orgId"`
+	Preset   *string                                `json:"preset,omitempty"`
+	TimeZone *string                                `json:"timeZone,omitempty"`
+	Places   []any                                  `json:"places,omitempty"`
+	Events   []any                                  `json:"events,omitempty"`
+	Staff    []ScanningSessionsSetupParamsStaffItem `json:"staff,omitempty"`
+	Doors    []ScanningSessionsSetupParamsDoorsItem `json:"doors"`
+}
+
+type ScanningSessionsSetupParamsDoorsItem struct {
+	Name     string                                            `json:"name"`
+	Place    *string                                           `json:"place,omitempty"`
+	Admits   any                                               `json:"admits"`
+	Hours    any                                               `json:"hours,omitempty"`
+	Scanners any                                               `json:"scanners,omitempty"`
+	Devices  []ScanningSessionsSetupParamsDoorsItemDevicesItem `json:"devices,omitempty"`
+	More     *ScanningSessionsSetupParamsDoorsItemMore         `json:"more,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemAdmits1 struct {
+	Any bool `json:"any"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemAdmits2 struct {
+	TemplateIds []string `json:"templateIds,omitempty"`
+	Events      []string `json:"events,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemDevicesItem struct {
+	Name      *string `json:"name,omitempty"`
+	Layout    *string `json:"layout,omitempty"`
+	Direction *string `json:"direction,omitempty"`
+	Reader    *string `json:"reader,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemHours2 struct {
+	Every  []string `json:"every,omitempty"`
+	Mon    []string `json:"mon,omitempty"`
+	Tue    []string `json:"tue,omitempty"`
+	Wed    []string `json:"wed,omitempty"`
+	Thu    []string `json:"thu,omitempty"`
+	Fri    []string `json:"fri,omitempty"`
+	Sat    []string `json:"sat,omitempty"`
+	Sun    []string `json:"sun,omitempty"`
+	Closed []string `json:"closed,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemMore struct {
+	CheckIn            *ScanningSessionsSetupParamsDoorsItemMoreCheckIn  `json:"checkIn,omitempty"`
+	Direction          *string                                           `json:"direction,omitempty"`
+	ShowPhoto          *bool                                             `json:"showPhoto,omitempty"`
+	AcceptAllTemplates *bool                                             `json:"acceptAllTemplates,omitempty"`
+	Flow               *string                                           `json:"flow,omitempty"`
+	DefaultActionID    *string                                           `json:"defaultActionId,omitempty"`
+	RoleWithoutSignIn  *string                                           `json:"roleWithoutSignIn,omitempty"`
+	StaffSignIn        *bool                                             `json:"staffSignIn,omitempty"`
+	LetInAgain         *string                                           `json:"letInAgain,omitempty"`
+	Reader             *string                                           `json:"reader,omitempty"`
+	Lookup             *bool                                             `json:"lookup,omitempty"`
+	Offline            *bool                                             `json:"offline,omitempty"`
+	WhenOffline        *string                                           `json:"whenOffline,omitempty"`
+	DailyAmount        *int64                                            `json:"dailyAmount,omitempty"`
+	DeskActions        *bool                                             `json:"deskActions,omitempty"`
+	HardLimit          *bool                                             `json:"hardLimit,omitempty"`
+	Approvals          *string                                           `json:"approvals,omitempty"`
+	Tags               *ScanningSessionsSetupParamsDoorsItemMoreTags     `json:"tags,omitempty"`
+	Customer           *ScanningSessionsSetupParamsDoorsItemMoreCustomer `json:"customer,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemMoreCheckIn struct {
+	Mode            *string `json:"mode,omitempty"`
+	EventID         *string `json:"eventId,omitempty"`
+	ValidFrom       *int64  `json:"validFrom,omitempty"`
+	ValidUntil      *int64  `json:"validUntil,omitempty"`
+	DurationMinutes *int64  `json:"durationMinutes,omitempty"`
+	DurationFrom    *string `json:"durationFrom,omitempty"`
+	Days            *int64  `json:"days,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemMoreCustomer struct {
+	Welcome     *string `json:"welcome,omitempty"`
+	RefusedLine *string `json:"refusedLine,omitempty"`
+	Greet       *bool   `json:"greet,omitempty"`
+	ShowReady   *bool   `json:"showReady,omitempty"`
+	ShowDraft   *bool   `json:"showDraft,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemMoreTags struct {
+	Assign       *string  `json:"assign,omitempty"`
+	AssignAll    *string  `json:"assignAll,omitempty"`
+	Level        *string  `json:"level,omitempty"`
+	Types        []string `json:"types,omitempty"`
+	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemScanners1 struct {
+	By string  `json:"by"`
+	As *string `json:"as,omitempty"`
+}
+
+type ScanningSessionsSetupParamsDoorsItemScanners2 struct {
+	By string `json:"by"`
+}
+
+type ScanningSessionsSetupParamsEventsItem1 struct {
+	EventID string `json:"eventId"`
+}
+
+type ScanningSessionsSetupParamsEventsItem2 struct {
+	FromTemplate string  `json:"fromTemplate"`
+	Ref          *string `json:"ref,omitempty"`
+}
+
+type ScanningSessionsSetupParamsEventsItem3 struct {
+	Ref         string   `json:"ref"`
+	Name        string   `json:"name"`
+	TemplateIds []string `json:"templateIds"`
+	OpensAt     int64    `json:"opensAt"`
+	ClosesAt    int64    `json:"closesAt"`
+	Max         *int64   `json:"max,omitempty"`
+	Reentry     *bool    `json:"reentry,omitempty"`
+}
+
+type ScanningSessionsSetupParamsPlacesItem1 struct {
+	ZoneID string `json:"zoneId"`
+}
+
+type ScanningSessionsSetupParamsPlacesItem2 struct {
+	Ref            string  `json:"ref"`
+	Name           string  `json:"name"`
+	Key            *string `json:"key,omitempty"`
+	Inside         *string `json:"inside,omitempty"`
+	Max            *int64  `json:"max,omitempty"`
+	Count          *bool   `json:"count,omitempty"`
+	TapOut         *bool   `json:"tapOut,omitempty"`
+	MaxStayMinutes *int64  `json:"maxStayMinutes,omitempty"`
+	ClearAt        *string `json:"clearAt,omitempty"`
+}
+
+type ScanningSessionsSetupParamsStaffItem struct {
+	Name string `json:"name"`
+	Role string `json:"role"`
+}
+
+type ScanningSessionsSetupQuery struct {
+	DryRun *string `json:"dryRun,omitempty"`
+}
+
+type ScanningSessionsSetupResult = ScanSetupAnswer
+
 type ScanningSessionsUpdateParams struct {
-	Name     *string                               `json:"name,omitempty"`
-	TimeZone *string                               `json:"timeZone,omitempty"`
-	Accepts  any                                   `json:"accepts,omitempty"`
-	Settings *ScanningSessionsUpdateParamsSettings `json:"settings,omitempty"`
-	ZoneIds  []string                              `json:"zoneIds,omitempty"`
-	Hours    map[string]any                        `json:"hours,omitempty"`
-	Status   *string                               `json:"status,omitempty"`
-	Revision *int64                                `json:"revision,omitempty"`
+	Name          *string                               `json:"name,omitempty"`
+	TimeZone      *string                               `json:"timeZone,omitempty"`
+	Accepts       any                                   `json:"accepts,omitempty"`
+	Settings      *ScanningSessionsUpdateParamsSettings `json:"settings,omitempty"`
+	ZoneIds       []string                              `json:"zoneIds,omitempty"`
+	Hours         map[string]any                        `json:"hours,omitempty"`
+	Status        *string                               `json:"status,omitempty"`
+	RemoveDevices *bool                                 `json:"removeDevices,omitempty"`
+	Revision      *int64                                `json:"revision,omitempty"`
 }
 
 type ScanningSessionsUpdateParamsAccepts1 struct {
@@ -6226,6 +6919,27 @@ type TemplateDetail struct {
 	PassesOnOlderVersions *int64                       `json:"passesOnOlderVersions,omitempty"`
 	PassesBlocked         *int64                       `json:"passesBlocked,omitempty"`
 	Restorable            *bool                        `json:"restorable,omitempty"`
+	Release               *TemplateDetailRelease       `json:"release,omitempty"`
+}
+
+type TemplateDetailRelease struct {
+	Live   map[string]any `json:"live"`
+	Test   map[string]any `json:"test"`
+	Draft  map[string]any `json:"draft"`
+	Review any            `json:"review"`
+	Alone  bool           `json:"alone"`
+	Next   *string        `json:"next"`
+}
+
+type TemplateDetailReleaseReview1 struct {
+	State string `json:"state"`
+}
+
+type TemplateDetailReleaseReview2 struct {
+	State   string  `json:"state"`
+	Version string  `json:"version"`
+	By      *string `json:"by"`
+	At      int64   `json:"at"`
 }
 
 type TemplateDetailVersionsItem struct {

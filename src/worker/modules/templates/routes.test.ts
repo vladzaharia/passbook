@@ -870,7 +870,7 @@ describe('read', () => {
     const back = passJson.coupon.backFields;
     // The message field stays so the first message changes a field instead of adding one.
     expect(back.filter((f) => f.value === '').map((f) => f.key)).toEqual(['message']);
-    expect(back.find((f) => f.key === 'pass-service')?.value).toBe(env.PUBLIC_BASE_URL);
+    expect(back.find((f) => f.key === 'pass-service')?.value).toBeUndefined();
   });
 });
 
@@ -1458,7 +1458,7 @@ describe('manifest', () => {
     const t = await seed(org.id, 'Bad Manifest');
     const bad = {
       ...manifest('Bad Manifest'),
-      inputs: { type: 'object', properties: { name: { type: 'string', pattern: '(a+)+$' } } },
+      inputs: { type: 'object', properties: { name: { type: 'string', pattern: '(a)\\1' } } },
     };
     const res = await call(`/${t.id}/manifest`, { method: 'PUT', ...json({ manifest: bad }) });
     expect(res.status).toBe(422);

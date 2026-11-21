@@ -16,6 +16,7 @@ export interface OrgRow {
   config_revision: number;
   /** The user this personal org belongs to; set at creation, never changed. */
   personal_user_id: string | null;
+  kind: 'standard' | 'developer';
 }
 
 export interface OrgCounts {
@@ -27,7 +28,7 @@ export interface OrgCounts {
 }
 
 const COLUMNS =
-  'id, slug, name, status, default_identity_id, branding, created_at, updated_at, config_revision, personal_user_id';
+  'id, slug, name, status, default_identity_id, branding, created_at, updated_at, config_revision, personal_user_id, kind';
 
 export function getOrgRow(db: D1Database, id: string): Promise<OrgRow | null> {
   return first<OrgRow>(db, `SELECT ${COLUMNS} FROM orgs WHERE id = ? AND status != 'deleted'`, [

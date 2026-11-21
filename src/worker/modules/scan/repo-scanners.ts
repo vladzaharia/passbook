@@ -195,7 +195,7 @@ export interface NewScanner {
   settings: string;
   timeZone: string;
   expiresAt: number | null;
-  createdBy: string;
+  createdBy: string | null;
   now: number;
   /** A pairing code issued with the row: its hash and expiry. */
   pair?: { hash: string; expiresAt: number };

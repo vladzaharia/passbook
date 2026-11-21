@@ -173,7 +173,10 @@ exec(compile(open(${JSON.stringify(file)}).read(), "snippet", "exec"))`;
   );
 });
 
-describe('the reference samples use the same literals', () => {
+describe.each([
+  ['the SDKs', true],
+  ['plain HTTP', false],
+])('the reference samples through %s use the same literals', (_name, published) => {
   const op: SampleOp = {
     method: 'post',
     path: '/passes',
@@ -186,7 +189,8 @@ describe('the reference samples use the same literals', () => {
     sample: { body: { note: GO_PAYLOAD, other: TS_PAYLOAD }, query: {}, headers: {} },
   };
   const base = "https://passbook.mobile/it's";
-  const samples = Object.fromEntries(samplesFor(op, base).map((x) => [x.lang, x.code]));
+  const sdk = { typescript: published, python: published, go: published };
+  const samples = Object.fromEntries(samplesFor(op, base, sdk).map((x) => [x.lang, x.code]));
 
   it('curl single-quotes the URL and body', () => {
     expect(samples.curl).toContain(`curl -X POST ${shQuote(`${base}/passes`)}`);
@@ -196,10 +200,16 @@ describe('the reference samples use the same literals', () => {
   });
   it('TypeScript, Python and Go put the body in literals, and parse', () => {
     // The SDK samples carry no URL: the portal's origin, which can hold a quote, never reaches them.
-    for (const lang of ['ts', 'py', 'go'] as const) expect(samples[lang]).not.toContain(base);
+    if (published)
+      for (const lang of ['ts', 'py', 'go'] as const) expect(samples[lang]).not.toContain(base);
     expect(samples.ts).toContain(`note: ${tsString(GO_PAYLOAD)}`);
     expect(samples.py).toContain(`"note": ${pyString(GO_PAYLOAD)}`);
     expect(samples.go).toContain(goRawString(jsonText({ note: GO_PAYLOAD, other: TS_PAYLOAD })));
+    if (!published) {
+      expect(samples.ts).toContain(`fetch(${tsString(`${base}/passes`)}`);
+      expect(samples.py).toContain(`requests.post(\n    ${pyString(`${base}/passes`)}`);
+      expect(samples.go).toContain(`http.NewRequest("POST", ${goString(`${base}/passes`)}`);
+    }
     const ts = join(dir, 'sample.mjs');
     writeFileSync(ts, samples.ts ?? '');
     execFileSync('node', ['--check', ts]);

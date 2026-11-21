@@ -2,7 +2,7 @@
    sessions leaving. The holder pass page's own sheet is holder-pass.css. Transform and opacity only;
    reduced motion keeps nothing moving. */
 /* My passes: the buddy (S, at="start") sits on the first tile's top edge, under the bundle badge;
-   the grid keeps 56 px clear above the tiles. It looks up at the bundle badge and down at a tile's
+   the grid keeps 68 px clear above the tiles. It looks up at the bundle badge and down at a tile's
    badge while one is pointed at or focused. */
 .wl-list-buddy {
   --wl-drop: 18px;

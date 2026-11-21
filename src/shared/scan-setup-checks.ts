@@ -36,6 +36,8 @@ export interface DoorFacts {
   /** The check-in type is Track in / out. */
   tracks: boolean;
   staffSignIn: boolean;
+  /** The offline list is chosen but the settings or zone rule it out: `settingsOfflineVerdict`'s message. */
+  offlineBlocked?: string | null;
   devices: {
     ref: string;
     name: string;
@@ -100,6 +102,14 @@ function doorChecks(door: DoorFacts, staff: SetupCheckFacts['staff']): ScanSetup
       params: { door: door.name },
       ...at,
       fix: { kind: 'track_in_out', session: door.ref },
+    });
+  if (door.offlineBlocked)
+    out.push({
+      code: 'OFFLINE_LIST_BLOCKED',
+      level: 'error',
+      message: 'offlineListBlocked',
+      params: { door: door.name, reason: door.offlineBlocked },
+      ...at,
     });
   const active = staff.filter((s) => s.active);
   const max = door.place?.max != null || door.events.some((e) => e.max !== null);

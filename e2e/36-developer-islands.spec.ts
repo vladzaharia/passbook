@@ -81,7 +81,7 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
 
   // D1: the webhook tester renders, with no Trusted Types error.
   await page.goto('/developers/webhooks');
-  await expect(page.getByRole('tab', { name: 'TypeScript' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Python' })).toBeVisible();
   await expect(
     page.locator('[data-island="webhook-tester"]').getByRole('button').first(),
   ).toBeVisible();

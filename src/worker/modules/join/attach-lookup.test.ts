@@ -34,14 +34,16 @@ function suite(label: string, lookup: boolean | 'default', body: (t: () => Publi
 async function join(t: PublicKit, email: string, mode: 'live' | 'test' = 'live'): Promise<Joiner> {
   const l = await t.link({ askEmail: true, mode });
   const res = await t.post(l, { email });
-  expect(res.status).toBe(303);
+  expect(res.status).toBe(200);
   const row = await first<{ id: string }>(
     t.kit.env.DB,
     'SELECT id FROM passes WHERE holder_email = ? ORDER BY id DESC LIMIT 1',
     [email],
   );
-  if (!row) throw new Error('no joined pass');
-  return { passId: row.id, link: res.headers.get('location') ?? '' };
+  const pass = row ? await getPass(t.kit.env.DB, row.id) : null;
+  if (!pass) throw new Error('no joined pass');
+  const token = await revealToken(t.kit.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
+  return { passId: pass.id, link: `/p/${token}` };
 }
 
 const tombstoned = async (

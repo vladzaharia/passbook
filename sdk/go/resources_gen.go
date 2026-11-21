@@ -1472,6 +1472,30 @@ func (r *RollCallsResource) RetrieveOpen(ctx context.Context, query *RollCallsRe
 	return &out, nil
 }
 
+type ScanSetupsResource struct {
+	c *core
+}
+
+func newScanSetupsResource(c *core) *ScanSetupsResource {
+	return &ScanSetupsResource{
+		c: c,
+	}
+}
+
+// List Managed scanner and screen setups `GET /api/v1/scan-setups`
+func (r *ScanSetupsResource) List(ctx context.Context, query *ScanSetupsListQuery, opts ...RequestOption) *Pager[ScanSetupsListItem] {
+	return newPager[ScanSetupsListItem](r.c, call{method: "GET", path: "/api/v1/scan-setups", query: queryValues(query)}, "cursor", opts)
+}
+
+// Retrieve Scanner setup and view settings `GET /api/v1/scan-setups/{id}`
+func (r *ScanSetupsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScanSetupsRetrieveResult, error) {
+	var out ScanSetupsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scan-setups/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type TerminalScansResource struct {
 	c *core
 }
@@ -1519,6 +1543,23 @@ func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBod
 		return nil, err
 	}
 	return &out, nil
+}
+
+type ScanningSessionsResource struct {
+	c *core
+}
+
+func newScanningSessionsResource(c *core) *ScanningSessionsResource {
+	return &ScanningSessionsResource{
+		c: c,
+	}
+}
+
+// Setup Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup`
+func (r *ScanningSessionsResource) Setup(ctx context.Context, body *ScanningSessionsSetupBody, query *ScanningSessionsSetupQuery, opts ...RequestOption) (ScanningSessionsSetupResult, error) {
+	var out ScanningSessionsSetupResult
+	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/setup", query: queryValues(query), body: body, idempotent: true}, &out, opts)
+	return out, err
 }
 
 type ScansResource struct {
@@ -2044,7 +2085,9 @@ type Resources struct {
 	Passes           *PassesResource
 	PrintJobs        *PrintJobsResource
 	RollCalls        *RollCallsResource
+	ScanSetups       *ScanSetupsResource
 	Terminal         *TerminalResource
+	ScanningSessions *ScanningSessionsResource
 	Scans            *ScansResource
 	Templates        *TemplatesResource
 	TemplateImports  *TemplateImportsResource
@@ -2072,7 +2115,9 @@ func newResources(c *core) Resources {
 		Passes:           newPassesResource(c),
 		PrintJobs:        newPrintJobsResource(c),
 		RollCalls:        newRollCallsResource(c),
+		ScanSetups:       newScanSetupsResource(c),
 		Terminal:         newTerminalResource(c),
+		ScanningSessions: newScanningSessionsResource(c),
 		Scans:            newScansResource(c),
 		Templates:        newTemplatesResource(c),
 		TemplateImports:  newTemplateImportsResource(c),

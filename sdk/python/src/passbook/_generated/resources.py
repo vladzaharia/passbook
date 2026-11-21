@@ -1369,6 +1369,32 @@ class RollCallsResource:
         return self._core.request("GET", "/api/v1/roll-calls", query={"sessionId": session_id}, result=m.RollCallsRetrieveOpenResult, **opts)
 
 
+class ScanSetupsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        status: _Literal["not_paired", "paired", "revoked"] | None = None,
+        event_id: str | None = None,
+        q: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanSetupsListItem]:
+        """Managed scanner and screen setups `GET /api/v1/scan-setups`"""
+        return self._core.paginate("GET", "/api/v1/scan-setups", query={"cursor": cursor, "limit": limit, "status": status, "eventId": event_id, "q": q}, result=m.ScanSetupsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanSetupsRetrieveResult:
+        """Scanner setup and view settings `GET /api/v1/scan-setups/{id}`"""
+        return self._core.request("GET", f"/api/v1/scan-setups/{_p(id)}", result=m.ScanSetupsRetrieveResult, **opts)
+
+
 class TerminalScansResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1403,6 +1429,21 @@ class TerminalResource:
     ) -> m.TerminalResolveResult:
         """Read a code `POST /api/v1/scan/resolve`"""
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
+
+
+class ScanningSessionsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def setup(
+        self,
+        body: m.ScanningSessionsSetupBody | _Dict[str, _Any],
+        *,
+        dry_run: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsSetupResult:
+        """Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup`"""
+        return self._core.request("POST", "/api/v1/scanning-sessions/setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.ScanningSessionsSetupResult, **opts)
 
 
 class ScansResource:
@@ -1957,7 +1998,9 @@ class Resources:
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)
         self.roll_calls = RollCallsResource(core)
+        self.scan_setups = ScanSetupsResource(core)
         self.terminal = TerminalResource(core)
+        self.scanning_sessions = ScanningSessionsResource(core)
         self.scans = ScansResource(core)
         self.templates = TemplatesResource(core)
         self.template_imports = TemplateImportsResource(core)

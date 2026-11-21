@@ -658,12 +658,12 @@ describe('statement corpus', () => {
       expect((await title(s.pass.id))?.t, kind).toBe(`corpus-${kind}`);
     }
     // Recorded in the design doc (WP0 spike results): tenant grants bind 19-23 values and stay under 1.8 KB.
-    // A key's live and scope text (retire_at, roles, a personal key's member) lifted the limit to 2.4 KB (0142);
+    // A key's live and scope text (retire_at, roles, a personal key's member) lifted the limit to 2.4 KB (0142); the sign-in strength and developer-org checks lifted it to 2.6 KB;
     // A child key's parent must be neither revoked nor past its retire time (WP6): one more bind and about 90 bytes;
     // the hard limits are 90 binds and 32 KB, asserted above.
     for (const n of Object.values(numbers) as { grant: { params: number; bytes: number } }[]) {
       expect(n.grant.params).toBeLessThanOrEqual(26);
-      expect(n.grant.bytes).toBeLessThan(2500);
+      expect(n.grant.bytes).toBeLessThan(2700);
     }
   });
 

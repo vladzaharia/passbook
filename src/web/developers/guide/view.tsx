@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { highlight, type Lang } from '../model/highlight.ts';
+import { exampleSamples } from '../model/samples.ts';
 import type { Example } from '../model/types.ts';
 import { Head } from '../pages/more.tsx';
 import { CodeRegion, SampleTabs } from '../ui/code.tsx';
@@ -40,17 +41,7 @@ export function Inline({ text }: { text: string }): ReactNode {
 }
 
 function Steps({ guide, example, k }: { guide: Guide; example: Example; k: string }) {
-  return (
-    <SampleTabs
-      id={`${guide.meta.id}-${k}`}
-      samples={[
-        ...(example.curl
-          ? [{ lang: 'curl' as const, label: 'curl', file: `${example.id}.sh`, code: example.curl }]
-          : []),
-        { lang: 'ts' as const, label: 'TypeScript', file: `${example.id}.ts`, code: example.ts },
-      ]}
-    />
-  );
+  return <SampleTabs id={`${guide.meta.id}-${k}`} samples={exampleSamples(example)} />;
 }
 
 function ConsoleLink({ href }: { href: string }) {

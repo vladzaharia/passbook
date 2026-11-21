@@ -162,6 +162,10 @@ async function presentationHtml(res: Response, secrets: string[]): Promise<strin
   if (html.includes('data-offline')) expect(html).toMatch(/<script nonce="[^"]+">/);
   const body = bodyOf(html);
   for (const secret of secrets) expect(body).not.toContain(secret);
+  // The pass title can be a holder's name: the tab, the link preview and the manifest stay neutral.
+  expect(html).toContain('<title>Barcode · ');
+  expect(html).toContain('<meta property="og:title" content="Barcode">');
+  expect(html).not.toContain('rel="manifest"');
   return html;
 }
 
@@ -647,7 +651,7 @@ describe('presentation barcode', () => {
     expect(source).toContain('caches.delete(name)');
   });
 
-  it('gives an Android phone the browser barcode and no Apple badge or QR', async () => {
+  it('gives an Android phone Save to this phone and no Apple badge or QR', async () => {
     const pass = await passWith({ json: primaryJson });
     const res = await h.call(`/p/${await linkToken(h.env, pass)}`, {
       headers: {
@@ -656,7 +660,7 @@ describe('presentation barcode', () => {
       },
     });
     const html = await res.text();
-    expect(html).toContain('Show barcode');
+    expect(html).toContain('Save to this phone');
     expect(html).toContain('For Apple Wallet, open this page on an iPhone.');
     expect(html).not.toContain('data-awb=');
     expect(html).not.toContain('wl-add-scan');

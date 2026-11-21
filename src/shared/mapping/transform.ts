@@ -11,7 +11,18 @@ export interface MappingIssue {
   message: string;
 }
 
-export const KINDS = ['enum', 'bool-status', 'date', 'constant', 'trim', 'upper', 'lower'] as const;
+export const KINDS = [
+  'enum',
+  'bool-status',
+  'date',
+  'constant',
+  'trim',
+  'upper',
+  'lower',
+  'join',
+] as const;
+/** Columns a `join` adds after `from`. */
+export const JOIN_MAX_WITH = 3;
 const FIELD = /^[A-Za-z_][A-Za-z0-9_]{0,63}$/;
 const RESERVED = new Set(['__proto__', 'constructor', 'prototype']);
 export const DATE_INPUTS = ['auto', 'iso', 'epoch-s', 'epoch-ms', 'dmy', 'mdy', 'ymd'] as const;
@@ -37,8 +48,31 @@ export function mappingIssues(
       issues.push({ path: `${path}.transform`, message: 'Unknown transform.' });
     }
     const o = entry.transform?.options ?? {};
-    if (kind === 'enum' && (typeof o.map !== 'object' || o.map === null || Array.isArray(o.map))) {
-      issues.push({ path: `${path}.transform`, message: 'enum needs options.map.' });
+    if (kind === 'enum' && !isRecord(o.map) && !isRecord(o.labels)) {
+      issues.push({
+        path: `${path}.transform`,
+        message: 'enum needs options.map or options.labels.',
+      });
+    }
+    if (kind === 'join') {
+      const extra = o.with;
+      if (
+        !Array.isArray(extra) ||
+        extra.length < 1 ||
+        extra.length > JOIN_MAX_WITH ||
+        !extra.every((p) => typeof p === 'string' && isPointer(p))
+      ) {
+        issues.push({ path: `${path}.transform`, message: 'join needs options.with pointers.' });
+      }
+      if (
+        o.separator !== undefined &&
+        (typeof o.separator !== 'string' || o.separator.length > 8)
+      ) {
+        issues.push({
+          path: `${path}.transform`,
+          message: 'join separator is text up to 8 characters.',
+        });
+      }
     }
     if (kind === 'constant' && !('value' in o)) {
       issues.push({ path: `${path}.transform`, message: 'constant needs options.value.' });
@@ -53,6 +87,37 @@ export function mappingIssues(
     }
   }
   return issues;
+}
+
+const isRecord = (v: Json | undefined): v is Record<string, Json> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** `map` first (exact, then ignoring case), then a key or label of `labels` ignoring case. */
+function enumValue(value: Json, o: Record<string, Json>): Json | undefined {
+  const key = String(value);
+  const fold = key.trim().toLowerCase();
+  const map = isRecord(o.map) ? o.map : {};
+  if (Object.hasOwn(map, key)) return map[key];
+  const near = Object.keys(map).find((k) => k.trim().toLowerCase() === fold);
+  if (near !== undefined) return map[near];
+  const labels = isRecord(o.labels) ? o.labels : {};
+  const hit = Object.entries(labels).find(
+    ([k, label]) => k.toLowerCase() === fold || String(label).trim().toLowerCase() === fold,
+  );
+  return hit ? hit[0] : o.default;
+}
+
+/** `from` and each `with` pointer, blanks left out, joined by `separator` (a space by default). */
+function joinValues(first: Json | undefined, o: Record<string, Json>, record: Json | undefined) {
+  const extra = Array.isArray(o.with) ? o.with : [];
+  const parts = [
+    first,
+    ...extra.map((p) => (typeof p === 'string' ? getPointer(record, p) : undefined)),
+  ]
+    .filter((v) => typeof v === 'string' || typeof v === 'number')
+    .map((v) => String(v).trim())
+    .filter((v) => v !== '');
+  return parts.length ? parts.join(typeof o.separator === 'string' ? o.separator : ' ') : undefined;
 }
 
 export function truthy(value: Json): boolean {
@@ -113,17 +178,20 @@ function formatDate(value: Json, o: Record<string, Json>): Json | undefined {
   }
 }
 
-export function transform(value: Json | undefined, entry: MappingEntry): Json | undefined {
+/** `record` is the whole source record; only `join` reads it. */
+export function transform(
+  value: Json | undefined,
+  entry: MappingEntry,
+  record?: Json,
+): Json | undefined {
   const t = entry.transform;
   const o = t?.options ?? {};
   if (t?.kind === 'constant') return o.value;
+  if (t?.kind === 'join') return joinValues(value, o, record);
   if (value === undefined || value === null) return undefined;
   switch (t?.kind) {
-    case 'enum': {
-      const map = o.map as Record<string, Json>;
-      const key = String(value);
-      return Object.hasOwn(map, key) ? map[key] : o.default;
-    }
+    case 'enum':
+      return enumValue(value, o);
     case 'bool-status':
       return truthy(value) ? (o.true ?? 'active') : (o.false ?? 'inactive');
     case 'date':
@@ -148,7 +216,7 @@ export function applyMapping(
   const out: Record<string, Json> = {};
   for (const [field, entry] of Object.entries(mapping)) {
     if (RESERVED.has(field)) continue;
-    const value = transform(getPointer(record, entry.from), entry);
+    const value = transform(getPointer(record, entry.from), entry, record);
     if (value !== undefined && value !== null) out[field] = value;
   }
   return out;

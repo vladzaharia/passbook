@@ -69,6 +69,7 @@ const PUBLIC = [
   'POST /p/:token/print/reprint',
   'POST /p/:token/print/void',
   'POST /p/:token/resend',
+  'POST /p/:token/sign-in',
   'POST /wallet/v1/devices/:deviceId/registrations/:passTypeId/:serial',
   'POST /wallet/v1/google/:accountId',
   'POST /wallet/v1/log',

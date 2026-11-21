@@ -471,6 +471,10 @@ __all__ = [
     "PassImportsCheckParamsPlanMappingValueTransform",
     "PassImportsCheckResult",
     "PassImportsCheckResultColumnsItem",
+    "PassImportsCheckResultMapping",
+    "PassImportsCheckResultMappingFieldsItem",
+    "PassImportsCheckResultMappingFieldsItemValuesItem",
+    "PassImportsCheckResultMappingUnusedItem",
     "PassImportsCheckResultPreviewsItem",
     "PassImportsCheckResultProblemTotals",
     "PassImportsCheckResultProblemsItem",
@@ -479,6 +483,10 @@ __all__ = [
     "PassImportsCommitParams",
     "PassImportsCommitResult",
     "PassImportsCommitResultColumnsItem",
+    "PassImportsCommitResultMapping",
+    "PassImportsCommitResultMappingFieldsItem",
+    "PassImportsCommitResultMappingFieldsItemValuesItem",
+    "PassImportsCommitResultMappingUnusedItem",
     "PassImportsCommitResultPreviewsItem",
     "PassImportsCommitResultProblemTotals",
     "PassImportsCommitResultProblemsItem",
@@ -492,6 +500,10 @@ __all__ = [
     "PassImportsCreateParamsSource2",
     "PassImportsCreateResult",
     "PassImportsCreateResultColumnsItem",
+    "PassImportsCreateResultMapping",
+    "PassImportsCreateResultMappingFieldsItem",
+    "PassImportsCreateResultMappingFieldsItemValuesItem",
+    "PassImportsCreateResultMappingUnusedItem",
     "PassImportsCreateResultPreviewsItem",
     "PassImportsCreateResultProblemTotals",
     "PassImportsCreateResultProblemsItem",
@@ -499,6 +511,10 @@ __all__ = [
     "PassImportsDeleteResult",
     "PassImportsListItem",
     "PassImportsListItemColumnsItem",
+    "PassImportsListItemMapping",
+    "PassImportsListItemMappingFieldsItem",
+    "PassImportsListItemMappingFieldsItemValuesItem",
+    "PassImportsListItemMappingUnusedItem",
     "PassImportsListItemPreviewsItem",
     "PassImportsListItemProblemTotals",
     "PassImportsListItemProblemsItem",
@@ -506,6 +522,10 @@ __all__ = [
     "PassImportsListResult",
     "PassImportsListResultItemsItem",
     "PassImportsListResultItemsItemColumnsItem",
+    "PassImportsListResultItemsItemMapping",
+    "PassImportsListResultItemsItemMappingFieldsItem",
+    "PassImportsListResultItemsItemMappingFieldsItemValuesItem",
+    "PassImportsListResultItemsItemMappingUnusedItem",
     "PassImportsListResultItemsItemPreviewsItem",
     "PassImportsListResultItemsItemProblemTotals",
     "PassImportsListResultItemsItemProblemsItem",
@@ -513,13 +533,19 @@ __all__ = [
     "PassImportsRemoveCreatedParams",
     "PassImportsRetrieveResult",
     "PassImportsRetrieveResultColumnsItem",
+    "PassImportsRetrieveResultMapping",
+    "PassImportsRetrieveResultMappingFieldsItem",
+    "PassImportsRetrieveResultMappingFieldsItemValuesItem",
+    "PassImportsRetrieveResultMappingUnusedItem",
     "PassImportsRetrieveResultPreviewsItem",
     "PassImportsRetrieveResultProblemTotals",
     "PassImportsRetrieveResultProblemsItem",
     "PassImportsRetrieveResultSource",
     "PassImportsRowsListItem",
+    "PassImportsRowsListItemChangesItem",
     "PassImportsRowsListResult",
     "PassImportsRowsListResultItemsItem",
+    "PassImportsRowsListResultItemsItemChangesItem",
     "PassImportsSendEmailsBody",
     "PassImportsSendEmailsParams",
     "PassImportsSendEmailsResult",
@@ -748,12 +774,63 @@ __all__ = [
     "ScanSessionStaffListItem",
     "ScanSessionTemplatesItem",
     "ScanSessionTemplatesItemActionsItem",
+    "ScanSetupAnswer",
+    "ScanSetupAnswer1",
+    "ScanSetupAnswer1ChecksItem",
+    "ScanSetupAnswer1ChecksItemFix1",
+    "ScanSetupAnswer1ChecksItemFix2",
+    "ScanSetupAnswer1ChecksItemFix3",
+    "ScanSetupAnswer1ChecksItemFix4",
+    "ScanSetupAnswer1ChecksItemFix5",
+    "ScanSetupAnswer1ChecksItemFix6",
+    "ScanSetupAnswer1ChecksItemSubject",
+    "ScanSetupAnswer1EventsItem",
+    "ScanSetupAnswer1SessionsItem",
+    "ScanSetupAnswer1SessionsItemDevicesItem",
+    "ScanSetupAnswer1StaffItem",
+    "ScanSetupAnswer1ZonesItem",
+    "ScanSetupAnswer2",
+    "ScanSetupAnswer2ChecksItem",
+    "ScanSetupAnswer2ChecksItemFix1",
+    "ScanSetupAnswer2ChecksItemFix2",
+    "ScanSetupAnswer2ChecksItemFix3",
+    "ScanSetupAnswer2ChecksItemFix4",
+    "ScanSetupAnswer2ChecksItemFix5",
+    "ScanSetupAnswer2ChecksItemFix6",
+    "ScanSetupAnswer2ChecksItemSubject",
+    "ScanSetupAnswer2EventsItem",
+    "ScanSetupAnswer2SessionsItem",
+    "ScanSetupAnswer2SessionsItemDevicesItem",
+    "ScanSetupAnswer2SessionsItemDevicesItemOverrides",
+    "ScanSetupAnswer2SessionsItemSettings",
+    "ScanSetupAnswer2SessionsItemSettingsCheckIn",
+    "ScanSetupAnswer2SessionsItemSettingsCustomer",
+    "ScanSetupAnswer2SessionsItemSettingsTags",
+    "ScanSetupAnswer2SessionsItemZonesItem1",
+    "ScanSetupAnswer2SessionsItemZonesItem2",
+    "ScanSetupAnswer2StaffItem",
+    "ScanSetupAnswer2ZonesItem",
+    "ScanSetupAnswer2ZonesItemParent1",
+    "ScanSetupAnswer2ZonesItemParent2",
     "ScanSetupsCreateParams",
     "ScanSetupsCreateParamsAccepts1",
     "ScanSetupsCreateParamsAccepts2",
     "ScanSetupsCreateParamsSettings",
     "ScanSetupsCreateParamsSettingsCheckIn",
     "ScanSetupsCreateParamsSettingsTags",
+    "ScanSetupsListItem",
+    "ScanSetupsListItemAccepts1",
+    "ScanSetupsListItemAccepts2",
+    "ScanSetupsListItemAccepts3",
+    "ScanSetupsListResult",
+    "ScanSetupsListResultItemsItem",
+    "ScanSetupsListResultItemsItemAccepts1",
+    "ScanSetupsListResultItemsItemAccepts2",
+    "ScanSetupsListResultItemsItemAccepts3",
+    "ScanSetupsRetrieveResult",
+    "ScanSetupsRetrieveResultAccepts1",
+    "ScanSetupsRetrieveResultAccepts2",
+    "ScanSetupsRetrieveResultAccepts3",
     "ScanSetupsUpdateParams",
     "ScanSetupsUpdateParamsAccepts1",
     "ScanSetupsUpdateParamsAccepts2",
@@ -834,6 +911,26 @@ __all__ = [
     "ScanningSessionsOverrideHoursParams1",
     "ScanningSessionsOverrideHoursParams2",
     "ScanningSessionsOverrideHoursParams3",
+    "ScanningSessionsSetupBody",
+    "ScanningSessionsSetupParams",
+    "ScanningSessionsSetupParamsDoorsItem",
+    "ScanningSessionsSetupParamsDoorsItemAdmits1",
+    "ScanningSessionsSetupParamsDoorsItemAdmits2",
+    "ScanningSessionsSetupParamsDoorsItemDevicesItem",
+    "ScanningSessionsSetupParamsDoorsItemHours2",
+    "ScanningSessionsSetupParamsDoorsItemMore",
+    "ScanningSessionsSetupParamsDoorsItemMoreCheckIn",
+    "ScanningSessionsSetupParamsDoorsItemMoreCustomer",
+    "ScanningSessionsSetupParamsDoorsItemMoreTags",
+    "ScanningSessionsSetupParamsDoorsItemScanners1",
+    "ScanningSessionsSetupParamsDoorsItemScanners2",
+    "ScanningSessionsSetupParamsEventsItem1",
+    "ScanningSessionsSetupParamsEventsItem2",
+    "ScanningSessionsSetupParamsEventsItem3",
+    "ScanningSessionsSetupParamsPlacesItem1",
+    "ScanningSessionsSetupParamsPlacesItem2",
+    "ScanningSessionsSetupParamsStaffItem",
+    "ScanningSessionsSetupResult",
     "ScanningSessionsUpdateParams",
     "ScanningSessionsUpdateParamsAccepts1",
     "ScanningSessionsUpdateParamsAccepts2",
@@ -852,6 +949,9 @@ __all__ = [
     "SettingsReplyToResendConfirmationParams",
     "SettingsUpdateParams",
     "TemplateDetail",
+    "TemplateDetailRelease",
+    "TemplateDetailReleaseReview1",
+    "TemplateDetailReleaseReview2",
     "TemplateDetailVersionsItem",
     "TemplateDetailVersionsItemAssetsItem",
     "TemplateDetailVersionsItemReport",
@@ -1069,7 +1169,7 @@ class ApiKeyCurrent(_Model):
     orgId: str | None
     name: str
     prefix: str
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdAt: int
     lastUsedAt: int | None
@@ -1084,7 +1184,7 @@ class ApiKeyDetail(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1112,7 +1212,7 @@ class ApiKeyMinted(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1144,7 +1244,7 @@ class ApiKeyRotationKey1(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1169,7 +1269,7 @@ class ApiKeyRotationKey2(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1193,7 +1293,7 @@ class ApiKeyRotationPrevious(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1215,7 +1315,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "scanning:write", "api-keys:write"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "scanning:write", "scan-setup:read", "scanning:admin", "api-keys:write"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -1230,7 +1330,7 @@ class ApiKeysListItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1259,7 +1359,7 @@ class ApiKeysListResultItemsItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -3879,6 +3979,7 @@ class Org(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
+    kind: _Literal["standard", "developer"] | str | None = None
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int
@@ -3923,6 +4024,7 @@ class OrgSummary(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
+    kind: _Literal["standard", "developer"] | str | None = None
     defaultIdentityId: str | None
     branding: OrgBranding
     createdAt: int
@@ -4163,11 +4265,41 @@ class PassImportsCheckResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsCheckResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsCheckResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsCheckResultMapping(_Model):
+    fields: _List[PassImportsCheckResultMappingFieldsItem]
+    unused: _List[PassImportsCheckResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsCheckResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsCheckResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsCheckResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsCheckResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsCheckResultPreviewsItem(_Model):
     row: int
@@ -4218,11 +4350,41 @@ class PassImportsCommitResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsCommitResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsCommitResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsCommitResultMapping(_Model):
+    fields: _List[PassImportsCommitResultMappingFieldsItem]
+    unused: _List[PassImportsCommitResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsCommitResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsCommitResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsCommitResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsCommitResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsCommitResultPreviewsItem(_Model):
     row: int
@@ -4299,11 +4461,41 @@ class PassImportsCreateResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsCreateResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsCreateResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsCreateResultMapping(_Model):
+    fields: _List[PassImportsCreateResultMappingFieldsItem]
+    unused: _List[PassImportsCreateResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsCreateResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsCreateResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsCreateResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsCreateResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsCreateResultPreviewsItem(_Model):
     row: int
@@ -4353,11 +4545,41 @@ class PassImportsListItem(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsListItemMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsListItemColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsListItemMapping(_Model):
+    fields: _List[PassImportsListItemMappingFieldsItem]
+    unused: _List[PassImportsListItemMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsListItemMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsListItemMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsListItemMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsListItemMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsListItemPreviewsItem(_Model):
     row: int
@@ -4408,11 +4630,41 @@ class PassImportsListResultItemsItem(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsListResultItemsItemMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsListResultItemsItemColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsListResultItemsItemMapping(_Model):
+    fields: _List[PassImportsListResultItemsItemMappingFieldsItem]
+    unused: _List[PassImportsListResultItemsItemMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsListResultItemsItemMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsListResultItemsItemMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsListResultItemsItemMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsListResultItemsItemMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsListResultItemsItemPreviewsItem(_Model):
     row: int
@@ -4462,11 +4714,41 @@ class PassImportsRetrieveResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsRetrieveResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsRetrieveResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsRetrieveResultMapping(_Model):
+    fields: _List[PassImportsRetrieveResultMappingFieldsItem]
+    unused: _List[PassImportsRetrieveResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsRetrieveResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsRetrieveResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsRetrieveResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsRetrieveResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsRetrieveResultPreviewsItem(_Model):
     row: int
@@ -4499,6 +4781,14 @@ class PassImportsRowsListItem(_Model):
     code: str | None
     message: str | None
     emailed: bool
+    changes: _List[PassImportsRowsListItemChangesItem] | None = None
+    wouldBe: _Literal["create", "update", None] | str = None
+
+class PassImportsRowsListItemChangesItem(_Model):
+    key: str
+    label: str
+    from_: str | None = _Field(alias="from")
+    to: str | None
 
 class PassImportsRowsListResult(_Model):
     items: _List[PassImportsRowsListResultItemsItem]
@@ -4514,6 +4804,14 @@ class PassImportsRowsListResultItemsItem(_Model):
     code: str | None
     message: str | None
     emailed: bool
+    changes: _List[PassImportsRowsListResultItemsItemChangesItem] | None = None
+    wouldBe: _Literal["create", "update", None] | str = None
+
+class PassImportsRowsListResultItemsItemChangesItem(_Model):
+    key: str
+    label: str
+    from_: str | None = _Field(alias="from")
+    to: str | None
 
 class PassImportsSendEmailsParams(_Model):
     cursor: str | None
@@ -5937,6 +6235,241 @@ class ScanSessionTemplatesItemActionsItem(_Model):
     label: str
     kind: _Literal["check_in", "add", "take", "set", "use_up"] | str
 
+class ScanSetupAnswer1(_Model):
+    replayed: bool
+    mode: _Literal["live", "test"] | str
+    sessions: _List[ScanSetupAnswer1SessionsItem]
+    pairingReissued: bool | None = None
+    zones: _List[ScanSetupAnswer1ZonesItem]
+    events: _List[ScanSetupAnswer1EventsItem]
+    staff: _List[ScanSetupAnswer1StaffItem]
+    checks: _List[ScanSetupAnswer1ChecksItem]
+
+class ScanSetupAnswer1ChecksItem(_Model):
+    code: _Literal["NO_EXIT", "NO_MANAGER", "NO_STAFF", "PLAN_MISSES_PLACE", "HOURS_DIFFER", "EVENT_NO_PASSES", "READER_BOTH", "PLACE_ON_EVENT", "TEST_ONLY", "DIRECTION_NEEDS_TRACKING", "OFFLINE_LIST_BLOCKED"] | str
+    level: _Literal["error", "warn", "info"] | str
+    message: str
+    params: _Dict[str, str] | None = None
+    door: str | None = None
+    subject: ScanSetupAnswer1ChecksItemSubject | None = None
+    fix: ScanSetupAnswer1ChecksItemFix1 | ScanSetupAnswer1ChecksItemFix2 | ScanSetupAnswer1ChecksItemFix3 | ScanSetupAnswer1ChecksItemFix4 | ScanSetupAnswer1ChecksItemFix5 | ScanSetupAnswer1ChecksItemFix6 | None = None
+
+class ScanSetupAnswer1ChecksItemFix1(_Model):
+    kind: _Literal["device_direction"] | str
+    device: str
+    direction: _Literal["in", "both"] | str
+
+class ScanSetupAnswer1ChecksItemFix2(_Model):
+    kind: _Literal["add_device"] | str
+    session: str
+    direction: _Literal["out"] | str
+
+class ScanSetupAnswer1ChecksItemFix3(_Model):
+    kind: _Literal["add_staff"] | str
+    role: _Literal["manager"] | str
+
+class ScanSetupAnswer1ChecksItemFix4(_Model):
+    kind: _Literal["remove_place"] | str
+    session: str
+
+class ScanSetupAnswer1ChecksItemFix5(_Model):
+    kind: _Literal["track_in_out"] | str
+    session: str
+
+class ScanSetupAnswer1ChecksItemFix6(_Model):
+    kind: _Literal["open_template"] | str
+    templateId: str
+
+class ScanSetupAnswer1ChecksItemSubject(_Model):
+    kind: _Literal["session", "device", "zone", "event", "template", "staff"] | str
+    ref: str
+
+class ScanSetupAnswer1EventsItem(_Model):
+    id: str
+    ref: str | None
+    name: str
+    created: bool
+
+class ScanSetupAnswer1SessionsItem(_Model):
+    id: str
+    ref: str
+    name: str
+    devices: _List[ScanSetupAnswer1SessionsItemDevicesItem]
+
+class ScanSetupAnswer1SessionsItemDevicesItem(_Model):
+    id: str
+    name: str
+    pairing: _Dict[str, _Any] | None
+
+class ScanSetupAnswer1StaffItem(_Model):
+    id: str
+    name: str
+    role: _Literal["door", "desk", "manager"] | str
+    pin: str | None
+
+class ScanSetupAnswer1ZonesItem(_Model):
+    id: str
+    ref: str | None
+    name: str
+    created: bool
+
+class ScanSetupAnswer2(_Model):
+    mode: _Literal["live", "test"] | str
+    timeZone: str
+    preset: _Literal["front_desk", "event_night", "venue", None] | str
+    zones: _List[ScanSetupAnswer2ZonesItem]
+    events: _List[ScanSetupAnswer2EventsItem]
+    staff: _List[ScanSetupAnswer2StaffItem]
+    sessions: _List[ScanSetupAnswer2SessionsItem]
+    checks: _List[ScanSetupAnswer2ChecksItem]
+
+class ScanSetupAnswer2ChecksItem(_Model):
+    code: _Literal["NO_EXIT", "NO_MANAGER", "NO_STAFF", "PLAN_MISSES_PLACE", "HOURS_DIFFER", "EVENT_NO_PASSES", "READER_BOTH", "PLACE_ON_EVENT", "TEST_ONLY", "DIRECTION_NEEDS_TRACKING", "OFFLINE_LIST_BLOCKED"] | str
+    level: _Literal["error", "warn", "info"] | str
+    message: str
+    params: _Dict[str, str] | None = None
+    door: str | None = None
+    subject: ScanSetupAnswer2ChecksItemSubject | None = None
+    fix: ScanSetupAnswer2ChecksItemFix1 | ScanSetupAnswer2ChecksItemFix2 | ScanSetupAnswer2ChecksItemFix3 | ScanSetupAnswer2ChecksItemFix4 | ScanSetupAnswer2ChecksItemFix5 | ScanSetupAnswer2ChecksItemFix6 | None = None
+
+class ScanSetupAnswer2ChecksItemFix1(_Model):
+    kind: _Literal["device_direction"] | str
+    device: str
+    direction: _Literal["in", "both"] | str
+
+class ScanSetupAnswer2ChecksItemFix2(_Model):
+    kind: _Literal["add_device"] | str
+    session: str
+    direction: _Literal["out"] | str
+
+class ScanSetupAnswer2ChecksItemFix3(_Model):
+    kind: _Literal["add_staff"] | str
+    role: _Literal["manager"] | str
+
+class ScanSetupAnswer2ChecksItemFix4(_Model):
+    kind: _Literal["remove_place"] | str
+    session: str
+
+class ScanSetupAnswer2ChecksItemFix5(_Model):
+    kind: _Literal["track_in_out"] | str
+    session: str
+
+class ScanSetupAnswer2ChecksItemFix6(_Model):
+    kind: _Literal["open_template"] | str
+    templateId: str
+
+class ScanSetupAnswer2ChecksItemSubject(_Model):
+    kind: _Literal["session", "device", "zone", "event", "template", "staff"] | str
+    ref: str
+
+class ScanSetupAnswer2EventsItem(_Model):
+    ref: str
+    name: str
+    templateIds: _List[str]
+    match: _Dict[str, _Any] | None
+    opensAt: int
+    closesAt: int
+    timeZone: str
+    capacity: int | None
+    reentry: bool
+
+class ScanSetupAnswer2SessionsItem(_Model):
+    ref: str
+    name: str
+    timeZone: str
+    accepts: _Dict[str, _Any] | None
+    zones: _List[ScanSetupAnswer2SessionsItemZonesItem1 | ScanSetupAnswer2SessionsItemZonesItem2]
+    hours: _Dict[str, _Any] | None
+    settings: ScanSetupAnswer2SessionsItemSettings
+    devices: _List[ScanSetupAnswer2SessionsItemDevicesItem]
+
+class ScanSetupAnswer2SessionsItemDevicesItem(_Model):
+    name: str
+    surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str
+    overrides: ScanSetupAnswer2SessionsItemDevicesItemOverrides
+    ref: str
+    role: _Literal["scan", "customer", "monitor"] | str
+
+class ScanSetupAnswer2SessionsItemDevicesItemOverrides(_Model):
+    flow: _Literal["auto", "choose"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
+    lookup: bool | None = None
+    showPhoto: bool | None = None
+
+class ScanSetupAnswer2SessionsItemSettings(_Model):
+    checkIn: ScanSetupAnswer2SessionsItemSettingsCheckIn | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
+    showPhoto: bool | None = None
+    acceptAllTemplates: bool | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
+    defaultActionId: str | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
+    staffSignIn: bool | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
+    lookup: bool | None = None
+    offline: bool | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
+    dailyAmount: int | None = None
+    deskActions: bool | None = None
+    hardLimit: bool | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
+    tags: ScanSetupAnswer2SessionsItemSettingsTags | None = None
+    customer: ScanSetupAnswer2SessionsItemSettingsCustomer | None = None
+
+class ScanSetupAnswer2SessionsItemSettingsCheckIn(_Model):
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
+    eventId: str | None = None
+    validFrom: int | None = None
+    validUntil: int | None = None
+    durationMinutes: int | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
+    days: int | None = None
+
+class ScanSetupAnswer2SessionsItemSettingsCustomer(_Model):
+    welcome: str | None = None
+    refusedLine: str | None = None
+    greet: bool | None = None
+    showReady: bool | None = None
+    showDraft: bool | None = None
+
+class ScanSetupAnswer2SessionsItemSettingsTags(_Model):
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
+
+class ScanSetupAnswer2SessionsItemZonesItem1(_Model):
+    ref: str
+
+class ScanSetupAnswer2SessionsItemZonesItem2(_Model):
+    id: str
+
+class ScanSetupAnswer2StaffItem(_Model):
+    ref: str
+    name: str
+    role: _Literal["door", "desk", "manager"] | str
+
+class ScanSetupAnswer2ZonesItem(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    ref: str
+    key: str
+    name: str
+    parent: ScanSetupAnswer2ZonesItemParent1 | ScanSetupAnswer2ZonesItemParent2 | None
+    timeZone: str | None
+
+class ScanSetupAnswer2ZonesItemParent1(_Model):
+    ref: str
+
+class ScanSetupAnswer2ZonesItemParent2(_Model):
+    id: str
+
 class ScanSetupsCreateParams(_Model):
     orgId: str
     name: str
@@ -5989,6 +6522,112 @@ class ScanSetupsCreateParamsSettingsTags(_Model):
     level: _Literal["off", "basic", "secure"] | str | None = None
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
+
+class ScanSetupsListItem(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsListItemAccepts1 | ScanSetupsListItemAccepts2 | ScanSetupsListItemAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsListItemAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsListItemAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsListItemAccepts3(_Model):
+    templateIds: _List[str]
+
+class ScanSetupsListResult(_Model):
+    items: _List[ScanSetupsListResultItemsItem]
+    nextCursor: str | None
+
+class ScanSetupsListResultItemsItem(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsListResultItemsItemAccepts1 | ScanSetupsListResultItemsItemAccepts2 | ScanSetupsListResultItemsItemAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsListResultItemsItemAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsListResultItemsItemAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsListResultItemsItemAccepts3(_Model):
+    templateIds: _List[str]
+
+class ScanSetupsRetrieveResult(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsRetrieveResultAccepts1 | ScanSetupsRetrieveResultAccepts2 | ScanSetupsRetrieveResultAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsRetrieveResultAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsRetrieveResultAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsRetrieveResultAccepts3(_Model):
+    templateIds: _List[str]
 
 class ScanSetupsUpdateParams(_Model):
     name: str | None = None
@@ -6589,7 +7228,7 @@ class ScanningSessionsCreateParamsSettingsTags(_Model):
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
 class ScanningSessionsDevicesCreateParams(_Model):
-    name: str
+    name: str | None = None
     surface: _Literal["auto", "phone", "operator", "desk", "customer"] | str | None = None
     overrides: ScanningSessionsDevicesCreateParamsOverrides | None = None
 
@@ -6626,6 +7265,133 @@ class ScanningSessionsOverrideHoursParams3(_Model):
     action: _Literal["clear"] | str
     revision: int | None = None
 
+class ScanningSessionsSetupParams(_Model):
+    orgId: str
+    preset: _Literal["front_desk", "event_night", "venue"] | str | None = None
+    timeZone: str | None = None
+    places: _List[ScanningSessionsSetupParamsPlacesItem1 | ScanningSessionsSetupParamsPlacesItem2] | None = None
+    events: _List[ScanningSessionsSetupParamsEventsItem1 | ScanningSessionsSetupParamsEventsItem2 | ScanningSessionsSetupParamsEventsItem3] | None = None
+    staff: _List[ScanningSessionsSetupParamsStaffItem] | None = None
+    doors: _List[ScanningSessionsSetupParamsDoorsItem]
+
+class ScanningSessionsSetupParamsDoorsItem(_Model):
+    name: str
+    place: str | None = None
+    admits: ScanningSessionsSetupParamsDoorsItemAdmits1 | ScanningSessionsSetupParamsDoorsItemAdmits2
+    hours: _Literal["always"] | str | ScanningSessionsSetupParamsDoorsItemHours2 | None = None
+    scanners: ScanningSessionsSetupParamsDoorsItemScanners1 | ScanningSessionsSetupParamsDoorsItemScanners2 | None = None
+    devices: _List[ScanningSessionsSetupParamsDoorsItemDevicesItem] | None = None
+    more: ScanningSessionsSetupParamsDoorsItemMore | None = None
+
+class ScanningSessionsSetupParamsDoorsItemAdmits1(_Model):
+    any: _Literal[True]
+
+class ScanningSessionsSetupParamsDoorsItemAdmits2(_Model):
+    templateIds: _List[str] | None = None
+    events: _List[str] | None = None
+
+class ScanningSessionsSetupParamsDoorsItemDevicesItem(_Model):
+    name: str | None = None
+    layout: _Literal["auto", "phone", "operator", "customer"] | str | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
+    reader: _Literal["camera", "barcode"] | str | None = None
+
+class ScanningSessionsSetupParamsDoorsItemHours2(_Model):
+    every: _List[str] | None = None
+    mon: _List[str] | None = None
+    tue: _List[str] | None = None
+    wed: _List[str] | None = None
+    thu: _List[str] | None = None
+    fri: _List[str] | None = None
+    sat: _List[str] | None = None
+    sun: _List[str] | None = None
+    closed: _List[str] | None = None
+
+class ScanningSessionsSetupParamsDoorsItemMore(_Model):
+    checkIn: ScanningSessionsSetupParamsDoorsItemMoreCheckIn | None = None
+    direction: _Literal["in", "out", "both"] | str | None = None
+    showPhoto: bool | None = None
+    acceptAllTemplates: bool | None = None
+    flow: _Literal["auto", "choose"] | str | None = None
+    defaultActionId: str | None = None
+    roleWithoutSignIn: _Literal["door", "desk"] | str | None = None
+    staffSignIn: bool | None = None
+    letInAgain: _Literal["anyone", "manager", "never"] | str | None = None
+    reader: _Literal["none", "barcode", "nfc"] | str | None = None
+    lookup: bool | None = None
+    offline: bool | None = None
+    whenOffline: _Literal["stop", "decide", "list"] | str | None = None
+    dailyAmount: int | None = None
+    deskActions: bool | None = None
+    hardLimit: bool | None = None
+    approvals: _Literal["managers", "desk"] | str | None = None
+    tags: ScanningSessionsSetupParamsDoorsItemMoreTags | None = None
+    customer: ScanningSessionsSetupParamsDoorsItemMoreCustomer | None = None
+
+class ScanningSessionsSetupParamsDoorsItemMoreCheckIn(_Model):
+    mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
+    eventId: str | None = None
+    validFrom: int | None = None
+    validUntil: int | None = None
+    durationMinutes: int | None = None
+    durationFrom: _Literal["first_scan", "issued"] | str | None = None
+    days: int | None = None
+
+class ScanningSessionsSetupParamsDoorsItemMoreCustomer(_Model):
+    welcome: str | None = None
+    refusedLine: str | None = None
+    greet: bool | None = None
+    showReady: bool | None = None
+    showDraft: bool | None = None
+
+class ScanningSessionsSetupParamsDoorsItemMoreTags(_Model):
+    assign: _Literal["desk", "manager", "never"] | str | None = None
+    assignAll: _Literal["desk", "manager", "never"] | str | None = None
+    level: _Literal["off", "basic", "secure"] | str | None = None
+    types: _List[str | _Literal["standard"] | str] | None = None
+    confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
+
+class ScanningSessionsSetupParamsDoorsItemScanners1(_Model):
+    by: _Literal["anyone"] | str
+    as_: _Literal["door", "desk"] | str | None = _Field(default=None, alias="as")
+
+class ScanningSessionsSetupParamsDoorsItemScanners2(_Model):
+    by: _Literal["staff"] | str
+
+class ScanningSessionsSetupParamsEventsItem1(_Model):
+    eventId: str
+
+class ScanningSessionsSetupParamsEventsItem2(_Model):
+    fromTemplate: str
+    ref: str | None = None
+
+class ScanningSessionsSetupParamsEventsItem3(_Model):
+    ref: str
+    name: str
+    templateIds: _List[str]
+    opensAt: int
+    closesAt: int
+    max: int | None = None
+    reentry: bool | None = None
+
+class ScanningSessionsSetupParamsPlacesItem1(_Model):
+    zoneId: str
+
+class ScanningSessionsSetupParamsPlacesItem2(_Model):
+    ref: str
+    name: str
+    key: str | None = None
+    inside: str | None = None
+    max: int | None = None
+    count: bool | None = None
+    tapOut: bool | None = None
+    maxStayMinutes: int | None = None
+    clearAt: str | None = None
+
+class ScanningSessionsSetupParamsStaffItem(_Model):
+    name: str
+    role: _Literal["door", "desk", "manager"] | str
+
 class ScanningSessionsUpdateParams(_Model):
     name: str | None = None
     timeZone: str | None = None
@@ -6634,6 +7400,7 @@ class ScanningSessionsUpdateParams(_Model):
     zoneIds: _List[str] | None = None
     hours: _Dict[str, _Any] | None = None
     status: _Literal["active", "paused", "ended"] | str | None = None
+    removeDevices: bool | None = None
     revision: int | None = None
 
 class ScanningSessionsUpdateParamsAccepts1(_Model):
@@ -6759,6 +7526,24 @@ class TemplateDetail(_Model):
     passesOnOlderVersions: int | None = None
     passesBlocked: int | None = None
     restorable: bool | None = None
+    release: TemplateDetailRelease | None = None
+
+class TemplateDetailRelease(_Model):
+    live: _Dict[str, _Any] | None
+    test: _Dict[str, _Any] | None
+    draft: _Dict[str, _Any] | None
+    review: TemplateDetailReleaseReview1 | TemplateDetailReleaseReview2
+    alone: bool
+    next: _Literal["design", "try", "release", "request_review", "review", "wait", None] | str
+
+class TemplateDetailReleaseReview1(_Model):
+    state: _Literal["none"] | str
+
+class TemplateDetailReleaseReview2(_Model):
+    state: _Literal["open", "approved"] | str
+    version: str
+    by: str | None
+    at: int
 
 class TemplateDetailVersionsItem(_Model):
     version: str
@@ -8014,11 +8799,17 @@ ScanDeviceCapabilities = _Dict[str, _Any] | None
 
 ScanPrevious = _Dict[str, _Any] | None
 
+ScanSetupAnswer = ScanSetupAnswer1 | ScanSetupAnswer2
+
 ScanTemplateRef = _Dict[str, _Any] | None
 
 ScanWorkspace = _Dict[str, _Any] | None
 
 ScanningSessionsOverrideHoursParams = ScanningSessionsOverrideHoursParams1 | ScanningSessionsOverrideHoursParams2 | ScanningSessionsOverrideHoursParams3
+
+ScanningSessionsSetupBody = ScanningSessionsSetupParams
+
+ScanningSessionsSetupResult = ScanSetupAnswer
 
 ScansListResult = ScansListResult1 | ScansListResult2
 

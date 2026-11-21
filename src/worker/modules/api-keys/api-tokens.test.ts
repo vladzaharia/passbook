@@ -152,6 +152,7 @@ describe('a role is a label on the scopes written at mint', () => {
       'messages:write',
       'passes:read',
       'passes:write',
+      'scan-setup:read',
       'scans:read',
       'templates:read',
     ]);

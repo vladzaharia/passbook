@@ -10,12 +10,12 @@ import {
   ForbiddenError,
   NotFoundError,
   RateLimitedError,
-  UnavailableError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
+import { pinOnlyOff } from './repo-pin-only.ts';
 import {
   addStaffPinRotate,
   addStaffUpdate,
@@ -33,7 +33,8 @@ import {
 } from './repo-staff-page.ts';
 import { newCapture } from './setup-capture.ts';
 import { staffViews } from './staff-admin-views.ts';
-import { hashPin, pinMatches } from './staff-pin.ts';
+import { hashPin } from './staff-pin.ts';
+import { newUniquePin } from './staff-pin-unique.ts';
 import {
   type CreateStaff,
   planStaff,
@@ -130,12 +131,15 @@ export async function listStaff(
     limit: Math.min(query.limit ?? STAFF_PAGE_LIMIT, STAFF_PAGE_MAX),
     cursor: decodeStaffCursor(query.cursor),
   };
+  // Read before the roster: the roster read is pinned to be followed by only a few statements.
+  const off = await pinOnlyOff(ctx.env.DB, orgId);
   const result = await staffViews(ctx, session, authority, page);
   // `hasMore` and `nextCursor` are present only when there is more.
   const last = result.items.at(-1);
   return result.authorized
     ? {
         items: result.items,
+        ...(off ? { pinOnlyOff: true } : {}),
         ...(result.hasMore && last ? { hasMore: true, nextCursor: encodeStaffCursor(last) } : {}),
       }
     : { items: [] };
@@ -223,12 +227,8 @@ export async function resetStaffPin(
   const { orgId, id } = staff;
   const { userId, mode } = authority;
   assertAuthority(authority, session, orgId, mode, 'scanning:manage');
-  let pin = ctx.ids.code(6);
-  // Even a random collision must not leave the old credential valid (under either root mid-rotation).
-  for (let i = 0; (await pinMatches(ctx.env, id, pin, staff.pinHash)) && i < 10; i++)
-    pin = ctx.ids.code(6);
-  if (await pinMatches(ctx.env, id, pin, staff.pinHash))
-    throw new UnavailableError('Could not generate a new PIN. Try again.', 'PIN_GENERATION_FAILED');
+  // Never the old PIN (under either root mid-rotation), and unique among the org's active staff.
+  const pin = await newUniquePin(ctx, orgId, id, staff.pinHash);
   const pinHash = await hashPin(ctx.env, id, pin);
   const now = ctx.clock.now();
   const g = adminGrant(

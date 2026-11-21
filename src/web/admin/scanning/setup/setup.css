@@ -1,0 +1,113 @@
+/* Guided scanning setup (admin/scanning/setup). All motion sits under no-preference. */
+@keyframes wl-sum-flash {
+  from {
+    background-color: var(--pk-accent-subtle);
+  }
+}
+@keyframes wl-deal {
+  from {
+    opacity: 0;
+    transform: translateY(24px) rotate(-2deg) scale(0.96);
+  }
+}
+@keyframes wl-qr-turn {
+  from {
+    opacity: 0;
+    transform: perspective(600px) rotateY(70deg) scale(0.92);
+  }
+}
+@keyframes wl-qr-sheen {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+@keyframes wl-digit-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+@keyframes wl-pip-pop {
+  from {
+    transform: scaleX(0.5);
+  }
+}
+@keyframes wl-check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+@keyframes wl-check-out {
+  to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.wl-qr-slot {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--pk-radius-lg);
+}
+.wl-qr-slot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--pk-accent) 30%, transparent) 45%,
+    color-mix(in srgb, #8b5cf6 28%, transparent) 55%,
+    color-mix(in srgb, #f59e0b 30%, transparent) 62%,
+    transparent 72%
+  );
+}
+.wl-check-row {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+.wl-check-row[data-gone] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.wl-check-row > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-sum-flash {
+    animation: wl-sum-flash 1200ms ease-out;
+  }
+  .wl-deal {
+    animation: wl-deal 480ms var(--wl-ease-spring) backwards;
+    animation-delay: calc(var(--wl-i, 0) * 60ms);
+  }
+  .wl-qr-turn {
+    animation: wl-qr-turn 640ms var(--wl-ease-spring) backwards;
+  }
+  .wl-qr-turn .wl-qr-slot::after {
+    animation: wl-qr-sheen 900ms var(--wl-ease-move) 200ms both;
+    opacity: 1;
+  }
+  .wl-digit {
+    animation: wl-digit-in 200ms var(--wl-ease-spring) backwards;
+  }
+  .wl-pip-pop {
+    animation: wl-pip-pop 480ms var(--wl-ease-bounce) backwards;
+  }
+  .wl-check-row {
+    transition:
+      grid-template-rows 240ms var(--wl-ease-move) 900ms,
+      opacity 240ms var(--wl-ease-move) 900ms;
+  }
+  .wl-check-done {
+    animation: wl-check-pop 480ms var(--wl-ease-bounce) backwards;
+  }
+}

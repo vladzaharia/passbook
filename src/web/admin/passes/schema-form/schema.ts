@@ -1,4 +1,5 @@
 import { EMAIL_INVALID_MESSAGE, strictEmail } from '@/shared/email.ts';
+import { patternMatches } from '@/shared/safe-pattern.ts';
 import { accessOf, type PlanChoice, plansOf } from './schema-access.ts';
 import type { FormValues } from './schema-values.ts';
 
@@ -228,18 +229,10 @@ function validateField(field: FieldDef, value: unknown): string | undefined {
   if (field.widget === 'datetime' && Number.isNaN(Date.parse(value))) {
     return 'Enter a valid date and time.';
   }
-  if (typeof s.pattern === 'string') {
-    try {
-      if (!new RegExp(s.pattern).test(value)) {
-        const said = s['x-pattern-message'];
-        if (typeof said === 'string' && said) return said;
-        return field.placeholder
-          ? `Check the format, like ${field.placeholder}.`
-          : 'Check the format.';
-      }
-    } catch {
-      // An unusable pattern is the server's to enforce.
-    }
+  if (typeof s.pattern === 'string' && !patternMatches(s.pattern, value)) {
+    const said = s['x-pattern-message'];
+    if (typeof said === 'string' && said) return said;
+    return field.placeholder ? `Check the format, like ${field.placeholder}.` : 'Check the format.';
   }
   return undefined;
 }

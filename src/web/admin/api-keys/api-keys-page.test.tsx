@@ -154,7 +154,7 @@ describe('api keys page', () => {
     expect(reveal.querySelectorAll('.wl-sheen-once')).toHaveLength(1);
     expect(reveal.querySelector('[data-verb-done] svg.lucide-key-round')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Copy API key' })).toBeInTheDocument();
-    expect(within(reveal).getByText('passes:read')).toBeInTheDocument();
+    expect(within(reveal).getByText('Read passes')).toBeInTheDocument();
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     const secret = within(reveal).getByLabelText('API key');
@@ -450,7 +450,7 @@ describe('api keys page', () => {
     expect(revoked).toBe(false);
     expect(within(dialog).getByText(/Organization: Platform/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Mode: Live/)).toBeInTheDocument();
-    expect(within(dialog).getByText(/Permissions: passes:read/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Permissions: Read passes/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Revoke' }));
     await waitFor(() => expect(revoked).toBe(true));
     await waitFor(() =>

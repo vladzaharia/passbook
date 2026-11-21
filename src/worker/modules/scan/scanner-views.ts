@@ -84,8 +84,9 @@ export async function listScanners(
   authority: TenantPassWrite,
 ) {
   if (
-    authority.kind !== 'session' ||
-    authority.capability !== 'scanning:read' ||
+    (authority.kind === 'session'
+      ? authority.capability !== 'scanning:read'
+      : authority.scope !== 'scan-setup:read') ||
     authority.mode !== mode ||
     !query.orgId ||
     query.orgId !== authority.orgId

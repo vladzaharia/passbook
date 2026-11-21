@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IdSchema, JsonSchema, pageOf, TimestampSchema } from './common.ts';
+import { TemplateReleaseStateSchema } from './template-release-flow.ts';
 
 export const PassStyleSchema = z.enum([
   'generic',
@@ -96,6 +97,8 @@ export const TemplateDetailSchema = TemplateSummarySchema.extend({
   passesBlocked: z.number().int().default(0),
   /** Archived, uploaded and never released: Restore flips it back without a release. */
   restorable: z.boolean().default(false),
+  /** Where releasing stands and the caller's next step. Absent for baked templates, blueprints and staged uploads. */
+  release: TemplateReleaseStateSchema.optional(),
 });
 
 const BoolQuery = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');

@@ -46,7 +46,7 @@ export function WalletLead({
       ) : way ? (
         <a className="wl-hero-action" href={way.href ?? undefined}>
           <ScanLine aria-hidden />
-          {HOLDER_COPY.showBarcode}
+          {way.id === 'phone' ? HOLDER_COPY.saveToPhone : HOLDER_COPY.showBarcode}
         </a>
       ) : (
         <a className="wl-hero-action" href={printHref}>
@@ -94,14 +94,14 @@ export function OtherWays({
   const native = choices.filter(isNative);
   const rows: Row[] = [];
   for (const choice of choices) {
-    if (choice.id === 'browser' && choice.href) {
+    if ((choice.id === 'browser' || choice.id === 'phone') && choice.href) {
       rows.push({
-        key: 'browser',
+        key: choice.id,
         body: (
           <OtherLink
             href={choice.href}
             icon={<ScanLine aria-hidden />}
-            label={HOLDER_COPY.showBarcode}
+            label={choice.id === 'phone' ? HOLDER_COPY.saveToPhone : HOLDER_COPY.showBarcode}
           />
         ),
       });

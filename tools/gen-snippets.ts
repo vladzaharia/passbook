@@ -1,5 +1,5 @@
 // Writes docs/developers/snippets/generated/<lang>/<operationId>.<ext> for every operation a key may call,
-// in curl, TypeScript, Python and Go: the same text the portal's reference pages show.
+// in curl, TypeScript, Python and Go, written for the SDKs (the portal shows plain HTTP until sdk-status.json says an SDK is published).
 // `node tools/gen-snippets.ts` writes; `--check` fails when the committed files differ (run in `npm run check:rules`).
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -9,6 +9,8 @@ import { buildSite } from '../src/web/developers/model/site.ts';
 
 const root = resolve(import.meta.dirname, '..');
 export const OUT = 'docs/developers/snippets/generated';
+// The SDK variants always: the SDK packages compile and run these files, whether or not they are published.
+const ALL_SDKS = { typescript: true, python: true, go: true };
 const EXT = { curl: 'sh', ts: 'ts', py: 'py', go: 'go' } as const;
 
 /** Generated files by path under OUT. */
@@ -17,7 +19,7 @@ export function generate(rootDir = root): Map<string, string> {
   const files = new Map<string, string>();
   for (const page of site.pages)
     for (const op of page.ops)
-      for (const s of samplesFor(op, site.baseUrl))
+      for (const s of samplesFor(op, site.baseUrl, ALL_SDKS))
         files.set(`${s.lang}/${op.operationId}.${EXT[s.lang as keyof typeof EXT]}`, `${s.code}\n`);
   return files;
 }

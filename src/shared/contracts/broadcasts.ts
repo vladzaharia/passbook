@@ -65,12 +65,25 @@ const DateClause = z
   })
   .refine((c) => c.from || c.to, 'Pick a start or end date.')
   .refine((c) => !c.from || !c.to || c.from <= c.to, 'Start is after end.');
+/** Text inputs: starts with or contains `value`, ignoring case. Find by any field only. */
+const TextClause = z.object({
+  input: InputKey,
+  op: z.enum(['startsWith', 'contains']),
+  value: z.string().trim().min(1).max(120),
+});
 /** 1-3 clauses, ANDed. Ranges are inclusive at both ends. */
 export const InputMatchSchema = z
   .array(z.union([ValuesClause, NumberClause, DateClause]))
   .min(1)
   .max(3);
 export type InputMatch = z.infer<typeof InputMatchSchema>;
+/** The passes list's wider match: up to 5 clauses, text clauses too. Not for broadcasts or rules yet. */
+export const PASS_MATCH_MAX = 5;
+export const PassMatchSchema = z
+  .array(z.union([ValuesClause, NumberClause, DateClause, TextClause]))
+  .min(1)
+  .max(PASS_MATCH_MAX);
+export type PassMatch = z.infer<typeof PassMatchSchema>;
 
 /** Active passes only: voided, removed and expired passes are never targeted. */
 export const BroadcastTargetSchema = z.object({

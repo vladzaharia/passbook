@@ -705,7 +705,7 @@ describe('new pass template step', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(await screen.findByText('ffeeddccbbaa9988')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Create pass' })).toBeInTheDocument();
     expect(screen.queryByText('Release generation')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Create pass' }));
     await waitFor(() => expect(posts).toHaveLength(1));

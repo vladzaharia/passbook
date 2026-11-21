@@ -5,6 +5,7 @@ import {
   formatDateTime,
   formatDay,
   formatEndedOn,
+  formatExpiry,
   formatRelative,
   formatShortDate,
   formatShortDateHour,
@@ -61,5 +62,11 @@ describe('formatEndedOn', () => {
       'Oct 1, 2026',
     );
     expect(formatEndedOn('voided', { modifiedAt: Number.NaN })).toBeNull();
+  });
+});
+
+describe('formatExpiry date-only', () => {
+  it('shows the written day in a western zone', () => {
+    expect(formatExpiry('2026-12-01', 'America/Los_Angeles')).toBe('Dec 1, 2026');
   });
 });

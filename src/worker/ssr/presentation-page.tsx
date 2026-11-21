@@ -83,6 +83,7 @@ export function renderPresentationPage(props: PresentationPageProps): string {
     theme: props.theme,
     ...(props.brand ? { brand: props.brand } : {}),
     title: props.passTitle,
+    headTitle: HOLDER_COPY.barcodeTitle,
     art: 'login',
     wide: true,
     replay: false,

@@ -1,4 +1,5 @@
 import { Validator } from '@cfworker/json-schema';
+import { schemaFor } from '../../shared/safe-pattern.ts';
 import type { BehaviorRegistry } from '../behaviors/registry.ts';
 import type {
   Binding,
@@ -81,9 +82,11 @@ export function validateManifest(
 
   const sample = manifest.sample ?? {};
   try {
-    const result = new Validator(manifest.inputs as never, '2020-12', false).validate(
-      applyDefaults(manifest, sample),
-    );
+    const result = new Validator(
+      schemaFor(manifest.inputs, applyDefaults(manifest, sample)),
+      '2020-12',
+      false,
+    ).validate(applyDefaults(manifest, sample));
     for (const e of leafErrors(result.errors))
       error('SAMPLE_INVALID', `sample: ${e.error}`, `sample${e.instanceLocation.slice(1)}`);
   } catch (e) {
@@ -242,22 +245,28 @@ export function applyDefaults(manifest: TemplateManifest, input: Personalization
   return out;
 }
 
-/** One `Validator` for many inputs (a bulk import). Issues name the failed keyword; `x-pattern-message` words a failed pattern. */
+const PATTERN_MESSAGE = 'Does not match the expected format.';
+
+/** A checker for many inputs (a bulk import); patterns run on RE2 per input. Issues name the failed keyword; `x-pattern-message` words a failed pattern. */
 export function inputChecker(manifest: TemplateManifest) {
-  const validator = new Validator(manifest.inputs as never, '2020-12', false);
-  return (input: Personalization) =>
-    leafErrors(validator.validate(applyDefaults(manifest, input)).errors).map((e) => {
+  return (input: Personalization) => {
+    const full = applyDefaults(manifest, input);
+    // Patterns are decided on RE2 first; the validator never runs a backtracking regex.
+    const validator = new Validator(schemaFor(manifest.inputs, full), '2020-12', false);
+    return leafErrors(validator.validate(full).errors).map((e) => {
       const path = e.instanceLocation.replace(/^#\/?/, '');
       const own = (manifest.inputs.properties as Record<string, unknown> | undefined)?.[path];
       const said = isRecord(own) && e.keyword === 'pattern' ? own['x-pattern-message'] : undefined;
       return {
         severity: 'error' as const,
         code: 'INPUT',
-        message: typeof said === 'string' ? said : e.error,
+        message:
+          typeof said === 'string' ? said : e.keyword === 'pattern' ? PATTERN_MESSAGE : e.error,
         path,
         keyword: e.keyword,
       };
     });
+  };
 }
 
 /** Validates against the inputs schema after defaults. Returns the problems (empty when valid). */

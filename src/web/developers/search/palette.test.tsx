@@ -288,10 +288,11 @@ describe('results while typing', () => {
     const { user, box } = await mount();
     await user.type(box, 'TEMPLATE_RELEASE_REQUIRED');
     await screen.findByRole('complementary', { name: 'Preview' });
+    // Let the ranking settle first: a second error code holds the same words.
+    await settle(400);
     await user.keyboard('{ArrowDown}');
     const picked = screen.getByRole('option', { selected: true }).textContent;
     const order = rows();
-    await settle(400);
     release(Response.json({ items: [{ at: Date.now() - 1000 }], nextCursor: null }));
     await settle(100);
     expect(rows()).toEqual(order);

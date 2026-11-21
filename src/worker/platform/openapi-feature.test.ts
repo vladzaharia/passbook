@@ -12,6 +12,7 @@ type Doc = { paths: Record<string, Record<string, { 'x-feature'?: unknown }>> };
  */
 const FEATURE_ROUTES: Record<string, unknown> = {
   'post /api/v1/templates/uploads': 'templates.uploads',
+  'post /api/v1/scanning-sessions/setup': 'scanning.devices',
   'post /api/v1/templates/{id}/scan-setup': 'scanning.devices',
   // Declared with `xFeature` (documentation): the service and its grant enforce them.
   'post /api/v1/passes/{id}/prints': 'print',

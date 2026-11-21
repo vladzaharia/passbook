@@ -37,6 +37,14 @@ describe('redactBody keeps only what is known to be safe', () => {
     expect(out.flag).toBe('[redacted]');
   });
 
+  it('blanks cursors and state, in bodies and in queries', () => {
+    const out = JSON.parse(redacted({ items: [], nextCursor: 'Sm9obiBTbWl0aA', state: 'abc123' }));
+    expect(out).toEqual({ items: [], nextCursor: '[redacted]', state: '[redacted]' });
+    expect(redactQuery('?limit=5&cursor=Sm9obiBTbWl0aA&state=abc&after=x')).toBe(
+      'limit=5&cursor=%5Bredacted%5D&state=%5Bredacted%5D&after=%5Bredacted%5D',
+    );
+  });
+
   it('blanks the reviewer’s probes: names, notes, city, ip, pins, pairing codes, links, secrets', () => {
     const out = redacted({
       name: `${S}-name`,

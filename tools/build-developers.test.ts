@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { DEVELOPERS_INDEXABLE, PATHS } from '../src/shared/developers.ts';
+import { DEVELOPERS_INDEXABLE, NOT_FOUND_FILE, PATHS, twin } from '../src/shared/developers.ts';
 import { loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
 import { INDEX_BUDGET_GZIP } from '../src/web/developers/search/build.ts';
@@ -74,6 +74,16 @@ describe('build-developers', () => {
     }
   });
 
+  it('writes a markdown twin for every page, and llms.txt links only to twins that exist', () => {
+    for (const [url, entry] of Object.entries(manifest))
+      if (entry.type.startsWith('text/html') && url !== NOT_FOUND_FILE)
+        expect(manifest[twin(url)], url).toBeDefined();
+    for (const m of read('/developers/llms.txt').matchAll(
+      /\]\(https:\/\/passbook\.mobile(\/[^)]+)\)/g,
+    ))
+      expect(manifest[m[1] ?? ''], m[1]).toBeDefined();
+  });
+
   it('resolves every anchor: a method id and an operation id alias per operation, every #link', () => {
     for (const page of site.pages) {
       const html = read(`/developers/reference/${page.slug}.html`);
@@ -133,7 +143,8 @@ describe('build-developers', () => {
       expect(html, url).not.toMatch(/<script(?![^>]*\ssrc=)/);
       expect(html, url).not.toMatch(/<style|\sstyle="|\son[a-z]+="/);
       expect(html.includes('name="robots"'), url).toBe(!DEVELOPERS_INDEXABLE);
-      expect(html, url).toContain(`rel="canonical" href="https://passbook.mobile${url}"`);
+      if (url !== NOT_FOUND_FILE)
+        expect(html, url).toContain(`rel="canonical" href="https://passbook.mobile${url}"`);
     }
   });
 

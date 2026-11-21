@@ -1,7 +1,7 @@
 import { formatDay } from '@/web/lib/format.ts';
 import { KeyValue, SecretReveal } from '@/web/ui/index.ts';
 import { ROLE_LABELS } from '../orgs/org-roles.ts';
-import type { ApiKey } from './queries.ts';
+import { type ApiKey, SCOPE_LABEL } from './queries.ts';
 
 /** The one-time key on the kit's SecretReveal, with the credential it belongs to beneath. */
 export function KeyDisclosure({
@@ -29,7 +29,10 @@ export function KeyDisclosure({
             : [{ label: 'Type', value: created.kind === 'personal' ? 'Personal' : 'Platform' }]),
           {
             label: 'Permissions',
-            value: [...created.roles.map((r) => ROLE_LABELS[r]), ...created.scopes].join(', '),
+            value: [
+              ...created.roles.map((r) => ROLE_LABELS[r]),
+              ...created.scopes.map((s) => SCOPE_LABEL[s] ?? s),
+            ].join(', '),
           },
           ...(created.ipAllow.length
             ? [{ label: 'Allowed IPs', value: created.ipAllow.join(', ') }]

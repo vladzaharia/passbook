@@ -42,6 +42,8 @@ export const OrgSchema = z.object({
   status: z.enum(['active', 'suspended', 'deleted']),
   /** A personal org: it belongs to one platform admin. The owner is shown to platform admins only. */
   personal: z.boolean().default(false),
+  /** A `developer` org is a test-only sandbox: it never holds Live. */
+  kind: z.enum(['standard', 'developer']).optional(),
   defaultIdentityId: IdSchema.nullable(),
   branding: OrgBrandingSchema,
   createdAt: TimestampSchema,

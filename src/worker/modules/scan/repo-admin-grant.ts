@@ -1,10 +1,5 @@
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
-import {
-  type Check,
-  epochIs,
-  exactlyOne,
-  templateUsableSql,
-} from '../../platform/authority-checks.ts';
+import { type Check, epochIs, templateUsableSql } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
@@ -14,6 +9,7 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import { tagged } from './setup-check-merge.ts';
 
 export type AdminAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
 
@@ -41,15 +37,18 @@ export function adminAuthorityOf(
 
 export const adminPrincipal = (authority: AdminAuthority): Principal => tenantPrincipal(authority);
 
+export const SETUP_APPLY = 'org_mode.scan.setup.apply';
+
 /** An API key that holds `scanning:write` for this org (the scan setup of a template). */
 export type KeyAdminAuthority = Extract<TenantPassWrite, { kind: 'api_key' }>;
 
-/** The scan admin grants a key may hold: the writes of a template's scan setup, and nothing else. */
+/** The scan admin grants a key may hold: the writes of a template's scan setup, and the one-call setup (which refuses zones and staff for a key). */
 const KEY_PURPOSES: ReadonlySet<string> = new Set([
   'org_mode.scan.event.create',
   'org_mode.scan.event.archive',
   'org_mode.scan.session.create',
   'org_mode.scan.session.update',
+  SETUP_APPLY,
 ]);
 
 /**
@@ -66,9 +65,13 @@ export function grantAuthorityOf(
   purpose?: string,
 ): AdminAuthority | KeyAdminAuthority {
   if (authority?.kind !== 'api_key') return adminAuthorityOf(authority, actorId, orgId);
+  const admin = authority.scope === 'scanning:admin';
   if (
     (purpose !== undefined && !KEY_PURPOSES.has(purpose)) ||
-    authority.scope !== 'scanning:write' ||
+    // `scanning:admin` (staff PINs, pairing codes) serves the one-call setup only, for an org-bound live key.
+    (admin &&
+      (purpose !== SETUP_APPLY || authority.keyOrgId !== orgId || authority.mode !== 'live')) ||
+    (!admin && authority.scope !== 'scanning:write') ||
     authority.keyId !== actorId ||
     authority.orgId !== orgId
   )
@@ -97,6 +100,20 @@ const SCAN_ADMIN_TABLES = [
   'scanner_templates',
   'scanner_setups',
 ] as const;
+
+/**
+ * The tables the one-call setup grant may write, by caller: a console session all of them; a
+ * `scanning:write` key neither staff nor, in test mode, zones (both are org-wide, not moded); a
+ * live org-bound `scanning:admin` key all of them. The grant refuses the rest itself.
+ */
+export function setupTables(authority: TenantPassWrite): readonly string[] {
+  if (authority.kind === 'session') return SCAN_ADMIN_TABLES;
+  const live = authority.mode === 'live';
+  const admin = authority.scope === 'scanning:admin' && live && authority.keyOrgId !== null;
+  return SCAN_ADMIN_TABLES.filter(
+    (t) => (t !== 'scan_staff' || admin) && (t !== 'scan_zones' || live),
+  );
+}
 
 /** Any captured tenant session, whatever its capability (a read that fills a cache). */
 export function sessionGrant(
@@ -151,10 +168,24 @@ export const eventEpoch = (id: string, epoch: number): Check =>
   epochIs('scan_events', id, 'config_epoch', epoch);
 
 /** Events the configuration points at exist in the grant's org and mode and are not archived. */
-export const eventsOpen = (ids: readonly (string | null | undefined)[]): Check[] =>
-  [...new Set(ids.filter((id): id is string => !!id))].map((id) =>
-    exactlyOne('scan_events', { id, archived_at: null }, undefined, 'config'),
-  );
+export const eventsOpen = (ids: readonly (string | null | undefined)[]): Check[] => {
+  const unique = [...new Set(ids.filter((id): id is string => !!id))];
+  // One bind for any count: the one-call setup puts every door's events in one grant row.
+  return unique.length === 0
+    ? []
+    : [
+        tagged(
+          tenantCheck(
+            'config',
+            `NOT EXISTS (SELECT 1 FROM json_each(?) j WHERE NOT EXISTS (SELECT 1 FROM scan_events e
+            WHERE e.id = j.value AND e.archived_at IS NULL AND e.org_id = {org} AND e.mode = {mode}))`,
+            [JSON.stringify(unique)],
+          ),
+          'events',
+          unique,
+        ),
+      ];
+};
 
 const TEMPLATE_STATUS = {
   active: templateUsableSql('t', 'issue'),
@@ -171,12 +202,16 @@ export function templatesUsable(
 ): Check[] {
   if (ids.length === 0) return [];
   return [
-    tenantCheck(
-      'config',
-      `NOT EXISTS (SELECT 1 FROM json_each(?) j
+    tagged(
+      tenantCheck(
+        'config',
+        `NOT EXISTS (SELECT 1 FROM json_each(?) j
         WHERE NOT EXISTS (SELECT 1 FROM templates t WHERE t.id = j.value AND ${TEMPLATE_STATUS[status]}
           AND (t.org_id IS NULL OR t.org_id = {org})))`,
-      [JSON.stringify([...new Set(ids)])],
+        [JSON.stringify([...new Set(ids)])],
+      ),
+      `templates:${status}`,
+      [...new Set(ids)],
     ),
   ];
 }

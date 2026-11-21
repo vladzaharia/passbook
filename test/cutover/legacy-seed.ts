@@ -104,6 +104,8 @@ export async function migrateForward(db: D1Database): Promise<void> {
  */
 export async function addGrantLimitKey(db: D1Database): Promise<void> {
   await db.exec('ALTER TABLE authority_grants ADD COLUMN limit_key TEXT');
+  // The grant SQL reads orgs.kind (0156) the same way.
+  await db.exec("ALTER TABLE orgs ADD COLUMN kind TEXT NOT NULL DEFAULT 'standard'");
 }
 
 async function dropGrantLimitKey(db: D1Database): Promise<void> {
@@ -111,6 +113,10 @@ async function dropGrantLimitKey(db: D1Database): Promise<void> {
     .prepare("SELECT 1 AS x FROM pragma_table_info('authority_grants') WHERE name = 'limit_key'")
     .first();
   if (has) await db.exec('ALTER TABLE authority_grants DROP COLUMN limit_key');
+  const kind = await db
+    .prepare("SELECT 1 AS x FROM pragma_table_info('orgs') WHERE name = 'kind'")
+    .first();
+  if (kind) await db.exec('ALTER TABLE orgs DROP COLUMN kind');
 }
 
 /** The rest of the release, after the promote: the seed's tokens are sealed (the pre-0070 cron), then 0070 runs. */

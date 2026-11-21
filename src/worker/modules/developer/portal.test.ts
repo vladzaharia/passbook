@@ -7,7 +7,16 @@ import type { AppEnv } from '../../platform/env.ts';
 const ORIGIN = 'https://passbook.mobile';
 const SPA = '<!doctype html><div id="root"></div>';
 const PAGE = '<!doctype html><title>Passes</title>';
+const NOT_FOUND = '<!doctype html><title>Page not found</title>';
 const MANIFEST = {
+  '/developers/not-found.html': {
+    asset: '/developers/not-found',
+    type: 'text/html; charset=utf-8',
+  },
+  '/developers/errors/INVALID_INPUT': {
+    asset: '/developers/errors/INVALID_INPUT',
+    type: 'text/html; charset=utf-8',
+  },
   '/developers': { asset: '/developers/', type: 'text/html; charset=utf-8' },
   '/developers/reference/passes': {
     asset: '/developers/reference/passes',
@@ -38,6 +47,10 @@ function appEnv(fetched: string[] = [], manifest: object = MANIFEST): AppEnv {
         path === '/developers/console'
       )
         return new Response(PAGE, { headers: { 'content-type': 'text/html', etag: '"v1"' } });
+      if (path === '/developers/not-found')
+        return new Response(NOT_FOUND, { headers: { 'content-type': 'text/html' } });
+      if (path === '/developers/errors/INVALID_INPUT')
+        return new Response(PAGE, { headers: { 'content-type': 'text/html' } });
       if (path === '/developers/reference/passes.md')
         return new Response('# Passes', { headers: { 'content-type': 'text/markdown' } });
       return new Response(SPA, { headers: { 'content-type': 'text/html' } });
@@ -76,6 +89,7 @@ describe('developer portal route', () => {
       const other = (await call(path)).headers.get('content-security-policy') ?? '';
       expect(other, path).not.toContain('cloudflare');
       expect(other, path).toContain("frame-src 'none'");
+      expect(other, path).toContain("trusted-types 'none'");
     }
   });
 
@@ -87,12 +101,10 @@ describe('developer portal route', () => {
     expect(res.headers.get('content-security-policy')).not.toContain('trusted-types');
   });
 
-  it('serves the home page for /developers and /developers/, and a markdown twin', async () => {
-    for (const path of ['/developers', '/developers/']) {
-      const res = await call(path);
-      expect(res.status, path).toBe(200);
-      expect(await res.text()).toBe(PAGE);
-    }
+  it('serves the home page for /developers, and a markdown twin', async () => {
+    const res = await call('/developers');
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(PAGE);
     const md = await call('/developers/reference/passes.md');
     expect(md.headers.get('content-type')).toBe('text/markdown; charset=utf-8');
     expect(md.headers.get('content-security-policy')).not.toContain('trusted-types');
@@ -108,6 +120,52 @@ describe('developer portal route', () => {
       expect(res.status, path).toBe(404);
       expect(await res.text(), path).not.toBe(SPA);
     }
+  });
+
+  it('answers a page that does not exist with the portal page, 404 and noindex, not problem+json', async () => {
+    for (const path of ['/developers/nope', '/developers/errors/x']) {
+      const res = await call(path);
+      expect(res.status, path).toBe(404);
+      expect(res.headers.get('content-type'), path).toBe('text/html; charset=utf-8');
+      expect(await res.text(), path).toBe(NOT_FOUND);
+      expect(res.headers.get('x-robots-tag'), path).toBe('noindex, nofollow');
+      expect(res.headers.get('cache-control'), path).toBe('no-store');
+      expect(res.headers.get('content-security-policy'), path).toContain("script-src 'self';");
+    }
+    const head = await call('/developers/nope', { method: 'HEAD' });
+    expect(head.status).toBe(404);
+    expect(await head.text()).toBe('');
+  });
+
+  it('keeps problem+json for files that do not exist', async () => {
+    const res = await call('/developers/x.md');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('content-type')).toContain('application/problem+json');
+  });
+
+  it('redirects a trailing slash, and a code in the wrong case, with a 308', async () => {
+    const moves: [string, string][] = [
+      ['/developers/', '/developers'],
+      ['/developers/reference/passes/?x=1', '/developers/reference/passes?x=1'],
+      ['/developers/errors/invalid_input', '/developers/errors/INVALID_INPUT'],
+      ['/developers/Reference/Passes', '/developers/reference/passes'],
+    ];
+    for (const [from, to] of moves) {
+      const res = await call(from);
+      expect(res.status, from).toBe(308);
+      expect(
+        new URL(res.headers.get('location') ?? '', ORIGIN).pathname +
+          new URL(res.headers.get('location') ?? '', ORIGIN).search,
+        from,
+      ).toBe(to);
+    }
+  });
+
+  it('marks pages no-transform, so the edge injects no analytics beacon the CSP would refuse', async () => {
+    const page = await call('/developers/reference/passes');
+    expect(page.headers.get('cache-control')).toBe('public, max-age=300, no-transform');
+    const md = await call('/developers/reference/passes.md');
+    expect(md.headers.get('cache-control')).toBe('public, max-age=300');
   });
 
   it('answers 404 for everything when the build left no manifest', async () => {

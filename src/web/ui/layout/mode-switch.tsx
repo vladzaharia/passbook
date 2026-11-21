@@ -1,7 +1,7 @@
 import { FlaskConical } from 'lucide-react';
 import { useId } from 'react';
 import { cn } from '../../lib/cn.ts';
-import { setMode, useMode } from '../../lib/mode.ts';
+import { setMode, useMode, useTestOnlyScope } from '../../lib/mode.ts';
 import { Switch } from '../switch.tsx';
 import { Tooltip } from '../tooltip.tsx';
 
@@ -9,6 +9,7 @@ import { Tooltip } from '../tooltip.tsx';
 export function ModeSwitch() {
   const mode = useMode();
   const on = mode === 'test';
+  const locked = useTestOnlyScope();
   const label = useId();
   return (
     <div
@@ -23,9 +24,18 @@ export function ModeSwitch() {
       <span id={label} className="whitespace-nowrap max-[28rem]:sr-only">
         Test mode
       </span>
-      <Tooltip content={on ? 'Leave Test mode' : 'Try things without sending email'}>
+      <Tooltip
+        content={
+          locked
+            ? 'This organization is test-only'
+            : on
+              ? 'Leave Test mode'
+              : 'Try things without sending email'
+        }
+      >
         <Switch
           checked={on}
+          disabled={locked}
           onCheckedChange={(next) => setMode(next ? 'test' : 'live')}
           aria-labelledby={label}
           className="data-[state=checked]:border-warning-border data-[state=checked]:bg-warning"

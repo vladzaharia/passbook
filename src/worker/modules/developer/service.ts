@@ -39,9 +39,10 @@ import { closeSandbox, insertSandbox } from './repo-grants.ts';
 const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';
 const KEY_TTL_MS = 30 * 86_400_000;
 
-/** A key a sandbox holds can reach everything a test org can, except minting keys and the terminal scope. */
+/** A key a sandbox holds can reach everything a test org can, except minting keys, the terminal scope and the live-only scanning setup scope. */
 const KEY_SCOPES = MINTABLE_SCOPES.filter(
-  (s) => !isPlatformScope(s) && s !== 'api-keys:write' && s !== 'scans:write',
+  (s) =>
+    !isPlatformScope(s) && s !== 'api-keys:write' && s !== 'scans:write' && s !== 'scanning:admin',
 );
 
 const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbox => ({

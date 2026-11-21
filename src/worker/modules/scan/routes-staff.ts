@@ -46,6 +46,8 @@ const OrgQuery = z.object({ orgId: IdSchema });
 const CreatedStaff = z.object({ staff: ScanStaffSchema, ...StaffPinSchema.shape });
 const StaffList = z.object({
   items: z.array(ScanStaffSchema),
+  /** Present when PIN-only sign-in is off after repeated wrong PINs. */
+  pinOnlyOff: z.literal(true).optional(),
   hasMore: z.boolean().optional(),
   nextCursor: z.string().optional(),
 });

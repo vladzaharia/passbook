@@ -61,6 +61,18 @@ export const managerRosterStatement = (
     [orgId],
   );
 
+/** Every active person of an org, for sign-in by PIN alone (the caller has checked the count). */
+export const activeRosterStatement = (db: Db, orgId: string): D1PreparedStatement =>
+  stmt(
+    db,
+    `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND disabled_at IS NULL ORDER BY id`,
+    [orgId],
+  );
+
+/** Everyone ever added, disabled included: a new PIN must not equal one that re-enabling would bring back. */
+export const fullRosterStatement = (db: Db, orgId: string): D1PreparedStatement =>
+  stmt(db, `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? ORDER BY id`, [orgId]);
+
 /** The named person, or every active manager when the PIN names none. */
 export const approverStatement = (
   db: Db,
@@ -82,7 +94,7 @@ export interface NewStaff {
   pinHash: string;
   /** The MAC root the hash was made under. */
   pinMacVersion: number;
-  createdBy: string;
+  createdBy: string | null;
   now: number;
 }
 

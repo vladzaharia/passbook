@@ -1,5 +1,6 @@
 import { Validator } from '@cfworker/json-schema';
 import { minorDigits, toMinor } from '../../shared/money.ts';
+import { schemaFor } from '../../shared/safe-pattern.ts';
 import type { Json, TemplateManifest } from '../types.ts';
 import { exprReferences } from './expr.ts';
 
@@ -243,7 +244,9 @@ function kindIssues(a: Rec, path: string, ctx: ActionContext): void {
       return;
     }
     if (a.value !== undefined) {
-      const ok = new Validator(schema as never, '2020-12', false).validate(a.value as Json).valid;
+      const ok = new Validator(schemaFor(schema, a.value), '2020-12', false).validate(
+        a.value as Json,
+      ).valid;
       if (!ok) error('SCAN_VALUE_INVALID', 'value does not fit the input.', `${path}.value`);
     }
     return;

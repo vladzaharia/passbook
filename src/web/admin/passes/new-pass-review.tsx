@@ -1,10 +1,17 @@
 import { Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { formatExpiry } from '../../lib/format.ts';
 import { Button, Callout, Card, CardBody } from '../../ui/index.ts';
-import { describeSchema, type FormValues } from './schema-form/index.ts';
+import { describeSchema, type FieldDef, type FormValues } from './schema-form/index.ts';
 
-const shown = (v: unknown) =>
-  v === undefined || v === '' ? null : typeof v === 'string' ? v : JSON.stringify(v);
+const shown = (v: unknown, field?: FieldDef) => {
+  if (v === undefined || v === '') return null;
+  if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+  if (typeof v !== 'string') return JSON.stringify(v);
+  const option = field?.options?.find((o) => o.value === v);
+  if (option) return option.label;
+  return field?.widget === 'datetime' ? formatExpiry(v) || v : v;
+};
 
 interface Row {
   label: string;
@@ -17,7 +24,6 @@ export function ReviewStep({
   org,
   mode,
   template,
-  templateVersion,
   release,
   schema,
   input,
@@ -31,7 +37,6 @@ export function ReviewStep({
   org: string | undefined;
   mode: 'live' | 'test';
   template: string | undefined;
-  templateVersion: string | undefined;
   release?: { id: string; generation: number; provider: 'apple' } | undefined;
   schema: unknown;
   input: FormValues;
@@ -49,14 +54,13 @@ export function ReviewStep({
     .map((w) => w.message);
   const fields = describeSchema(schema)
     .flatMap((g) => g.fields)
-    .filter((f) => f.required || shown(input[f.key]) !== null);
+    .filter((f) => f.required || shown(input[f.key], f) !== null);
   const rows: Row[] = [
     { label: 'Organization', value: org, ...(steps.org !== undefined ? { step: steps.org } : {}) },
     { label: 'Mode', value: mode === 'test' ? 'Test' : 'Live' },
     { label: 'Template', value: template, step: steps.template },
-    ...(templateVersion ? [{ label: 'Release version', value: templateVersion }] : []),
     ...(release ? [{ label: 'Wallet provider', value: 'Apple Wallet' }] : []),
-    ...fields.map((f) => ({ label: f.label, value: shown(input[f.key]), step: steps.details })),
+    ...fields.map((f) => ({ label: f.label, value: shown(input[f.key], f), step: steps.details })),
     { label: 'Holder', value: email.trim() || 'No holder yet', step: steps.holder },
     {
       label: 'Email',
