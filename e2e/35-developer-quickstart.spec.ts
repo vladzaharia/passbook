@@ -102,7 +102,7 @@ test('quickstart: from the page view to a 201 and the live TEST preview in six a
   // In Admin the sandbox is Test only: there is no Test switch, and the Overview points back here.
   await page.goto('/admin');
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
-  await expect(page.getByRole('switch', { name: 'Test mode' })).toHaveCount(0);
+  await expect(page.getByRole('radiogroup', { name: 'Mode' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
 
   // The platform's funnel card counts it, in numbers only.

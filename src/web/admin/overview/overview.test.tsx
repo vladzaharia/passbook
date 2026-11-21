@@ -577,7 +577,7 @@ describe('get started', () => {
     expect(modes.length).toBeGreaterThan(0);
     expect(modes.every((mode) => mode === null)).toBe(true);
     expect(screen.queryByText(/Test mode/)).toBeNull();
-    expect(screen.queryByRole('switch', { name: 'Test mode' })).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull();
   });
 
   it('replaces the charts with four steps that check themselves', async () => {
