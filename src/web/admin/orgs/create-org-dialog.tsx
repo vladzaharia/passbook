@@ -8,6 +8,7 @@ import {
   Form,
   FormField,
   Input,
+  SwitchRow,
   useFormErrors,
 } from '@/web/ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
@@ -48,6 +49,7 @@ export function CreateOrgDialog({
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugEdited, setSlugEdited] = useState(false);
+  const [addMe, setAddMe] = useState(true);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const check = useFormErrors(validate(name, slug));
@@ -58,6 +60,7 @@ export function CreateOrgDialog({
     setName('');
     setSlug('');
     setSlugEdited(false);
+    setAddMe(true);
     check.reset();
     setServerErrors({});
     setFormError(undefined);
@@ -66,7 +69,7 @@ export function CreateOrgDialog({
   async function submit() {
     setFormError(undefined);
     try {
-      const org = await create.mutateAsync({ name: name.trim(), slug });
+      const org = await create.mutateAsync({ name: name.trim(), slug, addMe });
       close();
       markCreated(`org:${org.id}`);
       void navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } });
@@ -140,6 +143,7 @@ export function CreateOrgDialog({
               />
             )}
           </FormField>
+          <SwitchRow label="Add me as admin" checked={addMe} onCheckedChange={setAddMe} />
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
         </Form>
       </DialogContent>

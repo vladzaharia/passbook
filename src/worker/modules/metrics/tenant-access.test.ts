@@ -222,8 +222,9 @@ describe('tenant metrics authorization', () => {
     const test = MetricsOverviewSchema.parse(await (await overview(q, testHeaders)).json());
     expect(live.totals).toMatchObject({ passes: 1, issued: 1 });
     expect(test.totals).toMatchObject({ passes: 1, issued: 1 });
-    expect(live.setup).toMatchObject({ passes: 1, passEmailsSent: 1, latestPassId: s.passA.id });
-    expect(test.setup).toMatchObject({ passes: 1, passEmailsSent: 1, latestPassId: s.passA2.id });
+    // Setup passes count Test and Live; the sent email and the newest pass follow the mode.
+    expect(live.setup).toMatchObject({ passes: 2, passEmailsSent: 1, latestPassId: s.passA.id });
+    expect(test.setup).toMatchObject({ passes: 2, passEmailsSent: 1, latestPassId: s.passA2.id });
     const adminTest = fake.session({ userId: s.person.id, roles: ['admin', 'user'], mode: 'test' });
     const platformResponse = await app.request(
       `/api/v1/metrics/platform/overview${q}`,
@@ -234,7 +235,7 @@ describe('tenant metrics authorization', () => {
     expect(platform.totals.passes).toBe(1);
     // Platform directory filters expose counts only and keep the checklist live-only; a cached
     // tenant response for the same org and mode must not be reused.
-    expect(platform.setup).toMatchObject({ passes: 1, passEmailsSent: 1, latestPassId: null });
+    expect(platform.setup).toMatchObject({ passes: 2, passEmailsSent: 1, latestPassId: null });
     const testAgain = MetricsOverviewSchema.parse(await (await overview(q, testHeaders)).json());
     expect(testAgain.setup.latestPassId).toBe(s.passA2.id);
     await run(base.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [s.a.id]);
@@ -408,6 +409,7 @@ describe('tenant metrics authorization', () => {
       assignedTemplates: 2,
       passes: 2,
       approvedTemplates: 0,
+      releasedTemplates: 0,
       walletPasses: 1,
       passEmailsSent: 3,
       latestPassId: s.passA2.id,
@@ -447,6 +449,7 @@ describe('tenant metrics authorization', () => {
       assignedTemplates: 1,
       passes: 1,
       approvedTemplates: 0,
+      releasedTemplates: 0,
       walletPasses: 1,
       passEmailsSent: 1,
       latestPassId: s.passA.id,

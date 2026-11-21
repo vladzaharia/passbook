@@ -319,7 +319,7 @@ describe('orgs list', () => {
     expect(within(dialog).getByLabelText(/Slug/)).toHaveValue('acme-gym');
     expect(within(dialog).getByLabelText(/Slug/)).not.toHaveAttribute('aria-invalid');
     await ui.click(within(dialog).getByRole('button', { name: 'Create' }));
-    await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym' }));
+    await waitFor(() => expect(body).toEqual({ name: 'Acme Gym', slug: 'acme-gym', addMe: true }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/platform/orgs/o2'));
     // The new org says so once, with the next steps; no toast.
     expect(await screen.findByText('Organization created')).toBeInTheDocument();

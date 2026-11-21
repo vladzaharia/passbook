@@ -154,6 +154,14 @@ export const ReviewTemplateSchema = z.strictObject({
 });
 export type ReviewTemplate = z.infer<typeof ReviewTemplateSchema>;
 
+/** The modes the reviewer approved, and the release when `release` was set. */
+export const ReviewResultSchema = z.object({
+  version: z.string(),
+  approved: z.array(ModeSchema),
+  release: ReleaseResultSchema.nullable(),
+});
+export type ReviewResult = z.infer<typeof ReviewResultSchema>;
+
 export const TemplateReviewQuerySchema = z.object({
   orgId: IdSchema.optional(),
   state: z.enum(['open']).default('open'),

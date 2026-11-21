@@ -1,10 +1,16 @@
+import type { EntitlementPreset } from '../../../shared/contracts/entitlements.ts';
 import { grant } from '../../platform/authority.ts';
-import { PERSONAL_ORG_PURPOSE, PERSONAL_ORG_TABLES } from '../../platform/authority-personal.ts';
+import {
+  CREATOR_ORG_PURPOSE,
+  PERSONAL_ORG_PURPOSE,
+  PERSONAL_ORG_TABLES,
+} from '../../platform/authority-personal.ts';
 import { all, first, placeholders } from '../../platform/db.ts';
 import { addOrgEntitlements } from '../../platform/entitlements.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import type { OrgRow } from './repo.ts';
 import type { OrgAdmin } from './repo-org-writes.ts';
 
 export interface PersonalUser {
@@ -112,5 +118,67 @@ export async function insertPersonalOrg(
     targetId: row.orgId,
     detail: { slug: row.slug, preset: 'standard', personal: true },
   });
+  await g.commit();
+}
+
+export interface CreatorMembership {
+  email: string;
+  invitationId: string;
+  membershipId: string;
+  tokenHash: string;
+}
+
+/**
+ * `platform.org.create_admin`: the org, its entitlements row, the creator's accepted invitation and
+ * `org_admin` membership commit together, only while the admin session is live.
+ */
+export async function insertOrgWithCreator(
+  ctx: ServiceContext,
+  row: Omit<OrgRow, 'config_revision' | 'personal_user_id'>,
+  admin: OrgAdmin,
+  preset: EntitlementPreset,
+  member: CreatorMembership,
+): Promise<void> {
+  const g = grant(ctx, {
+    purpose: CREATOR_ORG_PURPOSE,
+    principal: { kind: 'platform', userId: admin.userId, sessionIdHash: admin.sessionId },
+    target: row.id,
+    tables: PERSONAL_ORG_TABLES,
+  });
+  const roles = '["org_admin"]';
+  g.insertSelect(
+    'orgs',
+    ['id', 'slug', 'name', 'status', 'default_identity_id', 'branding', 'created_at', 'updated_at'],
+    [
+      row.id,
+      row.slug,
+      row.name,
+      row.status,
+      row.default_identity_id,
+      row.branding,
+      row.created_at,
+      row.updated_at,
+    ],
+  );
+  addOrgEntitlements(g, row.id, preset, row.updated_at);
+  g.insertSelect(
+    'org_invitations',
+    ['id', 'org_id', 'email', 'roles', 'token_hash', 'created_at', 'expires_at', 'accepted_at'],
+    [
+      member.invitationId,
+      row.id,
+      member.email,
+      roles,
+      member.tokenHash,
+      row.created_at,
+      row.created_at,
+      row.created_at,
+    ],
+  );
+  g.insertSelect(
+    'org_memberships',
+    ['id', 'org_id', 'user_id', 'invitation_id', 'roles', 'created_at'],
+    [member.membershipId, row.id, admin.userId, member.invitationId, roles, row.created_at],
+  );
   await g.commit();
 }

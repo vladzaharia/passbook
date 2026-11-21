@@ -4909,6 +4909,15 @@
       ]
     },
     {
+      "code": "TEMPLATE_REVIEW_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
       "code": "TEMPLATE_REVIEW_REQUIRED",
       "statuses": [
         409

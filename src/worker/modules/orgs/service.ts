@@ -16,6 +16,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
 import { closeOrg } from '../org-lifecycle/service.ts';
@@ -36,7 +37,7 @@ import {
   type OrgWriteAuthority,
   updateOrgRow,
 } from './repo-org-writes.ts';
-import { personalOwners } from './repo-personal.ts';
+import { getPersonalUser, insertOrgWithCreator, personalOwners } from './repo-personal.ts';
 
 type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
@@ -176,14 +177,23 @@ export async function createOrg(
     kind: 'standard',
   };
   const preset = input.preset ?? 'standard';
-  await insertOrgAsAdmin(ctx, row, admin, preset);
+  const addMe = input.addMe ?? true;
+  const me = addMe ? await getPersonalUser(ctx.env.DB, admin.userId) : null;
+  if (me?.status === 'active')
+    await insertOrgWithCreator(ctx, row, admin, preset, {
+      email: me.primary_email,
+      invitationId: ctx.ids.id(),
+      membershipId: ctx.ids.id(),
+      tokenHash: await sha256Hex(ctx.ids.token(32)),
+    });
+  else await insertOrgAsAdmin(ctx, row, admin, preset);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId: row.id,
     action: 'org.create',
     targetType: 'org',
     targetId: row.id,
-    detail: { slug: row.slug, name: row.name, preset },
+    detail: { slug: row.slug, name: row.name, preset, addMe: me?.status === 'active' },
   });
   return toDto(row);
 }

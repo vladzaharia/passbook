@@ -1570,6 +1570,7 @@ export type PlatformOrgsCreateParams = {
   defaultIdentityId?: string | null;
   branding?: OrgBranding;
   preset?: "legacy" | "trial" | "standard";
+  addMe?: boolean;
 };
 
 export type PlatformOrgsEntitlementsUpdateParams = {
@@ -1861,6 +1862,61 @@ export type ReleaseTemplate = {
     test?: number;
   };
   request?: boolean;
+};
+
+export type ReviewResult = {
+  version: string;
+  approved: Array<"live" | "test">;
+  release: {
+    version: string;
+    modes: {
+      test?: {
+        outcome: "released" | "kept" | "current" | "review_requested";
+        releaseId: string | null;
+        generation: number;
+        approvalKind: "peer" | "sole" | "test" | null;
+      };
+      live?: {
+        outcome: "released" | "kept" | "current" | "review_requested";
+        releaseId: string | null;
+        generation: number;
+        approvalKind: "peer" | "sole" | "test" | null;
+      };
+    };
+    state: {
+      live: {
+        version: string;
+        at: number;
+        by: string | null;
+      } | null;
+      test: {
+        version: string;
+        at: number;
+        state: "following" | "ahead";
+      } | null;
+      draft: {
+        version: string;
+        at: number;
+      } | null;
+      review: {
+        state: "none";
+      } | {
+        state: "open" | "approved";
+        version: string;
+        by: string | null;
+        at: number;
+      };
+      alone: boolean;
+      next: "design" | "try" | "release" | "request_review" | "review" | "wait" | null;
+    };
+  } | null;
+};
+
+export type ReviewTemplate = {
+  orgId?: string;
+  version: string;
+  release?: boolean;
+  note?: string;
 };
 
 export type RollCallsMarkParams = {
@@ -4028,6 +4084,18 @@ export type TemplateInputSchema = Record<string, unknown>;
 
 export type TemplatePage = {
   items: Array<TemplateSummary>;
+  nextCursor: string | null;
+};
+
+export type TemplateReviewList = {
+  items: Array<{
+    templateId: string;
+    templateName: string;
+    orgId: string;
+    version: string;
+    requestedBy: string | null;
+    requestedAt: number;
+  }>;
   nextCursor: string | null;
 };
 
