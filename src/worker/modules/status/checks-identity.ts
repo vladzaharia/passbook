@@ -44,6 +44,8 @@ export function identityComponent(
   if (days !== null && days < 0) lower('failing', 'Certificate expired.');
   else if (days !== null && days <= 30)
     lower('degraded', `${days} ${days === 1 ? 'day' : 'days'} left.`);
+  if (row.rotation === 'auto' && days !== null && days >= 0 && days <= 14)
+    lower('failing', 'Automatic renewal has not replaced it. Renew manually.');
   if (check && !check.ok) lower('failing', `Key check failed: ${check.code ?? 'unknown'}.`);
   if (row.source === 'db' && !check) lower('configured', 'Not checked yet.');
   const pushMethod = pushMethodOf(ctx.env, row.apns_binding, keyTeams.has(row.team_identifier));
