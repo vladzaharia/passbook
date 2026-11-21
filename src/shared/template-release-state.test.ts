@@ -91,6 +91,11 @@ const TABLE: [HeadState, Review, Record<Role, string | null>][] = [
     { solo: 'try', admin: 'try', author: 'request_review', reviewer: null, publisher: null },
   ],
   [
+    'draft',
+    'approved',
+    { solo: 'release', admin: 'release', author: 'wait', reviewer: 'wait', publisher: 'release' },
+  ],
+  [
     'tried',
     'none',
     {

@@ -75,9 +75,19 @@ export function registerTemplateReleaseFlow(router: Router): void {
       const id = c.req.valid('param').id;
       const orgId = orgIdOf(auth, body.orgId);
       const ctx = serviceContext(c);
+      // Why: a dry run writes nothing, so a reviewer may read the plan they are asked to approve.
+      const preview = !request && c.req.valid('query').dryRun === true;
       const options = {
-        scope: request ? ('templates:write' as const) : ('templates:publish' as const),
-        capability: request ? ('templates:author' as const) : ('templates:publish' as const),
+        scope: request
+          ? ('templates:write' as const)
+          : preview
+            ? ('templates:review' as const)
+            : ('templates:publish' as const),
+        capability: request
+          ? ('templates:author' as const)
+          : preview
+            ? ('templates:review' as const)
+            : ('templates:publish' as const),
         request,
         onReviewRequested: notifyReviewers,
       };

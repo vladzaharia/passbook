@@ -465,6 +465,22 @@ describe('release in one call', () => {
     });
   });
 
+  it("lets a reviewer without publish read the plan, and refuses the reviewer's real release", async () => {
+    const org = await makeOrg(f);
+    const author = await member(org.id, ['template_author']);
+    const reviewer = await member(org.id, ['template_reviewer']);
+    const t = await uploaded('Review Plan', org, author);
+    const body = { orgId: org.id, version: t.version };
+    const dry = await send(`/${t.templateId}/release`, body, reviewer, {
+      key: null,
+      query: '?dryRun=true',
+    });
+    expect(dry.status).toBe(200);
+    ReleasePlanSchema.parse(await dry.json());
+    expect(await candidates(t.templateId)).toBe(0);
+    await expectProblem(await send(`/${t.templateId}/release`, body, reviewer), 403, 'FORBIDDEN');
+  });
+
   it('shows a typed diff against the Live version', async () => {
     const org = await makeOrg(f);
     const owner = await member(org.id, ['org_admin']);
