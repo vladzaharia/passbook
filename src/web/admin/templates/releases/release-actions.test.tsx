@@ -39,7 +39,7 @@ describe('template release actions', () => {
     mountPanel({ mode: 'test' });
     const facts = (await screen.findByText('Published by')).closest('dl');
     if (!facts) throw new Error('Active release facts were not rendered');
-    for (const value of ['Version 2', 'Pia Publisher', 'Apple · Test'])
+    for (const value of ['Version 2', 'Pia Publisher'])
       expect(within(facts).getByText(value)).toBeVisible();
     const card = facts.closest('div.grid');
     if (!(card instanceof HTMLElement)) throw new Error('Active release card missing');

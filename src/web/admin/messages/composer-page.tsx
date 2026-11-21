@@ -74,15 +74,7 @@ export function ComposerPage({
   if (scope.isLoading) return <SkeletonDetail label="Loading organization access" />;
   if (scope.isError)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  if (!orgId)
-    return (
-      <EmptyState
-        heading
-        art="building"
-        title="Choose an organization"
-        description="Choose an organization in the top bar to continue."
-      />
-    );
+  if (!orgId) return <EmptyState heading art="building" title="Choose an organization" />;
   if (!canOperate) return <ForbiddenPage />;
   if (from && b && b.orgId !== orgId)
     return (

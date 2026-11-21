@@ -109,10 +109,6 @@ export function ScanOutline({
         <>
           <div className="rounded-lg border border-border p-3">
             <p className="text-sm font-medium text-fg-strong">Default scan screen</p>
-            <p className="mt-1 text-sm text-fg-muted">
-              Without an authored display, scanners show the template’s default layout and front
-              fields.
-            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
                 size="sm"

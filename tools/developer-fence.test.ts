@@ -52,6 +52,10 @@ const EXEMPT: Record<string, Exempt> = {
   'src/passkit/build.ts': { reason: LIBRARY },
   'src/passkit/sign/index.ts': { reason: LIBRARY },
   'src/passkit/package/zip.ts': { reason: LIBRARY },
+  'src/worker/modules/identities/certificates.ts': {
+    reason:
+      'signs a probe manifest to prove an uploaded certificate matches its key: the signature is checked and dropped, never stored, served or sent',
+  },
   'src/worker/modules/templates/build-check.ts': {
     reason:
       'a validation build of a template sample with the platform identity: the output is checked and dropped, never stored, served or sent',

@@ -54,7 +54,7 @@ const textOf = (node: ReactNode): string =>
         ? textOf(node.props.children)
         : '';
 
-/** Below 640 five or more tabs become a Select ("Section: Fields"); else a scrolling strip. */
+/** Below 640 five or more tabs become a Select named by the list's aria-label; else a scrolling strip. */
 export function TabsList({ className, children, ...props }: ComponentProps<typeof Primitive.List>) {
   const state = useContext(TabsContext);
   const phone = useMediaQuery(PHONE);
@@ -66,7 +66,7 @@ export function TabsList({ className, children, ...props }: ComponentProps<typeo
     return (
       <>
         <Select
-          label="Section"
+          aria-label={props['aria-label'] ?? 'Section'}
           className="w-full"
           value={state.value}
           onValueChange={state.setValue}

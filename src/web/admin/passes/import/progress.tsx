@@ -23,7 +23,6 @@ export function ImportProgress({ imp }: { imp: PassImportDto }) {
           max={Math.max(total, 1)}
           valueText={text}
         />
-        <p className="text-sm text-fg-muted">{C.progress.leave}</p>
       </CardBody>
     </Card>
   );

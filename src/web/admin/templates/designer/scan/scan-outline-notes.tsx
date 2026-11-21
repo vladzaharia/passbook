@@ -29,7 +29,7 @@ function Notes({ editor: e, refusedOnly = false }: { editor: Editor; refusedOnly
         help={
           e.display.notes?.refused && !safePreviewText(e.display.notes.refused)
             ? 'This note cannot be displayed safely. Enter a replacement.'
-            : 'Plain text only, up to 100 characters. Refused screens show no other template content.'
+            : 'Plain text, up to 100 characters.'
         }
       >
         {(control) => (

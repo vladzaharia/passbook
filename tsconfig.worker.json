@@ -11,6 +11,7 @@
     "src/shared",
     "src/generated",
     "src/web/pass-card",
+    "workers/apple-provisioner/src",
     "test",
     "worker-configuration.d.ts"
   ],

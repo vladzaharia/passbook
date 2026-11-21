@@ -139,12 +139,7 @@ export function AdmitsPicker({
   ];
   return (
     <div className="grid gap-4">
-      <SwitchRow
-        label="Any pass type"
-        help="Every pass this organization issues."
-        checked={any}
-        onCheckedChange={onAnyChange}
-      />
+      <SwitchRow label="Any pass type" checked={any} onCheckedChange={onAnyChange} />
       {any ? null : (
         <>
           <Input

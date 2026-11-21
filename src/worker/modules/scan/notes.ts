@@ -16,6 +16,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import { isPassHeld } from '../retention/holds.ts';
 import type { ScanActor } from './actor.ts';
 import { isManager, mayReadNotes, mayWriteNotes, passInScope } from './history-scope.ts';
 import {
@@ -240,6 +241,9 @@ async function changeGrant(ctx: ServiceContext, actor: ScanActor, passId: string
     throw new ForbiddenError('Only the author or a manager can change a note.', 'NOTE_ROLE');
   await enforceRateLimit(ctx.env, 'RL_SCAN_LOOKUP', `note:${actor.scanner?.id ?? actor.actorKey}`);
   const pass = await passFor(ctx, actor, passId);
+  // Edits and deletes destroy text a hold preserves; adds do not, so they stay open.
+  if (await isPassHeld(ctx, actor.orgId, passId))
+    throw new ConflictError('This pass is on hold, so its notes cannot change.', 'NOTE_HELD');
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.note',
     now,

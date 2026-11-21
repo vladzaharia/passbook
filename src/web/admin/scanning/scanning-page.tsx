@@ -23,6 +23,7 @@ import {
   type ScanningTab,
   withTab,
 } from './search.ts';
+import { useScanningSessions } from './sessions/api.ts';
 import { NewSessionDialog } from './sessions/session-dialog.tsx';
 import { SessionsTab } from './sessions/sessions-tab.tsx';
 import { StaffTab } from './staff-tab.tsx';
@@ -109,6 +110,11 @@ function ScopedScanningPage({
     if (canManage) setCreatingSession({});
     void navigate({ to: '.', search: (prev) => ({ ...prev, new: undefined }), replace: true });
   }, [search.new, navigate, canManage, setCreatingSession]);
+  const sessions = useScanningSessions(orgId);
+  const noSessions =
+    !sessions.isPending &&
+    !sessions.isError &&
+    !sessions.data?.pages.some((p) => p.items.some((i) => i.orgId === orgId));
   const noScanners =
     !live.isPending && !live.isError && !live.data?.pages.some((p) => p.items.length);
 
@@ -135,9 +141,13 @@ function ScopedScanningPage({
         title="Scanning"
         actions={
           tab === 'sessions'
-            ? newSession('primary')
+            ? noSessions
+              ? undefined
+              : newSession('primary')
             : tab === 'scanners'
-              ? newSession(noScanners ? 'outline' : 'primary')
+              ? noScanners
+                ? undefined
+                : newSession('primary')
               : undefined
         }
       />

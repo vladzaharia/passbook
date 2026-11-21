@@ -128,7 +128,7 @@ describe('template release panel', () => {
   it('asks for an organization without making unscoped requests and explains provider availability', () => {
     const fetch = stubFetch({});
     mountPanel({ orgId: undefined });
-    expect(screen.getByText(/Select an organization to view and manage/)).toBeInTheDocument();
+    expect(screen.getByText('Select an organization.')).toBeInTheDocument();
     expect(screen.queryByText(/offers unavailable|release workflow/)).not.toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -136,7 +136,7 @@ describe('template release panel', () => {
   it('does not fetch or offer actions for a different owning organization', () => {
     const fetch = stubFetch({});
     mountPanel({ orgId: 'org-2' });
-    expect(screen.getByText(/Select the template’s owning organization/)).toBeInTheDocument();
+    expect(screen.getByText('Select the owning organization.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create candidate' })).not.toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -156,7 +156,6 @@ describe('template release panel', () => {
       expect(within(candidates).getByText(value)).not.toBeVisible();
     expect(within(candidates).getByText('4')).toBeInTheDocument();
     expect(within(candidates).getByText('3')).toBeInTheDocument();
-    expect(within(candidates).getByText(/Approval required before publishing/)).toBeInTheDocument();
     expect(
       within(candidates).getByRole('button', { name: 'Publish candidate for Version 2' }),
     ).toBeDisabled();

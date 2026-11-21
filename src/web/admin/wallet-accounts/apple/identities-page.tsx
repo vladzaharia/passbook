@@ -114,10 +114,8 @@ export function IdentitiesPanel() {
           {attention.count > 1 ? `${attention.count - 1} more need a look.` : null}
         </Callout>
       ) : null}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-fg-strong">Apple identities</h2>
-        {upload(empty ? 'outline' : 'primary')}
-      </div>
+      <h2 className="sr-only">Apple identities</h2>
+      {empty ? null : <div className="mb-3 flex justify-end">{upload('primary')}</div>}
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (

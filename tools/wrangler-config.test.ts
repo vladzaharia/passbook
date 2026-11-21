@@ -50,13 +50,17 @@ describe('wrangler.jsonc', () => {
     expect(wrangler.vars?.SCAN_ENABLED).toBe('1');
   });
 
-  it('attaches the canonical host and each redirect host as custom domains', () => {
+  it('attaches the canonical, redirect and developers hosts as custom domains', () => {
     const vars = wrangler.vars ?? {};
     const canonical = new URL(vars.PUBLIC_BASE_URL ?? '').host;
-    const redirects = (vars.REDIRECT_HOSTS ?? '').split(',').filter(Boolean);
+    const list = (v: string | undefined) => (v ?? '').split(',').filter(Boolean);
+    const redirects = list(vars.REDIRECT_HOSTS);
     expect(redirects.length).toBeGreaterThan(0);
     expect(wrangler.routes).toEqual(
-      [canonical, ...redirects].map((pattern) => ({ pattern, custom_domain: true })),
+      [canonical, ...redirects, ...list(vars.DEVELOPERS_HOSTS)].map((pattern) => ({
+        pattern,
+        custom_domain: true,
+      })),
     );
     expect(vars.OIDC_CLIENT_ID).toBe(`${vars.PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`);
   });

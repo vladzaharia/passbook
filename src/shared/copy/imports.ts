@@ -8,7 +8,6 @@ const commitLabel = (create: number, update: number) =>
 /** Words of the pass import screens. */
 export const IMPORT_COPY = {
   title: 'Import passes',
-  sourceTitle: 'Spreadsheet',
   template: 'Template',
   noTemplates: 'No released templates in this mode.',
   fileTab: 'File',
@@ -54,7 +53,6 @@ export const IMPORT_COPY = {
     checking: 'Checking rows',
   },
   check: {
-    title: 'Check',
     errors: 'Problems',
     download: 'Download rows with errors',
     changeColumns: 'Change columns',
@@ -71,9 +69,8 @@ export const IMPORT_COPY = {
     email: 'Email new holders',
     noEmail: 'No new holder has an email.',
   },
-  progress: { title: 'Importing', leave: 'You can leave this page.' },
+  progress: { title: 'Importing' },
   results: {
-    title: 'Results',
     created: 'Created',
     updated: 'Updated',
     unchanged: 'Unchanged',
@@ -90,7 +87,6 @@ export const IMPORT_COPY = {
     summary: (done: number, skipped: number) =>
       `${done} ${done === 1 ? 'row' : 'rows'} done${skipped > 0 ? `, ${skipped} skipped` : ''}.`,
     skippedRows: 'Skipped rows',
-    notEmailedHelp: 'Created without an email. Nothing has been sent yet.',
     emailRestTitle: 'Email the rest?',
     emailRestBody: (n: number) =>
       `Sends the pass email to ${n} ${n === 1 ? 'holder' : 'holders'} created by this import that have not had one.`,

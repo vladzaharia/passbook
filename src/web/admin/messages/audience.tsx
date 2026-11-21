@@ -77,7 +77,6 @@ export function AudienceSection({
       />
       <SwitchRow
         label="On a device only"
-        help="Only passes with a device registration are included."
         checked={state.onDevice}
         onCheckedChange={(onDevice) => onChange({ onDevice })}
       />
@@ -144,10 +143,10 @@ export function AudienceSection({
           )}
         </FormField>
       ) : null}
-      <p aria-live="polite" className="text-sm text-fg-muted">
+      <p aria-live="polite" className="text-sm text-fg-muted empty:hidden">
         {!c
           ? state.templateIds.length === 0
-            ? 'Choose a template to see who is reached.'
+            ? null
             : eventFilter && !state.scanEventId
               ? 'Choose an event to count the audience.'
               : 'Counting…'

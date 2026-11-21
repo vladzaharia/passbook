@@ -194,7 +194,7 @@ export function IdentityDetailPage({ identityId }: { identityId: string }) {
         open={confirm === 'resign'}
         onOpenChange={(o) => !o && setConfirm(undefined)}
         title={`Re-sign ${passes(identity.passCount)}?`}
-        description={`Each pass signed by ${identity.label} is rebuilt with the current certificate. Devices get it on their next refresh.`}
+        description={'Devices get the rebuilt pass on their next refresh.'}
         confirmLabel="Re-sign"
         destructive
         onConfirm={async () => {

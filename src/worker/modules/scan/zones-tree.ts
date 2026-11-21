@@ -33,11 +33,17 @@ function ancestors(index: ZoneIndex, id: string): ZoneNode[] {
 
 export const depthOf = (index: ZoneIndex, id: string): number => ancestors(index, id).length;
 
-/** The root's time zone, or null. */
-export function effectiveTimeZone(index: ZoneIndex, id: string): string | null {
+/** The root's time zone, else the org's, else null. */
+export function effectiveTimeZone(
+  index: ZoneIndex,
+  id: string,
+  orgTimeZone: string | null = null,
+): string | null {
   const own = index.get(id);
   if (!own) return null;
-  return own.timeZone ?? ancestors(index, id).find((a) => a.timeZone !== null)?.timeZone ?? null;
+  return (
+    own.timeZone ?? ancestors(index, id).find((a) => a.timeZone !== null)?.timeZone ?? orgTimeZone
+  );
 }
 
 /** The zone and every zone below it, parents first. */

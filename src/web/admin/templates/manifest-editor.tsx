@@ -5,7 +5,6 @@ import { errorMessage, isApiError } from '../../lib/errors.ts';
 import {
   Card,
   CardBody,
-  CardHeader,
   SaveBar,
   Textarea,
   toast,
@@ -64,7 +63,6 @@ export function ManifestEditor({ template }: { template: Template }) {
 
   return (
     <Card>
-      <CardHeader title="Manifest" />
       <CardBody className="grid gap-3">
         <p className="text-sm text-fg-muted">Saving creates an inactive version.</p>
         <Textarea

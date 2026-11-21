@@ -271,7 +271,6 @@ export const SCAN_COPY = {
   changeMode: {
     menu: 'Change mode',
     title: 'Change mode',
-    current: 'This device is in {mode} mode.',
     customerSub: 'Scanning stops until staff switch back.',
     adminNote: 'Desk and Operator are set by an admin in Scanning.',
   },

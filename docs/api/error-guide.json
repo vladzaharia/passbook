@@ -119,6 +119,42 @@
     "fix": "Remove unused files and upload an archive under 15 MB.",
     "retryable": false
   },
+  "ASC_AUTH": {
+    "title": "Apple key rejected",
+    "when": "Apple rejected the provisioner key.",
+    "fix": "Replace the provisioner key, then send the request again.",
+    "retryable": false
+  },
+  "ASC_CONFLICT": {
+    "title": "Apple reports a conflict",
+    "when": "Apple refused the request because the resource already exists or is in use.",
+    "fix": "Check the resource in Apple Developer, then send the request again.",
+    "retryable": false
+  },
+  "ASC_NOT_FOUND": {
+    "title": "Apple resource not found",
+    "when": "Apple has no such resource.",
+    "fix": "Check the identifier, then send the request again.",
+    "retryable": false
+  },
+  "ASC_REFUSED": {
+    "title": "Apple provisioner refused",
+    "when": "The Apple provisioner refused the request.",
+    "fix": "Check the request against the provisioner allowlist, then send it again.",
+    "retryable": false
+  },
+  "ASC_UNAVAILABLE": {
+    "title": "Apple provisioner unavailable",
+    "when": "The Apple provisioner is not configured.",
+    "fix": "Ask the platform owner to configure it, then send the request again.",
+    "retryable": true
+  },
+  "ASC_UPSTREAM": {
+    "title": "Apple request failed",
+    "when": "The request to Apple failed.",
+    "fix": "Send the request again in a minute.",
+    "retryable": true
+  },
   "ASSETS_INVALID": {
     "title": "Invalid template assets",
     "when": "An image in the template archive failed validation.",
@@ -309,6 +345,24 @@
     "title": "Capture endpoint has no URL",
     "when": "You tried to set the URL of a capture endpoint, which stores requests and has none.",
     "fix": "Leave the url out, or create a URL endpoint instead.",
+    "retryable": false
+  },
+  "CERT_NOT_PENDING": {
+    "title": "Certificate not pending",
+    "when": "The certificate is no longer pending.",
+    "fix": "Refresh the identity and start a new certificate request if needed.",
+    "retryable": false
+  },
+  "CERT_PENDING_KEY_MISSING": {
+    "title": "Pending key missing",
+    "when": "The key for the pending certificate is gone.",
+    "fix": "Start a new certificate request.",
+    "retryable": false
+  },
+  "CERT_PENDING_NOT_FOUND": {
+    "title": "No pending certificate",
+    "when": "The identity has no pending certificate.",
+    "fix": "Start a certificate request, then upload the certificate.",
     "retryable": false
   },
   "CONNECTION_CONFLICT": {
@@ -509,24 +563,6 @@
     "fix": "Retry with backoff; Google resends failed callbacks.",
     "retryable": true
   },
-  "GRANT_BAD_PURPOSE": {
-    "title": "Internal grant error",
-    "when": "The server built an internal database grant incorrectly.",
-    "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": true
-  },
-  "GRANT_FOREIGN_STATEMENT": {
-    "title": "Internal grant error",
-    "when": "The server ran a database statement that its grant did not build.",
-    "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": true
-  },
-  "GRANT_SCOPE_OVERRIDE": {
-    "title": "Internal grant error",
-    "when": "The server built a database statement that overrides its grant's scope.",
-    "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": true
-  },
   "GROUP_ENTRY_ONLY": {
     "title": "Check in all needs an entry scanner",
     "when": "Check in all was used on a scanner that is not an entry scanner.",
@@ -575,10 +611,34 @@
     "fix": "Use a new key for a new request; resend the identical request to replay.",
     "retryable": false
   },
+  "IDENTITY_CHANGED": {
+    "title": "Identity changed",
+    "when": "The identity changed while its certificate was being activated.",
+    "fix": "Reload the identity, then activate again.",
+    "retryable": true
+  },
+  "IDENTITY_EXPIRED": {
+    "title": "Identity expired",
+    "when": "The signing identity certificate has expired.",
+    "fix": "Upload a renewed certificate, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_NOT_FOUND": {
     "title": "Signing identity not found",
     "when": "No signing identity with this id exists in this mode and organization.",
     "fix": "Check the id with GET /api/v1/identities.",
+    "retryable": false
+  },
+  "IDENTITY_PLATFORM_ENV_MISMATCH": {
+    "title": "Platform identity mismatch",
+    "when": "The platform identity row does not match the deployed signing identity.",
+    "fix": "Ask the platform owner to align the deployed identity with the database.",
+    "retryable": false
+  },
+  "IDENTITY_RETIRED": {
+    "title": "Identity retired",
+    "when": "The signing identity no longer issues passes.",
+    "fix": "Choose another identity, then send the request again.",
     "retryable": false
   },
   "IF_MATCH_INVALID": {
@@ -903,6 +963,12 @@
     "title": "Device note limit reached",
     "when": "This device has added its daily limit of notes to this person.",
     "fix": "Add the note from another device or wait until tomorrow.",
+    "retryable": false
+  },
+  "NOTE_HELD": {
+    "title": "Pass on hold",
+    "when": "A retention or legal hold covers the pass, so its notes cannot be edited or deleted.",
+    "fix": "Ask an org admin to release the hold. Adding a note still works.",
     "retryable": false
   },
   "NOTE_NOT_FOUND": {
@@ -1565,12 +1631,6 @@
     "fix": "Create the preview again and use its new id.",
     "retryable": false
   },
-  "SCAN_EPOCHS_MISSING": {
-    "title": "Internal scan authority error",
-    "when": "The server read a scanner row without its authority epochs.",
-    "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": true
-  },
   "SCAN_EVENT_CHANGED": {
     "title": "Scan event changed",
     "when": "The event's templates or release changed while your request ran.",
@@ -1811,12 +1871,6 @@
     "fix": "Fetch them with GET /api/v1/settings and send your change again.",
     "retryable": true
   },
-  "SQL_SIZE_BUDGET": {
-    "title": "Internal statement too large",
-    "when": "A server database statement exceeded its size limit.",
-    "fix": "Retry once; if it persists, send the requestId to support.",
-    "retryable": true
-  },
   "STAFF_NAME_TAKEN": {
     "title": "Staff name taken",
     "when": "Another active staff member already has this name.",
@@ -1840,12 +1894,6 @@
     "when": "Staff sign-in works only on a paired scanner.",
     "fix": "Pair the scanner, then sign in.",
     "retryable": false
-  },
-  "STALE_CONTEXT": {
-    "title": "Sync context unavailable",
-    "when": "The connection's sync context could not be loaded.",
-    "fix": "Retry with backoff.",
-    "retryable": true
   },
   "STAMPS_ABOVE_MAX": {
     "title": "Stamps above the maximum",
@@ -2535,42 +2583,6 @@
     "title": "Wallet offer not found",
     "when": "The wallet offer link is not valid anymore.",
     "fix": "Request a new offer for the pass.",
-    "retryable": false
-  },
-  "WALLET_OP_ACTOR": {
-    "title": "Wallet operation not permitted",
-    "when": "The actor that queued the operation lost access.",
-    "fix": "Queue the operation again with a key that has access.",
-    "retryable": false
-  },
-  "WALLET_OP_CONFIG": {
-    "title": "Wallet operation outdated",
-    "when": "The wallet configuration changed after the operation was queued.",
-    "fix": "Queue the operation again.",
-    "retryable": false
-  },
-  "WALLET_OP_LINEAGE": {
-    "title": "Wallet operation outdated",
-    "when": "The pass or account changed after the operation was queued.",
-    "fix": "Queue the operation again.",
-    "retryable": false
-  },
-  "WALLET_OP_ORG": {
-    "title": "Wallet operation wrong organization",
-    "when": "The operation does not belong to the caller's organization.",
-    "fix": "Use a key scoped to the organization that queued it.",
-    "retryable": false
-  },
-  "WALLET_OP_RELEASE": {
-    "title": "Wallet operation outdated",
-    "when": "The template release changed after the operation was queued.",
-    "fix": "Queue the operation again.",
-    "retryable": false
-  },
-  "WALLET_OP_STALE": {
-    "title": "Wallet operation outdated",
-    "when": "The pass changed after the operation was queued.",
-    "fix": "Queue the operation again.",
     "retryable": false
   },
   "WALLET_PROJECTION_BLOCKED": {

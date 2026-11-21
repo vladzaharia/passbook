@@ -13,7 +13,8 @@
   // passbook.mobile is PUBLIC_BASE_URL; wallet.plrs.im only redirects there (REDIRECT_HOSTS).
   "routes": [
     { "pattern": "passbook.mobile", "custom_domain": true },
-    { "pattern": "wallet.plrs.im", "custom_domain": true }
+    { "pattern": "wallet.plrs.im", "custom_domain": true },
+    { "pattern": "developers.passbook.mobile", "custom_domain": true }
   ],
 
   "assets": {
@@ -48,7 +49,7 @@
   "vars": {
     "PUBLIC_BASE_URL": "https://passbook.mobile",
     "REDIRECT_HOSTS": "wallet.plrs.im",
-    // Answers 308 to /developers on PUBLIC_BASE_URL. The DNS record and Worker route are the owner's.
+    // Answers 308 to /developers on PUBLIC_BASE_URL (custom domain above).
     "DEVELOPERS_HOSTS": "developers.passbook.mobile",
     "EMAIL_FROM": "delivery@passbook.mobile",
     "SUPPORT_EMAIL": "support@passbook.mobile",
