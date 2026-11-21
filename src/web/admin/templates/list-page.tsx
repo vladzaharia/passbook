@@ -206,7 +206,7 @@ export function TemplatesListPage({
       <PageHeader
         title="Templates"
         actions={
-          canAuthor ? (
+          canAuthor && !truth ? (
             <>
               {upload('outline')}
               {blueprints('New template')}
@@ -225,7 +225,6 @@ export function TemplatesListPage({
         <EmptyState
           art="template"
           title="No templates yet"
-          description="Start from a blueprint or upload a package."
           action={
             canAuthor ? (
               <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">

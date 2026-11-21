@@ -85,7 +85,6 @@ export function SessionDetail({
       <PageHeader
         title={s.name}
         breadcrumbs={crumbs}
-        description={s.orgName}
         meta={
           <>
             <SessionStatePill session={s} />
@@ -201,7 +200,6 @@ export function SessionDetail({
             <EmptyState
               art="scanner"
               title="Add your first device"
-              description="Pair a scanner, operator or display to use this session’s rules."
               action={
                 canManage ? (
                   <Button onClick={() => setDialog('add')} disabled={!active}>

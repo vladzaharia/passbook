@@ -84,7 +84,6 @@ export function ReplayDialog({
     <Dialog open={open} onOpenChange={change}>
       <DialogContent
         title="Replay deliveries"
-        description="Sent again to this endpoint with the same event id and body."
         size="md"
         footer={
           <>

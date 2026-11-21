@@ -10,7 +10,7 @@ export interface PreviewLayoutProps {
   still: ReactNode;
   title: string;
   /** Holder and quick actions beside the card at 640 to 1023 (the header has the rest). */
-  summary: ReactNode;
+  summary?: ReactNode;
   children: ReactNode;
 }
 
@@ -64,9 +64,11 @@ export function PreviewLayout({ stage, still, title, summary, children }: Previe
   }
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <Card className="grid grid-cols-[180px_minmax(0,1fr)] items-start gap-6 p-5">
-        <div className="w-[180px]">{stage('card')}</div>
-        <div className="flex min-w-0 flex-col gap-4">{summary}</div>
+      <Card
+        className={summary ? 'grid grid-cols-[180px_minmax(0,1fr)] items-start gap-6 p-5' : 'p-5'}
+      >
+        <div className="mx-auto w-[180px]">{stage('card')}</div>
+        {summary ? <div className="flex min-w-0 flex-col gap-4">{summary}</div> : null}
       </Card>
       {children}
     </div>

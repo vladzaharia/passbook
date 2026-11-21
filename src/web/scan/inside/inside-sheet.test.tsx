@@ -88,10 +88,9 @@ describe("Who's in", () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     await waitFor(() => expect(screen.getAllByTestId('inside-row').length).toBe(4));
   });
-  it('shows the empty state with the place', async () => {
+  it('shows the empty state', async () => {
     render(<Harness api={fakeInsideApi([])} />);
     expect(await screen.findByText('No one inside')).toBeVisible();
-    expect(screen.getByText('Gym is empty.')).toBeVisible();
   });
   it('marks out: the row and the count go, and Undo is offered', async () => {
     const api = fakeInsideApi(rows(3));

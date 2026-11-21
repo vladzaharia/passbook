@@ -188,7 +188,7 @@ describe('connections list', () => {
     expect(screen.getByText('Disabled')).toBeInTheDocument();
     expect(seen[0]?.searchParams.get('health')).toBe('degraded');
     expect(seen[0]?.searchParams.get('orgId')).toBe(ORG.id);
-    expect(screen.getByText(`2 connections in ${ORG.name}`)).toBeInTheDocument();
+    expect(screen.getByText('2 connections')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -221,7 +221,7 @@ describe('connections list', () => {
     expect(seen.at(-1)?.searchParams.get('cursor')).toBe('c1');
     expect(seen.at(-1)?.searchParams.get('orgId')).toBe(ORG.id);
     expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
-    expect(screen.getByText(`2 connections in ${ORG.name}`)).toBeInTheDocument();
+    expect(screen.getByText('2 connections')).toBeInTheDocument();
   });
 
   it('shows the filtered empty state with Clear filters', async () => {

@@ -218,9 +218,6 @@ export function ScanRowEditor({ row, manifest, onChange, role = 'door', passJson
           <ScanIconField value={row.icon} onChange={(icon) => set({ icon })} />
         </>
       ) : null}
-      {row.type === 'divider' ? (
-        <p className="text-sm text-fg-muted">A divider separates rows in this card.</p>
-      ) : null}
       <ScanRoleField value={row.minRole} onChange={(minRole) => set({ minRole })} />
       <ScanConditionField
         value={row.when}

@@ -285,11 +285,7 @@ export function UploadForm({
           </Button>
         }
       />
-      <Callout
-        tone="info"
-        className="mb-6"
-        title={version ? `Uploading a version of ${version.name}` : 'Before you upload'}
-      >
+      <Callout tone="info" className="mb-6">
         Uploads create inactive versions. Activate after review. The Test view does not isolate
         template changes.
       </Callout>

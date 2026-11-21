@@ -295,7 +295,6 @@ describe('templates', () => {
       },
     });
     expect(await screen.findByText('No templates yet')).toBeInTheDocument();
-    expect(screen.getByText('Start from a blueprint or upload a package.')).toBeInTheDocument();
     expect(target(screen.getByRole('link', { name: 'Browse blueprints' }))).toBe(
       '/admin/blueprints',
     );
@@ -345,9 +344,6 @@ describe('the new-pass picker', () => {
     });
     expect(
       await screen.findByText('No eligible templates for this organization and mode'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Make one from a blueprint, or release one in this mode.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Browse blueprints' })).toBeInTheDocument();
   });

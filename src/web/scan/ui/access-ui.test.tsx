@@ -98,7 +98,6 @@ describe('the direction sheet', () => {
     expect(radios.map((r) => (r as HTMLInputElement).value)).toEqual(['auto', 'in', 'out']);
     expect(screen.getByRole('radio', { name: /Auto/ })).toBeChecked();
     expect(screen.getByText("In if they're out, out if they're in.")).toBeVisible();
-    expect(screen.getByText('Every scan taps in.')).toBeVisible();
     expect(screen.getByText('Goes back to Auto after 15 min without a scan.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Done' })).toBeVisible();
   });

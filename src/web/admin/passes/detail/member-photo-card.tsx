@@ -85,9 +85,6 @@ export function MemberPhotoCard({ pass, readOnly }: { pass: PassDetailDto; readO
                   });
               }}
             />
-            <p className="text-sm text-fg-muted">
-              Shown to scanning staff. Photos are cropped to a square.
-            </p>
             {photo.data?.url ? (
               <>
                 <CheckboxField

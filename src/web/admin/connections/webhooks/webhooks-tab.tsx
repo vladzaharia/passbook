@@ -97,14 +97,7 @@ export function WebhooksTab() {
     [now],
   );
 
-  if (!orgId)
-    return (
-      <EmptyState
-        art="building"
-        title="Choose an organization"
-        description="Choose an organization in the top bar to see its webhooks."
-      />
-    );
+  if (!orgId) return <EmptyState art="building" title="Choose an organization" />;
   if (!canRead) return <EmptyState art="lock" title={STATE_COPY.forbidden} />;
   if (list.isError && rows.length === 0)
     return <ErrorState error={list.error} onRetry={() => void list.refetch()} />;

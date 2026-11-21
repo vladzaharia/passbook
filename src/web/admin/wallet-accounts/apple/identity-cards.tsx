@@ -145,7 +145,7 @@ export function SettingsCard({ identity }: { identity: Identity }) {
           <div className="flex flex-col gap-4 border-t border-border pt-4">
             <SwitchRow
               label="NFC"
-              help="Allow NFC passes. Needs Apple's NFC entitlement on the pass type ID."
+              help="Needs Apple's NFC entitlement on the pass type ID."
               checked={draft.nfc}
               onCheckedChange={(c) => edit({ nfc: c })}
             />
@@ -169,8 +169,8 @@ export function SettingsCard({ identity }: { identity: Identity }) {
                     env
                       ? 'Set in the environment'
                       : identity.isDefault
-                        ? 'Current default. Select another identity to change it; existing passes keep their identity.'
-                        : 'Fallback for eligible organizations without their own identity. Changing it does not migrate existing passes.'
+                        ? 'Select another identity to change it. Existing passes keep theirs.'
+                        : 'Fallback for organizations without their own. Existing passes keep theirs.'
                   }
                   checked={draft.isDefault}
                   disabled={env}

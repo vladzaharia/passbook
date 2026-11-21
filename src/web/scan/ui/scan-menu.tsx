@@ -104,7 +104,7 @@ export interface ScanMenuProps {
   canSwitchStaff?: boolean;
   onSwitchStaff?: () => void;
   /** A paired phone can face a customer; absent for terminals and admin sessions. */
-  flip?: { api: ScanApi; refetch: () => Promise<void>; mode: string };
+  flip?: { api: ScanApi; refetch: () => Promise<void> };
   /** Assign tag: absent when this scanner cannot assign; disabled offline. */
   tags?: { offline: boolean; onSelect: () => void } | null;
   onShift: () => void;

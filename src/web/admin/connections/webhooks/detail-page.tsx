@@ -81,11 +81,7 @@ function Loader({ endpointId }: { endpointId: string }) {
     return (
       <>
         {header}
-        <EmptyState
-          art="building"
-          title="Choose an organization"
-          description="Choose an organization in the top bar to continue."
-        />
+        <EmptyState art="building" title="Choose an organization" />
       </>
     );
   if (

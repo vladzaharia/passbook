@@ -189,7 +189,9 @@ export function ScanPreviewScreen({
           orgName,
           logoUrl: logoUrl !== undefined ? logoUrl : scanBrandLogoUrl(branding),
           state: capsuleState,
-          ...(direction ? { direction: SCAN_COPY.direction[direction.value] } : {}),
+          ...(direction && !direction.onCycle
+            ? { direction: SCAN_COPY.direction[direction.value] }
+            : {}),
           ...(chips ? { chips } : {}),
           ...(menu ? { menu } : {}),
         }}

@@ -31,7 +31,7 @@ export function SessionCustomerFields({
           />
         )}
       </FormField>
-      <FormField label="Refusal line" help="Every refusal and heads-up on the customer screen.">
+      <FormField label="Refusal line">
         {(p) => (
           <Input
             {...p}

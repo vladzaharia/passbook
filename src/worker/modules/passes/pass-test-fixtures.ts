@@ -24,6 +24,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { ManualClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { NotFoundError } from '../../platform/errors.ts';
+import { nullLogger } from '../../platform/log.ts';
 import { createServiceContext, type ServiceContext } from '../../platform/service-context.ts';
 import { addRegistration } from '../apple/repo.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -168,7 +169,7 @@ export async function setupKit(
     return { ...template, assets };
   };
   overrideDeps(env, { registry, apns, mailer });
-  await ensurePlatformIdentity(env, clock.now());
+  await ensurePlatformIdentity(env, clock.now(), nullLogger);
   const org = await makeOrg(fx, { name: 'Test Gym' });
   await persistTemplate(fx, resolved, { registry });
   const background: Promise<unknown>[] = [];

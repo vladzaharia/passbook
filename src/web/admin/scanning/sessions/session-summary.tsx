@@ -66,8 +66,7 @@ export function SessionSummary({
           </dl>
         </div>
         <div className="border-t border-border pt-4">
-          <h3 className="mb-1 text-xs font-semibold text-fg-muted">DEVICE DEFAULTS</h3>
-          <p className="mb-3 text-xs text-fg-muted">Can be overridden per device.</p>
+          <h3 className="mb-3 text-xs font-semibold text-fg-muted">DEVICE DEFAULTS</h3>
           <dl className="grid gap-3">
             {defaults.map(([label, value]) => (
               <div key={label} className="grid gap-1 text-sm">

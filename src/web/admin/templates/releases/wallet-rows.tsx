@@ -45,7 +45,7 @@ function releasedState(
       status: 'not_configured',
       pill: 'warning',
       label: 'No release',
-      meta: 'Nothing published yet.',
+      meta: '',
     };
   const source = candidates.find((c) => c.id === active.candidateId);
   return {

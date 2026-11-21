@@ -20,7 +20,7 @@ import {
   TechnicalDetails,
 } from '../../../ui/index.ts';
 import { eligibleApproval, selfApproved } from './eligibility.ts';
-import { providerModeLabel, roleLabel } from './labels.ts';
+import { roleLabel } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
 
 const UNKNOWN = 'Unknown user';
@@ -80,10 +80,6 @@ function CandidateCard({
         items={[
           { label: 'Candidate author', value: candidate.authorName ?? UNKNOWN },
           { label: 'Version author', value: candidate.versionAuthorName ?? UNKNOWN },
-          {
-            label: 'Provider and mode',
-            value: providerModeLabel(candidate.provider, candidate.mode),
-          },
           ...candidate.approvals.map((a) => ({
             id: a.id,
             label: 'Approved by',
@@ -118,9 +114,6 @@ function CandidateCard({
         ]}
       />
       <div className="mt-4 grid gap-3">
-        {!approval && !selfReview ? (
-          <p className="text-sm text-fg-muted">Approval required before publishing.</p>
-        ) : null}
         {selfReview && !approval ? (
           <Callout tone="info">
             {props.canReview
@@ -265,7 +258,7 @@ export function CandidateSection(props: CandidateSectionProps) {
           </section>
         ) : null}
         {props.canAuthor && props.editable && !options.length ? (
-          <p className="text-sm text-fg-muted">No other saved versions. Upload a new version.</p>
+          <p className="text-sm text-fg-muted">No other saved versions.</p>
         ) : null}
         {!props.canReview ? (
           <p className="text-sm text-fg-muted">

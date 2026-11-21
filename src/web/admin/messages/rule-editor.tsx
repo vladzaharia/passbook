@@ -165,7 +165,7 @@ export function RuleEditor({
             <FormField
               label="Text"
               error={checks.errors.message}
-              help={`${state.message.length} of ${BROADCAST_MESSAGE_MAX}. Shows on the lock screen. Keep private details out.`}
+              help={`${state.message.length} of ${BROADCAST_MESSAGE_MAX}. Keep private details out.`}
             >
               {(c) => (
                 <Textarea

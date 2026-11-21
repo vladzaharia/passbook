@@ -23,10 +23,8 @@ export const SURFACE_ICON = {
   customer: UserRound,
 };
 type SurfaceChoice = Exclude<ScanningDevice['surface'], 'desk'>;
-const HELP: Record<SurfaceChoice, string> = {
+const HELP: Partial<Record<SurfaceChoice, string>> = {
   auto: 'Chooses Scanner or Operator for this screen size.',
-  phone: 'Camera-first check-in for a handheld device.',
-  operator: 'Look up passes, check in by code, and review session activity.',
   customer: 'Show a simple scan result to the visitor. No check-in controls.',
 };
 
@@ -99,7 +97,7 @@ export function SurfacePicker({
             {SCAN_SURFACE_LABELS[key]}
             {selected ? <Check className="size-4 shrink-0 text-accent-fg" aria-hidden /> : null}
           </span>
-          <span className="mt-1 block text-xs text-fg-muted">{HELP[key]}</span>
+          {HELP[key] ? <span className="mt-1 block text-xs text-fg-muted">{HELP[key]}</span> : null}
         </span>
         <span aria-hidden>
           <SurfacePreview surface={key} />

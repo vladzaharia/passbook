@@ -133,9 +133,7 @@ export function ShiftSheet({
           {ending ? (
             <>
               {summary ? <Handover summary={summary} timeZone={timeZone} /> : null}
-              <p className="text-sm">
-                This device stays paired. Start a new shift when you’re ready.
-              </p>
+              <p className="text-sm">This device stays paired.</p>
               {pending ? (
                 <p role="status">{pending} scans need confirmation. Keep this shift open.</p>
               ) : null}
