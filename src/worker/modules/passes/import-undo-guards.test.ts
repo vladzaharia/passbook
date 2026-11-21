@@ -229,6 +229,56 @@ describe('M3 and LOW 3: held mail', () => {
   });
 });
 
+describe('N2-N4', () => {
+  const held = { email: { send: 'held', holdMs: 60_000 } };
+  const hd = 'Name,Points,Email,Id';
+  const release = (id: string) =>
+    releaseHeldPage(
+      createJobContext(h.kit.env, 'pass-import'),
+      { importId: id, orgId: h.kit.org.id, mode: 'live' },
+      0,
+    );
+
+  it('two asks that both see a dead run answer alike', async () => {
+    const id = await imported([HEAD, 'A,1,,N-1'].join('\n'));
+    await undo(id);
+    const first = h.created.find((c) => c.id.startsWith(`pass-import-undo-${id}-`));
+    h.statuses[first?.id ?? ''] = 'errored';
+    await run(h.kit.env.DB, 'UPDATE pass_imports SET undo_at = 1 WHERE id = ?', [id]);
+    const [a, b] = await Promise.all([undo(id), undo(id)]);
+    expect([a.status, b.status]).toEqual([200, 200]);
+  });
+
+  it('a suspended org ends held mail quietly', async () => {
+    const id = await imported([hd, 'A,1,a@x.co,N-2'].join('\n'), held);
+    await run(h.kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [h.kit.org.id]);
+    const result = await release(id).catch((e: unknown) => e);
+    await run(h.kit.env.DB, "UPDATE orgs SET status = 'active' WHERE id = ?", [h.kit.org.id]);
+    expect(result).toEqual({ next: null });
+  });
+
+  it('keeps the first claim time, and email-rest takes a stale claim nobody mailed', async () => {
+    const id = await imported([hd, 'A,1,a@x.co,N-3'].join('\n'), held);
+    await run(h.kit.env.DB, 'UPDATE pass_import_rows SET mail_pending_at = 7 WHERE import_id = ?', [
+      id,
+    ]);
+    await release(id);
+    // Claimed again by the release: still marked from the first claim, then settled as sent.
+    const row = await first<{ emailed: number }>(
+      h.kit.env.DB,
+      'SELECT emailed FROM pass_import_rows WHERE import_id = ?',
+      [id],
+    );
+    expect(row?.emailed).toBe(1);
+    const id2 = await imported([hd, 'A,1,a@x.co,N-4'].join('\n'), held);
+    await run(h.kit.env.DB, 'UPDATE pass_import_rows SET mail_pending_at = 1 WHERE import_id = ?', [
+      id2,
+    ]);
+    const sent = await h.api(h.admin, 'POST', `/${id2}/email-rest`, { cursor: null });
+    expect(((await sent.json()) as { sent: number }).sent).toBe(1);
+  });
+});
+
 describe('LOW codes, counts and restores', () => {
   it('names an import without earlier values, and a pass that is gone', async () => {
     await h.existing('L-OLD', { memberName: 'Old', points: 1 });

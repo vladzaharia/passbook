@@ -4,7 +4,7 @@ import { makeTemplate } from '../../../../test/helpers/index.ts';
 import { PassImportSchema } from '../../../shared/contracts/pass-imports.ts';
 import { sampleCsv } from '../../../shared/issuing/sample.ts';
 import { createApp } from '../../app.ts';
-import { all, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { setupTenantTestAuth } from './tenant-test-fixtures.ts';
 
@@ -115,7 +115,7 @@ describe('mapping: auto', () => {
     expect(imp.counts).toMatchObject({ create: 1, errors: 1, errorsCreate: 1, errorsUpdate: 0 });
     expect(imp.problems[0]?.message).toBe('Status must be Active or Suspended.');
     expect(imp.problems[0]?.message).not.toMatch(/Gone/);
-    expect(imp.problems[0]).toMatchObject({ label: 'Status', value: 'Gone', field: 'status' });
+    expect(imp.problems[0]).toMatchObject({ label: 'Status', field: 'status' });
   });
 });
 
@@ -155,6 +155,26 @@ describe('dates in changes', () => {
     );
     expect(await paid()).toBe('Dec 31, 2030, 12:00 PM');
     await run(kit.env.DB, "DELETE FROM settings WHERE key = 'org.timeZone'");
+  });
+});
+
+describe('problem values', () => {
+  it('are read from the stored input, so clearing the input clears them', async () => {
+    const imp = await parse(
+      await auto('Holder email,Member ID,Name,Guests left\na@x.co,M-1,Ann,abc'),
+    );
+    expect(imp.problems[0]).toMatchObject({ label: 'Guests left', value: 'abc' });
+    const stored = await first<{ problems: string }>(
+      kit.env.DB,
+      'SELECT problems FROM pass_import_rows WHERE import_id = ?',
+      [imp.id],
+    );
+    expect(stored?.problems).not.toContain('"value"');
+    // What the 30-day clear does to the row.
+    await run(kit.env.DB, 'UPDATE pass_import_rows SET input = NULL WHERE import_id = ?', [imp.id]);
+    const got = await parse(await api(admin, 'GET', `/${imp.id}`));
+    expect(got.problems[0]?.value).toBeUndefined();
+    expect(got.problems[0]?.label).toBe('Guests left');
   });
 });
 

@@ -6,15 +6,7 @@ const MAPPABLE = new Set(['string', 'number', 'integer', 'boolean']);
 const HOLDER_EMAIL = 'Holder email';
 
 /** Shapes a `pattern` is tried against, most plain first: the first that fits is the example. */
-const SHAPES = [
-  'A-1001',
-  'ABC',
-  'A1001',
-  '1001',
-  '+15550100123',
-  'https://example.com/a',
-  'A 1001',
-];
+const SHAPES = ['A-1001', 'ABC', 'A1001', '1001', '15550100123', 'https://example.com/a', 'A 1001'];
 
 function fitting(def: Record<string, unknown>, candidates: readonly string[]): string | null {
   let re: RegExp | null = null;

@@ -1,6 +1,6 @@
 import { jobGrant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { inList } from '../../platform/authority-expr.ts';
+import { coalesceTo, inList } from '../../platform/authority-expr.ts';
 import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Scope } from './repo-import-commit.ts';
@@ -39,7 +39,8 @@ export async function claimHeld(
   const g = heldGrant(ctx, s);
   const claim = g.joined('pass_import_rows', {
     where: { import_id: s.importId, result: 'created', emailed: 0, row_no: inList([...rows]) },
-    set: { mail_pending_at: ctx.clock.now() },
+    // The first claim's time stays: a retry looks for mail queued since the first attempt.
+    set: { mail_pending_at: coalesceTo(ctx.clock.now()) },
     returning: ['row_no'],
   });
   const results = await g.commit();

@@ -101,10 +101,12 @@ export function problemRows(
   db: D1Database,
   importId: string,
   limit: number,
-): Promise<Pick<ImportRowRecord, 'row_no' | 'problems'>[]> {
+): Promise<
+  Pick<ImportRowRecord, 'row_no' | 'problems' | 'input' | 'external_id' | 'holder_email'>[]
+> {
   return all(
     db,
-    `SELECT row_no, problems FROM pass_import_rows
+    `SELECT row_no, problems, input, external_id, holder_email FROM pass_import_rows
      WHERE import_id = ? AND problems IS NOT NULL
      ORDER BY CASE action WHEN 'error' THEN 0 ELSE 1 END, row_no LIMIT ?`,
     [importId, limit],

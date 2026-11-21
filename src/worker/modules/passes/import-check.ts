@@ -13,7 +13,6 @@ import {
   inputMessage,
   labelOf,
   problem,
-  shown,
 } from './import-messages.ts';
 import { headerOf, type ImportPlan, recordOf, withOverrides } from './import-plan.ts';
 
@@ -67,7 +66,6 @@ export function rowChecker(rc: RowCheckContext) {
           column: columnOf(name),
           field: name || null,
           label: label || null,
-          value: shown(input[name]),
           code: issue.code,
           message: inputMessage(issue, label || 'The pass', props[name]),
         }),
@@ -81,7 +79,6 @@ export function rowChecker(rc: RowCheckContext) {
             column: columnOf(issue.path),
             field: issue.path || null,
             label: issue.path ? labelOf(props[issue.path], issue.path) : null,
-            value: shown(input[issue.path]),
             code: issue.code ?? 'ACCESS_INPUT',
             message: issue.message,
           }),
@@ -115,7 +112,6 @@ function unreadValues(
         column,
         field,
         label: labelOf(props[field], field),
-        value: shown(cell),
         code: kind === 'enum' ? 'IMPORT_OPTION_UNKNOWN' : 'IMPORT_DATE_UNREADABLE',
         message: inputMessage(
           { keyword: READ_KEYWORD[kind], message: '' },
@@ -188,7 +184,6 @@ export function checkRows(rows: ParsedCsv['rows'], rc: RowCheckContext): Checked
         add({
           column: emailColumn,
           field: 'holderEmail',
-          value: shown(mappedEmail),
           code: 'EMAIL_INVALID',
           message: IMPORT_TEXT.emailInvalid,
         });
