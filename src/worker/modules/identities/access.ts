@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { enforceFeatures } from '../../platform/feature-guard.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
@@ -36,4 +36,27 @@ export async function requireOrgAccess(
 /** Platform-owned records (no org) are for platform admins. */
 export function requirePlatformAdmin(c: C): void {
   if (!isPlatformAdmin(c)) throw new ForbiddenError('Admin access is required.');
+}
+
+/** An id-addressed read: another organization's resource is "not found", not "forbidden". */
+export async function requireOrgAccessOr404(
+  ctx: ServiceContext,
+  c: C,
+  orgId: string | null | undefined,
+  capability: OrgCapability,
+  code: string,
+): Promise<void> {
+  try {
+    await requireOrgAccess(ctx, c, orgId, capability);
+  } catch (error) {
+    if (error instanceof ForbiddenError) throw new NotFoundError('Not found.', code);
+    throw error;
+  }
+}
+
+/** Compromise actions need a Pocket ID sign-in: a magic link or break-glass session is refused. */
+export function requireOidcSession(c: C): void {
+  const auth = c.var.auth;
+  if (auth?.kind !== 'session' || auth.amr !== 'oidc')
+    throw new ForbiddenError('Sign in with Pocket ID to do this.', 'OIDC_REQUIRED');
 }

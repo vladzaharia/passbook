@@ -21,6 +21,7 @@ import {
 } from '../modules/identities/provision-steps.ts';
 import { getManagedState } from '../modules/identities/repo-provision.ts';
 import { enterStep, finishRun, parkRun } from '../modules/identities/repo-runs.ts';
+import { stepRevoke } from '../modules/identities/revoke-run.ts';
 import type { IdentityProvisionParams } from '../modules/identities/run-start.ts';
 import type { Clock } from '../platform/clock.ts';
 import type { AppEnv } from '../platform/env.ts';
@@ -102,14 +103,18 @@ export async function runIdentityProvision(
   try {
     const start = await guarded('load', () => stepLoad(ctx, runId));
     if (start.done) return { state: 'succeeded' };
-    if (start.kind === 'provision') await guarded('handle', () => stepHandle(ctx, runId));
-    await viaApple('pass-type', (rpc) => resolvePassType(ctx, rpc, runId));
-    await guarded('key', () => stepKey(ctx, runId));
-    await viaApple('issue', (rpc) => issue(ctx, rpc, runId));
-    await guarded('validate', () => stepValidate(ctx, runId));
-    await guarded('activate', () => stepActivate(ctx, runId));
-    if (start.kind === 'provision') await guarded('default', () => stepDefault(ctx, runId));
-    await guarded('post-check', () => postCheck(ctx, runId));
+    if (start.kind === 'revoke') {
+      await viaApple('revoke', (rpc) => stepRevoke(ctx, rpc, runId));
+    } else {
+      if (start.kind === 'provision') await guarded('handle', () => stepHandle(ctx, runId));
+      await viaApple('pass-type', (rpc) => resolvePassType(ctx, rpc, runId));
+      await guarded('key', () => stepKey(ctx, runId));
+      await viaApple('issue', (rpc) => issue(ctx, rpc, runId));
+      await guarded('validate', () => stepValidate(ctx, runId));
+      await guarded('activate', () => stepActivate(ctx, runId));
+      if (start.kind === 'provision') await guarded('default', () => stepDefault(ctx, runId));
+      await guarded('post-check', () => postCheck(ctx, runId));
+    }
     await guarded('finish', async () => {
       // Repeating this step after it succeeded changes nothing: `finishRun` only closes an open run.
       await enterStep(env.DB, runId, 'finish', ctx.clock.now());

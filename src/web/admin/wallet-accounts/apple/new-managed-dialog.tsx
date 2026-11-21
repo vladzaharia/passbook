@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { handleBase, MANAGED_PREFIX } from '@/shared/identity-handle.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
   Button,
   Dialog,
@@ -30,14 +31,16 @@ export function NewManagedIdentityDialog({
   orgId?: string;
 }) {
   const orgs = useOrgList();
+  const scope = useOrgScope();
   const [picked, setPicked] = useState('');
   const [handle, setHandle] = useState('');
   const [formError, setFormError] = useState<string>();
   const orgId = fixedOrg ?? picked;
   const start = useStartManagedIdentity(orgId);
   const org = orgs.data?.items.find((o) => o.id === orgId);
-  const typed = handle.trim().toLowerCase();
-  const shown = typed || (org ? handleBase(org.slug) : '');
+  const typed = fixedOrg ? '' : handle.trim().toLowerCase();
+  const slug = org?.slug ?? (fixedOrg ? scope.membership?.orgSlug : undefined);
+  const shown = typed || (slug ? handleBase(slug) : '');
   const check = useFormErrors({
     ...(orgId ? {} : { org: 'Choose an organization.' }),
     ...(typed && !HANDLE.test(typed) ? { handle: '2 to 30 lowercase letters or digits.' } : {}),
@@ -99,17 +102,19 @@ export function NewManagedIdentityDialog({
               )}
             </FormField>
           )}
-          <FormField label="Handle" error={check.errors.handle}>
-            {(p) => (
-              <Input
-                {...p}
-                value={handle}
-                spellCheck={false}
-                autoCapitalize="none"
-                onChange={(e) => setHandle(e.target.value)}
-              />
-            )}
-          </FormField>
+          {fixedOrg ? null : (
+            <FormField label="Handle" error={check.errors.handle}>
+              {(p) => (
+                <Input
+                  {...p}
+                  value={handle}
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  onChange={(e) => setHandle(e.target.value)}
+                />
+              )}
+            </FormField>
+          )}
           <p aria-live="polite" className="break-all font-mono text-sm text-fg-strong">
             {MANAGED_PREFIX}
             {shown || '<handle>'}

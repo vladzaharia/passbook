@@ -1,6 +1,6 @@
 import { all, first, run } from '../../platform/db.ts';
 
-export type RunKind = 'provision' | 'rotate';
+export type RunKind = 'provision' | 'rotate' | 'revoke';
 export type RunState = 'queued' | 'running' | 'waiting' | 'succeeded' | 'failed' | 'cancelled';
 
 export interface RunRow {

@@ -37,6 +37,7 @@ const RUN_PILL: Record<Run['state'], { status: string; label: string }> = {
   failed: { status: 'failed', label: 'Failed' },
   cancelled: { status: 'cancelled', label: 'Cancelled' },
 };
+const RUN_KIND = { provision: 'Setup', rotate: 'Renewal', revoke: 'Revoke' } as const;
 const CERT_PILL: Record<Cert['state'], { status: string; label: string }> = {
   pending: { status: 'pending', label: 'Pending' },
   active: { status: 'verified', label: 'Active' },
@@ -94,7 +95,7 @@ export function RunsTable({
       {
         header: 'Run',
         id: 'kind',
-        cell: ({ row }) => (row.original.kind === 'provision' ? 'Setup' : 'Renewal'),
+        cell: ({ row }) => RUN_KIND[row.original.kind],
       },
       {
         header: 'Step',
@@ -185,7 +186,7 @@ export function CertificatesTable({
         id: 'actions',
         meta: { stackNoLabel: true },
         cell: ({ row }) =>
-          canRevoke && row.original.state === 'superseded' ? (
+          canRevoke && row.original.state === 'superseded' && row.original.origin === 'asc' ? (
             <Button size="sm" variant="outline" onClick={() => setTarget(row.original)}>
               Revoke certificate
             </Button>
@@ -219,7 +220,7 @@ export function CertificatesTable({
         onConfirm={async () => {
           if (!target) return;
           await revoke.mutateAsync({ certificateId: target.id, confirm: identifier });
-          toast.success('Certificate revoked');
+          toast.success('Revocation started');
         }}
       />
     </>

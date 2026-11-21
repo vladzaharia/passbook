@@ -3,7 +3,6 @@ import { useRef } from 'react';
 import {
   AppleCallListSchema,
   IdentityCertificateListSchema,
-  IdentityCertificateSchema,
   IdentityRunListSchema,
   IdentityRunSchema,
   type IdentityStatus,
@@ -124,7 +123,7 @@ export function useRevokeCertificate(identityId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: { certificateId: string; confirm: string }) =>
-      api.post(`${identityPath(identityId)}/revoke-certificate`, IdentityCertificateSchema, {
+      api.post(`${identityPath(identityId)}/revoke-certificate`, IdentityRunSchema, {
         ...body,
         reason: 'compromised',
       }),

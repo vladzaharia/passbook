@@ -67204,7 +67204,8 @@
                       "type": "string",
                       "enum": [
                         "provision",
-                        "rotate"
+                        "rotate",
+                        "revoke"
                       ]
                     },
                     "targetType": {
@@ -67450,7 +67451,7 @@
     },
     "/api/v1/identities/{id}/revoke-certificate": {
       "post": {
-        "summary": "Revoke a superseded certificate after a compromise",
+        "summary": "Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in",
         "tags": [
           "identities"
         ],
@@ -67477,7 +67478,7 @@
           }
         },
         "responses": {
-          "200": {
+          "202": {
             "description": "Success",
             "content": {
               "application/json": {
@@ -67489,57 +67490,76 @@
                       "minLength": 1,
                       "maxLength": 64
                     },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
                     "state": {
                       "type": "string",
                       "enum": [
-                        "pending",
-                        "active",
-                        "superseded",
-                        "revoked",
-                        "failed"
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
                       ]
                     },
-                    "origin": {
-                      "type": "string",
-                      "enum": [
-                        "upload",
-                        "asc",
-                        "csr",
-                        "env"
-                      ]
-                    },
-                    "certSha256": {
+                    "step": {
                       "type": [
                         "string",
                         "null"
                       ]
                     },
-                    "notBefore": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
+                    "attempt": {
+                      "type": "integer",
                       "minimum": 0
                     },
-                    "notAfter": {
+                    "waitingFor": {
                       "type": [
-                        "integer",
+                        "string",
                         "null"
-                      ],
-                      "minimum": 0
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
                     },
-                    "activatedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
+                    "updatedAt": {
+                      "type": "integer",
                       "minimum": 0
                     },
-                    "endedAt": {
+                    "finishedAt": {
                       "type": [
                         "integer",
                         "null"
@@ -67549,14 +67569,18 @@
                   },
                   "required": [
                     "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
                     "state",
-                    "origin",
-                    "certSha256",
-                    "notBefore",
-                    "notAfter",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
                     "createdAt",
-                    "activatedAt",
-                    "endedAt"
+                    "updatedAt",
+                    "finishedAt"
                   ]
                 }
               }
@@ -67670,7 +67694,8 @@
                             "type": "string",
                             "enum": [
                               "provision",
-                              "rotate"
+                              "rotate",
+                              "revoke"
                             ]
                           },
                           "targetType": {
@@ -67833,7 +67858,8 @@
                       "type": "string",
                       "enum": [
                         "provision",
-                        "rotate"
+                        "rotate",
+                        "revoke"
                       ]
                     },
                     "targetType": {
@@ -67983,7 +68009,8 @@
                       "type": "string",
                       "enum": [
                         "provision",
-                        "rotate"
+                        "rotate",
+                        "revoke"
                       ]
                     },
                     "targetType": {
@@ -68133,7 +68160,8 @@
                       "type": "string",
                       "enum": [
                         "provision",
-                        "rotate"
+                        "rotate",
+                        "revoke"
                       ]
                     },
                     "targetType": {
@@ -68538,7 +68566,8 @@
                       "type": "string",
                       "enum": [
                         "provision",
-                        "rotate"
+                        "rotate",
+                        "revoke"
                       ]
                     },
                     "targetType": {

@@ -1,6 +1,5 @@
 import {
   IdentityCertificateListSchema,
-  IdentityCertificateSchema,
   IdentityRunSchema,
   IdParamSchema,
   RevokeCertificateSchema,
@@ -9,8 +8,8 @@ import { NotFoundError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
-import { requireOrgAccess } from './access.ts';
-import { listIdentityCertificates, revokeIdentityCertificate } from './cert-admin.ts';
+import { requireOidcSession, requireOrgAccessOr404 } from './access.ts';
+import { listIdentityCertificates, requestCertificateRevoke } from './cert-admin.ts';
 import { getIdentityRow } from './repo.ts';
 import { renewIdentity } from './runs-service.ts';
 
@@ -45,7 +44,7 @@ export function registerManagedRoutes(identitiesRoutes: ReturnType<typeof create
       const { id } = c.req.valid('param');
       const row = await getIdentityRow(ctx.env.DB, id);
       if (!row) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
-      await requireOrgAccess(ctx, c, row.org_id, 'integrations:read');
+      await requireOrgAccessOr404(ctx, c, row.org_id, 'integrations:read', 'IDENTITY_NOT_FOUND');
       return c.json(await listIdentityCertificates(ctx, id));
     },
   );
@@ -55,19 +54,23 @@ export function registerManagedRoutes(identitiesRoutes: ReturnType<typeof create
     {
       method: 'post',
       path: '/{id}/revoke-certificate',
-      summary: 'Revoke a superseded certificate after a compromise',
+      summary: 'Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in',
       params: IdParamSchema,
       body: RevokeCertificateSchema,
-      response: IdentityCertificateSchema,
+      status: 202,
+      response: IdentityRunSchema,
     },
-    async (c) =>
-      c.json(
-        await revokeIdentityCertificate(
+    async (c) => {
+      requireOidcSession(c);
+      return c.json(
+        await requestCertificateRevoke(
           serviceContext(c),
           requestActor(c),
           c.req.valid('param').id,
           c.req.valid('json'),
         ),
-      ),
+        202,
+      );
+    },
   );
 }

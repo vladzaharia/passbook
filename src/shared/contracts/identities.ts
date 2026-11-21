@@ -132,7 +132,7 @@ export const PushKeyInputSchema = z.object({
   p8: z.string().min(1).max(4_000),
 });
 
-export const IdentityRunKindSchema = z.enum(['provision', 'rotate']);
+export const IdentityRunKindSchema = z.enum(['provision', 'rotate', 'revoke']);
 export const IdentityRunStateSchema = z.enum([
   'queued',
   'running',

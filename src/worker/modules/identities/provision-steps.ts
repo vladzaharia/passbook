@@ -70,6 +70,11 @@ export async function stepLoad(
       },
       null,
     );
+  } else if (run.kind === 'revoke') {
+    const row = await getManagedState(db, run.target_id);
+    if (!row) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');
+    if (row.org_id !== run.org_id)
+      throw new ConflictError('The identity changed owner.', 'IDENTITY_CHANGED');
   } else {
     const row = await getManagedState(db, run.target_id);
     if (!row) throw new NotFoundError('Signing identity not found.', 'IDENTITY_NOT_FOUND');

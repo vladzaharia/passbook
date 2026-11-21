@@ -8,6 +8,16 @@ import { beginStep, loadRun } from './provision-run.ts';
 import { countAscIssued, getCertificateRow } from './repo-certificates.ts';
 import { finishRun } from './repo-runs.ts';
 
+const FAIL_ACTION = {
+  provision: 'identity.provision_failed',
+  rotate: 'identity.rotation_failed',
+  revoke: 'identity.revoke_failed',
+} as const;
+const FAIL_CODE = {
+  provision: 'IDENTITY_PROVISION_FAILED',
+  rotate: 'IDENTITY_ROTATION_FAILED',
+  revoke: 'IDENTITY_REVOKE_FAILED',
+} as const;
 const CODE = /^([A-Z][A-Z0-9_]+): /;
 
 /** The stable code of a failure: an AppError's own, or the prefix a NonRetryableError carries. */
@@ -36,16 +46,16 @@ export async function failRun(ctx: ServiceContext, runId: string, cause: unknown
   await recordAudit(ctx, {
     actorType: 'system',
     orgId: run.org_id,
-    action: run.kind === 'rotate' ? 'identity.rotation_failed' : 'identity.provision_failed',
+    action: FAIL_ACTION[run.kind],
     targetType: identityId ? 'identity' : 'org',
     targetId: identityId ?? run.target_id,
     detail: { runId, step: run.step, code },
   });
-  ctx.log.error(run.kind === 'rotate' ? 'identity.rotation_failed' : 'identity.provision_failed', {
+  ctx.log.error(FAIL_ACTION[run.kind], {
     runId,
     identityId,
     step: run.step,
-    code: run.kind === 'rotate' ? 'IDENTITY_ROTATION_FAILED' : 'IDENTITY_PROVISION_FAILED',
+    code: FAIL_CODE[run.kind],
     reason: code,
   });
 }
