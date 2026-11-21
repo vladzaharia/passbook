@@ -160,13 +160,22 @@ export const getMyRemoval = (db: Db, userId: string, transferId: string) =>
     [transferId, userId],
   );
 
+/** False when there is no such email, or it is the account's last one (never none to sign in with). */
 export async function removeEmail(db: Db, userId: string, email: string): Promise<boolean> {
-  const { changes } = await run(db, 'DELETE FROM user_emails WHERE user_id = ? AND email = ?', [
-    userId,
-    email,
-  ]);
+  const { changes } = await run(
+    db,
+    `DELETE FROM user_emails WHERE user_id = ? AND email = ?
+     AND (SELECT COUNT(*) FROM user_emails WHERE user_id = ?) > 1`,
+    [userId, email, userId],
+  );
   return changes > 0;
 }
+
+export const hasEmail = async (db: Db, userId: string, email: string) =>
+  (await first(db, 'SELECT 1 FROM user_emails WHERE user_id = ? AND email = ?', [
+    userId,
+    email,
+  ])) !== null;
 
 /** Sign-in emails go to `email`, which must be one of the user's verified addresses. */
 export async function setPrimaryEmail(

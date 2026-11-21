@@ -30,6 +30,16 @@ const passJson = (a: string) => `COALESCE((SELECT pv.pass_json FROM pass_version
   ORDER BY pv.version DESC LIMIT 1), ${a}.pending_pass_json)`;
 
 /**
+ * Not past its end, as the card reads it: only an ISO-shaped text counts (anything else is kept), and
+ * a date with no time lasts to the end of that day. The one parameter after the owner is now (ms).
+ */
+const notExpired = (a: string) => `COALESCE(NOT (
+    json_type(${passJson(a)}, '$.expirationDate') = 'text'
+    AND json_extract(${passJson(a)}, '$.expirationDate') GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]*'
+    AND CAST(strftime('%s', json_extract(${passJson(a)}, '$.expirationDate')) AS INTEGER) * 1000
+      + CASE WHEN length(json_extract(${passJson(a)}, '$.expirationDate')) = 10 THEN 86399999 ELSE 0 END < ?), 1)`;
+
+/**
  * What Add all may bundle, for alias `a` (two parameters: the owner, then now in ms): the holder's
  * own passes that are active, not voided, not expired (a date with no end never expires), not in
  * Wallet, not mid-transfer. A date the card cannot read counts as unexpired, as the card does.
@@ -38,7 +48,7 @@ const eligible = (a: string) => `${a}.owner_user_id = ? AND ${a}.status = 'activ
   AND ${a}.deleted_at IS NULL AND ${a}.removed_at IS NULL AND ${a}.test_data_quarantined = 0
   AND ${transferFree(a)} AND ${notInWallet(a)}
   AND COALESCE(json_extract(${passJson(a)}, '$.voided'), 0) = 0
-  AND COALESCE(CAST(strftime('%s', json_extract(${passJson(a)}, '$.expirationDate')) AS INTEGER) * 1000 >= ?, 1)
+  AND ${notExpired(a)}
   AND EXISTS (SELECT 1 FROM orgs AS og WHERE og.id = ${a}.org_id AND og.status = 'active')`;
 
 /** Test passes bundle only when the holder has no live pass to add (a sandbox recipient). */
@@ -72,19 +82,19 @@ export const listBundlePasses = (
     [userId, now, userId, now, range.first, ...(range.after === null ? [] : [range.after]), limit],
   );
 
-/** Recheck each archive entry after its object read and before any bytes are emitted. */
-export const bundlePassIsCurrent = async (db: Db, userId: string, row: BundleRow) =>
+/** Recheck each archive entry after its object read and before any bytes are emitted: still in the set. */
+export const bundlePassIsCurrent = async (db: Db, userId: string, now: number, row: BundleRow) =>
   (await first(
     db,
-    `SELECT 1 FROM passes AS p ${ACTIVE_ORG} WHERE p.id = ? AND p.owner_user_id = ?
+    `SELECT 1 FROM passes AS p ${ACTIVE_ORG} WHERE ${BUNDLE_WHERE} AND p.id = ?
     AND p.object_key = ? AND p.object_size IS ? AND p.version = ? AND p.revision = ?
-    AND p.credential_generation = ? AND p.lifecycle_generation = ? AND p.link_generation = ?
-    AND p.status = 'active' AND p.deleted_at IS NULL AND p.removed_at IS NULL
-    AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
-    AND ${notInWallet('p')}`,
+    AND p.credential_generation = ? AND p.lifecycle_generation = ? AND p.link_generation = ?`,
     [
-      row.id,
       userId,
+      now,
+      userId,
+      now,
+      row.id,
       row.object_key,
       row.object_size,
       row.version,

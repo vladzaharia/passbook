@@ -51,17 +51,25 @@ describe('Add all scope', () => {
     await add();
     await add('live', { expirationDate: iso(DAY) });
     await add('live', { expirationDate: iso(-DAY) });
-    await add('live', { expirationDate: iso(-DAY).slice(0, 10) });
     await add('live', { voided: true });
     await add('test');
     expect(await count()).toBe(2);
+  });
+
+  it('keeps a date-only end through that day and drops it the day after', async () => {
+    const { add, count } = await holder();
+    await add('live', { expirationDate: iso(0).slice(0, 10) });
+    expect(await count()).toBe(1);
+    await add('live', { expirationDate: iso(-2 * DAY).slice(0, 10) });
+    expect(await count()).toBe(1);
   });
 
   it('keeps a pass with no end, or an end it cannot read', async () => {
     const { add, count } = await holder();
     await add('live', { expirationDate: 'someday' });
     await add('live', { foo: 1 });
-    expect(await count()).toBe(2);
+    await add('live', { expirationDate: 1 });
+    expect(await count()).toBe(3);
   });
 
   it('bundles test passes only when no live pass is left to add', async () => {

@@ -449,6 +449,20 @@ describe('emails', () => {
     expect((await del('not-an-email')).status).toBe(422);
   });
 
+  it('never removes the last email, even when the primary is not one of the verified ones', async () => {
+    const { user, session } = await setup();
+    const del = (email: string) =>
+      send('DELETE', `/api/v1/me/emails/${encodeURIComponent(email)}`, session.headers);
+    const extra = `solo-${Math.random().toString(36).slice(2)}@example.test`;
+    await run(h.env.DB, 'DELETE FROM user_emails WHERE user_id = ?', [user.id]);
+    await run(
+      h.env.DB,
+      "INSERT INTO user_emails (email, user_id, verified_via, verified_at) VALUES (?, ?, 'magic_link', 0)",
+      [extra, user.id],
+    );
+    await expectProblem(await del(extra), 409, 'LAST_EMAIL');
+  });
+
   it('caps verification mails per user per day', async () => {
     const { session } = await setup();
     const add = (n: number) =>

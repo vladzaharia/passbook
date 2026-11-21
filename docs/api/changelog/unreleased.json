@@ -285,7 +285,7 @@
     "operationId": "me.getMePasses",
     "op": "GET /api/v1/me/passes",
     "change": "200.items[].readOnly: field added",
-    "note": ""
+    "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
   },
   {
     "key": "GET /api/v1/me/passes/{id} 200.readOnly: field added",
@@ -293,7 +293,7 @@
     "operationId": "me.getMePassesById",
     "op": "GET /api/v1/me/passes/{id}",
     "change": "200.readOnly: field added",
-    "note": ""
+    "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
   },
   {
     "key": "GET /api/v1/metrics/platform/developer new operation",

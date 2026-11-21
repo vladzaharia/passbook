@@ -23,7 +23,7 @@ function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly Bun
           const object = await ctx.env.BUCKET.get(row.object_key);
           if (!object) throw new NotFoundError('A pass file is missing.', 'PASS_FILE_MISSING');
           const bytes = new Uint8Array(await object.arrayBuffer());
-          if (!(await bundlePassIsCurrent(ctx.env.DB, userId, row))) {
+          if (!(await bundlePassIsCurrent(ctx.env.DB, userId, ctx.clock.now(), row))) {
             throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
           }
           return bytes;
