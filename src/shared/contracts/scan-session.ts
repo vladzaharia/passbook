@@ -90,6 +90,8 @@ export type ScanSession = z.infer<typeof ScanSessionSchema>;
 export const ScanPairRequestSchema = z.object({ code: z.string().min(10).max(16) });
 export const ScanPairPreviewSchema = z.object({
   scannerName: z.string(),
+  /** The session the device would join; absent for a legacy scanner. */
+  sessionName: z.string().nullable().default(null),
   orgName: z.string(),
   mode: ModeSchema,
 });

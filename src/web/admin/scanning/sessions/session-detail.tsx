@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Copy, Pause, Play, Plus, ScanLine, Square } from 'lucide-react';
+import { Copy, Pause, Play, Plus, QrCode, ScanLine, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { z } from 'zod';
 import type {
@@ -25,6 +25,7 @@ import { AddDeviceDialog } from './add-device-dialog.tsx';
 import { useUpdateSession } from './api.ts';
 import { DeviceCard } from './device-card.tsx';
 import { DeviceSheet } from './device-sheet.tsx';
+import { PairSheet } from './pair-sheet.tsx';
 import { SessionActivity } from './session-activity.tsx';
 import { SessionPairDialog, SessionRevokeDialog } from './session-device-dialogs.tsx';
 import { SessionRulesDialog } from './session-dialog.tsx';
@@ -53,7 +54,7 @@ export function SessionDetail({
 }) {
   const update = useUpdateSession(s.id);
   const setupNote = useCreated<string>(`scan-setup:${s.id}`);
-  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | HoursDialog | undefined>(
+  const [dialog, setDialog] = useState<'rules' | 'add' | 'pair' | 'end' | HoursDialog | undefined>(
     canManage && addDevice ? 'add' : undefined,
   );
   const navigate = useNavigate();
@@ -104,6 +105,14 @@ export function SessionDetail({
                 onClick={() => setDialog('add')}
               >
                 Add device
+              </Button>
+              <Button
+                variant="outline"
+                iconStart={<QrCode aria-hidden />}
+                disabled={!active}
+                onClick={() => setDialog('pair')}
+              >
+                Pair devices
               </Button>
               <Button
                 variant="outline"
@@ -231,6 +240,9 @@ export function SessionDetail({
           deviceNames={s.devices.map((d) => d.name)}
           onClose={() => setDialog(undefined)}
         />
+      ) : null}
+      {canManage && dialog === 'pair' ? (
+        <PairSheet sessionId={s.id} onClose={() => setDialog(undefined)} />
       ) : null}
       {canManage && dialog === 'end' ? (
         <ConfirmDialog
