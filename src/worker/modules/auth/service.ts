@@ -3,6 +3,7 @@ import { writeEvent } from '../../platform/analytics.ts';
 import type { Amr, Role } from '../../platform/auth.ts';
 import { envString } from '../../platform/env.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
+import type { Logger } from '../../platform/log.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
@@ -59,6 +60,12 @@ export interface SignInResult {
   session: NewSession;
 }
 
+const groupKey = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_');
+
 /**
  * A claim matches a configured group name exactly, case included. If Pocket ID normalises a group's
  * name in the claim (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
@@ -66,10 +73,24 @@ export interface SignInResult {
  * Platform admins get everything. The admin group carries `console` (it opens the console where
  * `OIDC_CONSOLE_GROUP_REQUIRED` is on; which orgs is in-app membership).
  */
-export function rolesFromGroups(env: object, groups: readonly string[]): Role[] {
+export function rolesFromGroups(
+  env: object,
+  groups: readonly string[],
+  log?: Pick<Logger, 'warn'>,
+): Role[] {
   const has = (variable: string) => {
     const name = envString(env, variable);
-    return !!name && groups.includes(name);
+    if (!name) return false;
+    if (groups.includes(name)) return true;
+    // Grants nothing: a group that matches only after the old normalising is a config mistake to fix.
+    const near = groups.find((group) => group !== name && groupKey(group) === groupKey(name));
+    if (near !== undefined)
+      log?.warn('auth.oidc_group_near_miss', {
+        code: 'GROUP_NEAR_MISS',
+        received: near,
+        configured: name,
+      });
+    return false;
   };
   const platform = has('OIDC_PLATFORM_ADMIN_GROUP');
   const developer = platform || has('OIDC_DEVELOPER_GROUP');

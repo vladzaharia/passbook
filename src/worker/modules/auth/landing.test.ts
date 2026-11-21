@@ -31,6 +31,32 @@ beforeEach(async () => {
 afterEach(() => h.restore());
 
 describe('landing after Polaris ID', () => {
+  it('sends an org member without the console role to My passes when the group is required', async () => {
+    const who = person(['wallet_users']);
+    const jar = new Map();
+    await oidcSignIn(h, jar, who);
+    const { user } = await session(jar);
+    const org = await makeOrg(fixtures(h.env));
+    const now = h.clock.now();
+    await run(
+      h.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
+       VALUES ('inv-g', ?, ?, '["org_admin"]', 'th-g', ?, ?, ?)`,
+      [org.id, who.email, now, now + 3600_000, now],
+    );
+    await run(
+      h.env.DB,
+      `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
+       VALUES ('mem-g', ?, ?, 'inv-g', '["org_admin"]', ?)`,
+      [org.id, user.id, now],
+    );
+    expect((await oidcSignIn(h, new Map(), who)).res.headers.get('location')).toBe('/admin');
+    (h.env as unknown as Record<string, string>).OIDC_CONSOLE_GROUP_REQUIRED = 'true';
+    expect((await oidcSignIn(h, new Map(), who)).res.headers.get('location')).toBe('/');
+    const withGroup = { ...who, groups: ['wallet_users', 'wallet_org_admins'] };
+    expect((await oidcSignIn(h, new Map(), withGroup)).res.headers.get('location')).toBe('/admin');
+  });
+
   it('sends admins to the console and holders to My passes when there is no next', async () => {
     const admin = await oidcSignIn(h, new Map(), person(['wallet_admins']));
     expect(admin.res.headers.get('location')).toBe('/admin');

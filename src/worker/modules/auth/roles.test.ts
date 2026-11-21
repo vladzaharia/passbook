@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { rolesFromGroups } from './service.ts';
 
 const env = {
@@ -49,5 +49,23 @@ describe('rolesFromGroups', () => {
   it('grants nothing for unset variables', () => {
     expect(rolesFromGroups({}, ['wallet_admins', 'passbook_developers'])).toEqual([]);
     expect(rolesFromGroups({ OIDC_DEVELOPER_GROUP: '' }, [''])).toEqual([]);
+  });
+
+  it('grants nothing for a near miss and logs the group names only', () => {
+    const warn = vi.fn();
+    expect(rolesFromGroups(env, ['wallet-admins', 'Passbook_Developers'], { warn })).toEqual([]);
+    expect(warn).toHaveBeenCalledWith('auth.oidc_group_near_miss', {
+      code: 'GROUP_NEAR_MISS',
+      received: 'wallet-admins',
+      configured: 'wallet_admins',
+    });
+    expect(warn).toHaveBeenCalledWith('auth.oidc_group_near_miss', {
+      code: 'GROUP_NEAR_MISS',
+      received: 'Passbook_Developers',
+      configured: 'passbook_developers',
+    });
+    warn.mockClear();
+    expect(rolesFromGroups(env, ['wallet_admins'], { warn })).toHaveLength(4);
+    expect(warn).not.toHaveBeenCalled();
   });
 });
