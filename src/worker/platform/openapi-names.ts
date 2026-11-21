@@ -60,6 +60,10 @@ import {
   SessionActivitySchema,
 } from '../../shared/contracts/scanning-sessions.ts';
 import {
+  ReleaseResponseSchema,
+  ReleaseTemplateSchema,
+} from '../../shared/contracts/template-release-flow.ts';
+import {
   TemplateDetailSchema,
   TemplateInputSchemaSchema,
   TemplateListSchema,
@@ -150,6 +154,8 @@ const names = {
   CaptureSecret: CaptureSecretSchema,
   EventPage: EventFeedPageSchema,
   ScanSetupAnswer: ScanSetupAnswerSchema,
+  ReleaseTemplate: ReleaseTemplateSchema,
+  ReleaseResponse: ReleaseResponseSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

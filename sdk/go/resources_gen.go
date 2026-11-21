@@ -1660,6 +1660,13 @@ func (r *TemplatesReleasesResource) List(ctx context.Context, id string, query *
 	return newPager[TemplatesReleasesListItem](r.c, call{method: "GET", path: "/api/v1/templates/" + pathEscape(id) + "/releases", query: queryValues(query)}, "cursor", opts)
 }
 
+// Release Release a template version to Test and Live in one call (Idempotency-Key required; dryRun previews) `POST /api/v1/templates/{id}/release`
+func (r *TemplatesReleasesResource) Release(ctx context.Context, id string, body *TemplatesReleasesReleaseBody, query *TemplatesReleasesReleaseQuery, opts ...RequestOption) (TemplatesReleasesReleaseResult, error) {
+	var out TemplatesReleasesReleaseResult
+	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/release", query: queryValues(query), body: body, idempotent: true}, &out, opts)
+	return out, err
+}
+
 // RetrieveImpact What publishing or rolling back to a version changes, and for how many passes `GET /api/v1/templates/{id}/releases/impact`
 func (r *TemplatesReleasesResource) RetrieveImpact(ctx context.Context, id string, query *TemplatesReleasesRetrieveImpactQuery, opts ...RequestOption) (*TemplatesReleasesRetrieveImpactResult, error) {
 	var out TemplatesReleasesRetrieveImpactResult
@@ -1667,6 +1674,23 @@ func (r *TemplatesReleasesResource) RetrieveImpact(ctx context.Context, id strin
 		return nil, err
 	}
 	return &out, nil
+}
+
+type TemplatesReviewsResource struct {
+	c *core
+}
+
+func newTemplatesReviewsResource(c *core) *TemplatesReviewsResource {
+	return &TemplatesReviewsResource{
+		c: c,
+	}
+}
+
+// Request Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`
+func (r *TemplatesReviewsResource) Request(ctx context.Context, id string, body *TemplatesReviewsRequestBody, query *TemplatesReviewsRequestQuery, opts ...RequestOption) (TemplatesReviewsRequestResult, error) {
+	var out TemplatesReviewsRequestResult
+	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/review-requests", query: queryValues(query), body: body, idempotent: true}, &out, opts)
+	return out, err
 }
 
 type TemplatesVersionsResource struct {
@@ -1698,6 +1722,7 @@ type TemplatesResource struct {
 	Candidates *TemplatesCandidatesResource
 	Channels   *TemplatesChannelsResource
 	Releases   *TemplatesReleasesResource
+	Reviews    *TemplatesReviewsResource
 	Versions   *TemplatesVersionsResource
 }
 
@@ -1707,6 +1732,7 @@ func newTemplatesResource(c *core) *TemplatesResource {
 		Candidates: newTemplatesCandidatesResource(c),
 		Channels:   newTemplatesChannelsResource(c),
 		Releases:   newTemplatesReleasesResource(c),
+		Reviews:    newTemplatesReviewsResource(c),
 		Versions:   newTemplatesVersionsResource(c),
 	}
 }

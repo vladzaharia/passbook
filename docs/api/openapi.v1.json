@@ -2452,6 +2452,963 @@
         "type": "object",
         "additionalProperties": {}
       },
+      "ReleaseResponse": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "modes": {
+                "type": "object",
+                "properties": {
+                  "test": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "released",
+                          "kept",
+                          "current",
+                          "review_requested"
+                        ]
+                      },
+                      "releaseId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "approvalKind": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "peer",
+                          "sole",
+                          "test",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "releaseId",
+                      "generation",
+                      "approvalKind"
+                    ]
+                  },
+                  "live": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "released",
+                          "kept",
+                          "current",
+                          "review_requested"
+                        ]
+                      },
+                      "releaseId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "approvalKind": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "peer",
+                          "sole",
+                          "test",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "releaseId",
+                      "generation",
+                      "approvalKind"
+                    ]
+                  }
+                }
+              },
+              "state": {
+                "type": "object",
+                "properties": {
+                  "live": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "by": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "by"
+                    ]
+                  },
+                  "test": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "following",
+                          "ahead"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "state"
+                    ]
+                  },
+                  "draft": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at"
+                    ]
+                  },
+                  "review": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "none"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "open",
+                              "approved"
+                            ]
+                          },
+                          "version": {
+                            "type": "string"
+                          },
+                          "by": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "version",
+                          "by",
+                          "at"
+                        ]
+                      }
+                    ]
+                  },
+                  "alone": {
+                    "type": "boolean"
+                  },
+                  "next": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "design",
+                      "try",
+                      "release",
+                      "request_review",
+                      "review",
+                      "wait",
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "live",
+                  "test",
+                  "draft",
+                  "review",
+                  "alone",
+                  "next"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "modes",
+              "state"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "modes": {
+                "type": "object",
+                "properties": {
+                  "test": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "release",
+                          "kept",
+                          "current",
+                          "review_required",
+                          "review_requested"
+                        ]
+                      },
+                      "from": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "expectedGeneration": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "candidate": {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "enum": [
+                              "reuse",
+                              "create"
+                            ]
+                          },
+                          "id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "id"
+                        ]
+                      },
+                      "approval": {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "enum": [
+                              "reuse",
+                              "write",
+                              "needed"
+                            ]
+                          },
+                          "kind": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "peer",
+                              "sole",
+                              "test",
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "kind"
+                        ]
+                      },
+                      "impact": {
+                        "type": "object",
+                        "properties": {
+                          "passes": {
+                            "type": "object",
+                            "properties": {
+                              "count": {
+                                "type": "integer"
+                              },
+                              "capped": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "count",
+                              "capped"
+                            ]
+                          },
+                          "devices": {
+                            "type": "object",
+                            "properties": {
+                              "count": {
+                                "type": "integer"
+                              },
+                              "capped": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "count",
+                              "capped"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "passes",
+                          "devices"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "from",
+                      "expectedGeneration",
+                      "candidate",
+                      "approval",
+                      "impact"
+                    ]
+                  },
+                  "live": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "release",
+                          "kept",
+                          "current",
+                          "review_required",
+                          "review_requested"
+                        ]
+                      },
+                      "from": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "expectedGeneration": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "candidate": {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "enum": [
+                              "reuse",
+                              "create"
+                            ]
+                          },
+                          "id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "id"
+                        ]
+                      },
+                      "approval": {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "enum": [
+                              "reuse",
+                              "write",
+                              "needed"
+                            ]
+                          },
+                          "kind": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "peer",
+                              "sole",
+                              "test",
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "kind"
+                        ]
+                      },
+                      "impact": {
+                        "type": "object",
+                        "properties": {
+                          "passes": {
+                            "type": "object",
+                            "properties": {
+                              "count": {
+                                "type": "integer"
+                              },
+                              "capped": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "count",
+                              "capped"
+                            ]
+                          },
+                          "devices": {
+                            "type": "object",
+                            "properties": {
+                              "count": {
+                                "type": "integer"
+                              },
+                              "capped": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "count",
+                              "capped"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "passes",
+                          "devices"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "from",
+                      "expectedGeneration",
+                      "candidate",
+                      "approval",
+                      "impact"
+                    ]
+                  }
+                }
+              },
+              "diff": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "group": {
+                      "type": "string",
+                      "enum": [
+                        "colors",
+                        "front",
+                        "back",
+                        "images",
+                        "barcode"
+                      ]
+                    },
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "added",
+                              "removed",
+                              "changed"
+                            ]
+                          },
+                          "from": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "text"
+                                    ]
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "text"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "color"
+                                    ]
+                                  },
+                                  "color": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "color"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "date"
+                                    ]
+                                  },
+                                  "at": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "at"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image"
+                                    ]
+                                  },
+                                  "version": {
+                                    "type": "string"
+                                  },
+                                  "asset": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "version",
+                                  "asset"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "to": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "text"
+                                    ]
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "text"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "color"
+                                    ]
+                                  },
+                                  "color": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "color"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "date"
+                                    ]
+                                  },
+                                  "at": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "at"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image"
+                                    ]
+                                  },
+                                  "version": {
+                                    "type": "string"
+                                  },
+                                  "asset": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "version",
+                                  "asset"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "kind",
+                          "from",
+                          "to"
+                        ]
+                      }
+                    },
+                    "more": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "group",
+                    "rows",
+                    "more"
+                  ]
+                }
+              },
+              "fromVersion": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": "object",
+                "properties": {
+                  "live": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "by": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "by"
+                    ]
+                  },
+                  "test": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "following",
+                          "ahead"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "state"
+                    ]
+                  },
+                  "draft": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at"
+                    ]
+                  },
+                  "review": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "none"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "open",
+                              "approved"
+                            ]
+                          },
+                          "version": {
+                            "type": "string"
+                          },
+                          "by": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "version",
+                          "by",
+                          "at"
+                        ]
+                      }
+                    ]
+                  },
+                  "alone": {
+                    "type": "boolean"
+                  },
+                  "next": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "design",
+                      "try",
+                      "release",
+                      "request_review",
+                      "review",
+                      "wait",
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "live",
+                  "test",
+                  "draft",
+                  "review",
+                  "alone",
+                  "next"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "modes",
+              "diff",
+              "fromVersion",
+              "state"
+            ]
+          }
+        ]
+      },
+      "ReleaseTemplate": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "modes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "live",
+                "test"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 2
+          },
+          "expected": {
+            "type": "object",
+            "properties": {
+              "live": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "test": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "request": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
       "PassPage": {
         "type": "object",
         "properties": {
@@ -42324,6 +43281,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -42459,6 +43418,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -42669,6 +43630,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -42897,6 +43860,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -43017,6 +43982,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -43214,6 +44181,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -43529,6 +44498,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -43691,6 +44662,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -43809,6 +44782,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -43935,6 +44910,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -44054,6 +45031,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -44173,6 +45152,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -44365,6 +45346,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -44509,6 +45492,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -44797,6 +45782,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -44949,6 +45936,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -45477,6 +46466,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -46126,6 +47117,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -46333,6 +47326,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -46613,6 +47608,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -46776,6 +47773,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -46901,6 +47900,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -47181,6 +48182,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -47366,6 +48369,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -47476,6 +48481,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -47585,6 +48592,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -47703,6 +48712,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -48056,6 +49067,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -48354,6 +49367,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -48649,6 +49664,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
@@ -48828,6 +49845,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -49309,6 +50328,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -49577,6 +50598,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -49953,6 +50976,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
@@ -50218,8 +51243,369 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/templates/{id}/release": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:publish"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Release a template version to Test and Live in one call (Idempotency-Key required; dryRun previews)",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1",
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseTemplate"
+              },
+              "example": {
+                "version": "4",
+                "modes": [
+                  "test"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseResponse"
+                },
+                "example": {
+                  "version": "4",
+                  "modes": {
+                    "test": {
+                      "outcome": "released",
+                      "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "generation": 3,
+                      "approvalKind": "test"
+                    }
+                  },
+                  "state": {
+                    "live": null,
+                    "test": {
+                      "version": "4",
+                      "at": 1764086400000,
+                      "state": "following"
+                    },
+                    "draft": null,
+                    "review": {
+                      "state": "none"
+                    },
+                    "alone": true,
+                    "next": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.postTemplatesByIdRelease",
+        "x-sdk": {
+          "resource": "templates.releases",
+          "method": "release"
+        },
+        "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`. A Test key may name only `test`; a Live key cannot release.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/templates/{id}/review-requests": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Request review of a template version (Idempotency-Key required)",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1",
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseTemplate"
+              },
+              "example": {
+                "version": "4"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseResponse"
+                },
+                "example": {
+                  "version": "4",
+                  "modes": {
+                    "test": {
+                      "outcome": "review_requested",
+                      "releaseId": null,
+                      "generation": 3,
+                      "approvalKind": null
+                    },
+                    "live": {
+                      "outcome": "review_requested",
+                      "releaseId": null,
+                      "generation": 2,
+                      "approvalKind": null
+                    }
+                  },
+                  "state": {
+                    "live": {
+                      "version": "4",
+                      "at": 1764086400000,
+                      "by": "Ada Example"
+                    },
+                    "test": {
+                      "version": "4",
+                      "at": 1764086400000,
+                      "state": "following"
+                    },
+                    "draft": null,
+                    "review": {
+                      "state": "none"
+                    },
+                    "alone": true,
+                    "next": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.postTemplatesByIdReviewRequests",
+        "x-sdk": {
+          "resource": "templates.reviews",
+          "method": "request"
+        },
+        "description": "Create or reuse the Test and Live candidates of a saved version without approving them, so another reviewer can approve. Reviewers are told when notification ships. Send `Idempotency-Key`.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
           "INVALID_INPUT",
           "KEY_CREATOR_GONE",

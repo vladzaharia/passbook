@@ -1967,6 +1967,14 @@
     "resource": "templates.releases",
     "method": "create"
   },
+  "templates.postTemplatesByIdRelease": {
+    "resource": "templates.releases",
+    "method": "release"
+  },
+  "templates.postTemplatesByIdReviewRequests": {
+    "resource": "templates.reviews",
+    "method": "request"
+  },
   "templates.postTemplatesByIdReleasesRollback": {
     "resource": "templates.releases",
     "method": "rollback"
