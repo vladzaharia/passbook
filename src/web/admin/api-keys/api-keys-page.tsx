@@ -200,7 +200,7 @@ function ScopedApiKeys({
               <span className="block">
                 Permissions: {revoking.scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ')}
               </span>
-              <span className="block">Expires: {formatDay(revoking.expiresAt, 'Never')}</span>
+              <span className="block">Expires: {formatDay(revoking.expiresAt, 'No expiry')}</span>
               <span className="block">
                 Last used: {formatDay(revoking.lastUsedAt, 'No use recorded')} · Consumer impact is
                 not known.

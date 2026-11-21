@@ -18,6 +18,24 @@ const constant = (name: string) =>
   new RegExp(`export const ${name} = '([^']+)'`).exec(cronSource)?.[1];
 
 describe('wrangler.jsonc', () => {
+  it('holds Pocket ID claim values for the groups: lowercase letters, digits and underscores', () => {
+    const names = [
+      'OIDC_PLATFORM_ADMIN_GROUP',
+      'OIDC_ADMIN_GROUP',
+      'OIDC_DEVELOPER_GROUP',
+      'OIDC_USER_GROUP',
+    ].map((key) => wrangler.vars?.[key]);
+    for (const name of names) expect(name).toMatch(/^[a-z0-9_]+$/);
+    expect(new Set(names).size).toBe(names.length);
+    expect(wrangler.vars?.OIDC_CONSOLE_GROUP_REQUIRED).toBe('false');
+  });
+
+  it('is what the mock IdP issues', () => {
+    const mock = readFileSync(new URL('../test/mock-oidc/server.ts', import.meta.url), 'utf8');
+    for (const key of ['OIDC_PLATFORM_ADMIN_GROUP', 'OIDC_USER_GROUP', 'OIDC_DEVELOPER_GROUP'])
+      expect(mock).toContain(`'${wrangler.vars?.[key]}'`);
+  });
+
   it('schedules exactly the cron expressions the dispatcher has hooks for', () => {
     expect([...(wrangler.triggers?.crons ?? [])].sort()).toEqual(
       [constant('MINUTE_CRON'), constant('DAILY_CRON')].sort(),

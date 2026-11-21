@@ -38,8 +38,27 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
-   - Groups: `wallet-admins`, `wallet-users`. Pocket ID's generated names (`wallet_admins`) match
-     too. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
+   - Groups: the `OIDC_*_GROUP` vars hold the values Pocket ID sends in the `groups` claim, not the
+     display names. Pocket ID derives them from the display name (lowercase, other characters to
+     `_`): `Wallet Admins` or `wallet-admins` arrives as `wallet_admins`. Matching is exact and
+     case-sensitive, and a test fails any var that is not `[a-z0-9_]`. `OIDC_PLATFORM_ADMIN_GROUP`
+     (`wallet_admins`: every org and the platform scope, developer features included),
+     `OIDC_ADMIN_GROUP` (`wallet_org_admins`: may use the org console; which orgs is PassBook
+     membership), `OIDC_DEVELOPER_GROUP` (`passbook_developers`) and `OIDC_USER_GROUP`
+     (`wallet_users`). Check the real values in the logs of a refused sign-in
+     (`auth.oidc_no_access` lists the groups it received) before a deploy that changes them.
+   - Turning on the admin group requirement (`OIDC_CONSOLE_GROUP_REQUIRED`, default `"false"`):
+     1. In Pocket ID create `wallet_org_admins` (display name `wallet-org-admins`) and add everyone
+        who uses an org console, including every current org member. Platform admins need no
+        other group.
+     2. Add the group to the PassBook client's allowed groups.
+     3. Set `OIDC_CONSOLE_GROUP_REQUIRED` to `"true"` in `wrangler.jsonc` and deploy. Console
+        routes (org routes, members and invitations, audit, metrics, scan administration) then
+        answer `403 CONSOLE_ACCESS_REQUIRED` to a Polaris ID session without the group or the
+        platform admin role, and the Admin menu item is hidden. Sessions made before the change
+        lack the role until the next sign-in: members sign out and in. Email-link sessions in the
+        console grace window are not affected and end with the grace. API keys keep working.
+     Settings → Polaris ID shows the group names and whether the requirement is on.
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.
@@ -110,7 +129,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    [Cutover](#cutover-from-schema-0024), which is complete.
 10. **First admin**: a new database has no memberships. Run
     `node tools/bootstrap-tenancy.ts --owner <your email> --apply` locally, or the printed remote
-    commands, after signing in once. Then sign in through Pocket ID as a `wallet-admins` member
+    commands, after signing in once. Then sign in through Pocket ID as a `wallet_admins` member
     (or break-glass if Pocket ID is down). Check Status: every component should be verified or
     configured.
 11. **Device acceptance test** (a real iPhone)
@@ -308,7 +327,7 @@ Owner steps:
    first; the custom domain creates its own. The deploy applies `migrations/0008_passes.sql`,
    which moves stored web service URLs off wallet.plrs.im (no pass was on a device).
 3. **First sign-in** through Pocket ID creates a new client: set its allowed groups
-   (`wallet-admins`, `wallet-users`) and its logo as in [Go-live](#go-live-checklist) step 1. User
+   (`wallet_admins`, `wallet_users`) and its logo as in [Go-live](#go-live-checklist) step 1. User
    ids (`sub`) do not change, so linked accounts carry over; everyone consents once.
 4. If passes existed, rebuild their files: Identities → the platform identity → Re-sign.
 
@@ -598,10 +617,11 @@ The console, the developer tools and every API key mint need a Polaris ID sign-i
 - Migration 0169 puts every active member of an organization in `console_email_grace` (strong sessions never read it) and, when it found any, sets the platform setting `auth.consoleEmailUntil` to 21 days on (ms). Until then those members' email sessions keep the console and their personal keys keep working. Minting or rotating a key, the developer sandbox and Try it, closing an org and accepting an invitation need a Polaris ID sign-in at once, grace or not. The admin shell shows those members "Use Polaris ID by {date} to keep Admin access."; people with no Polaris ID account yet cannot sign in until one exists, so move the date out if that is not settled. Move the date with the platform settings API (`auth.consoleEmailUntil`, ms), or set it to `null` to end grace now. A database with nobody in grace enforces at once.
 - A personal key stops with 403 `KEY_OWNER_NEEDS_IDP` once its owner is outside grace and has no Polaris ID identity; it works again after one Polaris ID sign-in. Service and platform keys are not affected. `api_keys.created_amr` shows how a key's creator signed in.
 - Non-admin Polaris ID sessions last 7 days idle and 30 days in all.
+- Step-up: sensitive actions (key mint and rotate, org close, reopen and export, admin and integration invitations, webhook and connection secrets, signing identities, `auth.*` and `oidc.*` settings) need a sign-in within the last 10 minutes (`auth_time`). Otherwise 403 `STEP_UP_REQUIRED` with a `signInUrl` that sends Pocket ID `prompt=login&max_age=0`. Pocket ID must honour `max_age=0` and put the new `auth_time` in the ID token. The callback checks it: a step-up whose `auth_time` is older than the flow's start (migration 0179, `oidc_flows.step_up_started_at`, 2 minutes of clock skew allowed) fails with `STEP_UP_NOT_FRESH` ("Polaris ID didn't ask you to sign in again") and logs `STEP_UP_NOT_FRESH`; the old session stays as it was. If every step-up lands there, Pocket ID is ignoring `max_age`. A session with no `auth_time` (an email link, or a provider that sends none) is always stale. Break-glass sessions step up by entering the token again.
 
 ### Closing and purging an organization
 
-`POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 24 hours. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.
+`POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 1 hour and one download. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.
 
 The daily `org_lifecycle.sweep` starts the `org-purge` workflow (one instance per org and day) for every closed org past `purge_after` with no active legal hold. A hold placed at any time stops it where it stands; releasing the hold lets the next sweep finish. The purge first voids every pass (a last voided, expired version, pushed to registered devices; Apple serves a closed org's voided passes only, Google and Samsung revoke through their void path), stamps `purge_voided_at` and waits seven days; no row goes before that, enforced in each delete. It then soft-deletes the passes, waits up to seven more days for Wallet providers to let go, deletes every table of `PURGE_STEPS`, the org's R2 prefixes, removes the org's R2 prefixes (prints, branding, template files and uploads, import sheets, exports, member photos), then writes a `org_purge` retention receipt and scrubs the org row to a stub (id, slug, status, audit rows and receipts stay). `blocked` or `incomplete` in the log (`ORG_PURGE_VOID`, `ORG_PURGE_BLOCKED`, `ORG_PURGE_INCOMPLETE`) means a pass or table could not go yet; tomorrow's sweep retries.
 

@@ -35,6 +35,7 @@ import { eligibleTemplates } from './eligible.ts';
 import { cloneTemplate } from './fork.ts';
 import { removeTemplate, replaceManifest } from './mutations.ts';
 import { assignOrg } from './org-assignment.ts';
+import { registerTemplateReleaseFlow } from './release-flow-route.ts';
 import { TemplateScopeQuerySchema } from './route-scope.ts';
 import { registerBlueprints } from './routes-blueprints.ts';
 import {
@@ -56,7 +57,7 @@ export const templatesRoutes = createRouter({ bodyLimit: false });
 templatesRoutes.use('*', defaultBodyLimit(/\/(uploads|[^/]+\/(versions|use|use\/check))$/));
 /** Writes that declare their own `auth` (keys included): the router guard leaves them to it. */
 const OWN_AUTH_WRITES =
-  /^\/api\/v1\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|preview)\/?$/;
+  /^\/api\/v1\/templates\/[^/]+\/(use|candidates|candidates\/[^/]+\/approve|releases|release|review-requests|preview)\/?$/;
 
 // Template reads allow scoped API keys; mutations require a session and are authorized per org.
 // The scan setup route declares its own `auth` (a session or a `scanning:write` key).
@@ -321,3 +322,4 @@ registerBlueprints(templatesRoutes);
 registerTemplateScanSetup(templatesRoutes);
 registerLifecycle(templatesRoutes);
 registerTemplateReleases(templatesRoutes);
+registerTemplateReleaseFlow(templatesRoutes);

@@ -51,6 +51,8 @@ describe('api keys page', () => {
     expect(screen.getAllByText('wlt_abc123', { exact: false })[0]).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Expiry' })).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
+    // A key with no expiry says so.
+    expect(screen.getByText('No expiry')).toBeInTheDocument();
     // Active first; the revoked key waits behind the toggle.
     expect(screen.queryByText('Old')).toBeNull();
     expect(screen.getByRole('link', { name: 'Ada Lovelace' })).toHaveAttribute(

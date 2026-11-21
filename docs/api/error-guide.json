@@ -125,6 +125,18 @@
     "fix": "Replace the provisioner key, then send the request again.",
     "retryable": false
   },
+  "ASC_CERT_DER_MISSING": {
+    "title": "Apple listed a certificate without content",
+    "when": "Apple listed a certificate without its content.",
+    "fix": "Send the request again; contact support if it repeats.",
+    "retryable": true
+  },
+  "ASC_CERT_MISSING": {
+    "title": "Apple sent no certificate",
+    "when": "Apple accepted the request but returned no certificate.",
+    "fix": "Send the request again; contact support if it repeats.",
+    "retryable": true
+  },
   "ASC_CONFLICT": {
     "title": "Apple reports a conflict",
     "when": "Apple refused the request because the resource already exists or is in use.",
@@ -135,6 +147,12 @@
     "title": "Apple resource not found",
     "when": "Apple has no such resource.",
     "fix": "Check the identifier, then send the request again.",
+    "retryable": false
+  },
+  "ASC_PASS_TYPE_MISSING": {
+    "title": "Pass type not recorded",
+    "when": "The run has no recorded Apple pass type.",
+    "fix": "Retry the run from the start.",
     "retryable": false
   },
   "ASC_REFUSED": {
@@ -563,6 +581,24 @@
     "fix": "Retry with backoff; Google resends failed callbacks.",
     "retryable": true
   },
+  "GOOGLE_ISSUER_NOT_OWNED": {
+    "title": "Issuer not yours",
+    "when": "The Google issuer is not owned by the account that shared it.",
+    "fix": "Share an issuer your Google account owns, then send the request again.",
+    "retryable": false
+  },
+  "GOOGLE_ISSUER_NOT_SHARED": {
+    "title": "Issuer not shared",
+    "when": "The Google issuer is not shared with the platform account.",
+    "fix": "Share the issuer in the Google Pay and Wallet console, then send the request again.",
+    "retryable": false
+  },
+  "GOOGLE_UNAVAILABLE": {
+    "title": "Google unavailable",
+    "when": "Google did not answer.",
+    "fix": "Send the request again in a minute.",
+    "retryable": true
+  },
   "GROUP_ENTRY_ONLY": {
     "title": "Check in all needs an entry scanner",
     "when": "Check in all was used on a scanner that is not an entry scanner.",
@@ -593,6 +629,18 @@
     "fix": "Wait for the transfer to finish, then send the request again.",
     "retryable": false
   },
+  "IAM_BAD_ACCOUNT": {
+    "title": "Bad service account",
+    "when": "Google returned a service account that is not valid.",
+    "fix": "Send the request again; contact support if it repeats.",
+    "retryable": true
+  },
+  "IAM_BAD_KEY": {
+    "title": "Bad service account key",
+    "when": "Google returned a service account key that is not usable.",
+    "fix": "Send the request again; contact support if it repeats.",
+    "retryable": true
+  },
   "IDEMPOTENCY_IN_PROGRESS": {
     "title": "First request still running",
     "when": "A request with this Idempotency-Key has not finished.",
@@ -605,10 +653,40 @@
     "fix": "Send a unique string of 1 to 200 characters, such as a UUID.",
     "retryable": false
   },
+  "IDEMPOTENCY_KEY_REQUIRED": {
+    "title": "Idempotency-Key required",
+    "when": "A release without dryRun came without an Idempotency-Key header.",
+    "fix": "Send a unique string of 1 to 200 characters, such as a UUID, and reuse it to retry.",
+    "retryable": false
+  },
   "IDEMPOTENCY_KEY_REUSED": {
     "title": "Idempotency-Key reused",
     "when": "The same Idempotency-Key came with a different request.",
     "fix": "Use a new key for a new request; resend the identical request to replay.",
+    "retryable": false
+  },
+  "IDENTITY_ALREADY_PROVISIONED": {
+    "title": "Already provisioned",
+    "when": "The identity already has a certificate.",
+    "fix": "Renew it instead of provisioning again.",
+    "retryable": false
+  },
+  "IDENTITY_CERT_CAP": {
+    "title": "Certificate limit reached",
+    "when": "Apple allows no more certificates for this pass type.",
+    "fix": "Revoke an old certificate, then send the request again.",
+    "retryable": false
+  },
+  "IDENTITY_CERT_NOT_FOUND": {
+    "title": "Certificate not found",
+    "when": "No certificate with that id belongs to the identity.",
+    "fix": "List the identity's certificates and use an id from the list.",
+    "retryable": false
+  },
+  "IDENTITY_CERT_NOT_REVOCABLE": {
+    "title": "Certificate cannot be revoked",
+    "when": "Only a superseded certificate that Apple issued can be revoked.",
+    "fix": "Pick a superseded certificate from the identity's history.",
     "retryable": false
   },
   "IDENTITY_CHANGED": {
@@ -617,10 +695,46 @@
     "fix": "Reload the identity, then activate again.",
     "retryable": true
   },
+  "IDENTITY_CONFIRM_MISMATCH": {
+    "title": "Confirmation does not match",
+    "when": "The confirmation does not match the pass type ID.",
+    "fix": "Send the pass type ID exactly as shown.",
+    "retryable": false
+  },
   "IDENTITY_EXPIRED": {
     "title": "Identity expired",
     "when": "The signing identity certificate has expired.",
     "fix": "Upload a renewed certificate, then send the request again.",
+    "retryable": false
+  },
+  "IDENTITY_HANDLE_ADMIN_ONLY": {
+    "title": "Handle set by PassBook",
+    "when": "Only PassBook can choose the handle.",
+    "fix": "Leave the handle out; it comes from the organization slug.",
+    "retryable": false
+  },
+  "IDENTITY_HANDLE_FIXED": {
+    "title": "Handle is fixed",
+    "when": "The organization already has a handle.",
+    "fix": "Leave the handle out or send the existing one.",
+    "retryable": false
+  },
+  "IDENTITY_HANDLE_INVALID": {
+    "title": "Invalid handle",
+    "when": "The handle is not 2 to 30 lowercase letters or digits.",
+    "fix": "Use 2 to 30 lowercase letters or digits, then send the request again.",
+    "retryable": false
+  },
+  "IDENTITY_HANDLE_RESERVED": {
+    "title": "Handle reserved",
+    "when": "The handle is reserved by the platform.",
+    "fix": "Choose another handle.",
+    "retryable": false
+  },
+  "IDENTITY_HANDLE_TAKEN": {
+    "title": "Handle taken",
+    "when": "Another identity uses this handle.",
+    "fix": "Choose another handle.",
     "retryable": false
   },
   "IDENTITY_NOT_FOUND": {
@@ -629,10 +743,28 @@
     "fix": "Check the id with GET /api/v1/identities.",
     "retryable": false
   },
-  "IDP_SIGN_IN_REQUIRED": {
-    "title": "Polaris ID sign-in required",
-    "when": "A session made with an email link called a console or developer route. Only a Polaris ID sign-in opens them.",
-    "fix": "Sign in with Polaris ID at the signInUrl in the problem, then send the request again. API keys are not affected.",
+  "IDENTITY_NOT_READY": {
+    "title": "Identity not ready",
+    "when": "The identity has no certificate yet.",
+    "fix": "Wait for provisioning to finish, then send the request again.",
+    "retryable": true
+  },
+  "IDENTITY_NOT_ROTATABLE": {
+    "title": "Identity cannot renew automatically",
+    "when": "Only a managed or platform identity with a certificate renews automatically.",
+    "fix": "Set rotation to manual, or upload a certificate.",
+    "retryable": false
+  },
+  "CONSOLE_ACCESS_REQUIRED": {
+    "title": "Console access required",
+    "when": "The platform requires the admin group for organization console routes, and this session has neither the group nor platform admin.",
+    "fix": "Ask an administrator to add you to the admin group in Polaris ID, then sign in again.",
+    "retryable": false
+  },
+  "DEVELOPER_ACCESS_REQUIRED": {
+    "title": "Developer access required",
+    "when": "A signed-in person without developer access called a developer sandbox or Try it route.",
+    "fix": "Ask an administrator to add you to the developer group in Polaris ID, then sign in again.",
     "retryable": false
   },
   "IDENTITY_PLATFORM_ENV_MISMATCH": {
@@ -641,10 +773,52 @@
     "fix": "Ask the platform owner to align the deployed identity with the database.",
     "retryable": false
   },
+  "IDENTITY_PTI_TAKEN": {
+    "title": "Pass type taken",
+    "when": "The pass type belongs to another identity.",
+    "fix": "Use another pass type identifier.",
+    "retryable": false
+  },
+  "IDENTITY_REISSUE_PENDING": {
+    "title": "Reissue pending",
+    "when": "The identity's passes are not reissued yet and 72 hours have not passed since the renewal.",
+    "fix": "Reissue the identity's passes or wait 72 hours, then send the request again.",
+    "retryable": true
+  },
   "IDENTITY_RETIRED": {
     "title": "Identity retired",
     "when": "The signing identity no longer issues passes.",
     "fix": "Choose another identity, then send the request again.",
+    "retryable": false
+  },
+  "IDENTITY_RUN_CLOSED": {
+    "title": "Run finished",
+    "when": "The run has already finished or was cancelled.",
+    "fix": "Start a new run.",
+    "retryable": false
+  },
+  "IDENTITY_RUN_INCOMPLETE": {
+    "title": "Run incomplete",
+    "when": "The run is missing data a step needs.",
+    "fix": "Start a new run.",
+    "retryable": false
+  },
+  "IDENTITY_RUN_NOT_FOUND": {
+    "title": "Run not found",
+    "when": "No provisioning run with that id exists for you.",
+    "fix": "List runs and use an id from the list.",
+    "retryable": false
+  },
+  "IDENTITY_RUN_OPEN": {
+    "title": "Run still open",
+    "when": "Only a failed or cancelled run can be retried.",
+    "fix": "Wait for the run to end, or cancel it, then retry.",
+    "retryable": false
+  },
+  "IDP_SIGN_IN_REQUIRED": {
+    "title": "Polaris ID sign-in required",
+    "when": "A session made with an email link called a console or developer route. Only a Polaris ID sign-in opens them.",
+    "fix": "Sign in with Polaris ID at the signInUrl in the problem, then send the request again. API keys are not affected.",
     "retryable": false
   },
   "IF_MATCH_INVALID": {
@@ -1047,6 +1221,12 @@
     "title": "Offline list too large",
     "when": "The session covers more passes than an offline list can hold.",
     "fix": "Narrow the session to fewer events or pass types.",
+    "retryable": false
+  },
+  "OIDC_REQUIRED": {
+    "title": "Pocket ID sign-in required",
+    "when": "This action needs a session signed in with Pocket ID.",
+    "fix": "Sign in with Pocket ID, then send the request again.",
     "retryable": false
   },
   "ORG_ACCESS_CHANGED": {
@@ -2015,6 +2195,12 @@
     "fix": "Make the change in the template designer and publish a new version.",
     "retryable": false
   },
+  "STEP_UP_REQUIRED": {
+    "title": "Confirm it's you",
+    "when": "A sensitive action needs a Polaris ID sign-in from the last 10 minutes, and this session's sign-in is older. API keys never get it.",
+    "fix": "Open signInUrl to sign in with Polaris ID again, then repeat the action.",
+    "retryable": true
+  },
   "TAGS_OFF": {
     "title": "Tags off",
     "when": "NFC tags are not turned on for the organization.",
@@ -2675,6 +2861,30 @@
     "fix": "Rebuild the wallet projection and use the new image URL.",
     "retryable": false
   },
+  "WALLET_ISSUER_CLAIMED": {
+    "title": "Issuer claimed",
+    "when": "Another organization uses this issuer.",
+    "fix": "Use a different issuer.",
+    "retryable": false
+  },
+  "WALLET_ISSUER_EXISTS": {
+    "title": "Issuer exists",
+    "when": "Google already has an issuer for this account.",
+    "fix": "Attach it as a shared issuer instead.",
+    "retryable": false
+  },
+  "WALLET_ISSUER_NOT_WAITING": {
+    "title": "Issuer not waiting",
+    "when": "The issuer is not waiting for Google approval.",
+    "fix": "Check the issuer status before completing it.",
+    "retryable": false
+  },
+  "WALLET_KEY_HELD": {
+    "title": "Key still in use",
+    "when": "A credential still holds the key being retired.",
+    "fix": "Move the credential to the new key, then send the request again.",
+    "retryable": true
+  },
   "WALLET_MODE_MISMATCH": {
     "title": "Wallet mode mismatch",
     "when": "The requested mode differs from the key's mode.",
@@ -2685,6 +2895,12 @@
     "title": "Wallet offer not found",
     "when": "The wallet offer link is not valid anymore.",
     "fix": "Request a new offer for the pass.",
+    "retryable": false
+  },
+  "WALLET_PLATFORM_CREDENTIAL_MISSING": {
+    "title": "Platform credential missing",
+    "when": "The platform has no Google credential configured.",
+    "fix": "Ask the platform owner to add it, then send the request again.",
     "retryable": false
   },
   "WALLET_PROJECTION_BLOCKED": {
@@ -2716,6 +2932,12 @@
     "when": "The template uses wallet features the provider's native format cannot show.",
     "fix": "Remove the unsupported features or release without this provider.",
     "retryable": false
+  },
+  "WALLET_RUN_BUSY": {
+    "title": "Run busy",
+    "when": "Another job holds this run.",
+    "fix": "Send the request again in a minute.",
+    "retryable": true
   },
   "WALLET_VERIFICATION_CONFLICT": {
     "title": "Newer verification running",
@@ -2920,203 +3142,5 @@
     "when": "No zone with this id exists in this mode and organization.",
     "fix": "Check the zone id.",
     "retryable": false
-  },
-  "ASC_CERT_DER_MISSING": {
-    "title": "Apple listed a certificate without content",
-    "when": "Apple listed a certificate without its content.",
-    "fix": "Send the request again; contact support if it repeats.",
-    "retryable": true
-  },
-  "ASC_CERT_MISSING": {
-    "title": "Apple sent no certificate",
-    "when": "Apple accepted the request but returned no certificate.",
-    "fix": "Send the request again; contact support if it repeats.",
-    "retryable": true
-  },
-  "ASC_PASS_TYPE_MISSING": {
-    "title": "Pass type not recorded",
-    "when": "The run has no recorded Apple pass type.",
-    "fix": "Retry the run from the start.",
-    "retryable": false
-  },
-  "GOOGLE_ISSUER_NOT_OWNED": {
-    "title": "Issuer not yours",
-    "when": "The Google issuer is not owned by the account that shared it.",
-    "fix": "Share an issuer your Google account owns, then send the request again.",
-    "retryable": false
-  },
-  "GOOGLE_ISSUER_NOT_SHARED": {
-    "title": "Issuer not shared",
-    "when": "The Google issuer is not shared with the platform account.",
-    "fix": "Share the issuer in the Google Pay and Wallet console, then send the request again.",
-    "retryable": false
-  },
-  "GOOGLE_UNAVAILABLE": {
-    "title": "Google unavailable",
-    "when": "Google did not answer.",
-    "fix": "Send the request again in a minute.",
-    "retryable": true
-  },
-  "IAM_BAD_ACCOUNT": {
-    "title": "Bad service account",
-    "when": "Google returned a service account that is not valid.",
-    "fix": "Send the request again; contact support if it repeats.",
-    "retryable": true
-  },
-  "IAM_BAD_KEY": {
-    "title": "Bad service account key",
-    "when": "Google returned a service account key that is not usable.",
-    "fix": "Send the request again; contact support if it repeats.",
-    "retryable": true
-  },
-  "IDENTITY_ALREADY_PROVISIONED": {
-    "title": "Already provisioned",
-    "when": "The identity already has a certificate.",
-    "fix": "Renew it instead of provisioning again.",
-    "retryable": false
-  },
-  "IDENTITY_CERT_CAP": {
-    "title": "Certificate limit reached",
-    "when": "Apple allows no more certificates for this pass type.",
-    "fix": "Revoke an old certificate, then send the request again.",
-    "retryable": false
-  },
-  "IDENTITY_CERT_NOT_FOUND": {
-    "title": "Certificate not found",
-    "when": "No certificate with that id belongs to the identity.",
-    "fix": "List the identity's certificates and use an id from the list.",
-    "retryable": false
-  },
-  "IDENTITY_CERT_NOT_REVOCABLE": {
-    "title": "Certificate cannot be revoked",
-    "when": "Only a superseded certificate that Apple issued can be revoked.",
-    "fix": "Pick a superseded certificate from the identity's history.",
-    "retryable": false
-  },
-  "IDENTITY_CONFIRM_MISMATCH": {
-    "title": "Confirmation does not match",
-    "when": "The confirmation does not match the pass type ID.",
-    "fix": "Send the pass type ID exactly as shown.",
-    "retryable": false
-  },
-  "IDENTITY_HANDLE_ADMIN_ONLY": {
-    "title": "Handle set by PassBook",
-    "when": "Only PassBook can choose the handle.",
-    "fix": "Leave the handle out; it comes from the organization slug.",
-    "retryable": false
-  },
-  "IDENTITY_HANDLE_FIXED": {
-    "title": "Handle is fixed",
-    "when": "The organization already has a handle.",
-    "fix": "Leave the handle out or send the existing one.",
-    "retryable": false
-  },
-  "IDENTITY_HANDLE_INVALID": {
-    "title": "Invalid handle",
-    "when": "The handle is not 2 to 30 lowercase letters or digits.",
-    "fix": "Use 2 to 30 lowercase letters or digits, then send the request again.",
-    "retryable": false
-  },
-  "IDENTITY_HANDLE_RESERVED": {
-    "title": "Handle reserved",
-    "when": "The handle is reserved by the platform.",
-    "fix": "Choose another handle.",
-    "retryable": false
-  },
-  "IDENTITY_HANDLE_TAKEN": {
-    "title": "Handle taken",
-    "when": "Another identity uses this handle.",
-    "fix": "Choose another handle.",
-    "retryable": false
-  },
-  "IDENTITY_NOT_READY": {
-    "title": "Identity not ready",
-    "when": "The identity has no certificate yet.",
-    "fix": "Wait for provisioning to finish, then send the request again.",
-    "retryable": true
-  },
-  "IDENTITY_NOT_ROTATABLE": {
-    "title": "Identity cannot renew automatically",
-    "when": "Only a managed or platform identity with a certificate renews automatically.",
-    "fix": "Set rotation to manual, or upload a certificate.",
-    "retryable": false
-  },
-  "IDENTITY_PTI_TAKEN": {
-    "title": "Pass type taken",
-    "when": "The pass type belongs to another identity.",
-    "fix": "Use another pass type identifier.",
-    "retryable": false
-  },
-  "IDENTITY_REISSUE_PENDING": {
-    "title": "Reissue pending",
-    "when": "The identity's passes are not reissued yet and 72 hours have not passed since the renewal.",
-    "fix": "Reissue the identity's passes or wait 72 hours, then send the request again.",
-    "retryable": true
-  },
-  "IDENTITY_RUN_CLOSED": {
-    "title": "Run finished",
-    "when": "The run has already finished or was cancelled.",
-    "fix": "Start a new run.",
-    "retryable": false
-  },
-  "IDENTITY_RUN_INCOMPLETE": {
-    "title": "Run incomplete",
-    "when": "The run is missing data a step needs.",
-    "fix": "Start a new run.",
-    "retryable": false
-  },
-  "IDENTITY_RUN_NOT_FOUND": {
-    "title": "Run not found",
-    "when": "No provisioning run with that id exists for you.",
-    "fix": "List runs and use an id from the list.",
-    "retryable": false
-  },
-  "IDENTITY_RUN_OPEN": {
-    "title": "Run still open",
-    "when": "Only a failed or cancelled run can be retried.",
-    "fix": "Wait for the run to end, or cancel it, then retry.",
-    "retryable": false
-  },
-  "OIDC_REQUIRED": {
-    "title": "Pocket ID sign-in required",
-    "when": "This action needs a session signed in with Pocket ID.",
-    "fix": "Sign in with Pocket ID, then send the request again.",
-    "retryable": false
-  },
-  "WALLET_ISSUER_CLAIMED": {
-    "title": "Issuer claimed",
-    "when": "Another organization uses this issuer.",
-    "fix": "Use a different issuer.",
-    "retryable": false
-  },
-  "WALLET_ISSUER_EXISTS": {
-    "title": "Issuer exists",
-    "when": "Google already has an issuer for this account.",
-    "fix": "Attach it as a shared issuer instead.",
-    "retryable": false
-  },
-  "WALLET_ISSUER_NOT_WAITING": {
-    "title": "Issuer not waiting",
-    "when": "The issuer is not waiting for Google approval.",
-    "fix": "Check the issuer status before completing it.",
-    "retryable": false
-  },
-  "WALLET_KEY_HELD": {
-    "title": "Key still in use",
-    "when": "A credential still holds the key being retired.",
-    "fix": "Move the credential to the new key, then send the request again.",
-    "retryable": true
-  },
-  "WALLET_PLATFORM_CREDENTIAL_MISSING": {
-    "title": "Platform credential missing",
-    "when": "The platform has no Google credential configured.",
-    "fix": "Ask the platform owner to add it, then send the request again.",
-    "retryable": false
-  },
-  "WALLET_RUN_BUSY": {
-    "title": "Run busy",
-    "when": "Another job holds this run.",
-    "fix": "Send the request again in a minute.",
-    "retryable": true
   }
 }

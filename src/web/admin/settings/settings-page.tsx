@@ -43,8 +43,11 @@ function OidcSection() {
         <KeyValue
           items={[
             { label: 'Issuer', value: oidc.issuer, mono: true },
+            { label: 'Platform admin group', value: oidc.platformAdminGroup, mono: true },
             { label: 'Admin group', value: oidc.adminGroup, mono: true },
+            { label: 'Developer group', value: oidc.developerGroup, mono: true },
             { label: 'User group', value: oidc.userGroup, mono: true },
+            { label: 'Admin group required', value: oidc.consoleGroupRequired ? 'On' : 'Off' },
           ]}
         />
       </CardBody>

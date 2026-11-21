@@ -4,7 +4,7 @@ import type { ApiScope, RouteAuth, ScopeRule } from './auth.ts';
 import { SESSION_COOKIE } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
-import { signInLevelOf } from './sign-in-guard.ts';
+import { signInLevelOf, stepUpOf } from './sign-in-guard.ts';
 
 /** What an API key needs on the routes a guard covers; read for GET and HEAD, write for the rest. */
 export interface KeyAccess {
@@ -172,6 +172,39 @@ export function withSignIn(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
         .map((r) => signInLevelOf(r.handler));
       Object.assign(op as object, {
         'x-sign-in': levels.some((l) => l !== 'any') || !levels.includes('any') ? 'idp' : 'any',
+      });
+    }
+  }
+  return doc;
+}
+
+/**
+ * `x-step-up` on every session operation that asks for a recent sign-in: `{ maxAgeSec, conditional }`
+ * (conditional: only for some requests). A key is never asked. Read from the guards before the handler.
+ */
+export function withStepUp(app: OpenAPIHono<AppBindings>, doc: Doc): Doc {
+  for (const [path, item] of Object.entries(doc.paths ?? {})) {
+    const sample = path.replace(/\{([^}]+)\}/g, '$1');
+    const exact = path.replace(/\{([^}]+)\}/g, ':$1');
+    for (const [method, op] of Object.entries(item)) {
+      const last = app.routes.findLastIndex(
+        (r) => r.method.toLowerCase() === method && r.path === exact,
+      );
+      const decls = app.routes
+        .filter(
+          (r, i) =>
+            (last < 0 || i < last) &&
+            (r.method === 'ALL' || r.method.toLowerCase() === method) &&
+            patternOf(r.path).test(sample),
+        )
+        .map((r) => stepUpOf(r.handler))
+        .filter((d) => d !== undefined);
+      if (decls.length === 0) continue;
+      Object.assign(op as object, {
+        'x-step-up': {
+          maxAgeSec: Math.min(...decls.map((d) => d.maxAgeSec)),
+          conditional: decls.every((d) => d.conditional),
+        },
       });
     }
   }

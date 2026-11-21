@@ -55,7 +55,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | Personal | one member | `pbp_live_` / `pbp_test_` | made by any member for themself; expiry required, at most 90 days; works only while the membership and user are active, and within the member's current roles; no `scans:write` |
 | Platform | the operator, no org | `pbo_live_` / `pbo_test_` | made by a platform admin; expiry required (at most 90 days), IP allowlist required, no roles |
 
-Keys made before this carry `wlt_` and keep working as service (org) or platform (no org) keys, with the same scopes. An older platform key has no expiry or IP list: it is not expired, the console marks it, and each use logs `API_KEY_PLATFORM_UNBOUNDED`.
+Keys made before this carry `wlt_` and keep working as service (org) or platform (no org) keys, with the same scopes. An older platform key has no expiry or IP list: it is not expired, the console shows "No expiry", and each use logs `API_KEY_PLATFORM_UNBOUNDED`.
 A secret scanner can match the labels. Keys are never logged: the logger and audit rows redact every label.
 
 **Personal keys and sessions.** A personal key is its own credential, bounded by the membership and the user, not by a browser session: signing out or revoking a session does not end it. Revoke it, retire it, or remove the membership.
@@ -341,6 +341,16 @@ expectedGeneration}`. Use generation `0` for the first release and the current s
 thereafter. `GET /templates/{id}/candidates` and `/templates/{id}/releases` accept the same scope
 as query parameters and expose candidate approvals and release history; people appear by name
 (`authorName`, `reviewerName`, `createdByName`).
+`POST /templates/{id}/release` does the three steps for both modes in one call: `{orgId?, version, modes?, expected?, request?}`
+(a `templates:publish` session, or a Test key holding `templates:write`, `templates:review` and `templates:publish`; a Live key
+cannot release). Test runs first, then Live. Each mode creates or reuses its candidate, reuses or writes an approval (`test` in Test,
+`sole` in Live only for the sole reviewer) and publishes at `expected` (default: the current generation). Test follows Live: a Test
+head newer than Live's previous version stays and answers `test: kept`. Without a usable approval the answer is 409
+`TEMPLATE_REVIEW_REQUIRED` with `plan`; what already ran stays, and the same call resumes. `modes` defaults to `["live","test"]`
+for a person and `["test"]` for a key or a developer org, which may not name Live. `Idempotency-Key` is required: the same key and
+body replays the first answer, the same key with another body is 409 `IDEMPOTENCY_KEY_REUSED`. `?dryRun=true` returns `{version,
+modes, diff, fromVersion, state}` (steps, passes and devices reached per mode, a grouped diff) and writes nothing. `request: true`,
+or `POST /templates/{id}/review-requests` (`templates:write`), creates or reuses the candidates without approving.
 `GET /templates/{id}/releases/impact?orgId&mode&provider&version` returns what a publish or rollback to
 `version` changes: `passes` (`{count, capped}`: the org's passes in that mode not yet on it, counted up to
 10,000) and a semantic `diff` of `fields`, `images`, `barcode` and `colors`, each change
@@ -982,7 +992,7 @@ Session only: no API key reaches these routes (an export hands over every holder
 - `POST /orgs/{orgId}/close`: a platform admin, or an org admin with `{ "confirmSlug": "<slug>" }`. 409 `ORG_HELD` under a legal hold. Passes stop updating; 30 days to export.
 - `POST /orgs/{orgId}/reopen`: platform admin, inside the 30 days (409 `ORG_REOPEN_WINDOW`, `ORG_PURGING`).
 - `GET /orgs/{orgId}/lifecycle`: `status` (`active`, `suspended`, `closed`), `closedAt`, `purgeAfter`, `held`, `canReopen`. `GET /platform/closed-orgs` lists closed orgs.
-- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (24 hours): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template, brand and member photo files, without secrets or key material. `repo-export.ts` lists the entities and `repo-export-excluded.ts` the tables left out, each with its reason.
+- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (1 hour, consumed by its first download): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template, brand and member photo files, without secrets or key material. `repo-export.ts` lists the entities and `repo-export-excluded.ts` the tables left out, each with its reason.
 
 ## Brand kit
 

@@ -69,7 +69,7 @@ describe('requireScanActor: guard order (SA 2.5)', () => {
   it('an expired terminal and an idle device give SCANNER_EXPIRED', async () => {
     const t = await makeScanner(f, { orgId, kind: 'terminal', expiresAt: clock.now() - 1 });
     expect(await code(await get(app, env, '/ping', t.headers))).toBe('SCANNER_EXPIRED');
-    const d = await makeScanner(f, { orgId, lastSeenAt: clock.now() - 31 * 86_400_000 });
+    const d = await makeScanner(f, { orgId, lastSeenAt: clock.now() - 91 * 86_400_000 });
     expect(await code(await get(app, env, '/ping', d.headers))).toBe('SCANNER_EXPIRED');
   });
 

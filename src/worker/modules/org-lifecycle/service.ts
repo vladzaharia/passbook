@@ -25,6 +25,7 @@ import { exportKey, LINK_MS } from './export.ts';
 import {
   actorHolds,
   closedOrgs,
+  consumeExportLink,
   type ExportRow,
   exportOrgId,
   exportRow,
@@ -36,6 +37,7 @@ import {
   type LifecycleActor,
   type LifecycleRow,
   lifecycleRow,
+  setExportLink,
 } from './repo.ts';
 import { type CloseBy, closeOrgRow, reopenOrgRow } from './repo-state.ts';
 
@@ -75,6 +77,13 @@ export async function readLifecycle(
   if (!row) throw notFound();
   await requireCaller(ctx, orgId, actor);
   return lifecycleDto(row, ctx.clock.now());
+}
+
+/** A personal organization's holder data goes to its owner only: a platform admin may close or reopen it, not export it. */
+async function requireExportAccess(ctx: ServiceContext, orgId: string, actor: LifecycleActor) {
+  const org = await lifecycleRow(ctx.env.DB, orgId);
+  if (!org || (org.personal_user_id !== null && org.personal_user_id !== actor.userId))
+    throw notFound();
 }
 
 async function requireCaller(ctx: ServiceContext, orgId: string, actor: LifecycleActor) {
@@ -208,7 +217,7 @@ export async function listExports(
   orgId: string,
   actor: LifecycleActor,
 ): Promise<ExportDto[]> {
-  if (!(await lifecycleRow(ctx.env.DB, orgId))) throw notFound();
+  await requireExportAccess(ctx, orgId, actor);
   await requireCaller(ctx, orgId, actor);
   return (await exportRows(ctx.env.DB, orgId)).map(exportDto);
 }
@@ -225,6 +234,7 @@ export async function requestExport(
 ): Promise<ExportDto> {
   const org = await lifecycleRow(ctx.env.DB, orgId);
   if (!org || org.purged_at !== null) throw notFound();
+  await requireExportAccess(ctx, orgId, by);
   if (by.kind === 'owner' && !(await isOrgAdmin(ctx.env.DB, orgId, by.userId)))
     throw new ForbiddenError();
   if (org.purge_started_at !== null) throw new ConflictError(COPY.purging, 'ORG_PURGING');
@@ -265,7 +275,7 @@ async function linkMac(env: object, orgId: string, exportId: string, exp: number
   return toHex(new Uint8Array(mac));
 }
 
-/** A download link for a ready archive, good for 24 hours. Anyone holding it can download, so it is audited. */
+/** A download link for a ready archive, good for 1 hour and one download. Anyone holding it can download, so it is audited. */
 export async function exportLink(
   ctx: ServiceContext,
   actor: Actor,
@@ -273,11 +283,13 @@ export async function exportLink(
   exportId: string,
   by: LifecycleActor,
 ): Promise<{ url: string; expiresAt: number }> {
+  await requireExportAccess(ctx, orgId, by);
   await requireCaller(ctx, orgId, by);
   const row = await exportRow(ctx.env.DB, orgId, exportId);
   if (row?.state !== 'ready') throw new NotFoundError('Export not found.', 'EXPORT_NOT_FOUND');
   const expiresAt = ctx.clock.now() + LINK_MS;
   const sig = await linkMac(ctx.env, orgId, exportId, expiresAt);
+  await setExportLink(ctx.env.DB, exportId, expiresAt);
   await recordAudit(ctx, {
     ...auditActor(actor),
     orgId,
@@ -306,6 +318,7 @@ export async function openExport(
   const export_ = await exportRow(ctx.env.DB, orgId, exportId);
   const org = await lifecycleRow(ctx.env.DB, orgId);
   if (export_?.state !== 'ready' || !org || org.purge_started_at !== null) throw gone;
+  if (!(await consumeExportLink(ctx.env.DB, exportId, exp, ctx.clock.now()))) throw gone;
   const object = await ctx.env.BUCKET.get(exportKey(orgId, exportId));
   if (!object) throw gone;
   return {

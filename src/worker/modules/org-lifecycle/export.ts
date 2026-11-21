@@ -7,8 +7,8 @@ const PAGE_ROWS = 2000;
 const PART_BYTES = 8 * 1024 * 1024;
 /** The archive is a download for admins, not storage: it goes after a week. */
 export const EXPORT_KEEP_MS = 7 * 86_400_000;
-/** A link is good for a day. */
-export const LINK_MS = 86_400_000;
+/** A link is good for an hour, and for one download. */
+export const LINK_MS = 3_600_000;
 /** Stops a runaway: an archive over this many bytes of files fails with `ORG_EXPORT_TOO_LARGE`. */
 export const MAX_FILE_BYTES = 512 * 1024 * 1024;
 

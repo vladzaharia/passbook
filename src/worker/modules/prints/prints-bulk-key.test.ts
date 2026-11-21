@@ -13,7 +13,7 @@ async function setup() {
 }
 
 describe('bulk print with an API key', () => {
-  it('starts and reads a job with passes:write and passes:read, and any key of the org reads it', async () => {
+  it('starts and reads a job with passes:write and passes:read, and only a passes:write key of the org reads it', async () => {
     const { kit, api, printPass, keyOf } = await setup();
     const pass = await printPass();
     const write = await keyOf(['passes:write', 'passes:read']);
@@ -48,7 +48,20 @@ describe('bulk print with an API key', () => {
       undefined,
       read,
     );
-    expect(sameOrg.status).toBe(200);
+    expect(sameOrg.status).toBe(403);
+    expect(await sameOrg.json()).toMatchObject({ code: 'MISSING_SCOPE' });
+    const readPdf = await api(
+      'GET',
+      `/passes/bulk-print/${jobId}/pdf?orgId=${kit.org.id}`,
+      undefined,
+      read,
+    );
+    expect(readPdf.status).toBe(403);
+    const otherWriter = await keyOf(['passes:write', 'passes:read']);
+    expect(
+      (await api('GET', `/passes/bulk-print/${jobId}?orgId=${kit.org.id}`, undefined, otherWriter))
+        .status,
+    ).toBe(200);
   });
 
   it('refuses a key without the scope', async () => {

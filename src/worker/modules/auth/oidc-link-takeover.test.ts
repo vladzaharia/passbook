@@ -49,7 +49,7 @@ async function victimWithAddedAddress() {
 
 const refusedFor = async (trust: boolean, email: string) => {
   await setOidcTrust(h.env.DB, trust);
-  const subject = { sub: `sub-${uniq()}`, email, name: 'Someone', groups: ['wallet-users'] };
+  const subject = { sub: `sub-${uniq()}`, email, name: 'Someone', groups: ['wallet_users'] };
   const { res } = await oidcSignIn(h, new Map(), subject);
   return { res, subject };
 };
@@ -91,7 +91,7 @@ describe('Polaris ID email that is only a secondary address', () => {
           subject,
           emailClaim: added,
           emailVerified: true,
-          groups: ['wallet-users'],
+          groups: ['wallet_users'],
         },
         sign,
       ),
@@ -140,7 +140,7 @@ describe('Polaris ID email that is only a secondary address', () => {
       sub: `sub-${uniq()}`,
       email: victim.primaryEmail,
       name: 'V',
-      groups: ['wallet-users'],
+      groups: ['wallet_users'],
     };
     await oidcSignIn(h, new Map(), person);
     expect(await linkedUser(person.sub)).toBe(victim.id);
@@ -153,7 +153,7 @@ describe('Polaris ID email that is only a secondary address', () => {
       sub: `sub-${uniq()}`,
       email: victim.primaryEmail,
       name: 'Victim',
-      groups: ['wallet-users'],
+      groups: ['wallet_users'],
     };
     await oidcSignIn(h, new Map(), person);
     expect(await linkedUser(person.sub)).toBe(victim.id);

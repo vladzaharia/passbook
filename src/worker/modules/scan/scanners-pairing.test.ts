@@ -79,6 +79,22 @@ describe('pairing', () => {
     expect(dto).toMatchObject({ status: 'paired', pairedLabel: 'iPhone · Safari' });
   });
 
+  it('keeps an active device past 90 days since pairing and drops one idle for 90 days', async () => {
+    const DAY = 86_400_000;
+    const pairNew = async (name: string) => {
+      const { body } = await create({ name });
+      return cookieOf(await pairCall('', body.pairing?.code ?? '')).token;
+    };
+    const store = createScannerStore(env, clock);
+    const active = await pairNew('Active');
+    const idle = await pairNew('Idle');
+    for (let day = 30; day <= 200; day += 30) {
+      clock.advance(30 * DAY);
+      expect(await store.resolve(active, 'cookie'), `day ${day}`).not.toBeNull();
+    }
+    await expect(store.resolve(idle, 'cookie')).rejects.toMatchObject({ code: 'SCANNER_EXPIRED' });
+  });
+
   it('does not widen a stale session assignment in the initial paired session', async () => {
     const { body } = await create({ settings: { acceptAllTemplates: true } });
     await run(

@@ -179,7 +179,7 @@ export async function writeCandidate(
     codes: CODES,
     checks: [
       candidateTemplate(c.templateId, c.version, c.versionAuthorId),
-      ...keyChecks(authority.kind),
+      ...keyChecks(authority.kind, authority.kind === 'api_key' && authority.mode === 'live'),
     ],
   });
   g.insertSelect('template_candidates', CANDIDATE_COLUMNS, candidateValues(c), RETURN_ID);

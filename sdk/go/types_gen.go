@@ -4960,6 +4960,222 @@ type PushFailedEventData struct {
 	Code    *string `json:"code,omitempty"`
 }
 
+type ReleaseResponse = any
+
+type ReleaseResponse1 struct {
+	Version string                `json:"version"`
+	Modes   ReleaseResponse1Modes `json:"modes"`
+	State   ReleaseResponse1State `json:"state"`
+}
+
+type ReleaseResponse1Modes struct {
+	Test *ReleaseResponse1ModesTest `json:"test,omitempty"`
+	Live *ReleaseResponse1ModesLive `json:"live,omitempty"`
+}
+
+type ReleaseResponse1ModesLive struct {
+	Outcome      string  `json:"outcome"`
+	ReleaseID    *string `json:"releaseId"`
+	Generation   int64   `json:"generation"`
+	ApprovalKind *string `json:"approvalKind"`
+}
+
+type ReleaseResponse1ModesTest struct {
+	Outcome      string  `json:"outcome"`
+	ReleaseID    *string `json:"releaseId"`
+	Generation   int64   `json:"generation"`
+	ApprovalKind *string `json:"approvalKind"`
+}
+
+type ReleaseResponse1State struct {
+	Live   map[string]any `json:"live"`
+	Test   map[string]any `json:"test"`
+	Draft  map[string]any `json:"draft"`
+	Review any            `json:"review"`
+	Alone  bool           `json:"alone"`
+	Next   *string        `json:"next"`
+}
+
+type ReleaseResponse1StateReview1 struct {
+	State string `json:"state"`
+}
+
+type ReleaseResponse1StateReview2 struct {
+	State   string  `json:"state"`
+	Version string  `json:"version"`
+	By      *string `json:"by"`
+	At      int64   `json:"at"`
+}
+
+type ReleaseResponse2 struct {
+	Version     string                     `json:"version"`
+	Modes       ReleaseResponse2Modes      `json:"modes"`
+	Diff        []ReleaseResponse2DiffItem `json:"diff"`
+	FromVersion *string                    `json:"fromVersion"`
+	State       ReleaseResponse2State      `json:"state"`
+}
+
+type ReleaseResponse2DiffItem struct {
+	Group string                             `json:"group"`
+	Rows  []ReleaseResponse2DiffItemRowsItem `json:"rows"`
+	More  int64                              `json:"more"`
+}
+
+type ReleaseResponse2DiffItemRowsItem struct {
+	Label string `json:"label"`
+	Kind  string `json:"kind"`
+	From  any    `json:"from"`
+	To    any    `json:"to"`
+}
+
+type ReleaseResponse2DiffItemRowsItemFrom1 struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type ReleaseResponse2DiffItemRowsItemFrom2 struct {
+	Type  string `json:"type"`
+	Color string `json:"color"`
+}
+
+type ReleaseResponse2DiffItemRowsItemFrom3 struct {
+	Type string `json:"type"`
+	At   int64  `json:"at"`
+}
+
+type ReleaseResponse2DiffItemRowsItemFrom4 struct {
+	Type    string `json:"type"`
+	Version string `json:"version"`
+	Asset   string `json:"asset"`
+}
+
+type ReleaseResponse2DiffItemRowsItemTo1 struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type ReleaseResponse2DiffItemRowsItemTo2 struct {
+	Type  string `json:"type"`
+	Color string `json:"color"`
+}
+
+type ReleaseResponse2DiffItemRowsItemTo3 struct {
+	Type string `json:"type"`
+	At   int64  `json:"at"`
+}
+
+type ReleaseResponse2DiffItemRowsItemTo4 struct {
+	Type    string `json:"type"`
+	Version string `json:"version"`
+	Asset   string `json:"asset"`
+}
+
+type ReleaseResponse2Modes struct {
+	Test *ReleaseResponse2ModesTest `json:"test,omitempty"`
+	Live *ReleaseResponse2ModesLive `json:"live,omitempty"`
+}
+
+type ReleaseResponse2ModesLive struct {
+	Outcome            string                             `json:"outcome"`
+	From               *string                            `json:"from"`
+	ExpectedGeneration int64                              `json:"expectedGeneration"`
+	Candidate          ReleaseResponse2ModesLiveCandidate `json:"candidate"`
+	Approval           ReleaseResponse2ModesLiveApproval  `json:"approval"`
+	Impact             ReleaseResponse2ModesLiveImpact    `json:"impact"`
+}
+
+type ReleaseResponse2ModesLiveApproval struct {
+	Action string  `json:"action"`
+	Kind   *string `json:"kind"`
+}
+
+type ReleaseResponse2ModesLiveCandidate struct {
+	Action string  `json:"action"`
+	ID     *string `json:"id"`
+}
+
+type ReleaseResponse2ModesLiveImpact struct {
+	Passes  ReleaseResponse2ModesLiveImpactPasses  `json:"passes"`
+	Devices ReleaseResponse2ModesLiveImpactDevices `json:"devices"`
+}
+
+type ReleaseResponse2ModesLiveImpactDevices struct {
+	Count  int64 `json:"count"`
+	Capped bool  `json:"capped"`
+}
+
+type ReleaseResponse2ModesLiveImpactPasses struct {
+	Count  int64 `json:"count"`
+	Capped bool  `json:"capped"`
+}
+
+type ReleaseResponse2ModesTest struct {
+	Outcome            string                             `json:"outcome"`
+	From               *string                            `json:"from"`
+	ExpectedGeneration int64                              `json:"expectedGeneration"`
+	Candidate          ReleaseResponse2ModesTestCandidate `json:"candidate"`
+	Approval           ReleaseResponse2ModesTestApproval  `json:"approval"`
+	Impact             ReleaseResponse2ModesTestImpact    `json:"impact"`
+}
+
+type ReleaseResponse2ModesTestApproval struct {
+	Action string  `json:"action"`
+	Kind   *string `json:"kind"`
+}
+
+type ReleaseResponse2ModesTestCandidate struct {
+	Action string  `json:"action"`
+	ID     *string `json:"id"`
+}
+
+type ReleaseResponse2ModesTestImpact struct {
+	Passes  ReleaseResponse2ModesTestImpactPasses  `json:"passes"`
+	Devices ReleaseResponse2ModesTestImpactDevices `json:"devices"`
+}
+
+type ReleaseResponse2ModesTestImpactDevices struct {
+	Count  int64 `json:"count"`
+	Capped bool  `json:"capped"`
+}
+
+type ReleaseResponse2ModesTestImpactPasses struct {
+	Count  int64 `json:"count"`
+	Capped bool  `json:"capped"`
+}
+
+type ReleaseResponse2State struct {
+	Live   map[string]any `json:"live"`
+	Test   map[string]any `json:"test"`
+	Draft  map[string]any `json:"draft"`
+	Review any            `json:"review"`
+	Alone  bool           `json:"alone"`
+	Next   *string        `json:"next"`
+}
+
+type ReleaseResponse2StateReview1 struct {
+	State string `json:"state"`
+}
+
+type ReleaseResponse2StateReview2 struct {
+	State   string  `json:"state"`
+	Version string  `json:"version"`
+	By      *string `json:"by"`
+	At      int64   `json:"at"`
+}
+
+type ReleaseTemplate struct {
+	OrgID    *string                  `json:"orgId,omitempty"`
+	Version  string                   `json:"version"`
+	Modes    []string                 `json:"modes,omitempty"`
+	Expected *ReleaseTemplateExpected `json:"expected,omitempty"`
+	Request  *bool                    `json:"request,omitempty"`
+}
+
+type ReleaseTemplateExpected struct {
+	Live *int64 `json:"live,omitempty"`
+	Test *int64 `json:"test,omitempty"`
+}
+
 type RollCallsCreateQuery struct {
 	SessionID *string `json:"sessionId,omitempty"`
 }
@@ -7407,6 +7623,14 @@ type TemplatesReleasesListQuery struct {
 	Cursor   *string `json:"cursor,omitempty"`
 }
 
+type TemplatesReleasesReleaseBody = ReleaseTemplate
+
+type TemplatesReleasesReleaseQuery struct {
+	DryRun *string `json:"dryRun,omitempty"`
+}
+
+type TemplatesReleasesReleaseResult = ReleaseResponse
+
 type TemplatesReleasesRetrieveImpactQuery struct {
 	Mode     string `json:"mode"`
 	Provider string `json:"provider"`
@@ -7494,6 +7718,14 @@ type TemplatesRetrieveStampsImpactResult struct {
 	Highest     int64 `json:"highest"`
 	HighestKept int64 `json:"highestKept"`
 }
+
+type TemplatesReviewsRequestBody = ReleaseTemplate
+
+type TemplatesReviewsRequestQuery struct {
+	DryRun *string `json:"dryRun,omitempty"`
+}
+
+type TemplatesReviewsRequestResult = ReleaseResponse
 
 type TemplatesSetUpScanningBody = TemplatesSetUpScanningParams
 

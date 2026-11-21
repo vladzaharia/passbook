@@ -134,7 +134,7 @@ export function keyColumns({
       header: 'Expiry',
       id: 'expiry',
       meta: { nowrap: true, hideBelow: 'xl' },
-      cell: ({ row }) => formatDay(row.original.expiresAt, 'Never'),
+      cell: ({ row }) => formatDay(row.original.expiresAt, 'No expiry'),
     },
     {
       header: 'Last used',

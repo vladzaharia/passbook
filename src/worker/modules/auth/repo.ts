@@ -276,6 +276,8 @@ export interface FlowRow {
   redirect_path: string | null;
   /** 1: this flow already restarted once with prompt=login because the first came back without a passkey. */
   retried: number;
+  /** When a step-up flow started (ms); null for an ordinary sign-in. */
+  step_up_started_at: number | null;
 }
 
 export async function insertFlow(
@@ -288,12 +290,13 @@ export async function insertFlow(
     bindingHash: string;
     expiresAt: number;
     retried?: boolean;
+    stepUpStartedAt?: number;
   },
 ): Promise<void> {
   await run(
     db,
-    `INSERT INTO oidc_flows (state_hash, nonce, code_verifier, redirect_path, browser_binding_hash, expires_at, retried)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO oidc_flows (state_hash, nonce, code_verifier, redirect_path, browser_binding_hash, expires_at, retried, step_up_started_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       flow.stateHash,
       flow.nonce,
@@ -302,6 +305,7 @@ export async function insertFlow(
       flow.bindingHash,
       flow.expiresAt,
       flow.retried ? 1 : 0,
+      flow.stepUpStartedAt ?? null,
     ],
   );
 }
@@ -311,6 +315,6 @@ export const consumeFlow = (db: Db, stateHash: string, bindingHash: string, now:
   first<FlowRow>(
     db,
     `DELETE FROM oidc_flows WHERE state_hash = ? AND browser_binding_hash = ? AND expires_at > ?
-     RETURNING nonce, code_verifier, redirect_path, retried`,
+     RETURNING nonce, code_verifier, redirect_path, retried, step_up_started_at`,
     [stateHash, bindingHash, now],
   );

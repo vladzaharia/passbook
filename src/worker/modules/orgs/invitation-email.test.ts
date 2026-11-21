@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { invitationEmail } from './invitation-email.ts';
+import { invitationEmail, mailOrgName } from './invitation-email.ts';
 
 const base = {
   orgName: 'Acme',
@@ -20,5 +20,18 @@ describe('invitation email', () => {
     expect(invitationEmail(base).text).toContain(
       'You are invited to Acme as an organization admin.',
     );
+  });
+
+  it('keeps the organization name out of the subject, and cuts and cleans it in the body', () => {
+    const lure = `URGENT\u202e: your account is suspended, sign in at once ${'x'.repeat(80)}`;
+    const mail = invitationEmail({ ...base, orgName: lure });
+    expect(mail.subject).toBe('You are invited to PassBook');
+    expect(mail.subject).not.toContain('URGENT');
+    expect(mail.text).not.toContain('\u202e');
+    expect(mail.text).not.toContain('x'.repeat(41));
+    expect(mail.text).toContain('…');
+  });
+  it('leaves an ordinary name whole', () => {
+    expect(mailOrgName('  North  Gym  ')).toBe('North Gym');
   });
 });

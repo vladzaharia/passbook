@@ -48,12 +48,17 @@ import { deletePass, listPassSummaries, unvoidPass, voidPass } from './service.t
 export const passesRoutes = createRouter({ bodyLimit: false });
 /** Image overrides have their own cap (routes-assets.ts). */
 passesRoutes.use('*', defaultBodyLimit(/\/(?:assets\/[^/]+|member-photo)$/));
+const keyGuard = requireTenantSessionOrApiKey(
+  methodScope({ read: 'passes:read', write: 'passes:write' }),
+);
+const BULK_JOB = /\/bulk-print\//;
 guard(
   passesRoutes,
-  declareKeyAccess(
-    requireTenantSessionOrApiKey(methodScope({ read: 'passes:read', write: 'passes:write' })),
-    { read: ['passes:read'], write: ['passes:write'] },
-  ),
+  declareKeyAccess((c, next) => (BULK_JOB.test(c.req.path) ? next() : keyGuard(c, next)), {
+    read: ['passes:read'],
+    write: ['passes:write'],
+    only: /^(?!.*\/bulk-print\/)/,
+  }),
 );
 
 register(

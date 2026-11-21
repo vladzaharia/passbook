@@ -38,6 +38,8 @@ export interface FakeAuth {
     amr?: Amr;
     /** An email session's console grace end (ms). */
     consoleUntil?: number | null;
+    /** When the sign-in was proven (ms). Default: now, so a step-up route passes; null is a session with none. */
+    authTime?: number | null;
   }): Record<string, string>;
   /** `mode: 'test'` sends x-passbook-mode: test, as the admin UI does. */
   admin(options?: { mode?: Mode }): Record<string, string>;
@@ -231,6 +233,7 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
       mode,
       amr = 'oidc' as Amr,
       consoleUntil = null as number | null,
+      authTime = Date.now() as number | null,
     } = {}) {
       const id = crypto.randomUUID();
       const csrfSecret = `fake-csrf-${++n}`;
@@ -243,6 +246,7 @@ export function fakeAuth(origin = 'https://wallet.test'): FakeAuth {
           csrfSecret,
           amr,
           consoleUntil,
+          authTime,
           mode: 'live',
         },
         seeded: new WeakMap(),
