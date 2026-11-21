@@ -54,3 +54,59 @@ describe('date formats', () => {
     });
   });
 });
+
+describe('join', () => {
+  const entry = {
+    from: '/First',
+    transform: { kind: 'join', options: { with: ['/Last'] } },
+  };
+
+  it('joins columns with a space and skips blanks', () => {
+    expect(applyMapping({ name: entry }, { First: 'Kai', Last: 'Osei' })).toEqual({
+      name: 'Kai Osei',
+    });
+    expect(applyMapping({ name: entry }, { Last: 'Osei' })).toEqual({ name: 'Osei' });
+    expect(applyMapping({ name: entry }, { First: ' ' })).toEqual({});
+  });
+
+  it('takes a separator', () => {
+    const e = {
+      ...entry,
+      transform: { kind: 'join', options: { with: ['/Last'], separator: ', ' } },
+    };
+    expect(applyMapping({ name: e }, { First: 'Kai', Last: 'Osei' })).toEqual({
+      name: 'Kai, Osei',
+    });
+  });
+
+  it('is checked', () => {
+    expect(mappingIssues({ name: entry })).toEqual([]);
+    const bad = { from: '/a', transform: { kind: 'join', options: { with: [] } } };
+    expect(mappingIssues({ name: bad })).toHaveLength(1);
+  });
+});
+
+describe('enum', () => {
+  const e = (options: Record<string, never> | object) => ({
+    from: '',
+    transform: { kind: 'enum', options: options as Record<string, never> },
+  });
+
+  it('keeps the exact map first and falls back to the map ignoring case', () => {
+    expect(transform('Gold', e({ map: { Gold: 'pro', gold: 'x' } }))).toBe('pro');
+    expect(transform('GOLD', e({ map: { gold: 'pro' } }))).toBe('pro');
+  });
+
+  it('matches option keys and labels ignoring case', () => {
+    const labels = { member: 'Monthly', annual: 'Annual' };
+    expect(transform('monthly', e({ labels }))).toBe('member');
+    expect(transform('MEMBER', e({ labels }))).toBe('member');
+    expect(transform('Gold', e({ labels }))).toBeUndefined();
+    expect(transform('Gold', e({ labels, default: 'member' }))).toBe('member');
+  });
+
+  it('needs a map or labels', () => {
+    expect(mappingIssues({ a: e({ labels: {} }) })).toEqual([]);
+    expect(mappingIssues({ a: e({}) })).toHaveLength(1);
+  });
+});
