@@ -6,6 +6,7 @@ import { DiscardDialog } from '@/web/ui/alert-dialog.tsx';
 import { Badge, Button, Callout, FormField, Input, Sheet, SheetContent } from '@/web/ui/index.ts';
 import { useUpdateSessionDevice } from './api.ts';
 import { DeviceOverrides } from './device-overrides.tsx';
+import { HardwareBadges } from './hardware-badges.tsx';
 import { SurfacePicker } from './surface-picker.tsx';
 
 export function DeviceSheet({
@@ -79,9 +80,17 @@ export function DeviceSheet({
                   {device.capabilities.width} × {device.capabilities.height} viewport
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {device.capabilities.camera === 'available' ? <Badge>Camera</Badge> : null}
+                  {device.capabilities.hardware?.length ? (
+                    <HardwareBadges hardware={device.capabilities.hardware} />
+                  ) : (
+                    <>
+                      {device.capabilities.camera === 'available' ? <Badge>Camera</Badge> : null}
+                      {device.capabilities.nativeBarcode ? (
+                        <Badge>Android barcode reader</Badge>
+                      ) : null}
+                    </>
+                  )}
                   {device.capabilities.keyboard ? <Badge>Keyboard input</Badge> : null}
-                  {device.capabilities.nativeBarcode ? <Badge>Android barcode reader</Badge> : null}
                   {device.capabilities.touch ? <Badge>Touch</Badge> : null}
                   {device.capabilities.native ? (
                     <>
