@@ -117,6 +117,7 @@ export async function createOrgWithRoles(
   const org = await admin.send<Seed['org']>('POST', '/api/v1/orgs', {
     ...input,
     preset: 'legacy',
+    addMe: false,
   });
   await inviteVerifiedMember(admin, org.id, admin, identity, roles);
   return { id: org.id, slug: org.slug, name: org.name };
