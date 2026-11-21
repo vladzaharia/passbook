@@ -6236,6 +6236,31 @@
   }
  },
  {
+  "id": "templates.getTemplateReviews",
+  "call": "templates.reviews.list",
+  "http": "GET",
+  "path": "/api/v1/template-reviews",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "orgId": "x",
+     "version": "x",
+     "requestedBy": "x",
+     "requestedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
   "id": "templates.getTemplates",
   "call": "templates.list",
   "http": "GET",
@@ -6985,6 +7010,58 @@
     "images": 0,
     "barcode": 0,
     "colors": 0
+   }
+  }
+ },
+ {
+  "id": "templates.postTemplatesByIdReview",
+  "call": "templates.reviews.approve",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/review",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "version": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "version": "x",
+   "approved": [
+    "live"
+   ],
+   "release": {
+    "version": "x",
+    "modes": {},
+    "state": {
+     "live": {
+      "version": "x",
+      "at": 0,
+      "by": "x"
+     },
+     "test": {
+      "version": "x",
+      "at": 0,
+      "state": "following"
+     },
+     "draft": {
+      "version": "x",
+      "at": 0
+     },
+     "review": {
+      "state": "none"
+     },
+     "alone": false,
+     "next": "design"
+    }
    }
   }
  },
