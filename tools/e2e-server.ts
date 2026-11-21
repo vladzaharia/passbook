@@ -32,6 +32,8 @@ writeDevVars(varsFile, {
   ADMIN_SYNC_BUCKET_MS: '2000',
   // Token used by e2e/11-breakglass.spec.ts.
   BREAKGLASS_TOKEN_SHA256: createHash('sha256').update('wbg_e2e-breakglass-token').digest('hex'),
+  // The webhook URL check and sender answer this host without DNS (loopback PUBLIC_BASE_URL only, see resolver-memo.ts).
+  WEBHOOK_TEST_DNS: 'hooks.example.com=93.184.216.34',
   // The scanner document, off in production until M1.
   SCAN_ENABLED: '1',
   // Provider calls go to test/mock-wallets (honoured only on http loopback, see mock-endpoint.ts).
@@ -86,7 +88,9 @@ if (mode === 'preview') {
   // never reaches preview: 30 pairs a minute from one IP refused the 3rd-Nth device of a run.
   const built = resolve(root, 'dist/wallet/wrangler.json');
   const config = JSON.parse(readFileSync(built, 'utf8'));
-  for (const r of config.ratelimits ?? []) if (r.name === 'RL_SCAN_PAIR') r.simple.limit = 100_000;
+  // Specs sign in more than 10 times a minute (RL_LOGIN), so it is raised the same way.
+  for (const r of config.ratelimits ?? [])
+    if (r.name === 'RL_SCAN_PAIR' || r.name === 'RL_LOGIN') r.simple.limit = 100_000;
   writeFileSync(built, JSON.stringify(config));
 }
 

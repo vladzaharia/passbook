@@ -112,7 +112,9 @@ type RateLimitConfig = { name: string; simple: { limit: number; period: number }
  */
 function e2eRatelimits(all: RateLimitConfig[] = []): RateLimitConfig[] {
   return all.map((r) =>
-    r.name === 'RL_SCAN_PAIR' ? { ...r, simple: { ...r.simple, limit: 100_000 } } : r,
+    r.name === 'RL_SCAN_PAIR' || r.name === 'RL_LOGIN'
+      ? { ...r, simple: { ...r.simple, limit: 100_000 } }
+      : r,
   );
 }
 
@@ -264,7 +266,13 @@ export default defineConfig(({ command }) => ({
           : {}),
         ...(e2e
           ? {
-              vars: { ...c.vars, SIGNER_PLATFORM_INTERMEDIATE: '', ADMIN_SYNC_BUCKET_MS: '' },
+              vars: {
+                ...c.vars,
+                SIGNER_PLATFORM_INTERMEDIATE: '',
+                ADMIN_SYNC_BUCKET_MS: '',
+                // Declared so the e2e vars file can set it (resolver-memo.ts); empty everywhere else.
+                WEBHOOK_TEST_DNS: '',
+              },
               env: { e2e: { ratelimits: e2eRatelimits(c.ratelimits) } },
             }
           : {}),

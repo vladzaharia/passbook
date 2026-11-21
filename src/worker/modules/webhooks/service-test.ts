@@ -11,7 +11,7 @@ import { SEND_TIMEOUT_MS } from './deliver.ts';
 import { sendAllowed } from './deliver-gate.ts';
 import { bodyOf, buildEnvelope, testEnvelope } from './payload.ts';
 import { insertTestAttempt, listTestAttempts } from './repo-api.ts';
-import { memoResolver } from './resolver-memo.ts';
+import { resolverFor } from './resolver-memo.ts';
 import { sampleRow } from './sample-events.ts';
 import { commitEndpoint, requireEndpoint, webhookGrant } from './service.ts';
 import { storeCapture } from './service-captures.ts';
@@ -93,7 +93,7 @@ export async function sendTest(
       platformHosts: platformHostsOf(ctx.env),
       timeoutMs: SEND_TIMEOUT_MS,
       discardBody: true,
-      resolver: memoResolver(() => ctx.clock.now()),
+      resolver: resolverFor(ctx.env, () => ctx.clock.now()),
     });
     try {
       const res = await send(endpoint.url, {
@@ -118,6 +118,7 @@ export async function sendTest(
   insertTestAttempt(g, {
     id: event.id,
     endpointId,
+    type,
     status,
     errorCode,
     durationMs,

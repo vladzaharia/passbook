@@ -8578,6 +8578,7 @@ type WebhookTestAttemptPage struct {
 
 type WebhookTestAttemptPageItemsItem struct {
 	ID         string  `json:"id"`
+	Type       string  `json:"type"`
 	Ok         bool    `json:"ok"`
 	Status     *int64  `json:"status"`
 	ErrorCode  *string `json:"errorCode"`

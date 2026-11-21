@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
+import { SecretReveal } from './secret-reveal.tsx';
 
 /** The host and path shape the API returns; the path is a bearer secret, so only the masked form is shown. */
 const labelOf = (e: WebhookEndpointDto) =>
@@ -79,30 +80,7 @@ export function AddEndpoint({
     }
   }
 
-  if (secret)
-    return (
-      <div className="card card-b stack g2" role="status">
-        <div className="row">
-          <h2 className="h3">Signing secret</h2>
-          <span className="pill info push">Shown once</span>
-        </div>
-        <div className="cmd">
-          <code>{secret}</code>
-          <button
-            type="button"
-            className="iconbtn copy push"
-            data-copy
-            data-copy-text={secret}
-            aria-label="Copy secret"
-          >
-            Copy
-          </button>
-        </div>
-        <button type="button" className="btn outline sm" onClick={onClose}>
-          Done
-        </button>
-      </div>
-    );
+  if (secret) return <SecretReveal secret={secret} onHide={onClose} />;
   return (
     <form className="card card-b stack g2" onSubmit={(e) => void submit(e)}>
       <h2 className="h3">Add endpoint</h2>
@@ -134,5 +112,44 @@ export function AddEndpoint({
         </button>
       </div>
     </form>
+  );
+}
+
+/** Rotate the signing secret of a URL endpoint; the old one keeps signing for a day. */
+export function RotateSecret({ rotate }: { rotate: () => Promise<string> }) {
+  const [secret, setSecret] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (secret)
+    return (
+      <SecretReveal title="New signing secret" secret={secret} onHide={() => setSecret(null)} />
+    );
+  return (
+    <div className="card card-b stack g2">
+      <div className="row g2">
+        <h2 className="h3">Signing secret</h2>
+        <button
+          type="button"
+          className="btn outline sm push"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            setError(null);
+            rotate()
+              .then(setSecret)
+              .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not rotate.'))
+              .finally(() => setBusy(false));
+          }}
+        >
+          Rotate
+        </button>
+      </div>
+      <span className="xs muted">The old secret keeps signing for 24 hours.</span>
+      {error ? (
+        <p className="wh-msg" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }

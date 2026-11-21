@@ -202,6 +202,7 @@ export async function listAttempts(
 
 export interface TestAttemptRow {
   id: string;
+  type: string;
   status: number | null;
   errorCode: string | null;
   durationMs: number;
@@ -217,19 +218,21 @@ export async function listTestAttempts(
 ): Promise<TestAttemptRow[]> {
   const rows = await all<{
     id: string;
+    sample_type: string | null;
     status: number | null;
     error_code: string | null;
     duration_ms: number;
     at: number;
   }>(
     db,
-    `SELECT id, status, error_code, duration_ms, at FROM webhook_attempts
+    `SELECT id, sample_type, status, error_code, duration_ms, at FROM webhook_attempts
      WHERE endpoint_id = ? AND org_id = ? AND mode = ? AND event_seq IS NULL AND trigger = 'test'
      ORDER BY at DESC, rowid DESC LIMIT ?`,
     [endpointId, fence.orgId, fence.mode, limit],
   );
   return rows.map((r) => ({
     id: r.id,
+    type: r.sample_type ?? 'webhook.test',
     status: r.status,
     errorCode: r.error_code,
     durationMs: r.duration_ms,
@@ -243,6 +246,7 @@ export function insertTestAttempt(
   a: {
     id: string;
     endpointId: string;
+    type: string;
     status: number | null;
     errorCode: string | null;
     durationMs: number;
@@ -252,8 +256,8 @@ export function insertTestAttempt(
   assertOrgModeGrant(g);
   return g.insertSelect(
     'webhook_attempts',
-    ['id', 'attempt', 'trigger', 'status', 'error_code', 'duration_ms', 'at'],
-    [a.id, 1, 'test', a.status, a.errorCode, a.durationMs, a.at],
+    ['id', 'attempt', 'trigger', 'sample_type', 'status', 'error_code', 'duration_ms', 'at'],
+    [a.id, 1, 'test', a.type, a.status, a.errorCode, a.durationMs, a.at],
     {
       from: {
         table: 'webhook_endpoints',

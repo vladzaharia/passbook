@@ -151,6 +151,20 @@ export function hooks(
         nextCursor: null,
       });
     },
+    '/api/v1/webhook-endpoints/we1/tests': () =>
+      json({
+        items: [
+          {
+            id: 'tst1',
+            type: 'pass.updated',
+            ok: true,
+            status: 202,
+            errorCode: null,
+            durationMs: 41,
+            at: 1_700_000_000_000,
+          },
+        ],
+      }),
     '/api/v1/webhook-endpoints/we1/deliveries/ev1': (url, init) => {
       log(url, init);
       return json(detail());

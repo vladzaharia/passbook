@@ -621,7 +621,7 @@
     "operationId": "webhooks.getWebhookEndpointsByIdTests",
     "op": "GET /api/v1/webhook-endpoints/{id}/tests",
     "change": "new operation",
-    "note": "List the recent test sends of a webhook endpoint (status, code and timing, kept 7 days), newest first."
+    "note": "List the recent test sends of a webhook endpoint (sample event type, status, code and timing, kept 7 days), newest first."
   },
   {
     "key": "PATCH /api/v1/brand 200.kind: field added",

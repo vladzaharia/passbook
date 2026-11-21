@@ -8374,6 +8374,7 @@
    "items": [
     {
      "id": "x",
+     "type": "pass.issued",
      "ok": false,
      "status": 0,
      "errorCode": "x",

@@ -6,7 +6,7 @@ import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import type { ApiProblem, DeliveryDto, TestAttemptDto, TesterApi } from './client.ts';
 import { Deliveries, type ListenState } from './deliveries.tsx';
 import { Detail } from './detail.tsx';
-import { AddEndpoint, Endpoints } from './endpoints.tsx';
+import { AddEndpoint, Endpoints, RotateSecret } from './endpoints.tsx';
 import { VERIFY_SAMPLES } from './samples.ts';
 import { Samples } from './samples-tabs.tsx';
 import { rowsOf, UrlDetail, UrlEvents } from './url-events.tsx';
@@ -145,7 +145,13 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
     if (!endpoint) return null;
     const r = await api.sendTest(endpoint.id, sendType);
     if (endpoint.target === 'url')
-      setMessage(r.ok ? null : `The endpoint answered ${r.status ?? r.errorCode ?? 'nothing'}.`);
+      setMessage(
+        r.ok
+          ? null
+          : r.status === null
+            ? `Could not reach the endpoint (${r.errorCode ?? 'no answer'}).`
+            : `The endpoint answered ${r.status}.`,
+      );
     return r.captureId;
   }
 
@@ -199,6 +205,15 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
           {adding ? <AddEndpoint onCreate={create} onClose={() => setAdding(false)} /> : null}
           <Endpoints list={all} selected={endpoint.id} onSelect={pick} />
           {isUrl ? (
+            <RotateSecret
+              key={endpoint.id}
+              rotate={() => {
+                setMessage(null);
+                return api.rotate(endpoint.id, 24);
+              }}
+            />
+          ) : null}
+          {isUrl ? (
             <UrlEvents rows={rows} selected={urlRow?.key ?? null} onSelect={setPicked} now={now} />
           ) : (
             <Deliveries
@@ -217,7 +232,12 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
         <div className="stack g4">
           {isUrl ? (
             urlRow ? (
-              <UrlDetail api={api} endpointId={endpoint.id} row={urlRow} />
+              <UrlDetail
+                api={api}
+                endpointId={endpoint.id}
+                row={urlRow}
+                onReplayed={() => void load()}
+              />
             ) : (
               <Notice title="Nothing to inspect">Send a test event to this endpoint.</Notice>
             )

@@ -47,6 +47,9 @@ export interface TesterApi {
   deliveries(id: string): Promise<DeliveryDto[]>;
   delivery(id: string, eventId: string): Promise<DeliveryDetailDto>;
   tests(id: string): Promise<TestAttemptDto[]>;
+  replayDelivery(id: string, eventId: string): Promise<void>;
+  /** A new signing secret, returned once; the old one keeps signing for `overlapHours`. */
+  rotate(id: string, overlapHours: 0 | 24 | 72): Promise<string>;
   replay(id: string, captureId: string): Promise<WebhookCaptureDto>;
   secret(id: string): Promise<string>;
 }
@@ -143,6 +146,11 @@ export async function connect(
         (await call<{ items: DeliveryDto[] }>('GET', `${base(id)}/deliveries?limit=30`)).items,
       delivery: (id, eventId) =>
         call<DeliveryDetailDto>('GET', `${base(id)}/deliveries/${encodeURIComponent(eventId)}`),
+      replayDelivery: async (id, eventId) => {
+        await call('POST', `${base(id)}/deliveries/${encodeURIComponent(eventId)}/replay`);
+      },
+      rotate: async (id, overlapHours) =>
+        (await call<{ secret: string }>('POST', `${base(id)}/secret`, { overlapHours })).secret,
       tests: async (id) =>
         (await call<{ items: TestAttemptDto[] }>('GET', `${base(id)}/tests`)).items,
       replay: (id, captureId) =>

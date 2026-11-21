@@ -178,7 +178,33 @@ describe('the test list', () => {
       'id',
       'ok',
       'status',
+      'type',
     ]);
+  });
+
+  it('records the sample type of a send, and reads an older row as the plain test', async () => {
+    const test = await api.member(['org_admin'], { mode: 'test' });
+    const t = await create('https://hooks.example.com/t', test);
+    await api.call('POST', `${BASE}/${t.endpoint.id}/test`, { type: 'pass.updated' }, test);
+    await api.call('POST', `${BASE}/${t.endpoint.id}/test`, undefined, test);
+    await run(
+      api.rig.db,
+      'UPDATE webhook_attempts SET sample_type = NULL WHERE endpoint_id = ? AND at = (SELECT MIN(at) FROM webhook_attempts WHERE endpoint_id = ?)',
+      [t.endpoint.id, t.endpoint.id],
+    );
+    const res = await api.call('GET', `${BASE}/${t.endpoint.id}/tests`, undefined, test);
+    expect((res.json.items as { type: string }[]).map((i) => i.type).sort()).toEqual([
+      'webhook.test',
+      'webhook.test',
+    ]);
+  });
+
+  it('keeps the sample type when it is set', async () => {
+    const test = await api.member(['org_admin'], { mode: 'test' });
+    const t = await create('https://hooks.example.com/t2', test);
+    await api.call('POST', `${BASE}/${t.endpoint.id}/test`, { type: 'pass.issued' }, test);
+    const res = await api.call('GET', `${BASE}/${t.endpoint.id}/tests`, undefined, test);
+    expect((res.json.items as { type: string }[])[0]?.type).toBe('pass.issued');
   });
 
   it('is scoped to the endpoint of the caller', async () => {

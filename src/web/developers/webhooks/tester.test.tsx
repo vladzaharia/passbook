@@ -56,11 +56,21 @@ function api(
       return { endpoint: urlEndpoint, secret: 'whsec_once' };
     },
     deliveries: async () => [],
+    replayDelivery: async () => undefined,
+    rotate: async () => 'whsec_rotated',
     delivery: async () => {
       throw new Error('none');
     },
     tests: async () => [
-      { id: 't1', ok: true, status: 204, errorCode: null, durationMs: 31, at: 1 },
+      {
+        id: 't1',
+        type: 'pass.updated',
+        ok: true,
+        status: 204,
+        errorCode: null,
+        durationMs: 31,
+        at: 1,
+      },
     ],
     ensureCapture: async () => endpoint,
     captures: async (_id, type) => captures.filter((c) => !type || c.type === type),
@@ -182,7 +192,41 @@ describe('Tester', () => {
     expect(await screen.findByText('whsec_once')).toBeInTheDocument();
     expect(screen.getByText('Shown once')).toBeInTheDocument();
     expect(fake.sent).toContain('create https://hooks.example.dev/in pass.issued,pass.updated');
-    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Hide' }));
     expect(screen.queryByText('whsec_once')).toBeNull();
+  });
+
+  it('rotates a URL endpoint secret, shows it once and drops it after Copy', async () => {
+    const written: string[] = [];
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: async (t: string) => void written.push(t) },
+      configurable: true,
+    });
+    render(<Tester connect={ready(api([capture()], [urlEndpoint, endpoint]))} types={TYPES} />);
+    await screen.findByText('Signature matches');
+    await userEvent.click(
+      screen.getAllByRole('button').filter((b) => b.className.includes('wh-ep'))[1] as HTMLElement,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Rotate' }));
+    expect(await screen.findByText('whsec_rotated')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    await waitFor(() => expect(screen.queryByText('whsec_rotated')).toBeNull());
+    expect(written).toEqual(['whsec_rotated']);
+  });
+
+  it('hides a shown secret after a minute', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(<Tester connect={ready(api([capture()], [urlEndpoint, endpoint]))} types={TYPES} />);
+      await screen.findByText('Signature matches');
+      await userEvent.click(screen.getByRole('button', { name: 'Add endpoint' }));
+      await userEvent.type(screen.getByLabelText(/^URL/), 'https://hooks.example.dev/in');
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+      expect(await screen.findByText('whsec_once')).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(60_000);
+      await waitFor(() => expect(screen.queryByText('whsec_once')).toBeNull());
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

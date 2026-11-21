@@ -110,75 +110,40 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await shot(page, 'webhooks-signed-in');
   expect(errors).toEqual([]);
 
-  // D8: an unresolvable URL is refused in the portal with the API's own message, nothing is added.
+  // D8: a URL endpoint is added for real (the e2e server pins hooks.example.com, see WEBHOOK_TEST_DNS), its secret
+  // shows once, a test send is listed tagged Test, and the secret can be rotated.
   const tester = page.locator('[data-island="webhook-tester"]');
   await tester.getByRole('button', { name: 'Add endpoint' }).click();
-  await tester.getByLabel('URL').fill('https://hooks.example.com/passbook');
+  await tester.getByLabel('URL').fill('https://nowhere.example.net/passbook');
   await tester.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(tester.getByRole('alert')).toBeVisible();
+  await expect(tester.getByRole('alert')).toContainText('does not resolve');
   await shots(page, 'webhooks-add-refused');
-  await expect(tester.locator('.wh-ep')).toHaveCount(1);
-  // The sandbox has no DNS, so the success path answers from a stub: the secret shows once, then a test send is listed.
-  const endpoint = {
-    id: '0193a1b2-7c00-7000-8000-0000000000e2',
-    target: 'url',
-    description: '',
-    urlMasked: 'hooks.example.com/…',
-    eventTypes: ['pass.issued', 'pass.updated'],
-    status: 'active',
-    lastStatus: 200,
-  };
-  const json = (body: unknown, status = 200) => ({
-    status,
-    contentType: 'application/json',
-    body: JSON.stringify(body),
-  });
-  await page.route('**/api/v1/webhook-endpoints', (route) =>
-    route.request().method() === 'POST'
-      ? route.fulfill(json({ endpoint, secret: 'whsec_6f1d0c2a9b7e4d35a8c1' }, 201))
-      : route.continue(),
-  );
-  await page.route(`**/api/v1/webhook-endpoints/${endpoint.id}/**`, (route) => {
-    const url = route.request().url();
-    if (url.endsWith('/test'))
-      return route.fulfill(
-        json({ ok: true, status: 200, durationMs: 41, errorCode: null, captureId: null }),
-      );
-    if (url.endsWith('/tests'))
-      return route.fulfill(
-        json({
-          items: [
-            {
-              id: 't2',
-              ok: false,
-              status: 500,
-              errorCode: null,
-              durationMs: 88,
-              at: Date.now() - 60_000,
-            },
-            {
-              id: 't1',
-              ok: true,
-              status: 200,
-              errorCode: null,
-              durationMs: 41,
-              at: Date.now() - 5_000,
-            },
-          ],
-        }),
-      );
-    return route.fulfill(json({ items: [], nextCursor: null }));
-  });
+  await tester.getByLabel('URL').fill('https://hooks.example.com/passbook');
   await tester.getByRole('button', { name: 'Add', exact: true }).click();
   await expect(tester.getByText('Shown once')).toBeVisible();
   await shots(page, 'webhooks-secret');
-  await tester.getByRole('button', { name: 'Done' }).click();
-  await tester.getByRole('button', { name: 'Send test event' }).click();
-  await expect(tester.getByText('Test', { exact: true }).first()).toBeVisible();
-  await shots(page, 'webhooks-url-test');
+  await tester.getByRole('button', { name: 'Hide' }).click();
+  await expect(tester.getByText('Shown once')).toHaveCount(0);
   await expect(tester.locator('.wh-ep')).toHaveCount(2);
-  await page.unroute('**/api/v1/webhook-endpoints');
+  await tester.getByRole('button', { name: 'Send test event' }).click();
+  await expect(tester.getByText('Test', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+  await shots(page, 'webhooks-url-test');
+  await tester.getByRole('button', { name: 'Rotate' }).click();
+  await expect(tester.getByText('New signing secret')).toBeVisible();
+  await shots(page, 'webhooks-rotated');
+  await tester.getByRole('button', { name: 'Hide' }).click();
+  await expect(tester.getByText('New signing secret')).toHaveCount(0);
   expect(errors).toEqual([]);
+
+  // The same test send is listed in Admin, tagged the same way.
+  await page.goto('/admin/connections');
+  await page.getByRole('tab', { name: 'Webhook endpoints' }).click();
+  await page
+    .getByRole('link', { name: /hooks\.example\.com/ })
+    .first()
+    .click();
+  await expect(page.getByRole('main').getByText('Test', { exact: true }).first()).toBeVisible();
+  await shots(page, 'admin-webhook-deliveries');
 
   // D10: the playground offers the sandbox instead of asking to sign in.
   await page.goto('/developers/playground');

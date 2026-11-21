@@ -31,7 +31,7 @@ import {
   updateEndpoint,
 } from './repo-endpoints.ts';
 import { insertSecret } from './repo-secrets.ts';
-import { memoResolver } from './resolver-memo.ts';
+import { resolverFor } from './resolver-memo.ts';
 import { newEndpointSecret, sealSecret } from './secrets.ts';
 import { hostOf, maskUrl, normalizeEndpointUrl } from './url.ts';
 
@@ -138,7 +138,7 @@ async function checkedUrl(ctx: ServiceContext, raw: string): Promise<string> {
   const url = normalizeEndpointUrl(raw, platformHostsOf(ctx.env));
   await assertPublicHost(
     new URL(url).hostname,
-    memoResolver(() => ctx.clock.now()),
+    resolverFor(ctx.env, () => ctx.clock.now()),
   );
   return url;
 }

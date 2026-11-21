@@ -1,4 +1,6 @@
+import { RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { TEST_TAG, testRowOf } from '../../../shared/webhook-test-rows.ts';
 import type { DeliveryDetailDto, DeliveryDto, TestAttemptDto, TesterApi } from './client.ts';
 import { ago, prettyBody } from './format.ts';
 
@@ -23,15 +25,18 @@ export function rowsOf(deliveries: DeliveryDto[], tests: TestAttemptDto[]): UrlR
     test: false,
     eventId: x.eventId,
   }));
-  const t: UrlRow[] = tests.map((x) => ({
-    key: x.id,
-    at: x.at,
-    status: x.status,
-    type: 'webhook.test',
-    meta: [x.ok ? 'Sent' : 'Failed', x.errorCode, `${x.durationMs} ms`].filter(Boolean).join(' · '),
-    test: true,
-    eventId: null,
-  }));
+  const t: UrlRow[] = tests.map((x) => {
+    const r = testRowOf(x);
+    return {
+      key: r.key,
+      at: r.at,
+      status: r.status,
+      type: r.type,
+      meta: r.detail,
+      test: true,
+      eventId: null,
+    };
+  });
   return [...d, ...t].sort((a, b) => b.at - a.at);
 }
 
@@ -73,7 +78,7 @@ export function UrlEvents({
                 </span>
                 <span className="wh-t">
                   {r.type}
-                  {r.test ? <span className="pill neutral wh-tag">Test</span> : null}
+                  {r.test ? <span className="pill neutral wh-tag">{TEST_TAG}</span> : null}
                 </span>
                 <span className="wh-when">{ago(r.at, now)}</span>
                 <span className="wh-meta">{r.meta}</span>
@@ -91,11 +96,15 @@ export function UrlDetail({
   api,
   endpointId,
   row,
+  onReplayed,
 }: {
   api: TesterApi;
   endpointId: string;
   row: UrlRow;
+  onReplayed: () => void;
 }) {
+  const [replaying, setReplaying] = useState(false);
+  const [replayError, setReplayError] = useState<string | null>(null);
   const [detail, setDetail] = useState<DeliveryDetailDto | null>(null);
   const [failed, setFailed] = useState(false);
   const eventId = row.eventId;
@@ -117,7 +126,33 @@ export function UrlDetail({
     <div className="card">
       <div className="card-h">
         <h2 className="wh-title">{row.type}</h2>
+        {eventId ? (
+          <button
+            type="button"
+            className="btn ghost sm push"
+            disabled={replaying || detail?.state === 'pending'}
+            onClick={() => {
+              setReplaying(true);
+              setReplayError(null);
+              api
+                .replayDelivery(endpointId, eventId)
+                .then(onReplayed)
+                .catch((e: unknown) =>
+                  setReplayError(e instanceof Error ? e.message : 'Could not replay.'),
+                )
+                .finally(() => setReplaying(false));
+            }}
+          >
+            <RotateCw aria-hidden="true" />
+            Replay
+          </button>
+        ) : null}
       </div>
+      {replayError ? (
+        <p className="wh-msg" role="alert">
+          {replayError}
+        </p>
+      ) : null}
       {row.test ? (
         <div className="card-b stack g2">
           <span className="mono sm">{row.status ?? 'No response'}</span>
