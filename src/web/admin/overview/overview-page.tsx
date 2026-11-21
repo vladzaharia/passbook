@@ -23,7 +23,6 @@ import {
 import { useOrgPages } from '../orgs/org-pages.ts';
 import { useOrgNames } from '../orgs/queries.ts';
 import { ChartsCard } from './charts-card.tsx';
-import { GetStarted, setupDone, useGetStartedDismissed } from './get-started.tsx';
 import { Health } from './health.tsx';
 import { Kpis, RANGE_LABEL } from './kpis.tsx';
 import type { OverviewSearch } from './overview-search.ts';
@@ -42,8 +41,7 @@ function useMetrics(range: Range, orgId: string | undefined, principal: string |
         query: { range, orgId },
         signal,
       }),
-    // While the checklist shows, every visit refetches so a step ticks as soon as it is done.
-    staleTime: (q) => (q.state.data && !setupDone(q.state.data.setup) ? 0 : 30_000),
+    staleTime: 30_000,
     placeholderData: (previous, query) =>
       principal !== undefined &&
       query?.queryKey[2] === principal &&
@@ -170,12 +168,8 @@ export function OverviewPage({
   const metrics = useMetrics(range, orgId, principal);
   const arrived = useArrival(metrics.isPending);
   const busy = useDelayed(metrics.isPlaceholderData && metrics.isFetching, 150);
-  const [dismissed, dismiss] = useGetStartedDismissed();
   const data = metrics.data;
   const shownRange = metrics.isPlaceholderData ? (data?.range ?? range) : range;
-  const checklist = data !== undefined && !dismissed && !setupDone(data.setup);
-  // Do not hide existing Test-mode metrics merely because platform setup tracks Live passes.
-  const firstRun = checklist && data.setup.passes === 0 && data.totals.passes === 0;
   const picker = (
     <Select
       aria-label="Range"
@@ -187,7 +181,7 @@ export function OverviewPage({
   );
   return (
     <>
-      <PageHeader title="Overview" actions={firstRun ? undefined : picker} />
+      <PageHeader title="Overview" actions={picker} />
       <div className="flex flex-col gap-6">
         <div className="flex max-w-md flex-col gap-2">
           <Label htmlFor={filterId}>Organization</Label>
@@ -259,23 +253,17 @@ export function OverviewPage({
                 Updating metrics. Showing {RANGE_LABEL[shownRange].toLowerCase()} until they arrive.
               </p>
             ) : null}
-            {firstRun ? null : (
-              <Kpis
-                key={countScope}
-                countScope={countScope}
-                data={data}
-                range={shownRange}
-                enter={arrived}
-                listOrgId={
-                  orgId ? (memberships.some((m) => m.orgId === orgId) ? orgId : null) : undefined
-                }
-              />
-            )}
-            {checklist ? <GetStarted setup={data.setup} onDismiss={dismiss} /> : null}
-            {/* With no passes yet the checklist stands in for the (empty) charts. */}
-            {firstRun ? null : (
-              <ChartsCard data={data} range={shownRange} enter={arrived} busy={busy} />
-            )}
+            <Kpis
+              key={countScope}
+              countScope={countScope}
+              data={data}
+              range={shownRange}
+              enter={arrived}
+              listOrgId={
+                orgId ? (memberships.some((m) => m.orgId === orgId) ? orgId : null) : undefined
+              }
+            />
+            <ChartsCard data={data} range={shownRange} enter={arrived} busy={busy} />
           </>
         )}
         <RecentActivity orgId={orgId} />

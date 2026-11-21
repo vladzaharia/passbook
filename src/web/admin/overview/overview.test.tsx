@@ -387,12 +387,6 @@ describe('overview page', () => {
       within(directories).getByRole('heading', { name: 'Organizations · filtered' }),
     ).toBeInTheDocument();
     expect(await within(directories).findByText('1')).toBeInTheDocument();
-    const checklist = screen.getByRole('region', { name: 'Get started' });
-    const send = new URL(
-      within(checklist).getByRole('link', { name: 'Send email' }).getAttribute('href')!,
-      'http://localhost',
-    );
-    expect(send.pathname).toBe('/admin/passes');
     expect(metricsRequests[0]?.searchParams.get('orgId')).toBe('o2');
     await screen.findByRole('link', { name: /Settings updated/ });
     expect(auditRequests[0]?.searchParams.get('orgId')).toBe('o2');
@@ -581,103 +575,13 @@ describe('get started', () => {
     expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull();
   });
 
-  it('replaces the charts with four steps that check themselves', async () => {
-    const { container } = await renderApp('/admin', {
-      session: 'admin',
-      handlers: {
-        ...ok,
-        '/api/v1/metrics/platform/overview': () => json(zero({ assignedTemplates: 1 })),
-      },
-    });
-    const list = await screen.findByRole('region', { name: 'Get started' });
-    const steps = within(list).getAllByRole('listitem');
-    expect(
-      steps.map((step) =>
-        step.textContent
-          ?.replace(/\(done\)|Blueprints|Review|New pass|Send email|Needs step \d|^\d/g, '')
-          .trim(),
-      ),
-    ).toEqual(['Use a blueprint', 'Approve it', 'Issue a pass', 'Add it to your phone']);
-    expect(steps[0]).toHaveTextContent('(done)');
-    expect(steps[1]).not.toHaveTextContent('(done)');
-    expect(within(list).getByRole('link', { name: 'Review' })).toHaveAttribute(
-      'href',
-      '/admin/templates',
-    );
-    // Steps after the open one wait: no link, and they say which step they need.
-    expect(within(list).queryByRole('link', { name: 'New pass' })).toBeNull();
-    expect(within(list).getAllByRole('button', { name: 'Needs step 2' })).toHaveLength(2);
-    expect(screen.queryByRole('img', { name: /Issued/ })).not.toBeInTheDocument();
-    // Before the first pass the checklist leads: no zero tiles, no range.
-    expect(screen.queryByRole('combobox', { name: 'Range' })).not.toBeInTheDocument();
-    expect(screen.queryByText('Push failures')).not.toBeInTheDocument();
-    // One active art: the current step's; the done one holds still, the activity art is static.
-    expect(container.querySelector('[data-art="template"]')).toHaveAttribute('data-still');
-    expect(container.querySelector('[data-art="building"]')).not.toHaveAttribute('data-still');
-    expect(container.querySelector('[data-art="passes"]')).toHaveAttribute('data-still');
-    expect((await axe(container)).violations).toEqual([]);
-  });
-
-  it('sends step four to the newest pass holder tab, and goes once a pass is in a Wallet', async () => {
-    let inWallet = 0;
-    const { queryClient } = await renderApp('/admin', {
-      session: 'admin',
-      handlers: {
-        ...ok,
-        '/api/v1/metrics/platform/overview': () =>
-          json(
-            zero({
-              assignedTemplates: 1,
-              approvedTemplates: 1,
-              passes: 1,
-              latestPassId: 'p7',
-              walletPasses: inWallet,
-            }),
-          ),
-      },
-    });
-    const list = await screen.findByRole('region', { name: 'Get started' });
-    expect(within(list).getByRole('link', { name: 'Send email' })).toHaveAttribute(
-      'href',
-      '/admin/passes/p7?tab=holder',
-    );
-    // With a pass issued the charts are back, under the checklist.
-    expect(screen.getByRole('img', { name: /Issued/ })).toBeInTheDocument();
-    inWallet = 1;
-    await queryClient.invalidateQueries({ queryKey: ['metrics'] });
-    await waitFor(() => expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull());
-    expect(screen.getByRole('img', { name: /Issued/ })).toBeInTheDocument();
-  });
-
-  it.each([
-    [{}, []],
-    [{ assignedTemplates: 1 }, ['Use a blueprint']],
-    [{ assignedTemplates: 1, approvedTemplates: 1 }, ['Use a blueprint', 'Approve it']],
-    [
-      { assignedTemplates: 1, approvedTemplates: 1, passes: 1 },
-      ['Use a blueprint', 'Approve it', 'Issue a pass'],
-    ],
-  ])('shows the first-run states for %j', async (counts, done) => {
+  it('has no first-run checklist: the charts show from the start', async () => {
     await renderApp('/admin', {
       session: 'admin',
-      handlers: { ...ok, '/api/v1/metrics/platform/overview': () => json(zero(counts)) },
+      handlers: { ...ok, '/api/v1/metrics/platform/overview': () => json(zero({})) },
     });
-    const list = await screen.findByRole('region', { name: 'Get started' });
-    const marked = within(list)
-      .getAllByRole('listitem')
-      .filter((step) => step.textContent?.includes('(done)'))
-      .map((step) => step.textContent?.split('(done)')[0]?.trim());
-    expect(marked).toEqual(done);
-  });
-
-  it('stays dismissed for this viewer', async () => {
-    const handlers = { ...ok, '/api/v1/metrics/platform/overview': () => json(zero({})) };
-    const first = await renderApp('/admin', { session: 'admin', handlers });
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Dismiss' }));
-    expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
-    first.unmount();
-    await renderApp('/admin', { session: 'admin', handlers });
     expect(await screen.findByRole('img', { name: /Issued/ })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
   });
 });

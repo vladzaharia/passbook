@@ -35,9 +35,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const handlers = (activity: unknown = orgActivity()) => ({
+const doneSetup = { ...emptySetup, assignedTemplates: 1, walletPasses: 1, releasedTemplates: 1 };
+
+const handlers = (activity: unknown = orgActivity(), setup: typeof emptySetup = emptySetup) => ({
   '/api/v1/metrics/activity': () => json(activity),
-  '/api/v1/metrics/overview': () => json(overview({ setup: emptySetup })),
+  '/api/v1/metrics/overview': () => json(overview({ setup })),
+  '/api/v1/templates': () => json({ items: [], nextCursor: null }),
   '/api/v1/audit': () => json({ ...audit, items: audit.items.map((e) => ({ ...e, orgId: 'o1' })) }),
 });
 
@@ -102,7 +105,7 @@ describe('organization overview', () => {
       memberships: [member([...READER, 'templates:read', 'integrations:read'])],
       selectedOrg: 'o1',
       handlers: {
-        ...handlers(),
+        ...handlers(orgActivity(), doneSetup),
         '/api/v1/orgs/o1/workspace': () =>
           json({
             id: 'o1',
@@ -201,23 +204,50 @@ describe('organization overview', () => {
     expect(calls(fetchMock).filter((u) => u.includes('/metrics/'))).toEqual([]);
   });
 
-  it('shows the buddy and the first-run checklist when there are no passes', async () => {
+  it('shows the first-pass path when there are no passes', async () => {
     await renderApp('/admin', {
       session: 'user',
       memberships: [member()],
       selectedOrg: 'o1',
       handlers: handlers(orgActivity({ templates: [] })),
     });
-    expect(await screen.findByText('No passes yet')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'New pass' })).toHaveAttribute(
-      'href',
-      '/admin/passes/new?orgId=o1',
-    );
-    expect(await screen.findByRole('region', { name: 'Get started' })).toBeInTheDocument();
+    const path = await screen.findByRole('region', { name: 'First pass' });
+    expect(within(path).getByText('Pick a blueprint')).toHaveTextContent('Pick a blueprint');
+    expect(within(path).getByRole('link', { name: 'All blueprints' })).toBeInTheDocument();
+    expect(screen.queryByText('No passes yet')).toBeNull();
     expect(screen.queryByRole('list', { name: 'Totals' })).toBeNull();
   });
 
-  it('shows no Get started checklist in a developer sandbox', async () => {
+  it('folds into a Next row once the first pass is released, and stays closed', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member()],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity(), doneSetup),
+    });
+    const next = await screen.findByRole('region', { name: 'Next' });
+    expect(within(next).getByRole('link', { name: 'New pass' })).toHaveAttribute(
+      'href',
+      '/admin/o/o1/passes/new',
+    );
+    expect(within(next).getByRole('link', { name: 'Import' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
+    await user.click(within(next).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('region', { name: 'Next' })).toBeNull();
+  });
+
+  it('shows the Next row in a mode with no passes once the first pass is released', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member()],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity({ templates: [] }), doneSetup),
+    });
+    expect(await screen.findByRole('region', { name: 'Next' })).toBeInTheDocument();
+  });
+
+  it('shows no first-pass path in a developer sandbox', async () => {
     await renderApp('/admin', {
       session: 'user',
       memberships: [{ ...member(), testOnly: true }],
@@ -225,7 +255,7 @@ describe('organization overview', () => {
       handlers: handlers(orgActivity({ templates: [] })),
     });
     expect(await screen.findByText('No passes yet')).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
   });
 
   it('hides New pass from a member who cannot operate passes', async () => {
@@ -233,7 +263,7 @@ describe('organization overview', () => {
       session: 'user',
       memberships: [member(READER)],
       selectedOrg: 'o1',
-      handlers: handlers(orgActivity({ templates: [] })),
+      handlers: handlers(orgActivity({ templates: [] }), doneSetup),
     });
     expect(await screen.findByText('No passes yet')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'New pass' })).toBeNull();
@@ -287,7 +317,7 @@ describe.each(COMBOS)('organization overview axe at %i, %s theme', (width, theme
       selectedOrg: 'o1',
       handlers: handlers(orgActivity({ templates: [] })),
     });
-    await screen.findByRole('region', { name: 'Get started' });
+    await screen.findByRole('region', { name: 'First pass' });
     expect((await axe(document.body)).violations).toEqual([]);
   });
 });
