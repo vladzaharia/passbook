@@ -57,6 +57,25 @@ describe('step-up dialog', () => {
     expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('/api-keys'))).toHaveLength(1);
   });
 
+  it('shows one message: the screen toast for the same refusal is dropped', async () => {
+    const { toast } = await import('./toaster.tsx');
+    const { ApiError } = await import('../lib/errors.ts');
+    await renderApp('/account', {
+      handlers: {
+        '/api/v1/me/emails': () => json({ items: [] }),
+        '/api/v1/me/sessions': () => json({ items: [] }),
+      },
+    });
+    await act(async () => {
+      toast.error(new ApiError({ status: 403, code: 'STEP_UP_REQUIRED' }), 'Could not close');
+    });
+    expect(screen.queryByText('Could not close')).toBeNull();
+    await act(async () => {
+      toast.error(new ApiError({ status: 403, code: 'FORBIDDEN' }), 'Could not rename');
+    });
+    expect(await screen.findByText('Could not rename')).toBeInTheDocument();
+  });
+
   it('stays closed for other refusals', async () => {
     await renderApp('/account', {
       handlers: {

@@ -5,7 +5,7 @@ import { STATE_COPY } from '@/shared/copy/states.ts';
 import { ApiError, problemToError } from './errors.ts';
 import { modeHeaders } from './mode.ts';
 import { safeNext } from './redirect.ts';
-import { requestStepUp } from './step-up.ts';
+import { isStepUp, requestStepUp } from './step-up.ts';
 
 export type QueryValue = string | number | boolean | null | undefined;
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -122,7 +122,7 @@ export function createApiClient(deps: ApiClientDeps) {
     if (!res.ok) {
       const error = problemToError(res.status, data);
       // One dialog for every sensitive action, whichever screen made the call.
-      if (error.code === 'STEP_UP_REQUIRED') requestStepUp(error.signInUrl);
+      if (isStepUp(error)) requestStepUp(error.signInUrl);
       if (
         res.status === 401 &&
         (!getSessionPrincipal ||
