@@ -16,6 +16,7 @@ const files = [
   ...sources(join(dev, 'console')),
   ...sources(join(dev, 'ui')),
   ...sources(join(dev, 'shell')),
+  ...sources(join(dev, 'keys')),
 ];
 const islandFiles = [
   ...files,

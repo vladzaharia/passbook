@@ -2,6 +2,7 @@ import { ExternalLink, MoreHorizontal, Plus, RefreshCw, Zap } from 'lucide-react
 import { useCallback, useEffect, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
 import { KEYS_COPY as C } from '../../../shared/copy/developers-keys.ts';
+import { PATHS } from '../../../shared/developers.ts';
 import { fetchHome } from '../workbench/api.ts';
 import { keyState, masked } from '../workbench/model.ts';
 import { type KeyApi, keyApi } from './api.ts';
@@ -59,7 +60,7 @@ export function KeysPage({
   }, []);
   // The address drops #new or #<key id> once the panel closes.
   useEffect(() => {
-    if (panel.kind === 'none') history.replaceState(null, '', location.pathname);
+    if (panel.kind === 'none') history.replaceState(null, '', PATHS.keys);
   }, [panel.kind]);
 
   return (

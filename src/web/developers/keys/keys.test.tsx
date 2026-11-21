@@ -114,6 +114,9 @@ describe('Keys page', () => {
       expect(screen.getByTestId('ks-secret').textContent).toContain(maskSecret(SECRET)),
     );
     expect(document.body.textContent).not.toContain(SECRET);
+    expect(screen.getByText('Paste it into .env, then clear your clipboard.')).toBeTruthy();
+    // Copied: nothing to show again.
+    expect(screen.queryByRole('button', { name: 'Show again' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Done' }));
     expect(screen.queryByTestId('ks-secret')).toBeNull();
     expect(document.body.textContent).not.toContain(SECRET);
@@ -135,10 +138,14 @@ describe('Keys page', () => {
     });
     expect(screen.getByTestId('ks-secret')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+    expect(screen.getByText('Copy the key first. It is not shown again.')).toBeTruthy();
     await act(async () => {
       vi.advanceTimersByTime(HIDE_MS + 100);
     });
     expect(document.body.textContent).not.toContain(SECRET);
+    // Still open and uncopied: Show again brings it back, and the timer starts over.
+    await user.click(screen.getByRole('button', { name: 'Show again' }));
+    expect(screen.getByTestId('ks-secret').textContent).toContain(SECRET);
   });
 
   it('Pick scopes offers only the sandbox ceiling and needs one scope', async () => {
@@ -180,6 +187,21 @@ describe('Keys page', () => {
     expect(link.getAttribute('href')).toBe(
       '/auth/oidc/start?prompt=login&max_age=0&next=%2Fdevelopers%2Fkeys%23new',
     );
+  });
+
+  it('a step-up url that is not a same-origin /auth/ path is not followed', async () => {
+    const a = api({
+      mint: vi.fn(async () => {
+        throw new KeyError(403, 'STEP_UP_REQUIRED', 'x', 'https://x//evil.com/a');
+      }),
+    });
+    const user = userEvent.setup();
+    page(a);
+    await user.click(screen.getByRole('button', { name: 'New key' }));
+    await user.type(screen.getByLabelText('Name'), 'CI');
+    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    const link = await screen.findByRole('link', { name: 'Continue' });
+    expect(link.getAttribute('href')?.startsWith('/auth/')).toBe(true);
   });
 
   it('Roll keeps the access, reveals the new key once and says when the old one stops', async () => {

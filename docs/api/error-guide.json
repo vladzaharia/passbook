@@ -101,6 +101,12 @@
     "fix": "Request only scopes your own key or role holds.",
     "retryable": false
   },
+  "API_KEY_SCOPE_EXCEEDS_SANDBOX": {
+    "title": "Scope not available in a sandbox",
+    "when": "A sandbox key asked for, or holds, key minting, a terminal scope or scanning setup. issues names them.",
+    "fix": "Request only sandbox scopes. A key that already holds one cannot be rolled: create a new key.",
+    "retryable": false
+  },
   "API_KEY_TERMINALS_REQUIRED": {
     "title": "Terminals required",
     "when": "A key with the scans:write scope was created without terminals.",

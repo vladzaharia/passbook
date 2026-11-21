@@ -46,6 +46,8 @@ export const KEYS_COPY = {
     copied: 'Copied',
     done: 'Done',
     masked: 'Hidden. Roll the key for a new one.',
+    showAgain: 'Show again',
+    clipboard: 'Paste it into .env, then clear your clipboard.',
     copyFirst: 'Copy the key first. It is not shown again.',
     lost: 'The key was not returned. Roll it for a new one.',
     stops: (when: string) => `The old key stops ${when}.`,

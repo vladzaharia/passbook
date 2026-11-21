@@ -10,12 +10,15 @@ export function Sheet({
   title,
   onClose,
   guard = false,
+  onBlocked,
   footer,
   children,
 }: {
   title: ReactNode;
   onClose: () => void;
   guard?: boolean;
+  /** Escape or a backdrop tap met the guard. */
+  onBlocked?: () => void;
   footer?: ReactNode;
   children: ReactNode;
 }) {
@@ -40,10 +43,18 @@ export function Sheet({
       aria-labelledby="ks-title"
       onCancel={(e) => {
         e.preventDefault();
-        if (!guard) onClose();
+        if (guard) onBlocked?.();
+        else onClose();
+      }}
+      // A second Escape can close the dialog without a cancel event: put it back while guarded.
+      onClose={() => {
+        if (guard) ref.current?.showModal();
+        else onClose();
       }}
       onClick={(e) => {
-        if (e.target === ref.current && !guard) onClose();
+        if (e.target !== ref.current) return;
+        if (guard) onBlocked?.();
+        else onClose();
       }}
     >
       <div className="ks-h">
