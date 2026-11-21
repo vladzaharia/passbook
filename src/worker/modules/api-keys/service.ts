@@ -199,6 +199,17 @@ export async function keyAuthOf(
   }
   // A personal key dies with its membership or user; its reach is capped by the member's roles now.
   if (row.kind === 'personal' && row.member_roles === null) return null;
+  // A personal key acts for a person, so it needs the person's strong sign-in to exist: a Polaris ID identity,
+  // or the console grace the member was given when this rule started.
+  if (
+    row.kind === 'personal' &&
+    row.owner_idp !== 1 &&
+    !(typeof row.owner_grace_until === 'number' && now < row.owner_grace_until)
+  )
+    throw new ForbiddenError(
+      "This key's owner must sign in with Polaris ID once.",
+      'KEY_OWNER_NEEDS_IDP',
+    );
   // The caller's address is not an oracle: a wrong address looks like a wrong key. No address means no match.
   const allow = row.ip_allow ? (JSON.parse(row.ip_allow) as string[]) : [];
   if (allow.length > 0 && !ipAllowed(caller?.ip, allow)) return null;

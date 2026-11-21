@@ -222,6 +222,10 @@ export type ResolvedKeyRow = ApiKeyRow & {
   org_status: string | null;
   org_kind: string | null;
   member_roles: string | null;
+  /** A personal key's member has a Polaris ID identity: 1, else null. */
+  owner_idp: number | null;
+  /** A personal key's member still keeps console access by email: `auth.consoleEmailUntil`, else null. */
+  owner_grace_until: number | null;
   parent: string | null;
 };
 
@@ -230,6 +234,11 @@ export const RESOLVED_KEY_COLUMNS = `k.*, o.status AS org_status, o.kind AS org_
        (SELECT m.roles FROM org_memberships m JOIN users u ON u.id = m.user_id
         WHERE m.id = k.membership_id AND m.org_id = k.org_id AND m.revoked_at IS NULL
           AND u.status = 'active') AS member_roles,
+       (SELECT 1 FROM org_memberships m JOIN auth_identities i ON i.user_id = m.user_id AND i.provider = 'pocketid'
+        WHERE m.id = k.membership_id LIMIT 1) AS owner_idp,
+       (SELECT json_extract(st.value, '$') FROM org_memberships m
+          JOIN console_email_grace g ON g.user_id = m.user_id, settings st
+        WHERE m.id = k.membership_id AND st.scope = 'platform' AND st.key = 'auth.consoleEmailUntil') AS owner_grace_until,
        (SELECT json_object('revoked_at', q.revoked_at, 'expires_at', q.expires_at, 'retire_at', q.retire_at)
         FROM api_keys q WHERE q.id = k.parent_key_id) AS parent`;
 

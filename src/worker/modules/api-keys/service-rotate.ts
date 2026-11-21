@@ -78,6 +78,7 @@ export async function rotateApiKey(
     last_ip_prefix: null,
     rotated_from: old.id,
     created_by_key: authority.kind === 'api_key' ? authority.keyId : null,
+    created_amr: authority.kind === 'api_key' ? null : authority.amr,
   };
   await createKey(
     ctx,
