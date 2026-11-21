@@ -1,4 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
+import { apiAs, uid } from './helpers/api.ts';
+import { addOrgMember, createOrgWithRoles } from './helpers/seed.ts';
 
 async function openMenu(page: Page) {
   await page.getByRole('button', { name: 'Account menu' }).click();
@@ -62,10 +64,73 @@ test.describe('admin', () => {
     // No space links in the bar: the account menu switches spaces.
     await expect(bar.getByRole('link', { name: 'Admin', exact: true })).toHaveCount(0);
   });
+
+  test('the developers header fits at every width and the menu sheet carries sections and spaces', async ({
+    page,
+  }) => {
+    const nav = page.getByRole('navigation', { name: 'Sections' });
+    for (const [width, inline] of [
+      [1440, true],
+      [820, false],
+      [390, false],
+    ] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/developers/quickstart');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+      await expect(nav).toBeVisible({ visible: inline });
+      await expect(nav.getByRole('link')).toHaveText(
+        inline ? ['Quickstart', 'Guides', 'Reference', 'Webhooks', 'Logs'] : [],
+      );
+    }
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    const sheet = page.locator('#dev-menu');
+    await expect(sheet.getByRole('link', { name: 'Reference', exact: true })).toBeVisible();
+    await expect(sheet.locator('.menu-only').getByRole('link', { name: 'Playground' })).toHaveCount(
+      0,
+    );
+    const spaces = sheet.locator('[data-menu-spaces]');
+    await expect(spaces.getByRole('link', { name: 'Developers' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(spaces.getByRole('link', { name: 'Admin' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+  });
 });
 
 test.describe('organization member', () => {
   test.use({ storageState: 'e2e/.auth/user.json' });
+
+  // Admin needs a membership; this test makes its own instead of relying on another spec's.
+  let grant: { orgId: string; id: string } | undefined;
+  test.beforeAll(async () => {
+    const admin = await apiAs('admin');
+    const member = await apiAs('user');
+    try {
+      const slug = uid('menubar-member').toLowerCase();
+      const org = await createOrgWithRoles(admin, { slug, name: `Menubar member ${slug}` });
+      const membership = await addOrgMember(admin, org.id, member, ['pass_operator']);
+      grant = { orgId: org.id, id: membership.id };
+    } finally {
+      await member.dispose();
+      await admin.dispose();
+    }
+  });
+  test.afterAll(async () => {
+    if (!grant) return;
+    const admin = await apiAs('admin');
+    try {
+      await admin.send(
+        'DELETE',
+        `/api/v1/orgs/${encodeURIComponent(grant.orgId)}/memberships/${encodeURIComponent(grant.id)}`,
+      );
+    } finally {
+      await admin.dispose();
+    }
+  });
 
   test('an organization member gets Admin, and never Developers without the role', async ({
     page,
