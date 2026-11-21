@@ -18,7 +18,7 @@ const SOURCES = Object.fromEntries(
 const ARTIFACT =
   /servePassFile\(|\/pass\.pkpass|passes\.pkpasses|BUCKET\.get\([^)]*(?:objectKey|object_key)|packagePassObjects\(|packagePasses\(|listWalletOffers\(|issueWalletOffer\(/i;
 const GATE =
-  /channelGate\(|appleFileGate\(|channelOn\(|holderChannels\(|holderChannelsMany\(|appleVariant\(|eligibleWalletProvider\(/;
+  /channelGate\(|appleFileGate\(|channelOn\(|holderChannels\(|holderChannelsMany\(|appleVariant\(|eligibleWalletProvider\(|channels\.effective\.(?:apple|mobile)\.on/;
 
 /** Every file that hands a .pkpass or a wallet offer to a holder goes through the one gate (M11). */
 const GATED = [
@@ -27,6 +27,8 @@ const GATED = [
   'modules/me/bundle.ts',
   'modules/bundles/public-routes.ts',
   'modules/bundles/public-service.ts',
+  'modules/bundles/public-items.ts',
+  'modules/bundles/public-member.ts',
   'modules/bundles/deliver.ts',
   'modules/delivery/email.ts',
   'modules/sandbox/service.ts',
