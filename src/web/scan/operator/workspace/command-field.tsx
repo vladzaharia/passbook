@@ -33,7 +33,7 @@ export function CommandField({
     ? C.ready.offline
     : readiness === 'paused'
       ? C.ready.paused
-      : C.ready.anywhere;
+      : null;
   return (
     <search className="op-command" aria-label={C.landmark.search}>
       <div className="op-field" data-filled={value ? '' : undefined}>

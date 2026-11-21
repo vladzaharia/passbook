@@ -82,7 +82,6 @@ export function Notes({
         <h3>
           <StickyNote aria-hidden /> {N.heading}
         </h3>
-        <span className="op-block-aside">{N.aside}</span>
       </div>
       {notes.failed ? (
         <p className="op-hist-fail" role="status">
