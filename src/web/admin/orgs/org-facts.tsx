@@ -21,11 +21,12 @@ export function OrgFacts({ org }: { org: z.infer<typeof OrgSummarySchema> }) {
               label: 'Signing',
               value: (
                 <Link
-                  to="/admin/o/$orgId/wallet-accounts"
+                  to="/admin/o/$orgId/brand"
+                  hash="channels"
                   params={{ orgId: org.id }}
                   className="text-accent-fg hover:underline"
                 >
-                  {signing ?? "PassBook's identity"}
+                  {signing ?? 'Shared with PassBook'}
                 </Link>
               ),
             },

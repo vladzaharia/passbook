@@ -136,36 +136,6 @@ export function useInviteOrgAdmin(id: string) {
 
 export type BrandingSlot = 'logo' | 'icon';
 
-/** The server marks the organization for rebuild; it does not confirm that passes updated. */
-export const passUpdateText = (count?: number) =>
-  count ? `${count} active ${count === 1 ? 'pass' : 'passes'} marked for rebuild.` : undefined;
-/** The same as a toast tail. */
-export const passUpdateNote = (count?: number) => {
-  const text = passUpdateText(count);
-  return text ? ` ${text}` : '';
-};
-
-export function useBrandingImage(id: string) {
-  const client = useQueryClient();
-  const done = () => client.invalidateQueries({ queryKey: orgKeys.all });
-  return {
-    upload: useMutation({
-      mutationFn: (v: { slot: BrandingSlot; x3: string; x2?: string; configRevision?: number }) =>
-        api.put(`${orgPath(id)}/branding/${v.slot}`, OrgSchema, {
-          x3: v.x3,
-          x2: v.x2,
-          configRevision: v.configRevision,
-        }),
-      onSuccess: done,
-    }),
-    remove: useMutation({
-      mutationFn: (slot: BrandingSlot) =>
-        api.deleteJson(`${orgPath(id)}/branding/${slot}`, OrgSchema),
-      onSuccess: done,
-    }),
-  };
-}
-
 /** Admin URL of an uploaded image; the sha busts the cache after a new upload. */
 export const brandingUrl = (id: string, slot: BrandingSlot, sha: string, scale = '3x') =>
   `${orgPath(id)}/branding/${slot}/${scale}?v=${sha.slice(0, 12)}`;

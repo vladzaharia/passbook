@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
+import { newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
 
 const DAY = 86_400_000;
@@ -349,57 +350,49 @@ describe('Apple API tab', () => {
   });
 });
 
-describe('organization Apple card', () => {
+describe('organization Apple row', () => {
   const north = membershipFixture('o1', { orgName: 'North' });
-  const enrolments = page([]);
-  const base = {
-    '/api/v1/orgs/o1/wallet-enrolments': enrolments,
-    '/api/v1/orgs/o1/wallet-credentials': page([]),
-  };
-  const row = {
-    id: 'm1',
-    provider: 'apple',
-    orgId: 'o1',
-    label: 'North',
-    identifier: 'pass.mobile.passbook.north',
-    kind: 'managed',
-    status: 'active',
-    notBefore: null,
-    notAfter: Date.now() + 100 * DAY,
-    rotation: 'auto',
-    nextRotationAt: Date.UTC(2027, 9, 1, 12),
-    issuing: true,
-    isDefault: true,
-    passCount: 0,
-    createdAt: 1,
-  };
+  const base = (view: unknown) => ({
+    '/api/v1/orgs/o1/pass-setup': () => json(view),
+    '/api/v1/wallet-identities': page([]),
+    '/api/v1/identity-runs': page([run({ state: 'succeeded', errorCode: null })]),
+    '/api/v1/identities/idn_1/certificates': page([cert()]),
+  });
 
-  it('is one line and opens the history', async () => {
-    await renderApp('/admin/o/o1/wallet-accounts', {
+  it('shows the managed ID on one line and opens the history', async () => {
+    await renderApp('/admin/o/o1/brand', {
       session: 'user',
       memberships: [north],
-      handlers: {
-        ...base,
-        '/api/v1/wallet-identities': page([row]),
-        '/api/v1/identity-runs': page([run({ state: 'succeeded', errorCode: null })]),
-        '/api/v1/identities/m1/certificates': page([cert()]),
-      },
+      handlers: base(viewOf(readyFacts())),
     });
     const ui = userEvent.setup();
-    expect(await screen.findByText('pass.mobile.passbook.north')).toBeInTheDocument();
+    await ui.click(await screen.findByRole('button', { name: /^Apple Wallet/ }));
+    expect(await screen.findByText('pass.mobile.passbook.acmefitness')).toBeInTheDocument();
     await ui.click(screen.getByRole('button', { name: 'History' }));
     const dialog = await screen.findByRole('dialog');
     expect(await within(dialog).findByText('Renewal')).toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: 'Revoke certificate' })).toBeNull();
   });
 
-  it('offers a managed ID to an owner on the platform identity, not to a reader', async () => {
-    const handlers = { ...base, '/api/v1/wallet-identities': page([]) };
-    await renderApp('/admin/o/o1/wallet-accounts', {
+  it('offers an own ID to an owner on the shared identity, not to a reader', async () => {
+    const view = viewOf(newOrgFacts());
+    const ui = userEvent.setup();
+    const { unmount } = await renderApp('/admin/o/o1/brand', {
       session: 'user',
       memberships: [north],
-      handlers,
+      handlers: base(view),
     });
-    expect(await screen.findByRole('button', { name: 'Get a managed ID' })).toBeInTheDocument();
+    await ui.click(await screen.findByRole('button', { name: /^Apple Wallet/ }));
+    const channels = await screen.findByRole('region', { name: 'Channels' });
+    expect(within(channels).getByRole('button', { name: 'Get your own ID' })).toBeInTheDocument();
+    unmount();
+    await renderApp('/admin/o/o1/brand', {
+      session: 'user',
+      memberships: [membershipFixture('o1', { capabilities: ['org:read'] })],
+      handlers: base(view),
+    });
+    await ui.click(await screen.findByRole('button', { name: /^Apple Wallet/ }));
+    const readOnly = await screen.findByRole('region', { name: 'Channels' });
+    expect(within(readOnly).queryByRole('button', { name: 'Get your own ID' })).toBeNull();
   });
 });

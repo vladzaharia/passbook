@@ -1,8 +1,12 @@
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type {
   PlatformWalletEnrolment,
   WalletCredential,
   WalletEnrolment,
 } from '@/shared/contracts/wallet-providers.ts';
+import { channelOf, enrolmentOf, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
+import { json, type RenderAppOptions, renderApp } from '@/web/lib/test-utils.tsx';
 
 export const KEY = '-----BEGIN PRIVATE KEY-----\nU0VDUkVUX0tFWQ==\n-----END PRIVATE KEY-----';
 
@@ -49,3 +53,28 @@ export const platformEnrolment = (
   updatedAt: 1_700_000_000_000,
   ...over,
 });
+
+/** Both wallets released for the org, so the Channels card shows their account cards. */
+function releasedSetup() {
+  const f = readyFacts();
+  for (const p of ['google', 'samsung'] as const)
+    f.channels[p] = channelOf(undefined, { account: enrolmentOf(p) });
+  return viewOf(f);
+}
+
+/** The org's wallet accounts now live in the Google and Samsung rows of Brand and channels. */
+export async function renderOrgAccounts(options: RenderAppOptions) {
+  const user = userEvent.setup();
+  const rendered = await renderApp('/admin/o/o1/brand', {
+    ...options,
+    handlers: {
+      '/api/v1/orgs/o1/pass-setup': () => json(releasedSetup()),
+      ...options.handlers,
+    },
+  });
+  for (const name of ['Google Wallet', 'Samsung Wallet']) {
+    const row = await screen.findByRole('button', { name: new RegExp(`^${name}`) });
+    await user.click(row);
+  }
+  return rendered;
+}

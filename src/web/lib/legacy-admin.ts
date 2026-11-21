@@ -62,7 +62,9 @@ function plan(path: string, search: Record<string, unknown>): Plan | undefined {
     }
     // A workspace link whose ?orgId= names another organization opens neither: only the record.
     if (search.orgId === undefined || search.orgId === orgId) {
-      return { kind: 'org', rest: '/settings', orgId, detail: false };
+      // The reply-to confirmation lives with the support contacts, on Brand and channels.
+      const rest = search.confirmReplyTo !== undefined ? '/brand' : '/settings';
+      return { kind: 'org', rest, orgId, detail: false };
     }
   }
   if (PLATFORM_ONLY.test(path)) return { kind: 'platform', rest: path.slice('/admin'.length) };
