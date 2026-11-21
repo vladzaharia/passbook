@@ -1,3 +1,5 @@
+import type { ErrorCode } from './generated/error-codes.ts';
+
 /** Fields of an RFC 9457 problem+json body, as the API sends them. */
 export interface Problem {
   type?: string;
@@ -27,8 +29,8 @@ export class ConnectionError extends PassBookError {}
 /** The API answered with a non-2xx status. Branch on `code`, which is stable. */
 export class ApiError extends PassBookError {
   readonly status: number;
-  /** Stable, upper-case, such as `VALIDATION` or `RATE_LIMITED`. */
-  readonly code: string;
+  /** Stable, upper-case, such as `VALIDATION` or `RATE_LIMITED`. A code a newer API adds still arrives as a string. */
+  readonly code: ErrorCode | (string & Record<never, never>);
   readonly title: string;
   readonly detail: string;
   readonly requestId: string | undefined;
