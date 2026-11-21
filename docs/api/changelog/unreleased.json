@@ -1478,5 +1478,125 @@
     "op": "GET /b/{token}/{passId}",
     "change": "new operation",
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
+  },
+  {
+    "key": "DELETE /api/v1/scan/staff 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "GET /api/v1/scan-staff 200.items[].pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "200.items[].pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
+    "key": "GET /api/v1/scan-staff 200.items[].pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "200.items[].pinResetRequired: field added",
+    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "GET /api/v1/scans/{id} 200.late: field added",
+    "class": "additive",
+    "operationId": "scans.getScansById",
+    "op": "GET /api/v1/scans/{id}",
+    "change": "200.late: field added",
+    "note": "Scans report late: an offline read dated before its scanner's last contact or list, counted at the time it synced."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} 200.pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "200.pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} 200.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "200.pinResetRequired: field added",
+    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "POST /api/v1/scan-staff 201.staff.pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.staff.pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
+    "key": "POST /api/v1/scan-staff 201.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.staff.pinResetRequired: field added",
+    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffByIdUnlockPin",
+    "op": "POST /api/v1/scan-staff/{id}/unlock-pin",
+    "change": "new operation",
+    "note": "Admins lift a staff member's daily PIN lock with POST /scan-staff/{id}/unlock-pin."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/reset-untagged new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffResetUntagged",
+    "op": "POST /api/v1/scan-staff/reset-untagged",
+    "change": "new operation",
+    "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin new operation",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "new operation",
+    "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
   }
 ]

@@ -11,6 +11,7 @@ import {
   preparePinReservation,
   type VerifiedPinSnapshot,
 } from './staff-pin.ts';
+import { countNamedMiss, guardNamedDay } from './staff-pin-day.ts';
 
 /**
  * A Manager's PIN for one action (SA 2.7). Verified here and stored nowhere: the scan row keeps
@@ -40,11 +41,20 @@ export async function verifyApproval(
     },
     guard,
   );
+  const scannerId = actor.scanner?.id ?? actor.actorKey;
+  if (staffId) await guardNamedDay(ctx, scannerId, staffId);
+  // Only a name that exists is counted, so made-up names cannot fill the counters.
+  let known = false;
   try {
     const results = await db.batch([approverStatement(db, orgId, staffId), ...reservation.stmts]);
+    known = pinStaffFromResult(results[0]) !== null;
     return staffId
       ? await reservation.verify(results.slice(1), pinStaffFromResult(results[0]), pin, true)
       : await reservation.verifyAny(results.slice(1), pinStaffListFromResult(results[0]), pin);
+  } catch (error) {
+    // A named approval counts against the person's day like a named sign-in does.
+    if (staffId && known) await countNamedMiss(ctx, { orgId, scannerId, staffId }, error);
+    throw error;
   } finally {
     await reservation.refund();
   }

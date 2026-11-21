@@ -314,12 +314,55 @@ describe('controller', () => {
     expect((await createQueueStore(t.queueKv).all()).map((r) => r.door)).toEqual(['unverified']);
   });
 
+  it('sends the queue before it fetches a new list: the server dates reads no earlier than the last list', async () => {
+    const h = await rosterHash('TICKET-0005');
+    const t = harness('list', [{ h, status: 'active', state: null }]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    t.setOnline(false);
+    await c.decide('k1', input('TICKET-0005'), false);
+    t.api.roster.mockClear();
+    t.setOnline(true);
+    // A new scope makes the list stale: the next cycle both sends and refreshes.
+    t.setScope('S:3');
+    c.rescope();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(t.api.batch).toHaveBeenCalled();
+    expect(t.api.batch.mock.invocationCallOrder[0]).toBeLessThan(
+      t.api.roster.mock.invocationCallOrder[0] ?? Infinity,
+    );
+    c.dispose();
+  });
+
+  it('syncNow sends the queue and waits for it; an empty queue or no link returns at once', async () => {
+    const h = await rosterHash('TICKET-0006');
+    const t = harness('list', [{ h, status: 'active', state: null }]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await c.syncNow();
+    expect(t.api.batch).not.toHaveBeenCalled();
+    t.setOnline(false);
+    await c.decide('k1', input('TICKET-0006'), false);
+    await c.syncNow();
+    expect(t.api.batch).not.toHaveBeenCalled();
+    t.setOnline(true);
+    await c.syncNow();
+    expect(t.api.batch).toHaveBeenCalledOnce();
+    c.dispose();
+  });
+
   it('a list cut for another session or config is stale at once', async () => {
     const h = await rosterHash('TICKET-0003');
     const t = harness('list', [{ h, status: 'active', state: null }]);
     const c = t.make();
     t.setOnline(true);
     await c.start();
+    // The first cycle sends the queue, then fetches the list: let it finish before the scope changes.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     t.setScope('S:2');
     await c.decide('k1', input('TICKET-0003'), false);
     expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'system', reason: 'network' });

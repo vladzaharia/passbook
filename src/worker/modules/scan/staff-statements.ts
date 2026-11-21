@@ -10,6 +10,7 @@ import { adminActorOf, audited, createdByOf } from './repo-admin-grant.ts';
 import { addStaffInsert } from './repo-staff.ts';
 import type { SetupCapture } from './setup-capture.ts';
 import { hashPin } from './staff-pin.ts';
+import { pinTag } from './staff-pin-hash.ts';
 import { newUniquePin } from './staff-pin-unique.ts';
 
 export type CreateStaff = z.infer<typeof CreateScanStaffSchema>;
@@ -19,6 +20,11 @@ export const STAFF_CODES = { config: 'SCAN_STAFF_CHANGED', lineage: 'SCAN_STAFF_
 
 export function staffMutationError(error: unknown): never {
   const info = classifyD1Error(error);
+  if (info?.kind === 'unique' && /scan_staff\.pin_tag/.test(info.detail))
+    throw new ConflictError(
+      'Another active staff member has that PIN. Reset it.',
+      'STAFF_PIN_TAKEN',
+    );
   if (info?.kind === 'unique' && /scan_staff\.org_id|scan_staff_org_name/.test(info.detail))
     throw new ConflictError(
       'Another active staff member already has that name.',
@@ -33,6 +39,7 @@ export interface StaffPlan {
   /** Shown once: only its hash is stored. */
   pin: string;
   pinHash: string;
+  pinTag: string;
 }
 
 /** The reads of a staff create: the org is active, then the PIN and its hash. Nothing is written. */
@@ -41,7 +48,13 @@ export async function planStaff(ctx: ServiceContext, input: CreateStaff): Promis
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const id = ctx.ids.id();
   const pin = await newUniquePin(ctx, input.orgId, id);
-  return { input, id, pin, pinHash: await hashPin(ctx.env, id, pin) };
+  return {
+    input,
+    id,
+    pin,
+    pinHash: await hashPin(ctx.env, id, pin),
+    pinTag: await pinTag(ctx.env, input.orgId, pin),
+  };
 }
 
 /** The staff row and its audit row. The PIN goes back to the caller and nowhere else. */
@@ -51,12 +64,13 @@ export function staffStatements(
   plan: StaffPlan,
   capture: SetupCapture,
 ): { id: string; pin: string } {
-  const { input, id, pin, pinHash } = plan;
+  const { input, id, pin, pinHash, pinTag: tag } = plan;
   addStaffInsert(g, {
     id,
     name: input.name,
     role: input.role,
     pinHash,
+    pinTag: tag,
     pinMacVersion: macKeyVersion(ctx.env),
     createdBy: createdByOf(capture.authority, capture.userId),
     now: ctx.clock.now(),

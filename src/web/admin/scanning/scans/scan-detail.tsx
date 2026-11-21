@@ -100,6 +100,9 @@ export function ScanDetail({
                   ),
                 },
                 { label: 'Override', value: row.override ? 'Yes' : 'No' },
+                ...(row.late
+                  ? [{ label: 'Late', value: 'Dated before its scanner last synced' }]
+                  : []),
                 ...(row.undoneAt
                   ? [
                       {

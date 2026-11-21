@@ -1407,6 +1407,14 @@
     "resource": "scanStaff",
     "method": "resetPin"
   },
+  "scan-staff.postScanStaffByIdUnlockPin": {
+    "resource": "scanStaff",
+    "method": "unlockPin"
+  },
+  "scan-staff.postScanStaffResetUntagged": {
+    "resource": "scanStaff",
+    "method": "resetUntagged"
+  },
   "scan-zones.getScanZones": {
     "resource": "scanZones",
     "method": "list"
@@ -1682,6 +1690,12 @@
   "scan.postScanStaff": {
     "resource": "terminal.staff",
     "method": "signIn",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.postScanStaffPin": {
+    "resource": "terminal.staff",
+    "method": "setPin",
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },

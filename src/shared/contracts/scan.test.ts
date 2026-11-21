@@ -241,6 +241,7 @@ describe('scan records', () => {
     override: false,
     offline: false,
     unverified: false,
+    late: false,
     actor: { type: 'scanner', id },
     undoneAt: null,
     undoneBy: null,

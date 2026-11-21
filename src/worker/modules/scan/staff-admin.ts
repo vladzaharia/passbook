@@ -16,6 +16,7 @@ import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
 import { pinOnlyOff } from './repo-pin-only.ts';
+import { clearNamedDayStatement } from './repo-pin-tag.ts';
 import {
   addStaffPinRotate,
   addStaffUpdate,
@@ -32,8 +33,10 @@ import {
   type StaffPage,
 } from './repo-staff-page.ts';
 import { newCapture } from './setup-capture.ts';
+import { withLocks } from './staff-admin-pins.ts';
 import { staffViews } from './staff-admin-views.ts';
 import { hashPin } from './staff-pin.ts';
+import { pinTag } from './staff-pin-hash.ts';
 import { newUniquePin } from './staff-pin-unique.ts';
 import {
   type CreateStaff,
@@ -101,7 +104,7 @@ async function committedStaff(
 ): Promise<StaffDto> {
   try {
     const result = await staffViews(ctx, session, authority, { staffId: id, limit: 1 });
-    const [staff] = result.items;
+    const [staff] = await withLocks(ctx, result.items);
     if (staff) return staff;
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
@@ -109,8 +112,16 @@ async function committedStaff(
   }
   const base = await getStaffBase(ctx.env.DB, authority.orgId, id);
   if (!base) throw new NotFoundError('Staff member not found.', 'SCAN_STAFF_NOT_FOUND');
-  return { ...base, locked: false, today: 0, lastScan: null };
+  return { ...base, pinLockedToday: false, locked: false, today: 0, lastScan: null };
 }
+
+/** The committed account after a mutation, for the console. */
+export const committedStaffOf = (
+  ctx: ServiceContext,
+  session: SessionAuth,
+  authority: StaffAuthority,
+  id: string,
+) => committedStaff(ctx, session, authority, id);
 
 /** Accounts and PINs are org-wide; the activity and lock status are for the console mode. */
 export async function listStaff(
@@ -138,7 +149,7 @@ export async function listStaff(
   const last = result.items.at(-1);
   return result.authorized
     ? {
-        items: result.items,
+        items: await withLocks(ctx, result.items),
         ...(off ? { pinOnlyOff: true } : {}),
         ...(result.hasMore && last ? { hasMore: true, nextCursor: encodeStaffCursor(last) } : {}),
       }
@@ -241,7 +252,7 @@ export async function resetStaffPin(
     STAFF_CODES,
     id,
   );
-  addStaffPinRotate(g, id, pinHash, macKeyVersion(ctx.env), now);
+  addStaffPinRotate(g, id, pinHash, await pinTag(ctx.env, orgId, pin), macKeyVersion(ctx.env), now);
   addUnbindStaffEverywhere(g, id, now);
   g.add(
     audited(g, ctx, {
@@ -254,5 +265,7 @@ export async function resetStaffPin(
     }),
   );
   await g.commit();
+  // The person starts the day clean: an admin reset also lifts the daily lock.
+  await clearNamedDayStatement(ctx.env.DB, id).run();
   return { pin };
 }

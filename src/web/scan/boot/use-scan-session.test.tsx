@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createScanApi } from '../api/scan-api.ts';
 import { fixtureState, states } from '../machine/fixtures.test-support.ts';
+import { registerSync } from '../offline/sync-gate.ts';
 import { resetPairLink } from './pair-link.ts';
 import { sessionFixture } from './session.test-support.ts';
 import { createCsrfHolder, needsSessionRefetch, useScanSession } from './use-scan-session.ts';
@@ -48,6 +49,91 @@ describe('useScanSession (against a stub server)', () => {
       'csrf-token-1',
     );
     replace.mockRestore();
+  });
+
+  const syncing = (flag: boolean) =>
+    fixtureState({
+      queue: { pending: 2, oldestAt: 1, conflicts: 0 },
+      offline: { mode: 'list', listAt: null, syncing: flag },
+    });
+  const setup = () => {
+    const fetchFn = vi.fn(async () => json(sessionFixture()));
+    const holder = createCsrfHolder();
+    const api = createScanApi({ fetch: fetchFn as unknown as typeof fetch, csrf: holder.get });
+    const hook = renderHook(({ machine }) => useScanSession(api, holder, machine), {
+      wrapper: wrapper(),
+      initialProps: { machine: null as ReturnType<typeof fixtureState> | null },
+    });
+    return { fetchFn, ...hook };
+  };
+  const reconnect = () =>
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event('online'));
+    });
+
+  it('waits for the sync a reconnect starts: no session refetch before the queue is sent', async () => {
+    const { fetchFn, result, rerender } = setup();
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    rerender({ machine: syncing(false) });
+    const before = fetchFn.mock.calls.length;
+    reconnect();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fetchFn.mock.calls.length).toBe(before);
+  });
+
+  it('polls again after a failed sync: a stuck queue does not hide the session', async () => {
+    const { fetchFn, result, rerender } = setup();
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    rerender({ machine: syncing(true) });
+    rerender({ machine: syncing(false) });
+    const before = fetchFn.mock.calls.length;
+    reconnect();
+    await waitFor(() => expect(fetchFn.mock.calls.length).toBeGreaterThan(before));
+  });
+
+  it('holds polls during a sync for 30 s at most, then polls on', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { fetchFn, result, rerender } = setup();
+      await waitFor(() => expect(result.current.phase).toBe('ready'));
+      rerender({ machine: syncing(true) });
+      const before = fetchFn.mock.calls.length;
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(25_000);
+      });
+      expect(fetchFn.mock.calls.length).toBe(before);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(6_000);
+      });
+      // The hold is over: the interval starts and fires.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000);
+      });
+      expect(fetchFn.mock.calls.length).toBeGreaterThan(before);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('sends the queue before a session poll when reads are queued, even with no offline event', async () => {
+    const order: string[] = [];
+    registerSync(async () => {
+      order.push('sync');
+    });
+    try {
+      const fetchFn = vi.fn(async () => {
+        order.push('session');
+        return json(sessionFixture());
+      });
+      const holder = createCsrfHolder();
+      const api = createScanApi({ fetch: fetchFn as unknown as typeof fetch, csrf: holder.get });
+      renderHook(() => useScanSession(api, holder, syncing(false)), { wrapper: wrapper() });
+      await waitFor(() => expect(order).toContain('session'));
+      expect(order[0]).toBe('sync');
+    } finally {
+      registerSync(null);
+    }
   });
 
   it('is unpaired on SCANNER_UNAUTHENTICATED, and pair() loads the new session', async () => {

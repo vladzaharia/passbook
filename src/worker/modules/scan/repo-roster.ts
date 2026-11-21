@@ -7,8 +7,6 @@ export interface RosterRow {
   status: 'active' | 'voided';
   removed_at: number | null;
   deleted_at: number | null;
-  /** SHA-256 hex of the barcode message (64), or null when the pass has none. */
-  barcode_hash: string | null;
   scan_code: string | null;
   /** The active printed ticket's 128-bit roster hash, if the pass has one. */
   print_hash: string | null;
@@ -39,7 +37,7 @@ export const rosterPage = (
   all<RosterRow>(
     db,
     `SELECT p.id, p.template_id, p.personalization, p.status, p.removed_at, p.deleted_at,
-            p.barcode_hash, p.scan_code,
+            p.scan_code,
             (SELECT pp.roster_hash FROM pass_prints pp WHERE pp.pass_id = p.id AND pp.status = 'active') AS print_hash,
             EXISTS (SELECT 1 FROM scan_gates g
                     WHERE g.pass_id = p.id AND g.kind = 'check_in' AND g.state IN ('in', 'used')
@@ -96,6 +94,8 @@ export interface OfflineRead {
   outcome: 'ok' | 'heads_up' | 'refused';
   reason: string | null;
   conflict: boolean;
+  /** Dated before the door's last contact or its list: recorded at server time. */
+  late: boolean;
   clientTs: number;
   recordedTs: number;
   syncedAt: number;
@@ -106,8 +106,8 @@ export const recordOfflineRead = (db: D1Database, r: OfflineRead) =>
   run(
     db,
     `INSERT OR IGNORE INTO scan_offline_reads (id, pass_id, actor_key, idempotency_key, org_id, mode, session_id,
-       scanner_id, door, scan_id, outcome, reason, conflict, client_ts, recorded_ts, synced_at)
-     VALUES (?, (SELECT pass_id FROM scans WHERE id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       scanner_id, door, scan_id, outcome, reason, conflict, late, client_ts, recorded_ts, synced_at)
+     VALUES (?, (SELECT pass_id FROM scans WHERE id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       r.id,
       r.scanId,
@@ -122,6 +122,7 @@ export const recordOfflineRead = (db: D1Database, r: OfflineRead) =>
       r.outcome,
       r.reason,
       r.conflict ? 1 : 0,
+      r.late ? 1 : 0,
       r.clientTs,
       r.recordedTs,
       r.syncedAt,
@@ -148,7 +149,10 @@ export const sessionChanges = (db: D1Database, sessionId: string) =>
     [sessionId],
   );
 
-/** The door's last contact with nothing queued; only ever moves forward. */
+/**
+ * The door's last online contact (a session poll or an online scan, whatever it still has queued);
+ * only ever moves forward. The server writes it, so the device cannot hold it back.
+ */
 export const touchOnlineAt = (db: D1Database, scannerId: string, orgId: string, now: number) =>
   run(
     db,
@@ -157,11 +161,23 @@ export const touchOnlineAt = (db: D1Database, scannerId: string, orgId: string, 
     [scannerId, orgId, now],
   );
 
-export const onlineAtOf = async (db: D1Database, scannerId: string): Promise<number> =>
-  (
-    await all<{ online_at: number }>(
+/** When the door last downloaded its list: a listed read cannot be older. */
+export const touchRosterAt = (db: D1Database, scannerId: string, orgId: string, now: number) =>
+  run(
+    db,
+    `INSERT INTO scan_offline_state (scanner_id, org_id, online_at, roster_at) VALUES (?, ?, 0, ?)
+     ON CONFLICT (scanner_id) DO UPDATE SET roster_at = excluded.roster_at WHERE excluded.roster_at > roster_at`,
+    [scannerId, orgId, now],
+  );
+
+/** The later of the two server-kept times: before it, a door could not have been offline with that list. */
+export const offlineFloorOf = async (db: D1Database, scannerId: string): Promise<number> => {
+  const row = (
+    await all<{ online_at: number; roster_at: number }>(
       db,
-      'SELECT online_at FROM scan_offline_state WHERE scanner_id = ?',
+      'SELECT online_at, roster_at FROM scan_offline_state WHERE scanner_id = ?',
       [scannerId],
     )
-  )[0]?.online_at ?? 0;
+  )[0];
+  return Math.max(row?.online_at ?? 0, row?.roster_at ?? 0);
+};

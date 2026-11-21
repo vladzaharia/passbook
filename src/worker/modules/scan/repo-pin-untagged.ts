@@ -1,0 +1,18 @@
+import type { Grant } from '../../platform/authority.ts';
+import { ne } from '../../platform/authority-expr.ts';
+import type { SqlValue } from '../../platform/db.ts';
+
+/** Active Door and Desk people with no PIN tag and no reset flag yet (a Manager's PIN is reset by an admin, one by one). */
+export const untaggedCountStatement = (orgId: string): [string, SqlValue[]] => [
+  `SELECT COUNT(*) AS n FROM scan_staff
+   WHERE org_id = ? AND disabled_at IS NULL AND pin_tag IS NULL AND pin_reset_required = 0
+     AND role != 'manager'`,
+  [orgId],
+];
+
+/** The flag only: no role, PIN hash or disabled time moves, so no epoch does. */
+export const untaggedFlagUpdate = (g: Grant) =>
+  g.update('scan_staff', {
+    set: { pin_reset_required: 1 },
+    where: { pin_tag: null, disabled_at: null, pin_reset_required: 0, role: ne('manager') },
+  });

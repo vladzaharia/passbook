@@ -4303,6 +4303,42 @@
       ]
     },
     {
+      "code": "STAFF_PIN_ADMIN_RESET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_RESET_NOT_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_RESET_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "STAFF_REQUIRED",
       "statuses": [
         403
@@ -4315,6 +4351,15 @@
       "code": "STAFF_SIGN_IN_DISABLED",
       "statuses": [
         403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_SIGN_IN_REQUIRED",
+      "statuses": [
+        409
       ],
       "modules": [
         "scan"

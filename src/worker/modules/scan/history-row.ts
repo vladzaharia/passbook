@@ -38,6 +38,8 @@ export interface HistoryRaw {
   after_value: string | null;
   override_of: string | null;
   offline: number;
+  /** 1 when the offline read that made this scan was dated before its door's contact or list. */
+  late?: number;
   actor_type: 'scanner' | 'user' | 'system';
   actor_id: string;
   undone_at: number | null;
@@ -132,6 +134,8 @@ export interface HistoryRow {
   offline: boolean;
   /** Let in on staff's word with no list; the server checked it afterwards. */
   unverified: boolean;
+  /** A back-dated offline read, taken at server time. */
+  late: boolean;
   actorType: HistoryRaw['actor_type'];
   actorId: string;
   undoneAt: number | null;
@@ -223,6 +227,7 @@ export const toHistoryRow = (r: HistoryRaw): HistoryRow => ({
   override: r.override_of !== null,
   offline: on(r.offline),
   unverified: r.offline === 2,
+  late: r.late === 1,
   actorType: r.actor_type,
   actorId: r.actor_id,
   undoneAt: r.undone_at,

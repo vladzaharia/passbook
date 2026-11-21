@@ -5,6 +5,7 @@ import { PickEdit, SourcePicker, TextEdit } from './controls.tsx';
 import { BARCODE_TEXT_EMPTY, barcodeTextMissing } from './local-issues.ts';
 import { type BarcodeSettings, readBarcode } from './ops-more.ts';
 import { LookupSettings } from './scan/lookup-settings.tsx';
+import { OfflineBarcodeNote } from './scan/offline-barcode-note.tsx';
 
 const label = (f: string) =>
   f.replace('PKBarcodeFormat', '').replace(/([a-z0-9])([A-Z])/g, '$1 $2');
@@ -38,6 +39,7 @@ export function BarcodeSection() {
             staticLabel="Text in the template"
             onChange={(message) => set({ message })}
           />
+          <OfflineBarcodeNote />
           {s.message.kind === 'static' ? (
             <TextEdit
               label="Message text"
