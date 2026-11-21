@@ -2300,5 +2300,13 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
+  },
+  "broadcasts.postBroadcastsByIdUndo": {
+    "resource": "broadcasts",
+    "method": "undo"
+  },
+  "broadcasts.postBroadcastsByIdStop": {
+    "resource": "broadcasts",
+    "method": "stop"
   }
 }

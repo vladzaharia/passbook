@@ -1,0 +1,51 @@
+{
+  "broadcasts.postBroadcastsByIdUndo": {
+    "description": "Undoes a change run for 24 hours after it ends, as a silent background run. Each pass gets back the inputs the change touched, but only while they still hold the value the change set: a pass edited since keeps its edit, and any other input it holds. Nothing notifies. Asking again returns the same undo; one that ended on an error runs again. A run that is still sending must be stopped first. Read the result from GET /broadcasts/{id} on the returned `id`.",
+    "request": {},
+    "requests": {
+      "Undo the change": {}
+    },
+    "response": {
+      "id": "01JABCDEF0123456789UNDO",
+      "parentId": "01JABCDEF0123456789CHNG",
+      "restorable": 1240,
+      "kept": 0
+    }
+  },
+  "broadcasts.postBroadcastsByIdStop": {
+    "description": "Stops a sending message or change after its current chunk of passes. The run ends cancelled with errorCode BROADCAST_STOPPED, and what it already changed stays (a change can still be undone). Asking twice is the same ask.",
+    "response": {
+      "id": "01JABCDEF0123456789CHNG",
+      "orgId": "org_1",
+      "mode": "live",
+      "kind": "change",
+      "name": "Scheduled change",
+      "state": "sending",
+      "target": {
+        "templateIds": ["tpl_1"]
+      },
+      "patch": {
+        "plan": {
+          "set": "monthly"
+        }
+      },
+      "notify": true,
+      "at": 1795000000000,
+      "clearAfter": null,
+      "parentId": null,
+      "ruleId": null,
+      "followUp": null,
+      "counts": {
+        "targeted": 1240,
+        "updated": 300,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 0
+      },
+      "errorCode": null,
+      "createdAt": 1795000000000,
+      "startedAt": 1795000000000,
+      "finishedAt": null
+    }
+  }
+}

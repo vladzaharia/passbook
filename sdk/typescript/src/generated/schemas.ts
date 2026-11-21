@@ -259,39 +259,13 @@ export type BrandWebLogoUploadParams = {
   configRevision?: number;
 };
 
-export type BroadcastsCountRecipientsParams = {
+export type Broadcast = {
+  id: string;
   orgId: string;
-  target: {
-    templateIds: Array<string>;
-    onDevice?: boolean;
-    holderState?: "unassigned" | "waiting" | "owned";
-    q?: string;
-    scan?: {
-      eventId: string;
-      checkedIn: boolean;
-    } | {
-      noScanDays: number;
-    };
-    match?: Array<{
-      input: string;
-      values: Array<string>;
-    } | {
-      input: string;
-      min?: number;
-      max?: number;
-    } | {
-      input: string;
-      from?: string;
-      to?: string;
-      timeZone: string;
-    }>;
-  };
-};
-
-export type BroadcastsCreateParams = {
-  orgId: string;
+  mode: "live" | "test";
   kind: "message" | "change";
-  name?: string;
+  name: string;
+  state: "draft" | "scheduled" | "sending" | "sent" | "partial" | "failed" | "cancelled";
   target: {
     templateIds: Array<string>;
     onDevice?: boolean;
@@ -318,10 +292,117 @@ export type BroadcastsCreateParams = {
     }>;
   };
   patch: Record<string, unknown>;
+  notify: boolean;
+  at: number | null;
+  clearAfter: number | null;
+  parentId: string | null;
+  message?: string | null;
+  ruleId: string | null;
+  followUp: {
+    id: string;
+    at: number | null;
+  } | null;
+  counts: {
+    targeted: number;
+    updated: number;
+    unchanged: number;
+    overBudget: number;
+    failed: number;
+  };
+  errorCode: string | null;
+  createdAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+};
+
+export type BroadcastUndo = {
+  id: string;
+  parentId: string;
+  restorable: number;
+  kept: number;
+};
+
+export type BroadcastsCountRecipientsParams = {
+  orgId: string;
+  target: {
+    templateIds?: Array<string>;
+    onDevice?: boolean;
+    holderState?: "unassigned" | "waiting" | "owned";
+    q?: string;
+    scan?: {
+      eventId: string;
+      checkedIn: boolean;
+    } | {
+      noScanDays: number;
+    };
+    match?: Array<{
+      input: string;
+      values: Array<string>;
+    } | {
+      input: string;
+      min?: number;
+      max?: number;
+    } | {
+      input: string;
+      from?: string;
+      to?: string;
+      timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
+    }>;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
+  };
+  patch?: Record<string, unknown>;
+  notify?: boolean;
+  message?: string;
+};
+
+export type BroadcastsCreateParams = {
+  orgId: string;
+  kind: "message" | "change";
+  name?: string;
   notify?: boolean;
   send?: "draft" | "now" | "schedule";
   at?: number;
   clearAfter?: number | null;
+  target: {
+    templateIds?: Array<string>;
+    onDevice?: boolean;
+    holderState?: "unassigned" | "waiting" | "owned";
+    q?: string;
+    scan?: {
+      eventId: string;
+      checkedIn: boolean;
+    } | {
+      noScanDays: number;
+    };
+    match?: Array<{
+      input: string;
+      values: Array<string>;
+    } | {
+      input: string;
+      min?: number;
+      max?: number;
+    } | {
+      input: string;
+      from?: string;
+      to?: string;
+      timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
+    }>;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
+  };
+  patch: Record<string, unknown>;
+  message?: string;
 };
 
 export type BroadcastsSendParams = {
@@ -332,8 +413,12 @@ export type BroadcastsUpdateParams = {
   orgId: string;
   kind: "message" | "change";
   name?: string;
+  notify?: boolean;
+  send?: "draft" | "now" | "schedule";
+  at?: number;
+  clearAfter?: number | null;
   target: {
-    templateIds: Array<string>;
+    templateIds?: Array<string>;
     onDevice?: boolean;
     holderState?: "unassigned" | "waiting" | "owned";
     q?: string;
@@ -355,13 +440,17 @@ export type BroadcastsUpdateParams = {
       from?: string;
       to?: string;
       timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
     }>;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
   };
   patch: Record<string, unknown>;
-  notify?: boolean;
-  send?: "draft" | "now" | "schedule";
-  at?: number;
-  clearAfter?: number | null;
+  message?: string;
 };
 
 export type BundlesCreateParams = {

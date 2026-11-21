@@ -209,18 +209,18 @@ func (r *BroadcastsResource) CountRecipients(ctx context.Context, body *Broadcas
 	return &out, nil
 }
 
-// Create Save, send or schedule a message or change `POST /api/v1/broadcasts`
+// Create Save, send or schedule a message or change (Idempotency-Key) `POST /api/v1/broadcasts`
 func (r *BroadcastsResource) Create(ctx context.Context, body *BroadcastsCreateBody, opts ...RequestOption) (*BroadcastsCreateResult, error) {
 	var out BroadcastsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts", body: body, idempotent: true}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
 }
 
 // List List messages and scheduled changes `GET /api/v1/broadcasts`
-func (r *BroadcastsResource) List(ctx context.Context, query *BroadcastsListQuery, opts ...RequestOption) *Pager[BroadcastsListItem] {
-	return newPager[BroadcastsListItem](r.c, call{method: "GET", path: "/api/v1/broadcasts", query: queryValues(query)}, "cursor", opts)
+func (r *BroadcastsResource) List(ctx context.Context, query *BroadcastsListQuery, opts ...RequestOption) *Pager[Broadcast] {
+	return newPager[Broadcast](r.c, call{method: "GET", path: "/api/v1/broadcasts", query: queryValues(query)}, "cursor", opts)
 }
 
 // Retrieve One message or change, with progress `GET /api/v1/broadcasts/{id}`
@@ -245,6 +245,24 @@ func (r *BroadcastsResource) Retry(ctx context.Context, id string, opts ...Reque
 func (r *BroadcastsResource) Send(ctx context.Context, id string, body *BroadcastsSendBody, opts ...RequestOption) (*BroadcastsSendResult, error) {
 	var out BroadcastsSendResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/send", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Stop Stop a sending message or change after its current chunk `POST /api/v1/broadcasts/{id}/stop`
+func (r *BroadcastsResource) Stop(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsStopResult, error) {
+	var out BroadcastsStopResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/stop"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Undo Undo a change for 24 hours: restores passes still at the value the change set `POST /api/v1/broadcasts/{id}/undo`
+func (r *BroadcastsResource) Undo(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsUndoResult, error) {
+	var out BroadcastsUndoResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/undo"}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -630,8 +648,8 @@ func newMessageRulesRunsResource(c *core) *MessageRulesRunsResource {
 }
 
 // List The messages an automatic message sent `GET /api/v1/message-rules/{id}/runs`
-func (r *MessageRulesRunsResource) List(ctx context.Context, id string, query *MessageRulesRunsListQuery, opts ...RequestOption) *Pager[MessageRulesRunsListItem] {
-	return newPager[MessageRulesRunsListItem](r.c, call{method: "GET", path: "/api/v1/message-rules/" + pathEscape(id) + "/runs", query: queryValues(query)}, "cursor", opts)
+func (r *MessageRulesRunsResource) List(ctx context.Context, id string, query *MessageRulesRunsListQuery, opts ...RequestOption) *Pager[Broadcast] {
+	return newPager[Broadcast](r.c, call{method: "GET", path: "/api/v1/message-rules/" + pathEscape(id) + "/runs", query: queryValues(query)}, "cursor", opts)
 }
 
 type MessageRulesResource struct {

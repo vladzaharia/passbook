@@ -4942,6 +4942,369 @@
           "forwarding"
         ]
       },
+      "Broadcast": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "test"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "message",
+              "change"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "sending",
+              "sent",
+              "partial",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "templateIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 20
+              },
+              "onDevice": {
+                "type": "boolean"
+              },
+              "holderState": {
+                "type": "string",
+                "enum": [
+                  "unassigned",
+                  "waiting",
+                  "owned"
+                ]
+              },
+              "q": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "scan": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "eventId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "checkedIn": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "eventId",
+                      "checkedIn"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "noScanDays": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 730
+                      }
+                    },
+                    "required": [
+                      "noScanDays"
+                    ]
+                  }
+                ]
+              },
+              "match": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120
+                          },
+                          "minItems": 1,
+                          "maxItems": 20
+                        }
+                      },
+                      "required": [
+                        "input",
+                        "values"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "min": {
+                          "type": "number"
+                        },
+                        "max": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "input"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "from": {
+                          "type": "string",
+                          "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "input",
+                        "timeZone"
+                      ]
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "maxItems": 3
+              }
+            },
+            "required": [
+              "templateIds"
+            ]
+          },
+          "patch": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "notify": {
+            "type": "boolean"
+          },
+          "at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "clearAfter": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ruleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "followUp": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "at": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "at"
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "targeted": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "updated": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unchanged": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "overBudget": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "targeted",
+              "updated",
+              "unchanged",
+              "overBudget",
+              "failed"
+            ]
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "startedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "finishedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "mode",
+          "kind",
+          "name",
+          "state",
+          "target",
+          "patch",
+          "notify",
+          "at",
+          "clearAfter",
+          "parentId",
+          "ruleId",
+          "followUp",
+          "counts",
+          "errorCode",
+          "createdAt",
+          "startedAt",
+          "finishedAt"
+        ]
+      },
+      "BroadcastUndo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "parentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "restorable": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "kept": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "parentId",
+          "restorable",
+          "kept"
+        ]
+      },
       "WebhookEndpointPage": {
         "type": "object",
         "properties": {
@@ -20251,6 +20614,31 @@
             "minLength": 1,
             "maxLength": 80
           },
+          "notify": {
+            "type": "boolean",
+            "default": true
+          },
+          "send": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "now",
+              "schedule"
+            ],
+            "default": "now"
+          },
+          "at": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "clearAfter": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 60000,
+            "maximum": 31622400000
+          },
           "target": {
             "type": "object",
             "properties": {
@@ -20386,45 +20774,68 @@
                         "input",
                         "timeZone"
                       ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "op": {
+                          "type": "string",
+                          "enum": [
+                            "startsWith",
+                            "contains"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        }
+                      },
+                      "required": [
+                        "input",
+                        "op",
+                        "value"
+                      ]
                     }
                   ]
                 },
                 "minItems": 1,
-                "maxItems": 3
+                "maxItems": 5
+              },
+              "passIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 5000
+              },
+              "importId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "expectCount": {
+                "type": "integer",
+                "minimum": 0
               }
-            },
-            "required": [
-              "templateIds"
-            ]
+            }
           },
           "patch": {
             "type": "object",
             "additionalProperties": {}
           },
-          "notify": {
-            "type": "boolean",
-            "default": true
-          },
-          "send": {
+          "message": {
             "type": "string",
-            "enum": [
-              "draft",
-              "now",
-              "schedule"
-            ],
-            "default": "now"
-          },
-          "at": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "clearAfter": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 60000,
-            "maximum": 31622400000
+            "minLength": 1,
+            "maxLength": 120
           }
         },
         "required": [
@@ -20577,16 +20988,71 @@
                         "input",
                         "timeZone"
                       ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "op": {
+                          "type": "string",
+                          "enum": [
+                            "startsWith",
+                            "contains"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        }
+                      },
+                      "required": [
+                        "input",
+                        "op",
+                        "value"
+                      ]
                     }
                   ]
                 },
                 "minItems": 1,
-                "maxItems": 3
+                "maxItems": 5
+              },
+              "passIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 5000
+              },
+              "importId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "expectCount": {
+                "type": "integer",
+                "minimum": 0
               }
-            },
-            "required": [
-              "templateIds"
-            ]
+            }
+          },
+          "patch": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "notify": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
           }
         },
         "required": [
@@ -20613,6 +21079,31 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80
+          },
+          "notify": {
+            "type": "boolean",
+            "default": true
+          },
+          "send": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "now",
+              "schedule"
+            ],
+            "default": "now"
+          },
+          "at": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "clearAfter": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 60000,
+            "maximum": 31622400000
           },
           "target": {
             "type": "object",
@@ -20749,45 +21240,68 @@
                         "input",
                         "timeZone"
                       ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "op": {
+                          "type": "string",
+                          "enum": [
+                            "startsWith",
+                            "contains"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        }
+                      },
+                      "required": [
+                        "input",
+                        "op",
+                        "value"
+                      ]
                     }
                   ]
                 },
                 "minItems": 1,
-                "maxItems": 3
+                "maxItems": 5
+              },
+              "passIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 5000
+              },
+              "importId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "expectCount": {
+                "type": "integer",
+                "minimum": 0
               }
-            },
-            "required": [
-              "templateIds"
-            ]
+            }
           },
           "patch": {
             "type": "object",
             "additionalProperties": {}
           },
-          "notify": {
-            "type": "boolean",
-            "default": true
-          },
-          "send": {
+          "message": {
             "type": "string",
-            "enum": [
-              "draft",
-              "now",
-              "schedule"
-            ],
-            "default": "now"
-          },
-          "at": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "clearAfter": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 60000,
-            "maximum": 31622400000
+            "minLength": 1,
+            "maxLength": 120
           }
         },
         "required": [
@@ -32693,6 +33207,7 @@
                               "scanning.devices",
                               "join.perDay",
                               "messages.perDay",
+                              "passes.changesPerDay",
                               "passes.live",
                               "passes.test",
                               "templates",
@@ -42058,6 +42573,7 @@
                               "scanning.devices",
                               "join.perDay",
                               "messages.perDay",
+                              "passes.changesPerDay",
                               "passes.live",
                               "passes.test",
                               "templates",
@@ -42347,6 +42863,7 @@
                               "scanning.devices",
                               "join.perDay",
                               "messages.perDay",
+                              "passes.changesPerDay",
                               "passes.live",
                               "passes.test",
                               "templates",
@@ -71297,332 +71814,7 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "orgId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "mode": {
-                            "type": "string",
-                            "enum": [
-                              "live",
-                              "test"
-                            ]
-                          },
-                          "kind": {
-                            "type": "string",
-                            "enum": [
-                              "message",
-                              "change"
-                            ]
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "state": {
-                            "type": "string",
-                            "enum": [
-                              "draft",
-                              "scheduled",
-                              "sending",
-                              "sent",
-                              "partial",
-                              "failed",
-                              "cancelled"
-                            ]
-                          },
-                          "target": {
-                            "type": "object",
-                            "properties": {
-                              "templateIds": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "minItems": 1,
-                                "maxItems": 20
-                              },
-                              "onDevice": {
-                                "type": "boolean"
-                              },
-                              "holderState": {
-                                "type": "string",
-                                "enum": [
-                                  "unassigned",
-                                  "waiting",
-                                  "owned"
-                                ]
-                              },
-                              "q": {
-                                "type": "string",
-                                "maxLength": 200
-                              },
-                              "scan": {
-                                "anyOf": [
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "eventId": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 64
-                                      },
-                                      "checkedIn": {
-                                        "type": "boolean"
-                                      }
-                                    },
-                                    "required": [
-                                      "eventId",
-                                      "checkedIn"
-                                    ]
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "noScanDays": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "maximum": 730
-                                      }
-                                    },
-                                    "required": [
-                                      "noScanDays"
-                                    ]
-                                  }
-                                ]
-                              },
-                              "match": {
-                                "type": "array",
-                                "items": {
-                                  "anyOf": [
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "input": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        },
-                                        "values": {
-                                          "type": "array",
-                                          "items": {
-                                            "type": "string",
-                                            "minLength": 1,
-                                            "maxLength": 120
-                                          },
-                                          "minItems": 1,
-                                          "maxItems": 20
-                                        }
-                                      },
-                                      "required": [
-                                        "input",
-                                        "values"
-                                      ]
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "input": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        },
-                                        "min": {
-                                          "type": "number"
-                                        },
-                                        "max": {
-                                          "type": "number"
-                                        }
-                                      },
-                                      "required": [
-                                        "input"
-                                      ]
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "input": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        },
-                                        "from": {
-                                          "type": "string",
-                                          "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                        },
-                                        "to": {
-                                          "type": "string",
-                                          "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                        },
-                                        "timeZone": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        }
-                                      },
-                                      "required": [
-                                        "input",
-                                        "timeZone"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                "minItems": 1,
-                                "maxItems": 3
-                              }
-                            },
-                            "required": [
-                              "templateIds"
-                            ]
-                          },
-                          "patch": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "notify": {
-                            "type": "boolean"
-                          },
-                          "at": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "clearAfter": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "exclusiveMinimum": 0
-                          },
-                          "parentId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "ruleId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "followUp": {
-                            "type": [
-                              "object",
-                              "null"
-                            ],
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 64
-                              },
-                              "at": {
-                                "type": [
-                                  "integer",
-                                  "null"
-                                ],
-                                "minimum": 0
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "at"
-                            ]
-                          },
-                          "counts": {
-                            "type": "object",
-                            "properties": {
-                              "targeted": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "updated": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "unchanged": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "overBudget": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "failed": {
-                                "type": "integer",
-                                "minimum": 0
-                              }
-                            },
-                            "required": [
-                              "targeted",
-                              "updated",
-                              "unchanged",
-                              "overBudget",
-                              "failed"
-                            ]
-                          },
-                          "errorCode": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "startedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "finishedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "orgId",
-                          "mode",
-                          "kind",
-                          "name",
-                          "state",
-                          "target",
-                          "patch",
-                          "notify",
-                          "at",
-                          "clearAfter",
-                          "parentId",
-                          "ruleId",
-                          "followUp",
-                          "counts",
-                          "errorCode",
-                          "createdAt",
-                          "startedAt",
-                          "finishedAt"
-                        ]
+                        "$ref": "#/components/schemas/Broadcast"
                       }
                     },
                     "nextCursor": {
@@ -71668,30 +71860,41 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
       },
       "post": {
-        "summary": "Save, send or schedule a message or change",
+        "summary": "Save, send or schedule a message or change (Idempotency-Key)",
         "tags": [
           "broadcasts"
         ],
@@ -71711,332 +71914,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "message",
-                        "change"
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "draft",
-                        "scheduled",
-                        "sending",
-                        "sent",
-                        "partial",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "target": {
-                      "type": "object",
-                      "properties": {
-                        "templateIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "minItems": 1,
-                          "maxItems": 20
-                        },
-                        "onDevice": {
-                          "type": "boolean"
-                        },
-                        "holderState": {
-                          "type": "string",
-                          "enum": [
-                            "unassigned",
-                            "waiting",
-                            "owned"
-                          ]
-                        },
-                        "q": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "scan": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "eventId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "checkedIn": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "eventId",
-                                "checkedIn"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "noScanDays": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 730
-                                }
-                              },
-                              "required": [
-                                "noScanDays"
-                              ]
-                            }
-                          ]
-                        },
-                        "match": {
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "values": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 120
-                                    },
-                                    "minItems": 1,
-                                    "maxItems": 20
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "values"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "min": {
-                                    "type": "number"
-                                  },
-                                  "max": {
-                                    "type": "number"
-                                  }
-                                },
-                                "required": [
-                                  "input"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "from": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "to": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "timeZone": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "timeZone"
-                                ]
-                              }
-                            ]
-                          },
-                          "minItems": 1,
-                          "maxItems": 3
-                        }
-                      },
-                      "required": [
-                        "templateIds"
-                      ]
-                    },
-                    "patch": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "notify": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "clearAfter": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "exclusiveMinimum": 0
-                    },
-                    "parentId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "ruleId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "followUp": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "at": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "at"
-                      ]
-                    },
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "targeted": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "updated": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "unchanged": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "overBudget": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "failed": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "targeted",
-                        "updated",
-                        "unchanged",
-                        "overBudget",
-                        "failed"
-                      ]
-                    },
-                    "errorCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "mode",
-                    "kind",
-                    "name",
-                    "state",
-                    "target",
-                    "patch",
-                    "notify",
-                    "at",
-                    "clearAfter",
-                    "parentId",
-                    "ruleId",
-                    "followUp",
-                    "counts",
-                    "errorCode",
-                    "createdAt",
-                    "startedAt",
-                    "finishedAt"
-                  ]
+                  "$ref": "#/components/schemas/Broadcast"
                 }
               }
             }
@@ -72067,26 +71945,42 @@
             "session": []
           }
         ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -72131,13 +72025,112 @@
                     "limit": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "samples": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "passId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "title": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "changes": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string",
+                                  "maxLength": 64
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "maxLength": 200
+                                },
+                                "from": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "to": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "label",
+                                "from",
+                                "to"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "passId",
+                          "title",
+                          "changes"
+                        ]
+                      },
+                      "maxItems": 20
+                    },
+                    "unchanged": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "maxLength": 64
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "count"
+                        ]
+                      }
+                    },
+                    "notified": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "silent": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "estimated": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "targeted",
                     "onDevice",
                     "overBudget",
-                    "limit"
+                    "limit",
+                    "samples",
+                    "unchanged",
+                    "blocked",
+                    "notified",
+                    "silent"
                   ]
                 }
               }
@@ -72171,24 +72164,35 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -72218,332 +72222,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "message",
-                        "change"
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "draft",
-                        "scheduled",
-                        "sending",
-                        "sent",
-                        "partial",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "target": {
-                      "type": "object",
-                      "properties": {
-                        "templateIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "minItems": 1,
-                          "maxItems": 20
-                        },
-                        "onDevice": {
-                          "type": "boolean"
-                        },
-                        "holderState": {
-                          "type": "string",
-                          "enum": [
-                            "unassigned",
-                            "waiting",
-                            "owned"
-                          ]
-                        },
-                        "q": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "scan": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "eventId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "checkedIn": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "eventId",
-                                "checkedIn"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "noScanDays": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 730
-                                }
-                              },
-                              "required": [
-                                "noScanDays"
-                              ]
-                            }
-                          ]
-                        },
-                        "match": {
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "values": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 120
-                                    },
-                                    "minItems": 1,
-                                    "maxItems": 20
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "values"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "min": {
-                                    "type": "number"
-                                  },
-                                  "max": {
-                                    "type": "number"
-                                  }
-                                },
-                                "required": [
-                                  "input"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "from": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "to": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "timeZone": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "timeZone"
-                                ]
-                              }
-                            ]
-                          },
-                          "minItems": 1,
-                          "maxItems": 3
-                        }
-                      },
-                      "required": [
-                        "templateIds"
-                      ]
-                    },
-                    "patch": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "notify": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "clearAfter": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "exclusiveMinimum": 0
-                    },
-                    "parentId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "ruleId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "followUp": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "at": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "at"
-                      ]
-                    },
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "targeted": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "updated": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "unchanged": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "overBudget": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "failed": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "targeted",
-                        "updated",
-                        "unchanged",
-                        "overBudget",
-                        "failed"
-                      ]
-                    },
-                    "errorCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "mode",
-                    "kind",
-                    "name",
-                    "state",
-                    "target",
-                    "patch",
-                    "notify",
-                    "at",
-                    "clearAfter",
-                    "parentId",
-                    "ruleId",
-                    "followUp",
-                    "counts",
-                    "errorCode",
-                    "createdAt",
-                    "startedAt",
-                    "finishedAt"
-                  ]
+                  "$ref": "#/components/schemas/Broadcast"
                 }
               }
             }
@@ -72576,25 +72255,36 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -72632,332 +72322,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "message",
-                        "change"
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "draft",
-                        "scheduled",
-                        "sending",
-                        "sent",
-                        "partial",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "target": {
-                      "type": "object",
-                      "properties": {
-                        "templateIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "minItems": 1,
-                          "maxItems": 20
-                        },
-                        "onDevice": {
-                          "type": "boolean"
-                        },
-                        "holderState": {
-                          "type": "string",
-                          "enum": [
-                            "unassigned",
-                            "waiting",
-                            "owned"
-                          ]
-                        },
-                        "q": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "scan": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "eventId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "checkedIn": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "eventId",
-                                "checkedIn"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "noScanDays": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 730
-                                }
-                              },
-                              "required": [
-                                "noScanDays"
-                              ]
-                            }
-                          ]
-                        },
-                        "match": {
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "values": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 120
-                                    },
-                                    "minItems": 1,
-                                    "maxItems": 20
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "values"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "min": {
-                                    "type": "number"
-                                  },
-                                  "max": {
-                                    "type": "number"
-                                  }
-                                },
-                                "required": [
-                                  "input"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "from": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "to": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "timeZone": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "timeZone"
-                                ]
-                              }
-                            ]
-                          },
-                          "minItems": 1,
-                          "maxItems": 3
-                        }
-                      },
-                      "required": [
-                        "templateIds"
-                      ]
-                    },
-                    "patch": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "notify": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "clearAfter": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "exclusiveMinimum": 0
-                    },
-                    "parentId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "ruleId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "followUp": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "at": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "at"
-                      ]
-                    },
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "targeted": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "updated": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "unchanged": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "overBudget": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "failed": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "targeted",
-                        "updated",
-                        "unchanged",
-                        "overBudget",
-                        "failed"
-                      ]
-                    },
-                    "errorCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "mode",
-                    "kind",
-                    "name",
-                    "state",
-                    "target",
-                    "patch",
-                    "notify",
-                    "at",
-                    "clearAfter",
-                    "parentId",
-                    "ruleId",
-                    "followUp",
-                    "counts",
-                    "errorCode",
-                    "createdAt",
-                    "startedAt",
-                    "finishedAt"
-                  ]
+                  "$ref": "#/components/schemas/Broadcast"
                 }
               }
             }
@@ -72990,25 +72355,36 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -73048,332 +72424,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "message",
-                        "change"
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "draft",
-                        "scheduled",
-                        "sending",
-                        "sent",
-                        "partial",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "target": {
-                      "type": "object",
-                      "properties": {
-                        "templateIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "minItems": 1,
-                          "maxItems": 20
-                        },
-                        "onDevice": {
-                          "type": "boolean"
-                        },
-                        "holderState": {
-                          "type": "string",
-                          "enum": [
-                            "unassigned",
-                            "waiting",
-                            "owned"
-                          ]
-                        },
-                        "q": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "scan": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "eventId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "checkedIn": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "eventId",
-                                "checkedIn"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "noScanDays": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 730
-                                }
-                              },
-                              "required": [
-                                "noScanDays"
-                              ]
-                            }
-                          ]
-                        },
-                        "match": {
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "values": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 120
-                                    },
-                                    "minItems": 1,
-                                    "maxItems": 20
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "values"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "min": {
-                                    "type": "number"
-                                  },
-                                  "max": {
-                                    "type": "number"
-                                  }
-                                },
-                                "required": [
-                                  "input"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "from": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "to": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "timeZone": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "timeZone"
-                                ]
-                              }
-                            ]
-                          },
-                          "minItems": 1,
-                          "maxItems": 3
-                        }
-                      },
-                      "required": [
-                        "templateIds"
-                      ]
-                    },
-                    "patch": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "notify": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "clearAfter": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "exclusiveMinimum": 0
-                    },
-                    "parentId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "ruleId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "followUp": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "at": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "at"
-                      ]
-                    },
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "targeted": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "updated": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "unchanged": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "overBudget": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "failed": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "targeted",
-                        "updated",
-                        "unchanged",
-                        "overBudget",
-                        "failed"
-                      ]
-                    },
-                    "errorCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "mode",
-                    "kind",
-                    "name",
-                    "state",
-                    "target",
-                    "patch",
-                    "notify",
-                    "at",
-                    "clearAfter",
-                    "parentId",
-                    "ruleId",
-                    "followUp",
-                    "counts",
-                    "errorCode",
-                    "createdAt",
-                    "startedAt",
-                    "finishedAt"
-                  ]
+                  "$ref": "#/components/schemas/Broadcast"
                 }
               }
             }
@@ -73406,25 +72457,36 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -73454,332 +72516,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "message",
-                        "change"
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "draft",
-                        "scheduled",
-                        "sending",
-                        "sent",
-                        "partial",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "target": {
-                      "type": "object",
-                      "properties": {
-                        "templateIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "minItems": 1,
-                          "maxItems": 20
-                        },
-                        "onDevice": {
-                          "type": "boolean"
-                        },
-                        "holderState": {
-                          "type": "string",
-                          "enum": [
-                            "unassigned",
-                            "waiting",
-                            "owned"
-                          ]
-                        },
-                        "q": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "scan": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "eventId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "checkedIn": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "eventId",
-                                "checkedIn"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "noScanDays": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 730
-                                }
-                              },
-                              "required": [
-                                "noScanDays"
-                              ]
-                            }
-                          ]
-                        },
-                        "match": {
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "values": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 120
-                                    },
-                                    "minItems": 1,
-                                    "maxItems": 20
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "values"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "min": {
-                                    "type": "number"
-                                  },
-                                  "max": {
-                                    "type": "number"
-                                  }
-                                },
-                                "required": [
-                                  "input"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "from": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "to": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "timeZone": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "timeZone"
-                                ]
-                              }
-                            ]
-                          },
-                          "minItems": 1,
-                          "maxItems": 3
-                        }
-                      },
-                      "required": [
-                        "templateIds"
-                      ]
-                    },
-                    "patch": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "notify": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "clearAfter": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "exclusiveMinimum": 0
-                    },
-                    "parentId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "ruleId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "followUp": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "at": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "at"
-                      ]
-                    },
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "targeted": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "updated": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "unchanged": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "overBudget": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "failed": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "targeted",
-                        "updated",
-                        "unchanged",
-                        "overBudget",
-                        "failed"
-                      ]
-                    },
-                    "errorCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "mode",
-                    "kind",
-                    "name",
-                    "state",
-                    "target",
-                    "patch",
-                    "notify",
-                    "at",
-                    "clearAfter",
-                    "parentId",
-                    "ruleId",
-                    "followUp",
-                    "counts",
-                    "errorCode",
-                    "createdAt",
-                    "startedAt",
-                    "finishedAt"
-                  ]
+                  "$ref": "#/components/schemas/Broadcast"
                 }
               }
             }
@@ -73812,25 +72549,36 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -73860,332 +72608,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "message",
-                        "change"
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "draft",
-                        "scheduled",
-                        "sending",
-                        "sent",
-                        "partial",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "target": {
-                      "type": "object",
-                      "properties": {
-                        "templateIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "minItems": 1,
-                          "maxItems": 20
-                        },
-                        "onDevice": {
-                          "type": "boolean"
-                        },
-                        "holderState": {
-                          "type": "string",
-                          "enum": [
-                            "unassigned",
-                            "waiting",
-                            "owned"
-                          ]
-                        },
-                        "q": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "scan": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "eventId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "checkedIn": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "eventId",
-                                "checkedIn"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "noScanDays": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 730
-                                }
-                              },
-                              "required": [
-                                "noScanDays"
-                              ]
-                            }
-                          ]
-                        },
-                        "match": {
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "values": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 120
-                                    },
-                                    "minItems": 1,
-                                    "maxItems": 20
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "values"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "min": {
-                                    "type": "number"
-                                  },
-                                  "max": {
-                                    "type": "number"
-                                  }
-                                },
-                                "required": [
-                                  "input"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "from": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "to": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "timeZone": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "timeZone"
-                                ]
-                              }
-                            ]
-                          },
-                          "minItems": 1,
-                          "maxItems": 3
-                        }
-                      },
-                      "required": [
-                        "templateIds"
-                      ]
-                    },
-                    "patch": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "notify": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "clearAfter": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "exclusiveMinimum": 0
-                    },
-                    "parentId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "ruleId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "followUp": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "at": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "at"
-                      ]
-                    },
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "targeted": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "updated": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "unchanged": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "overBudget": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "failed": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "targeted",
-                        "updated",
-                        "unchanged",
-                        "overBudget",
-                        "failed"
-                      ]
-                    },
-                    "errorCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "mode",
-                    "kind",
-                    "name",
-                    "state",
-                    "target",
-                    "patch",
-                    "notify",
-                    "at",
-                    "clearAfter",
-                    "parentId",
-                    "ruleId",
-                    "followUp",
-                    "counts",
-                    "errorCode",
-                    "createdAt",
-                    "startedAt",
-                    "finishedAt"
-                  ]
+                  "$ref": "#/components/schemas/Broadcast"
                 }
               }
             }
@@ -74218,25 +72641,36 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -74387,25 +72821,263 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_EDITABLE",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
           "BROADCAST_PAST",
           "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
           "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
           "RATE_LIMITED",
+          "SELECTION_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/broadcasts/{id}/undo": {
+      "post": {
+        "summary": "Undo a change for 24 hours: restores passes still at the value the change set",
+        "tags": [
+          "broadcasts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BroadcastUndo"
+                },
+                "example": {
+                  "id": "01JABCDEF0123456789UNDO",
+                  "parentId": "01JABCDEF0123456789CHNG",
+                  "restorable": 1240,
+                  "kept": 0
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "broadcasts.postBroadcastsByIdUndo",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "undo"
+        },
+        "description": "Undoes a change run for 24 hours after it ends, as a silent background run. Each pass gets back the inputs the change touched, but only while they still hold the value the change set: a pass edited since keeps its edit, and any other input it holds. Nothing notifies. Asking again returns the same undo; one that ended on an error runs again. A run that is still sending must be stopped first. Read the result from GET /broadcasts/{id} on the returned `id`.",
+        "security": [
+          {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "BROADCAST_EMPTY",
+          "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
+          "BROADCAST_NOT_CANCELLABLE",
+          "BROADCAST_NOT_DRAFT",
+          "BROADCAST_NOT_EDITABLE",
+          "BROADCAST_NOT_FOUND",
+          "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
+          "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
+          "BROADCAST_PAST",
+          "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
+          "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
+          "INVALID_API_KEY",
+          "MESSAGING_UNSUPPORTED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SELECTION_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/broadcasts/{id}/stop": {
+      "post": {
+        "summary": "Stop a sending message or change after its current chunk",
+        "tags": [
+          "broadcasts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Broadcast"
+                },
+                "example": {
+                  "id": "01JABCDEF0123456789CHNG",
+                  "orgId": "org_1",
+                  "mode": "live",
+                  "kind": "change",
+                  "name": "Scheduled change",
+                  "state": "sending",
+                  "target": {
+                    "templateIds": [
+                      "tpl_1"
+                    ]
+                  },
+                  "patch": {
+                    "plan": {
+                      "set": "monthly"
+                    }
+                  },
+                  "notify": true,
+                  "at": 1795000000000,
+                  "clearAfter": null,
+                  "parentId": null,
+                  "ruleId": null,
+                  "followUp": null,
+                  "counts": {
+                    "targeted": 1240,
+                    "updated": 300,
+                    "unchanged": 0,
+                    "overBudget": 0,
+                    "failed": 0
+                  },
+                  "errorCode": null,
+                  "createdAt": 1795000000000,
+                  "startedAt": 1795000000000,
+                  "finishedAt": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "broadcasts.postBroadcastsByIdStop",
+        "x-sdk": {
+          "resource": "broadcasts",
+          "method": "stop"
+        },
+        "description": "Stops a sending message or change after its current chunk of passes. The run ends cancelled with errorCode BROADCAST_STOPPED, and what it already changed stays (a change can still be undone). Asking twice is the same ask.",
+        "security": [
+          {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "BROADCAST_EMPTY",
+          "BROADCAST_INVALID_INPUT",
+          "BROADCAST_INVALID_OP",
+          "BROADCAST_NOT_CANCELLABLE",
+          "BROADCAST_NOT_DRAFT",
+          "BROADCAST_NOT_EDITABLE",
+          "BROADCAST_NOT_FOUND",
+          "BROADCAST_NOT_RETRYABLE",
+          "BROADCAST_NOT_SENDING",
+          "BROADCAST_NOT_UNDOABLE",
+          "BROADCAST_ORG",
+          "BROADCAST_PASS_CHANGED",
+          "BROADCAST_PAST",
+          "BROADCAST_TOO_FAR",
+          "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNDO_EXPIRED",
+          "BROADCAST_UNKNOWN_INPUT",
+          "BROADCAST_UNKNOWN_TOKEN",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_NOT_FOUND",
+          "INVALID_API_KEY",
+          "MESSAGING_UNSUPPORTED",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SELECTION_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -76364,332 +75036,7 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "orgId": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "mode": {
-                            "type": "string",
-                            "enum": [
-                              "live",
-                              "test"
-                            ]
-                          },
-                          "kind": {
-                            "type": "string",
-                            "enum": [
-                              "message",
-                              "change"
-                            ]
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "state": {
-                            "type": "string",
-                            "enum": [
-                              "draft",
-                              "scheduled",
-                              "sending",
-                              "sent",
-                              "partial",
-                              "failed",
-                              "cancelled"
-                            ]
-                          },
-                          "target": {
-                            "type": "object",
-                            "properties": {
-                              "templateIds": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "minItems": 1,
-                                "maxItems": 20
-                              },
-                              "onDevice": {
-                                "type": "boolean"
-                              },
-                              "holderState": {
-                                "type": "string",
-                                "enum": [
-                                  "unassigned",
-                                  "waiting",
-                                  "owned"
-                                ]
-                              },
-                              "q": {
-                                "type": "string",
-                                "maxLength": 200
-                              },
-                              "scan": {
-                                "anyOf": [
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "eventId": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 64
-                                      },
-                                      "checkedIn": {
-                                        "type": "boolean"
-                                      }
-                                    },
-                                    "required": [
-                                      "eventId",
-                                      "checkedIn"
-                                    ]
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "noScanDays": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "maximum": 730
-                                      }
-                                    },
-                                    "required": [
-                                      "noScanDays"
-                                    ]
-                                  }
-                                ]
-                              },
-                              "match": {
-                                "type": "array",
-                                "items": {
-                                  "anyOf": [
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "input": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        },
-                                        "values": {
-                                          "type": "array",
-                                          "items": {
-                                            "type": "string",
-                                            "minLength": 1,
-                                            "maxLength": 120
-                                          },
-                                          "minItems": 1,
-                                          "maxItems": 20
-                                        }
-                                      },
-                                      "required": [
-                                        "input",
-                                        "values"
-                                      ]
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "input": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        },
-                                        "min": {
-                                          "type": "number"
-                                        },
-                                        "max": {
-                                          "type": "number"
-                                        }
-                                      },
-                                      "required": [
-                                        "input"
-                                      ]
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "input": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        },
-                                        "from": {
-                                          "type": "string",
-                                          "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                        },
-                                        "to": {
-                                          "type": "string",
-                                          "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                        },
-                                        "timeZone": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "maxLength": 64
-                                        }
-                                      },
-                                      "required": [
-                                        "input",
-                                        "timeZone"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                "minItems": 1,
-                                "maxItems": 3
-                              }
-                            },
-                            "required": [
-                              "templateIds"
-                            ]
-                          },
-                          "patch": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "notify": {
-                            "type": "boolean"
-                          },
-                          "at": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "clearAfter": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "exclusiveMinimum": 0
-                          },
-                          "parentId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "ruleId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "followUp": {
-                            "type": [
-                              "object",
-                              "null"
-                            ],
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 64
-                              },
-                              "at": {
-                                "type": [
-                                  "integer",
-                                  "null"
-                                ],
-                                "minimum": 0
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "at"
-                            ]
-                          },
-                          "counts": {
-                            "type": "object",
-                            "properties": {
-                              "targeted": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "updated": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "unchanged": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "overBudget": {
-                                "type": "integer",
-                                "minimum": 0
-                              },
-                              "failed": {
-                                "type": "integer",
-                                "minimum": 0
-                              }
-                            },
-                            "required": [
-                              "targeted",
-                              "updated",
-                              "unchanged",
-                              "overBudget",
-                              "failed"
-                            ]
-                          },
-                          "errorCode": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "createdAt": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "startedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          },
-                          "finishedAt": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 0
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "orgId",
-                          "mode",
-                          "kind",
-                          "name",
-                          "state",
-                          "target",
-                          "patch",
-                          "notify",
-                          "at",
-                          "clearAfter",
-                          "parentId",
-                          "ruleId",
-                          "followUp",
-                          "counts",
-                          "errorCode",
-                          "createdAt",
-                          "startedAt",
-                          "finishedAt"
-                        ]
+                        "$ref": "#/components/schemas/Broadcast"
                       }
                     },
                     "nextCursor": {
@@ -76897,332 +75244,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "message",
-                        "change"
-                      ]
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "draft",
-                        "scheduled",
-                        "sending",
-                        "sent",
-                        "partial",
-                        "failed",
-                        "cancelled"
-                      ]
-                    },
-                    "target": {
-                      "type": "object",
-                      "properties": {
-                        "templateIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 64
-                          },
-                          "minItems": 1,
-                          "maxItems": 20
-                        },
-                        "onDevice": {
-                          "type": "boolean"
-                        },
-                        "holderState": {
-                          "type": "string",
-                          "enum": [
-                            "unassigned",
-                            "waiting",
-                            "owned"
-                          ]
-                        },
-                        "q": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "scan": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "eventId": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 64
-                                },
-                                "checkedIn": {
-                                  "type": "boolean"
-                                }
-                              },
-                              "required": [
-                                "eventId",
-                                "checkedIn"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "noScanDays": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 730
-                                }
-                              },
-                              "required": [
-                                "noScanDays"
-                              ]
-                            }
-                          ]
-                        },
-                        "match": {
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "values": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 120
-                                    },
-                                    "minItems": 1,
-                                    "maxItems": 20
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "values"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "min": {
-                                    "type": "number"
-                                  },
-                                  "max": {
-                                    "type": "number"
-                                  }
-                                },
-                                "required": [
-                                  "input"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "input": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  },
-                                  "from": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "to": {
-                                    "type": "string",
-                                    "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
-                                  },
-                                  "timeZone": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 64
-                                  }
-                                },
-                                "required": [
-                                  "input",
-                                  "timeZone"
-                                ]
-                              }
-                            ]
-                          },
-                          "minItems": 1,
-                          "maxItems": 3
-                        }
-                      },
-                      "required": [
-                        "templateIds"
-                      ]
-                    },
-                    "patch": {
-                      "type": "object",
-                      "additionalProperties": {}
-                    },
-                    "notify": {
-                      "type": "boolean"
-                    },
-                    "at": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "clearAfter": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "exclusiveMinimum": 0
-                    },
-                    "parentId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "ruleId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "followUp": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 64
-                        },
-                        "at": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "at"
-                      ]
-                    },
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "targeted": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "updated": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "unchanged": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "overBudget": {
-                          "type": "integer",
-                          "minimum": 0
-                        },
-                        "failed": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "targeted",
-                        "updated",
-                        "unchanged",
-                        "overBudget",
-                        "failed"
-                      ]
-                    },
-                    "errorCode": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "startedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    },
-                    "finishedAt": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "orgId",
-                    "mode",
-                    "kind",
-                    "name",
-                    "state",
-                    "target",
-                    "patch",
-                    "notify",
-                    "at",
-                    "clearAfter",
-                    "parentId",
-                    "ruleId",
-                    "followUp",
-                    "counts",
-                    "errorCode",
-                    "createdAt",
-                    "startedAt",
-                    "finishedAt"
-                  ]
+                  "$ref": "#/components/schemas/Broadcast"
                 }
               }
             }

@@ -188,8 +188,8 @@ class BroadcastsResource:
         body: m.BroadcastsCreateBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.BroadcastsCreateResult:
-        """Save, send or schedule a message or change `POST /api/v1/broadcasts`"""
-        return self._core.request("POST", "/api/v1/broadcasts", body=body, result=m.BroadcastsCreateResult, **opts)
+        """Save, send or schedule a message or change (Idempotency-Key) `POST /api/v1/broadcasts`"""
+        return self._core.request("POST", "/api/v1/broadcasts", body=body, idempotent=True, result=m.BroadcastsCreateResult, **opts)
 
     def list(
         self,
@@ -199,7 +199,7 @@ class BroadcastsResource:
         state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | None = None,
         origin: _Literal["manual", "rule"] | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.BroadcastsListItem]:
+    ) -> Page[m.Broadcast]:
         """List messages and scheduled changes `GET /api/v1/broadcasts`"""
         return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
 
@@ -227,6 +227,22 @@ class BroadcastsResource:
     ) -> m.BroadcastsSendResult:
         """Send a draft now or at a time `POST /api/v1/broadcasts/{id}/send`"""
         return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/send", body=body, result=m.BroadcastsSendResult, **opts)
+
+    def stop(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BroadcastsStopResult:
+        """Stop a sending message or change after its current chunk `POST /api/v1/broadcasts/{id}/stop`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/stop", result=m.BroadcastsStopResult, **opts)
+
+    def undo(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BroadcastsUndoResult:
+        """Undo a change for 24 hours: restores passes still at the value the change set `POST /api/v1/broadcasts/{id}/undo`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/undo", result=m.BroadcastsUndoResult, **opts)
 
     def update(
         self,
@@ -593,7 +609,7 @@ class MessageRulesRunsResource:
         cursor: str | None = None,
         limit: int | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.MessageRulesRunsListItem]:
+    ) -> Page[m.Broadcast]:
         """The messages an automatic message sent `GET /api/v1/message-rules/{id}/runs`"""
         return self._core.paginate("GET", f"/api/v1/message-rules/{_p(id)}/runs", query={"cursor": cursor, "limit": limit}, result=m.MessageRulesRunsListResult, cursor_param="cursor", **opts)
 

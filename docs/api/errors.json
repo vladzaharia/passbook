@@ -441,7 +441,25 @@
       ]
     },
     {
+      "code": "BROADCAST_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_INVALID_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_INVALID_OP",
       "statuses": [
         422
       ],
@@ -495,9 +513,36 @@
       ]
     },
     {
+      "code": "BROADCAST_NOT_SENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_UNDOABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_ORG",
       "statuses": [
         422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_PASS_CHANGED",
+      "statuses": [
+        409
       ],
       "modules": [
         "broadcasts"
@@ -522,7 +567,34 @@
       ]
     },
     {
+      "code": "BROADCAST_TOO_MANY_TEMPLATES",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_UNDO_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_UNKNOWN_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_UNKNOWN_TOKEN",
       "statuses": [
         422
       ],
@@ -1761,6 +1833,7 @@
         404
       ],
       "modules": [
+        "broadcasts",
         "passes"
       ]
     },
@@ -2717,6 +2790,7 @@
         404
       ],
       "modules": [
+        "broadcasts",
         "bundles",
         "channels",
         "delivery",
@@ -4168,6 +4242,15 @@
       ],
       "modules": [
         "webhooks"
+      ]
+    },
+    {
+      "code": "SELECTION_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
       ]
     },
     {

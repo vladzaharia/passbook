@@ -41,6 +41,8 @@
   "broadcasts.postBroadcastsByIdCancel",
   "broadcasts.postBroadcastsByIdRetry",
   "broadcasts.postBroadcastsByIdSend",
+  "broadcasts.postBroadcastsByIdStop",
+  "broadcasts.postBroadcastsByIdUndo",
   "broadcasts.postBroadcastsPreview",
   "bundles.deleteBundlesById",
   "bundles.getBundles",

@@ -131,8 +131,8 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"broadcasts.create", "POST", "/api/v1/broadcasts", false,
-		`{"orgId":"x","kind":"message","target":{"templateIds":["x"]},"patch":{}}`, `{"id":"x","orgId":"x","mode":"live","kind":"message","name":"x","state":"draft","target":{"templateIds":["x"]},"patch":{},"notify":false,"at":0,"clearAfter":0,"parentId":"x","ruleId":"x","followUp":{"id":"x","at":0},"counts":{"targeted":0,"updated":0,"unchanged":0,"overBudget":0,"failed":0},"errorCode":"x","createdAt":0,"startedAt":0,"finishedAt":0}`,
+		"broadcasts.create", "POST", "/api/v1/broadcasts", true,
+		`{"orgId":"x","kind":"message","target":{},"patch":{}}`, `{"id":"x","orgId":"x","mode":"live","kind":"message","name":"x","state":"draft","target":{"templateIds":["x"]},"patch":{},"notify":false,"at":0,"clearAfter":0,"parentId":"x","ruleId":"x","followUp":{"id":"x","at":0},"counts":{"targeted":0,"updated":0,"unchanged":0,"overBudget":0,"failed":0},"errorCode":"x","createdAt":0,"startedAt":0,"finishedAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b BroadcastsCreateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -143,7 +143,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"broadcasts.countRecipients", "POST", "/api/v1/broadcasts/preview", false,
-		`{"orgId":"x","target":{"templateIds":["x"]}}`, `{"targeted":0,"onDevice":0,"overBudget":0,"limit":0}`,
+		`{"orgId":"x","target":{}}`, `{"targeted":0,"onDevice":0,"overBudget":0,"limit":0,"samples":[{"passId":"x","title":"x","changes":[{"key":"x","label":"x","from":"x","to":"x"}]}],"unchanged":0,"blocked":[{"code":"x","count":0}],"notified":0,"silent":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b BroadcastsCountRecipientsBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -161,7 +161,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"broadcasts.update", "PATCH", "/api/v1/broadcasts/id1", false,
-		`{"orgId":"x","kind":"message","target":{"templateIds":["x"]},"patch":{}}`, `{"id":"x","orgId":"x","mode":"live","kind":"message","name":"x","state":"draft","target":{"templateIds":["x"]},"patch":{},"notify":false,"at":0,"clearAfter":0,"parentId":"x","ruleId":"x","followUp":{"id":"x","at":0},"counts":{"targeted":0,"updated":0,"unchanged":0,"overBudget":0,"failed":0},"errorCode":"x","createdAt":0,"startedAt":0,"finishedAt":0}`,
+		`{"orgId":"x","kind":"message","target":{},"patch":{}}`, `{"id":"x","orgId":"x","mode":"live","kind":"message","name":"x","state":"draft","target":{"templateIds":["x"]},"patch":{},"notify":false,"at":0,"clearAfter":0,"parentId":"x","ruleId":"x","followUp":{"id":"x","at":0},"counts":{"targeted":0,"updated":0,"unchanged":0,"overBudget":0,"failed":0},"errorCode":"x","createdAt":0,"startedAt":0,"finishedAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b BroadcastsUpdateBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -200,6 +200,20 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Broadcasts.Send(ctx, "id1", &b)
+		},
+	},
+	{
+		"broadcasts.stop", "POST", "/api/v1/broadcasts/id1/stop", false,
+		"", `{"id":"x","orgId":"x","mode":"live","kind":"message","name":"x","state":"draft","target":{"templateIds":["x"]},"patch":{},"notify":false,"at":0,"clearAfter":0,"parentId":"x","ruleId":"x","followUp":{"id":"x","at":0},"counts":{"targeted":0,"updated":0,"unchanged":0,"overBudget":0,"failed":0},"errorCode":"x","createdAt":0,"startedAt":0,"finishedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Broadcasts.Stop(ctx, "id1")
+		},
+	},
+	{
+		"broadcasts.undo", "POST", "/api/v1/broadcasts/id1/undo", false,
+		"", `{"id":"x","parentId":"x","restorable":0,"kept":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Broadcasts.Undo(ctx, "id1")
 		},
 	},
 	{
