@@ -188,11 +188,22 @@ export function auditStmt(
   ctx: Pick<ServiceContext, 'clock' | 'requestId' | 'via'>,
   entry: AuditEntry,
 ): D1PreparedStatement {
+  return auditStmtWhere(db, ctx, entry, '1', []);
+}
+
+/** `auditStmt` that writes its row only while `condition` (SQL over other tables) holds, for batches. */
+export function auditStmtWhere(
+  db: D1Database,
+  ctx: Pick<ServiceContext, 'clock' | 'requestId' | 'via'>,
+  entry: AuditEntry,
+  condition: string,
+  conditionParams: readonly SqlValue[],
+): D1PreparedStatement {
   const detail = ctx.via ? { ...entry.detail, via: ctx.via } : entry.detail;
   return stmt(
     db,
     `INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id, request_id, ip_prefix, detail)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${condition}`,
     [
       ctx.clock.now(),
       entry.orgId ?? null,
@@ -204,6 +215,7 @@ export function auditStmt(
       ctx.requestId,
       entry.ipPrefix ?? null,
       detail ? JSON.stringify(redactDetail(detail)) : null,
+      ...conditionParams,
     ],
   );
 }
