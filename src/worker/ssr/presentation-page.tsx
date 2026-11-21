@@ -86,7 +86,6 @@ export function renderPresentationPage(props: PresentationPageProps): string {
     ...(props.brand ? { brand: props.brand } : {}),
     title: props.passTitle,
     art: 'login',
-    lede: escapeHtml(HOLDER_COPY.presentLine),
     wide: true,
     replay: false,
     css: CSS,

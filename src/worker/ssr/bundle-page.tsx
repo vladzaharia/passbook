@@ -144,8 +144,7 @@ function BundleBody(props: BundlePageProps) {
           {area && android ? (
             <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
           ) : area ? (
-            <section className="bd-add" aria-labelledby="bd-add">
-              <h2 id="bd-add">{BUNDLE_COPY.addAll}</h2>
+            <section className="bd-add" aria-label={BUNDLE_COPY.addAll}>
               <AddBlock {...area} buddy={(p) => <BuddyArt {...p} playOnLoad />} />
             </section>
           ) : addable.length === 0 ? (

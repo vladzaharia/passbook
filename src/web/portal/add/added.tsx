@@ -49,7 +49,6 @@ export function AddedLine({ children }: { children?: ReactNode }) {
     <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-fg-strong">{HOLDER_COPY.added}</p>
-        <p className="text-sm text-fg-muted">{HOLDER_COPY.addedLine}</p>
       </div>
       {children}
     </div>

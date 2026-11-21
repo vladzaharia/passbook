@@ -1,4 +1,3 @@
-import { Laptop } from 'lucide-react';
 import { useId, useState } from 'react';
 import { HOLDER_COPY } from '../../../shared/copy/holder.ts';
 import { isAndroid } from '../../../shared/device.ts';
@@ -28,10 +27,6 @@ export function AddBlock(p: AddAreaProps & { buddy: RenderBuddy }) {
   const ask = url ? (
     <Scan url={url} label={p.qrLabel} buddy={added ? undefined : p.buddy}>
       <div className="wl-way">
-        <p className="wl-way-label">
-          <Laptop aria-hidden />
-          Apple Wallet
-        </p>
         {p.badge}
       </div>
       {p.line ? <p className="text-sm text-fg-muted">{p.line}</p> : null}
