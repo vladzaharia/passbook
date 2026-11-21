@@ -1287,6 +1287,15 @@
       ]
     },
     {
+      "code": "IDEMPOTENCY_KEY_REQUIRED",
+      "statuses": [
+        400
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
       "code": "IDEMPOTENCY_KEY_REUSED",
       "statuses": [
         409,
@@ -1296,7 +1305,8 @@
         "delivery",
         "passes",
         "platform",
-        "scan"
+        "scan",
+        "templates"
       ]
     },
     {

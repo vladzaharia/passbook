@@ -341,6 +341,16 @@ expectedGeneration}`. Use generation `0` for the first release and the current s
 thereafter. `GET /templates/{id}/candidates` and `/templates/{id}/releases` accept the same scope
 as query parameters and expose candidate approvals and release history; people appear by name
 (`authorName`, `reviewerName`, `createdByName`).
+`POST /templates/{id}/release` does the three steps for both modes in one call: `{orgId?, version, modes?, expected?, request?}`
+(a `templates:publish` session, or a Test key holding `templates:write`, `templates:review` and `templates:publish`; a Live key
+cannot release). Test runs first, then Live. Each mode creates or reuses its candidate, reuses or writes an approval (`test` in Test,
+`sole` in Live only for the sole reviewer) and publishes at `expected` (default: the current generation). Test follows Live: a Test
+head newer than Live's previous version stays and answers `test: kept`. Without a usable approval the answer is 409
+`TEMPLATE_REVIEW_REQUIRED` with `plan`; what already ran stays, and the same call resumes. `modes` defaults to `["live","test"]`
+for a person and `["test"]` for a key or a developer org, which may not name Live. `Idempotency-Key` is required: the same key and
+body replays the first answer, the same key with another body is 409 `IDEMPOTENCY_KEY_REUSED`. `?dryRun=true` returns `{version,
+modes, diff, fromVersion, state}` (steps, passes and devices reached per mode, a grouped diff) and writes nothing. `request: true`,
+or `POST /templates/{id}/review-requests` (`templates:write`), creates or reuses the candidates without approving.
 `GET /templates/{id}/releases/impact?orgId&mode&provider&version` returns what a publish or rollback to
 `version` changes: `passes` (`{count, capped}`: the org's passes in that mode not yet on it, counted up to
 10,000) and a semantic `diff` of `fields`, `images`, `barcode` and `colors`, each change

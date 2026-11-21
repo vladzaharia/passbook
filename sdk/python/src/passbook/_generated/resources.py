@@ -1555,6 +1555,17 @@ class TemplatesReleasesResource:
         """List template releases `GET /api/v1/templates/{id}/releases`"""
         return self._core.paginate("GET", f"/api/v1/templates/{_p(id)}/releases", query={"mode": mode, "provider": provider, "cursor": cursor}, result=m.TemplatesReleasesListResult, cursor_param="cursor", **opts)
 
+    def release(
+        self,
+        id: str,
+        body: m.TemplatesReleasesReleaseBody | _Dict[str, _Any],
+        *,
+        dry_run: _Literal["0", "1", "true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesReleasesReleaseResult:
+        """Release a template version to Test and Live in one call (Idempotency-Key required; dryRun previews) `POST /api/v1/templates/{id}/release`"""
+        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/release", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.TemplatesReleasesReleaseResult, **opts)
+
     def retrieve_impact(
         self,
         id: str,
@@ -1566,6 +1577,22 @@ class TemplatesReleasesResource:
     ) -> m.TemplatesReleasesRetrieveImpactResult:
         """What publishing or rolling back to a version changes, and for how many passes `GET /api/v1/templates/{id}/releases/impact`"""
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/releases/impact", query={"mode": mode, "provider": provider, "version": version}, result=m.TemplatesReleasesRetrieveImpactResult, **opts)
+
+
+class TemplatesReviewsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def request(
+        self,
+        id: str,
+        body: m.TemplatesReviewsRequestBody | _Dict[str, _Any],
+        *,
+        dry_run: _Literal["0", "1", "true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesReviewsRequestResult:
+        """Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`"""
+        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/review-requests", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.TemplatesReviewsRequestResult, **opts)
 
 
 class TemplatesVersionsResource:
@@ -1600,6 +1627,7 @@ class TemplatesResource:
         self.candidates = TemplatesCandidatesResource(core)
         self.channels = TemplatesChannelsResource(core)
         self.releases = TemplatesReleasesResource(core)
+        self.reviews = TemplatesReviewsResource(core)
         self.versions = TemplatesVersionsResource(core)
 
     def download_package(
