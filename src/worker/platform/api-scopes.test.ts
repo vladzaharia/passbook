@@ -18,6 +18,7 @@ describe('role presets', () => {
         'scans:read',
         'scanning:write',
         'scan-setup:read',
+        'scanning:admin',
         'connections:read',
         'connections:write',
         'webhooks:manage',
@@ -88,6 +89,8 @@ describe('role presets', () => {
     expect(ROLE_PRESETS.pass_operator).not.toContain('scanning:write');
     expect(ROLE_PRESETS.integration_admin).not.toContain('scanning:write');
     expect(ROLE_PRESETS.org_admin).toContain('scanning:write');
+    expect(ROLE_PRESETS.org_admin).toContain('scanning:admin');
+    expect(ROLE_PRESETS.pass_operator).not.toContain('scanning:admin');
   });
 
   it('adds a role to the listed scopes, once each', () => {

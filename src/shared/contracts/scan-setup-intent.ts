@@ -169,6 +169,7 @@ export const PlannedStaffSchema = z.strictObject({
 
 export const PlannedDeviceSchema = CreateScanningDeviceSchema.extend({
   ref: PlanRef,
+  name: PlainLineSchema(40),
   surface: ScanSurfaceChoiceSchema,
   overrides: CreateScanningDeviceSchema.shape.overrides.unwrap(),
   /** Derived from the layout. */
@@ -202,6 +203,7 @@ export const ScanSetupCheckCodeSchema = z.enum([
   'PLACE_ON_EVENT',
   'TEST_ONLY',
   'DIRECTION_NEEDS_TRACKING',
+  'OFFLINE_LIST_BLOCKED',
 ]);
 export type ScanSetupCheckCode = z.infer<typeof ScanSetupCheckCodeSchema>;
 
@@ -271,6 +273,8 @@ export const ScanSetupResultSchema = z.object({
       ),
     }),
   ),
+  /** True on a replay whose pairing codes had expired: new ones are in `sessions`. */
+  pairingReissued: z.boolean().default(false),
   zones: z.array(z.object(made)),
   events: z.array(z.object(made)),
   staff: z.array(
@@ -284,3 +288,6 @@ export const ScanSetupResultSchema = z.object({
   checks: z.array(ScanSetupCheckSchema),
 });
 export type ScanSetupResult = z.infer<typeof ScanSetupResultSchema>;
+
+/** What `POST /scanning-sessions/setup` answers: the result, or with `dryRun` the plan. */
+export const ScanSetupAnswerSchema = z.union([ScanSetupResultSchema, ScanSetupPlanSchema]);

@@ -13,13 +13,13 @@ function frontDesk(door: SetupDoor): SetupDoor {
   };
 }
 
-/** Doors where anyone scans and the offline list keeps the line moving; a desk (operator) signs staff in. */
+/** Doors where anyone scans; a desk (operator) signs staff in. The offline list is the planner's to add, once it knows the door needs no exits. */
 function eventNight(door: SetupDoor): SetupDoor {
   const desk = door.devices?.some((d) => d.layout === 'operator') === true;
   return {
     ...door,
     scanners: door.scanners ?? (desk ? { by: 'staff' } : { by: 'anyone', as: 'door' }),
-    more: fill(door.more, desk ? { lookup: true } : { offline: true, whenOffline: 'list' }),
+    more: fill(door.more, desk ? { lookup: true } : {}),
   };
 }
 

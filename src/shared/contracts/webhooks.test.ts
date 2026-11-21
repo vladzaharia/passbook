@@ -157,6 +157,7 @@ describe('API key scopes', () => {
       'scanning:write',
       'scan-setup:read',
       'scan-setup:write',
+      'scanning:admin',
       'nfc:read',
       'nfc:write',
       'wallet:read',

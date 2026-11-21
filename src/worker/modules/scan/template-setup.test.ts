@@ -428,7 +428,7 @@ describe('template scan setup', () => {
     expect((await setup(id)).events.map((e) => e.name)).toEqual(['Night Three']);
   });
 
-  it("archives the events a lost race made past the winner's room of ten", async () => {
+  it('leaves no stray event when a competing session lands mid-batch', async () => {
     const id = await eventTemplate(fixture.kit, 'Crowded ticket');
     for (const [n, name] of ['Crowd One', 'Crowd Two', 'Crowd Three'].entries())
       await ticket(id, {
@@ -451,21 +451,18 @@ describe('template scan setup', () => {
          VALUES ('race-winner', NEW.org_id, NEW.mode, 'Winner', 'active', '${accepts}', '${settings}', 'UTC', 1, 1, '${id}');
        END`,
     );
-    let made: TemplateScanSetup;
     try {
       const res = await post(id);
-      if (res.status !== 200) throw new Error(await res.text());
-      made = (await res.json()) as TemplateScanSetup;
+      expect(res.status).toBe(409);
+      expect(((await res.json()) as { code: string }).code).toBe('SCAN_SETUP_CONFLICT');
     } finally {
       await run(db, 'DROP TRIGGER setup_race');
     }
-    expect(made.session.id).toBe('race-winner');
-    expect(made.events.map((e) => e.name)).toEqual(['Crowd One']);
     const live = await rows<{ name: string }>(
       "SELECT name FROM scan_events WHERE org_id = ? AND archived_at IS NULL AND name LIKE 'Crowd%'",
       fixture.kit.org.id,
     );
-    expect(live.map((e) => e.name)).toEqual(['Crowd One']);
+    expect(live).toEqual([]);
   });
 
   it('logs a start value that is not a date, and skips its event', async () => {

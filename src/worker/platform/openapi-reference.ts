@@ -1,5 +1,5 @@
 type Json = Record<string, unknown>;
-type Media = { example?: unknown; schema?: unknown };
+type Media = { example?: unknown; examples?: unknown; schema?: unknown };
 type Op = {
   operationId?: string;
   description?: string;
@@ -16,6 +16,8 @@ type Doc = {
 export interface OpReference {
   description?: string;
   request?: unknown;
+  /** Named request examples, shown beside `request`: one per way to call it. */
+  requests?: Record<string, unknown>;
   response?: unknown;
 }
 
@@ -45,6 +47,10 @@ export function withReference(doc: Doc): Doc {
     if (ref.description) op.description = ref.description;
     const request = op.requestBody?.content?.[JSON_TYPE];
     if (request && ref.request !== undefined) request.example = ref.request;
+    if (request && ref.requests)
+      request.examples = Object.fromEntries(
+        Object.entries(ref.requests).map(([summary, value]) => [summary, { summary, value }]),
+      );
     const ok = Object.entries(op.responses ?? {}).find(([code]) => code.startsWith('2'));
     const response = ok?.[1].content?.[JSON_TYPE];
     if (response && ref.response !== undefined) response.example = ref.response;

@@ -1797,6 +1797,10 @@
     "resource": "scanningSessions",
     "method": "overrideHours"
   },
+  "scanners.postScanningSessionsSetup": {
+    "resource": "scanningSessions",
+    "method": "setup"
+  },
   "scanners.postScanningSessionsJoin": {
     "resource": "scanningSessions",
     "method": "join",

@@ -390,6 +390,7 @@
   "scanners.postScanningSessionsByIdDevices",
   "scanners.postScanningSessionsByIdHold",
   "scanners.postScanningSessionsJoin",
+  "scanners.postScanningSessionsSetup",
   "scans.getScans",
   "scans.getScansById",
   "scans.getScansExport",

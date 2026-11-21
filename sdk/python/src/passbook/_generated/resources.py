@@ -1405,6 +1405,21 @@ class TerminalResource:
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
 
+class ScanningSessionsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def setup(
+        self,
+        body: m.ScanningSessionsSetupBody | _Dict[str, _Any],
+        *,
+        dry_run: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsSetupResult:
+        """Set up scanning in one call: places, events, staff, sessions and devices `POST /api/v1/scanning-sessions/setup`"""
+        return self._core.request("POST", "/api/v1/scanning-sessions/setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.ScanningSessionsSetupResult, **opts)
+
+
 class ScansResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1958,6 +1973,7 @@ class Resources:
         self.print_jobs = PrintJobsResource(core)
         self.roll_calls = RollCallsResource(core)
         self.terminal = TerminalResource(core)
+        self.scanning_sessions = ScanningSessionsResource(core)
         self.scans = ScansResource(core)
         self.templates = TemplatesResource(core)
         self.template_imports = TemplateImportsResource(core)

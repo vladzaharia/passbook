@@ -5985,6 +5985,82 @@
   }
  },
  {
+  "id": "scanners.postScanningSessionsSetup",
+  "call": "scanning_sessions.setup",
+  "http": "POST",
+  "path": "/api/v1/scanning-sessions/setup",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "doors": [
+    {
+     "name": "x",
+     "admits": {
+      "any": true
+     }
+    }
+   ]
+  },
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "replayed": false,
+   "mode": "live",
+   "sessions": [
+    {
+     "id": "x",
+     "ref": "x",
+     "name": "x",
+     "devices": [
+      {
+       "id": "x",
+       "name": "x",
+       "pairing": {
+        "code": "x",
+        "url": "x",
+        "expiresAt": 0
+       }
+      }
+     ]
+    }
+   ],
+   "zones": [
+    {
+     "id": "x",
+     "ref": "x",
+     "name": "x",
+     "created": false
+    }
+   ],
+   "events": [
+    {
+     "id": "x",
+     "ref": "x",
+     "name": "x",
+     "created": false
+    }
+   ],
+   "staff": [
+    {
+     "id": "x",
+     "name": "x",
+     "role": "door",
+     "pin": "x"
+    }
+   ],
+   "checks": [
+    {
+     "code": "NO_EXIT",
+     "level": "error",
+     "message": "x"
+    }
+   ]
+  }
+ },
+ {
   "id": "scans.getScans",
   "call": "scans.list",
   "http": "GET",

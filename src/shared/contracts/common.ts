@@ -80,6 +80,8 @@ export const ApiScopeSchema = z.enum([
   'scan-setup:read',
   /** Reserved: setup writes need a user creator, so no key route accepts it yet. */
   'scan-setup:write',
+  /** Staff PINs and paired devices (codes shown once) in the one-call setup: org-bound, live keys only. */
+  'scanning:admin',
   'nfc:read',
   'nfc:write',
   'wallet:read',

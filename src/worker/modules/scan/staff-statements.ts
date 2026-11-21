@@ -6,7 +6,7 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import { audited } from './repo-admin-grant.ts';
+import { adminActorOf, audited, createdByOf } from './repo-admin-grant.ts';
 import { addStaffInsert } from './repo-staff.ts';
 import type { SetupCapture } from './setup-capture.ts';
 import { hashPin } from './staff-pin.ts';
@@ -58,14 +58,13 @@ export function staffStatements(
     role: input.role,
     pinHash,
     pinMacVersion: macKeyVersion(ctx.env),
-    createdBy: capture.userId,
+    createdBy: createdByOf(capture.authority, capture.userId),
     now: ctx.clock.now(),
   });
   g.add(
     audited(g, ctx, {
       orgId: input.orgId,
-      actorType: 'user',
-      actorId: capture.userId,
+      ...adminActorOf(capture.authority, capture.userId),
       action: 'scan_staff.create',
       targetType: 'scan_staff',
       targetId: id,

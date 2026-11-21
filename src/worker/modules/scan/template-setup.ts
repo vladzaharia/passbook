@@ -1,13 +1,12 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { CreateScanEventSchema } from '../../../shared/contracts/index.ts';
+import { ScanSetupIntentSchema } from '../../../shared/contracts/scan-setup-intent.ts';
 import type {
   TemplateScanSetup,
   TemplateScanSetupBodySchema,
 } from '../../../shared/contracts/scan-template-setup.ts';
-import { CreateScanningSessionSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
-import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
@@ -22,6 +21,8 @@ import {
   setupSession,
 } from './repo-template-setup.ts';
 import { loadScanningSession } from './scanning-sessions.ts';
+import { planSetupIntent } from './setup-intent.ts';
+import { applySetupPlan } from './setup-intent-apply.ts';
 import { setupActor } from './template-setup-actor.ts';
 import {
   checkInOf,
@@ -202,45 +203,50 @@ export async function setupTemplateScan(
   const existing = await findSession();
   if (existing) return addToExisting(existing.id);
 
-  // No session yet: its events come first, since the session admits them.
-  const events: Made[] = [];
-  for (const e of planned) {
-    const made = await ensureEvent(e);
-    if (made) events.push(made);
-  }
-  try {
-    const checkIn = checkInOf(template.manifest);
-    const body = CreateScanningSessionSchema.parse({
-      orgId,
-      name: plainText(template.manifest.name, 80) ?? 'Scanning',
-      timeZone,
-      accepts:
-        events.length > 0
-          ? { templateIds: [templateId], eventIds: events.map((e) => e.id) }
-          : { templateIds: [templateId] },
-      ...(checkIn ? { settings: { checkIn } } : {}),
-    });
-    const session = await actor.createSession(body, templateId);
-    return {
-      session: { id: session.id, name: session.name },
-      created: true,
-      events,
-      noEvents: eventStyle && events.length === 0,
-      truncated,
-    };
-  } catch (error) {
-    const winner = await findSession();
-    if (winner) {
-      ctx.log.info('scan.template_setup.raced', { orgId, code: 'SETUP_RACED' });
-      return addToExisting(winner.id, events);
+  // No session yet: its events, the session and the one-time keys commit in one batch.
+  const intent = ScanSetupIntentSchema.parse({
+    orgId,
+    timeZone,
+    events: [{ fromTemplate: templateId, ref: 'template' }],
+    doors: [
+      {
+        name: plainText(template.manifest.name, 80) ?? 'Scanning',
+        admits: { templateIds: [templateId], events: ['template'] },
+        ...(checkInOf(template.manifest)
+          ? { more: { checkIn: checkInOf(template.manifest) } }
+          : {}),
+      },
+    ],
+  });
+  const actorId = auth.kind === 'api_key' ? auth.keyId : auth.userId;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const { plan, facts } = await planSetupIntent(ctx, authority, intent);
+      const made = await applySetupPlan(ctx, actorId, authority, plan, facts, {
+        origin: '',
+        setupTemplateId: templateId,
+      });
+      return {
+        session: { id: made.sessions[0]?.id ?? '', name: made.sessions[0]?.name ?? '' },
+        created: true,
+        events: made.events.map(({ id, name, created }) => ({ id, name, created })),
+        noEvents: eventStyle && made.events.length === 0,
+        truncated,
+      };
+    } catch (error) {
+      if (!(error instanceof AppError) || error.code !== 'SCAN_SETUP_NAME_TAKEN') throw error;
+      // A concurrent call holds the session or an event key: take its session, else try once more.
+      const winner = await findSession();
+      if (winner) {
+        ctx.log.info('scan.template_setup.raced', { orgId, code: 'SETUP_RACED' });
+        return addToExisting(winner.id);
+      }
+      if (attempt > 0)
+        throw new ConflictError(
+          'Another session already scans this template. Reload and try again.',
+          'SCAN_SETUP_CONFLICT',
+        );
     }
-    await discard(events);
-    if (classifyD1Error(error)?.kind === 'unique')
-      throw new ConflictError(
-        'Another session already scans this template. Reload and try again.',
-        'SCAN_SETUP_CONFLICT',
-      );
-    throw error;
   }
 }
 

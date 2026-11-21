@@ -4363,6 +4363,7 @@
                 "templates:publish",
                 "messages:read",
                 "scanning:write",
+                "scanning:admin",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -4506,6 +4507,7 @@
                         "templates:publish",
                         "messages:read",
                         "scanning:write",
+                        "scanning:admin",
                         "nfc:read",
                         "nfc:write",
                         "wallet:read",
@@ -4734,6 +4736,7 @@
                         "templates:publish",
                         "messages:read",
                         "scanning:write",
+                        "scanning:admin",
                         "nfc:read",
                         "nfc:write",
                         "wallet:read",
@@ -4960,6 +4963,7 @@
                     "templates:publish",
                     "messages:read",
                     "scanning:write",
+                    "scanning:admin",
                     "nfc:read",
                     "nfc:write",
                     "wallet:read",
@@ -5190,6 +5194,7 @@
                 "templates:publish",
                 "messages:read",
                 "scanning:write",
+                "scanning:admin",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -5597,6 +5602,7 @@
                 "templates:publish",
                 "messages:read",
                 "scanning:write",
+                "scanning:admin",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -13140,6 +13146,1430 @@
           "pairing"
         ]
       },
+      "ScanSetupAnswer": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "replayed": {
+                "type": "boolean"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "live",
+                  "test"
+                ]
+              },
+              "sessions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "ref": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "devices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "pairing": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": "string"
+                              },
+                              "expiresAt": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "url",
+                              "expiresAt"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "pairing"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ref",
+                    "name",
+                    "devices"
+                  ]
+                }
+              },
+              "pairingReissued": {
+                "type": "boolean",
+                "default": false
+              },
+              "zones": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "ref": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ref",
+                    "name",
+                    "created"
+                  ]
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "ref": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ref",
+                    "name",
+                    "created"
+                  ]
+                }
+              },
+              "staff": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "door",
+                        "desk",
+                        "manager"
+                      ]
+                    },
+                    "pin": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{6}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "role",
+                    "pin"
+                  ]
+                }
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NO_EXIT",
+                        "NO_MANAGER",
+                        "NO_STAFF",
+                        "PLAN_MISSES_PLACE",
+                        "HOURS_DIFFER",
+                        "EVENT_NO_PASSES",
+                        "READER_BOTH",
+                        "PLACE_ON_EVENT",
+                        "TEST_ONLY",
+                        "DIRECTION_NEEDS_TRACKING",
+                        "OFFLINE_LIST_BLOCKED"
+                      ]
+                    },
+                    "level": {
+                      "type": "string",
+                      "enum": [
+                        "error",
+                        "warn",
+                        "info"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "params": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "door": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "session",
+                            "device",
+                            "zone",
+                            "event",
+                            "template",
+                            "staff"
+                          ]
+                        },
+                        "ref": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "ref"
+                      ]
+                    },
+                    "fix": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "device_direction"
+                              ]
+                            },
+                            "device": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "in",
+                                "both"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "device",
+                            "direction"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "add_device"
+                              ]
+                            },
+                            "session": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "out"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "session",
+                            "direction"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "add_staff"
+                              ]
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "manager"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "role"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "remove_place"
+                              ]
+                            },
+                            "session": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "session"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "track_in_out"
+                              ]
+                            },
+                            "session": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "session"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "open_template"
+                              ]
+                            },
+                            "templateId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "templateId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "level",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "replayed",
+              "mode",
+              "sessions",
+              "zones",
+              "events",
+              "staff",
+              "checks"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "live",
+                  "test"
+                ]
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "preset": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "front_desk",
+                  "event_night",
+                  "venue",
+                  null
+                ]
+              },
+              "zones": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "occupancy": {
+                      "type": "string",
+                      "enum": [
+                        "off",
+                        "track",
+                        "enforce"
+                      ]
+                    },
+                    "capacity": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 100000
+                    },
+                    "maxStayMinutes": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 15,
+                      "maximum": 2880
+                    },
+                    "hardLimit": {
+                      "type": "boolean"
+                    },
+                    "clearAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "ref": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "key": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "parent": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ref": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            }
+                          },
+                          "required": [
+                            "ref"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            }
+                          },
+                          "required": [
+                            "id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "timeZone": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "occupancy",
+                    "capacity",
+                    "maxStayMinutes",
+                    "clearAt",
+                    "ref",
+                    "key",
+                    "name",
+                    "parent",
+                    "timeZone"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 8
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "templateIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "minItems": 1,
+                      "maxItems": 20
+                    },
+                    "match": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "input": {
+                          "type": "string"
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1
+                        }
+                      },
+                      "required": [
+                        "input",
+                        "values"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "opensAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "closesAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "capacity": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1
+                    },
+                    "reentry": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "name",
+                    "templateIds",
+                    "match",
+                    "opensAt",
+                    "closesAt",
+                    "timeZone",
+                    "capacity",
+                    "reentry"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 10
+              },
+              "staff": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "door",
+                        "desk",
+                        "manager"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "name",
+                    "role"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50
+              },
+              "sessions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "accepts": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "templateIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "maxItems": 100
+                        },
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "ref": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  }
+                                },
+                                "required": [
+                                  "ref"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  }
+                                },
+                                "required": [
+                                  "id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "templateIds",
+                        "events"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "zones": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "ref": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 64
+                              }
+                            },
+                            "required": [
+                              "ref"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 64
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "maxItems": 8
+                    },
+                    "hours": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "mon": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "tue": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "wed": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "thu": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "fri": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "sat": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "sun": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "dates": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                            },
+                            "maxItems": 4
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "settings": {
+                      "type": "object",
+                      "properties": {
+                        "checkIn": {
+                          "type": "object",
+                          "properties": {
+                            "mode": {
+                              "type": "string",
+                              "enum": [
+                                "single",
+                                "daily",
+                                "unlimited",
+                                "in_out"
+                              ]
+                            },
+                            "eventId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "minLength": 1,
+                              "maxLength": 64
+                            },
+                            "validFrom": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            },
+                            "validUntil": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 0
+                            },
+                            "durationMinutes": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "maximum": 5256000
+                            },
+                            "durationFrom": {
+                              "type": "string",
+                              "enum": [
+                                "first_scan",
+                                "issued"
+                              ]
+                            },
+                            "days": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "maximum": 366
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "direction": {
+                          "type": "string",
+                          "enum": [
+                            "in",
+                            "out",
+                            "both"
+                          ]
+                        },
+                        "showPhoto": {
+                          "type": "boolean"
+                        },
+                        "acceptAllTemplates": {
+                          "type": "boolean"
+                        },
+                        "flow": {
+                          "type": "string",
+                          "enum": [
+                            "auto",
+                            "choose"
+                          ]
+                        },
+                        "defaultActionId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 32
+                        },
+                        "roleWithoutSignIn": {
+                          "type": "string",
+                          "enum": [
+                            "door",
+                            "desk"
+                          ]
+                        },
+                        "staffSignIn": {
+                          "type": "boolean"
+                        },
+                        "letInAgain": {
+                          "type": "string",
+                          "enum": [
+                            "anyone",
+                            "manager",
+                            "never"
+                          ]
+                        },
+                        "reader": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "barcode",
+                            "nfc"
+                          ]
+                        },
+                        "lookup": {
+                          "type": "boolean"
+                        },
+                        "offline": {
+                          "type": "boolean"
+                        },
+                        "whenOffline": {
+                          "type": "string",
+                          "enum": [
+                            "stop",
+                            "decide",
+                            "list"
+                          ]
+                        },
+                        "dailyAmount": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 10000000
+                        },
+                        "deskActions": {
+                          "type": "boolean"
+                        },
+                        "hardLimit": {
+                          "type": "boolean"
+                        },
+                        "approvals": {
+                          "type": "string",
+                          "enum": [
+                            "managers",
+                            "desk"
+                          ]
+                        },
+                        "tags": {
+                          "type": "object",
+                          "properties": {
+                            "assign": {
+                              "type": "string",
+                              "enum": [
+                                "desk",
+                                "manager",
+                                "never"
+                              ],
+                              "default": "desk"
+                            },
+                            "assignAll": {
+                              "type": "string",
+                              "enum": [
+                                "desk",
+                                "manager",
+                                "never"
+                              ],
+                              "default": "manager"
+                            },
+                            "level": {
+                              "type": "string",
+                              "enum": [
+                                "off",
+                                "basic",
+                                "secure"
+                              ]
+                            },
+                            "types": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "standard"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "minItems": 1,
+                              "maxItems": 12
+                            },
+                            "confirmBasic": {
+                              "type": "string",
+                              "enum": [
+                                "none",
+                                "staff",
+                                "manager"
+                              ]
+                            }
+                          }
+                        },
+                        "customer": {
+                          "type": "object",
+                          "properties": {
+                            "welcome": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 40
+                            },
+                            "refusedLine": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 40
+                            },
+                            "greet": {
+                              "type": "boolean"
+                            },
+                            "showReady": {
+                              "type": "boolean"
+                            },
+                            "showDraft": {
+                              "type": "boolean"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "devices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "surface": {
+                            "type": "string",
+                            "enum": [
+                              "auto",
+                              "phone",
+                              "operator",
+                              "desk",
+                              "customer"
+                            ]
+                          },
+                          "overrides": {
+                            "type": "object",
+                            "properties": {
+                              "flow": {
+                                "type": "string",
+                                "enum": [
+                                  "auto",
+                                  "choose"
+                                ]
+                              },
+                              "reader": {
+                                "type": "string",
+                                "enum": [
+                                  "none",
+                                  "barcode",
+                                  "nfc"
+                                ]
+                              },
+                              "direction": {
+                                "type": "string",
+                                "enum": [
+                                  "in",
+                                  "out",
+                                  "both"
+                                ]
+                              },
+                              "lookup": {
+                                "type": "boolean"
+                              },
+                              "showPhoto": {
+                                "type": "boolean"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "ref": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "scan",
+                              "customer",
+                              "monitor"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "surface",
+                          "overrides",
+                          "ref",
+                          "role"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "minItems": 1,
+                      "maxItems": 10
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "name",
+                    "timeZone",
+                    "accepts",
+                    "zones",
+                    "hours",
+                    "settings",
+                    "devices"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 8
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NO_EXIT",
+                        "NO_MANAGER",
+                        "NO_STAFF",
+                        "PLAN_MISSES_PLACE",
+                        "HOURS_DIFFER",
+                        "EVENT_NO_PASSES",
+                        "READER_BOTH",
+                        "PLACE_ON_EVENT",
+                        "TEST_ONLY",
+                        "DIRECTION_NEEDS_TRACKING",
+                        "OFFLINE_LIST_BLOCKED"
+                      ]
+                    },
+                    "level": {
+                      "type": "string",
+                      "enum": [
+                        "error",
+                        "warn",
+                        "info"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "params": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "door": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "session",
+                            "device",
+                            "zone",
+                            "event",
+                            "template",
+                            "staff"
+                          ]
+                        },
+                        "ref": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "ref"
+                      ]
+                    },
+                    "fix": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "device_direction"
+                              ]
+                            },
+                            "device": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "in",
+                                "both"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "device",
+                            "direction"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "add_device"
+                              ]
+                            },
+                            "session": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "out"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "session",
+                            "direction"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "add_staff"
+                              ]
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "manager"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "role"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "remove_place"
+                              ]
+                            },
+                            "session": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "session"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "track_in_out"
+                              ]
+                            },
+                            "session": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "session"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "open_template"
+                              ]
+                            },
+                            "templateId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "templateId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "level",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "mode",
+              "timeZone",
+              "preset",
+              "zones",
+              "events",
+              "staff",
+              "sessions",
+              "checks"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
       "ScanningSessionDetail": {
         "type": "object",
         "properties": {
@@ -19736,6 +21166,7 @@
                 "webhooks:manage",
                 "brand:manage",
                 "scanning:write",
+                "scanning:admin",
                 "api-keys:write"
               ]
             },
@@ -21617,6 +23048,734 @@
           }
         }
       },
+      "ScanningSessionsSetupParams": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "preset": {
+            "type": "string",
+            "enum": [
+              "front_desk",
+              "event_night",
+              "venue"
+            ]
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "places": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "zoneId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "zoneId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9-]{0,23}$"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "key": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                    },
+                    "inside": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9-]{0,23}$"
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      ]
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000
+                    },
+                    "count": {
+                      "type": "boolean"
+                    },
+                    "tapOut": {
+                      "type": "boolean"
+                    },
+                    "maxStayMinutes": {
+                      "type": "integer",
+                      "minimum": 15,
+                      "maximum": 2880
+                    },
+                    "clearAt": {
+                      "type": "string",
+                      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "maxItems": 8,
+            "default": []
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "eventId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "fromTemplate": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "ref": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9-]{0,23}$"
+                    }
+                  },
+                  "required": [
+                    "fromTemplate"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9-]{0,23}$"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "templateIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "minItems": 1,
+                      "maxItems": 20
+                    },
+                    "opensAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "closesAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "reentry": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "name",
+                    "templateIds",
+                    "opensAt",
+                    "closesAt"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "maxItems": 10,
+            "default": []
+          },
+          "staff": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "door",
+                    "desk",
+                    "manager"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "role"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 50,
+            "default": []
+          },
+          "doors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "place": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9-]{0,23}$"
+                    },
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "admits": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "any": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "any"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "templateIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "maxItems": 100,
+                          "default": []
+                        },
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z][a-z0-9-]{0,23}$"
+                              },
+                              {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 64
+                              }
+                            ]
+                          },
+                          "maxItems": 10,
+                          "default": []
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "hours": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "always"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "every": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "mon": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "tue": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "wed": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "thu": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "fri": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "sat": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "sun": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$"
+                          },
+                          "minItems": 1,
+                          "maxItems": 4
+                        },
+                        "closed": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 60
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "scanners": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string",
+                          "enum": [
+                            "anyone"
+                          ]
+                        },
+                        "as": {
+                          "type": "string",
+                          "enum": [
+                            "door",
+                            "desk"
+                          ],
+                          "default": "door"
+                        }
+                      },
+                      "required": [
+                        "by"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "by": {
+                          "type": "string",
+                          "enum": [
+                            "staff"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "by"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "devices": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "layout": {
+                        "type": "string",
+                        "enum": [
+                          "auto",
+                          "phone",
+                          "operator",
+                          "customer"
+                        ]
+                      },
+                      "direction": {
+                        "type": "string",
+                        "enum": [
+                          "in",
+                          "out",
+                          "both"
+                        ]
+                      },
+                      "reader": {
+                        "type": "string",
+                        "enum": [
+                          "camera",
+                          "barcode"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 1,
+                  "maxItems": 10
+                },
+                "more": {
+                  "type": "object",
+                  "properties": {
+                    "checkIn": {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "single",
+                            "daily",
+                            "unlimited",
+                            "in_out"
+                          ]
+                        },
+                        "eventId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "validFrom": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "validUntil": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "durationMinutes": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 5256000
+                        },
+                        "durationFrom": {
+                          "type": "string",
+                          "enum": [
+                            "first_scan",
+                            "issued"
+                          ]
+                        },
+                        "days": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 366
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "direction": {
+                      "type": "string",
+                      "enum": [
+                        "in",
+                        "out",
+                        "both"
+                      ]
+                    },
+                    "showPhoto": {
+                      "type": "boolean"
+                    },
+                    "acceptAllTemplates": {
+                      "type": "boolean"
+                    },
+                    "flow": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "choose"
+                      ]
+                    },
+                    "defaultActionId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 32
+                    },
+                    "roleWithoutSignIn": {
+                      "type": "string",
+                      "enum": [
+                        "door",
+                        "desk"
+                      ]
+                    },
+                    "staffSignIn": {
+                      "type": "boolean"
+                    },
+                    "letInAgain": {
+                      "type": "string",
+                      "enum": [
+                        "anyone",
+                        "manager",
+                        "never"
+                      ]
+                    },
+                    "reader": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "barcode",
+                        "nfc"
+                      ]
+                    },
+                    "lookup": {
+                      "type": "boolean"
+                    },
+                    "offline": {
+                      "type": "boolean"
+                    },
+                    "whenOffline": {
+                      "type": "string",
+                      "enum": [
+                        "stop",
+                        "decide",
+                        "list"
+                      ]
+                    },
+                    "dailyAmount": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 10000000
+                    },
+                    "deskActions": {
+                      "type": "boolean"
+                    },
+                    "hardLimit": {
+                      "type": "boolean"
+                    },
+                    "approvals": {
+                      "type": "string",
+                      "enum": [
+                        "managers",
+                        "desk"
+                      ]
+                    },
+                    "tags": {
+                      "type": "object",
+                      "properties": {
+                        "assign": {
+                          "type": "string",
+                          "enum": [
+                            "desk",
+                            "manager",
+                            "never"
+                          ],
+                          "default": "desk"
+                        },
+                        "assignAll": {
+                          "type": "string",
+                          "enum": [
+                            "desk",
+                            "manager",
+                            "never"
+                          ],
+                          "default": "manager"
+                        },
+                        "level": {
+                          "type": "string",
+                          "enum": [
+                            "off",
+                            "basic",
+                            "secure"
+                          ]
+                        },
+                        "types": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 64
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "standard"
+                                ]
+                              }
+                            ]
+                          },
+                          "minItems": 1,
+                          "maxItems": 12
+                        },
+                        "confirmBasic": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "staff",
+                            "manager"
+                          ]
+                        }
+                      }
+                    },
+                    "customer": {
+                      "type": "object",
+                      "properties": {
+                        "welcome": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "refusedLine": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "greet": {
+                          "type": "boolean"
+                        },
+                        "showReady": {
+                          "type": "boolean"
+                        },
+                        "showDraft": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "admits"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 8
+          }
+        },
+        "required": [
+          "orgId",
+          "doors"
+        ],
+        "additionalProperties": false
+      },
       "ScanningSessionsCreateParams": {
         "type": "object",
         "properties": {
@@ -22457,6 +24616,9 @@
               "ended"
             ]
           },
+          "removeDevices": {
+            "type": "boolean"
+          },
           "revision": {
             "type": "integer",
             "minimum": 0
@@ -22585,9 +24747,6 @@
             "additionalProperties": false
           }
         },
-        "required": [
-          "name"
-        ],
         "additionalProperties": false
       },
       "ScanningSessionsDevicesUpdateParams": {
@@ -27963,6 +30122,7 @@
                           "templates:publish",
                           "messages:read",
                           "scanning:write",
+                          "scanning:admin",
                           "nfc:read",
                           "nfc:write",
                           "wallet:read",
@@ -88575,6 +90735,7 @@
                                 "templates:publish",
                                 "messages:read",
                                 "scanning:write",
+                                "scanning:admin",
                                 "nfc:read",
                                 "nfc:write",
                                 "wallet:read",
@@ -92525,6 +94686,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -92555,7 +94717,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -92757,6 +94927,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -92787,7 +94958,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -92962,6 +95141,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -92992,7 +95172,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -93199,6 +95387,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -93229,7 +95418,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -93473,6 +95670,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -93503,7 +95701,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -93707,6 +95913,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -93737,7 +95944,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -93917,6 +96132,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -93947,7 +96163,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -94345,6 +96569,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -94375,7 +96600,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -94760,6 +96993,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -94790,7 +97024,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -95190,6 +97432,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -95220,7 +97463,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -95710,6 +97961,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -95740,7 +97992,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -96141,6 +98401,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -96171,7 +98432,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -96422,6 +98691,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -96452,7 +98722,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -96724,6 +99002,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -96754,7 +99033,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -96967,6 +99254,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -96997,7 +99285,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -97300,6 +99596,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -97330,7 +99627,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -97574,6 +99879,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -97604,7 +99910,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -97840,6 +100154,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -97870,7 +100185,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -98211,6 +100534,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -98241,7 +100565,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -98750,6 +101082,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -98780,7 +101113,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -98990,6 +101331,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -99020,7 +101362,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -99277,6 +101627,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -99307,7 +101658,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -99538,6 +101897,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -99568,7 +101928,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -99862,6 +102230,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -99892,7 +102261,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -100098,6 +102475,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -100128,7 +102506,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -100346,6 +102732,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -100376,7 +102763,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -100651,6 +103046,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -100681,7 +103077,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -100867,6 +103271,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -100897,7 +103302,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -101153,6 +103566,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -101183,7 +103597,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -101537,6 +103959,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -101567,7 +103990,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -101807,6 +104238,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -101837,7 +104269,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -102090,6 +104530,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -102120,7 +104561,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -102417,6 +104866,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -102447,7 +104897,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -102661,6 +105119,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -102691,7 +105150,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -102886,6 +105353,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -102916,7 +105384,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -103150,6 +105626,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -103180,7 +105657,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -103404,6 +105889,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -103434,7 +105920,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -103631,6 +106125,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -103661,7 +106156,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -103858,6 +106361,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -103888,7 +106392,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -104083,6 +106595,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -104113,7 +106626,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -104335,6 +106856,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -104365,7 +106887,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -104561,6 +107091,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -104591,7 +107122,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -104793,6 +107332,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -104823,7 +107363,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -105079,6 +107627,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -105109,7 +107658,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -105319,6 +107876,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -105349,7 +107907,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -105614,6 +108180,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -105644,7 +108211,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -105834,6 +108409,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -105864,7 +108440,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -106059,6 +108643,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -106089,7 +108674,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -106292,6 +108885,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -106322,7 +108916,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -106545,6 +109147,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -106575,7 +109178,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -106801,6 +109412,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -106831,7 +109443,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -107039,6 +109659,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -107069,7 +109690,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -107288,6 +109917,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -107318,7 +109948,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -107513,6 +110151,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -107543,7 +110182,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -107748,6 +110395,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -107778,7 +110426,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -107989,6 +110645,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -108019,7 +110676,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -108555,6 +111220,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -108585,7 +111251,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -109070,6 +111744,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -109100,7 +111775,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -109340,6 +112023,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -109370,7 +112054,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -109836,6 +112528,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -109866,7 +112559,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -110340,6 +113041,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -110370,7 +113072,487 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
+          "SCAN_STAFF_CHANGED",
+          "SCAN_STAFF_CURSOR",
+          "SCAN_STAFF_NOT_FOUND",
+          "SCAN_SUMMARY_SESSION_FORBIDDEN",
+          "SCAN_SURFACE_UNSUPPORTED",
+          "SCAN_TOO_MANY_MISSES",
+          "SCAN_TOO_MANY_OVERRIDES",
+          "SCAN_UNDO_EXPIRED",
+          "SCAN_UNDO_FORBIDDEN",
+          "SCREEN_ONLY",
+          "SCREEN_REQUIRED",
+          "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
+          "STAFF_NAME_TAKEN",
+          "STAFF_REQUIRED",
+          "STAFF_SIGN_IN_DISABLED",
+          "STAFF_SIGN_IN_UNAVAILABLE",
+          "TAG_APPROVAL_REQUIRED",
+          "TAG_ASSIGN_FORBIDDEN",
+          "TAG_CARD_AMBIGUOUS",
+          "TAG_CHECK_FAILED",
+          "TAG_HOLDER_CHANGED",
+          "TAG_LIMIT",
+          "TAG_NOT_FOUND",
+          "TAG_NO_ACCOUNT",
+          "TAG_PASS_NOT_ACCEPTED",
+          "TAG_POOL_UNSUPPORTED",
+          "TAG_REQUEST_EXPIRED",
+          "TAG_SCANNER_ONLY",
+          "TAG_SUN_REPLAY",
+          "TAG_UID_RANDOM",
+          "TAG_UNDO_EXPIRED",
+          "TAG_UNDO_FORBIDDEN",
+          "TAG_UNREADABLE",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_RELEASED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TERMINAL_NOT_FOUND",
+          "TERMINAL_ONLY",
+          "UNAUTHENTICATED",
+          "UNDO_SUPERSEDED",
+          "UNDO_UNCONFIRMED",
+          "UNLOCK_REQUIRED",
+          "USER_NOT_FOUND",
+          "VALIDATION",
+          "ZONE_ARCHIVED",
+          "ZONE_CYCLE",
+          "ZONE_DEPTH",
+          "ZONE_EVENT_SESSION",
+          "ZONE_KEY_TAKEN",
+          "ZONE_NAME_TAKEN",
+          "ZONE_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/scanning-sessions/setup": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
+        "summary": "Set up scanning in one call: places, events, staff, sessions and devices",
+        "tags": [
+          "scanners"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanningSessionsSetupParams"
+              },
+              "example": {
+                "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                "preset": "front_desk",
+                "places": [
+                  {
+                    "ref": "gym",
+                    "name": "Gym",
+                    "max": 60
+                  }
+                ],
+                "staff": [
+                  {
+                    "name": "Maya Chen",
+                    "role": "manager"
+                  },
+                  {
+                    "name": "Sam Ortiz",
+                    "role": "desk"
+                  }
+                ],
+                "doors": [
+                  {
+                    "name": "Front desk",
+                    "place": "gym",
+                    "admits": {
+                      "templateIds": [
+                        "0193a1b2-7c00-7000-8000-0000000000b1",
+                        "0193a1b2-7c00-7000-8000-0000000000b2"
+                      ]
+                    },
+                    "hours": {
+                      "every": [
+                        "06:00-22:00"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "examples": {
+                "Front desk": {
+                  "summary": "Front desk",
+                  "value": {
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "preset": "front_desk",
+                    "places": [
+                      {
+                        "ref": "gym",
+                        "name": "Gym",
+                        "max": 60
+                      }
+                    ],
+                    "staff": [
+                      {
+                        "name": "Maya Chen",
+                        "role": "manager"
+                      },
+                      {
+                        "name": "Sam Ortiz",
+                        "role": "desk"
+                      }
+                    ],
+                    "doors": [
+                      {
+                        "name": "Front desk",
+                        "place": "gym",
+                        "admits": {
+                          "templateIds": [
+                            "0193a1b2-7c00-7000-8000-0000000000b1",
+                            "0193a1b2-7c00-7000-8000-0000000000b2"
+                          ]
+                        },
+                        "hours": {
+                          "every": [
+                            "06:00-22:00"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "Event night": {
+                  "summary": "Event night",
+                  "value": {
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "preset": "event_night",
+                    "events": [
+                      {
+                        "ref": "gala",
+                        "name": "Saturday gala",
+                        "templateIds": [
+                          "0193a1b2-7c00-7000-8000-0000000000b1"
+                        ],
+                        "opensAt": 1795129200000,
+                        "closesAt": 1795212000000,
+                        "max": 300
+                      }
+                    ],
+                    "doors": [
+                      {
+                        "name": "Gala door",
+                        "admits": {
+                          "events": [
+                            "gala"
+                          ]
+                        },
+                        "devices": [
+                          {
+                            "layout": "phone"
+                          },
+                          {
+                            "layout": "phone"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "Several areas": {
+                  "summary": "Several areas",
+                  "value": {
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "preset": "venue",
+                    "places": [
+                      {
+                        "ref": "club",
+                        "name": "Club",
+                        "max": 200
+                      },
+                      {
+                        "ref": "vip",
+                        "name": "VIP",
+                        "inside": "club",
+                        "max": 20
+                      }
+                    ],
+                    "doors": [
+                      {
+                        "name": "Main door",
+                        "place": "club",
+                        "admits": {
+                          "templateIds": [
+                            "0193a1b2-7c00-7000-8000-0000000000b1"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "VIP door",
+                        "place": "vip",
+                        "admits": {
+                          "templateIds": [
+                            "0193a1b2-7c00-7000-8000-0000000000b1"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanSetupAnswer"
+                },
+                "example": {
+                  "replayed": false,
+                  "pairingReissued": false,
+                  "mode": "live",
+                  "sessions": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+                      "ref": "door-1",
+                      "name": "Front desk",
+                      "devices": [
+                        {
+                          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                          "name": "Front desk 1",
+                          "pairing": {
+                            "code": "ABCDE-FGHJK",
+                            "url": "https://passbook.mobile/scan#pair=ABCDE-FGHJK",
+                            "expiresAt": 1795129800000
+                          }
+                        },
+                        {
+                          "id": "0193a1b2-7c00-7000-8000-0000000000e2",
+                          "name": "Front desk 2",
+                          "pairing": {
+                            "code": "KLMNP-QRSTV",
+                            "url": "https://passbook.mobile/scan#pair=KLMNP-QRSTV",
+                            "expiresAt": 1795129800000
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "zones": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "ref": "gym",
+                      "name": "Gym",
+                      "created": true
+                    }
+                  ],
+                  "events": [],
+                  "staff": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+                      "name": "Maya Chen",
+                      "role": "manager",
+                      "pin": "482913"
+                    },
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000f2",
+                      "name": "Sam Ortiz",
+                      "role": "desk",
+                      "pin": "730256"
+                    }
+                  ],
+                  "checks": []
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScanningSessionsSetup",
+        "x-sdk": {
+          "resource": "scanningSessions",
+          "method": "setup"
+        },
+        "description": "Makes the zones, events, staff, sessions and devices for a set of doors in one batch. Send an `Idempotency-Key`: the same key and body replays the answer with `replayed: true` and no PINs or pairing codes (codes that ran out are reissued, `pairingReissued: true`); the same key with another body is 409 `SCAN_SETUP_KEY_REUSED`. PINs and pairing codes appear once. `?dryRun=true` returns the plan and its checks with refs in place of ids and writes nothing. Any `error` check is 422 `SCAN_SETUP_CHECKS_FAILED`. `dryRun` needs no key and runs the same rules. A `scanning:write` key makes places (live) and devices with no pairing code; staff and pairing codes need `scanning:admin`.",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "ADMITS_TOO_MANY",
+          "API_KEY_NO_APPROVAL",
+          "API_KEY_ORG_REQUIRED",
+          "API_KEY_ROUTE",
+          "ASSET_NOT_FOUND",
+          "BLUEPRINT_NOT_SCANNABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "CSRF_ORIGIN",
+          "DEVICE_REQUIRED",
+          "ENROLLMENT_ENDED",
+          "ENROLLMENT_NOT_FOUND",
+          "EVENT_ARCHIVED",
+          "EVENT_IN_USE",
+          "EVENT_MATCH_INPUT",
+          "EVENT_NEEDS_CAPACITY",
+          "EVENT_NOT_FOUND",
+          "EVENT_TEMPLATE_NO_CHECK_IN",
+          "EVENT_TEMPLATE_RELEASE_REQUIRED",
+          "FORBIDDEN",
+          "GROUP_ENTRY_ONLY",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IMAGE_NOT_FOUND",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOTE_CAP",
+          "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
+          "NOTE_NOT_FOUND",
+          "NOTE_ROLE",
+          "NOT_INSIDE",
+          "OFFLINE_OFF",
+          "OFFLINE_TOO_BIG",
+          "ORG_INACTIVE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PAIRING_INVALID",
+          "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
+          "PHOTO_PASS_INACTIVE",
+          "PHOTO_ROLE",
+          "PIN_GENERATION_FAILED",
+          "PIN_INVALID",
+          "PIN_MANAGER_REQUIRED",
+          "RATE_LIMITED",
+          "ROLE_NOT_ALLOWED",
+          "ROLL_CALL_ENDED",
+          "ROLL_CALL_NOT_FOUND",
+          "ROLL_CALL_NO_PLACES",
+          "ROLL_CALL_NO_SESSION",
+          "ROLL_CALL_TOO_LARGE",
+          "SAMPLE_TEST_ONLY",
+          "SCANNER_ADMIN_ROLE",
+          "SCANNER_ADMIN_SETUP_EXISTS",
+          "SCANNER_ADMIN_USER",
+          "SCANNER_CANNOT_SCAN",
+          "SCANNER_CHANGED",
+          "SCANNER_EXPIRED",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_PAIRABLE",
+          "SCANNER_NOT_TERMINAL",
+          "SCANNER_REPAIR",
+          "SCANNER_REVOKED",
+          "SCANNER_ROLE_INVALID",
+          "SCANNER_SETUP_EXISTS",
+          "SCANNER_UNASSIGNED",
+          "SCANNER_UNAUTHENTICATED",
+          "SCANNER_WATCH_INVALID",
+          "SCANNER_WATCH_MODE",
+          "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_DEVICE_CHANGED",
+          "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_HOLD_RANGE",
+          "SCANNING_HOURS_NONE",
+          "SCANNING_SESSION_CHANGED",
+          "SCANNING_SESSION_CLOSED",
+          "SCANNING_SESSION_CONFIG_REQUIRED",
+          "SCANNING_SESSION_COUNTS_UNAVAILABLE",
+          "SCANNING_SESSION_MODE",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCANNING_SESSION_OPEN",
+          "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
+          "SCANNING_SESSION_SCOPE_INVALID",
+          "SCANNING_SESSION_SETTINGS_INVALID",
+          "SCAN_ACCESS_CHANGED",
+          "SCAN_ADMIN_SETUP_REQUIRED",
+          "SCAN_BODY_INVALID",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_COUNTS_UNAVAILABLE",
+          "SCAN_CREDENTIAL_CHANGED",
+          "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+          "SCAN_EVENT_CHANGED",
+          "SCAN_EXPORT_RANGE",
+          "SCAN_EXPORT_TOO_LARGE",
+          "SCAN_HISTORY_UNAVAILABLE",
+          "SCAN_IN_PROGRESS",
+          "SCAN_KEY_REUSED",
+          "SCAN_LIVE_ORIGIN",
+          "SCAN_LOOKUP_DISABLED",
+          "SCAN_MARK_OUT_INVALID",
+          "SCAN_MODE_MISMATCH",
+          "SCAN_NOT_FOUND",
+          "SCAN_NO_SESSION",
+          "SCAN_OVERRIDE_FORBIDDEN",
+          "SCAN_OVERRIDE_INVALID",
+          "SCAN_OVERRIDE_NOTE_CLOSED",
+          "SCAN_OVERRIDE_TAKEN",
+          "SCAN_PASS_CHANGED",
+          "SCAN_SCOPE_NOT_ALLOWED",
+          "SCAN_SCOPE_REQUIRED",
+          "SCAN_SEARCH_FORBIDDEN",
+          "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
+          "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -110603,6 +113785,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -110633,7 +113816,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -110823,6 +114014,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -110853,7 +114045,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -111093,6 +114293,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -111123,7 +114324,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -111318,6 +114527,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -111348,7 +114558,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -111551,6 +114769,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -111581,7 +114800,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -111776,6 +115003,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -111806,7 +115034,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -112011,6 +115247,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -112041,7 +115278,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -112246,6 +115491,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -112276,7 +115522,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -112491,6 +115745,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -112521,7 +115776,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -114286,6 +117549,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -114316,7 +117580,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -114514,6 +117786,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -114544,7 +117817,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -114925,6 +118206,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -114955,7 +118237,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -115347,6 +118637,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -115377,7 +118668,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -115575,6 +118874,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -115605,7 +118905,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -115861,6 +119169,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -115891,7 +119200,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -116081,6 +119398,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -116111,7 +119429,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -116306,6 +119632,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -116336,7 +119663,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -116539,6 +119874,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -116569,7 +119905,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -116764,6 +120108,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -116794,7 +120139,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -116999,6 +120352,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -117029,7 +120383,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -117275,6 +120637,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -117305,7 +120668,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -117508,6 +120879,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -117538,7 +120910,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -117754,6 +121134,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -117784,7 +121165,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -117999,6 +121388,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -118029,7 +121419,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -118421,6 +121819,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -118451,7 +121850,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -118649,6 +122056,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -118679,7 +122087,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -119095,6 +122511,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -119125,7 +122542,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -119486,6 +122911,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -119516,7 +122942,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -119892,6 +123326,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -119922,7 +123357,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -120288,6 +123731,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -120318,7 +123762,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -120684,6 +124136,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -120714,7 +124167,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -120926,6 +124387,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -120956,7 +124418,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -121390,6 +124860,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -121420,7 +124891,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -121763,6 +125242,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -121793,7 +125273,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -121988,6 +125476,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -122018,7 +125507,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -122223,6 +125720,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -122253,7 +125751,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -122680,6 +126186,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -122710,7 +126217,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -123124,6 +126639,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -123154,7 +126670,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -123581,6 +127105,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -123611,7 +127136,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -124083,6 +127616,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -124113,7 +127647,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -124540,6 +128082,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -124570,7 +128113,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",
@@ -124819,6 +128370,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_OPEN",
           "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
           "SCANNING_SESSION_SCOPE_INVALID",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_ACCESS_CHANGED",
@@ -124849,7 +128401,15 @@
           "SCAN_SCOPE_REQUIRED",
           "SCAN_SEARCH_FORBIDDEN",
           "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
           "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
           "SCAN_STAFF_CHANGED",
           "SCAN_STAFF_CURSOR",
           "SCAN_STAFF_NOT_FOUND",

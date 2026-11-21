@@ -39,6 +39,7 @@ import {
   ScanSessionSchema,
   ScanSummarySchema,
 } from '../../shared/contracts/scan-session.ts';
+import { ScanSetupAnswerSchema } from '../../shared/contracts/scan-setup-intent.ts';
 import {
   CreatedScannerSchema,
   ScanEventLiveSchema,
@@ -148,6 +149,7 @@ const names = {
   CaptureEndpointCreated: CaptureEndpointCreatedSchema,
   CaptureSecret: CaptureSecretSchema,
   EventPage: EventFeedPageSchema,
+  ScanSetupAnswer: ScanSetupAnswerSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

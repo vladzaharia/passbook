@@ -283,6 +283,7 @@ describe('mintable scopes', () => {
       'brand:manage',
       'scanning:write',
       'scan-setup:read',
+      'scanning:admin',
       'api-keys:write',
     ]);
   });

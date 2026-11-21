@@ -72,6 +72,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scanning:admin\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"scanning:admin\" added",
+    "note": "Keys may hold scanning:admin: staff PINs and pairing codes in the one-call setup."
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",
@@ -416,6 +424,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} body.removeDevices: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "body.removeDevices: optional input field added",
+    "note": "Ending a session can revoke all its devices with removeDevices: true."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
@@ -718,6 +734,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup new operation",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "new operation",
+    "note": "Set up scanning in one call: places, events, staff, sessions and devices."
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.personal: field added",

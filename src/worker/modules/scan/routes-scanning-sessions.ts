@@ -20,6 +20,7 @@ import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { registerScanSetup } from './routes-scan-setup.ts';
 import {
   createScanningDevice,
   joinAdminScanningSession,
@@ -39,6 +40,8 @@ import { consoleSessionSummary } from './summary-session.ts';
 import { sessionAuthority } from './target-authority.ts';
 
 export const scanningSessionsRoutes = createRouter();
+/** The one-call setup declares its own `auth` (a console session or a `scanning:write` key): it is registered before the session guard, which applies to what follows. */
+registerScanSetup(scanningSessionsRoutes);
 guard(scanningSessionsRoutes, requireTenantSession);
 register(
   scanningSessionsRoutes,
