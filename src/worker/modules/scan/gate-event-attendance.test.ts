@@ -61,9 +61,11 @@ it.each(['once', 'daily', 'always', 'cooldown'] as const)(
       ),
     ).toMatchObject({ state: 'in', last_scan_id: expect.any(String) });
     expect(await action(scanner, c)).toMatchObject({ kind: 'heads_up', reason: 'capacity_full' });
+    // A re-entry event is a place: a pass already inside is held, and capacity never counts it twice.
     if (repeat === 'always')
       expect(await action(scanner, a)).toMatchObject({
-        kind: 'ok',
+        kind: 'heads_up',
+        reason: 'still_inside',
         counts: { event: { arrived: 2, inside: 2 } },
       });
   },
