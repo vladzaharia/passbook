@@ -524,14 +524,18 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
   `/p` page, so the iPhone that scans it opens the page in Safari and adds with the badge there (a
   Mac's own add needs Safari and iCloud's Wallet sync; the scan needs neither). A Mac gets the
   badge beside the QR; elsewhere (iPad, Android, Windows) the scan is the only way, so the pass
-  page shows no badge and no line. Tiles, Add all and the email keep the badge everywhere, with
-  `Open this page on your phone to add the pass to your wallet.` where it cannot add; an in-app web view on a
-  device that can, `Open in Safari…`.
-- **Portal tiles**: three rows of the list grid (subgrid): the pass (stage), title and org, the
-  actions at the bottom, so a row of tiles lines them up however the actions wrap. Actions:
-  `Show QR` where the badge cannot add (a Mac finds it in More) and the badge, then `Refresh` and
-  `More` (Show QR, Remove) as badge-sized outline icon buttons. `In Wallet` pill for registered
-  passes. No `Updated` line. Tile radius 18 px (the pass's ~14). Show QR opens `Add to Apple
+  page and the tiles show no badge and no line (tiles lead with Show QR). The bundle page's Add all
+  and the email keep the badge everywhere, with `Open this page on your phone to add the pass to
+  your wallet.` where it cannot add; an in-app web view on a device that can, `Open in Safari…`.
+- **Portal tiles**: two rows of the list grid (subgrid): the pass (stage, the link into it, named
+  by it), then one action row, so a row of tiles lines them up. The tile repeats nothing the card
+  says (name, org, fields, Active); it keeps the states the card does not: `Test`, `Voided`,
+  `Removed`, `In Wallet` (in place of the badge). The row leads with this device's way, as the pass
+  page: the badge where it adds (iPhone, Mac), `Show QR` on a computer, else `View pass`; then
+  `Refresh` and `More` (Show QR on a Mac, Remove) as badge-sized outline icon buttons. No page
+  action (the nav has Account). `Add N passes` sits above the grid with no card or title, only on a
+  device that adds, with Apple's line in an app's web view. Tile radius 18 px (the pass's ~14).
+  Show QR opens `Add to Apple
   Wallet` over the pass's name with the pass page's scan (`portal/add/scan.tsx`): the buddy on the
   QR's tile, `Scan with your iPhone camera.` beside it, under it in the bottom sheet.
 - **Portal pass detail** and **`/p`** are one header and one view (`portal/holder-heading.tsx`,

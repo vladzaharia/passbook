@@ -656,13 +656,11 @@ describe('presentation barcode', () => {
     });
     const html = await res.text();
     expect(html).toContain('Show barcode');
-    expect(html).toContain('Open this page on your phone to add the pass to your wallet.');
+    expect(html).toContain('For Apple Wallet, open this page on an iPhone.');
     expect(html).not.toContain('data-awb=');
     expect(html).not.toContain('wl-add-scan');
     expect(html).not.toContain('/apple/badge/');
-    expect(html.indexOf('Show a barcode in your browser')).toBeLessThan(
-      html.indexOf('Open this page on your phone'),
-    );
+    expect(html.indexOf('wl-hero-action')).toBeLessThan(html.indexOf('For Apple Wallet'));
   });
 
   it.each(['primary', 'persisted'])(

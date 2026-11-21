@@ -217,8 +217,14 @@
   .wl-holder[data-rise] .wl-holder-add > :not(:has([data-awb], .wl-native-badge)) {
     animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 240ms backwards;
   }
+  /* /p allows no inline styles but the pass's colours: the rows count themselves. */
   .wl-holder[data-rise] .wl-others > li:not(.wl-other-badges) {
-    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) calc(320ms + var(--i, 0) * 60ms)
-      backwards;
+    animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) 320ms backwards;
+  }
+  .wl-holder[data-rise] .wl-others > li:nth-child(2):not(.wl-other-badges) {
+    animation-delay: 380ms;
+  }
+  .wl-holder[data-rise] .wl-others > li:nth-child(n + 3):not(.wl-other-badges) {
+    animation-delay: 440ms;
   }
 }

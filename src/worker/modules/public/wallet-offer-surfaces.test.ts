@@ -130,7 +130,10 @@ describe('native offers on public and holder surfaces', () => {
     async (mode) => {
       const pass = await ownPass(mode);
       offerLookup(pass);
-      const htmlResponse = await get(`/p/${await linkToken(kit.env, pass)}`);
+      // A Mac: the page carries the badge's download link beside the QR.
+      const htmlResponse = await get(`/p/${await linkToken(kit.env, pass)}`, {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15',
+      });
       expect(htmlResponse.status).toBe(200);
       const html = await htmlResponse.text();
       expect(html).toContain(`href="/p/${await linkToken(kit.env, pass)}/pass.pkpass"`);

@@ -1,5 +1,5 @@
 import { ChevronRight, Printer, ScanLine, Smartphone } from 'lucide-react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { NATIVE_WALLET_BADGES, type WalletChoice } from '../../shared/wallet-choice.ts';
 import type { RenderBuddy } from './add/scan.tsx';
@@ -132,9 +132,8 @@ export function OtherWays({
   if (rows.length === 0) return null;
   return (
     <ul className="wl-others" aria-label={HOLDER_COPY.otherWays}>
-      {rows.map((row, i) => (
-        // Each row carries its place, so the column's rise staggers them (holder-pass.css).
-        <li key={row.key} className={row.className} style={{ '--i': i } as CSSProperties}>
+      {rows.map((row) => (
+        <li key={row.key} className={row.className}>
           {row.body}
         </li>
       ))}

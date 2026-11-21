@@ -48,6 +48,8 @@ beforeAll(async () => {
 const get = (path: string, headers: Record<string, string> = {}, env = kit.env) =>
   app.request(`${ORIGIN}${path}`, { headers }, env);
 const assetPath = (token: string) => `/p/${token}/assets/thumbnail@3x.png`;
+/** A Mac, where the page carries the badge (its download link) beside the QR. */
+const MAC = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15' };
 
 const testPass = (orgId = kit.org.id) => kit.pass({ orgId, mode: 'test' });
 
@@ -471,7 +473,7 @@ describe('public credential transfer fence', () => {
     const freshToken = await linkToken(kit.env, fresh);
     expect(images.every((image) => image.path.startsWith(`/p/${freshToken}/assets/`))).toBe(true);
     expect((await get(oldBase)).status).toBe(404);
-    const freshPage = await get(`/p/${await linkToken(kit.env, fresh)}`);
+    const freshPage = await get(`/p/${await linkToken(kit.env, fresh)}`, MAC);
     expect(freshPage.status).toBe(200);
     expect(await freshPage.text()).toContain(`/p/${await linkToken(kit.env, fresh)}/pass.pkpass`);
     expect((await get(`/p/${await linkToken(kit.env, fresh)}/barcode`)).status).toBe(200);
@@ -993,7 +995,7 @@ describe('public page fencing', () => {
     expect(html).not.toContain(newToken);
     expect(html).not.toContain('/wallet/google');
     expect(html).not.toContain('/wallet/samsung');
-    const current = await get(`/p/${newToken}`, {}, nativeKit.env);
+    const current = await get(`/p/${newToken}`, MAC, nativeKit.env);
     expect(current.status).toBe(200);
     const currentHtml = await current.text();
     expect(currentHtml).toContain(`href="/p/${newToken}/pass.pkpass"`);
