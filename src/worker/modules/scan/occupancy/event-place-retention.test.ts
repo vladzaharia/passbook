@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { first } from '../../../platform/db.ts';
+import { first, run } from '../../../platform/db.ts';
 import {
   clearScanRetentionDeleteStmt,
   stageScanRetentionDeleteStmt,
@@ -78,5 +78,18 @@ describe('event totals keep a deleted pass the builder moved', () => {
     expect(await t.row(a, e.id)).toMatchObject({ state: 'in' });
     await hardDelete(a);
     expect(await t.act(inDoor, b)).toMatchObject({ reason: 'capacity_full' });
+  });
+
+  it('a voided holder who is inside keeps the place until they tap out (OC4)', async () => {
+    const e = await t.event({ capacity: 1 });
+    const inDoor = await t.door(e.id, 'in');
+    const outDoor = await t.door(e.id, 'out');
+    const [a, b] = [await t.pass(), await t.pass()];
+    await t.act(inDoor, a);
+    await run(t.kit.env.DB, "UPDATE passes SET status='voided' WHERE id=?", [a.id]);
+    expect(await t.act(inDoor, b)).toMatchObject({ reason: 'capacity_full' });
+    // Leaving is never refused: the voided pass taps out and frees the place.
+    expect((await t.act(outDoor, a)).kind).toBe('ok');
+    expect((await t.act(inDoor, b)).kind).toBe('ok');
   });
 });
