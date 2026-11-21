@@ -261,4 +261,18 @@ describe('native scanner adapter, bridge v2 tags', () => {
     bridge.onmessage?.({ data: JSON.stringify({ version: 2, event: 'cancelled' }) });
     expect(tagEnded).toHaveBeenCalledTimes(1);
   });
+
+  it('a cancelled that names the tag read ends it without failing a barcode check', () => {
+    const s = setup();
+    s.bridge.onmessage?.({
+      data: JSON.stringify({ version: 2, event: 'ready', capabilities: {} }),
+    });
+    s.bridge.onmessage?.({
+      data: JSON.stringify({ version: 2, event: 'scan', id: 'n-1', source: 'barcode', value: 'A' }),
+    });
+    const id = s.client?.tagRead('Hold');
+    s.bridge.onmessage?.({ data: JSON.stringify({ version: 2, event: 'cancelled', id }) });
+    expect(s.cancelled).not.toHaveBeenCalled();
+    expect(s.client?.result('input-1', 'accepted')).toBe(true);
+  });
 });

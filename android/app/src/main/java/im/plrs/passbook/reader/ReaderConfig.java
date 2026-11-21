@@ -70,10 +70,22 @@ public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String 
         if (originOf(value).equals(LOCAL_ORIGIN)) invalid("Use an external verifier URL or leave it empty.");
     }
 
+    /** Stored settings a stricter rule now rejects fall back to defaults, field by field, instead of crashing onCreate. */
     public static ReaderConfig load(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("reader", Context.MODE_PRIVATE);
-        return new ReaderConfig(prefs.getString("url", DEFAULT_VERIFIER), parseIds(prefs.getString("ids", DEFAULT_ID)),
-            prefs.getString("action", ""), prefs.getString("extra", ""), prefs.getBoolean("unverifiedScanners", false));
+        String url = prefs.getString("url", DEFAULT_VERIFIER), ids = prefs.getString("ids", DEFAULT_ID);
+        String action = prefs.getString("action", ""), extra = prefs.getString("extra", "");
+        boolean unverified = prefs.getBoolean("unverifiedScanners", false);
+        try {
+            return new ReaderConfig(url, parseIds(ids), action, extra, unverified);
+        } catch (IllegalArgumentException rejected) {
+            android.util.Log.w("PassBook", "reader.config_reset");
+        }
+        try {
+            return new ReaderConfig(DEFAULT_VERIFIER, parseIds(ids), "", "", unverified);
+        } catch (IllegalArgumentException rejected) {
+            return new ReaderConfig(DEFAULT_VERIFIER, List.of(DEFAULT_ID), "", "", unverified);
+        }
     }
 
     public void save(Context context) {

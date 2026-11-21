@@ -49,7 +49,7 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | `platform`, `appVersion` | `"android"` and the native application version (at most 32 characters). |
 | `camera.available`, `camera.permission` | A camera is currently enumerated (or a built-in camera is known when enumeration throws). Permission is `granted`, `denied`, `restricted`, `unavailable`, or `unknown` from the current OS state and observed permission results. Android cannot always distinguish a first request from permanent denial, so the app uses `unknown` rather than guessing. Reporting never requests permission. |
 | `keyboard.supported`, `keyboard.connected`, `keyboard.connectionObservable` | `true`, `null`, `false`: keyboard-wedge input uses the OS text-input path, but Android cannot reliably identify a connected barcode wedge. Focus must be in the intended native or web input field. |
-| `nfc.available`, `nfc.reading`, `nfc.formats` | `available` means NFC reader hardware is present and enabled; `reading` means native reader mode is active. Supported hardware reports `["wallet-vas"]`, including while NFC is disabled; no hardware reports `[]`. This implementation does not read NDEF. |
+| `nfc.available`, `nfc.reading`, `nfc.formats` | `available` means NFC reader hardware is present and enabled; `reading` means native reader mode is active. Supported hardware reports `["wallet-vas"]`, including while NFC is disabled; no hardware reports `[]`. With bridge v2 it also reads third-party tags (`tag-uid`, `tag-sun`; see below). |
 | `vas.deviceSupported`, `vas.available`, `vas.reader`, `vas.reason` | Native NFC hardware support is distinct from verification. `available` is always `false`: no dedicated backend verifier is integrated. `reader` is `"android-native"` when supported, otherwise `"none"`; `reason` explains the limitation. |
 | `externalReader.mode`, `externalReader.connected` | `"keyboard"` and `null`; this does not claim a connected scanner or generic USB/Bluetooth serial support. |
 | `haptics` | `true`: the app plays the `haptic` op. |
@@ -69,7 +69,7 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | `haptics`, `speaker` | Vibrator present; audio output feature present. | Haptics engine support; always a speaker. |
 | `display` | Not reported. | Not reported. |
 
-Android re-sends `capabilities` on input-device changes, USB attach and detach, NFC adapter changes and resume (debounced 200 ms). iOS re-sends it on keyboard connect and disconnect, and on the other changes above.
+Android re-sends `capabilities` on input-device changes, USB attach and detach, NFC adapter changes and resume (input-device, USB, Bluetooth bond and camera-availability changes are debounced 200 ms). iOS re-sends it on keyboard connect and disconnect, and on the other changes above.
 
 Vendor scan broadcasts: when a vendor scanner service is installed the app also listens for its scan intent and delivers reads as `{event:'scan', source:'barcode', value}`. A broadcast can come from any app, so a value only ever becomes a normal `barcode` scan: 1 to 2048 characters, no control characters, one read at a time and duplicates within two seconds dropped by `ScanGate`, exactly as for typed input. Receivers are registered `RECEIVER_EXPORTED`, which Android 13+ requires for broadcasts from other apps. The manual action and extra in Settings still work, and keyboard output keeps working through the input field.
 

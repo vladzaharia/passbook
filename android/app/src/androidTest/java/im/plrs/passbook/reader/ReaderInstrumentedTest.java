@@ -52,7 +52,8 @@ public class ReaderInstrumentedTest {
 
     @Test public void capabilitySnapshotsDoNotClaimUnsupportedReadersOrVerification() throws Exception {
         JSONObject caps = MainActivity.capabilitySnapshot("1.2.3", true, "granted", true, true, true);
-        assertEquals(8, caps.length());
+        assertEquals(9, caps.length());
+        assertTrue(caps.getBoolean("haptics"));
         assertEquals("android", caps.getString("platform"));
         assertEquals("1.2.3", caps.getString("appVersion"));
         JSONObject camera = caps.getJSONObject("camera");

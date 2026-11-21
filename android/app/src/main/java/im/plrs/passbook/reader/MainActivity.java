@@ -138,17 +138,15 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         }
     };
     private final CameraManager.AvailabilityCallback cameraAvailability = new CameraManager.AvailabilityCallback() {
-        @Override public void onCameraAvailable(String cameraId) {
-            if (foreground) reportCapabilities();
-        }
-        @Override public void onCameraUnavailable(String cameraId) {
-            if (foreground) reportCapabilities();
-        }
+        @Override public void onCameraAvailable(String cameraId) { if (foreground) hardwareChanged(); }
+        @Override public void onCameraUnavailable(String cameraId) { if (foreground) hardwareChanged(); }
     };
     private final Runnable oneShotExpiry = () -> {
         if (oneShot == null) return;
+        String expired = oneShot;
         oneShot = null;
-        web.send(message("cancelled")); resumeReader(); reportCapabilities();
+        JSONObject ended = message("cancelled"); put(ended, "id", expired);
+        web.send(ended); resumeReader(); reportCapabilities();
     };
     /** Runs only while a read holds the gate: until its acknowledgement, or its verdict on an older web. */
     private final Runnable expiry = new Runnable() {
@@ -255,6 +253,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         if (inputManager != null) inputManager.registerInputDeviceListener(inputListener, handler);
         IntentFilter usb = new IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         usb.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        usb.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         ContextCompat.registerReceiver(this, usbReceiver, usb, ContextCompat.RECEIVER_NOT_EXPORTED);
         resumeReader(); cameraPermissions.resume(); reportCapabilities();
     }
@@ -359,6 +358,8 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                 Vibrator buzz = getSystemService(Vibrator.class);
                 if (timings != null && buzz != null && buzz.hasVibrator()) buzz.vibrate(VibrationEffect.createWaveform(timings, -1));
                 break;
+            // iOS-only operations: nothing to do here, and nothing to tell the operator.
+            case "nfcRead": case "customerStatus": case "customerBranding": break;
             default: notice("Verifier requested an unsupported reader operation.");
         }
     }
@@ -562,6 +563,16 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         return snapshot;
     }
 
+    private String installSalt() {
+        SharedPreferences prefs = getSharedPreferences("hardware", MODE_PRIVATE);
+        String salt = prefs.getString("salt", null);
+        if (salt == null) {
+            salt = java.util.UUID.randomUUID().toString();
+            prefs.edit().putString("salt", salt).apply();
+        }
+        return salt;
+    }
+
     private void hardwareChanged() {
         handler.removeCallbacks(hardwareReport);
         handler.postDelayed(hardwareReport, 200);
@@ -596,13 +607,17 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             // Report the cameras read so far; the camera field already covers a failed enumeration.
         }
         List<Hardware.Input> inputs = new ArrayList<>();
+        Set<String> installed = installedVendorPackages();
+        List<Hardware.Vendor> vendors = Hardware.present(installed);
         for (int id : InputDevice.getDeviceIds()) {
             InputDevice device = InputDevice.getDevice(id);
             if (device == null || (device.getSources() & InputDevice.SOURCE_KEYBOARD) != InputDevice.SOURCE_KEYBOARD
                 || (device.getSources() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) continue;
-            // isExternal is API 34. Earlier, a USB or Bluetooth device carries a vendor id; built-in keys usually do not.
-            boolean external = Build.VERSION.SDK_INT >= 34 ? device.isExternal() : device.getVendorId() != 0;
-            inputs.add(new Hardware.Input(id, device.getName(), device.getDescriptor(), true, external, device.isVirtual()));
+            boolean alphabetic = device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC;
+            boolean external = Build.VERSION.SDK_INT >= 34 ? device.isExternal()
+                : Hardware.externalBeforeApi34(device.getName(), device.getVendorId(), alphabetic, !vendors.isEmpty());
+            inputs.add(new Hardware.Input(Hardware.stableId(device.getDescriptor(), installSalt()), device.getName(),
+                device.getDescriptor(), true, external, device.isVirtual(), alphabetic));
         }
         List<String> usb = new ArrayList<>();
         UsbManager usbManager = getSystemService(UsbManager.class);
@@ -616,12 +631,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         PackageManager packages = getPackageManager();
         Vibrator vibrator = getSystemService(Vibrator.class);
         return toJson(Hardware.build(new Hardware.Snapshot(facings, cameraPermission, nfc.supported(), nfc.available(),
-            nfc.isReading(), inputs, installedVendorPackages(), usb, bluetoothInputs(),
+            nfc.isReading(), inputs, installed, usb, bluetoothInputs(inputs),
             vibrator != null && vibrator.hasVibrator(), packages.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT))));
     }
 
     /** Bonded Bluetooth keyboards and HID peripherals. Never asks for BLUETOOTH_CONNECT; empty when it is not granted. */
-    private List<String> bluetoothInputs() {
+    private List<String> bluetoothInputs(List<Hardware.Input> inputs) {
         List<String> names = new ArrayList<>();
         if (Build.VERSION.SDK_INT < 31
             || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return names;
@@ -632,7 +647,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                 BluetoothClass type = device.getBluetoothClass();
                 if (type != null && type.getMajorDeviceClass() == BluetoothClass.Device.Major.PERIPHERAL) {
                     String name = device.getName();
-                    names.add(name == null ? "Bluetooth device" : name);
+                    // A bonded keyboard-class device is already listed as an input device; do not list it twice.
+                    boolean listed = name != null && inputs.stream().anyMatch(input -> name.equalsIgnoreCase(input.name()));
+                    if (!listed) names.add(name == null ? "Bluetooth device" : name);
                 }
             }
         } catch (SecurityException ignored) {
@@ -685,7 +702,8 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         if (nfcSupported) formats.put("wallet-vas");
         if (nfcSupported && tags) { formats.put("tag-uid"); formats.put("tag-sun"); }
         put(nfc, "formats", formats);
-        if (tags) put(nfc, "continuous", nfcSupported); put(capabilities, "nfc", nfc);
+        if (tags) put(nfc, "continuous", nfcSupported);
+        put(capabilities, "nfc", nfc);
 
         JSONObject vas = new JSONObject();
         put(vas, "deviceSupported", nfcSupported); put(vas, "available", false);

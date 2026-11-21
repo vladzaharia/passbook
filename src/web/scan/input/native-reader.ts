@@ -140,7 +140,8 @@ export function connectNativeReader(
       return;
     }
     if (message.event === 'timeout' || message.event === 'cancelled') {
-      cancel();
+      // A `cancelled` naming the one-shot tag read ends that read only; a barcode check in flight stays.
+      if (!(message.event === 'cancelled' && tagPending && message.id === tagPending)) cancel();
       if (tagPending) {
         tagPending = null;
         options.tagEnded?.(message.event);
