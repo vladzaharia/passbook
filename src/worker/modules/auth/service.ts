@@ -12,6 +12,7 @@ import {
   announceLiftedLink,
   checkPrimaryOwner,
   createUser,
+  linkLifted,
   releaseClaimOtherThan,
 } from './account-claims.ts';
 import * as repo from './repo.ts';
@@ -192,15 +193,12 @@ export async function linkIdentityByMail(
   const { kind } = await checkPrimaryOwner(ctx, email, { trust: false, mailProven: true });
   const lifted = kind === 'lifted';
   const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: !lifted });
-  const linked = await repo.insertIdentity(
-    ctx.env.DB,
-    { ...pending, userId: user.id, now: ctx.clock.now() },
-    lifted,
-  );
+  const row = { ...pending, userId: user.id, now: ctx.clock.now() };
+  const linked = lifted ? await linkLifted(ctx, row) : await repo.insertIdentity(ctx.env.DB, row);
   if (lifted && !linked) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   if (linked) {
     await auditIdentityLinked(ctx, user.id, 'mail_proof', pending.emailVerified);
-    if (lifted) await announceLiftedLink(ctx, user.id, email, pending);
+    if (lifted) await announceLiftedLink(ctx, user.id, email);
   }
   await attachWaitingPassesForEmail(ctx, user.id, email);
 }

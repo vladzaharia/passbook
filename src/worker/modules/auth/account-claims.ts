@@ -3,6 +3,7 @@ import { identityLinkedEmail } from '../../email/identity-linked.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, ForbiddenError, IdpEmailNotPrimaryError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { auditStmtWhere } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { getPlatformSettings } from '../settings/service.ts';
@@ -172,22 +173,36 @@ export async function accountProvenByMail(
 }
 
 /**
- * A fenced account got a Polaris ID through a mail proof alone: audited with the subject, and every
- * other verified address of the account is told.
+ * A fenced account gets a Polaris ID through a mail proof alone: the identity and its audit row are
+ * one batch (the row exists exactly when the identity does); then every other verified address is told.
  */
+export async function linkLifted(
+  ctx: ServiceContext,
+  row: Parameters<typeof repo.insertIdentityStmt>[1],
+): Promise<boolean> {
+  const db = ctx.env.DB;
+  const audit = auditStmtWhere(
+    db,
+    ctx,
+    {
+      actorType: 'system',
+      action: 'auth.identity_linked_moved_primary',
+      targetType: 'user',
+      targetId: row.userId,
+      detail: { provider: row.provider, subject: row.subject },
+    },
+    repo.IDENTITY_LINKED_SQL,
+    [row.provider, row.subject, row.userId],
+  );
+  const [inserted] = await db.batch([repo.insertIdentityStmt(db, row, true), audit]);
+  return (inserted?.meta.changes ?? 0) > 0;
+}
+
 export async function announceLiftedLink(
   ctx: ServiceContext,
   userId: string,
   proofEmail: string,
-  pending: { provider: string; subject: string },
 ): Promise<void> {
-  await recordAudit(ctx, {
-    actorType: 'system',
-    action: 'auth.identity_linked_moved_primary',
-    targetType: 'user',
-    targetId: userId,
-    detail: { provider: pending.provider, subject: pending.subject },
-  });
   const mailer = createEmailBindingMailer(ctx.env);
   const { 'email.senderName': fromName } = await getPlatformSettings(ctx);
   const mail = identityLinkedEmail(baseUrl(ctx.env));

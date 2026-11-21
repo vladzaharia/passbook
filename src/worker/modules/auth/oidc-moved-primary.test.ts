@@ -170,6 +170,12 @@ describe('lift under trust off', () => {
     const mailB = h.mail.at(-1)?.text ?? '';
     await Promise.all([consume(mailA, jarA), consume(mailB, jarB)]);
     expect(await identityCount(member.id)).toBe(1);
+    const audits = await all(
+      h.env.DB,
+      "SELECT 1 FROM audit_log WHERE action = 'auth.identity_linked_moved_primary' AND target_id = ?",
+      [member.id],
+    );
+    expect(audits).toHaveLength(1);
   });
 
   it('writes the audit with the subject and tells the other verified addresses', async () => {

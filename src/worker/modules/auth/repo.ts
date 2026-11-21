@@ -1,7 +1,7 @@
 import { normalizeEmail, UNVERIFIED_EMAIL_SUFFIX } from '../../../shared/email.ts';
 import { deleteInBatches } from '../../platform/batched.ts';
 import { pruneCounters } from '../../platform/counters.ts';
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, run, stmt } from '../../platform/db.ts';
 
 type Db = D1Database;
 
@@ -169,22 +169,19 @@ export const findIdentity = (db: Db, provider: string, subject: string) =>
     [provider, subject],
   );
 
-/** True when the identity was linked now; false when the subject was already linked. */
-export async function insertIdentity(
-  db: Db,
-  row: {
-    provider: string;
-    subject: string;
-    userId: string;
-    emailClaim: string | null;
-    emailVerified: boolean;
-    groups: string[];
-    now: number;
-  },
-  /** Link only while the account has no identity at all (one statement, so concurrent links race safely). */
-  onlyIfNone = false,
-): Promise<boolean> {
-  const { changes } = await run(
+interface NewIdentityRow {
+  provider: string;
+  subject: string;
+  userId: string;
+  emailClaim: string | null;
+  emailVerified: boolean;
+  groups: string[];
+  now: number;
+}
+
+/** `onlyIfNone`: link only while the account has no identity (one statement, race-safe). */
+export function insertIdentityStmt(db: Db, row: NewIdentityRow, onlyIfNone = false) {
+  return stmt(
     db,
     `INSERT OR IGNORE INTO auth_identities
        (provider, subject, user_id, email_claim, email_verified, groups, created_at, last_used_at)
@@ -203,7 +200,15 @@ export async function insertIdentity(
       row.userId,
     ],
   );
-  return changes > 0;
+}
+
+export const IDENTITY_LINKED_SQL =
+  'EXISTS (SELECT 1 FROM auth_identities WHERE provider = ? AND subject = ? AND user_id = ?)';
+
+/** True when the identity was linked now; false when the subject was already linked. */
+export async function insertIdentity(db: Db, row: NewIdentityRow, onlyIfNone = false) {
+  const { meta } = await insertIdentityStmt(db, row, onlyIfNone).run();
+  return (meta.changes ?? 0) > 0;
 }
 
 export async function updateIdentity(
