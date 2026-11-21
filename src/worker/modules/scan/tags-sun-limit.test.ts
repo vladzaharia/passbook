@@ -17,7 +17,7 @@ const device = () => ({
   orgId: f.kit.org.id,
   mode: 'live' as const,
   actorKey: `k-${key()}`,
-  scanner: null,
+  scanner: null as { id: string } | null,
 });
 const fail = async (who: ReturnType<typeof device>, times: number) => {
   for (let i = 0; i < times; i++) await noteSunFailure(f.kit.ctx, who, 'TAG_SUN_VERIFY');
