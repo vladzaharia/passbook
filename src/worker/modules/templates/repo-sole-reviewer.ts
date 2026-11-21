@@ -43,6 +43,21 @@ export async function countEligibleReviewers(db: D1Database, orgId: string): Pro
   return row?.n ?? 0;
 }
 
+/** A review-capable membership made after `since`: it voids an earlier `sole` approval at release. */
+export async function reviewerAddedSince(
+  db: D1Database,
+  orgId: string,
+  since: number,
+): Promise<boolean> {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT count(*) AS n FROM org_memberships m
+     WHERE m.org_id = ? AND m.created_at > ? AND ${reviews('m')}`,
+    [orgId, since],
+  );
+  return (row?.n ?? 0) > 0;
+}
+
 /** When the newest review-capable membership of the org was revoked, or null. */
 export async function lastReviewerRemoval(db: D1Database, orgId: string): Promise<number | null> {
   const row = await first<{ at: number | null }>(

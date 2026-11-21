@@ -726,6 +726,43 @@ __all__ = [
     "ProblemIssuesItem",
     "PushFailedEvent",
     "PushFailedEventData",
+    "ReleaseResponse",
+    "ReleaseResponse1",
+    "ReleaseResponse1Modes",
+    "ReleaseResponse1ModesLive",
+    "ReleaseResponse1ModesTest",
+    "ReleaseResponse1State",
+    "ReleaseResponse1StateReview1",
+    "ReleaseResponse1StateReview2",
+    "ReleaseResponse2",
+    "ReleaseResponse2DiffItem",
+    "ReleaseResponse2DiffItemRowsItem",
+    "ReleaseResponse2DiffItemRowsItemFrom1",
+    "ReleaseResponse2DiffItemRowsItemFrom2",
+    "ReleaseResponse2DiffItemRowsItemFrom3",
+    "ReleaseResponse2DiffItemRowsItemFrom4",
+    "ReleaseResponse2DiffItemRowsItemTo1",
+    "ReleaseResponse2DiffItemRowsItemTo2",
+    "ReleaseResponse2DiffItemRowsItemTo3",
+    "ReleaseResponse2DiffItemRowsItemTo4",
+    "ReleaseResponse2Modes",
+    "ReleaseResponse2ModesLive",
+    "ReleaseResponse2ModesLiveApproval",
+    "ReleaseResponse2ModesLiveCandidate",
+    "ReleaseResponse2ModesLiveImpact",
+    "ReleaseResponse2ModesLiveImpactDevices",
+    "ReleaseResponse2ModesLiveImpactPasses",
+    "ReleaseResponse2ModesTest",
+    "ReleaseResponse2ModesTestApproval",
+    "ReleaseResponse2ModesTestCandidate",
+    "ReleaseResponse2ModesTestImpact",
+    "ReleaseResponse2ModesTestImpactDevices",
+    "ReleaseResponse2ModesTestImpactPasses",
+    "ReleaseResponse2State",
+    "ReleaseResponse2StateReview1",
+    "ReleaseResponse2StateReview2",
+    "ReleaseTemplate",
+    "ReleaseTemplateExpected",
     "RollCallsCreateResult",
     "RollCallsCreateResultCounts",
     "RollCallsCreateResultPeopleItem",
@@ -1007,6 +1044,8 @@ __all__ = [
     "TemplatesReleasesListItem",
     "TemplatesReleasesListResult",
     "TemplatesReleasesListResultItemsItem",
+    "TemplatesReleasesReleaseBody",
+    "TemplatesReleasesReleaseResult",
     "TemplatesReleasesRetrieveImpactResult",
     "TemplatesReleasesRetrieveImpactResultDiff",
     "TemplatesReleasesRetrieveImpactResultDiffBarcodeItem",
@@ -1019,6 +1058,8 @@ __all__ = [
     "TemplatesRetrieveInputSchemaResult",
     "TemplatesRetrieveResult",
     "TemplatesRetrieveStampsImpactResult",
+    "TemplatesReviewsRequestBody",
+    "TemplatesReviewsRequestResult",
     "TemplatesSetUpScanningBody",
     "TemplatesSetUpScanningParams",
     "TemplatesSetUpScanningResult",
@@ -5794,6 +5835,184 @@ class PushFailedEventData(_Model):
     reason: str | None = None
     code: str | None = None
 
+class ReleaseResponse1(_Model):
+    version: str
+    modes: ReleaseResponse1Modes
+    state: ReleaseResponse1State
+
+class ReleaseResponse1Modes(_Model):
+    test: ReleaseResponse1ModesTest | None = None
+    live: ReleaseResponse1ModesLive | None = None
+
+class ReleaseResponse1ModesLive(_Model):
+    outcome: _Literal["released", "kept", "current", "review_requested"] | str
+    releaseId: str | None
+    generation: int
+    approvalKind: _Literal["peer", "sole", "test", None] | str
+
+class ReleaseResponse1ModesTest(_Model):
+    outcome: _Literal["released", "kept", "current", "review_requested"] | str
+    releaseId: str | None
+    generation: int
+    approvalKind: _Literal["peer", "sole", "test", None] | str
+
+class ReleaseResponse1State(_Model):
+    live: _Dict[str, _Any] | None
+    test: _Dict[str, _Any] | None
+    draft: _Dict[str, _Any] | None
+    review: ReleaseResponse1StateReview1 | ReleaseResponse1StateReview2
+    alone: bool
+    next: _Literal["design", "try", "release", "request_review", "review", "wait", None] | str
+
+class ReleaseResponse1StateReview1(_Model):
+    state: _Literal["none"] | str
+
+class ReleaseResponse1StateReview2(_Model):
+    state: _Literal["open", "approved"] | str
+    version: str
+    by: str | None
+    at: int
+
+class ReleaseResponse2(_Model):
+    version: str
+    modes: ReleaseResponse2Modes
+    diff: _List[ReleaseResponse2DiffItem]
+    fromVersion: str | None
+    state: ReleaseResponse2State
+
+class ReleaseResponse2DiffItem(_Model):
+    group: _Literal["colors", "front", "back", "images", "barcode"] | str
+    rows: _List[ReleaseResponse2DiffItemRowsItem]
+    more: int
+
+class ReleaseResponse2DiffItemRowsItem(_Model):
+    label: str
+    kind: _Literal["added", "removed", "changed"] | str
+    from_: ReleaseResponse2DiffItemRowsItemFrom1 | ReleaseResponse2DiffItemRowsItemFrom2 | ReleaseResponse2DiffItemRowsItemFrom3 | ReleaseResponse2DiffItemRowsItemFrom4 | None = _Field(alias="from")
+    to: ReleaseResponse2DiffItemRowsItemTo1 | ReleaseResponse2DiffItemRowsItemTo2 | ReleaseResponse2DiffItemRowsItemTo3 | ReleaseResponse2DiffItemRowsItemTo4 | None
+
+class ReleaseResponse2DiffItemRowsItemFrom1(_Model):
+    type: _Literal["text"]
+    text: str
+
+class ReleaseResponse2DiffItemRowsItemFrom2(_Model):
+    type: _Literal["color"]
+    color: str
+
+class ReleaseResponse2DiffItemRowsItemFrom3(_Model):
+    type: _Literal["date"]
+    at: int
+
+class ReleaseResponse2DiffItemRowsItemFrom4(_Model):
+    type: _Literal["image"]
+    version: str
+    asset: str
+
+class ReleaseResponse2DiffItemRowsItemTo1(_Model):
+    type: _Literal["text"]
+    text: str
+
+class ReleaseResponse2DiffItemRowsItemTo2(_Model):
+    type: _Literal["color"]
+    color: str
+
+class ReleaseResponse2DiffItemRowsItemTo3(_Model):
+    type: _Literal["date"]
+    at: int
+
+class ReleaseResponse2DiffItemRowsItemTo4(_Model):
+    type: _Literal["image"]
+    version: str
+    asset: str
+
+class ReleaseResponse2Modes(_Model):
+    test: ReleaseResponse2ModesTest | None = None
+    live: ReleaseResponse2ModesLive | None = None
+
+class ReleaseResponse2ModesLive(_Model):
+    outcome: _Literal["release", "kept", "current", "review_required", "review_requested"] | str
+    from_: str | None = _Field(alias="from")
+    expectedGeneration: int
+    candidate: ReleaseResponse2ModesLiveCandidate
+    approval: ReleaseResponse2ModesLiveApproval
+    impact: ReleaseResponse2ModesLiveImpact
+
+class ReleaseResponse2ModesLiveApproval(_Model):
+    action: _Literal["reuse", "write", "needed"] | str
+    kind: _Literal["peer", "sole", "test", None] | str
+
+class ReleaseResponse2ModesLiveCandidate(_Model):
+    action: _Literal["reuse", "create"] | str
+    id: str | None
+
+class ReleaseResponse2ModesLiveImpact(_Model):
+    passes: ReleaseResponse2ModesLiveImpactPasses
+    devices: ReleaseResponse2ModesLiveImpactDevices
+
+class ReleaseResponse2ModesLiveImpactDevices(_Model):
+    count: int
+    capped: bool
+
+class ReleaseResponse2ModesLiveImpactPasses(_Model):
+    count: int
+    capped: bool
+
+class ReleaseResponse2ModesTest(_Model):
+    outcome: _Literal["release", "kept", "current", "review_required", "review_requested"] | str
+    from_: str | None = _Field(alias="from")
+    expectedGeneration: int
+    candidate: ReleaseResponse2ModesTestCandidate
+    approval: ReleaseResponse2ModesTestApproval
+    impact: ReleaseResponse2ModesTestImpact
+
+class ReleaseResponse2ModesTestApproval(_Model):
+    action: _Literal["reuse", "write", "needed"] | str
+    kind: _Literal["peer", "sole", "test", None] | str
+
+class ReleaseResponse2ModesTestCandidate(_Model):
+    action: _Literal["reuse", "create"] | str
+    id: str | None
+
+class ReleaseResponse2ModesTestImpact(_Model):
+    passes: ReleaseResponse2ModesTestImpactPasses
+    devices: ReleaseResponse2ModesTestImpactDevices
+
+class ReleaseResponse2ModesTestImpactDevices(_Model):
+    count: int
+    capped: bool
+
+class ReleaseResponse2ModesTestImpactPasses(_Model):
+    count: int
+    capped: bool
+
+class ReleaseResponse2State(_Model):
+    live: _Dict[str, _Any] | None
+    test: _Dict[str, _Any] | None
+    draft: _Dict[str, _Any] | None
+    review: ReleaseResponse2StateReview1 | ReleaseResponse2StateReview2
+    alone: bool
+    next: _Literal["design", "try", "release", "request_review", "review", "wait", None] | str
+
+class ReleaseResponse2StateReview1(_Model):
+    state: _Literal["none"] | str
+
+class ReleaseResponse2StateReview2(_Model):
+    state: _Literal["open", "approved"] | str
+    version: str
+    by: str | None
+    at: int
+
+class ReleaseTemplate(_Model):
+    orgId: str | None = None
+    version: str
+    modes: _List[_Literal["live", "test"] | str] | None = None
+    expected: ReleaseTemplateExpected | None = None
+    request: bool | None = None
+
+class ReleaseTemplateExpected(_Model):
+    live: int | None = None
+    test: int | None = None
+
 class RollCallsCreateResult(_Model):
     id: str
     placeNames: _List[str]
@@ -8791,6 +9010,8 @@ PlatformWalletCredentialsUpsertParams = PlatformWalletCredentialsUpsertParams1 |
 
 PrintJobsCreateBody = PrintJobsCreateParams
 
+ReleaseResponse = ReleaseResponse1 | ReleaseResponse2
+
 RollCallsMarkBody = RollCallsMarkParams
 
 ScanCard = _Dict[str, _Any] | None
@@ -8827,9 +9048,17 @@ TemplatesPreviewBody = TemplatesPreviewParams
 
 TemplatesReleasesCreateBody = TemplatesReleasesCreateParams
 
+TemplatesReleasesReleaseBody = ReleaseTemplate
+
+TemplatesReleasesReleaseResult = ReleaseResponse
+
 TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 
 TemplatesRetrieveResult = TemplateDetail
+
+TemplatesReviewsRequestBody = ReleaseTemplate
+
+TemplatesReviewsRequestResult = ReleaseResponse
 
 TemplatesSetUpScanningBody = TemplatesSetUpScanningParams
 

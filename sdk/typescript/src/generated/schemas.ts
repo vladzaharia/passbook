@@ -1695,6 +1695,174 @@ export type PushFailedEvent = {
   sample?: true;
 };
 
+export type ReleaseResponse = {
+  version: string;
+  modes: {
+    test?: {
+      outcome: "released" | "kept" | "current" | "review_requested";
+      releaseId: string | null;
+      generation: number;
+      approvalKind: "peer" | "sole" | "test" | null;
+    };
+    live?: {
+      outcome: "released" | "kept" | "current" | "review_requested";
+      releaseId: string | null;
+      generation: number;
+      approvalKind: "peer" | "sole" | "test" | null;
+    };
+  };
+  state: {
+    live: {
+      version: string;
+      at: number;
+      by: string | null;
+    } | null;
+    test: {
+      version: string;
+      at: number;
+      state: "following" | "ahead";
+    } | null;
+    draft: {
+      version: string;
+      at: number;
+    } | null;
+    review: {
+      state: "none";
+    } | {
+      state: "open" | "approved";
+      version: string;
+      by: string | null;
+      at: number;
+    };
+    alone: boolean;
+    next: "design" | "try" | "release" | "request_review" | "review" | "wait" | null;
+  };
+} | {
+  version: string;
+  modes: {
+    test?: {
+      outcome: "release" | "kept" | "current" | "review_required" | "review_requested";
+      from: string | null;
+      expectedGeneration: number;
+      candidate: {
+        action: "reuse" | "create";
+        id: string | null;
+      };
+      approval: {
+        action: "reuse" | "write" | "needed";
+        kind: "peer" | "sole" | "test" | null;
+      };
+      impact: {
+        passes: {
+          count: number;
+          capped: boolean;
+        };
+        devices: {
+          count: number;
+          capped: boolean;
+        };
+      };
+    };
+    live?: {
+      outcome: "release" | "kept" | "current" | "review_required" | "review_requested";
+      from: string | null;
+      expectedGeneration: number;
+      candidate: {
+        action: "reuse" | "create";
+        id: string | null;
+      };
+      approval: {
+        action: "reuse" | "write" | "needed";
+        kind: "peer" | "sole" | "test" | null;
+      };
+      impact: {
+        passes: {
+          count: number;
+          capped: boolean;
+        };
+        devices: {
+          count: number;
+          capped: boolean;
+        };
+      };
+    };
+  };
+  diff: Array<{
+    group: "colors" | "front" | "back" | "images" | "barcode";
+    rows: Array<{
+      label: string;
+      kind: "added" | "removed" | "changed";
+      from: {
+        type: "text";
+        text: string;
+      } | {
+        type: "color";
+        color: string;
+      } | {
+        type: "date";
+        at: number;
+      } | {
+        type: "image";
+        version: string;
+        asset: string;
+      } | null;
+      to: {
+        type: "text";
+        text: string;
+      } | {
+        type: "color";
+        color: string;
+      } | {
+        type: "date";
+        at: number;
+      } | {
+        type: "image";
+        version: string;
+        asset: string;
+      } | null;
+    }>;
+    more: number;
+  }>;
+  fromVersion: string | null;
+  state: {
+    live: {
+      version: string;
+      at: number;
+      by: string | null;
+    } | null;
+    test: {
+      version: string;
+      at: number;
+      state: "following" | "ahead";
+    } | null;
+    draft: {
+      version: string;
+      at: number;
+    } | null;
+    review: {
+      state: "none";
+    } | {
+      state: "open" | "approved";
+      version: string;
+      by: string | null;
+      at: number;
+    };
+    alone: boolean;
+    next: "design" | "try" | "release" | "request_review" | "review" | "wait" | null;
+  };
+};
+
+export type ReleaseTemplate = {
+  orgId?: string;
+  version: string;
+  modes?: Array<"live" | "test">;
+  expected?: {
+    live?: number;
+    test?: number;
+  };
+  request?: boolean;
+};
+
 export type RollCallsMarkParams = {
   marks: Array<{
     rollCallId: string;

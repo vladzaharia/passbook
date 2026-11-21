@@ -97,7 +97,7 @@ export type ReleaseDiffGroup = z.infer<typeof ReleaseDiffGroupSchema>;
 
 /** One mode's steps. `kept`: a newer Test head stays. `current`: the head is already `version`. */
 export const ReleaseModePlanSchema = z.object({
-  outcome: z.enum(['release', 'kept', 'current', 'review_required']),
+  outcome: z.enum(['release', 'kept', 'current', 'review_required', 'review_requested']),
   from: z.string().nullable(),
   expectedGeneration: z.number().int().nonnegative(),
   candidate: z.object({ action: z.enum(['reuse', 'create']), id: IdSchema.nullable() }),
@@ -140,6 +140,9 @@ export const ReleaseResultSchema = z.object({
   state: TemplateReleaseStateSchema,
 });
 export type ReleaseResult = z.infer<typeof ReleaseResultSchema>;
+
+/** The release route answers a result, or a plan when `dryRun` is set. */
+export const ReleaseResponseSchema = z.union([ReleaseResultSchema, ReleasePlanSchema]);
 
 /** `POST /templates/{id}/review`: peer approvals on both modes' candidates for `version`. */
 export const ReviewTemplateSchema = z.strictObject({

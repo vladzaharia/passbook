@@ -12,7 +12,7 @@ import { getVersion } from './repo.ts';
 import { countPassesNotOnVersion } from './repo-release-impact.ts';
 import { getLatestRelease } from './repo-releases.ts';
 
-const COUNT_CAP = 10_000;
+export const COUNT_CAP = 10_000;
 
 /** Passes of the org on the template, in the release's mode, that are not yet on `version`. */
 async function affectedPasses(
