@@ -3380,6 +3380,38 @@
   }
  },
  {
+  "id": "pass-imports.postPassImportsByIdUndo",
+  "call": "pass_imports.undo",
+  "http": "POST",
+  "path": "/api/v1/pass-imports/{id}/undo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "state": "running",
+   "removed": 0,
+   "restored": 0,
+   "keptTotal": 0,
+   "kept": [
+    {
+     "passId": "x",
+     "code": "x"
+    }
+   ],
+   "emailsCancelled": 0
+  }
+ },
+ {
   "id": "passes.getPasses",
   "call": "passes.list",
   "http": "GET",

@@ -91,7 +91,7 @@ describe('personal org journey', () => {
         email: user.primaryEmail,
         emailVerified: true,
         name: 'Pat Owner',
-        groups: ['wallet-admins'],
+        groups: ['wallet_admins'],
       },
       { ipPrefix: null, userAgent: null },
     );

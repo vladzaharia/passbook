@@ -3238,6 +3238,21 @@ type PassImportMappingsSavedItemPlanMappingValueTransform struct {
 	Options map[string]any `json:"options,omitempty"`
 }
 
+type PassImportUndo struct {
+	State           string                   `json:"state"`
+	Removed         int64                    `json:"removed"`
+	Restored        int64                    `json:"restored"`
+	KeptTotal       int64                    `json:"keptTotal"`
+	Kept            []PassImportUndoKeptItem `json:"kept"`
+	EmailsCancelled int64                    `json:"emailsCancelled"`
+	Unrevertable    *int64                   `json:"unrevertable,omitempty"`
+}
+
+type PassImportUndoKeptItem struct {
+	PassID string `json:"passId"`
+	Code   string `json:"code"`
+}
+
 type PassImportsCheckBody = PassImportsCheckParams
 
 type PassImportsCheckParams struct {
@@ -3290,6 +3305,8 @@ type PassImportsCheckResult struct {
 	ExpiresAt         int64                                `json:"expiresAt"`
 	Mapping           *PassImportsCheckResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                               `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                      `json:"undo,omitempty"`
+	Unrevertable      *int64                               `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCheckResultColumnsItem struct {
@@ -3345,6 +3362,8 @@ type PassImportsCheckResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3359,7 +3378,16 @@ type PassImportsCommitBody = PassImportsCommitParams
 
 type PassImportsCommitParams struct {
 	SkipInvalid *bool `json:"skipInvalid,omitempty"`
-	Email       *bool `json:"email,omitempty"`
+	Email       any   `json:"email,omitempty"`
+}
+
+type PassImportsCommitParamsEmail2 struct {
+	Send string `json:"send"`
+}
+
+type PassImportsCommitParamsEmail3 struct {
+	Send   string `json:"send"`
+	HoldMs *int64 `json:"holdMs,omitempty"`
 }
 
 type PassImportsCommitResult struct {
@@ -3388,6 +3416,8 @@ type PassImportsCommitResult struct {
 	ExpiresAt         int64                                 `json:"expiresAt"`
 	Mapping           *PassImportsCommitResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                       `json:"undo,omitempty"`
+	Unrevertable      *int64                                `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCommitResultColumnsItem struct {
@@ -3443,6 +3473,8 @@ type PassImportsCommitResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3519,6 +3551,8 @@ type PassImportsCreateResult struct {
 	ExpiresAt         int64                                 `json:"expiresAt"`
 	Mapping           *PassImportsCreateResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                       `json:"undo,omitempty"`
+	Unrevertable      *int64                                `json:"unrevertable,omitempty"`
 }
 
 type PassImportsCreateResultColumnsItem struct {
@@ -3574,6 +3608,8 @@ type PassImportsCreateResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3614,6 +3650,8 @@ type PassImportsListItem struct {
 	ExpiresAt         int64                             `json:"expiresAt"`
 	Mapping           *PassImportsListItemMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                            `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                   `json:"undo,omitempty"`
+	Unrevertable      *int64                            `json:"unrevertable,omitempty"`
 }
 
 type PassImportsListItemColumnsItem struct {
@@ -3669,6 +3707,8 @@ type PassImportsListItemProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3758,6 +3798,8 @@ type PassImportsRetrieveResult struct {
 	ExpiresAt         int64                                   `json:"expiresAt"`
 	Mapping           *PassImportsRetrieveResultMapping       `json:"mapping,omitempty"`
 	EmailHoldUntil    *int64                                  `json:"emailHoldUntil,omitempty"`
+	Undo              *PassImportUndo                         `json:"undo,omitempty"`
+	Unrevertable      *int64                                  `json:"unrevertable,omitempty"`
 }
 
 type PassImportsRetrieveResultColumnsItem struct {
@@ -3813,6 +3855,8 @@ type PassImportsRetrieveResultProblemsItem struct {
 	Row      int64   `json:"row"`
 	Column   *string `json:"column"`
 	Field    *string `json:"field"`
+	Label    *string `json:"label,omitempty"`
+	Value    *string `json:"value,omitempty"`
 	Code     string  `json:"code"`
 	Message  string  `json:"message"`
 	Severity string  `json:"severity"`
@@ -3860,6 +3904,12 @@ type PassImportsSendEmailsResult struct {
 	Skipped    int64   `json:"skipped"`
 	NextCursor *string `json:"nextCursor"`
 }
+
+type PassImportsUndoBody = PassImportsUndoParams
+
+type PassImportsUndoParams struct{}
+
+type PassImportsUndoResult = PassImportUndo
 
 type PassInstalledEvent struct {
 	ID         string                 `json:"id"`

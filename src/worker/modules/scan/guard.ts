@@ -22,7 +22,7 @@ import {
 import { ipPrefix } from '../../platform/ip.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { assertSignIn } from '../../platform/sign-in-guard.ts';
+import { assertConsoleGroup, assertSignIn } from '../../platform/sign-in-guard.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { isOrgActive } from '../orgs/active.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
@@ -102,6 +102,7 @@ async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   if (!adminChosen && !canUseConsole(session, serviceContext(c).clock.now()))
     throw unauthenticated();
   assertSignIn(c, session, 'idp');
+  assertConsoleGroup(c, session);
   return { admin: session };
 }
 

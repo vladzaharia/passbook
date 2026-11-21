@@ -2,6 +2,7 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import type { FieldChange } from '../../../shared/contracts/issuing.ts';
 import { fieldChanges } from '../../../shared/issuing/diff.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { resolveTemplate } from './builder.ts';
 import type { ImportProblem } from './import-messages.ts';
 import { personalizationsOf } from './repo-import-lookup.ts';
@@ -51,8 +52,16 @@ export async function rowChanges(
     imp.org_id,
     wanted.flatMap((r) => r.pass_id ?? []),
   );
+  // Dates read in the org's own zone; UTC only for an org that has none.
+  const timeZone = (await readOrgTimeZone(ctx.env.DB, imp.org_id)) ?? undefined;
   for (const r of wanted) {
-    const before = objectOf(r.before) ?? objectOf(now.get(r.pass_id ?? ''));
+    // The commit keeps `{ personalization, fieldSources }`; an older import kept the inputs flat.
+    const stored = objectOf(r.before);
+    const earlier =
+      stored && typeof stored.personalization === 'object' && stored.personalization !== null
+        ? (stored.personalization as Record<string, Json>)
+        : stored;
+    const before = earlier ?? objectOf(now.get(r.pass_id ?? ''));
     const input = objectOf(r.input);
     // A finished row without its earlier values has nothing left to compare against.
     if (!before || !input || (r.state !== 'planned' && !r.before)) continue;
@@ -61,9 +70,12 @@ export async function rowChanges(
         .filter((p) => p.code === 'IMPORT_MANUAL_KEPT')
         .map((p) => p.field),
     );
-    const changes = fieldChanges(schema, before, { ...before, ...input }).filter(
-      (c) => !kept.has(c.key),
-    );
+    const changes = fieldChanges(
+      schema,
+      before,
+      { ...before, ...input },
+      timeZone ? { timeZone } : {},
+    ).filter((c) => !kept.has(c.key));
     if (changes.length > 0) out.set(r.row_no, changes);
   }
   return out;

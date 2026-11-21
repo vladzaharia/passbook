@@ -64,7 +64,7 @@ const send = (method: string, path: string, headers: Record<string, string>, bod
 
 async function person(withSandbox: boolean, viewedAt?: number) {
   const user = await makeUser(kit.f);
-  const session = await makeSession(kit.f, { userId: user.id });
+  const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
   if (!withSandbox) return { user, headers: session.headers, made: null };
   const res = await send('POST', '/api/v1/developer/sandbox', session.headers, {
     turnstileToken: 'ok',
@@ -374,7 +374,7 @@ describe('what the funnel counts', () => {
 describe('GET /metrics/platform/developer', () => {
   it('is for platform admins', async () => {
     const user = await makeUser(kit.f);
-    const session = await makeSession(kit.f, { userId: user.id });
+    const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
     expect(
       (await send('GET', '/api/v1/metrics/platform/developer', session.headers)).status,
     ).toBeGreaterThanOrEqual(401);

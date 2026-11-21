@@ -1,4 +1,5 @@
 import { REMOVE_MESSAGE_MAX } from '../../../shared/contracts/events.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -59,6 +60,8 @@ export async function removePass(
   fence?: RemovalFence,
   /** The org-lifecycle purge removes the passes of a closed org. */
   closedOk?: true,
+  /** Proofs of the caller's own right, checked in the publish's write; a refusal rolls the claim back. */
+  extraChecks?: readonly Check[],
 ) {
   const db = ctx.env.DB;
   const pass = await getPassForWrite(db, passId, scope);
@@ -128,6 +131,7 @@ export async function removePass(
       actor,
       authority,
       ...(closedOk ? { closedOk } : {}),
+      ...(extraChecks ? { extraChecks } : {}),
       expectedPass: pass,
       expectedRemoval: {
         at: staged.at,

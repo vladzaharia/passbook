@@ -722,6 +722,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"passImports.undo", "POST", "/api/v1/pass-imports/id1/undo", false,
+		`{}`, `{"state":"running","removed":0,"restored":0,"keptTotal":0,"kept":[{"passId":"x","code":"x"}],"emailsCancelled":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassImportsUndoBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.PassImports.Undo(ctx, "id1", &b)
+		},
+	},
+	{
 		"passes.list", "GET", "/api/v1/passes", false,
 		"", `{"items":[{"id":"x","orgId":"x","templateId":"x","templateVersion":"x","identityId":"x","serial":"x","title":"x","subtitle":"x","externalId":"x","status":"active","version":0,"connectionId":"x","syncErrorCode":"x","holderEmail":"x","holderState":"unassigned","ownerUserId":"x","modifiedAt":0,"createdAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

@@ -186,3 +186,31 @@ export async function createdRowNumbers(db: D1Database, importId: string): Promi
   );
   return rows.map((r) => r.row_no);
 }
+
+/** The draft's counts as its rows stand now, for a re-check that rewrote only some of them. */
+export async function rowCounts(
+  db: D1Database,
+  importId: string,
+): Promise<{
+  rows: number;
+  create: number;
+  update: number;
+  unchanged: number;
+  errors: number;
+  warnings: number;
+}> {
+  const rows = await all<{ action: string; n: number }>(
+    db,
+    'SELECT action, count(*) AS n FROM pass_import_rows WHERE import_id = ? GROUP BY action',
+    [importId],
+  );
+  const n = (a: string) => rows.find((r) => r.action === a)?.n ?? 0;
+  return {
+    rows: rows.reduce((t, r) => t + r.n, 0),
+    create: n('create'),
+    update: n('update'),
+    unchanged: n('unchanged'),
+    errors: n('error'),
+    warnings: (await problemTotals(db, importId)).warnings,
+  };
+}

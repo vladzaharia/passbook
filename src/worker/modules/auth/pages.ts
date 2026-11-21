@@ -13,6 +13,7 @@ import {
   type SignInErrorCode,
 } from '../../../shared/copy/sign-in.ts';
 import { STATE_COPY } from '../../../shared/copy/states.ts';
+import { STEP_UP_NOT_FRESH_COPY } from '../../../shared/copy/step-up.ts';
 import { maskEmail } from '../../../shared/email.ts';
 import { backToSignIn } from '../../ssr/error-page.tsx';
 import type { PageTheme } from '../../ssr/head.ts';
@@ -266,6 +267,25 @@ export function oidcFailurePage(
   return messagePage(
     nonce,
     { ...OIDC_FAILURE_COPY[failure], action, art: OIDC_ART[failure] },
+    theme,
+  );
+}
+
+/** A step-up that came back without a fresh sign-in: say so, and offer the same step-up again. */
+export function stepUpNotFreshPage(nonce: string, next: string | null, theme?: PageTheme): string {
+  const { retry, ...copy } = STEP_UP_NOT_FRESH_COPY;
+  const query = next ? `&next=${encodeURIComponent(next)}` : '';
+  return messagePage(
+    nonce,
+    {
+      ...copy,
+      action: {
+        label: retry,
+        href: `/auth/oidc/start?prompt=login&max_age=0${query}`,
+        primary: true,
+      },
+      art: 'login',
+    },
     theme,
   );
 }

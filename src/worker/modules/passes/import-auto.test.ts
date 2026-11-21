@@ -115,6 +115,7 @@ describe('mapping: auto', () => {
     expect(imp.counts).toMatchObject({ create: 1, errors: 1, errorsCreate: 1, errorsUpdate: 0 });
     expect(imp.problems[0]?.message).toBe('Status must be Active or Suspended.');
     expect(imp.problems[0]?.message).not.toMatch(/Gone/);
+    expect(imp.problems[0]).toMatchObject({ label: 'Status', value: 'Gone', field: 'status' });
   });
 });
 
@@ -125,6 +126,77 @@ describe('overrides', () => {
     );
     expect(imp.counts?.errors).toBe(1);
     const plan = { ...imp.plan, overrides: { '2': { '/Status': 'Active' } } };
+    const fixed = await parse(await api(admin, 'POST', `/${imp.id}/check`, { plan }));
+    expect(fixed.counts).toMatchObject({ create: 2, errors: 0 });
+  });
+});
+
+describe('dates in changes', () => {
+  it('read in the org time zone, and in UTC when it has none', async () => {
+    const pass = await kit.pass({ memberName: 'Old' });
+    await run(
+      kit.env.DB,
+      "UPDATE passes SET external_id = 'TZ-1', personalization = ?, field_sources = '{}' WHERE id = ?",
+      [JSON.stringify({ memberName: 'Old', validUntil: '2030-12-31T20:00:00.000Z' }), pass.id],
+    );
+    const csv = 'Holder email,Member ID,Name,Paid through\na@x.co,TZ-1,Old,2031-01-01 20:00';
+    const paid = async () => {
+      const imp = await parse(await auto(csv));
+      const rows = (await (await api(admin, 'GET', `/${imp.id}/rows`)).json()) as {
+        items: { changes?: { key: string; from: string }[] }[];
+      };
+      return rows.items[0]?.changes?.find((c) => c.key === 'validUntil')?.from;
+    };
+    expect(await paid()).toBe('Dec 31, 2030, 8:00 PM');
+    await run(
+      kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'org.timeZone', '\"America/Los_Angeles\"', 1)",
+      [`org:${kit.org.id}`],
+    );
+    expect(await paid()).toBe('Dec 31, 2030, 12:00 PM');
+    await run(kit.env.DB, "DELETE FROM settings WHERE key = 'org.timeZone'");
+  });
+});
+
+describe('GET /{id}', () => {
+  it('carries the suggestion while the draft is being mapped', async () => {
+    const imp = await parse(await auto(WALKTHROUGH));
+    const got = await parse(await api(admin, 'GET', `/${imp.id}`));
+    expect(got.mapping?.fields.find((f) => f.target === 'memberId')?.from).toEqual(['/Member ID']);
+  });
+});
+
+describe('re-check with a fix', () => {
+  it('rewrites only the rows the fix touches and keeps the others as they were', async () => {
+    const imp = await parse(
+      await auto(
+        'Holder email,Member ID,Name,Status\na@x.co,M-1,Ann,Gone\nb@x.co,M-2,Bo,Active\nc@x.co,M-3,Cy,Active',
+      ),
+    );
+    await run(kit.env.DB, "UPDATE pass_import_rows SET code = 'MARK' WHERE import_id = ?", [
+      imp.id,
+    ]);
+    const plan = { ...imp.plan, overrides: { '2': { '/Status': 'Active' } } };
+    const fixed = await parse(await api(admin, 'POST', `/${imp.id}/check`, { plan }));
+    expect(fixed.counts).toMatchObject({ rows: 3, create: 3, errors: 0 });
+    const marks = await all<{ row_no: number; code: string | null }>(
+      kit.env.DB,
+      'SELECT row_no, code FROM pass_import_rows WHERE import_id = ? ORDER BY row_no',
+      [imp.id],
+    );
+    expect(marks).toEqual([
+      { row_no: 2, code: null },
+      { row_no: 3, code: 'MARK' },
+      { row_no: 4, code: 'MARK' },
+    ]);
+  });
+
+  it('re-checks a row that shares a key with the fixed one', async () => {
+    const imp = await parse(
+      await auto('Holder email,Member ID,Name\na@x.co,M-1,Ann\nb@x.co,M-1,Bo'),
+    );
+    expect(imp.counts?.errors).toBe(1);
+    const plan = { ...imp.plan, overrides: { '2': { '/Member ID': 'M-9' } } };
     const fixed = await parse(await api(admin, 'POST', `/${imp.id}/check`, { plan }));
     expect(fixed.counts).toMatchObject({ create: 2, errors: 0 });
   });
@@ -167,6 +239,7 @@ describe('row changes', () => {
       { key: 'status', label: 'Status', from: null, to: 'Suspended' },
     ]);
     expect(at(4)).toMatchObject({ action: 'create' });
+    expect(at(2)?.changes).toBeUndefined();
     expect(at(5)).toMatchObject({ action: 'error', wouldBe: 'create' });
   });
 });

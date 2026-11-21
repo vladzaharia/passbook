@@ -1150,6 +1150,19 @@ export type PassImportMappings = {
   }>;
 };
 
+export type PassImportUndo = {
+  state: "running" | "done" | "failed";
+  removed: number;
+  restored: number;
+  keptTotal: number;
+  kept: Array<{
+    passId: string;
+    code: string;
+  }>;
+  emailsCancelled: number;
+  unrevertable?: number;
+};
+
 export type PassImportsCheckParams = {
   plan: {
     mapping: Record<string, {
@@ -1182,7 +1195,12 @@ export type PassImportsCheckParams = {
 
 export type PassImportsCommitParams = {
   skipInvalid?: boolean;
-  email?: boolean;
+  email?: boolean | {
+    send: "now";
+  } | {
+    send: "held";
+    holdMs?: number;
+  };
 };
 
 export type PassImportsCreateParams = {
@@ -1265,6 +1283,8 @@ export type PassImportsRemoveCreatedParams = {
 export type PassImportsSendEmailsParams = {
   cursor: string | null;
 };
+
+export type PassImportsUndoParams = Record<string, unknown>;
 
 export type PassInstalledEvent = {
   id: string;

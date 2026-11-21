@@ -23,6 +23,7 @@ import { idempotentJson, principalOf } from '../../platform/idempotency.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { actorFor, authOf, requireTenantSessionOrApiKey, svc } from './http.ts';
+import { suggestionFor } from './import-check-run.ts';
 import { commitImport } from './import-commit.ts';
 import { emailRest } from './import-email-rest.ts';
 import { errorsCsv, importDto, rowsPage } from './import-read.ts';
@@ -36,6 +37,7 @@ import {
   requireImport,
 } from './import-service.ts';
 import { authorityFor, registerImportMappings } from './routes-import-mappings.ts';
+import { registerImportUndo } from './routes-import-undo.ts';
 
 /** Bulk create and update from a file or a sheet link: the check (dry run) and the draft it keeps. */
 export const passImportRoutes = createRouter({ bodyLimit: false });
@@ -66,6 +68,7 @@ const ListQuerySchema = PassImportListQuerySchema.extend({ orgId: IdSchema.optio
 const RowsQuerySchema = PassImportRowsQuerySchema.extend({ orgId: IdSchema.optional() });
 
 registerImportMappings(passImportRoutes);
+registerImportUndo(passImportRoutes);
 
 register(
   passImportRoutes,
@@ -124,7 +127,8 @@ register(
     const ctx = svc(c);
     const authority = await authorityFor(c, c.req.valid('query').orgId, 'passes:read');
     const row = await requireImport(ctx, authority, c.req.valid('param').id);
-    return c.json(await importDto(ctx, row));
+    const mapping = await suggestionFor(ctx, authority, row);
+    return c.json(await importDto(ctx, row, mapping ? { mapping } : {}));
   },
 );
 
@@ -286,7 +290,7 @@ register(
     method: 'post',
     path: '/{id}/email-rest',
     summary:
-      'Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice',
+      'Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice',
     params: IdParamSchema,
     query: OrgQuerySchema,
     body: PassImportEmailRestSchema,

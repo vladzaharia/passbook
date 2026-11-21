@@ -7,6 +7,7 @@ import { requireApprovedRelease } from '../templates/releases.ts';
 import { createPassRow } from './create.ts';
 import { parsePlan } from './import-plan.ts';
 import { publishPass } from './publish.ts';
+import type { Pass } from './repo.ts';
 import {
   type DeferredStarter,
   reissuePrincipalCheck,
@@ -35,6 +36,8 @@ export interface ImportRunParams {
   importId: string;
   orgId: string;
   mode: 'live' | 'test';
+  /** An undo run: the same instance kind, a different job. */
+  undo?: true;
 }
 
 export interface ChunkResult {
@@ -138,9 +141,11 @@ async function updateRow(
   starter: DeferredStarter,
   row: ImportRowRecord,
   keepManual: boolean,
-): Promise<RowResult['result']> {
+): Promise<{ result: RowResult['result']; undo?: RowResult['undo'] }> {
   const input = parseJson<Personalization>(row.input, {});
   let replayed = false;
+  let earlier: { personalization: Personalization; fieldSources: Pass['fieldSources'] } | null =
+    null;
   const published = await publishPass(ctx, {
     orgScope: { orgId: imp.org_id, mode: imp.mode, principal: 'session' },
     passId: row.pass_id ?? '',
@@ -174,10 +179,19 @@ async function updateRow(
         }
         throw new AppError('IMPORT_PASS_CHANGED', 409, 'The pass changed since the check.');
       }
+      earlier = {
+        personalization: current.personalization,
+        fieldSources: { ...current.fieldSources },
+      };
       return changed ? { personalization: merged, fieldSources: sources } : {};
     },
   });
-  return replayed || published.changed ? 'updated' : 'unchanged';
+  if (!replayed && published.changed && earlier)
+    return {
+      result: 'updated',
+      undo: { before: JSON.stringify(earlier), version: published.pass.version },
+    };
+  return { result: replayed || published.changed ? 'updated' : 'unchanged' };
 }
 
 /** Applies the next planned rows of a committing import; the plan is the rows as checked, nothing else. */
@@ -226,11 +240,11 @@ export async function applyChunk(
     // The plan's pass limit stopped the creates: they were marked skipped; updates still apply.
     if (limited && row.action === 'create') continue;
     try {
-      const result =
+      const done =
         row.action === 'create'
-          ? await createRow(ctx, imp, starter, row)
+          ? { result: await createRow(ctx, imp, starter, row) }
           : await updateRow(ctx, imp, starter, row, keepManual);
-      await writeRowResult(ctx, s, { row: row.row_no, state: 'done', result, code: null });
+      await writeRowResult(ctx, s, { row: row.row_no, state: 'done', code: null, ...done });
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
       if (error.code === 'FEATURE_LIMIT_REACHED' || error.code === 'SANDBOX_QUOTA') {

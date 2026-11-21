@@ -469,6 +469,8 @@ __all__ = [
     "PassImportMappingsSavedItemPlan",
     "PassImportMappingsSavedItemPlanMappingValue",
     "PassImportMappingsSavedItemPlanMappingValueTransform",
+    "PassImportUndo",
+    "PassImportUndoKeptItem",
     "PassImportsCheckBody",
     "PassImportsCheckParams",
     "PassImportsCheckParamsPlan",
@@ -486,6 +488,8 @@ __all__ = [
     "PassImportsCheckResultSource",
     "PassImportsCommitBody",
     "PassImportsCommitParams",
+    "PassImportsCommitParamsEmail2",
+    "PassImportsCommitParamsEmail3",
     "PassImportsCommitResult",
     "PassImportsCommitResultColumnsItem",
     "PassImportsCommitResultMapping",
@@ -562,6 +566,9 @@ __all__ = [
     "PassImportsSendEmailsBody",
     "PassImportsSendEmailsParams",
     "PassImportsSendEmailsResult",
+    "PassImportsUndoBody",
+    "PassImportsUndoParams",
+    "PassImportsUndoResult",
     "PassInstalledEvent",
     "PassInstalledEventData",
     "PassIssuedEvent",
@@ -4302,6 +4309,19 @@ class PassImportMappingsSavedItemPlanMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
+class PassImportUndo(_Model):
+    state: _Literal["running", "done", "failed"] | str
+    removed: int
+    restored: int
+    keptTotal: int
+    kept: _List[PassImportUndoKeptItem]
+    emailsCancelled: int
+    unrevertable: int | None = None
+
+class PassImportUndoKeptItem(_Model):
+    passId: str
+    code: str
+
 class PassImportsCheckParams(_Model):
     plan: PassImportsCheckParamsPlan
 
@@ -4348,6 +4368,8 @@ class PassImportsCheckResult(_Model):
     expiresAt: int
     mapping: PassImportsCheckResultMapping | None = None
     emailHoldUntil: int | None = None
+    undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsCheckResultColumnsItem(_Model):
     pointer: str
@@ -4395,6 +4417,8 @@ class PassImportsCheckResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4405,7 +4429,14 @@ class PassImportsCheckResultSource(_Model):
 
 class PassImportsCommitParams(_Model):
     skipInvalid: bool | None = None
-    email: bool | None = None
+    email: bool | PassImportsCommitParamsEmail2 | PassImportsCommitParamsEmail3 | None = None
+
+class PassImportsCommitParamsEmail2(_Model):
+    send: _Literal["now"] | str
+
+class PassImportsCommitParamsEmail3(_Model):
+    send: _Literal["held"] | str
+    holdMs: int | None = None
 
 class PassImportsCommitResult(_Model):
     id: str
@@ -4433,6 +4464,8 @@ class PassImportsCommitResult(_Model):
     expiresAt: int
     mapping: PassImportsCommitResultMapping | None = None
     emailHoldUntil: int | None = None
+    undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsCommitResultColumnsItem(_Model):
     pointer: str
@@ -4480,6 +4513,8 @@ class PassImportsCommitResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4546,6 +4581,8 @@ class PassImportsCreateResult(_Model):
     expiresAt: int
     mapping: PassImportsCreateResultMapping | None = None
     emailHoldUntil: int | None = None
+    undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsCreateResultColumnsItem(_Model):
     pointer: str
@@ -4593,6 +4630,8 @@ class PassImportsCreateResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4630,6 +4669,8 @@ class PassImportsListItem(_Model):
     expiresAt: int
     mapping: PassImportsListItemMapping | None = None
     emailHoldUntil: int | None = None
+    undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsListItemColumnsItem(_Model):
     pointer: str
@@ -4677,6 +4718,8 @@ class PassImportsListItemProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4715,6 +4758,8 @@ class PassImportsListResultItemsItem(_Model):
     expiresAt: int
     mapping: PassImportsListResultItemsItemMapping | None = None
     emailHoldUntil: int | None = None
+    undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsListResultItemsItemColumnsItem(_Model):
     pointer: str
@@ -4762,6 +4807,8 @@ class PassImportsListResultItemsItemProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4822,6 +4869,8 @@ class PassImportsRetrieveResult(_Model):
     expiresAt: int
     mapping: PassImportsRetrieveResultMapping | None = None
     emailHoldUntil: int | None = None
+    undo: PassImportUndo | None = None
+    unrevertable: int | None = None
 
 class PassImportsRetrieveResultColumnsItem(_Model):
     pointer: str
@@ -4869,6 +4918,8 @@ class PassImportsRetrieveResultProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
+    label: str | None = None
+    value: str | None = None
     code: str
     message: str
     severity: _Literal["error", "warning"] | str
@@ -4926,6 +4977,9 @@ class PassImportsSendEmailsResult(_Model):
     sent: int
     skipped: int
     nextCursor: str | None
+
+class PassImportsUndoParams(_Model):
+    pass
 
 class PassInstalledEvent(_Model):
     id: str
@@ -9022,6 +9076,10 @@ PassImportsMappingsSaveBody = PassImportsMappingsSaveParams
 PassImportsMappingsSaveResult = PassImportMappings
 
 PassImportsSendEmailsBody = PassImportsSendEmailsParams
+
+PassImportsUndoBody = PassImportsUndoParams
+
+PassImportsUndoResult = PassImportUndo
 
 PassesBulkApplyBody = PassesBulkApplyParams
 

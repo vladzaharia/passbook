@@ -93,8 +93,10 @@ export async function harness(
     OIDC_ISSUER: ISSUER,
     OIDC_CLIENT_ID: CLIENT_ID,
     OIDC_CLIENT_SECRET: 'secret',
-    OIDC_ADMIN_GROUP: 'wallet-admins',
-    OIDC_USER_GROUP: 'wallet-users',
+    OIDC_PLATFORM_ADMIN_GROUP: 'wallet_admins',
+    OIDC_ADMIN_GROUP: 'wallet_org_admins',
+    OIDC_DEVELOPER_GROUP: 'passbook_developers',
+    OIDC_USER_GROUP: 'wallet_users',
     EMAIL: {
       send: async (m: { to: string; subject: string; html: string; text: string }) => {
         mail.push({ to: m.to, subject: m.subject, html: m.html, text: m.text });

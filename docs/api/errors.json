@@ -794,6 +794,15 @@
       ]
     },
     {
+      "code": "CONSOLE_ACCESS_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "CREATE_STALE",
       "statuses": [
         409
@@ -859,6 +868,15 @@
         "bundles",
         "delivery",
         "passes"
+      ]
+    },
+    {
+      "code": "DEVELOPER_ACCESS_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {
@@ -1756,6 +1774,15 @@
       ]
     },
     {
+      "code": "IMPORT_PASS_GONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "IMPORT_PLAN_INVALID",
       "statuses": [
         422
@@ -1789,6 +1816,42 @@
       ],
       "modules": [
         "nfc"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDONE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_NO_BEFORE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_UNDO_RUNNING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -4282,6 +4345,15 @@
       ],
       "modules": [
         "templates"
+      ]
+    },
+    {
+      "code": "STEP_UP_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {

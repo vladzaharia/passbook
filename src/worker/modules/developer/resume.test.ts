@@ -18,7 +18,7 @@ beforeAll(async () => {
 
 async function session(): Promise<{ auth: SessionAuth; userId: string }> {
   const user = await makeUser(kit.f);
-  const made = await makeSession(kit.f, { userId: user.id });
+  const made = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
   return {
     userId: user.id,
     auth: {

@@ -34,7 +34,10 @@ describe('POST /developer/try-token', () => {
     expect((await send('POST', '/developer/try-token', BROWSER)).status).toBe(401);
     const noCsrf = { cookie: d.session.headers.cookie ?? '', 'sec-fetch-site': 'cross-site' };
     expect((await send('POST', '/developer/try-token', noCsrf)).status).toBe(403);
-    const other = await makeSession(t.kit.f, { userId: (await makeUser(t.kit.f)).id });
+    const other = await makeSession(t.kit.f, {
+      userId: (await makeUser(t.kit.f)).id,
+      roles: ['user', 'developer'],
+    });
     await expectProblem(
       await send('POST', '/developer/try-token', { ...other.headers, ...BROWSER }),
       404,
@@ -85,7 +88,7 @@ describe('try token revocation', () => {
   it('stops when the session is revoked from another session', async () => {
     const d = await developer();
     const { token } = await mint(d.browser);
-    const phone = await makeSession(t.kit.f, { userId: d.user.id });
+    const phone = await makeSession(t.kit.f, { userId: d.user.id, roles: ['user', 'developer'] });
     const idHash = await sha256Hex(d.session.cookieValue);
     const res = await send('DELETE', `/me/sessions/${idHash}`, { ...phone.headers, ...BROWSER });
     expect(res.status, await res.clone().text()).toBe(200);

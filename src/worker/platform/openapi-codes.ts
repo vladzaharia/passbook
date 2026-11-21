@@ -7,6 +7,7 @@ type Op = {
   summary?: string;
   security?: Record<string, unknown>[];
   'x-sign-in'?: string;
+  'x-step-up'?: { maxAgeSec: number; conditional: boolean };
   parameters?: Param[];
   requestBody?: unknown;
   'x-codes'?: string[];
@@ -47,6 +48,7 @@ const bySecurity = (op: Op): string[] => {
         'RATE_LIMITED',
         ...(keys ? ['INVALID_API_KEY', 'MISSING_SCOPE'] : []),
         ...(op['x-sign-in'] === 'idp' ? ['IDP_SIGN_IN_REQUIRED'] : []),
+        ...(op['x-step-up'] ? ['STEP_UP_REQUIRED'] : []),
       ]
     : ['RATE_LIMITED'];
 };
