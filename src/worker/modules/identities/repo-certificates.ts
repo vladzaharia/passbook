@@ -220,3 +220,18 @@ export async function countAscIssued(db: D1Database, identityId: string, since: 
   );
   return row?.n ?? 0;
 }
+
+/** Superseded to revoked. False when the row is in another state. */
+export async function markCertificateRevoked(
+  db: D1Database,
+  id: string,
+  now: number,
+): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE identity_certificates SET state = 'revoked', ended_at = COALESCE(ended_at, ?)
+     WHERE id = ? AND state = 'superseded'`,
+    [now, id],
+  );
+  return changes === 1;
+}

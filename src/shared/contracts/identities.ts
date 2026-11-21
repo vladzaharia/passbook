@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { HANDLE_PATTERN } from '../identity-handle.ts';
 import { IdSchema, PageQuerySchema, pageOf, TimestampSchema } from './common.ts';
 import { VasKeySchema } from './nfc.ts';
 
@@ -16,6 +17,19 @@ export const PushKeyInfoSchema = z.object({
   /** Identities of the team with no present binding, which push only with the key. */
   dependentCount: z.number().int().nonnegative(),
 });
+
+export const IdentityKindSchema = z.enum(['platform', 'managed', 'own']);
+export const IdentityStatusSchema = z.enum([
+  'provisioning',
+  'active',
+  'renewing',
+  'expiring',
+  'expired',
+  'retired',
+  'failed',
+]);
+export type IdentityStatus = z.infer<typeof IdentityStatusSchema>;
+export const IdentityRotationSchema = z.enum(['auto', 'csr', 'manual']);
 
 export const IdentitySchema = z.object({
   id: IdSchema,
@@ -45,6 +59,14 @@ export const IdentitySchema = z.object({
   nfcKeys: z.array(VasKeySchema).default([]),
   isDefault: z.boolean(),
   createdAt: TimestampSchema,
+  kind: IdentityKindSchema.default('own'),
+  status: IdentityStatusSchema.default('active'),
+  rotation: IdentityRotationSchema.default('manual'),
+  /** New passes may sign with it; false once stopped. */
+  issuing: z.boolean().default(true),
+  nextRotationAt: TimestampSchema.nullable().default(null),
+  /** `pass.mobile.passbook.<handle>` for a managed identity. */
+  handle: z.string().nullable().default(null),
 });
 export type IdentityDto = z.infer<typeof IdentitySchema>;
 /** Oldest first (the platform identity leads); `cursor` is the last id of the previous page. */
@@ -84,6 +106,10 @@ export const UpdateIdentitySchema = z.object({
   isDefault: z.boolean().optional(),
   nfcEnabled: z.boolean().optional(),
   apnsBinding: z.string().max(64).nullable().optional(),
+  /** `manual` pauses automatic renewal; `auto` needs a managed identity. */
+  rotation: z.enum(['auto', 'manual']).optional(),
+  /** `false` stops new passes from signing with the identity; existing passes keep working. */
+  issuing: z.boolean().optional(),
 });
 export const ApnsProbeResultSchema = z.object({
   health: z.enum(['healthy', 'failing', 'inconclusive', 'unavailable']),
@@ -104,4 +130,111 @@ export const RotateIdentitySchema = z.object({
 export const PushKeyInputSchema = z.object({
   keyId: z.string().min(1).max(20),
   p8: z.string().min(1).max(4_000),
+});
+
+export const IdentityRunKindSchema = z.enum(['provision', 'rotate', 'revoke']);
+export const IdentityRunStateSchema = z.enum([
+  'queued',
+  'running',
+  'waiting',
+  'succeeded',
+  'failed',
+  'cancelled',
+]);
+
+export const IdentityRunSchema = z.object({
+  id: IdSchema,
+  orgId: IdSchema.nullable(),
+  kind: IdentityRunKindSchema,
+  targetType: z.enum(['identity', 'org']),
+  targetId: IdSchema,
+  state: IdentityRunStateSchema,
+  step: z.string().nullable(),
+  attempt: z.number().int().nonnegative(),
+  waitingFor: z.string().nullable(),
+  errorCode: z.string().nullable(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+  finishedAt: TimestampSchema.nullable(),
+});
+export type IdentityRunDto = z.infer<typeof IdentityRunSchema>;
+export const IdentityRunListSchema = pageOf(IdentityRunSchema);
+export const IdentityRunListQuerySchema = PageQuerySchema.extend({
+  orgId: IdSchema.optional(),
+  targetId: IdSchema.optional(),
+});
+
+/** The handle of `pass.mobile.passbook.<handle>`: 2 to 30 lowercase letters or digits, starting with a letter. */
+export const IdentityHandleSchema = z.string().regex(HANDLE_PATTERN);
+export const OrgIdParamSchema = z.object({ orgId: IdSchema });
+export const StartManagedIdentitySchema = z.object({ handle: IdentityHandleSchema.optional() });
+
+/** One row of the cross-provider list. Apple only until the Google and Samsung identities land. */
+export const WalletIdentitySchema = z.object({
+  id: IdSchema,
+  provider: z.literal('apple'),
+  orgId: IdSchema.nullable(),
+  label: z.string(),
+  identifier: z.string(),
+  kind: IdentityKindSchema,
+  status: IdentityStatusSchema,
+  notBefore: TimestampSchema.nullable(),
+  notAfter: TimestampSchema.nullable(),
+  rotation: IdentityRotationSchema,
+  nextRotationAt: TimestampSchema.nullable(),
+  issuing: z.boolean(),
+  isDefault: z.boolean(),
+  passCount: z.number().int().nonnegative(),
+  createdAt: TimestampSchema,
+});
+export type WalletIdentityDto = z.infer<typeof WalletIdentitySchema>;
+export const WalletIdentityListSchema = pageOf(WalletIdentitySchema);
+export const WalletIdentityListQuerySchema = PageQuerySchema.extend({
+  orgId: IdSchema.optional(),
+  provider: z.literal('apple').default('apple'),
+  kind: IdentityKindSchema.optional(),
+  status: IdentityStatusSchema.optional(),
+});
+
+export const IdentityCertificateSchema = z.object({
+  id: IdSchema,
+  state: z.enum(['pending', 'active', 'superseded', 'revoked', 'failed']),
+  origin: z.enum(['upload', 'asc', 'csr', 'env']),
+  certSha256: z.string().nullable(),
+  notBefore: TimestampSchema.nullable(),
+  notAfter: TimestampSchema.nullable(),
+  createdAt: TimestampSchema,
+  activatedAt: TimestampSchema.nullable(),
+  endedAt: TimestampSchema.nullable(),
+});
+export type IdentityCertificateDto = z.infer<typeof IdentityCertificateSchema>;
+export const IdentityCertificateListSchema = z.object({
+  items: z.array(IdentityCertificateSchema),
+});
+
+/** `confirm` is the pass type ID, typed by the admin. */
+export const RevokeCertificateSchema = z.object({
+  certificateId: IdSchema,
+  reason: z.literal('compromised'),
+  confirm: z.string().min(1).max(100),
+});
+
+export const AppleCallSchema = z.object({
+  id: z.number().int(),
+  callId: z.string(),
+  phase: z.string(),
+  method: z.string(),
+  target: z.string().nullable(),
+  caller: z.string().nullable(),
+  status: z.string().nullable(),
+  durationMs: z.number().int().nullable(),
+  at: TimestampSchema,
+});
+export const AppleCallListSchema = z.object({
+  items: z.array(AppleCallSchema),
+  /** False when the provisioner binding is not configured. */
+  available: z.boolean(),
+});
+export const AppleCallQuerySchema = z.object({
+  since: z.coerce.number().int().nonnegative().default(0),
 });

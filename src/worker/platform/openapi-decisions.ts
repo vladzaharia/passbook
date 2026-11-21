@@ -31,6 +31,7 @@ const IDEMPOTENT = [
   'post /api/v1/passes/{id}/resend-email',
   'post /api/v1/passes/bulk',
   'post /api/v1/bundles/{id}/send-email',
+  'post /api/v1/orgs/{orgId}/identities/apple',
 ];
 
 const toRegex = (path: string) =>

@@ -9,8 +9,13 @@ export const WARN_DAYS = 30;
 export const DANGER_DAYS = 7;
 
 /** Days left, computed from notAfter so a stale `daysRemaining` cannot mislead. */
-export function remainingDays(identity: Pick<Identity, 'notAfter' | 'daysRemaining'>, now: number) {
-  return identity.notAfter === null ? identity.daysRemaining : daysUntil(identity.notAfter, now);
+export function remainingDays(
+  identity: { notAfter: number | null; daysRemaining?: number | null },
+  now: number,
+) {
+  return identity.notAfter === null
+    ? (identity.daysRemaining ?? null)
+    : daysUntil(identity.notAfter, now);
 }
 
 export function ExpiryPill({
@@ -44,15 +49,4 @@ export function ExpiryPill({
       ) : null}
     </span>
   );
-}
-
-export function ApnsPill({
-  identity,
-}: {
-  identity: Pick<Identity, 'apnsAvailable' | 'apnsHealth'>;
-}) {
-  if (!identity.apnsAvailable) return <StatusPill status="not_configured">Not set up</StatusPill>;
-  if (identity.apnsHealth === 'healthy') return <StatusPill status="verified">Healthy</StatusPill>;
-  if (identity.apnsHealth === 'failing') return <StatusPill status="failing">Failing</StatusPill>;
-  return <StatusPill status="not_checked" />;
 }

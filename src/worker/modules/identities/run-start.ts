@@ -94,3 +94,18 @@ export async function startRotation(
     createdBy: input.createdBy,
   });
 }
+
+/** Revokes one superseded certificate through the workflow, so Apple sees a run id and the ledger names it. */
+export function startRevocation(
+  ctx: ServiceContext,
+  input: { identityId: string; orgId: string | null; certId: string; createdBy: string | null },
+): Promise<StartedRun> {
+  return startRun(ctx, {
+    kind: 'revoke',
+    targetType: 'identity',
+    targetId: input.identityId,
+    orgId: input.orgId,
+    createdBy: input.createdBy,
+    ref: { certId: input.certId },
+  });
+}

@@ -19242,6 +19242,16 @@
               "null"
             ],
             "maxLength": 64
+          },
+          "rotation": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ]
+          },
+          "issuing": {
+            "type": "boolean"
           }
         }
       },
@@ -19286,6 +19296,41 @@
           "keyId",
           "p8"
         ]
+      },
+      "IdentitiesCertificatesRevokeParams": {
+        "type": "object",
+        "properties": {
+          "certificateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "compromised"
+            ]
+          },
+          "confirm": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "certificateId",
+          "reason",
+          "confirm"
+        ]
+      },
+      "IdentityRunsStartManagedParams": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]{1,29}$"
+          }
+        }
       },
       "WalletProviderAccountsVerifyParams": {
         "type": "object",
@@ -28575,7 +28620,8 @@
                               "members",
                               "brand.mark",
                               "domains",
-                              "identity.own"
+                              "identity.own",
+                              "identity.managed"
                             ]
                           },
                           "value": {
@@ -36700,7 +36746,8 @@
                               "members",
                               "brand.mark",
                               "domains",
-                              "identity.own"
+                              "identity.own",
+                              "identity.managed"
                             ]
                           },
                           "value": {
@@ -36986,7 +37033,8 @@
                               "members",
                               "brand.mark",
                               "domains",
-                              "identity.own"
+                              "identity.own",
+                              "identity.managed"
                             ]
                           },
                           "value": {
@@ -77858,6 +77906,56 @@
                               "createdAt": {
                                 "type": "integer",
                                 "minimum": 0
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "platform",
+                                  "managed",
+                                  "own"
+                                ],
+                                "default": "own"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "provisioning",
+                                  "active",
+                                  "renewing",
+                                  "expiring",
+                                  "expired",
+                                  "retired",
+                                  "failed"
+                                ],
+                                "default": "active"
+                              },
+                              "rotation": {
+                                "type": "string",
+                                "enum": [
+                                  "auto",
+                                  "csr",
+                                  "manual"
+                                ],
+                                "default": "manual"
+                              },
+                              "issuing": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "nextRotationAt": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 0,
+                                "default": null
+                              },
+                              "handle": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
                               }
                             },
                             "required": [
@@ -78298,6 +78396,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -78634,6 +78782,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -78979,6 +79177,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -79417,6 +79665,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -79885,6 +80183,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -80220,6 +80568,56 @@
                     "createdAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "platform",
+                        "managed",
+                        "own"
+                      ],
+                      "default": "own"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "provisioning",
+                        "active",
+                        "renewing",
+                        "expiring",
+                        "expired",
+                        "retired",
+                        "failed"
+                      ],
+                      "default": "active"
+                    },
+                    "rotation": {
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "csr",
+                        "manual"
+                      ],
+                      "default": "manual"
+                    },
+                    "issuing": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "nextRotationAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "default": null
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -80297,6 +80695,1637 @@
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
+      }
+    },
+    "/api/v1/identities/{id}/renew": {
+      "post": {
+        "summary": "Get a new certificate now (managed identities)",
+        "tags": [
+          "identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identities.postIdentitiesByIdRenew",
+        "x-sdk": {
+          "resource": "identities",
+          "method": "renew"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/identities/{id}/certificates": {
+      "get": {
+        "summary": "Certificate history of an identity, newest first",
+        "tags": [
+          "identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "active",
+                              "superseded",
+                              "revoked",
+                              "failed"
+                            ]
+                          },
+                          "origin": {
+                            "type": "string",
+                            "enum": [
+                              "upload",
+                              "asc",
+                              "csr",
+                              "env"
+                            ]
+                          },
+                          "certSha256": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "notBefore": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "notAfter": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "activatedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "endedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "state",
+                          "origin",
+                          "certSha256",
+                          "notBefore",
+                          "notAfter",
+                          "createdAt",
+                          "activatedAt",
+                          "endedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identities.getIdentitiesByIdCertificates",
+        "x-sdk": {
+          "resource": "identities.certificates",
+          "method": "list"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/identities/{id}/revoke-certificate": {
+      "post": {
+        "summary": "Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in",
+        "tags": [
+          "identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentitiesCertificatesRevokeParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identities.postIdentitiesByIdRevokeCertificate",
+        "x-sdk": {
+          "resource": "identities.certificates",
+          "method": "revoke"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/api/v1/identity-runs": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "List identity runs, newest first",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "targetId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "orgId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "provision",
+                              "rotate",
+                              "revoke"
+                            ]
+                          },
+                          "targetType": {
+                            "type": "string",
+                            "enum": [
+                              "identity",
+                              "org"
+                            ]
+                          },
+                          "targetId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "queued",
+                              "running",
+                              "waiting",
+                              "succeeded",
+                              "failed",
+                              "cancelled"
+                            ]
+                          },
+                          "step": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "attempt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "waitingFor": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "errorCode": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "updatedAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "finishedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "orgId",
+                          "kind",
+                          "targetType",
+                          "targetId",
+                          "state",
+                          "step",
+                          "attempt",
+                          "waitingFor",
+                          "errorCode",
+                          "createdAt",
+                          "updatedAt",
+                          "finishedAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.getIdentityRuns",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "list"
+        }
+      }
+    },
+    "/api/v1/identity-runs/{id}": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Get an identity run",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.getIdentityRunsById",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "retrieve"
+        }
+      }
+    },
+    "/api/v1/identity-runs/{id}/retry": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Start a failed or cancelled run again",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.postIdentityRunsByIdRetry",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "retry"
+        }
+      }
+    },
+    "/api/v1/identity-runs/{id}/cancel": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Cancel an open run",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.postIdentityRunsByIdCancel",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "cancel"
+        }
+      }
+    },
+    "/api/v1/wallet-identities": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "List wallet identities; a member reads their own organization",
+        "tags": [
+          "wallet-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "apple"
+              ],
+              "default": "apple"
+            },
+            "required": false,
+            "name": "provider",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "platform",
+                "managed",
+                "own"
+              ]
+            },
+            "required": false,
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "provisioning",
+                "active",
+                "renewing",
+                "expiring",
+                "expired",
+                "retired",
+                "failed"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "apple"
+                            ]
+                          },
+                          "orgId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "identifier": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "platform",
+                              "managed",
+                              "own"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "provisioning",
+                              "active",
+                              "renewing",
+                              "expiring",
+                              "expired",
+                              "retired",
+                              "failed"
+                            ]
+                          },
+                          "notBefore": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "notAfter": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "rotation": {
+                            "type": "string",
+                            "enum": [
+                              "auto",
+                              "csr",
+                              "manual"
+                            ]
+                          },
+                          "nextRotationAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          },
+                          "issuing": {
+                            "type": "boolean"
+                          },
+                          "isDefault": {
+                            "type": "boolean"
+                          },
+                          "passCount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "createdAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "provider",
+                          "orgId",
+                          "label",
+                          "identifier",
+                          "kind",
+                          "status",
+                          "notBefore",
+                          "notAfter",
+                          "rotation",
+                          "nextRotationAt",
+                          "issuing",
+                          "isDefault",
+                          "passCount",
+                          "createdAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.getWalletIdentities",
+        "x-sdk": {
+          "resource": "walletIdentities",
+          "method": "list"
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/identities/apple": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "x-feature": "identity.managed",
+        "summary": "Start the managed Apple identity of an organization (Idempotency-Key)",
+        "tags": [
+          "identity-runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityRunsStartManagedParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "provision",
+                        "rotate",
+                        "revoke"
+                      ]
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "org"
+                      ]
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "running",
+                        "waiting",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ]
+                    },
+                    "step": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "attempt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "waitingFor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "errorCode": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "updatedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orgId",
+                    "kind",
+                    "targetType",
+                    "targetId",
+                    "state",
+                    "step",
+                    "attempt",
+                    "waitingFor",
+                    "errorCode",
+                    "createdAt",
+                    "updatedAt",
+                    "finishedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
+        "x-sdk": {
+          "resource": "identityRuns",
+          "method": "startManaged"
+        }
+      }
+    },
+    "/api/v1/platform/apple-calls": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:identities",
+        "summary": "Apple provisioner's call ledger",
+        "tags": [
+          "wallet-identities"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "default": 0
+            },
+            "required": false,
+            "name": "since",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "callId": {
+                            "type": "string"
+                          },
+                          "phase": {
+                            "type": "string"
+                          },
+                          "method": {
+                            "type": "string"
+                          },
+                          "target": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "caller": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "status": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "durationMs": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "callId",
+                          "phase",
+                          "method",
+                          "target",
+                          "caller",
+                          "status",
+                          "durationMs",
+                          "at"
+                        ]
+                      }
+                    },
+                    "available": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "available"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "wallet-identities.getPlatformAppleCalls",
+        "x-sdk": {
+          "resource": "platform.appleCalls",
+          "method": "list"
+        }
       }
     },
     "/api/v1/wallet-providers/accounts/verify": {

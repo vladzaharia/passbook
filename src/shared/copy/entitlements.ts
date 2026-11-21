@@ -37,6 +37,7 @@ export const ENTITLEMENT_LABEL: Record<EntitlementKey, string> = {
   'brand.mark': 'PassBook mark',
   domains: 'Custom domains',
   'identity.own': 'Own Pass Type ID',
+  'identity.managed': 'Managed Pass Type ID',
 };
 
 /** Level values by key; every level of the registry has a label. */

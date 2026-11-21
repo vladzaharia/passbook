@@ -1,4 +1,5 @@
 import { PageHeader, Tabs, TabsContent, TabsList, TabsTrigger } from '@/web/ui/index.ts';
+import { AppleApiPanel } from './apple/apple-api-tab.tsx';
 import { IdentitiesPanel } from './apple/identities-page.tsx';
 import { MigrationSection } from './migration-section.tsx';
 import { ProviderTab } from './provider-tab.tsx';
@@ -13,6 +14,7 @@ export function PlatformWalletAccountsPage() {
           <TabsTrigger value="apple">Apple</TabsTrigger>
           <TabsTrigger value="google">Google</TabsTrigger>
           <TabsTrigger value="samsung">Samsung</TabsTrigger>
+          <TabsTrigger value="apple-api">Apple API</TabsTrigger>
           <TabsTrigger value="migration">Migration</TabsTrigger>
         </TabsList>
         <TabsContent value="apple">
@@ -23,6 +25,9 @@ export function PlatformWalletAccountsPage() {
         </TabsContent>
         <TabsContent value="samsung">
           <ProviderTab provider="samsung" />
+        </TabsContent>
+        <TabsContent value="apple-api">
+          <AppleApiPanel />
         </TabsContent>
         <TabsContent value="migration">
           <MigrationSection />

@@ -189,3 +189,19 @@ export async function handleOfOrg(db: D1Database, orgId: string): Promise<string
   );
   return row?.handle ?? null;
 }
+
+/** A passes reissue for the identity finished after `since`: installed passes carry the new signature. */
+export async function reissueDrained(
+  db: D1Database,
+  identityId: string,
+  since: number,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      `SELECT 1 AS x FROM workflow_runs
+       WHERE kind = 'bulk_reissue' AND target_id = ? AND status = 'complete' AND started_at >= ? LIMIT 1`,
+      [identityId, since],
+    )) !== null
+  );
+}

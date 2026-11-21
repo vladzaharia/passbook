@@ -425,6 +425,10 @@
     "resource": "identities",
     "method": "retrieve"
   },
+  "identities.getIdentitiesByIdCertificates": {
+    "resource": "identities.certificates",
+    "method": "list"
+  },
   "identities.patchIdentitiesById": {
     "resource": "identities",
     "method": "update"
@@ -437,6 +441,14 @@
     "resource": "identities",
     "method": "checkApns"
   },
+  "identities.postIdentitiesByIdRenew": {
+    "resource": "identities",
+    "method": "renew"
+  },
+  "identities.postIdentitiesByIdRevokeCertificate": {
+    "resource": "identities.certificates",
+    "method": "revoke"
+  },
   "identities.postIdentitiesByIdRotate": {
     "resource": "identities",
     "method": "rotate"
@@ -444,6 +456,26 @@
   "identities.putIdentitiesByIdPushKey": {
     "resource": "identities.pushKey",
     "method": "upload"
+  },
+  "identity-runs.getIdentityRuns": {
+    "resource": "identityRuns",
+    "method": "list"
+  },
+  "identity-runs.getIdentityRunsById": {
+    "resource": "identityRuns",
+    "method": "retrieve"
+  },
+  "identity-runs.postIdentityRunsByIdCancel": {
+    "resource": "identityRuns",
+    "method": "cancel"
+  },
+  "identity-runs.postIdentityRunsByIdRetry": {
+    "resource": "identityRuns",
+    "method": "retry"
+  },
+  "identity-runs.postOrgsByOrgIdIdentitiesApple": {
+    "resource": "identityRuns",
+    "method": "startManaged"
   },
   "join-links.getJoinLinksByTemplateId": {
     "resource": "joinLinks",
@@ -2056,6 +2088,14 @@
   "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider": {
     "resource": "walletEnrollments",
     "method": "update"
+  },
+  "wallet-identities.getPlatformAppleCalls": {
+    "resource": "platform.appleCalls",
+    "method": "list"
+  },
+  "wallet-identities.getWalletIdentities": {
+    "resource": "walletIdentities",
+    "method": "list"
   },
   "wallet-platform.getPlatformWalletCredentials": {
     "resource": "platform.walletCredentials",

@@ -15,7 +15,7 @@ beforeEach(() => {
 afterEach(() => resetModeForTests());
 
 const orgHandlers = (check: (init: RequestInit | undefined) => Response) => ({
-  '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+  '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
   '/api/v1/orgs/o1/wallet-enrolments': () =>
     json({
       items: [
@@ -102,7 +102,7 @@ describe('migration', () => {
     ...over,
   });
   const handlers = (resolve: (body: unknown) => Response) => ({
-    '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+    '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-enrolments': () => json({ items: [], nextCursor: null }),
     '/api/v1/platform/wallet-credentials/migrate': (_u: URL, init: RequestInit | undefined) =>
