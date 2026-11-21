@@ -2905,6 +2905,20 @@ type NfcTagTypesUpdateResult struct {
 	ArchivedAt  *int64   `json:"archivedAt"`
 }
 
+type NfcTagsAssignParams = any
+
+type NfcTagsAssignParams1 struct {
+	ID      string  `json:"id"`
+	Format  *string `json:"format,omitempty"`
+	Binding string  `json:"binding"`
+	Label   *string `json:"label,omitempty"`
+}
+
+type NfcTagsAssignParams2 struct {
+	TagID   string `json:"tagId"`
+	Binding string `json:"binding"`
+}
+
 type NfcTagsRebindParams struct {
 	TagID   string `json:"tagId"`
 	Binding string `json:"binding"`

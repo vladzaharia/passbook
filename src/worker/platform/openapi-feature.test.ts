@@ -16,6 +16,7 @@ const FEATURE_ROUTES: Record<string, unknown> = {
   // Declared with `xFeature` (documentation): the service and its grant enforce them.
   'post /api/v1/passes/{id}/prints': 'print',
   'post /api/v1/nfc/passes/{passId}/tags': { key: 'nfc', atLeast: 'basic' },
+  'post /api/v1/nfc/passes/{passId}/tags/assign': { key: 'nfc', atLeast: 'basic' },
   'patch /api/v1/nfc/bindings/{bindingId}': { key: 'nfc', atLeast: 'basic' },
   'post /api/v1/nfc/passes/{passId}/enrollments': { key: 'nfc', atLeast: 'basic' },
   'post /api/v1/nfc/keysets': { key: 'nfc', atLeast: 'secure' },

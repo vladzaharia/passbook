@@ -848,6 +848,16 @@ export type NfcTagTypesUpdateParams = {
   templateIds?: Array<string>;
 };
 
+export type NfcTagsAssignParams = {
+  id: string;
+  format?: "hex" | "reversed" | "decimal";
+  binding: "pass" | "user";
+  label?: string;
+} | {
+  tagId: string;
+  binding: "pass" | "user";
+};
+
 export type NfcTagsRebindParams = {
   tagId: string;
   binding: "pass" | "user";

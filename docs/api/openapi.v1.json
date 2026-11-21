@@ -23204,6 +23204,67 @@
         ],
         "additionalProperties": false
       },
+      "NfcTagsAssignParams": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "hex",
+                  "reversed",
+                  "decimal"
+                ]
+              },
+              "binding": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "user"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              }
+            },
+            "required": [
+              "id",
+              "binding"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tagId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "binding": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "user"
+                ]
+              }
+            },
+            "required": [
+              "tagId",
+              "binding"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
       "NfcTagTypesCreateParams": {
         "type": "object",
         "properties": {
@@ -91811,6 +91872,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -92042,6 +92104,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -92246,6 +92309,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -92482,6 +92546,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -92755,6 +92820,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -92820,7 +92886,6 @@
                   }
                 },
                 "required": [
-                  "staffId",
                   "pin"
                 ]
               }
@@ -92989,6 +93054,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -93198,6 +93264,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -93625,6 +93692,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -94039,6 +94107,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -94468,6 +94537,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -94987,6 +95057,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -95417,6 +95488,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -95697,6 +95769,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -95998,6 +96071,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -96240,6 +96314,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -96572,6 +96647,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -96845,6 +96921,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -97110,6 +97187,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -97480,6 +97558,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -98018,6 +98097,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -98257,6 +98337,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -98543,6 +98624,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -98803,6 +98885,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -99126,6 +99209,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -99361,6 +99445,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -99608,6 +99693,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -99912,6 +99998,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -100127,6 +100214,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -100412,6 +100500,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -100795,6 +100884,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -101064,6 +101154,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -101346,6 +101437,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -101672,6 +101764,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -101915,6 +102008,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -102139,6 +102233,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -102402,6 +102497,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -102655,6 +102751,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -102879,6 +102976,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -103103,6 +103201,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -103327,6 +103426,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -103578,6 +103678,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -103803,6 +103904,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -104034,6 +104136,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -104319,6 +104422,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -104556,6 +104660,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -104848,6 +104953,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -105065,6 +105171,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -105287,6 +105394,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -105517,6 +105625,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -105767,6 +105876,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -106020,6 +106130,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -106255,6 +106366,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -106501,6 +106613,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -106723,6 +106836,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -106955,6 +107069,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -107193,6 +107308,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -107756,6 +107872,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -108268,6 +108385,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -108535,6 +108653,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -109028,6 +109147,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -109529,6 +109649,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -109789,6 +109910,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -110006,6 +110128,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -110273,6 +110396,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -110495,6 +110619,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -110725,6 +110850,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -110947,6 +111073,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -111179,6 +111306,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -111411,6 +111539,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -111653,6 +111782,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -113447,6 +113577,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -113674,6 +113805,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -114084,6 +114216,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -114503,6 +114636,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -114728,6 +114862,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -115011,6 +115146,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -115228,6 +115364,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -115450,6 +115587,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -115680,6 +115818,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -115902,6 +116041,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -116134,6 +116274,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -116401,6 +116542,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -116631,6 +116773,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -116874,6 +117017,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -117116,6 +117260,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -117535,6 +117680,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -117760,6 +117906,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -118203,6 +118350,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -118591,6 +118739,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -118994,6 +119143,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -119387,6 +119537,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -119780,6 +119931,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -120019,6 +120171,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -120480,6 +120633,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -120850,6 +121004,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -121072,6 +121227,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -121304,6 +121460,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -121758,6 +121915,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -122199,6 +122357,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -122653,6 +122812,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -123152,6 +123312,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -123606,6 +123767,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -123882,6 +124044,7 @@
           "SCREEN_ONLY",
           "SCREEN_REQUIRED",
           "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
           "STAFF_NAME_TAKEN",
           "STAFF_REQUIRED",
           "STAFF_SIGN_IN_DISABLED",
@@ -124286,6 +124449,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -124660,6 +124824,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -125022,6 +125187,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -125396,6 +125562,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -125819,6 +125986,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -126181,6 +126349,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -126551,6 +126720,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -126913,6 +127083,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -127275,6 +127446,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -127637,6 +127809,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -127832,6 +128005,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -128199,6 +128373,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -128562,6 +128737,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -128923,6 +129099,384 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
+          "TAG_KEY_UNREADABLE",
+          "TAG_NOT_ASSIGNED",
+          "TAG_NOT_FOUND",
+          "TAG_NO_ACCOUNT",
+          "TAG_POOL_UNSUPPORTED",
+          "TAG_REQUEST_BUSY",
+          "TAG_SECURE_REQUIRED",
+          "TAG_SYSTEM_DISABLED",
+          "TAG_TYPED_OFF",
+          "TAG_TYPE_ARCHIVED",
+          "TAG_TYPE_CHANGED",
+          "TAG_TYPE_CHOOSE",
+          "TAG_TYPE_LIMIT",
+          "TAG_TYPE_MISMATCH",
+          "TAG_TYPE_NAME_TAKEN",
+          "TAG_TYPE_NOT_FOUND",
+          "TAG_TYPE_SCOPE",
+          "TAG_TYPE_SET",
+          "TAG_TYPE_SYSTEM",
+          "TAG_UNDO_EXPIRED",
+          "TAG_USE_MISMATCH",
+          "TEMPLATE_IN_TAG_TYPE",
+          "UNAUTHENTICATED",
+          "UNKNOWN_TEMPLATE",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/nfc/passes/{passId}/tags/assign": {
+      "post": {
+        "x-feature": {
+          "key": "nfc",
+          "atLeast": "basic"
+        },
+        "summary": "Assign a typed tag ID or a spare tag to a pass",
+        "tags": [
+          "nfc-tags"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "passId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NfcTagsAssignParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "live",
+                        "test"
+                      ]
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "uid",
+                        "sun"
+                      ]
+                    },
+                    "system": {
+                      "type": "string",
+                      "enum": [
+                        "uid",
+                        "sun"
+                      ]
+                    },
+                    "type": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "use": {
+                          "type": "string",
+                          "enum": [
+                            "member",
+                            "staff",
+                            "visitor"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "use"
+                      ]
+                    },
+                    "assurance": {
+                      "type": "string",
+                      "enum": [
+                        "basic",
+                        "secure"
+                      ]
+                    },
+                    "hint": {
+                      "type": "string",
+                      "pattern": "^[0-9A-F]{4}$"
+                    },
+                    "label": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "pool": {
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "retired"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "assigned",
+                        "spare",
+                        "lent",
+                        "lost",
+                        "retired"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "lastSeenAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "keysetId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "binding": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "tagId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "pass",
+                            "user"
+                          ]
+                        },
+                        "passId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "passTitle": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "userId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "holderName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "scanner",
+                            "remote",
+                            "admin"
+                          ]
+                        },
+                        "lent": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "boundAt": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "boundByName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "scannerName": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "expiresAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "endedAt": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
+                        "endCause": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "enum": [
+                            "admin",
+                            "staff",
+                            "undo",
+                            "lost",
+                            "replaced",
+                            "moved",
+                            "holder_changed",
+                            "pass_deleted",
+                            "no_passes",
+                            "offboard",
+                            "visitor_out",
+                            "pass_ended",
+                            "tag_retired",
+                            "channel_off",
+                            "expired",
+                            "type_changed",
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "tagId",
+                        "scope",
+                        "passId",
+                        "passTitle",
+                        "userId",
+                        "holderName",
+                        "source",
+                        "boundAt",
+                        "boundByName",
+                        "scannerName",
+                        "endedAt",
+                        "endCause"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "mode",
+                    "kind",
+                    "assurance",
+                    "hint",
+                    "label",
+                    "pool",
+                    "status",
+                    "state",
+                    "createdAt",
+                    "lastSeenAt",
+                    "keysetId",
+                    "binding"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
+        "x-sdk": {
+          "resource": "nfc.tags",
+          "method": "assign"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-codes": [
+          "ENROLLMENT_NOT_FOUND",
+          "FORBIDDEN",
+          "IMPORT_EMPTY",
+          "IMPORT_HEADER",
+          "IMPORT_TOO_MANY",
+          "KEYSET_CHANGED",
+          "KEYSET_KEY_INVALID",
+          "KEYSET_KEY_NOT_FOUND",
+          "KEYSET_KEY_REUSED",
+          "KEYSET_KEY_WEAK",
+          "KEYSET_NOT_FOUND",
+          "NOT_FOUND",
+          "ORG_NOT_FOUND",
+          "PASS_NOT_FOUND",
+          "RATE_LIMITED",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NO_TAGS",
+          "SCANNER_OFFLINE",
+          "SCANNER_REQUESTS_OFF",
+          "TAGS_OFF",
+          "TAG_ALREADY_ASSIGNED",
+          "TAG_ASSURANCE_LOW",
+          "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -129211,6 +129765,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -129621,6 +130176,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -129877,6 +130433,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -130102,6 +130659,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -130329,6 +130887,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -130556,6 +131115,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -130777,6 +131337,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -131004,6 +131565,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -131229,6 +131791,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -131433,6 +131996,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -131637,6 +132201,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -131859,6 +132424,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -132037,6 +132603,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -132231,6 +132798,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",
@@ -132322,6 +132890,7 @@
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",
           "TAG_HOLDER_CHANGED",
+          "TAG_ID_INVALID",
           "TAG_KEY_UNREADABLE",
           "TAG_NOT_ASSIGNED",
           "TAG_NOT_FOUND",

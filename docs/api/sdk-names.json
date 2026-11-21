@@ -751,6 +751,10 @@
     "resource": "nfc.enrollments",
     "method": "create"
   },
+  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
+    "resource": "nfc.tags",
+    "method": "assign"
+  },
   "nfc-tags.postNfcPassesByPassIdTags": {
     "resource": "nfc.tags",
     "method": "rebind"

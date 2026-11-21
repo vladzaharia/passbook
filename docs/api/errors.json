@@ -4030,6 +4030,15 @@
       ]
     },
     {
+      "code": "STAFF_NAME_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "STAFF_NAME_TAKEN",
       "statuses": [
         409
@@ -4201,6 +4210,15 @@
       "modules": [
         "nfc",
         "scan"
+      ]
+    },
+    {
+      "code": "TAG_ID_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {

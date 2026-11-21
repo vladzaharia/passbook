@@ -54,6 +54,12 @@ export function usePassTags(passId: string, enabled = true) {
   });
 }
 
+/** An admin assigns a typed tag ID or a spare tag, with no scanner. */
+export type AssignRequest = { passId: string; binding: 'pass' | 'user' } & (
+  | { id: string }
+  | { tagId: string }
+);
+
 /** Writes on a tag or its binding. Every one refreshes all tag reads. */
 export function useTagMutations() {
   const client = useQueryClient();
@@ -74,6 +80,11 @@ export function useTagMutations() {
         );
         return refresh();
       },
+    }),
+    assign: useMutation({
+      mutationFn: ({ passId, ...body }: AssignRequest) =>
+        api.post(`${NFC}/passes/${encodeURIComponent(passId)}/tags/assign`, TagSchema, body),
+      onSuccess: refresh,
     }),
     lost: useMutation({ mutationFn: post('lost'), onSuccess: refresh }),
     restore: useMutation({ mutationFn: post('restore'), onSuccess: refresh }),

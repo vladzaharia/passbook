@@ -1871,6 +1871,12 @@
     "fix": "Fetch them with GET /api/v1/settings and send your change again.",
     "retryable": true
   },
+  "STAFF_NAME_REQUIRED": {
+    "title": "Name required",
+    "when": "Sign-in with a PIN alone is not available now: it is off for the org, paused after too many wrong PINs, or the org has more than 100 active staff.",
+    "fix": "Send staffId with the PIN.",
+    "retryable": false
+  },
   "STAFF_NAME_TAKEN": {
     "title": "Staff name taken",
     "when": "Another active staff member already has this name.",
@@ -2121,6 +2127,12 @@
     "title": "Tag type is for another tag system",
     "when": "The tag type is for Basic tags and the tag is Secure, or the reverse.",
     "fix": "Choose a tag type for this tag's system.",
+    "retryable": false
+  },
+  "TAG_ID_INVALID": {
+    "title": "Tag ID not valid",
+    "when": "The typed tag ID is not 4, 7 or 10 bytes in the chosen format.",
+    "fix": "Check the ID against the reader or the supplier's list.",
     "retryable": false
   },
   "TAG_UID_RANDOM": {
