@@ -227,7 +227,9 @@ describe('Scanning page', () => {
       handlers,
     });
     expect(await screen.findByRole('heading', { name: 'Scanning', level: 1 })).toBeInTheDocument();
-    expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Set up scanning', level: 2 }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByRole('button', { name: 'New scanning session' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
@@ -273,7 +275,7 @@ describe('Scanning page', () => {
     });
     await screen.findByText('No staff yet');
     await userEvent.setup().click(screen.getByRole('tab', { name: 'Sessions' }));
-    await screen.findByText('No scanning sessions');
+    await screen.findByRole('heading', { name: 'Set up scanning', level: 2 });
     expect(router.state.location.search).not.toHaveProperty('tab');
   });
 
@@ -284,7 +286,9 @@ describe('Scanning page', () => {
       selectedOrg: 'o1',
       handlers,
     });
-    expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Set up scanning', level: 2 }),
+    ).toBeInTheDocument();
   });
 
   it('links the event page back to Scanning with typed routes', async () => {

@@ -5,11 +5,20 @@ import { type ReactNode, useId } from 'react';
  * down to the wizard bar, right of the steps (the Wizard clears it). It stays put while the steps
  * scroll; content taller than the slice scrolls inside it.
  */
-export function WizardStage({ label, children }: { label: string; children: ReactNode }) {
+export function WizardStage({
+  label,
+  quiet,
+  children,
+}: {
+  label: string;
+  /** The label only names the landmark; the content already says it. */
+  quiet?: boolean;
+  children: ReactNode;
+}) {
   const id = useId();
   return (
     <aside aria-labelledby={id} className="wl-stage">
-      <p id={id} className="px-6 pt-5 text-xs font-medium text-fg-muted">
+      <p id={id} className={quiet ? 'sr-only' : 'px-6 pt-5 text-xs font-medium text-fg-muted'}>
         {label}
       </p>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
