@@ -102,7 +102,6 @@ function Rail({ op, site, slot, slug }: { op: OpView; site: Site; slot: string; 
               <a className="btn sm" href={SIGN_IN}>
                 {DEV_COPY.reference.signInToTry}
               </a>
-              <span className="xs muted">{DEV_COPY.reference.tryLine}</span>
             </div>
           }
         />

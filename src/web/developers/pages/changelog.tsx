@@ -24,8 +24,7 @@ export function ChangelogView({ site }: { site: Site }) {
         </a>
       </div>
       <p className="lede muted mt2 prose">
-        Changes to the API, newest first. Send <code>PassBook-Version</code> to opt in to a dated
-        version; without it nothing changes.
+        Send <code>PassBook-Version</code> to opt in to a dated version; without it nothing changes.
       </p>
       {site.versions.map((v) => (
         <div key={v.date} className="card cl-version mt4" id={`version-${v.date}`}>

@@ -77,9 +77,7 @@ export function StatusBody({ status }: { status: PublicStatus | null }) {
 export function StatusView() {
   return (
     <>
-      <div className="eyebrow">Platform</div>
       <h1 className="h1 page-h">{STATUS_COPY.title}</h1>
-      <p className="lede muted mt2 prose">{STATUS_COPY.lede}</p>
       <div data-status-slot="1" />
     </>
   );

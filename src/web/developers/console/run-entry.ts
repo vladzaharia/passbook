@@ -39,7 +39,7 @@ export async function mountSheet(
     h.textContent = 'Sign in to try';
     const p = document.createElement('p');
     p.className = 'muted sm';
-    p.textContent = 'Runs against your own test sandbox. Nothing is issued.';
+    p.textContent = 'Nothing is issued.';
     const a = document.createElement('a');
     a.className = 'btn';
     a.href = '/login?next=%2Fdevelopers';

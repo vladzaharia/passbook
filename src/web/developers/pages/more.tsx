@@ -5,10 +5,9 @@ import { pagePath } from '../model/markdown.ts';
 import type { ErrorEntry, Site } from '../model/types.ts';
 import { MethodPill } from '../ui/method-pill.tsx';
 
-export function Head({ eyebrow, title, line }: { eyebrow?: string; title: string; line?: string }) {
+export function Head({ title, line }: { title: string; line?: string }) {
   return (
     <>
-      {eyebrow ? <div className="eyebrow">{eyebrow}</div> : null}
       <h1 className="h1 page-h">{title}</h1>
       {line ? <p className="lede muted mt2 prose">{line}</p> : null}
     </>
@@ -18,7 +17,7 @@ export function Head({ eyebrow, title, line }: { eyebrow?: string; title: string
 export function ReferenceIndex({ site }: { site: Site }) {
   return (
     <>
-      <Head title={DEV_COPY.reference.title} line={DEV_COPY.reference.lede} />
+      <Head title={DEV_COPY.reference.title} />
       {site.groups.map((g) => (
         <section key={g.label} className="mt8">
           <h2 className="h2">{g.label}</h2>
@@ -37,15 +36,12 @@ export function ReferenceIndex({ site }: { site: Site }) {
         <div className="tiles mt4">
           <a className="card link tile slim" href={PATHS.errors}>
             <div className="h3">Errors</div>
-            <span className="xs muted">Codes and their fixes</span>
           </a>
           <a className="card link tile slim" href={PATHS.console}>
             <div className="h3">Console</div>
-            <span className="xs muted">Run any operation in your sandbox</span>
           </a>
           <a className="card link tile slim" href={PATHS.protocols}>
             <div className="h3">Protocols</div>
-            <span className="xs muted">Apple, scanner and public routes</span>
           </a>
         </div>
       </section>
@@ -56,11 +52,7 @@ export function ReferenceIndex({ site }: { site: Site }) {
 export function ErrorsIndex({ site }: { site: Site }) {
   return (
     <>
-      <Head
-        eyebrow="Reference"
-        title="Errors"
-        line="Every error is problem+json with a stable code. Branch on code, not on the message."
-      />
+      <Head title="Errors" line="Branch on code, not on the message." />
       {site.errors.length === 0 ? (
         <p className="muted mt8">
           The catalog is empty. Each operation lists its codes once they are published.
@@ -140,11 +132,7 @@ export function ErrorEntryView({ entry }: { entry: ErrorEntry }) {
 export function ProtocolsView({ site }: { site: Site }) {
   return (
     <>
-      <Head
-        eyebrow="Reference"
-        title="Protocols"
-        line="Routes that devices and wallets call, not integrations: the Apple Wallet web service, the scanner device protocol and public capability links. They are listed so nothing is hidden."
-      />
+      <Head title="Protocols" line="Called by devices and wallets, not by integrations." />
       <div className="list card mt8">
         {site.protocols.map((p) => (
           <div key={`${p.method}${p.path}`} className="lrow wrap-row">
@@ -162,14 +150,8 @@ export function WebhooksView({ site }: { site: Site }) {
   return (
     <div className="wh">
       <div className="wh-head">
-        <div className="stack g1">
-          <div className="eyebrow">Webhooks</div>
-          <h1 className="h1">Tester</h1>
-        </div>
+        <h1 className="h1">Webhook tester</h1>
       </div>
-      <p className="muted wh-lede">
-        Your sandbox captures every delivery with its real signature. Nothing leaves PassBook.
-      </p>
       <div
         className="stack g4"
         data-island="webhook-tester"
@@ -177,7 +159,6 @@ export function WebhooksView({ site }: { site: Site }) {
       >
         <div className="card card-b stack g2">
           <h2 className="h3">Sign in to capture webhooks</h2>
-          <p className="muted">Your sandbox gets a capture endpoint when you make it.</p>
           <p>
             <a className="btn" href="/login?next=%2Fdevelopers%2Fwebhooks">
               {DEV_COPY.signIn}
@@ -218,11 +199,7 @@ export function SlotView({ which }: { which: 'quickstart' | 'guides' }) {
           {DEV_GUIDES.map((g) => (
             <div key={g.id} id={g.id} className="row g3 card tile-row">
               <span className={`sw ${g.tone}`} />
-              <span>
-                <span className="strong">{g.title}</span>
-                <br />
-                <span className="xs muted">{g.line}</span>
-              </span>
+              <span className="strong">{g.title}</span>
             </div>
           ))}
         </div>

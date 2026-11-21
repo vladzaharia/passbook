@@ -188,7 +188,7 @@ export function RunApp({ session, mode, slug, opId }: RunAppProps) {
             }}
           />
         }
-        body={<p className="muted sm resp-hint">Runs against your sandbox. Nothing is issued.</p>}
+        body={<p className="muted sm resp-hint">Nothing is issued.</p>}
       />
     );
   if (session.kind === 'closed')

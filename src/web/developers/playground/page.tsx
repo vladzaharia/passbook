@@ -13,7 +13,6 @@ export function PlaygroundPage({ site }: { site: Site }) {
       <div className="pg" data-island="playground">
         <div className="pg-fallback">
           <h1 className="h2">{DEV_COPY.slots.playground.title}</h1>
-          <p className="muted">{DEV_COPY.slots.playground.line}</p>
           <p>
             <a className="btn outline" href={PATHS.reference}>
               {DEV_COPY.home.reference}
