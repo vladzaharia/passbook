@@ -1,8 +1,14 @@
-import { knownEmail, maskEmail } from '../../../shared/email.ts';
+import { isUnverifiedEmail, knownEmail, maskEmail, normalizeEmail } from '../../../shared/email.ts';
+import { identityLinkedEmail } from '../../email/identity-linked.ts';
+import { baseUrl } from '../../platform/env.ts';
 import { ConflictError, ForbiddenError, IdpEmailNotPrimaryError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { auditStmtWhere } from '../audit/repo.ts';
 import { recordAudit } from '../audit/service.ts';
+import { createEmailBindingMailer } from '../delivery/mailer.ts';
+import { getPlatformSettings } from '../settings/service.ts';
 import * as repo from './repo.ts';
+import * as claims from './repo-claims.ts';
 
 export async function createUser(ctx: ServiceContext, email: string, name: string | null) {
   const id = ctx.ids.id();
@@ -14,23 +20,56 @@ export async function createUser(ctx: ServiceContext, email: string, name: strin
   return user;
 }
 
-/**
- * A Polaris ID email that matches an account only through a secondary address (or a primary an email
- * session moved) creates and binds nothing: the person fixes the email in Polaris ID.
- */
-export async function refuseNonPrimaryOwner(ctx: ServiceContext, email: string): Promise<void> {
-  const db = ctx.env.DB;
-  if (await repo.findUserByProvenEmail(db, email, { primaryOnly: true })) return;
-  const owner = await repo.findUserByEmail(db, email);
-  if (!owner) return;
-  ctx.log.warn('auth.oidc_email_not_primary', { code: 'IDP_EMAIL_NOT_PRIMARY', userId: owner.id });
+/** What a Polaris ID email that names an account without auto-linking needs next. */
+export interface PrimaryCheck {
+  kind: 'ok' | 'prove' | 'lifted';
+  /** `prove` for another account's secondary address: audited once the mail passes its caps. */
+  probedOwnerId?: string;
+}
+
+/** A refused or probed Polaris ID claim on an address that is not an account's main email. */
+export async function auditEmailNotPrimary(
+  ctx: ServiceContext,
+  ownerId: string,
+  proven: boolean,
+): Promise<void> {
+  ctx.log.warn('auth.oidc_email_not_primary', { code: 'IDP_EMAIL_NOT_PRIMARY', userId: ownerId });
   await recordAudit(ctx, {
     actorType: 'system',
     action: 'auth.oidc_email_not_primary',
     targetType: 'user',
-    targetId: owner.id,
-    detail: { code: 'IDP_EMAIL_NOT_PRIMARY' },
+    targetId: ownerId,
+    detail: { code: 'IDP_EMAIL_NOT_PRIMARY', proven },
   });
+}
+
+/**
+ * A Polaris ID email that matches an account only through a secondary address (or a primary an email
+ * session moved) creates and binds nothing. Unproven (no mail proof, provider not trusted), nothing
+ * is said about the account: the address is mailed. Then:
+ * - the address is the member's own primary, moved by an email session, it is the address their
+ *   membership invitation named, and the account has no identity at all: the mail proof lifts the
+ *   fence (`lifted`) and the subject links;
+ * - otherwise the person is told the main email, masked.
+ */
+export async function checkPrimaryOwner(
+  ctx: ServiceContext,
+  email: string,
+  state: { trust: boolean; mailProven: boolean },
+): Promise<PrimaryCheck> {
+  const db = ctx.env.DB;
+  if (await repo.findUserByProvenEmail(db, email, { primaryOnly: true })) return { kind: 'ok' };
+  const owner = await repo.findUserByEmail(db, email);
+  if (!owner) return { kind: 'ok' };
+  const movedPrimary =
+    owner.status === 'active' &&
+    normalizeEmail(owner.primary_email) === normalizeEmail(email) &&
+    owner.primary_set_amr === 'magic_link' &&
+    !(await claims.hasAnyIdentity(db, owner.id)) &&
+    (await claims.invitedAs(db, owner.id, email));
+  if (movedPrimary) return { kind: state.mailProven ? 'lifted' : 'prove' };
+  if (!state.trust && !state.mailProven) return { kind: 'prove', probedOwnerId: owner.id };
+  await auditEmailNotPrimary(ctx, owner.id, true);
   const primary = knownEmail(owner.primary_email);
   throw new IdpEmailNotPrimaryError(primary ? maskEmail(primary) : 'your main email');
 }
@@ -131,4 +170,48 @@ export async function accountProvenByMail(
   if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');
   await repo.adoptPrimaryEmail(db, user.id, email, 'magic_link');
   return user;
+}
+
+/**
+ * A fenced account gets a Polaris ID through a mail proof alone: the identity and its audit row are
+ * one batch (the row exists exactly when the identity does); then every other verified address is told.
+ */
+export async function linkLifted(
+  ctx: ServiceContext,
+  row: Parameters<typeof repo.insertIdentityStmt>[1],
+): Promise<boolean> {
+  const db = ctx.env.DB;
+  const audit = auditStmtWhere(
+    db,
+    ctx,
+    {
+      actorType: 'system',
+      action: 'auth.identity_linked_moved_primary',
+      targetType: 'user',
+      targetId: row.userId,
+      detail: { provider: row.provider, subject: row.subject },
+    },
+    repo.IDENTITY_LINKED_SQL,
+    [row.provider, row.subject, row.userId],
+  );
+  const [inserted] = await db.batch([repo.insertIdentityStmt(db, row, true), audit]);
+  return (inserted?.meta.changes ?? 0) > 0;
+}
+
+export async function announceLiftedLink(
+  ctx: ServiceContext,
+  userId: string,
+  proofEmail: string,
+): Promise<void> {
+  const mailer = createEmailBindingMailer(ctx.env);
+  const { 'email.senderName': fromName } = await getPlatformSettings(ctx);
+  const mail = identityLinkedEmail(baseUrl(ctx.env));
+  for (const { email } of await repo.emailsOf(ctx.env.DB, userId)) {
+    if (email === proofEmail || isUnverifiedEmail(email)) continue;
+    try {
+      await mailer.send({ to: email, fromName, ...mail });
+    } catch (error) {
+      ctx.log.error('auth.identity_linked_notice_failed', { code: 'NOTICE_FAILED', error });
+    }
+  }
 }

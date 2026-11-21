@@ -1009,6 +1009,21 @@ Session only: no API key reaches these routes (an export hands over every holder
 Send the `configRevision` you read; a save from older values is a `409`. SVG, JPEG and animated PNG are refused with
 `422`. The logo is served without a session at its content-addressed path, so a changed logo is a new URL.
 
+## Pass setup (planned)
+
+One read and one write for an org's brand, support, email and channels, with each wallet's account and Apple ID. The contract is `src/shared/contracts/pass-setup.ts`; the routes are not mounted yet.
+
+| Call | Does |
+| --- | --- |
+| `GET /orgs/{orgId}/pass-setup` | the view in the caller's mode: `brand`, `channels`, `apple`, `templates`, `checks`, `revision`, `passCount`. `org:read` |
+| `PATCH /orgs/{orgId}/pass-setup` | `expectedRevision` plus any of `brand` and `channels` (`allowed` or `blocked`). `?dryRun=true` answers `{ dryRun, view, diff, impact }` and writes nothing. A session needs `org:manage`; a key `org:write`, or `brand:manage` for a body with `brand` only |
+| `POST /orgs/{orgId}/brand-assets` | stage a PNG (`slot`: `logo`, `icon`, `webLogo`); answers `{ slot, sha, w, h, expiresAt }`. Name it in a PATCH as `{ "sha": "…" }` to commit it |
+
+- **Values.** Each brand value is `{ value, source }`: `source` is `passbook` (default or placeholder) or `org`. Logo, icon and pass colours add `templatesOwn`, the templates that keep their own. `null` in a PATCH clears a value.
+- **Chain.** Each channel has `levels`, in order `passbook`, `plan`, `org`, `template`, each with `state` (`ok`, `partial`, `off`, `needs`, `locked`), `reason` and `canChange`. The first level that is not `ok` or `partial` stops the channel. `plan` is an entitlement refusal; elsewhere the API still reports its `source` as `platform`. `on` means no level down to the org stops it.
+- **Checks.** Each has `code`, `level` (`error`, `warn`, `info`), `area`, `message`, optional `channel` and `templateIds`, and `fix` (`action`, `target`). Warnings and errors are to-dos; info rows are suggestions. Codes: `BRAND_LOGO`, `BRAND_ICON`, `BRAND_COLORS`, `BRAND_CONTRAST`, `ACCENT_CONTRAST`, `SUPPORT_MISSING`, `APPLE_SHARED_ID`, `APPLE_ID_FAILED`, `APPLE_ID_EXPIRING`, `APPLE_PUSH`, `WALLET_ACCOUNT`, `NO_CHANNEL`, `TEMPLATE_BRAND_OWN`. Fix actions are stable ids such as `upload_logo`, `start_apple_managed` and `setup_wallet_account`.
+- **Stale saves.** A PATCH with an old `expectedRevision` is `409 PASS_SETUP_CHANGED`: read again and resend.
+
 ## Other
 
 - Most lists take `limit` (1 to 200) and `cursor`; scanner history has the tighter limit above.

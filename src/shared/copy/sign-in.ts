@@ -22,6 +22,11 @@ export const graceLine = (date: string) => `Use Polaris ID by ${date} to keep Ad
 /** A Polaris ID email that is only a secondary address of a PassBook account; `masked` is its main email. */
 export const idpEmailNotPrimaryLine = (masked: string) =>
   `This Polaris ID email isn't your PassBook account's main email. Change it in Polaris ID to ${masked}.`;
+/** The proof mail for linking a Polaris ID account to an existing PassBook account. */
+export const IDENTITY_LINK_MAIL_LINE =
+  "A Polaris ID account is being linked to your PassBook account. If this wasn't you, ignore this email. Never share this code.";
+export const IDENTITY_LINKED_SUBJECT = 'Polaris ID linked';
+export const IDENTITY_LINKED_BODY = 'Polaris ID was linked to your PassBook account.';
 export const PASSKEY_REQUIRED_MESSAGE = 'Sign in to Polaris ID with your passkey, not a code.';
 
 export const INVALID_EMAIL = EMAIL_INVALID_MESSAGE;
