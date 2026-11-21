@@ -201,6 +201,17 @@ describe('organization overview', () => {
     expect(screen.queryByRole('list', { name: 'Totals' })).toBeNull();
   });
 
+  it('shows no Get started checklist in a developer sandbox', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [{ ...member(), testOnly: true }],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity({ templates: [] })),
+    });
+    expect(await screen.findByText('No passes yet')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
+  });
+
   it('hides New pass from a member who cannot operate passes', async () => {
     await renderApp('/admin', {
       session: 'user',
