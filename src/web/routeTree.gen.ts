@@ -87,6 +87,7 @@ import { Route as AdminOOrgIdPassesNewRouteImport } from './routes/admin/o/$orgI
 import { Route as AdminOOrgIdPassesPhotosRouteImport } from './routes/admin/o/$orgId/passes/photos'
 import { Route as AdminOOrgIdRetentionIndexRouteImport } from './routes/admin/o/$orgId/retention/index'
 import { Route as AdminOOrgIdScanningIndexRouteImport } from './routes/admin/o/$orgId/scanning/index'
+import { Route as AdminOOrgIdScanningSetupRouteImport } from './routes/admin/o/$orgId/scanning/setup'
 import { Route as AdminOOrgIdSettingsIndexRouteImport } from './routes/admin/o/$orgId/settings/index'
 import { Route as AdminOOrgIdTemplatesIndexRouteImport } from './routes/admin/o/$orgId/templates/index'
 import { Route as AdminOOrgIdTemplatesTemplateIdRouteImport } from './routes/admin/o/$orgId/templates/$templateId'
@@ -525,6 +526,12 @@ const AdminOOrgIdScanningIndexRoute =
     path: '/scanning/',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdScanningSetupRoute =
+  AdminOOrgIdScanningSetupRouteImport.update({
+    id: '/scanning/setup',
+    path: '/scanning/setup',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
 const AdminOOrgIdSettingsIndexRoute =
   AdminOOrgIdSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -697,6 +704,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/passes/$passId': typeof AdminOOrgIdPassesPassIdRoute
   '/admin/o/$orgId/passes/new': typeof AdminOOrgIdPassesNewRoute
   '/admin/o/$orgId/passes/photos': typeof AdminOOrgIdPassesPhotosRoute
+  '/admin/o/$orgId/scanning/setup': typeof AdminOOrgIdScanningSetupRoute
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
@@ -791,6 +799,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/passes/$passId': typeof AdminOOrgIdPassesPassIdRoute
   '/admin/o/$orgId/passes/new': typeof AdminOOrgIdPassesNewRoute
   '/admin/o/$orgId/passes/photos': typeof AdminOOrgIdPassesPhotosRoute
+  '/admin/o/$orgId/scanning/setup': typeof AdminOOrgIdScanningSetupRoute
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
@@ -889,6 +898,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/passes/$passId': typeof AdminOOrgIdPassesPassIdRoute
   '/admin/o/$orgId/passes/new': typeof AdminOOrgIdPassesNewRoute
   '/admin/o/$orgId/passes/photos': typeof AdminOOrgIdPassesPhotosRoute
+  '/admin/o/$orgId/scanning/setup': typeof AdminOOrgIdScanningSetupRoute
   '/admin/o/$orgId/templates/$templateId': typeof AdminOOrgIdTemplatesTemplateIdRoute
   '/admin/o/$orgId/templates/new': typeof AdminOOrgIdTemplatesNewRoute
   '/admin/o/$orgId/templates/upload': typeof AdminOOrgIdTemplatesUploadRoute
@@ -988,6 +998,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/passes/$passId'
     | '/admin/o/$orgId/passes/new'
     | '/admin/o/$orgId/passes/photos'
+    | '/admin/o/$orgId/scanning/setup'
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
@@ -1082,6 +1093,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/passes/$passId'
     | '/admin/o/$orgId/passes/new'
     | '/admin/o/$orgId/passes/photos'
+    | '/admin/o/$orgId/scanning/setup'
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
@@ -1179,6 +1191,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/passes/$passId'
     | '/admin/o/$orgId/passes/new'
     | '/admin/o/$orgId/passes/photos'
+    | '/admin/o/$orgId/scanning/setup'
     | '/admin/o/$orgId/templates/$templateId'
     | '/admin/o/$orgId/templates/new'
     | '/admin/o/$orgId/templates/upload'
@@ -1763,6 +1776,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdScanningIndexRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/scanning/setup': {
+      id: '/admin/o/$orgId/scanning/setup'
+      path: '/scanning/setup'
+      fullPath: '/admin/o/$orgId/scanning/setup'
+      preLoaderRoute: typeof AdminOOrgIdScanningSetupRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/settings/': {
       id: '/admin/o/$orgId/settings/'
       path: '/settings'
@@ -1932,6 +1952,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdPassesPassIdRoute: typeof AdminOOrgIdPassesPassIdRoute
   AdminOOrgIdPassesNewRoute: typeof AdminOOrgIdPassesNewRoute
   AdminOOrgIdPassesPhotosRoute: typeof AdminOOrgIdPassesPhotosRoute
+  AdminOOrgIdScanningSetupRoute: typeof AdminOOrgIdScanningSetupRoute
   AdminOOrgIdTemplatesTemplateIdRoute: typeof AdminOOrgIdTemplatesTemplateIdRoute
   AdminOOrgIdTemplatesNewRoute: typeof AdminOOrgIdTemplatesNewRoute
   AdminOOrgIdTemplatesUploadRoute: typeof AdminOOrgIdTemplatesUploadRoute
@@ -1972,6 +1993,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdPassesPassIdRoute: AdminOOrgIdPassesPassIdRoute,
   AdminOOrgIdPassesNewRoute: AdminOOrgIdPassesNewRoute,
   AdminOOrgIdPassesPhotosRoute: AdminOOrgIdPassesPhotosRoute,
+  AdminOOrgIdScanningSetupRoute: AdminOOrgIdScanningSetupRoute,
   AdminOOrgIdTemplatesTemplateIdRoute: AdminOOrgIdTemplatesTemplateIdRoute,
   AdminOOrgIdTemplatesNewRoute: AdminOOrgIdTemplatesNewRoute,
   AdminOOrgIdTemplatesUploadRoute: AdminOOrgIdTemplatesUploadRoute,

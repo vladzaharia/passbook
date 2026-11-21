@@ -9,7 +9,6 @@ import {
   Card,
   CardBody,
   DropdownMenuItem,
-  EmptyState,
   ErrorState,
   MoreMenu,
   Skeleton,
@@ -17,7 +16,7 @@ import {
 } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { useScanEvents } from '../scanner-api.ts';
-import { SetupChecklist } from '../setup-checklist.tsx';
+import { SetupEmpty } from '../setup-empty.tsx';
 import { useScanningSessions, useUpdateSession } from './api.ts';
 import { sessionAccepts, sessionRuleLabel } from './draft.ts';
 import { type HoursDialog, HoursDialogs, HoursMenuItems } from './session-hours-actions.tsx';
@@ -48,16 +47,10 @@ export function SessionsTab({
       </div>
     );
   if (!items.length)
-    return (
-      <div>
-        <SetupChecklist onNew={canManage ? onNew : undefined} />
-        <EmptyState art="scanner" title="No scanning sessions" />
-      </div>
-    );
+    return <SetupEmpty orgId={orgId ?? ''} canManage={canManage} onBlank={onNew} />;
   const online = items.reduce((n, s) => n + s.onlineCount, 0);
   return (
     <div className="grid gap-6">
-      <SetupChecklist onNew={canManage ? onNew : undefined} />
       <div className="flex flex-wrap gap-2 text-sm text-fg-muted">
         <Badge>
           <Radio aria-hidden />
