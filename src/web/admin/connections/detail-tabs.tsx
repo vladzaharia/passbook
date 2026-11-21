@@ -121,9 +121,6 @@ export function MappingTab({
           disabled={!canManage || !templateOrg || actions.update.isPending}
           onChange={setTemplateId}
         />
-        {sample || !canManage ? null : (
-          <p className="text-xs text-fg-muted">Load a sample to see example values per field.</p>
-        )}
         <MappingEditor
           rows={rows}
           onChange={setRows}

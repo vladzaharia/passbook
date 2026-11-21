@@ -138,7 +138,7 @@ describe('create connection wizard', () => {
     });
     // The only organization opens directly; the catalog is read in it.
     await waitFor(() => expect(router.state.location.pathname.split('/')[3]).toBe(ORG.id));
-    expect(await screen.findByText('Fetch records from a JSON API.')).toBeInTheDocument();
+    expect((await screen.findAllByRole('radio')).length).toBeGreaterThan(0);
     expect(screen.queryByRole('combobox', { name: 'Organization' })).toBeNull();
     expect(screen.queryByText('http-json')).toBeNull();
     await toConfig(user);

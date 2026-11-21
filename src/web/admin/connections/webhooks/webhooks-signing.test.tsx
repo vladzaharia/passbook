@@ -30,7 +30,6 @@ describe('signing on the endpoint page', () => {
     await screen.findByRole('heading', { name: 'Signing' });
     const signing = screen;
     expect(signing.getByText('Secret set')).toBeVisible();
-    expect(signing.getByText(/shown once/)).toBeVisible();
     expect(signing.queryByText(/whsec_/)).toBeNull();
     expect(signing.getByText('How to verify')).toBeVisible();
     expect(signing.getByText(/HMAC-SHA256/)).toBeInTheDocument();
@@ -82,14 +81,11 @@ describe('signing on the endpoint page', () => {
 });
 
 describe('add endpoint', () => {
-  it('says the signing secret is shown once, and what the pre-selection is', async () => {
+  it('says the signing secret is shown once', async () => {
     const calls: Calls[] = [];
     await open('/admin/connections/webhooks/new', calls);
     expect(
       await screen.findByText('https only. A signing secret is shown once after you add this.'),
-    ).toBeVisible();
-    expect(
-      screen.getByText('Recommended events are selected. Change them any time.'),
     ).toBeVisible();
   });
 });

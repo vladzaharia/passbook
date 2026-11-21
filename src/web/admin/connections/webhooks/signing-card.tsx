@@ -36,9 +36,6 @@ export function SigningCard({
               : []),
           ]}
         />
-        <p className="text-xs text-fg-muted">
-          The secret was shown once when it was made. Rotate to get a new one.
-        </p>
         {canManage ? (
           <Button
             variant="outline"
