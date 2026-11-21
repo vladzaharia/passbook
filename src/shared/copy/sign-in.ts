@@ -29,6 +29,10 @@ const LINK_EXPIRED = 'Link expired';
 /** One line on /login for `?reason=`. */
 export const LOGIN_REASONS = {
   expired: 'Your session ended. Sign in again.',
+  /** From a pass page's "My passes" row (H5). */
+  pass: 'Use the email this pass was sent to.',
+  /** From a dead pass link. */
+  link: 'That pass link does not work. Sign in to see your current passes.',
 } as const;
 export type LoginReason = keyof typeof LOGIN_REASONS;
 

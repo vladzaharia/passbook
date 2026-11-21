@@ -18,6 +18,8 @@ export const HOLDER_SOURCES = [
   'src/web/portal/holder-heading.tsx',
   'src/web/portal/holder-pass-view.tsx',
   'src/web/portal/holder-parts.tsx',
+  'src/web/portal/ended-card.tsx',
+  'src/web/ui/button-variants.ts',
   'src/web/portal/holder-qr.tsx',
   'src/web/portal/pass-details.tsx',
   'src/web/ui/card-base.tsx',
@@ -36,7 +38,7 @@ export const HOLDER_SOURCES = [
 /** Every whitespace- or quote-separated word of the sources; Tailwind ignores the non-classes. */
 export function candidatesOf(root: string): string[] {
   const words = new Set<string>();
-  for (const file of HOLDER_SOURCES.filter((f) => f.endsWith('.tsx'))) {
+  for (const file of HOLDER_SOURCES.filter((f) => /\.tsx?$/.test(f))) {
     for (const word of readFileSync(resolve(root, file), 'utf8').split(/[\s"'`]+/))
       if (word) words.add(word);
   }

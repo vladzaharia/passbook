@@ -6,6 +6,10 @@ import {
   rateLimit,
   tokenBucket,
 } from '../../platform/rate-limit.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { isEmailSignInEnabled } from '../auth/magic-service.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
+
 import { assertRecipientBudget } from '../me/service-help.ts';
 import { svc } from '../passes/http.ts';
 import { isTokenShape, passForToken } from './service.ts';
@@ -42,3 +46,29 @@ resendRoutes.post('/:token/resend', async (c) => {
   });
   return back('sent');
 });
+
+const stateOf = (v: string | undefined): 'sent' | 'wait' | null =>
+  v === 'sent' || v === 'wait' ? v : null;
+
+/**
+ * What the pass page needs for the two holder mails: Send it again (live) and Email me my passes.
+ * No sign-in action for a test-mode or developer-org pass, or while email sign-in is off: the
+ * route sends nothing then, so the card must not promise it.
+ */
+export async function holderMailProps(
+  ctx: ServiceContext,
+  page: string,
+  pass: { holderEmail: string | null; mode: string; orgId: string },
+  removed: boolean,
+  query: (name: string) => string | undefined,
+) {
+  if (!pass.holderEmail) return {};
+  const signin =
+    pass.mode !== 'test' &&
+    !(await isPreviewOnlyOrg(ctx.env.DB, pass.orgId)) &&
+    (await isEmailSignInEnabled(ctx));
+  return {
+    ...(removed ? {} : { resend: { action: `${page}/resend`, again: stateOf(query('again')) } }),
+    ...(signin ? { signin: { action: `${page}/sign-in`, state: stateOf(query('signin')) } } : {}),
+  };
+}

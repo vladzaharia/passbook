@@ -1,3 +1,4 @@
+import { WalletCards } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../web/pass-card/sync-barcode.ts';
 import holderCss from '../../generated/ssr-holder.css?raw';
@@ -22,6 +23,7 @@ import stageMotion from '../../web/pass-card/stage-motion.css?raw';
 import stageSeg from '../../web/pass-card/stage-seg.css?raw';
 import addCss from '../../web/portal/add/add.css?raw';
 import { passHeading } from '../../web/portal/add/heading.ts';
+import type { EndedSignIn } from '../../web/portal/ended-card.tsx';
 import { HolderHeading } from '../../web/portal/holder-heading.tsx';
 import { PortalLink } from '../../web/portal/holder-parts.tsx';
 import holderPassCss from '../../web/portal/holder-pass.css?raw';
@@ -34,9 +36,8 @@ import nudge from '../../web/ui/art/scenes/nudge.css?raw';
 import rest from '../../web/ui/art/scenes/rest.css?raw';
 import tear from '../../web/ui/art/scenes/tear.css?raw';
 import walletStates from '../../web/ui/art/wallet-states.css?raw';
-import { GO_TO_MY_PASSES } from './error-page.tsx';
 import { documentStart, type PageTheme } from './head.ts';
-import { actionHtml, hostedPage, REPLAY_SCRIPT } from './hosted.ts';
+import { actionHtml, hostedPage, type PageAction, REPLAY_SCRIPT } from './hosted.ts';
 import { OrgBar, OrgMark } from './org-bar.tsx';
 import { brandCss, ORG_SHELL_CSS } from './org-brand-css.ts';
 import { RIBBON_CSS, TestRibbon } from './test-ribbon.tsx';
@@ -103,6 +104,8 @@ export interface PassPageProps {
   notice?: string;
   /** Send it again: set when the pass has a holder email. */
   resend?: { action: string; again: 'sent' | 'wait' | null };
+  /** An ended pass with a holder email: Email me my passes. */
+  signin?: EndedSignIn;
 }
 
 /** What the pass is, split at the org (the portal's header says the same). */
@@ -158,6 +161,7 @@ function PassBody(props: PassPageProps) {
           support={props.support}
           endedOn={props.endedOn ?? null}
           {...(props.resend ? { resend: props.resend } : {})}
+          {...(props.signin ? { signin: props.signin } : {})}
           {...(props.notice ? { notice: props.notice } : {})}
           details={
             <PassDetails
@@ -211,10 +215,17 @@ export function renderPassPage(props: PassPageProps): string {
   return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}${mac}</body></html>`;
 }
 
+/** The dead link's one way on: the login, which says the link did not work. Sends no mail. */
+const DEAD_LINK_ACTION: PageAction = {
+  label: HOLDER_COPY.emailMyPasses,
+  href: '/login?next=/&reason=link',
+  icon: WalletCards,
+  primary: true,
+};
+
 /**
- * An unknown, rotated or expired link: the hosted card with one way on, outline as every way back
- * on the hosted pages: My passes (sign-in first when needed). It names the thing (pass or bundle)
- * but never says which of the three it was, so it tells a guesser nothing.
+ * An unknown, rotated or expired link: the hosted card with one way on, to sign-in. It names the
+ * thing (pass or bundle) but never says which of the three it was, so it tells a guesser nothing.
  */
 export function renderNotFoundPage(
   nonce: string,
@@ -227,7 +238,7 @@ export function renderNotFoundPage(
     title: HOLDER_COPY.deadLinkTitle(what),
     art: 'expired',
     lede: escapeHtml(HOLDER_COPY.deadLinkLine),
-    body: actionHtml(GO_TO_MY_PASSES),
+    body: actionHtml(DEAD_LINK_ACTION),
     replay,
   });
 }

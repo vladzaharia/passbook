@@ -193,9 +193,9 @@ describe('GET /p/:token', () => {
     clearSettingsCache(kit.env.DB);
     await voidPass(jobCtxOf(kit), actor, pass.id, null);
     const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
-    const note = /<div role="status">[\s\S]*?<\/div><\/div><\/div>/.exec(html)?.[0] ?? '';
+    const note = /<div role="status"[^>]*>[\s\S]*?<\/div><\/div><\/div>/.exec(html)?.[0] ?? '';
     expect(note).toMatch(/This pass was voided on [A-Z][a-z]+ \d+, \d{4}\./);
-    expect(note).toMatch(/href="mailto:help@gym.test"[^>]*>Contact /);
+    expect(note).toMatch(/href="mailto:help@gym.test"[^>]*>(?:<svg[\s\S]*?<\/svg>)?Contact /);
     expect(html.match(/mailto:help@gym.test/g)).toHaveLength(1);
     await run(kit.env.DB, 'DELETE FROM settings WHERE scope = ?', [`org:${kit.org.id}`]);
     clearSettingsCache(kit.env.DB);
@@ -221,7 +221,7 @@ describe('GET /p/:token', () => {
     const pass = await kit.pass();
     await removePass(jobCtxOf(kit), actor, pass.id, { message: 'Season ended <b>.' }, null);
     const html = await (await get(`/p/${await linkToken(kit.env, pass)}`)).text();
-    expect(html).toContain('Removed from Wallet. It stays in Expired passes until you delete it.');
+    expect(html).toContain('This pass was removed.');
     expect(html).toContain('Season ended &lt;b&gt;.');
     expect(html).not.toContain('This pass was voided.');
     expect(html).not.toContain('Add to Apple Wallet');
@@ -337,13 +337,12 @@ describe('GET /p/:token', () => {
     expect(res.headers.get('content-type')).toContain('text/html');
     const body = await res.text();
     expect(body).toContain('<h1>This pass link does not work</h1>');
-    expect(body).toContain('Ask the organization for a new one.');
+    expect(body).toContain('It may have been replaced.');
     expect(body).toContain('class="card" data-state="expired"');
-    // The way on is outline, as on every hosted page: My passes, through sign-in when needed.
+    // The one way on opens the login with the reason; it names no pass, org or address.
     expect(body).toMatch(
-      /<a class="btn outline" href="\/"><svg[\s\S]*?<\/svg>Go to My passes<\/a>/,
+      /<a class="btn" href="\/login\?next=\/&amp;reason=link"><svg[\s\S]*?<\/svg>Email me my passes<\/a>/,
     );
-    expect(body).not.toMatch(/class="btn"/);
     const oldToken = await linkToken(kit.env, pass);
     await rotateLink(kit.ctx, actor, pass.id, null);
     expect((await get(`/p/${oldToken}`)).status).toBe(404);

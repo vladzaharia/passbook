@@ -81,8 +81,12 @@ export const HOLDER_COPY = {
   lostPhoneDone:
     'The old copies stop working and your other devices are signed out. Check your email for the new pass.',
   /** A voided or expired pass: when, then who to ask. */
-  voidedOn: (date: string) => `This pass was voided on ${date}. It no longer works.`,
+  voidedOn: (date: string) => `This pass was voided on ${date}.`,
   expiredOn: (date: string) => `This pass expired on ${date}.`,
+  /** The ended card's way back in: a sign-in link to the pass's holder (never names the address). */
+  emailMyPasses: 'Email me my passes',
+  /** The ended card's disclosure for the pass's fields. */
+  details: 'Details',
   /** My passes: the group of voided and removed ones, under the live ones. */
   endedTitle: 'Voided and removed',
   addAllTitle: 'Add all to Apple Wallet',
@@ -109,5 +113,5 @@ export const HOLDER_COPY = {
    * passes (STATE_COPY.goToMyPasses).
    */
   deadLinkTitle: (what: 'pass' | 'bundle') => `This ${what} link does not work`,
-  deadLinkLine: 'It may have been replaced. Ask the organization for a new one.',
+  deadLinkLine: 'It may have been replaced.',
 } as const;

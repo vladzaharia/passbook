@@ -154,6 +154,37 @@
   color: var(--pk-text-muted);
   font-size: 0.875rem;
 }
+/* An ended pass keeps its fields behind "Details" (a native disclosure: no script on /p). */
+.wl-ended-details > summary {
+  display: flex;
+  min-height: 2.75rem;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--pk-text-strong);
+  font-size: 0.875rem;
+  font-weight: 600;
+  list-style: none;
+}
+.wl-ended-details > summary::-webkit-details-marker {
+  display: none;
+}
+.wl-ended-details > summary:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.wl-ended-details > summary > svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--pk-text-muted);
+  transition: rotate var(--wl-dur-hover) var(--wl-ease-move);
+}
+.wl-ended-details[open] > summary > svg {
+  rotate: 90deg;
+}
+.wl-ended-details[open] > summary {
+  margin-bottom: 0.5rem;
+}
 /* The iPhone adding, or a pass that cannot be added: the card of the badge or the notice first,
    the pass under it. */
 @media (max-width: 1023.98px) {
