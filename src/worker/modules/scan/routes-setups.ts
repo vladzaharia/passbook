@@ -9,10 +9,10 @@ import {
   UpdateScannerSetupSchema,
 } from '../../../shared/contracts/scan-setups.ts';
 import { ScannerListQuerySchema } from '../../../shared/contracts/scanners.ts';
-import { currentUserId, modeOf } from '../../platform/auth.ts';
+import { currentUserId, methodScope, modeOf } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { authOf, requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
 import { loadScanner } from './scanner-views.ts';
 import { startAdminSetup } from './scanning-sessions.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
@@ -21,7 +21,10 @@ import { createSetup, updateSetup } from './setups.ts';
 import { scannerAuthority } from './target-authority.ts';
 
 export const scanSetupsRoutes = createRouter();
-guard(scanSetupsRoutes, requireTenantSession);
+guard(
+  scanSetupsRoutes,
+  requireTenantSessionOrApiKey(methodScope({ read: 'scan-setup:read', write: 'scan-setup:write' })),
+);
 register(
   scanSetupsRoutes,
   'scanners',

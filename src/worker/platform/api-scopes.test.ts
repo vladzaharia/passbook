@@ -17,6 +17,7 @@ describe('role presets', () => {
         'messages:write',
         'scans:read',
         'scanning:write',
+        'scan-setup:read',
         'connections:read',
         'connections:write',
         'webhooks:manage',
@@ -40,8 +41,15 @@ describe('role presets', () => {
         'templates:read',
         'messages:write',
         'scans:read',
+        'scan-setup:read',
       ],
-      read_only: ['passes:read', 'templates:read', 'scans:read', 'connections:read'],
+      read_only: [
+        'passes:read',
+        'templates:read',
+        'scans:read',
+        'scan-setup:read',
+        'connections:read',
+      ],
     });
   });
 
