@@ -166,7 +166,7 @@ export function TemplateDetailContent({
     );
 
   const stage = (size: 'column' | 'card' | 'sheet') =>
-    toggle && size !== 'sheet' ? (
+    toggle ? (
       <PreviewToggle view={view} onView={setView}>
         {panel(size)}
       </PreviewToggle>
