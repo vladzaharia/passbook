@@ -33,9 +33,3 @@ CREATE TABLE wallet_sa_keys (
   deleted_at INTEGER
 );
 CREATE INDEX wallet_sa_keys_credential ON wallet_sa_keys (credential_id);
-
--- identity.managed: a flag, on for legacy and standard, off for trial (as identity.own).
-INSERT INTO entitlement_presets (preset, key, value) VALUES
-  ('legacy', 'identity.managed', '1'),
-  ('trial', 'identity.managed', '0'),
-  ('standard', 'identity.managed', '1');
