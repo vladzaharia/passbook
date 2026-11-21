@@ -11,6 +11,7 @@ import {
   makeUser,
   saveOrgSettings,
   type UserRow,
+  withoutTrigger,
 } from '../../../../test/helpers/index.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import {
@@ -42,7 +43,12 @@ import {
 } from './http.ts';
 import { putMemberPhoto } from './member-photo.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
-import { tenantPassAuthorityParams, tenantPassAuthoritySql } from './repo-authority.ts';
+import {
+  tenantOrgAccessRevision,
+  tenantPassAuthorityParams,
+  tenantPassAuthoritySql,
+  tenantPassAuthorityValid,
+} from './repo-authority.ts';
 import { memberPhoto } from './repo-member-photo.ts';
 import { currentPassJson, getPass } from './repo-read-pass.ts';
 import { makeTenantTestApiKey } from './repo-tenant-test-fixtures.ts';
@@ -566,6 +572,38 @@ describe('tenant pass authorization', () => {
     };
     expect(keyDetail).toMatchObject({ mode: 'test', templateVersion: releases.test.version });
     expect(await getPass(kit.env.DB, keyDetail.id)).toMatchObject({ releaseId: releases.test.id });
+  });
+
+  it("keeps a platform key out of a personal org's write authority, and in everyone else's", async () => {
+    const owner = await makeUser(kit.fx);
+    const key = await makeApiKey(kit.fx, { orgId: null, scopes: ['passes:write'] });
+    const validFor = async (orgId: string) =>
+      tenantPassAuthorityValid(
+        kit.env.DB,
+        {
+          kind: 'api_key',
+          orgId,
+          orgAccessRevision: (await tenantOrgAccessRevision(kit.env.DB, orgId)) ?? 0,
+          keyId: key.id,
+          keyOrgId: null,
+          scopes: ['passes:write'],
+          scope: 'passes:write',
+          mode: 'live',
+        },
+        kit.clock.now(),
+      );
+    expect(await validFor(otherOrg.id)).toBe(true);
+    const mark = (value: string | null) =>
+      withoutTrigger(kit.env.DB, 'orgs_personal_fixed', () =>
+        run(kit.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [value, otherOrg.id]),
+      );
+    await mark(owner.id);
+    try {
+      expect(await validFor(otherOrg.id)).toBe(false);
+      expect(await validFor(kit.org.id)).toBe(true);
+    } finally {
+      await mark(null);
+    }
   });
 
   it('requires explicit org scope for sessions and API keys without widening tenant access', async () => {
@@ -1934,6 +1972,28 @@ describe('member photo authority', () => {
     },
     60_000,
   );
+});
+
+describe('resend recipient', () => {
+  it('sends to another address only for an organization admin', async () => {
+    const operator = await member();
+    const admin = await member(kit.org.id, ['org_admin']);
+    const pass = await kit.pass({ holderEmail: 'holder-resend@example.test' });
+    const send = (who: { session: { headers: Record<string, string> } }, to?: string) =>
+      app.request(
+        `${ORIGIN}/api/v1/passes/${pass.id}/resend-email`,
+        {
+          method: 'POST',
+          headers: { ...who.session.headers, origin: ORIGIN, 'content-type': 'application/json' },
+          body: JSON.stringify(to ? { to } : {}),
+        },
+        kit.env,
+      );
+    await expectProblem(await send(operator, 'else@example.test'), 422, 'RECIPIENT_NOT_HOLDER');
+    expect((await send(operator, 'Holder-Resend@example.test')).status).toBe(202);
+    expect((await send(operator)).status).toBe(202);
+    expect((await send(admin, 'else@example.test')).status).toBe(202);
+  });
 });
 
 describe('resend audit atomicity', () => {

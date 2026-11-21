@@ -3,20 +3,30 @@ import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
-import { getScannerByPrefix, type ScannerRow, touchScanner } from './repo-device.ts';
+import {
+  DEVICE_IDLE_MS,
+  DEVICE_MAX_MS,
+  getScannerByPrefix,
+  type ScannerRow,
+  touchScanner,
+} from './repo-device.ts';
 
-const DAY = 86_400_000;
 export const TOUCH_EVERY_MS = 60_000;
-export const DEVICE_IDLE_MS = 30 * DAY;
+export { DEVICE_IDLE_MS };
 
 /** The row `resolve` already read, so the guard does not read it again. */
 const resolvedRows = new WeakMap<ScannerAuth, ScannerRow>();
 export const resolvedRowOf = (auth: ScannerAuth): ScannerRow | undefined => resolvedRows.get(auth);
 
-/** The guard's expiry: past `expires_at`, or a device idle past the window (a terminal never idles). */
+/**
+ * The guard's expiry. A terminal ends at `expires_at`. A device ends when idle past the window (each request
+ * slides it) or at an explicit `expires_at` (retention, revoke); the one it is paired with, a default, does not count.
+ */
 export function scannerExpired(row: ScannerRow, now: number): boolean {
-  if (row.expiresAt !== null && row.expiresAt <= now) return true;
-  if (row.kind === 'terminal') return false;
+  if (row.kind === 'terminal') return row.expiresAt !== null && row.expiresAt <= now;
+  const expiry = row.expiresAt;
+  if (expiry !== null && expiry <= now && expiry !== (row.pairedAt ?? Number.NaN) + DEVICE_MAX_MS)
+    return true;
   return (row.lastSeenAt ?? row.pairedAt ?? now) + DEVICE_IDLE_MS <= now;
 }
 

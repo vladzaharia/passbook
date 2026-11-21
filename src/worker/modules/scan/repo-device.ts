@@ -121,6 +121,11 @@ export async function getScanner(db: Db, id: string): Promise<ScannerRow | null>
 }
 
 /** Callers skip the call inside `everyMs` of the last touch; the WHERE keeps it safe against races. */
+/** A device that makes no request for this long needs pairing again; each request slides the window. */
+export const DEVICE_IDLE_MS = 90 * 86_400_000;
+/** The expiry a device is paired with. It is a default, not a limit: activity keeps the device paired. */
+export const DEVICE_MAX_MS = 180 * 86_400_000;
+
 export async function touchScanner(
   db: Db,
   id: string,

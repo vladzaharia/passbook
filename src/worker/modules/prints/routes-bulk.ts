@@ -56,13 +56,8 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
   const whoOf = async (c: Parameters<typeof svc>[0], named: string | undefined) => {
     const auth = authOf(c);
     const orgId = orgIdOf(auth, named);
-    // A key reads with passes:read (the guard picks the scope by method); a session needs the operate right it started with.
-    await tenantAuthorityOf(
-      svc(c),
-      auth,
-      orgId,
-      auth.kind === 'api_key' ? 'passes:read' : 'passes:operate',
-    );
+    // The PDF holds the scan barcodes: reading a job needs the operate right that started it, for keys too.
+    await tenantAuthorityOf(svc(c), auth, orgId, 'passes:operate');
     return { orgId, userId: callerIdOf(auth), mode: passScopeOf(c).mode };
   };
 
@@ -73,6 +68,7 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
       method: 'get',
       path: '/bulk-print/{jobId}',
       summary: 'State of a bulk Print job',
+      auth: { scope: 'passes:write', capability: 'passes:operate' },
       params: BulkPrintParamSchema,
       query: BulkPrintQuerySchema,
       response: BulkPrintStatusSchema,
@@ -92,6 +88,7 @@ export function registerBulkPrintRoutes(passesRoutes: Router): void {
       method: 'get',
       path: '/bulk-print/{jobId}/pdf',
       summary: 'The combined PDF of a finished bulk Print job',
+      auth: { scope: 'passes:write', capability: 'passes:operate' },
       params: BulkPrintParamSchema,
       query: BulkPrintQuerySchema,
     },

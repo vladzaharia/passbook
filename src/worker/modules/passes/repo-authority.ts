@@ -42,6 +42,7 @@ export function tenantPassAuthoritySql(authority: TenantPassWrite, tableAlias?: 
   return `(${target} AND EXISTS (
     SELECT 1 FROM api_keys k JOIN orgs o ON o.id = ? AND ${orgEpochMatchSql('o')}
     WHERE k.id = ? AND k.org_id IS ? AND (k.org_id IS NULL OR k.org_id = o.id)
+      AND (k.org_id IS NOT NULL OR o.personal_user_id IS NULL)
       AND k.mode = ? AND ${developerTestOnly('o', 'k.mode')}
       AND ${keyLive('k', 0).sql} AND ${keyHoldsScope('k', authority.scope).sql}
   ))`;

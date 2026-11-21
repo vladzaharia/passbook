@@ -109,6 +109,31 @@ describe('atomic PIN reservations', () => {
     ).toHaveLength(1);
   });
 
+  it("caps one person's wrong PINs across devices, not just per device", async () => {
+    const manager = await makeScanStaff(f, { orgId, role: 'manager', pin: '482913' });
+    const other = (await makeScanner(f, { orgId })).id;
+    // Another paired device already saw 28 misses for this person in the last hour; this one has none.
+    await seed(`scan:pin:${other}:${manager.id}`, personWindow() - PIN_PERSON_WINDOW_MS, 28);
+    const errors: string[] = [];
+    for (let i = 0; i < 5; i++)
+      errors.push(
+        await attempt(manager.id, '000000').then(
+          () => 'ok',
+          (error: { code: string }) => error.code,
+        ),
+      );
+    expect(errors).toEqual([
+      'PIN_INVALID',
+      'PIN_INVALID',
+      'RATE_LIMITED',
+      'RATE_LIMITED',
+      'RATE_LIMITED',
+    ]);
+    // Older than an hour no longer counts.
+    clock.advance(PIN_SCANNER_WINDOW_MS + PIN_PERSON_WINDOW_MS);
+    await expect(attempt(manager.id, '000000')).rejects.toMatchObject({ code: 'PIN_INVALID' });
+  });
+
   it('serializes guesses across names at the scanner limit and compensates each person', async () => {
     const errors = await Promise.all(
       Array.from({ length: 40 }, (_, i) =>

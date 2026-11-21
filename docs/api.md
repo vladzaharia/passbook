@@ -55,7 +55,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | Personal | one member | `pbp_live_` / `pbp_test_` | made by any member for themself; expiry required, at most 90 days; works only while the membership and user are active, and within the member's current roles; no `scans:write` |
 | Platform | the operator, no org | `pbo_live_` / `pbo_test_` | made by a platform admin; expiry required (at most 90 days), IP allowlist required, no roles |
 
-Keys made before this carry `wlt_` and keep working as service (org) or platform (no org) keys, with the same scopes. An older platform key has no expiry or IP list: it is not expired, the console marks it, and each use logs `API_KEY_PLATFORM_UNBOUNDED`.
+Keys made before this carry `wlt_` and keep working as service (org) or platform (no org) keys, with the same scopes. An older platform key has no expiry or IP list: it is not expired, the console shows "No expiry", and each use logs `API_KEY_PLATFORM_UNBOUNDED`.
 A secret scanner can match the labels. Keys are never logged: the logger and audit rows redact every label.
 
 **Personal keys and sessions.** A personal key is its own credential, bounded by the membership and the user, not by a browser session: signing out or revoking a session does not end it. Revoke it, retire it, or remove the membership.
@@ -992,7 +992,7 @@ Session only: no API key reaches these routes (an export hands over every holder
 - `POST /orgs/{orgId}/close`: a platform admin, or an org admin with `{ "confirmSlug": "<slug>" }`. 409 `ORG_HELD` under a legal hold. Passes stop updating; 30 days to export.
 - `POST /orgs/{orgId}/reopen`: platform admin, inside the 30 days (409 `ORG_REOPEN_WINDOW`, `ORG_PURGING`).
 - `GET /orgs/{orgId}/lifecycle`: `status` (`active`, `suspended`, `closed`), `closedAt`, `purgeAfter`, `held`, `canReopen`. `GET /platform/closed-orgs` lists closed orgs.
-- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (24 hours): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template, brand and member photo files, without secrets or key material. `repo-export.ts` lists the entities and `repo-export-excluded.ts` the tables left out, each with its reason.
+- `POST /orgs/{orgId}/exports` (202) starts an archive, one at a time (409 `ORG_EXPORT_RUNNING`); `GET /orgs/{orgId}/exports` lists them; `POST /orgs/{orgId}/exports/{id}/link` returns `{ url, expiresAt }` once it is `ready`. The link is the credential (1 hour, consumed by its first download): `GET /org-exports/{id}/download?exp&sig` returns the zip, NDJSON per entity plus template, brand and member photo files, without secrets or key material. `repo-export.ts` lists the entities and `repo-export-excluded.ts` the tables left out, each with its reason.
 
 ## Brand kit
 

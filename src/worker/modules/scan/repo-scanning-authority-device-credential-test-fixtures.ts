@@ -93,7 +93,7 @@ export function registerScanningAuthorityDeviceCredential() {
         ]);
       if (state === 'idle')
         await run(kit.env.DB, 'UPDATE scanners SET last_seen_at=? WHERE id=?', [
-          now - 31 * 86_400_000,
+          now - 91 * 86_400_000,
           device.id,
         ]);
       if (state === 'revoked')
