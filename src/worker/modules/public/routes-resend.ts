@@ -37,3 +37,19 @@ resendRoutes.post('/:token/resend', async (c) => {
   });
   return back('sent');
 });
+
+const stateOf = (v: string | undefined) => (v === 'sent' || v === 'wait' ? v : null);
+
+/** What the pass page needs for the two holder mails: Send it again (live) and Email me my passes. */
+export function holderMailProps(
+  page: string,
+  pass: { holderEmail: string | null },
+  removed: boolean,
+  query: (name: string) => string | undefined,
+) {
+  if (!pass.holderEmail) return {};
+  return {
+    ...(removed ? {} : { resend: { action: `${page}/resend`, again: stateOf(query('again')) } }),
+    signin: { action: `${page}/sign-in`, state: stateOf(query('signin')) },
+  };
+}

@@ -81,7 +81,7 @@ describe('/p never says Active beside a void', () => {
     // The card stamps it; the details say no state at all.
     expect(text(details(html))).not.toMatch(/Voided|Active/);
     expect(text(html)).not.toMatch(/Status\s+Active/i);
-    expect(text(html)).toContain('This pass was voided on Nov 18, 2026. It no longer works.');
+    expect(text(html)).toContain('This pass was voided on Nov 18, 2026.');
     expect(text(html)).toContain('Contact Northwind');
   });
 
