@@ -959,6 +959,12 @@
     "fix": "Split the file and import it in parts.",
     "retryable": false
   },
+  "IMPORT_UNDO_EXPIRED": {
+    "title": "Undo window has passed",
+    "when": "The import ended more than 24 hours ago, so it can no longer be undone.",
+    "fix": "Remove or change the passes one by one, or run a change that sets the earlier values.",
+    "retryable": false
+  },
   "INVALID_API_KEY": {
     "title": "Invalid API key",
     "when": "The key is unknown, revoked or expired.",

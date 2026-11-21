@@ -104,28 +104,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.deleteUsersByIdEmailsByEmail",
-    "op": "DELETE /api/v1/users/{id}/emails/{email}",
-    "change": "200.lastRoles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.deleteUsersByIdEmailsByEmail",
     "op": "DELETE /api/v1/users/{id}/emails/{email}",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.deleteUsersByIdEmailsByEmail",
-    "op": "DELETE /api/v1/users/{id}/emails/{email}",
-    "change": "200.lastRoles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"console\" added",
@@ -136,28 +120,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.deleteUsersByIdEmailsByEmail",
-    "op": "DELETE /api/v1/users/{id}/emails/{email}",
-    "change": "200.sessions[].roles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.deleteUsersByIdEmailsByEmail",
     "op": "DELETE /api/v1/users/{id}/emails/{email}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.deleteUsersByIdEmailsByEmail",
-    "op": "DELETE /api/v1/users/{id}/emails/{email}",
-    "change": "200.sessions[].roles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
@@ -190,14 +158,6 @@
     "op": "GET /api/v1/developer/access",
     "change": "new operation",
     "note": "GET /developer/access answers yes, none or email, with signInUrl for an email session."
-  },
-  {
-    "key": "GET /api/v1/developer/access operation removed",
-    "class": "breaking",
-    "operationId": "developer.getAccess",
-    "op": "GET /api/v1/developer/access",
-    "change": "operation removed",
-    "note": ""
   },
   {
     "key": "GET /api/v1/developer/resolve new operation",
@@ -488,14 +448,6 @@
     "note": "The session reports consoleGroupRequired: whether the admin group is required for an org console."
   },
   {
-    "key": "GET /api/v1/session 200|0.consoleGroupRequired: field removed",
-    "class": "breaking",
-    "operationId": "session.getSession",
-    "op": "GET /api/v1/session",
-    "change": "200|0.consoleGroupRequired: field removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/session 200|0.consoleUntil: field added",
     "class": "additive",
     "operationId": "session.getSession",
@@ -512,28 +464,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "GET /api/v1/session 200|0.roles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "session.getSession",
-    "op": "GET /api/v1/session",
-    "change": "200|0.roles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/session 200|0.roles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "session.getSession",
     "op": "GET /api/v1/session",
     "change": "200|0.roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "GET /api/v1/session 200|0.roles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "session.getSession",
-    "op": "GET /api/v1/session",
-    "change": "200|0.roles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "GET /api/v1/settings 200.oidc.consoleGroupRequired: field added",
@@ -544,14 +480,6 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
-    "key": "GET /api/v1/settings 200.oidc.consoleGroupRequired: field removed",
-    "class": "breaking",
-    "operationId": "settings.getSettings",
-    "op": "GET /api/v1/settings",
-    "change": "200.oidc.consoleGroupRequired: field removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/settings 200.oidc.developerGroup: field added",
     "class": "additive",
     "operationId": "settings.getSettings",
@@ -560,28 +488,12 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
-    "key": "GET /api/v1/settings 200.oidc.developerGroup: field removed",
-    "class": "breaking",
-    "operationId": "settings.getSettings",
-    "op": "GET /api/v1/settings",
-    "change": "200.oidc.developerGroup: field removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/settings 200.oidc.platformAdminGroup: field added",
     "class": "additive",
     "operationId": "settings.getSettings",
     "op": "GET /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
-  },
-  {
-    "key": "GET /api/v1/settings 200.oidc.platformAdminGroup: field removed",
-    "class": "breaking",
-    "operationId": "settings.getSettings",
-    "op": "GET /api/v1/settings",
-    "change": "200.oidc.platformAdminGroup: field removed",
-    "note": ""
   },
   {
     "key": "GET /api/v1/templates/{id} 200.release: field added",
@@ -608,28 +520,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.getUsers",
-    "op": "GET /api/v1/users",
-    "change": "200.items[].lastRoles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.getUsers",
     "op": "GET /api/v1/users",
     "change": "200.items[].lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.getUsers",
-    "op": "GET /api/v1/users",
-    "change": "200.items[].lastRoles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "GET /api/v1/users/{id} 200.lastRoles[]: enum value \"console\" added",
@@ -640,28 +536,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "GET /api/v1/users/{id} 200.lastRoles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.getUsersById",
-    "op": "GET /api/v1/users/{id}",
-    "change": "200.lastRoles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/users/{id} 200.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.getUsersById",
     "op": "GET /api/v1/users/{id}",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "GET /api/v1/users/{id} 200.lastRoles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.getUsersById",
-    "op": "GET /api/v1/users/{id}",
-    "change": "200.lastRoles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"console\" added",
@@ -672,28 +552,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.getUsersById",
-    "op": "GET /api/v1/users/{id}",
-    "change": "200.sessions[].roles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.getUsersById",
     "op": "GET /api/v1/users/{id}",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.getUsersById",
-    "op": "GET /api/v1/users/{id}",
-    "change": "200.sessions[].roles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "GET /api/v1/wallet-identities new operation",
@@ -840,28 +704,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "PATCH /api/v1/users/{id} 200.lastRoles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.patchUsersById",
-    "op": "PATCH /api/v1/users/{id}",
-    "change": "200.lastRoles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "PATCH /api/v1/users/{id} 200.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.patchUsersById",
     "op": "PATCH /api/v1/users/{id}",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "PATCH /api/v1/users/{id} 200.lastRoles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.patchUsersById",
-    "op": "PATCH /api/v1/users/{id}",
-    "change": "200.lastRoles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
@@ -1096,12 +944,20 @@
     "note": "A plan can carry overrides: cell fixes by row and column, at most 200."
   },
   {
+    "key": "POST /api/v1/pass-imports/{id}/commit request.email: union added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdCommit",
+    "op": "POST /api/v1/pass-imports/{id}/commit",
+    "change": "request.email: union added",
+    "note": "email also takes {send: now} or {send: held, holdMs}; held mail goes out after the wait unless the import is undone."
+  },
+  {
     "key": "POST /api/v1/pass-imports/{id}/undo new operation",
     "class": "additive",
     "operationId": "pass-imports.postPassImportsByIdUndo",
     "op": "POST /api/v1/pass-imports/{id}/undo",
     "change": "new operation",
-    "note": ""
+    "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -1296,28 +1152,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.lastRoles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.postUsersByIdEmails",
     "op": "POST /api/v1/users/{id}/emails",
     "change": "202.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.lastRoles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"console\" added",
@@ -1328,28 +1168,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.sessions[].roles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.postUsersByIdEmails",
     "op": "POST /api/v1/users/{id}/emails",
     "change": "202.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.sessions[].roles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"console\" added",
@@ -1360,28 +1184,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.lastRoles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.postUsersByIdEmailsByEmailPrimary",
     "op": "POST /api/v1/users/{id}/emails/{email}/primary",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.lastRoles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"console\" added",
@@ -1392,28 +1200,12 @@
     "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"console\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.sessions[].roles[]: enum value \"console\" removed",
-    "note": ""
-  },
-  {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.postUsersByIdEmailsByEmailPrimary",
     "op": "POST /api/v1/users/{id}/emails/{email}/primary",
     "change": "200.sessions[].roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"developer\" removed",
-    "class": "breaking",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.sessions[].roles[]: enum value \"developer\" removed",
-    "note": ""
   },
   {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
@@ -1536,14 +1328,6 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
-    "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field removed",
-    "class": "breaking",
-    "operationId": "settings.putSettings",
-    "op": "PUT /api/v1/settings",
-    "change": "200.oidc.consoleGroupRequired: field removed",
-    "note": ""
-  },
-  {
     "key": "PUT /api/v1/settings 200.oidc.developerGroup: field added",
     "class": "additive",
     "operationId": "settings.putSettings",
@@ -1552,28 +1336,12 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
-    "key": "PUT /api/v1/settings 200.oidc.developerGroup: field removed",
-    "class": "breaking",
-    "operationId": "settings.putSettings",
-    "op": "PUT /api/v1/settings",
-    "change": "200.oidc.developerGroup: field removed",
-    "note": ""
-  },
-  {
     "key": "PUT /api/v1/settings 200.oidc.platformAdminGroup: field added",
     "class": "additive",
     "operationId": "settings.putSettings",
     "op": "PUT /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
-  },
-  {
-    "key": "PUT /api/v1/settings 200.oidc.platformAdminGroup: field removed",
-    "class": "breaking",
-    "operationId": "settings.putSettings",
-    "op": "PUT /api/v1/settings",
-    "change": "200.oidc.platformAdminGroup: field removed",
-    "note": ""
   },
   {
     "key": "PUT /api/v1/templates/{id}/manifest 200.release: field added",
