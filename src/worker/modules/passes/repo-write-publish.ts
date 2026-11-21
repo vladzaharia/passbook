@@ -1,5 +1,4 @@
 import type { Personalization } from '../../../passkit/types.ts';
-import type { PassSource } from '../../../shared/contracts/passes.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { coalesceTo, type SetValue } from '../../platform/authority-expr.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
