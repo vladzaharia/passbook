@@ -36,6 +36,37 @@ describe('the prerendered portal', () => {
     }
   });
 
+  it('marks the console in the nav and offers sign-in in place of an empty panel', () => {
+    const html = body(`${PATHS.console}.html`);
+    expect(html).toMatch(/<a href="\/developers\/console" aria-current="page">Console<\/a>/);
+    expect(html).toContain('Sign in to try');
+  });
+
+  it('prerenders the playground with a sample pass and its fields when the previews are known', () => {
+    const withSample = renderSite(site, ORIGIN, '', undefined, {
+      schema: 1,
+      items: [
+        {
+          id: 'baked:starter-store-card',
+          slug: 'starter-store-card',
+          name: 'Balance card',
+          description: null,
+          inputs: { properties: { balance: { 'x-label': 'Balance' } } },
+          sample: { balance: 25 },
+          manifest: {},
+          passJson: {},
+          assetBaseUrl: '',
+          assetNames: [],
+          assets: [],
+          paper: { src: '/developers/paper/starter-store-card.svg', width: 520, height: 300 },
+        },
+      ],
+    });
+    const html = withSample.find((f) => f.url === PATHS.playground)?.body ?? '';
+    expect(html).toContain('/developers/paper/starter-store-card.svg');
+    expect(html).toMatch(/<dt>Balance<\/dt><dd>25<\/dd>/);
+  });
+
   it('has the console, logs, status, playground and changelog pages and the feed', () => {
     const urls = files.map((f) => f.url).filter(Boolean);
     for (const path of [PATHS.console, PATHS.logs, PATHS.status, PATHS.playground, PATHS.changelog])
