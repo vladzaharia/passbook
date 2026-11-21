@@ -1320,6 +1320,13 @@ class BulkRunsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
 
+    def current(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsCurrentResult:
+        """Get the organization's running bulk run, or the last one that ended within the hour `GET /api/v1/passes/bulk-runs/current`"""
+        return self._core.request("GET", "/api/v1/passes/bulk-runs/current", result=m.BulkRunsCurrentResult, **opts)
+
     def retrieve(
         self,
         id: str,

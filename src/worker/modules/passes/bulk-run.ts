@@ -3,6 +3,7 @@ import type { PassFilter } from '../../../shared/contracts/pass-selection.ts';
 import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import { actorOfStarter } from '../delivery/delivery-actor.ts';
 import { bulkRunDto } from './bulk-run-dto.ts';
 import { resolveFilterPasses } from './find.ts';
 import type { TenantPassWrite } from './http.ts';
@@ -12,6 +13,7 @@ import {
   type DeferredStarter,
   reissuePrincipalCheck,
   reissuePrincipalOf,
+  reissuePrincipalSql,
   reissuePrincipalValid,
 } from './repo-bulk-principal.ts';
 import {
@@ -20,6 +22,7 @@ import {
   type BulkRunState,
   deleteRun,
   insertRun,
+  latestRun,
   readRun,
   releaseLock,
   requestStop,
@@ -132,6 +135,19 @@ export async function startBulkRun(
   return bulkRunDto(rec, false);
 }
 
+/** What the list shows on load: a running run, or one that ended within the hour. */
+export async function currentBulkRun(
+  ctx: ServiceContext,
+  orgId: string,
+  mode: 'live' | 'test',
+): Promise<BulkRunDto | null> {
+  const rec = await latestRun(ctx.env.DB, orgId, mode);
+  const recent =
+    rec &&
+    (ACTIVE_STATES.includes(rec.state) || (rec.finishedAt ?? 0) > ctx.clock.now() - 3_600_000);
+  return rec && recent ? bulkRunDto(rec, rec.stopRequested) : null;
+}
+
 export async function getBulkRun(
   ctx: ServiceContext,
   id: string,
@@ -201,7 +217,9 @@ async function applyOne(
     if (rec.action === 'send_email') {
       if (pass.removedAt !== null) return 'PASS_REMOVED';
       if (!pass.holderEmail) return 'NO_RECIPIENT';
-      await resendEmail(ctx, actor, passId, {}, scope);
+      await resendEmail(ctx, actor, passId, {}, scope, undefined, [
+        actorOfStarter(rec.starter, rec.orgId, rec.mode),
+      ]);
       return 'done';
     }
     if (rec.action === 'void') {
@@ -220,7 +238,11 @@ async function applyOne(
       { message: rec.message ?? undefined },
       scope,
       undefined,
-      { version: seen, noScans: false },
+      {
+        version: seen,
+        noScans: false,
+        proof: reissuePrincipalSql(rec.orgId, rec.starter, ctx.clock.now()),
+      },
       undefined,
       proof,
     );

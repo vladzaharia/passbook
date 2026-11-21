@@ -1026,6 +1026,8 @@ type BulkRun struct {
 	Code          *string          `json:"code"`
 }
 
+type BulkRunsCurrentResult = CurrentBulkRun
+
 type BulkRunsRetrieveResult = BulkRun
 
 type BulkRunsStartBody = BulkRunsStartParams
@@ -1910,6 +1912,10 @@ type CreatedScanningDeviceOverrides struct {
 	Direction *string `json:"direction,omitempty"`
 	Lookup    *bool   `json:"lookup,omitempty"`
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+}
+
+type CurrentBulkRun struct {
+	Run *BulkRun `json:"run,omitempty"`
 }
 
 type DeliveriesListQuery struct {

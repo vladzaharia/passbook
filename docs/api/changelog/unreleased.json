@@ -416,6 +416,14 @@
     "note": "GET /passes/bulk-runs/{id} reports a bulk run's progress."
   },
   {
+    "key": "GET /api/v1/passes/bulk-runs/current new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesBulkRunsCurrent",
+    "op": "GET /api/v1/passes/bulk-runs/current",
+    "change": "new operation",
+    "note": "GET /passes/bulk-runs/current reports the organization's running bulk run, or the last one to end within the hour."
+  },
+  {
     "key": "GET /api/v1/passes/views new operation",
     "class": "additive",
     "operationId": "passes.getPassesViews",

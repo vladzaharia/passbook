@@ -168,3 +168,12 @@ export function reissuePrincipalCheck(
   const q = principalQuery(orgId, principal, now, true);
   return rawCheck('actor', `EXISTS (${q.sql})`, q.params);
 }
+
+/** The same proof as a bare SELECT, for a statement that is not a grant (a claim by a deferred run). */
+export function reissuePrincipalSql(
+  orgId: string | null,
+  principal: ReissuePrincipal,
+  now: number,
+): { sql: string; params: SqlValue[] } {
+  return principalQuery(orgId, principal, now, false);
+}

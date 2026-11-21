@@ -149,4 +149,52 @@ describe('bulk runs', () => {
     expect(await voided()).toBe(0);
     expect((await start(3)).status).toBe(202);
   });
+
+  it('removes passes through the fenced path and mails holders under the starter', async () => {
+    const removed = (await (await start(3, 'remove')).json()) as Run;
+    await runBulkChunk(jobCtxOf(kit), removed.id);
+    expect(await get(removed.id)).toMatchObject({ state: 'done', done: 3 });
+    const gone = await call('GET', `/passes?orgId=${kit.org.id}&status=removed&count=true`);
+    expect(((await gone.json()) as { count: number }).count).toBe(3);
+    // Mail: Cy D keeps a holder; the three removed ones are skipped as PASS_REMOVED.
+    const mail = (await (
+      await call('POST', '/passes/bulk-runs', {
+        action: 'send_email',
+        orgId: kit.org.id,
+        selection: {
+          filter: { match: [{ input: 'memberName', op: 'startsWith', value: 'Cy' }] },
+          expectCount: 1,
+        },
+      })
+    ).json()) as Run;
+    await runBulkChunk(jobCtxOf(kit), mail.id);
+    expect(await get(mail.id)).toMatchObject({ state: 'done', done: 1 });
+  });
+
+  it('refuses a remove whose starter lost access at the claim', async () => {
+    const started = (await (await start(3, 'remove')).json()) as Run;
+    await run(kit.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE org_id = ?', [
+      kit.clock.now(),
+      kit.org.id,
+    ]);
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    expect(await readRun(kit.env.DB, started.id)).toMatchObject({ state: 'failed', done: 0 });
+  });
+
+  it('shows the current run, then none an hour after it ended', async () => {
+    const none = await call('GET', `/passes/bulk-runs/current?orgId=${kit.org.id}`);
+    expect(await none.json()).toEqual({});
+    const started = (await (await start(3)).json()) as Run;
+    const cur = async () =>
+      (
+        (await (await call('GET', `/passes/bulk-runs/current?orgId=${kit.org.id}`)).json()) as {
+          run?: Run;
+        }
+      ).run;
+    expect((await cur())?.id).toBe(started.id);
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    expect((await cur())?.state).toBe('done');
+    kit.clock.advance(61 * 60_000);
+    expect(await cur()).toBeUndefined();
+  });
 });

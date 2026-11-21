@@ -1,8 +1,12 @@
 import { z } from 'zod';
-import { BulkRunSchema, StartBulkRunSchema } from '../../../shared/contracts/pass-bulk-runs.ts';
+import {
+  BulkRunSchema,
+  CurrentBulkRunSchema,
+  StartBulkRunSchema,
+} from '../../../shared/contracts/pass-bulk-runs.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
-import { getBulkRun, startBulkRun, stopBulkRun } from './bulk-run.ts';
+import { currentBulkRun, getBulkRun, startBulkRun, stopBulkRun } from './bulk-run.ts';
 import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
 import { requireTenantPassRead } from './pass-access.ts';
 
@@ -45,6 +49,26 @@ export function registerBulkRunRoutes(passesRoutes: ReturnType<typeof createRout
         expectCount: body.selection.expectCount,
       });
       return c.json(run, 202);
+    },
+  );
+
+  register(
+    passesRoutes,
+    'passes',
+    {
+      method: 'get',
+      path: '/bulk-runs/current',
+      summary:
+        "Get the organization's running bulk run, or the last one that ended within the hour",
+      query: OrgQuery,
+      response: CurrentBulkRunSchema,
+    },
+    async (c) => {
+      const ctx = svc(c);
+      const orgId = orgOf(c, c.req.valid('query').orgId);
+      await requireTenantPassRead(ctx, authOf(c), orgId);
+      const run = await currentBulkRun(ctx, orgId, passScopeOf(c).mode);
+      return c.json(run ? { run } : {});
     },
   );
 

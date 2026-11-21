@@ -120,7 +120,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason:
       "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority; routes take the grants in repo-remove.ts",
     writes: [
-      'passes:5b7a0ebd34a7',
+      'passes:1c3f1cf261fd',
       'passes:d03344a9a7dc',
       'passes:dbb5af80fe98',
       'passes:ec2d184a0290',

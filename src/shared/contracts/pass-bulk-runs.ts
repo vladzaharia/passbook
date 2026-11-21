@@ -40,3 +40,6 @@ export const BulkRunSchema = z.object({
   code: z.string().nullable(),
 });
 export type BulkRunDto = z.infer<typeof BulkRunSchema>;
+
+/** The organization's running run, or the last one that ended within the hour; absent when there is none. */
+export const CurrentBulkRunSchema = z.object({ run: BulkRunSchema.optional() });

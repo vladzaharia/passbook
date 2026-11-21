@@ -1427,6 +1427,15 @@ func newBulkRunsResource(c *core) *BulkRunsResource {
 	}
 }
 
+// Current Get the organization's running bulk run, or the last one that ended within the hour `GET /api/v1/passes/bulk-runs/current`
+func (r *BulkRunsResource) Current(ctx context.Context, opts ...RequestOption) (*BulkRunsCurrentResult, error) {
+	var out BulkRunsCurrentResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/bulk-runs/current"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Retrieve Get the progress of a bulk run `GET /api/v1/passes/bulk-runs/{id}`
 func (r *BulkRunsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*BulkRunsRetrieveResult, error) {
 	var out BulkRunsRetrieveResult

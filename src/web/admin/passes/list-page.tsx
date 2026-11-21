@@ -21,6 +21,7 @@ import { useTemplates } from '../templates/api.ts';
 import { usePassList } from './api.ts';
 import { BulkRunCard } from './bulk-run-card.tsx';
 import { downloadText, toCsv } from './csv.ts';
+import { useCurrentBulkRun } from './find-api.ts';
 import { useFindFields } from './find-fields.ts';
 import { allChips, chipFilter, toPassFilter } from './find-query.ts';
 import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
@@ -73,6 +74,10 @@ export function PassesListPage({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [allMatching, setAllMatching] = useState(false);
   const [runId, setRunId] = useState<string>();
+  const [dismissed, setDismissed] = useState<string>();
+  const current = useCurrentBulkRun(orgId, canOperate);
+  const shownRun =
+    runId ?? (current.data && current.data.id !== dismissed ? current.data.id : undefined);
   const count = list.data?.pages[0]?.count ?? rows.length;
   const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
   const truth = !list.isPending && !filtered && rows.length === 0;
@@ -194,8 +199,15 @@ export function PassesListPage({
   return (
     <div className={selected.size > 0 || allMatching ? 'pb-20' : undefined}>
       <PageHeader title="Passes" actions={canOperate && !truth ? create('primary') : undefined} />
-      {runId ? (
-        <BulkRunCard id={runId} orgId={orgId} onDismiss={() => setRunId(undefined)} />
+      {shownRun ? (
+        <BulkRunCard
+          id={shownRun}
+          orgId={orgId}
+          onDismiss={() => {
+            setDismissed(shownRun);
+            setRunId(undefined);
+          }}
+        />
       ) : null}
       <PassListContext.Provider value={context}>
         {list.isError ? (

@@ -18,7 +18,10 @@ func main() {
 
 	var body passbook.PassesBulkApplyBody
 	if err := json.Unmarshal([]byte(`{
-  "action": "void"
+  "action": "void",
+  "ids": [
+    "0193a1b2-7c00-7000-8000-0000000000c1"
+  ]
 }`), &body); err != nil {
 		panic(err)
 	}

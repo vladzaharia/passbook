@@ -575,6 +575,10 @@ export type CreatedScanningDevice = {
   } | null;
 };
 
+export type CurrentBulkRun = {
+  run?: BulkRun;
+};
+
 export type EmailFailedEvent = {
   id: string;
   type: "email.failed";

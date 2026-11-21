@@ -3512,6 +3512,19 @@
   }
  },
  {
+  "id": "passes.getPassesBulkRunsCurrent",
+  "call": "bulk_runs.current",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-runs/current",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {}
+ },
+ {
   "id": "passes.getPassesBulkRunsById",
   "call": "bulk_runs.retrieve",
   "http": "GET",

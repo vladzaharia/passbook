@@ -2,6 +2,7 @@ import { issueToken } from '../../platform/capability-token.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
+import type { DeliveryActor } from '../delivery/delivery-actor.ts';
 import { enqueuePassEmail } from '../delivery/issuance-intent.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { recordPassEvent } from '../events/record.ts';
@@ -62,6 +63,8 @@ export async function resendEmail(
   input: { to?: string; attach?: boolean },
   scope: ScopeArg,
   authority?: TenantPassWrite,
+  /** A deferred run's starter: the queueing batch proves its revisions. */
+  queuedFor?: DeliveryActor[],
 ): Promise<void> {
   const pass = await getPassForWrite(ctx.env.DB, passId, scope);
   if (pass.removedAt !== null)
@@ -86,5 +89,6 @@ export async function resendEmail(
       targetId: passId,
     },
     ...(authority ? { authority } : {}),
+    ...(queuedFor ? { queuedFor } : {}),
   });
 }

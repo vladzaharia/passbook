@@ -155,6 +155,7 @@ __all__ = [
     "BroadcastsUpdateResultTargetScan1",
     "BroadcastsUpdateResultTargetScan2",
     "BulkRun",
+    "BulkRunsCurrentResult",
     "BulkRunsRetrieveResult",
     "BulkRunsStartBody",
     "BulkRunsStartParams",
@@ -276,6 +277,7 @@ __all__ = [
     "CreatedScannerAccepts3",
     "CreatedScanningDevice",
     "CreatedScanningDeviceOverrides",
+    "CurrentBulkRun",
     "DeliveriesListResult",
     "DeliveriesListResultItemsItem",
     "EmailFailedEvent",
@@ -3057,6 +3059,9 @@ class CreatedScanningDeviceOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+
+class CurrentBulkRun(_Model):
+    run: BulkRun | None = None
 
 class DeliveriesListResult(_Model):
     items: _List[DeliveriesListResultItemsItem]
@@ -9018,6 +9023,8 @@ BroadcastsCreateBody = BroadcastsCreateParams
 BroadcastsSendBody = BroadcastsSendParams
 
 BroadcastsUpdateBody = BroadcastsUpdateParams
+
+BulkRunsCurrentResult = CurrentBulkRun
 
 BulkRunsRetrieveResult = BulkRun
 

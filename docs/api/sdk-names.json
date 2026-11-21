@@ -2300,5 +2300,9 @@
   "passes.postPassesBulkRunsByIdStop": {
     "resource": "bulkRuns",
     "method": "stop"
+  },
+  "passes.getPassesBulkRunsCurrent": {
+    "resource": "bulkRuns",
+    "method": "current"
   }
 }

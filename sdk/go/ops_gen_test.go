@@ -773,6 +773,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"bulkRuns.current", "GET", "/api/v1/passes/bulk-runs/current", false,
+		"", `{}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.BulkRuns.Current(ctx)
+		},
+	},
+	{
 		"bulkRuns.retrieve", "GET", "/api/v1/passes/bulk-runs/id1", false,
 		"", `{"id":"x","orgId":"x","action":"void","state":"queued","total":0,"done":0,"skipped":0,"skippedBy":{},"stopRequested":false,"createdAt":0,"finishedAt":0,"code":"x"}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

@@ -20,6 +20,7 @@ export async function claimRemovalTrusted(
   guard: RemovalGuard,
 ): Promise<number | null> {
   if (guard.pass.removedAt !== null) return null;
+  const proof = guard.fence?.proof;
   const row = await first<{ generation: number }>(
     db,
     `UPDATE passes SET removed_at = ?, removal_message = ?, removal_prior_status = ?,
@@ -27,6 +28,7 @@ export async function claimRemovalTrusted(
        removal_claim_status = status, removal_claim_object_key = object_key,
        removal_claim_link_generation = link_generation
      WHERE id = ? AND removed_at IS NULL AND ${snapshotSql} AND lifecycle_generation = ?
+       AND (${proof ? `EXISTS (${proof.sql})` : '1'})
      RETURNING lifecycle_generation AS generation`,
     [
       state.at,
@@ -35,6 +37,7 @@ export async function claimRemovalTrusted(
       passId,
       ...snapshotParams(guard.pass),
       guard.generation,
+      ...(proof ? proof.params : []),
     ],
   );
   return row?.generation ?? null;

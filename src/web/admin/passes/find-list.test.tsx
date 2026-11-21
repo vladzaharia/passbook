@@ -25,6 +25,7 @@ function handlers(extra: Record<string, (url: URL, init?: RequestInit) => Respon
     '/api/v1/templates/previews': previewsHandler,
     '/api/v1/connections': empty,
     '/api/v1/passes/views': () => json({ items: [] }),
+    '/api/v1/passes/bulk-runs/current': () => json({}),
     ...extra,
   };
 }
@@ -154,5 +155,32 @@ describe('find passes', () => {
     expect(await screen.findByText('Voiding 40 of 150')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Stop' }));
     expect(await screen.findByRole('button', { name: 'Stopping' })).toBeDisabled();
+  });
+
+  it('shows the run that is going when the page loads', async () => {
+    const run = {
+      id: 'run9',
+      orgId: ORG.id,
+      action: 'void',
+      state: 'running',
+      total: 150,
+      done: 40,
+      skipped: 0,
+      skippedBy: {},
+      stopRequested: false,
+      createdAt: 1,
+      finishedAt: null,
+      code: null,
+    };
+    await renderApp('/admin/passes', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers({
+        '/api/v1/passes': () => json({ items: [passSummary()], nextCursor: null, count: 1 }),
+        '/api/v1/passes/bulk-runs/current': () => json({ run }),
+        '/api/v1/passes/bulk-runs/run9': () => json(run),
+      }),
+    });
+    expect(await screen.findByText('Voiding 40 of 150')).toBeInTheDocument();
   });
 });

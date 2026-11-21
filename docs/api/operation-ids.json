@@ -220,6 +220,7 @@
   "passes.getPassesBulkPrintByJobId",
   "passes.getPassesBulkPrintByJobIdPdf",
   "passes.getPassesBulkRunsById",
+  "passes.getPassesBulkRunsCurrent",
   "passes.getPassesById",
   "passes.getPassesByIdAssets",
   "passes.getPassesByIdChannels",

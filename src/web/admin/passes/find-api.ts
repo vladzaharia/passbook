@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BulkRunSchema } from '@/shared/contracts/pass-bulk-runs.ts';
+import { BulkRunSchema, CurrentBulkRunSchema } from '@/shared/contracts/pass-bulk-runs.ts';
 import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
 import { type PassView, PassViewListSchema } from '@/shared/contracts/pass-views.ts';
 import { PassListSchema } from '@/shared/contracts/passes.ts';
@@ -100,5 +100,20 @@ export function useStopBulkRun(orgId: string | undefined) {
     mutationFn: (id: string) =>
       api.post(`/api/v1/passes/bulk-runs/${id}/stop`, BulkRunSchema, {}, { query: { orgId } }),
     onSuccess: (run) => qc.setQueryData(runKey(run.id), run),
+  });
+}
+
+/** The org's running run (or the last to end within the hour), so the card survives a reload. */
+export function useCurrentBulkRun(orgId: string | undefined, enabled: boolean) {
+  const mode = useMode();
+  return useQuery({
+    queryKey: ['admin', 'passes', 'bulk-run-current', orgId, mode],
+    queryFn: ({ signal }) =>
+      api.get('/api/v1/passes/bulk-runs/current', CurrentBulkRunSchema, {
+        query: { orgId },
+        signal,
+      }),
+    enabled: enabled && Boolean(orgId),
+    select: (r) => r.run,
   });
 }

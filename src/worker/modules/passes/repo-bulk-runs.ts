@@ -192,3 +192,17 @@ export async function deleteRun(db: D1Database, id: string): Promise<void> {
     id,
   ]);
 }
+
+/** The newest run of an organization and mode. */
+export async function latestRun(
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+): Promise<(BulkRunRecord & { stopRequested: boolean }) | null> {
+  const row = await first<Row>(
+    db,
+    `SELECT ${COLUMNS} FROM pass_bulk_runs WHERE org_id = ? AND mode = ? ORDER BY created_at DESC, id DESC LIMIT 1`,
+    [orgId, mode],
+  );
+  return row ? { ...toRecord(row), stopRequested: row.stop_requested === 1 } : null;
+}
