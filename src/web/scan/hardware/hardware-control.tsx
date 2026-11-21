@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { savedCount } from '../machine/derive.ts';
 import type { ScanState } from '../machine/types.ts';
 import type { ScanRuntime } from '../platform/runtime.ts';
+import { LiveAnnouncer } from '../ui/live-announcer.tsx';
 import type { CameraChoice } from '../ui/scan-menu.tsx';
 import { guideOf } from './guide.ts';
 import { HardwarePanel } from './hardware-panel.tsx';
@@ -38,16 +39,15 @@ function HardwareSurface({
 }) {
   const [open, setOpen] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
-  const { refresh } = view;
+  const { refresh, change } = view;
   useEffect(() => {
     if (open) refresh();
   }, [open, refresh]);
+  const said = useMemo(() => (change ? { ...change, polite: true } : null), [change]);
   return (
     <>
       <HardwarePill icons={view.icons} reads={view.reads} onOpen={() => setOpen(true)} />
-      <span role="status" aria-live="polite" className="scan-sr" key={view.change?.n}>
-        {view.change?.text ?? ''}
-      </span>
+      <LiveAnnouncer message={said} />
       {open ? (
         <HardwarePanel
           items={view.items}
