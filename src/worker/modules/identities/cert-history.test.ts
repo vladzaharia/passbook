@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { all, first, run } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { createFakeWwdr, issueFromCsr } from './cert-fixtures.ts';
@@ -27,7 +27,6 @@ async function setup() {
   const PTI = `pass.mobile.passbook.acme${n}`;
   const ID = `ident-${n}`;
   const OLD = `cred-old-${n}`;
-  const OLD_CERT = `cert-old-${n}`;
   const kit: Kit = await setupKit({ clockStart: Date.UTC(2026, 10, 20) });
   const ca = await createFakeWwdr(kit.clock.now());
   const env = { ...kit.env, KEK_V1, SIGNER_PLATFORM_INTERMEDIATE: ca.pem };
@@ -57,12 +56,8 @@ async function setup() {
     },
     now,
   });
-  await run(
-    env.DB,
-    `INSERT INTO identity_certificates (id, identity_id, credential_id, cert_sha256, origin, state, created_at, activated_at)
-     VALUES (?2, ?3, ?4, 'old', 'upload', 'active', ?1, ?1)`,
-    [now, OLD_CERT, ID, OLD],
-  );
+  // The identities trigger records the insert as the active history row.
+  const OLD_CERT = (await listCertificateRows(env.DB, ID))[0]?.id ?? '';
   const row = async () => {
     const r = await getIdentityRow(env.DB, ID);
     if (!r) throw new Error('missing identity');
