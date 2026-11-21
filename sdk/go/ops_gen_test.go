@@ -612,7 +612,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"orgs.stageBrandAsset", "POST", "/api/v1/orgs/id1/brand-assets", false,
-		`{"slot":"logo","png":"x"}`, `{"slot":"logo","sha":"x","w":0,"h":0,"expiresAt":0}`,
+		`{"slot":"logo","png":"x"}`, `{"slot":"logo","sha":"x","version":"x","w":0,"h":0,"expiresAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b OrgsStageBrandAssetBody
 			if err := json.Unmarshal(body, &b); err != nil {

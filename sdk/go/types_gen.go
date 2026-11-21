@@ -7682,6 +7682,7 @@ type SettingsUpdateParams struct {
 type StagedBrandAsset struct {
 	Slot      string `json:"slot"`
 	Sha       string `json:"sha"`
+	Version   string `json:"version"`
 	W         int64  `json:"w"`
 	H         int64  `json:"h"`
 	ExpiresAt int64  `json:"expiresAt"`

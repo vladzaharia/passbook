@@ -14,7 +14,7 @@ import { type Api, auditOf, setupApi } from '../webhooks/api-test-fixtures.ts';
 import { orgBrandOf } from './brand.ts';
 import { brandingKey, webLogoKey } from './branding-files.ts';
 import { BRANDING_GC_GRACE_MS, sweepBrandingGc } from './branding-gc.ts';
-import { seedTemplate } from './pass-setup-test-fixtures.ts';
+import { seedTemplate, setSetting } from './pass-setup-test-fixtures.ts';
 
 let api: Api;
 let orgId: string;
@@ -67,6 +67,12 @@ const orgRow = () =>
 const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 const stage = (slot: string, png: Uint8Array, headers = admin, org = orgId) =>
   api.call('POST', `/api/v1/orgs/${org}/brand-assets`, { slot, png: b64(png) }, headers);
+
+/** Stages a PNG and answers the reference a save names it by. */
+const ref = async (slot: string, png: Uint8Array, headers = admin, org = orgId) => {
+  const res = await stage(slot, png, headers, org);
+  return { sha: res.json.sha as string, version: res.json.version as string };
+};
 
 describe('PATCH pass-setup: input and scopes', () => {
   it('refuses an empty change and an unknown field', async () => {
@@ -313,9 +319,8 @@ describe('the web logo follows the pass logo', () => {
 
   it('is the pass logo while no web logo exists, and serves its bytes', async () => {
     const png = makePng(480, 150);
-    const sha = await sha256Hex(png);
-    await stage('logo', png);
-    await patch({ brand: { logo: { sha } } });
+    const { sha, version } = await ref('logo', png);
+    await patch({ brand: { logo: { sha, version } } });
     const brand = await brandOf();
     expect(brand.logo?.path).toBe(`/brand/${orgId}/${sha}.png`);
     const res = await fetchLogo(brand.logo?.path ?? '');
@@ -328,16 +333,74 @@ describe('the web logo follows the pass logo', () => {
   it('a web logo wins until the org chooses the pass logo, and off means the web logo only', async () => {
     const logo = makePng(480, 150);
     const web = makePng(400, 100);
-    const [logoSha, webSha] = await Promise.all([sha256Hex(logo), sha256Hex(web)]);
-    await stage('logo', logo);
-    await stage('webLogo', web);
-    await patch({ brand: { logo: { sha: logoSha }, webLogo: { sha: webSha } } });
+    const l = await ref('logo', logo);
+    const w = await ref('webLogo', web);
+    const [logoSha, webSha] = [l.sha, w.sha];
+    await patch({ brand: { logo: l, webLogo: w } });
     expect((await brandOf()).logo?.path).toBe(`/brand/${orgId}/${webSha}.png`);
     expect((await view()).brand.webLogo.sameAsLogo).toBe(false);
     await patch({ brand: { webLogoSameAsLogo: true } });
     expect((await brandOf()).logo?.path).toBe(`/brand/${orgId}/${logoSha}.png`);
     await patch({ brand: { webLogoSameAsLogo: false, webLogo: null } });
     expect((await brandOf()).logo).toBeNull();
+  });
+});
+
+describe('PATCH pass-setup: snapshot, caps and scopes', () => {
+  it('plans from the settings read with the revision, not from a cache another writer left', async () => {
+    // Prime this isolate's settings cache with no block, as a request seconds ago would have.
+    await setSetting(api, `org:${orgId}`, 'channels.blocked', []);
+    await view();
+    // Another writer blocks Apple straight in D1 (which moves config_revision).
+    await run(
+      api.rig.db,
+      "INSERT OR REPLACE INTO settings (scope, key, value, updated_by, updated_at) VALUES (?, 'channels.blocked', '[\"apple\"]', 'x', 1)",
+      [`org:${orgId}`],
+    );
+    const row = await orgRow();
+    const revision = `live.${row?.config_revision}.0.0`;
+    const res = await patch({ channels: { samsung: 'blocked' } }, { revision });
+    expect(res.status).toBe(200);
+    expect((await getOrgSettings(ctx(), orgId))['channels.blocked']).toEqual(['apple', 'samsung']);
+  });
+
+  it('mails at most five reply-to confirmations a day; the rest wait pending', async () => {
+    for (let i = 0; i < 7; i++) {
+      const res = await patch(
+        { brand: { support: { email: `help${i}@acme.test` } } },
+        { headers: orgWrite },
+      );
+      expect(res.status).toBe(200);
+    }
+    const pending = await first<{ address: string }>(
+      api.rig.db,
+      'SELECT address FROM org_reply_to WHERE org_id = ?',
+      [orgId],
+    );
+    expect(pending?.address).toBe('help6@acme.test');
+    const sent = await first<{ n: number }>(
+      api.rig.db,
+      'SELECT count FROM counters WHERE key = ? ORDER BY window_start DESC LIMIT 1',
+      [`reply-to-confirm:${orgId}`],
+    ).then((r) => r as unknown as { count: number } | null);
+    expect(sent?.count).toBe(5);
+  });
+
+  it('a key holding only wallet:write gets 403 on everything else', async () => {
+    const wallet = await api.key({ scopes: ['wallet:write'] });
+    const other = await api.otherOrg();
+    for (const [method, path, body] of [
+      ['GET', base(), undefined],
+      ['PATCH', base(), { expectedRevision: 'x', brand: { accent: '#112233' } }],
+      ['POST', `/api/v1/orgs/${orgId}/brand-assets`, { slot: 'logo', png: 'AAAA' }],
+      ['GET', '/api/v1/passes', undefined],
+      ['GET', `/api/v1/orgs/${orgId}/entitlements`, undefined],
+      ['PUT', '/api/v1/brand/web-logo', { png: 'AAAA' }],
+    ] as const) {
+      const res = await api.call(method, path, body, wallet);
+      expect(res.status, `${method} ${path}`).toBe(403);
+    }
+    void other;
   });
 });
 
@@ -402,16 +465,18 @@ describe('staged brand assets', () => {
   };
   const exists = async (key: string) => (await api.rig.kit.env.BUCKET.head(key)) !== null;
 
-  it('stages a logo, then a save names it by sha and commits it', async () => {
+  it('stages a logo, then a save names it by sha and version and commits it', async () => {
     const png = makePng(480, 150);
     const sha = await sha256Hex(png);
     const staged = await stage('logo', png);
     expect(staged).toMatchObject({ status: 201, json: { slot: 'logo', sha, w: 480, h: 150 } });
+    const version = staged.json.version as string;
     expect(staged.json.expiresAt).toBeGreaterThan(api.rig.kit.clock.now());
     expect(JSON.parse((await orgRow())?.branding ?? '{}')).toEqual({});
-    const dry = await patch({ brand: { logo: { sha } } }, { dryRun: true });
+    const named = { sha, version };
+    const dry = await patch({ brand: { logo: named } }, { dryRun: true });
     expect(dry.json.view.brand.logo.value).toEqual({ sha, w: 480, h: 150 });
-    const res = await patch({ brand: { logo: { sha } } });
+    const res = await patch({ brand: { logo: named } });
     expect(res.status).toBe(200);
     expect(res.json.diff).toEqual([
       { field: 'brand.logo', before: null, after: { sha, w: 480, h: 150 } },
@@ -420,20 +485,39 @@ describe('staged brand assets', () => {
       sha,
       w: 480,
       h: 150,
-      storageVersion: sha,
+      storageVersion: version,
     });
     expect((await view()).brand.logo).toMatchObject({ source: 'org', value: { sha } });
     expect(res.json.impact.passesToUpdate).toBe(0);
   });
 
+  it('staging never replaces a file a pass uses: another @2x is another version', async () => {
+    const png = makePng(480, 150);
+    const first = await ref('logo', png);
+    await patch({ brand: { logo: first } });
+    const live = brandingKey(orgId, 'logo', 2, first.version);
+    const before = await (await api.rig.kit.env.BUCKET.get(live))?.arrayBuffer();
+    const other = makePng(320, 100);
+    const res = await api.call(
+      'POST',
+      `/api/v1/orgs/${orgId}/brand-assets`,
+      { slot: 'logo', png: b64(png), x2: b64(other) },
+      admin,
+    );
+    expect(res.status).toBe(201);
+    expect(res.json.sha).toBe(first.sha);
+    expect(res.json.version).not.toBe(first.version);
+    expect(await (await api.rig.kit.env.BUCKET.get(live))?.arrayBuffer()).toEqual(before);
+  });
+
   it('refuses a sha that was never staged, was staged for another slot, or is another org’s', async () => {
     const png = makePng(480, 150);
-    const sha = await sha256Hex(png);
-    await stage('logo', png);
+    const named = await ref('logo', png);
     for (const body of [
       { brand: { logo: { sha: 'f'.repeat(64) } } },
-      { brand: { icon: { sha } } },
-      { brand: { webLogo: { sha } } },
+      { brand: { logo: { sha: named.sha, version: 'e'.repeat(64) } } },
+      { brand: { icon: named } },
+      { brand: { webLogo: { sha: named.sha } } },
     ]) {
       const res = await patch(body);
       expect(res, JSON.stringify(body)).toMatchObject({
@@ -444,9 +528,9 @@ describe('staged brand assets', () => {
     const other = await api.otherOrg();
     const foreign = await api.member(['org_admin'], { orgId: other });
     await stage('logo', png, foreign, other);
-    const res = await patch({ brand: { logo: { sha } } });
+    const res = await patch({ brand: { logo: named } });
     expect(res.status).toBe(200);
-    expect(await exists(brandingKey(other, 'logo', 3, sha))).toBe(true);
+    expect(await exists(brandingKey(other, 'logo', 3, named.version))).toBe(true);
   });
 
   it('checks the PNG when staging', async () => {
@@ -461,15 +545,14 @@ describe('staged brand assets', () => {
   it('stages a web logo and an icon; clearing a slot is null', async () => {
     const web = makePng(400, 100);
     const icon = makePng(114, 114);
-    const webSha = await sha256Hex(web);
-    const iconSha = await sha256Hex(icon);
-    await stage('webLogo', web);
-    await stage('icon', icon);
-    const res = await patch({ brand: { webLogo: { sha: webSha }, icon: { sha: iconSha } } });
+    const w = await ref('webLogo', web);
+    const i = await ref('icon', icon);
+    const [webSha, iconSha] = [w.sha, i.version];
+    const res = await patch({ brand: { webLogo: w, icon: i } });
     expect(res.status).toBe(200);
     const saved = JSON.parse((await orgRow())?.branding ?? '{}');
     expect(saved.web).toEqual({ sha: webSha, w: 400, h: 100 });
-    expect(saved.icon).toMatchObject({ sha: iconSha, storageVersion: iconSha });
+    expect(saved.icon).toMatchObject({ sha: i.sha, storageVersion: iconSha });
     const cleared = await patch({ brand: { webLogo: null, icon: null } });
     expect(cleared.json.diff.map((d: { field: string }) => d.field)).toEqual([
       'brand.icon',
@@ -489,40 +572,49 @@ describe('staged brand assets', () => {
   });
 
   it('the sweep deletes an unreferenced staged asset after the grace period, never a referenced one', async () => {
-    const used = makePng(480, 150);
-    const lost = makePng(300, 90);
-    const [usedSha, lostSha] = await Promise.all([sha256Hex(used), sha256Hex(lost)]);
-    await stage('logo', used);
-    await stage('logo', lost);
-    await stage('webLogo', makePng(400, 100));
-    const res = await patch({ brand: { logo: { sha: usedSha } } });
+    const used = await ref('logo', makePng(480, 150));
+    const lost = await ref('logo', makePng(300, 90));
+    const web = await ref('webLogo', makePng(400, 100));
+    const res = await patch({ brand: { logo: used } });
     expect(res.status).toBe(200);
-    const usedKey = brandingKey(orgId, 'logo', 3, usedSha);
-    const lostKey = brandingKey(orgId, 'logo', 3, lostSha);
-    await sweep(BRANDING_GC_GRACE_MS - 60_000);
+    const usedKey = brandingKey(orgId, 'logo', 3, used.version);
+    const lostKey = brandingKey(orgId, 'logo', 3, lost.version);
+    // Staged keys wait an hour past the advertised expiry.
+    await sweep(BRANDING_GC_GRACE_MS);
     expect(await exists(lostKey)).toBe(true);
-    await sweep(60_000 + 1);
+    await sweep(3_600_000 + 1);
     expect(await exists(usedKey)).toBe(true);
     expect(await exists(lostKey)).toBe(false);
-    expect(await exists(webLogoKey(orgId, await sha256Hex(makePng(400, 100))))).toBe(false);
+    expect(await exists(webLogoKey(orgId, web.sha))).toBe(false);
     expect(
       await all(api.rig.db, 'SELECT 1 FROM branding_gc_queue WHERE org_id = ?', [orgId]),
     ).toEqual([]);
     // A save after the sweep finds it gone.
     admin = await api.member(['org_admin']);
-    const late = await patch({ brand: { logo: { sha: lostSha } } });
+    const late = await patch({ brand: { logo: lost } });
     expect(late.json.code).toBe('BRAND_ASSET_NOT_FOUND');
   });
 
+  it('a save that names a key the sweep claimed meanwhile keeps it', async () => {
+    const named = await ref('logo', makePng(480, 150));
+    const key = brandingKey(orgId, 'logo', 3, named.version);
+    // The save re-queues the key right before it commits; a sweep that claimed the old row finds that row.
+    expect((await patch({ brand: { logo: named } })).status).toBe(200);
+    await run(
+      api.rig.db,
+      'INSERT OR REPLACE INTO branding_gc_queue (org_id, r2_key, superseded_at) VALUES (?, ?, 1)',
+      [orgId, key],
+    );
+    await sweepBrandingGc(ctx());
+    expect(await exists(key)).toBe(true);
+  });
+
   it('a replaced logo is queued and swept like any superseded one', async () => {
-    const first = makePng(480, 150);
-    const second = makePng(300, 90);
-    const [a, b] = await Promise.all([sha256Hex(first), sha256Hex(second)]);
-    await stage('logo', first);
-    expect((await patch({ brand: { logo: { sha: a } } })).status).toBe(200);
-    await stage('logo', second);
-    expect((await patch({ brand: { logo: { sha: b } } })).status).toBe(200);
-    await sweep();
+    const a = await ref('logo', makePng(480, 150));
+    expect((await patch({ brand: { logo: a } })).status).toBe(200);
+    const b = await ref('logo', makePng(300, 90));
+    expect((await patch({ brand: { logo: b } })).status).toBe(200);
+    await sweep(BRANDING_GC_GRACE_MS + 3_600_000);
     expect(
       await all(
         api.rig.db,
@@ -531,7 +623,7 @@ describe('staged brand assets', () => {
       ),
     ).toEqual([]);
     admin = await api.member(['org_admin']);
-    expect(await exists(brandingKey(orgId, 'logo', 3, a))).toBe(false);
-    expect(await exists(brandingKey(orgId, 'logo', 3, b))).toBe(true);
+    expect(await exists(brandingKey(orgId, 'logo', 3, a.version))).toBe(false);
+    expect(await exists(brandingKey(orgId, 'logo', 3, b.version))).toBe(true);
   });
 });

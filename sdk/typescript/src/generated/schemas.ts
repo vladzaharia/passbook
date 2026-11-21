@@ -963,12 +963,15 @@ export type OrgsUpdatePassSetupParams = {
     name?: string;
     logo?: {
       sha: string;
+      version?: string;
     } | null;
     icon?: {
       sha: string;
+      version?: string;
     } | null;
     webLogo?: {
       sha: string;
+      version?: string;
     } | null;
     webLogoSameAsLogo?: boolean;
     passColors?: {
@@ -4422,6 +4425,7 @@ export type SettingsUpdateParams = {
 export type StagedBrandAsset = {
   slot: "logo" | "icon" | "webLogo";
   sha: string;
+  version: string;
   w: number;
   h: number;
   expiresAt: number;

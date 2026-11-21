@@ -137,7 +137,7 @@ export interface EnrolmentStep {
     checkId?: string;
     roundTrip?: RoundTrip;
     reason?: string;
-    actor: { type: 'user' | 'platform' | 'system'; id: string | null };
+    actor: { type: 'user' | 'platform' | 'system' | 'api_key'; id: string | null };
     /** The stamp `enabled_at`, `revoked_at` or `platform_hold_at` repeats; within 5 s of the database clock. */
     createdAt?: number;
   };

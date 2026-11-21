@@ -43,6 +43,15 @@ export function assertScanningAdminKey(
     );
 }
 
+/** `org:write` and `wallet:write` change one organization's setup: a platform key never holds them. */
+export function assertOrgBoundScopes(scopes: readonly string[], kind: ApiKeyKind): void {
+  if (kind === 'platform' && scopes.some((s) => s === 'org:write' || s === 'wallet:write'))
+    throw invalid(
+      'org:write and wallet:write are for keys of one organization.',
+      'API_KEY_ORG_SCOPE_ORG_ONLY',
+    );
+}
+
 export const invalid = (message: string, code: string, path = 'scopes') =>
   new ValidationError(message, [{ path, message }], code);
 
@@ -207,6 +216,7 @@ export async function createApiKey(
   }
   const mode = authority.kind === 'platform' ? input.mode : authority.mode;
   assertScanningAdminKey(effectiveScopes(input.scopes, input.roles), kind, mode);
+  assertOrgBoundScopes(effectiveScopes(input.scopes, input.roles), kind);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),

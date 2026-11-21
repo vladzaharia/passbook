@@ -6,7 +6,12 @@ import { createKey } from './repo-create.ts';
 import { terminalsOf } from './repo-family.ts';
 import type { ApiKeyRow } from './repo-row.ts';
 import { reachable } from './service.ts';
-import { assertScanningAdminKey, invalid, newSecret } from './service-create.ts';
+import {
+  assertOrgBoundScopes,
+  assertScanningAdminKey,
+  invalid,
+  newSecret,
+} from './service-create.ts';
 import type { ApiKeyDto } from './service-dto.ts';
 import { parseScopes, type Resources, toDto } from './service-dto.ts';
 
@@ -63,6 +68,7 @@ export async function rotateApiKey(
       .map((r) => r.value) as Resources['passStyles'],
   };
   assertScanningAdminKey(parseScopes(old.scopes), old.kind, old.mode);
+  assertOrgBoundScopes(parseScopes(old.scopes), old.kind);
   const { prefix, label, secret, hash } = await newSecret(ctx, old.kind, old.mode);
   const row: ApiKeyRow = {
     ...old,

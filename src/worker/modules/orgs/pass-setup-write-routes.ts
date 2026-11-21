@@ -1,3 +1,4 @@
+import type { z } from 'zod';
 import { OrgIdParamSchema } from '../../../shared/contracts/identities.ts';
 import {
   PassSetupPatchQuerySchema,
@@ -6,14 +7,16 @@ import {
   StageBrandAssetSchema,
   StagedBrandAssetSchema,
 } from '../../../shared/contracts/pass-setup.ts';
+import type { AuthContext } from '../../platform/auth.ts';
 import { DEFAULT_BODY_BYTES, limitBody } from '../../platform/body-limit.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
 import { idempotentJson, principalOf } from '../../platform/idempotency.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
-import { serviceContext } from '../../platform/service-context.ts';
+import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { requestActor } from '../audit/http.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
 import { stageBrandAsset } from './pass-setup-stage.ts';
-import { patchPassSetup } from './pass-setup-write.ts';
+import { assertOrgBoundKey, patchPassSetup } from './pass-setup-write.ts';
 
 /**
  * Mount at /api/v1/orgs, beside `passSetupRoutes`. A key writes with `org:write` or, for the brand kit alone,
@@ -25,6 +28,31 @@ passSetupWriteRoutes.use('/:orgId/pass-setup', limitBody(DEFAULT_BODY_BYTES));
 passSetupWriteRoutes.use('/:orgId/brand-assets', limitBody(1024 * 1024));
 
 const WRITE_SCOPES = ['org:write', 'brand:manage'] as const;
+
+/** A body that only allows Google or Samsung: the one write `wallet:write` or `integrations:manage` may make. */
+const walletShaped = (patch: z.infer<typeof PassSetupPatchSchema>) => {
+  const entries = Object.entries(patch.channels ?? {});
+  return (
+    patch.brand === undefined &&
+    entries.length > 0 &&
+    entries.every(([c, w]) => (c === 'google' || c === 'samsung') && w === 'allowed')
+  );
+};
+
+/** `org:manage`; failing that, a wallet-shaped body is admitted on `integrations:manage` alone. */
+async function writeAuthority(
+  ctx: ServiceContext,
+  auth: AuthContext,
+  orgId: string,
+  patch: z.infer<typeof PassSetupPatchSchema>,
+) {
+  try {
+    return await tenantAuthorityOf(ctx, auth, orgId, 'org:manage');
+  } catch (error) {
+    if (!(error instanceof ForbiddenError) || !walletShaped(patch)) throw error;
+    return tenantAuthorityOf(ctx, auth, orgId, 'integrations:manage');
+  }
+}
 
 register(
   passSetupWriteRoutes,
@@ -38,7 +66,7 @@ register(
     query: PassSetupPatchQuerySchema,
     body: PassSetupPatchSchema,
     response: PassSetupResultSchema,
-    auth: { scope: [...WRITE_SCOPES], capability: 'org:manage' },
+    auth: { scope: [...WRITE_SCOPES, 'wallet:write'] },
   },
   async (c) => {
     const { orgId } = c.req.valid('param');
@@ -47,7 +75,7 @@ register(
     const ctx = serviceContext(c);
     const auth = authOf(c);
     // Proven before the replay too: a key that lost its scope gets no stored result.
-    const authority = await tenantAuthorityOf(ctx, auth, orgId, 'org:manage');
+    const authority = await writeAuthority(ctx, auth, orgId, body);
     const run = () => patchPassSetup(ctx, requestActor(c), auth, authority, orgId, body, dryRun);
     // A dry run writes nothing, so it has nothing to replay.
     if (dryRun) return c.json(await run(), 200);
@@ -82,7 +110,7 @@ register(
   async (c) => {
     const { orgId } = c.req.valid('param');
     const ctx = serviceContext(c);
-    await tenantAuthorityOf(ctx, authOf(c), orgId, 'org:manage');
+    assertOrgBoundKey(await tenantAuthorityOf(ctx, authOf(c), orgId, 'org:manage'));
     return c.json(await stageBrandAsset(ctx, orgId, c.req.valid('json')), 201);
   },
 );

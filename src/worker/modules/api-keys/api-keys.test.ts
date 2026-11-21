@@ -136,6 +136,15 @@ describe('the pass-setup scopes', () => {
     expect(refused.status).toBeLessThan(500);
   });
 
+  it('org:write and wallet:write are for keys of one organization', async () => {
+    for (const scope of ['org:write', 'wallet:write']) {
+      const platform = await create({ name: 'platform', scopes: [scope], orgId: null });
+      await expectProblem(platform.res, 422, 'API_KEY_ORG_SCOPE_ORG_ONLY');
+    }
+    const read = await create({ name: 'platform read', scopes: ['org:read'], orgId: null });
+    expect(read.res.status).toBe(201);
+  });
+
   it('wallet:write follows integrations:manage', async () => {
     expect((await mint('integration_admin', ['wallet:write'])).status).toBe(201);
     expect((await mint('org_admin', ['wallet:write'])).status).toBe(201);

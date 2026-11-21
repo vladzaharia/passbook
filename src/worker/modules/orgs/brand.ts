@@ -5,16 +5,15 @@ import { safeMail, safeUrl } from '../../email/safe.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { allowedMarks, effectiveMark } from './brand-mark.ts';
+import { brandingKey, webLogoKey } from './branding-files.ts';
 import { requireOrg } from './service.ts';
 
 /** Content-addressed, same-origin path of a web logo. */
 export const brandLogoPath = (orgId: string, sha: string) => `/brand/${orgId}/${sha}.png`;
 
 /** Holder pages use the pass logo as the web logo: as chosen, else while no web logo is uploaded. */
-export const webSameAsLogo = (
-  chosen: boolean | undefined,
-  stored: Pick<z.infer<typeof OrgBrandingSchema>, 'web'>,
-) => chosen ?? !stored.web;
+export const webSameAsLogo = (chosen: boolean | undefined, stored: { web?: unknown }) =>
+  chosen ?? !stored.web;
 
 /** Org settings win over the legacy branding fields; unsafe values are dropped. */
 export async function orgBrandOf(ctx: ServiceContext, orgId: string): Promise<OrgBrand> {
@@ -34,6 +33,23 @@ export async function orgBrandOf(ctx: ServiceContext, orgId: string): Promise<Or
     supportUrl: safeUrl(settings['support.url'] ?? stored.supportUrl),
     mark: effectiveMark(stored.mark, allowed),
   };
+}
+
+/** The stored image holder pages show as the logo, and the R2 key of its bytes. */
+export async function shownLogoKey(
+  ctx: ServiceContext,
+  orgId: string,
+): Promise<{ sha: string; key: string } | null> {
+  const [row, settings] = await Promise.all([requireOrg(ctx, orgId), getOrgSettings(ctx, orgId)]);
+  if (row.status !== 'active') return null;
+  const parsed = OrgBrandingSchema.safeParse(JSON.parse(row.branding));
+  const stored = (parsed.success ? JSON.parse(row.branding) : {}) as {
+    logo?: { sha: string; storageVersion?: string };
+    web?: { sha: string };
+  };
+  if (webSameAsLogo(settings['branding.webLogoSameAsLogo'], stored) && stored.logo)
+    return { sha: stored.logo.sha, key: brandingKey(orgId, 'logo', 3, stored.logo.storageVersion) };
+  return stored.web ? { sha: stored.web.sha, key: webLogoKey(orgId, stored.web.sha) } : null;
 }
 
 /** The logo holder pages show: the pass logo when chosen and present, else the web logo. */

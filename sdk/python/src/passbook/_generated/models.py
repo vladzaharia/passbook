@@ -8284,6 +8284,7 @@ class SettingsUpdateParams(_Model):
 class StagedBrandAsset(_Model):
     slot: _Literal["logo", "icon", "webLogo"] | str
     sha: str
+    version: str
     w: int
     h: int
     expiresAt: int

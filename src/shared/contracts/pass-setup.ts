@@ -174,7 +174,10 @@ export const PassSetupSchema = z.object({
 export type PassSetup = z.infer<typeof PassSetupSchema>;
 
 /** A staged upload from POST /orgs/{orgId}/brand-assets; the save that names it commits it. */
-const StagedAssetRefSchema = z.strictObject({ sha: ShaSchema });
+const StagedAssetRefSchema = z.strictObject({
+  sha: ShaSchema,
+  version: ShaSchema.optional().describe('The version the upload answered; absent: the sha.'),
+});
 
 /** PATCH /api/v1/orgs/{orgId}/pass-setup. Absent leaves a value; `null` clears it. */
 export const PassSetupPatchSchema = z.strictObject({
@@ -287,6 +290,7 @@ export const StageBrandAssetSchema = z.strictObject({
 export const StagedBrandAssetSchema = z.object({
   slot: BrandAssetSlotSchema,
   sha: ShaSchema,
+  version: ShaSchema.describe('Names the stored pair of sizes; send it back with the sha.'),
   w: z.number().int().positive(),
   h: z.number().int().positive(),
   expiresAt: TimestampSchema.describe('Swept after this unless a save names it.'),

@@ -959,6 +959,12 @@
     "fix": "Create a key with the scope the operation lists under security.",
     "retryable": false
   },
+  "MODE_LIVE_REQUIRED": {
+    "title": "Live key required",
+    "when": "A Test key tried to change channels, support, email or the name of an organization that also has Live passes. A Test key may change the brand kit only.",
+    "fix": "Use a live key for this change.",
+    "retryable": false
+  },
   "MODE_MISMATCH": {
     "title": "Mode mismatch",
     "when": "The request mixes test and live objects, for example a test pass with a live connection.",

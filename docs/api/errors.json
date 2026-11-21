@@ -2169,6 +2169,15 @@
       ]
     },
     {
+      "code": "MODE_LIVE_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "MODE_MISMATCH",
       "statuses": [
         409
@@ -2406,6 +2415,7 @@
         403
       ],
       "modules": [
+        "orgs",
         "passes",
         "platform"
       ]

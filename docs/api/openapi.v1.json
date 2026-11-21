@@ -4303,6 +4303,11 @@
             "type": "string",
             "pattern": "^[0-9a-f]{64}$"
           },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Names the stored pair of sizes; send it back with the sha."
+          },
           "w": {
             "type": "integer",
             "exclusiveMinimum": 0
@@ -4320,6 +4325,7 @@
         "required": [
           "slot",
           "sha",
+          "version",
           "w",
           "h",
           "expiresAt"
@@ -20092,6 +20098,11 @@
                   "sha": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$",
+                    "description": "The version the upload answered; absent: the sha."
                   }
                 },
                 "required": [
@@ -20108,6 +20119,11 @@
                   "sha": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$",
+                    "description": "The version the upload answered; absent: the sha."
                   }
                 },
                 "required": [
@@ -20124,6 +20140,11 @@
                   "sha": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$",
+                    "description": "The version the upload answered; absent: the sha."
                   }
                 },
                 "required": [
@@ -35745,6 +35766,11 @@
           {
             "apiKey": [
               "brand:manage"
+            ]
+          },
+          {
+            "apiKey": [
+              "wallet:write"
             ]
           },
           {

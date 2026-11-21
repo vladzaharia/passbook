@@ -19,6 +19,7 @@ import type {
 } from '../../../shared/contracts/wallet-providers.ts';
 import type { SetupFacts } from '../../../shared/org-setup-checks.ts';
 import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
+import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import * as channelsRepo from '../channels/repo.ts';
 import { levels } from '../channels/service.ts';
@@ -26,11 +27,18 @@ import { latestRun } from '../identities/repo-runs.ts';
 import { toRunDto } from '../identities/runs-service.ts';
 import { listWalletIdentities } from '../identities/wallet-list.ts';
 import { placeholderSlots, sourceArtHashes } from '../passes/branding.ts';
-import { getOrgSettings, getPlatformSettings, type OrgSettings } from '../settings/service.ts';
+import { orgSettingsStmt } from '../settings/repo.ts';
+import {
+  getOrgSettings,
+  getPlatformSettings,
+  type OrgSettings,
+  primeOrgSettings,
+} from '../settings/service.ts';
 import { enrolmentView } from '../wallet-providers/enrolment-read.ts';
 import { type EnrolmentRow, enrolmentsOf } from '../wallet-providers/repo-enrolments.ts';
 import { webSameAsLogo } from './brand.ts';
 import { allowedMarks, effectiveMark } from './brand-mark.ts';
+import { type OrgRow, orgRowStmt } from './repo.ts';
 import {
   apnsHealthOf,
   passCountOf,
@@ -38,7 +46,6 @@ import {
   setupTemplateRows,
   sharedPassCountOf,
 } from './repo-pass-setup.ts';
-import { requireOrg } from './service.ts';
 
 type Branding = z.infer<typeof OrgBrandingSchema>;
 const PROVIDERS = ['google', 'samsung'] as const;
@@ -56,6 +63,8 @@ export interface LoadedSetup {
   /** The org row's `config_revision` and the enrolment rows, which make the revision. */
   enrolments: EnrolmentRow[];
   branding: StoredBranding;
+  /** The org's settings as read with the org row. */
+  settings: OrgSettings;
   /** The org's `config_revision` the view was read at: the save's compare-and-set. */
   config: number;
 }
@@ -207,8 +216,13 @@ export async function loadSetupFacts(
   change: SetupChange = {},
 ): Promise<LoadedSetup> {
   const db = ctx.env.DB;
-  const [found, saved, platform, plan, marks, enrolled] = await Promise.all([
-    requireOrg(ctx, orgId),
+  // The org row and its settings in one read transaction, never from the settings cache: the plan and the
+  // save's compare-and-set must see the same state.
+  const [orgRes, settingsRes] = await db.batch([orgRowStmt(db, orgId), orgSettingsStmt(db, orgId)]);
+  const found = orgRes?.results[0] as OrgRow | undefined;
+  if (!found || !settingsRes) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  primeOrgSettings(ctx, orgId, settingsRes);
+  const [saved, platform, plan, marks, enrolled] = await Promise.all([
     getOrgSettings(ctx, orgId),
     getPlatformSettings(ctx),
     entitlementsOf(ctx, orgId),
@@ -296,6 +310,7 @@ export async function loadSetupFacts(
     facts,
     enrolments: enrolled,
     branding: brandingOf(found.branding),
-    config: row.config_revision,
+    settings: saved,
+    config: found.config_revision,
   };
 }

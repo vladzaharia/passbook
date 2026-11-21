@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { makeApiKey } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeOrg, makeSession } from '../../../../test/helpers/index.ts';
 import type { PassSetupPatch } from '../../../shared/contracts/pass-setup.ts';
 import { createApp } from '../../app.ts';
 import type { AuthContext } from '../../platform/auth.ts';
@@ -30,8 +30,14 @@ afterEach(() => {
 });
 
 /** An org with an admin in Test mode, on the platform source with a fresh check: ready to enable. */
-async function ready(options: { check?: boolean } = {}) {
-  const org = await k.org();
+async function ready(options: { check?: boolean; sandbox?: boolean } = {}) {
+  const org = options.sandbox ? await makeOrg(k.f, { kind: 'developer' }) : await k.org();
+  if (options.sandbox)
+    await run(
+      env.DB,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'wallet.google', '1', 1)",
+      [org.id],
+    );
   const m = await k.member(org.id);
   const admin = await k.admin();
   const row = await first<{ revision: number }>(
@@ -204,8 +210,13 @@ describe('Allowed on a wallet channel', () => {
 });
 
 /** The HTTP route, with the kit's database and a key made by the kit's fixtures. */
-async function patchAs(orgId: string, scopes: string[], body: object) {
-  const headers = (await makeApiKey(k.f, { scopes, orgId, mode: 'test' })).headers;
+async function patchAs(
+  orgId: string,
+  scopes: string[],
+  body: object,
+  mode: 'test' | 'live' = 'test',
+) {
+  const headers = (await makeApiKey(k.f, { scopes, orgId, mode })).headers;
   const app = createApp({
     stores: {
       ...denyAllStores,
@@ -230,9 +241,9 @@ async function patchAs(orgId: string, scopes: string[], body: object) {
 }
 
 describe('who may turn an enrolment on', () => {
-  it('a key needs wallet:write as well as org:write', async () => {
+  it('an org:write key without wallet:write cannot turn it on', async () => {
     restore = setWalletProvidersEnabledForTest(true, 'test');
-    const { org } = await ready();
+    const { org } = await ready({ sandbox: true });
     await block(org.id);
     const refused = await patchAs(org.id, ['org:read', 'org:write'], {
       channels: { google: 'allowed' },
@@ -247,25 +258,135 @@ describe('who may turn an enrolment on', () => {
     expect(plain.status).toBe(200);
   });
 
-  it('a key with both turns it on; the event is the system’s and the audit row names the key', async () => {
+  it('a wallet:write key alone turns an allowed channel on, attributed to the key, and may do nothing else', async () => {
     restore = setWalletProvidersEnabledForTest(true, 'test');
     const { org } = await ready();
-    await block(org.id);
-    const done = await patchAs(org.id, ['org:read', 'org:write', 'wallet:write'], {
+    const done = await patchAs(org.id, ['org:read', 'wallet:write'], {
       channels: { google: 'allowed' },
     });
     expect(done.status).toBe(200);
     expect((await enrolment(org.id))?.enabled_at).not.toBeNull();
-    expect((await events(org.id)).at(-1)).toEqual({
-      kind: 'enable',
-      actor_type: 'system',
-      actor_id: null,
-    });
-    const audit = await first<{ actor_type: string }>(
+    const last = (await events(org.id)).at(-1);
+    expect(last).toMatchObject({ kind: 'enable', actor_type: 'api_key' });
+    const key = await first(env.DB, 'SELECT 1 AS x FROM api_keys WHERE id = ?', [
+      last?.actor_id ?? '',
+    ]);
+    expect(key).not.toBeNull();
+    const rows = await all<{ action: string; actor_type: string }>(
       env.DB,
-      "SELECT actor_type FROM audit_log WHERE org_id = ? AND action = 'org.pass_setup_update'",
+      `SELECT action, actor_type FROM audit_log WHERE org_id = ?
+       AND action IN ('org.pass_setup_update', 'wallet_provider.enrolment_enable') ORDER BY action`,
       [org.id],
     );
-    expect(audit?.actor_type).toBe('api_key');
+    expect(rows).toEqual([
+      { action: 'org.pass_setup_update', actor_type: 'api_key' },
+      { action: 'wallet_provider.enrolment_enable', actor_type: 'api_key' },
+    ]);
+    for (const body of [
+      { channels: { mobile: 'blocked' } },
+      { channels: { google: 'blocked' } },
+      { brand: { accent: '#112233' } },
+      { brand: { name: 'Nope' }, channels: { google: 'allowed' } },
+    ]) {
+      const refused = await patchAs(org.id, ['org:read', 'wallet:write'], body);
+      expect(refused.status, JSON.stringify(body)).toBe(403);
+    }
+  });
+
+  it('a member with integrations:manage only may turn an account on, nothing else', async () => {
+    restore = setWalletProvidersEnabledForTest(true, 'test');
+    const { org } = await ready();
+    const m = await k.member(org.id, 'test', ['integration_admin']);
+    const session = await makeSession(k.f, { userId: m.user.id });
+    const headers = { ...session.headers, 'x-passbook-mode': 'test' };
+    const app = createApp({
+      stores: {
+        ...denyAllStores,
+        sessions: createSessionStore(k.env, systemClock),
+        apiKeys: createApiKeyStore(k.env, systemClock),
+      },
+      clock: systemClock,
+    });
+    const url = `https://wallet.test/api/v1/orgs/${org.id}/pass-setup`;
+    const send = async (body: object) => {
+      const read = await app.request(url, { headers }, k.env);
+      const { revision } = (await read.json()) as { revision: string };
+      return app.request(
+        url,
+        {
+          method: 'PATCH',
+          headers: { ...headers, 'content-type': 'application/json' },
+          body: JSON.stringify({ expectedRevision: revision, ...body }),
+        },
+        k.env,
+      );
+    };
+    expect((await send({ brand: { accent: '#112233' } })).status).toBe(403);
+    expect((await send({ channels: { mobile: 'blocked' } })).status).toBe(403);
+    expect((await send({ channels: { google: 'allowed' } })).status).toBe(200);
+    expect((await enrolment(org.id))?.enabled_at).not.toBeNull();
+    expect((await events(org.id)).at(-1)).toMatchObject({
+      kind: 'enable',
+      actor_type: 'user',
+      actor_id: m.user.id,
+    });
+  });
+
+  it('a platform key never changes an organization', async () => {
+    const { org } = await ready();
+    const headers = (await makeApiKey(k.f, { scopes: ['brand:manage'], orgId: null, mode: 'live' }))
+      .headers;
+    const app = createApp({
+      stores: {
+        ...denyAllStores,
+        sessions: createSessionStore(k.env, systemClock),
+        apiKeys: createApiKeyStore(k.env, systemClock),
+      },
+      clock: systemClock,
+    });
+    const url = `https://wallet.test/api/v1/orgs/${org.id}`;
+    const res = await app.request(
+      `${url}/pass-setup`,
+      {
+        method: 'PATCH',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ expectedRevision: 'x', brand: { accent: '#112233' } }),
+      },
+      k.env,
+    );
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { code: string }).code).toBe('ORG_FORBIDDEN');
+    const stage = await app.request(
+      `${url}/brand-assets`,
+      {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ slot: 'webLogo', png: 'AAAA' }),
+      },
+      k.env,
+    );
+    expect(stage.status).toBe(403);
+  });
+
+  it('a Test key changes brand-kit fields only, unless the org is a sandbox', async () => {
+    const { org } = await ready();
+    const kit = await patchAs(org.id, ['org:read', 'org:write'], { brand: { accent: '#112233' } });
+    expect(kit.status).toBe(200);
+    for (const body of [
+      { brand: { name: 'Renamed' } },
+      { brand: { support: { url: 'https://help.example.com' } } },
+      { channels: { mobile: 'blocked' } },
+    ]) {
+      const refused = await patchAs(org.id, ['org:read', 'org:write'], body);
+      expect(refused, JSON.stringify(body)).toMatchObject({
+        status: 403,
+        json: { code: 'MODE_LIVE_REQUIRED' },
+      });
+    }
+    const box = await ready({ sandbox: true });
+    expect(
+      (await patchAs(box.org.id, ['org:read', 'org:write'], { channels: { mobile: 'blocked' } }))
+        .status,
+    ).toBe(200);
   });
 });

@@ -517,7 +517,7 @@
     "operationId": "pass-setup.patchOrgsByOrgIdPassSetup",
     "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
     "change": "new operation",
-    "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff and impact. Needs org:write, or brand:manage for the brand kit."
+    "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
@@ -725,7 +725,7 @@
     "operationId": "pass-setup.postOrgsByOrgIdBrandAssets",
     "op": "POST /api/v1/orgs/{orgId}/brand-assets",
     "change": "new operation",
-    "note": "Stage a logo, icon or web logo PNG for a pass-setup save to name by sha; unused uploads are deleted after 24 hours. Needs org:write or brand:manage."
+    "note": "Stage a logo, icon or web logo PNG; it answers the sha and version a pass-setup save names. Unused uploads are deleted later. Needs org:write or brand:manage."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",
