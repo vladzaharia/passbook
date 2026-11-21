@@ -59,9 +59,9 @@ export async function findUserByProvenEmail(
   // `primaryOnly`: a Polaris ID subject links only by the address the account signed up with. An
   // address added later through /me was proven to that account's own session, which may be an email
   // link, so it never names the owner of a console account to a new Polaris ID subject.
-  const verified = options.primaryOnly ? null : await findUserByEmail(db, email);
-  if (verified) return verified;
   const byPrimary = await findUserByPrimaryEmail(db, email);
+  const verified = await findUserByEmail(db, email);
+  if (verified && (!options.primaryOnly || verified.id === byPrimary?.id)) return verified;
   return byPrimary && !(await hasExternalIdentity(db, byPrimary.id)) ? byPrimary : null;
 }
 
