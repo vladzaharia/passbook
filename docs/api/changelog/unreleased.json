@@ -160,6 +160,14 @@
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
   },
   {
+    "key": "GET /api/v1/broadcasts optional parameter query:kind added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcasts",
+    "op": "GET /api/v1/broadcasts",
+    "change": "optional parameter query:kind added",
+    "note": "Only messages or only changes. The console's Messages list asks for messages and shows changes behind a filter."
+  },
+  {
     "key": "GET /api/v1/broadcasts/{id} 200.message: field added",
     "class": "additive",
     "operationId": "broadcasts.getBroadcastsById",
@@ -878,6 +886,14 @@
     "op": "POST /api/v1/broadcasts/{id}/retry",
     "change": "201.message: field added",
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/retry optional parameter query:expectCount added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdRetry",
+    "op": "POST /api/v1/broadcasts/{id}/retry",
+    "change": "optional parameter query:expectCount added",
+    "note": "A change run resumes over the passes it never changed: send the count it has left (409 SELECTION_CHANGED when it moved, 422 EXPECT_COUNT_REQUIRED without it)."
   },
   {
     "key": "POST /api/v1/broadcasts/{id}/send 200.message: field added",

@@ -601,6 +601,7 @@ type BroadcastsListQuery struct {
 	Limit  *int64  `json:"limit,omitempty"`
 	State  *string `json:"state,omitempty"`
 	Origin *string `json:"origin,omitempty"`
+	Kind   *string `json:"kind,omitempty"`
 }
 
 type BroadcastsRecipientsListItem struct {
@@ -618,6 +619,10 @@ type BroadcastsRecipientsListQuery struct {
 }
 
 type BroadcastsRetrieveResult = Broadcast
+
+type BroadcastsRetryQuery struct {
+	ExpectCount *int64 `json:"expectCount,omitempty"`
+}
 
 type BroadcastsRetryResult = Broadcast
 

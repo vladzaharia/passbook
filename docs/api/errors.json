@@ -531,6 +531,15 @@
       ]
     },
     {
+      "code": "BROADCAST_NO_RELEASE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_ORG",
       "statuses": [
         422
@@ -1151,6 +1160,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "EXPECT_COUNT_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
       ]
     },
     {
@@ -1825,6 +1843,15 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "IMPORT_NOT_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
       ]
     },
     {

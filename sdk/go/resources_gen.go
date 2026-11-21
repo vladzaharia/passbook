@@ -232,10 +232,10 @@ func (r *BroadcastsResource) Retrieve(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
-// Retry Send a failed or cancelled message again, as a new one in the same mode `POST /api/v1/broadcasts/{id}/retry`
-func (r *BroadcastsResource) Retry(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsRetryResult, error) {
+// Retry Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`
+func (r *BroadcastsResource) Retry(ctx context.Context, id string, query *BroadcastsRetryQuery, opts ...RequestOption) (*BroadcastsRetryResult, error) {
 	var out BroadcastsRetryResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/retry"}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/retry", query: queryValues(query)}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

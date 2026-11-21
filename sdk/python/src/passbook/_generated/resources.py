@@ -198,10 +198,11 @@ class BroadcastsResource:
         limit: int | None = None,
         state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | None = None,
         origin: _Literal["manual", "rule"] | None = None,
+        kind: _Literal["message", "change"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.Broadcast]:
         """List messages and scheduled changes `GET /api/v1/broadcasts`"""
-        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin, "kind": kind}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
 
     def retrieve(
         self,
@@ -214,10 +215,12 @@ class BroadcastsResource:
     def retry(
         self,
         id: str,
+        *,
+        expect_count: int | None | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.BroadcastsRetryResult:
-        """Send a failed or cancelled message again, as a new one in the same mode `POST /api/v1/broadcasts/{id}/retry`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", result=m.BroadcastsRetryResult, **opts)
+        """Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", query={"expectCount": expect_count}, result=m.BroadcastsRetryResult, **opts)
 
     def send(
         self,

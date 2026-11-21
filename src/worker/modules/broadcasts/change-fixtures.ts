@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { BroadcastSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
-import { run } from '../../platform/db.ts';
+import { prune } from '../../platform/counters.ts';
 import { runBroadcast } from '../../workflows/broadcast.ts';
 import { itemsWithBefore } from './repo-items.ts';
 import { type BroadcastAuth, type BroadcastKit, broadcastAuth, broadcastKit } from './test-kit.ts';
@@ -50,7 +50,7 @@ export async function changeKit(): Promise<ChangeKit> {
   const state = { spread: true };
   const post: ChangeKit['post'] = async (path, body = {}, headers = auth.admin()) => {
     if (path === '/broadcasts' && state.spread)
-      await run(kit.env.DB, "DELETE FROM counters WHERE key LIKE 'change-run:%'");
+      await prune(kit.env.DB, 'change-run:%', Number.MAX_SAFE_INTEGER);
     return api(path, {
       method: 'POST',
       headers: { ...headers, 'content-type': 'application/json' },

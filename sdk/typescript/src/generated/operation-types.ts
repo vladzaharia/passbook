@@ -126,6 +126,7 @@ export type BroadcastsListQuery = {
   limit?: number;
   state?: "draft" | "scheduled" | "sending" | "sent" | "partial" | "failed" | "cancelled";
   origin?: "manual" | "rule";
+  kind?: "message" | "change";
 };
 
 /** Response of `broadcasts.list`. */
@@ -198,6 +199,11 @@ export type BroadcastsRecipientsListResult = {
     silent: boolean;
   }>;
   nextCursor: string | null;
+};
+
+/** Query of `broadcasts.retry`. */
+export type BroadcastsRetryQuery = {
+  expectCount?: number | null;
 };
 
 /** Response of `broadcasts.retry`. */

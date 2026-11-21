@@ -20615,8 +20615,7 @@
             "maxLength": 80
           },
           "notify": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "send": {
             "type": "string",
@@ -21081,8 +21080,7 @@
             "maxLength": 80
           },
           "notify": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "send": {
             "type": "string",
@@ -71801,6 +71799,18 @@
             "required": false,
             "name": "origin",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "message",
+                "change"
+              ]
+            },
+            "required": false,
+            "name": "kind",
+            "in": "query"
           }
         ],
         "responses": {
@@ -72586,7 +72596,7 @@
     },
     "/api/v1/broadcasts/{id}/retry": {
       "post": {
-        "summary": "Send a failed or cancelled message again, as a new one in the same mode",
+        "summary": "Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount)",
         "tags": [
           "broadcasts"
         ],
@@ -72600,6 +72610,18 @@
             "required": true,
             "name": "id",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "expectCount",
+            "in": "query"
           }
         ],
         "responses": {

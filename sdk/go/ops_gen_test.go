@@ -188,7 +188,7 @@ var generatedOps = []opCase{
 		"broadcasts.retry", "POST", "/api/v1/broadcasts/id1/retry", false,
 		"", `{"id":"x","orgId":"x","mode":"live","kind":"message","name":"x","state":"draft","target":{"templateIds":["x"]},"patch":{},"notify":false,"at":0,"clearAfter":0,"parentId":"x","ruleId":"x","followUp":{"id":"x","at":0},"counts":{"targeted":0,"updated":0,"unchanged":0,"overBudget":0,"failed":0},"errorCode":"x","createdAt":0,"startedAt":0,"finishedAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
-			return c.Broadcasts.Retry(ctx, "id1")
+			return c.Broadcasts.Retry(ctx, "id1", nil)
 		},
 	},
 	{

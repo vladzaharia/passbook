@@ -3232,5 +3232,23 @@
     "when": "The passes the request matches now differ by more than 2% from expectCount.",
     "fix": "Preview the selection again and send the new count as expectCount.",
     "retryable": false
+  },
+  "BROADCAST_NO_RELEASE": {
+    "title": "No approved design",
+    "when": "A template in the run has no approved release to move passes to.",
+    "fix": "Approve and publish a release of the template, then run it again.",
+    "retryable": false
+  },
+  "IMPORT_NOT_ENDED": {
+    "title": "Import not ended",
+    "when": "The import is still running, or was undone, so the passes it made are not fixed.",
+    "fix": "Wait for the import to finish, or choose passes another way.",
+    "retryable": false
+  },
+  "EXPECT_COUNT_REQUIRED": {
+    "title": "Send the count left",
+    "when": "Resuming a change needs expectCount: the passes it has left.",
+    "fix": "Preview the remainder, then retry with ?expectCount=<count>.",
+    "retryable": false
   }
 }
