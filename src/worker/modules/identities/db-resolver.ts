@@ -1,6 +1,7 @@
 import { credentialAad, decryptSecretText, loadKekRing } from '../../platform/crypto.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
+import { createLogger } from '../../platform/log.ts';
 import {
   type IdentityResolver,
   intermediatePem,
@@ -62,20 +63,44 @@ export async function loadIdentityKey(env: AppEnv, row: IdentityRow): Promise<st
   return pem;
 }
 
+export function platformEnvMismatch(
+  identity: Pick<ResolvedIdentity, 'passTypeIdentifier' | 'teamIdentifier'>,
+  row: Pick<IdentityRow, 'pass_type_identifier' | 'team_identifier'>,
+): boolean {
+  return (
+    identity.passTypeIdentifier !== row.pass_type_identifier ||
+    identity.teamIdentifier !== row.team_identifier
+  );
+}
+
+// Every refused sign would log; once per 50 per isolate keeps a bad deploy loud but not flooding.
+let mismatchRefusals = 0;
+export function resetEnvMismatchLog(): void {
+  mismatchRefusals = 0;
+}
+function noteEnvMismatch(identity: ResolvedIdentity, row: IdentityRow): void {
+  if (mismatchRefusals++ % 50 !== 0) return;
+  createLogger().error('identity.platform_env_mismatch', {
+    code: 'IDENTITY_PLATFORM_ENV_MISMATCH',
+    identityId: row.id,
+    rowPassType: row.pass_type_identifier,
+    envPassType: identity.passTypeIdentifier,
+  });
+}
+
 export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<ResolvedIdentity> {
   if (row.source === 'env') {
     if (row.id !== PLATFORM_IDENTITY_ID)
       throw new NotFoundError('Signing identity is not configured.', 'IDENTITY_NOT_CONFIGURED');
     const identity = readEnvIdentity(env);
     // Installed passes key on the row's pass type and team: never sign them as anything else.
-    if (
-      identity.passTypeIdentifier !== row.pass_type_identifier ||
-      identity.teamIdentifier !== row.team_identifier
-    )
+    if (platformEnvMismatch(identity, row)) {
+      noteEnvMismatch(identity, row);
       throw new UnavailableError(
         'The platform signing identity does not match its configuration.',
         'IDENTITY_PLATFORM_ENV_MISMATCH',
       );
+    }
     return { ...identity, label: row.label, nfcEnabled: row.nfc_enabled === 1 };
   }
   if (!row.cert_pem) throw notFound();
@@ -143,7 +168,11 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
       const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
       if (orgDefault) {
         const identity = await scoped(orgDefault);
-        if (!(await refusal(env, identity.id, now))) return identity;
+        const refused = await refusal(env, identity.id, now);
+        if (!refused) return identity;
+        // Only a retired default hands over to the next one: a pass never changes identity, so an
+        // expired one must refuse instead of quietly issuing under another pass type.
+        if (refused.code !== 'IDENTITY_RETIRED') throw refused;
       }
       const fallback = await getDefaultRow(env.DB);
       if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
