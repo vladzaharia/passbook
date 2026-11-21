@@ -11,6 +11,10 @@ export const SIGN_IN_FOOTER = HOLDER_COPY.signInFooter;
 export const SIGN_IN_SENT =
   'If this address has a pass or an invitation, a link is on its way. Nothing yet? Use the address your pass was sent to.';
 
+/** 403 IDP_SIGN_IN_REQUIRED: the console and developer tools are not open to an email-link sign-in. */
+export const IDP_SIGN_IN_REQUIRED_MESSAGE = 'Sign in with Polaris ID to continue.';
+export const PASSKEY_REQUIRED_MESSAGE = 'Sign in to Polaris ID with your passkey, not a code.';
+
 export const INVALID_EMAIL = EMAIL_INVALID_MESSAGE;
 export const WRONG_CODE = 'That code is wrong or expired.';
 const LINK_EXPIRED = 'Link expired';
@@ -32,6 +36,7 @@ export type SignInErrorCode =
   | 'LINK_INVALID'
   | 'EMAIL_TAKEN'
   | 'MAGIC_LINK_DISABLED'
+  | 'PASSKEY_REQUIRED'
   | 'RATE_LIMITED'
   | 'VALIDATION';
 
@@ -71,6 +76,7 @@ export const SIGN_IN_ERROR_COPY: Record<SignInErrorCode, { title: string; messag
   },
   EMAIL_TAKEN: { title: 'Email in use', message: 'That address belongs to another account.' },
   MAGIC_LINK_DISABLED: { title: 'Email sign-in is off', message: 'Sign in another way.' },
+  PASSKEY_REQUIRED: { title: 'Use your passkey', message: PASSKEY_REQUIRED_MESSAGE },
   RATE_LIMITED: { title: STATE_COPY.rateLimited, message: waitLine() },
   VALIDATION: { title: 'Sign-in failed', message: 'The request was incomplete. Start again.' },
 };
@@ -93,6 +99,7 @@ export type OidcFailure = keyof typeof OIDC_FAILURE_COPY;
 /** The SSR auth pages' labels (worker/modules/auth/pages.ts). */
 export const AUTH_PAGE_COPY = {
   signIn: 'Sign in',
+  signInPolarisId: 'Sign in with Polaris ID',
   backToSignIn: 'Back to sign in',
   signInToConfirm: 'Sign in to confirm',
   confirmEmail: 'Confirm email',

@@ -5,7 +5,7 @@ import { ipPrefix } from './ip.ts';
 import { serviceContext } from './service-context.ts';
 
 export interface DeniedEvent {
-  code: 'FORBIDDEN' | 'CSRF_ORIGIN' | 'CSRF_TOKEN' | 'MISSING_SCOPE';
+  code: 'FORBIDDEN' | 'CSRF_ORIGIN' | 'CSRF_TOKEN' | 'MISSING_SCOPE' | 'IDP_SIGN_IN_REQUIRED';
   actorType: 'user' | 'api_key' | 'scanner';
   actorId: string;
   ipPrefix: string | null;

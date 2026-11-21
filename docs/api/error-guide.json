@@ -581,6 +581,12 @@
     "fix": "Check the id with GET /api/v1/identities.",
     "retryable": false
   },
+  "IDP_SIGN_IN_REQUIRED": {
+    "title": "Polaris ID sign-in required",
+    "when": "A session made with an email link called a console or developer route. Only a Polaris ID sign-in opens them.",
+    "fix": "Sign in with Polaris ID at the signInUrl in the problem, then send the request again. API keys are not affected.",
+    "retryable": false
+  },
   "IF_MATCH_INVALID": {
     "title": "Bad If-Match",
     "when": "If-Match is not a pass version number.",
@@ -797,6 +803,12 @@
     "fix": "Create a new key from a current member with POST /api/v1/api-keys.",
     "retryable": false
   },
+  "KEY_OWNER_NEEDS_IDP": {
+    "title": "Key owner needs Polaris ID",
+    "when": "A personal key's owner has never signed in with Polaris ID, and the email sign-in grace period for the console has ended.",
+    "fix": "Ask the key's owner to sign in with Polaris ID once. The key then works again unchanged.",
+    "retryable": false
+  },
   "KEY_TEST_ONLY": {
     "title": "Test key only",
     "when": "The operation is limited to Test keys.",
@@ -1007,16 +1019,16 @@
     "fix": "Check orgId with GET /api/v1/orgs.",
     "retryable": false
   },
-  "ORG_REQUIRED": {
-    "title": "Organization required",
-    "when": "The request spans organizations and does not name one.",
-    "fix": "Send orgId with the request, or use a key scoped to one organization.",
-    "retryable": false
-  },
   "ORG_PERSONAL_SINGLE_MEMBER": {
     "title": "Personal organization has one member",
     "when": "You invited a member to, or revoked the owner of, a personal organization.",
     "fix": "Use a regular organization to work with others.",
+    "retryable": false
+  },
+  "ORG_REQUIRED": {
+    "title": "Organization required",
+    "when": "The request spans organizations and does not name one.",
+    "fix": "Send orgId with the request, or use a key scoped to one organization.",
     "retryable": false
   },
   "ORG_SLUG_RESERVED": {
@@ -1041,6 +1053,12 @@
     "title": "Pairing code invalid",
     "when": "The pairing code is wrong, used or expired.",
     "fix": "Create a new pairing code and enter it again.",
+    "retryable": false
+  },
+  "PASSKEY_REQUIRED": {
+    "title": "Passkey required",
+    "when": "A Polaris ID sign-in finished with an emailed login code instead of a passkey, twice.",
+    "fix": "Sign in to Polaris ID with your passkey, not a code.",
     "retryable": false
   },
   "PASS_CONFLICT": {
