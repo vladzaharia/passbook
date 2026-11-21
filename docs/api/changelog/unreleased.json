@@ -808,6 +808,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPairPreview",
+    "op": "POST /api/v1/scan/pair/preview",
+    "change": "200.sessionName: field added",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
