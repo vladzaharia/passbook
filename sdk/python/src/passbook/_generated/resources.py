@@ -1589,6 +1589,28 @@ class TerminalResource:
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
 
+class ScannersResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def revoke(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersRevokeResult:
+        """Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/revoke", result=m.ScannersRevokeResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScannersUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersUpdateResult:
+        """Edit a scanner `PATCH /api/v1/scanners/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scanners/{_p(id)}", body=body, result=m.ScannersUpdateResult, **opts)
+
+
 class ScanningSessionsDevicesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2268,6 +2290,7 @@ class Resources:
         self.scan_setups = ScanSetupsResource(core)
         self.scan_zones = ScanZonesResource(core)
         self.terminal = TerminalResource(core)
+        self.scanners = ScannersResource(core)
         self.scanning_sessions = ScanningSessionsResource(core)
         self.scans = ScansResource(core)
         self.templates = TemplatesResource(core)

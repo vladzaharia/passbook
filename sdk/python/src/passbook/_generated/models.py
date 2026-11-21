@@ -957,13 +957,16 @@ __all__ = [
     "ScannersCreateParamsSettings",
     "ScannersCreateParamsSettingsCheckIn",
     "ScannersCreateParamsSettingsTags",
+    "ScannersRevokeResult",
     "ScannersSetModeParams",
+    "ScannersUpdateBody",
     "ScannersUpdateParams",
     "ScannersUpdateParamsAccepts1",
     "ScannersUpdateParamsAccepts2",
     "ScannersUpdateParamsSettings",
     "ScannersUpdateParamsSettingsCheckIn",
     "ScannersUpdateParamsSettingsTags",
+    "ScannersUpdateResult",
     "ScanningDevice",
     "ScanningDeviceOverrides",
     "ScanningSession",
@@ -9458,6 +9461,12 @@ ScanWorkspace = _Dict[str, _Any] | None
 ScanZonesCreateBody = ScanZonesCreateParams
 
 ScanZonesUpdateBody = ScanZonesUpdateParams
+
+ScannersRevokeResult = Scanner
+
+ScannersUpdateBody = ScannersUpdateParams
+
+ScannersUpdateResult = Scanner
 
 ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
 

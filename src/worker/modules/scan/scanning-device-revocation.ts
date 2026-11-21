@@ -3,7 +3,7 @@ import { AppError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { kickScreen } from './live.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited } from './repo-admin-grant.ts';
 import { assertAdminConfigurationAuthority } from './repo-scanner-configuration-authority.ts';
 import { addScannerRevoke, getConsoleScanner } from './repo-scanners.ts';
 import { addAdminDeviceRelease } from './repo-scanning-devices.ts';
@@ -45,8 +45,7 @@ export async function revokeScanner(
   g.add(
     audited(g, ctx, {
       orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scanner.revoke',
       targetType: 'scanner',
       targetId: id,

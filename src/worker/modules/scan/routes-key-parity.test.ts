@@ -219,3 +219,20 @@ describe('event assign and visits reset by scanning:write key', () => {
     expect((await send('POST', `/scan-zones/visits/${id}/reset`, read.headers)).status).toBe(403);
   });
 });
+
+describe('scanner edit and revoke by scanning:write key', () => {
+  it('edits and revokes a device as the key, and refuses a read-only key and another mode', async () => {
+    const session = await fixture.parent('Key scanner');
+    const device = await fixture.device(session.id, 'Key scanner device');
+    const k = await keyOf(['scanning:write']);
+    const read = await keyOf(['scan-setup:read']);
+    const path = `/scanners/${device.id}`;
+    expect((await send('PATCH', path, read.headers, { name: 'No' })).status).toBe(403);
+    const test = await keyOf(['scanning:write'], 'test');
+    expect((await send('PATCH', path, test.headers, { name: 'No' })).status).toBe(404);
+    expect((await send('POST', `${path}/revoke`, k.headers)).status).toBe(200);
+    expect(await audit('scanner.revoke', device.id)).toEqual({ t: 'api_key', a: k.id });
+    // A second revoke changes nothing and still answers only to a live key.
+    expect((await send('POST', `${path}/revoke`, k.headers)).status).toBe(200);
+  });
+});

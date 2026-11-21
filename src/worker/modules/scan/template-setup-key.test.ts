@@ -168,7 +168,7 @@ describe('which scan admin grants a key may hold', () => {
       'org_mode.scan.pair',
       'org_mode.scan.setup.admin_session',
       'org.scan.staff.pin',
-      'org_mode.scan.scanner.revoke',
+      'org_mode.scan.scanner.create',
       'org_mode.scan.zone.create',
       'org_mode.scan.pairing.token',
     ])

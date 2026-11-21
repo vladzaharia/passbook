@@ -1713,6 +1713,34 @@ func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBod
 	return &out, nil
 }
 
+type ScannersResource struct {
+	c *core
+}
+
+func newScannersResource(c *core) *ScannersResource {
+	return &ScannersResource{
+		c: c,
+	}
+}
+
+// Revoke Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`
+func (r *ScannersResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*ScannersRevokeResult, error) {
+	var out ScannersRevokeResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/revoke"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Edit a scanner `PATCH /api/v1/scanners/{id}`
+func (r *ScannersResource) Update(ctx context.Context, id string, body *ScannersUpdateBody, opts ...RequestOption) (*ScannersUpdateResult, error) {
+	var out ScannersUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scanners/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ScanningSessionsDevicesResource struct {
 	c *core
 }
@@ -2355,6 +2383,7 @@ type Resources struct {
 	ScanSetups       *ScanSetupsResource
 	ScanZones        *ScanZonesResource
 	Terminal         *TerminalResource
+	Scanners         *ScannersResource
 	ScanningSessions *ScanningSessionsResource
 	Scans            *ScansResource
 	Templates        *TemplatesResource
@@ -2387,6 +2416,7 @@ func newResources(c *core) Resources {
 		ScanSetups:       newScanSetupsResource(c),
 		ScanZones:        newScanZonesResource(c),
 		Terminal:         newTerminalResource(c),
+		Scanners:         newScannersResource(c),
 		ScanningSessions: newScanningSessionsResource(c),
 		Scans:            newScansResource(c),
 		Templates:        newTemplatesResource(c),

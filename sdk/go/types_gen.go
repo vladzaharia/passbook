@@ -6774,10 +6774,14 @@ type ScannersCreateParamsSettingsTags struct {
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
 
+type ScannersRevokeResult = Scanner
+
 type ScannersSetModeParams struct {
 	Mode        string `json:"mode"`
 	DetachEvent *bool  `json:"detachEvent,omitempty"`
 }
+
+type ScannersUpdateBody = ScannersUpdateParams
 
 type ScannersUpdateParams struct {
 	Name     *string                       `json:"name,omitempty"`
@@ -6831,6 +6835,8 @@ type ScannersUpdateParamsSettingsTags struct {
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
+
+type ScannersUpdateResult = Scanner
 
 type ScanningDevice struct {
 	ID               string                  `json:"id"`

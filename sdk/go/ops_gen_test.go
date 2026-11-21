@@ -1302,6 +1302,24 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanners.update", "PATCH", "/api/v1/scanners/id1", false,
+		`{}`, `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScannersUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Scanners.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanners.revoke", "POST", "/api/v1/scanners/id1/revoke", false,
+		"", `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.Revoke(ctx, "id1")
+		},
+	},
+	{
 		"scanningSessions.list", "GET", "/api/v1/scanning-sessions", false,
 		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

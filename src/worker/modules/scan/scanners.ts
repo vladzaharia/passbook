@@ -16,6 +16,7 @@ import { kickScreen } from './live.ts';
 import { createPairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
 import {
+  adminActorOf,
   adminGrant,
   audited,
   eventsOpen,
@@ -184,8 +185,7 @@ export async function updateScanner(
   g.add(
     audited(g, ctx, {
       orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scanner.update',
       targetType: 'scanner',
       targetId: id,

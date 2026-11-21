@@ -18,11 +18,16 @@ export async function assertAdminConfigurationAuthority(
   credential: AdminConfigurationClaim,
 ): Promise<void> {
   const { authority, userId, now } = credential;
+  const holds =
+    authority?.kind === 'api_key'
+      ? authority.scope === 'scanning:write' && authority.keyId === userId
+      : authority?.kind === 'session' &&
+        authority.userId === userId &&
+        authority.capability === 'scanning:manage';
   if (
-    authority?.kind !== 'session' ||
+    !authority ||
+    !holds ||
     authority.orgId !== orgId ||
-    authority.userId !== userId ||
-    authority.capability !== 'scanning:manage' ||
     !(await tenantPassAuthorityValid(db, authority, now))
   )
     throw new ForbiddenError();

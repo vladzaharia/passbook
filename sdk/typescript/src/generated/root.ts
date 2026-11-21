@@ -20,6 +20,7 @@ import { ScanEventsResource } from './resources/scan-events.ts';
 import { ScanSetupsResource } from './resources/scan-setups.ts';
 import { ScanZonesResource } from './resources/scan-zones.ts';
 import { TerminalResource } from './resources/terminal.ts';
+import { ScannersResource } from './resources/scanners.ts';
 import { ScanningSessionsResource } from './resources/scanning-sessions.ts';
 import { ScansResource } from './resources/scans.ts';
 import { TemplatesResource } from './resources/templates.ts';
@@ -51,6 +52,7 @@ export class Resources {
   readonly scanSetups: ScanSetupsResource;
   readonly scanZones: ScanZonesResource;
   readonly terminal: TerminalResource;
+  readonly scanners: ScannersResource;
   readonly scanningSessions: ScanningSessionsResource;
   readonly scans: ScansResource;
   readonly templates: TemplatesResource;
@@ -80,6 +82,7 @@ export class Resources {
     this.scanSetups = new ScanSetupsResource(core);
     this.scanZones = new ScanZonesResource(core);
     this.terminal = new TerminalResource(core);
+    this.scanners = new ScannersResource(core);
     this.scanningSessions = new ScanningSessionsResource(core);
     this.scans = new ScansResource(core);
     this.templates = new TemplatesResource(core);
