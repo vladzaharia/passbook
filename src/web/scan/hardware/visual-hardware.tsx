@@ -5,7 +5,7 @@ import { MenuTrigger } from '../ui/capsule.tsx';
 import { CountChip, SyncChip } from '../ui/chips.tsx';
 import { OPERATOR_CASES, OperatorVisual } from '../visual-operator.tsx';
 import { HARDWARE_CASES, type HardwareCase, hardwareCase } from './fixtures.test-support.ts';
-import { guideOf } from './guide.ts';
+import { panelRows } from './guide.ts';
 import { HardwarePanel } from './hardware-panel.tsx';
 import { HardwarePill } from './hardware-pill.tsx';
 import { hardwareItems } from './items.ts';
@@ -28,8 +28,7 @@ export function VisualPill({ operator = false }: { operator?: boolean }) {
       <HardwarePill icons={pillIcons(items)} onOpen={() => setOpen(true)} />
       {open ? (
         <HardwarePanel
-          items={items}
-          steps={guideOf(items, { reads: live.reads, camera: !operator })}
+          items={panelRows(items, { reads: live.reads, camera: !operator })}
           testing={testing}
           onAction={(item, action) => (action.kind === 'test' ? setTesting(item.id) : undefined)}
           onTestDone={() => setTesting(null)}

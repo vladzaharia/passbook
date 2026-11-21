@@ -57,6 +57,7 @@ export function nativeRows(
       builtIn: e.builtIn,
       connected: e.connected,
       ...(e.facing ? { facing: e.facing } : {}),
+      ...(e.trigger ? { trigger: e.trigger } : {}),
     };
   });
 }

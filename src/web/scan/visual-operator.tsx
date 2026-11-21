@@ -12,7 +12,6 @@ import { createScanStore } from './machine/store.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorWorkspace } from './operator/workspace/workspace.tsx';
 import type { ScanRuntime } from './platform/runtime.ts';
-import { ReaderChip } from './ui/chips.tsx';
 import { FLOOR_CASES, floorApi } from './visual-operator-floor.ts';
 import { historyPage, NOTES } from './visual-operator-history.ts';
 import {
@@ -282,7 +281,7 @@ export function OperatorVisual({
           branding={null}
           logoUrl={null}
           modeLabel="Operator"
-          chips={<ReaderChip state="ready" />}
+          chips={null}
           testing={null}
           menu={menu}
           scanCard={null}
