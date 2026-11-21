@@ -4,7 +4,6 @@ import { OkSchema } from '@/shared/contracts/common.ts';
 import {
   type CheckPassImportSchema,
   type CreatePassImportSchema,
-  type PassImportCommitSchema,
   type PassImportDto,
   PassImportEmailRestResultSchema,
   PassImportPageSchema,
@@ -88,16 +87,6 @@ export function useCheckImport(id: string, orgId: string | undefined) {
   return useMutation({
     mutationFn: (body: z.input<typeof CheckPassImportSchema>) =>
       api.post(`${BASE}/${id}/check`, PassImportSchema, body, { query: { orgId } }),
-    onSuccess: (imp) => keep(qc, orgId, mode, imp),
-  });
-}
-
-export function useCommitImport(id: string, orgId: string | undefined) {
-  const qc = useQueryClient();
-  const mode = useMode();
-  return useMutation({
-    mutationFn: (body: z.input<typeof PassImportCommitSchema>) =>
-      api.post(`${BASE}/${id}/commit`, PassImportSchema, body, { query: { orgId } }),
     onSuccess: (imp) => keep(qc, orgId, mode, imp),
   });
 }

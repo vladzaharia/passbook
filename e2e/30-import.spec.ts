@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { apiAs, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
@@ -9,9 +9,7 @@ const HEAD = 'Name,MemberId,Tier,Guests,Email,Ref';
 const row = (ref: string, name: string, guests: string) =>
   `${name},${ref}-M,Plus,${guests},${ref.toLowerCase()}@example.test,${ref}`;
 
-test('import a sheet: fix the error file, commit, re-import as unchanged, remove what it created', async ({
-  page,
-}) => {
+test('import a sheet: fix in place, commit, re-import as unchanged, undo', async ({ page }) => {
   const admin = await apiAs('admin');
   const { org, template } = readSeed();
   const refs = [uid('IMP'), uid('IMP'), uid('IMP')].map((r) => r.toUpperCase());
@@ -28,15 +26,19 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
     await page.getByRole('combobox', { name: 'Template' }).click();
     await page.getByRole('option', { name: template.name }).click();
     await upload(csv);
-    await page.getByRole('button', { name: 'Check file' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/o\/[^/]+\/passes\/import\/[^/?]+/);
+    await expect(page.getByText('Match columns')).toBeVisible();
   };
+  const check = () => page.getByRole('button', { name: /^Check/ }).click();
+  const tile = (label: string, n: number) =>
+    expect(page.getByRole('button', { name: new RegExp(`^${n}\\s*${label}`) })).toBeVisible();
 
-  // 1. A file with a bad row: map the columns, check, and download the error file.
+  // 1. A file with a bad row: match the columns, check, download the error file, fix it in place.
   await start([HEAD, ...good, bad].join('\n'));
-  await expect(page.getByText('Match columns')).toBeVisible();
-  await page.getByRole('button', { name: 'Check', exact: true }).click();
-  await expect(page.getByText('2 to create · 0 to update · 0 unchanged · 1 error')).toBeVisible();
+  await check();
+  await tile('New', 2);
+  await tile('Needs a fix', 1);
   await expect(page.getByRole('table', { name: 'Problems' })).toContainText('Guests');
   const [errors] = await Promise.all([
     page.waitForEvent('download'),
@@ -45,28 +47,31 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
   const text = (await (await errors.createReadStream()).toArray()).join('');
   expect(text).toContain('Problem');
   expect(text).toContain(refs[2] as string);
-
-  // 2. Fix it and upload again: the saved mapping runs the check at once.
-  await start([HEAD, ...good, row(refs[2] as string, 'Cy', '30')].join('\n'));
-  await expect(page.getByText('3 to create · 0 to update · 0 unchanged · 0 errors')).toBeVisible();
+  await page.getByRole('button', { name: 'Fix Guests on row 4' }).click();
+  await page.getByRole('textbox', { name: 'Fix Guests on row 4' }).fill('30');
+  await page.keyboard.press('Enter');
+  await tile('New', 3);
+  await tile('Needs a fix', 0);
   const first = page.url();
 
-  // 3. Commit with email.
-  await page.getByRole('button', { name: /^(Create|Update) \d+/ }).click();
+  // 2. Commit with email sent now; the run card counts what it did.
   await page.getByRole('switch', { name: 'Email new holders' }).click();
-  await page.getByRole('button', { name: 'Create 3', exact: true }).click();
-  await expect(page.getByText('All rows done.')).toBeVisible({ timeout: 60_000 });
+  await page.getByRole('combobox', { name: /Send/ }).click();
+  await page.getByRole('option', { name: 'Now' }).click();
+  await page.getByRole('button', { name: 'Create 3 passes', exact: true }).click();
+  await expect(page.getByText('3 done')).toBeVisible({ timeout: 60_000 });
   const created = await admin.get<{ items: { id: string }[] }>(
     `/api/v1/passes?orgId=${org.id}&q=${encodeURIComponent(refs[0] as string)}`,
   );
   expect(created.items).toHaveLength(1);
 
-  // 4. The same file again changes nothing.
+  // 3. The same file again changes nothing.
   await start([HEAD, ...good, row(refs[2] as string, 'Cy', '30')].join('\n'));
-  await expect(page.getByText('0 to create · 0 to update · 3 unchanged · 0 errors')).toBeVisible();
+  await check();
+  await tile('Same', 3);
   await expect(page.getByRole('button', { name: /^(Create|Update) \d+/ })).toBeDisabled();
 
-  // 5. Results of the first run: download, then remove what it created.
+  // 4. Results of the first run: download, then undo what it created.
   await page.goto(first);
   await expect(page.getByRole('button', { name: 'Download results' })).toBeVisible();
   const [results] = await Promise.all([
@@ -76,16 +81,52 @@ test('import a sheet: fix the error file, commit, re-import as unchanged, remove
   expect((await (await results.createReadStream()).toArray()).join('')).toContain(
     refs[1] as string,
   );
-  await page.getByRole('button', { name: 'Remove created passes' }).click();
+  await page.getByRole('button', { name: 'Undo import' }).click();
   await page
-    .getByRole('alertdialog', { name: 'Remove created passes?' })
-    .getByRole('button', { name: 'Remove' })
+    .getByRole('alertdialog', { name: 'Undo this import?' })
+    .getByRole('button', { name: 'Undo import' })
     .click();
-  await expect(page.getByText('3 passes removed')).toBeVisible();
+  await expect(page.getByText(/Removed 3/)).toBeVisible();
   const detail = await admin.get<{ removedAt: number | null }>(
     `/api/v1/passes/${created.items[0]?.id}`,
   );
   expect(detail.removedAt).not.toBeNull();
 
   await admin.dispose();
+});
+
+const SAMPLE_BUG =
+  'I2 sample.csv: example values for uri-format and pattern fields (Website, Phone, Renew link) fail the check';
+
+async function importSample(page: Page) {
+  const { org, template } = readSeed();
+  await page.goto(`/admin/passes/import?orgId=${encodeURIComponent(org.id)}`);
+  await page.getByRole('combobox', { name: 'Template' }).click();
+  await page.getByRole('option', { name: template.name }).click();
+  const [sample] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download sample CSV' }).click(),
+  ]);
+  const text = (await (await sample.createReadStream()).toArray()).join('');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'sample.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(text),
+  });
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('Match columns')).toBeVisible();
+}
+
+test('the template sample file maps in full', async ({ page }) => {
+  await importSample(page);
+  await expect(page.getByText('All fields ready')).toBeVisible();
+});
+
+// Remove `test.fail` when I2's sample row passes its own check.
+test('the template sample file checks with no errors', async ({ page }) => {
+  test.fail(true, SAMPLE_BUG);
+  await importSample(page);
+  await page.getByRole('button', { name: /^Check/ }).click();
+  await expect(page.getByRole('button', { name: /^1\s*New/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^0\s*Needs a fix/ })).toBeVisible();
 });

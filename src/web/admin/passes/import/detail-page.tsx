@@ -13,37 +13,46 @@ import {
   ErrorState,
   PageHeader,
   Skeleton,
+  Stepper,
 } from '../../../ui/index.ts';
 import { useImport } from './api.ts';
 import { CheckStep } from './check-step.tsx';
+import { takeFresh } from './fresh.ts';
 import { MatchStep } from './match-step.tsx';
-import { ImportProgress } from './progress.tsx';
 import { ImportResults } from './results.tsx';
 import { STATE_LABEL, STATE_TONE } from './state-tone.ts';
+import { IMPORT_STEPS, STEP } from './steps.ts';
 
-function Checking() {
+function Checking({ onStep }: { onStep: (step: number) => void }) {
   return (
-    <Card>
-      <CardBody className="flex items-center gap-4">
-        <Buddy scene="inspect" size="sm" className="shrink-0" />
-        <p role="status" className="text-sm text-fg-muted">
-          {C.match.checking}
-        </p>
-      </CardBody>
-    </Card>
+    <div className="flex flex-col gap-6">
+      <Stepper steps={IMPORT_STEPS} current={STEP.check} onStep={onStep} />
+      <Card>
+        <CardBody className="flex items-center gap-4">
+          <Buddy scene="inspect" size="sm" className="shrink-0" />
+          <p role="status" className="text-sm text-fg-muted">
+            {C.match.checking}
+          </p>
+        </CardBody>
+      </Card>
+    </div>
   );
 }
 
-/** One import, by state: columns, check, progress, results. */
+/** One import, by state: match, check, run and results, under one stepper. */
 export function ImportDetailPage({ importId }: { importId: string }) {
   const navigate = useNavigate();
   const { orgId, membership } = useOrgScope();
   const query = useImport(importId, orgId);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(() => takeFresh(importId));
   const imp = query.data;
   const canSync = membership?.capabilities.includes('integrations:manage') ?? false;
   const canOperate = membership?.capabilities.includes('passes:operate') ?? false;
-  const back = () => orgId && void navigate({ href: orgPath(orgId, '/passes/import') });
+  const source = () => orgId && void navigate({ href: orgPath(orgId, '/passes/import') });
+  const goto = (step: number) => {
+    if (step === STEP.source) source();
+    else setEditing(step === STEP.match);
+  };
 
   let body = <Skeleton className="h-64" />;
   if (!orgId) body = <EmptyState art="people" title={C.chooseOrg} />;
@@ -62,18 +71,28 @@ export function ImportDetailPage({ importId }: { importId: string }) {
           }
         />
       );
-    else if (imp.state === 'checking') body = <Checking />;
-    else if (imp.state === 'committing') body = <ImportProgress imp={imp} />;
-    else if ((imp.state === 'done' || imp.state === 'failed') && imp.progress)
-      body = <ImportResults imp={imp} orgId={orgId} canSync={canSync} canOperate={canOperate} />;
+    else if (imp.state === 'checking') body = <Checking onStep={goto} />;
+    else if (
+      imp.state === 'committing' ||
+      ((imp.state === 'done' || imp.state === 'failed') && imp.progress)
+    )
+      body = (
+        <ImportResults
+          imp={imp}
+          orgId={orgId}
+          canSync={canSync}
+          canOperate={canOperate}
+          onSource={source}
+        />
+      );
     else if ((imp.state === 'ready' || imp.state === 'stale') && !editing)
       body = (
         <CheckStep
           imp={imp}
           orgId={orgId}
           canOperate={canOperate}
-          onEditColumns={() => setEditing(true)}
-          onDiscarded={back}
+          onStep={goto}
+          onDiscarded={source}
         />
       );
     else if (!canOperate) body = <EmptyState art="lock" title={C.forbidden} />;
@@ -84,6 +103,7 @@ export function ImportDetailPage({ importId }: { importId: string }) {
           imp={imp}
           orgId={orgId}
           onChecked={() => setEditing(false)}
+          onStep={goto}
         />
       );
   }
