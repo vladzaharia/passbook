@@ -1,0 +1,36 @@
+name: iOS Scanner
+on:
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Select Xcode
+        run: ios/scripts/select-xcode.sh
+      - name: Install XcodeGen
+        run: ios/scripts/install-xcodegen.sh
+      - name: Generate the project
+        run: ios/scripts/build.sh --generate-only
+      - name: Project is up to date
+        run: git diff --exit-code -- ios/PassBookScanner.xcodeproj
+      - name: Build for the simulator
+        run: ios/scripts/build.sh
+      - name: Unit tests
+        run: |
+          xcodebuild test -project ios/PassBookScanner.xcodeproj -scheme PassBookScanner \
+            -destination 'platform=iOS Simulator,name=iPhone 18 Pro' CODE_SIGNING_ALLOWED=NO
