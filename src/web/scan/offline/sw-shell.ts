@@ -1,10 +1,13 @@
 /** The shell worker's registration and removal. Kept apart from the stores, which import it on unpair. */
 import { SCAN_SHELL_CACHE, SCAN_SW_PATH, SCAN_SW_SCOPE } from '../../../shared/scan-sw.ts';
+import { trustedWorkerUrl } from '../../lib/trusted-worker-url.ts';
 
 export async function registerShell(): Promise<void> {
   if (!('serviceWorker' in navigator)) return;
   try {
-    await navigator.serviceWorker.register(SCAN_SW_PATH, { scope: SCAN_SW_SCOPE });
+    await navigator.serviceWorker.register(trustedWorkerUrl(SCAN_SW_PATH), {
+      scope: SCAN_SW_SCOPE,
+    });
   } catch (error) {
     // The shell then needs a connection to open; scanning itself is unaffected.
     void error;

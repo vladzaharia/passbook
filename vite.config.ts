@@ -38,7 +38,11 @@ function radixNoInlineStyles(): Plugin {
         return code.replace('function makeStyleTag() {', 'function makeStyleTag() { return null;');
       }
       if (/node_modules\/@radix-ui\/react-select\/dist\/index\.mjs/.test(id)) {
-        return code.replace(/__html: `\[data-radix-select-viewport\][^`]*`/, '__html: ""');
+        // No dangerouslySetInnerHTML at all: Trusted Types refuses even an empty string (base.css has the rules).
+        return code.replace(
+          /dangerouslySetInnerHTML: \{\s*__html: `\[data-radix-select-viewport\][^`]*`\s*\}/,
+          'hidden: true',
+        );
       }
       return null;
     },
