@@ -2,7 +2,7 @@
 import { type AfterRead, prepareAfter } from './authority-after.ts';
 import { AuthorityError } from './authority-error.ts';
 import { authorityDenial } from './authority-granted.ts';
-import { AppError, FeatureLimitError, type LimitHit } from './errors.ts';
+import { AppError, FeatureLimitError, type LimitHit, SandboxQuotaError } from './errors.ts';
 
 /** What a batch needs of a grant; `Grant` is the only implementation. */
 export interface BatchGrant {
@@ -28,7 +28,9 @@ async function refusalOf(grants: BatchGrant[], error: unknown): Promise<unknown>
   const translated = grants.reduce((e, g) => g.translate(e), error);
   // A path with its own code for the refusal (a public join link) keeps it and tells nothing of the plan.
   return hit && translated instanceof AppError && translated.code === 'FEATURE_LIMIT_REACHED'
-    ? new FeatureLimitError(hit)
+    ? hit.sandbox
+      ? new SandboxQuotaError(hit)
+      : new FeatureLimitError(hit)
     : translated;
 }
 

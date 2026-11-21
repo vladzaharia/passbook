@@ -30,6 +30,7 @@ export interface PassLinkRow {
   id: string;
   org_id: string;
   download_token: string;
+  link_generation: number;
   removed_at: number | null;
 }
 
@@ -53,7 +54,7 @@ export async function passLinkRows(
     out.push(
       ...(await all<PassLinkRow>(
         db,
-        `SELECT id, org_id, download_token, removed_at FROM passes
+        `SELECT id, org_id, download_token, link_generation, removed_at FROM passes
          WHERE org_id = ? AND mode = ? AND id IN (${part.map(() => '?').join(',')})`,
         [orgId, mode, ...part],
       )),

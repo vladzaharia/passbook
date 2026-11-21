@@ -14,12 +14,13 @@ import {
   TemplateReleaseImpactQuerySchema,
   TemplateReleaseImpactSchema,
   TemplateReleaseListSchema,
+  TemplateReleaseQueryScopeSchema,
   TemplateReleaseSchema,
-  TemplateReleaseScopeSchema,
 } from '../../../shared/contracts/index.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { authOf, orgIdOf } from '../passes/http.ts';
 import { releaseImpact } from './release-impact.ts';
 import {
   approveCandidate,
@@ -42,18 +43,19 @@ export function registerTemplateReleases(router: Router): void {
       path: '/{id}/candidates',
       summary: 'List template release candidates',
       params: IdParamSchema,
-      query: TemplateReleaseScopeSchema.extend(CursorQuerySchema.shape),
+      query: TemplateReleaseQueryScopeSchema.extend(CursorQuerySchema.shape),
       response: TemplateCandidateListSchema,
     },
-    async (c) =>
-      c.json(
-        await listCandidates(
-          serviceContext(c),
-          c.var.auth,
-          c.req.valid('param').id,
-          c.req.valid('query'),
-        ),
-      ),
+    async (c) => {
+      const auth = authOf(c);
+      const q = c.req.valid('query');
+      return c.json(
+        await listCandidates(serviceContext(c), auth, c.req.valid('param').id, {
+          ...q,
+          orgId: orgIdOf(auth, q.orgId),
+        }),
+      );
+    },
   );
 
   register(
@@ -139,18 +141,19 @@ export function registerTemplateReleases(router: Router): void {
       path: '/{id}/releases',
       summary: 'List template releases',
       params: IdParamSchema,
-      query: TemplateReleaseScopeSchema.extend(CursorQuerySchema.shape),
+      query: TemplateReleaseQueryScopeSchema.extend(CursorQuerySchema.shape),
       response: TemplateReleaseListSchema,
     },
-    async (c) =>
-      c.json(
-        await listReleases(
-          serviceContext(c),
-          c.var.auth,
-          c.req.valid('param').id,
-          c.req.valid('query'),
-        ),
-      ),
+    async (c) => {
+      const auth = authOf(c);
+      const q = c.req.valid('query');
+      return c.json(
+        await listReleases(serviceContext(c), auth, c.req.valid('param').id, {
+          ...q,
+          orgId: orgIdOf(auth, q.orgId),
+        }),
+      );
+    },
   );
 
   register(
@@ -164,15 +167,16 @@ export function registerTemplateReleases(router: Router): void {
       query: TemplateReleaseImpactQuerySchema,
       response: TemplateReleaseImpactSchema,
     },
-    async (c) =>
-      c.json(
-        await releaseImpact(
-          serviceContext(c),
-          c.var.auth,
-          c.req.valid('param').id,
-          c.req.valid('query'),
-        ),
-      ),
+    async (c) => {
+      const auth = authOf(c);
+      const q = c.req.valid('query');
+      return c.json(
+        await releaseImpact(serviceContext(c), auth, c.req.valid('param').id, {
+          ...q,
+          orgId: orgIdOf(auth, q.orgId),
+        }),
+      );
+    },
   );
 
   register(

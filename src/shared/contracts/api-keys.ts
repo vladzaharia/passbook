@@ -68,9 +68,9 @@ export const ApiKeySchema = z.object({
   /** The key this one replaced when it was rotated. */
   rotatedFrom: IdSchema.nullable().default(null),
 });
-/** The literal query value `null` selects platform-wide keys. */
+/** The literal query value `null` selects platform-wide keys; an org key leaves `orgId` out. */
 export const ApiKeyScopeQuerySchema = z.object({
-  orgId: z.union([z.literal('null').transform(() => null), IdSchema]),
+  orgId: z.union([z.literal('null').transform(() => null), IdSchema]).optional(),
 });
 export const ApiKeyListQuerySchema = PageQuerySchema.extend({
   /** An exact organization ID, or `null` for platform-wide keys. */

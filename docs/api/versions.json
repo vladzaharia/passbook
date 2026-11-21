@@ -1,0 +1,9 @@
+{
+  "versions": [
+    {
+      "date": "2026-11-20",
+      "summary": "POST /roll-calls answers 201 when it starts a roll call.",
+      "migration": "Send PassBook-Version: 2026-11-20 to opt in. POST /roll-calls then returns 201, not 200. Without the header nothing changes."
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { originUnlessKey } from '../../../../test/helpers/browser.ts';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import {
   editApiKeyIdentity,
@@ -367,7 +368,7 @@ describe('pass event side effects', () => {
               method: 'PATCH',
               headers: {
                 ...headers,
-                origin: ORIGIN,
+                ...originUnlessKey(headers, ORIGIN),
                 'content-type': 'application/json',
                 'if-match': '"1"',
               },

@@ -32,6 +32,14 @@ describe('openapi document', () => {
     expect((JSON.parse(frozenRaw) as string[]).filter((id) => !now.has(id))).toEqual([]);
   });
 
+  it('prints every pattern as a regular expression source, with no `/flags` suffix', () => {
+    const patterns = [...JSON.stringify(live).matchAll(/"pattern":"((?:[^"\\]|\\.)*)"/g)].map(
+      (m) => JSON.parse(`"${m[1]}"`) as string,
+    );
+    expect(patterns.length).toBeGreaterThan(0);
+    expect(patterns.filter((p) => /\/[a-z]+$/.test(p))).toEqual([]);
+  });
+
   it('matches the committed snapshot and id list', async () => {
     await expect(`${JSON.stringify(live, null, 2)}\n`).toMatchFileSnapshot(
       resolve(root, 'docs/api/openapi.v1.json'),

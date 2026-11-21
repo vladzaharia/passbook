@@ -12,7 +12,7 @@ beforeAll(async () => {
 });
 
 describe('holder refresh round trips', () => {
-  it('a device re-sign republishes in at most 6 round trips', async () => {
+  it('a device re-sign republishes in at most 7 round trips', async () => {
     const pass = await kit.pass();
     const original = kit.env.DB;
     const counted = countD1(original);
@@ -32,6 +32,7 @@ describe('holder refresh round trips', () => {
     }
     const log = counted.tripLog();
     const heads = `\n${log.map((t) => `[${t.length}] ${t[0]?.replace(/\s+/g, ' ').slice(0, 40)}`).join('\n')}`;
-    expect(counted.count(), heads).toBeLessThanOrEqual(6);
+    // 7 since the developer-org fence (builder.ts) reads the org kind once per build.
+    expect(counted.count(), heads).toBeLessThanOrEqual(7);
   });
 });

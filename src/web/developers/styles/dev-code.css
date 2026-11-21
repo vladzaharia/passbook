@@ -1,0 +1,279 @@
+/* Code, the ticket, the stamp, parameters and the errors table. One syntax theme for pages,
+   islands and .md twins: token classes from model/highlight.ts. */
+
+.code {
+  position: relative;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-sunken);
+  overflow: hidden;
+}
+.code-h {
+  overflow-x: auto;
+  scrollbar-width: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 40px;
+  padding: 0 6px 0 8px;
+  border-bottom: 1px solid var(--pk-border-subtle);
+  background: var(--dp-glass);
+}
+.code-h .copy {
+  margin-left: auto;
+  flex: none;
+}
+.tab-wrap {
+  display: contents;
+}
+.tab {
+  flex: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--pk-text-muted);
+  position: relative;
+  cursor: pointer;
+}
+.tab:hover {
+  color: var(--pk-text-strong);
+}
+.tab[aria-current],
+.tab-radio:checked + .tab {
+  color: var(--pk-text-strong);
+}
+.tab[aria-current]::after,
+.tab-radio:checked + .tab::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--pk-accent);
+}
+.tab-radio:focus-visible + .tab {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+.samples .panel {
+  display: none;
+}
+.samples:has([data-lang="curl"]:checked) [data-panel="curl"],
+.samples:has([data-lang="ts"]:checked) [data-panel="ts"],
+.samples:has([data-lang="py"]:checked) [data-panel="py"],
+.samples:has([data-lang="go"]:checked) [data-panel="go"] {
+  display: block;
+}
+pre.src {
+  margin: 0;
+  padding: 14px 16px;
+  font: 400 12.5px / 1.7 var(--pk-font-mono);
+  color: var(--pk-text-default);
+  overflow-x: auto;
+  tab-size: 2;
+}
+pre.src code {
+  font: inherit;
+}
+pre.src .ln {
+  display: block;
+  min-height: 1.7em;
+  padding-inline: 16px;
+  margin-inline: -16px;
+  white-space: pre;
+}
+pre.src .ln.hl {
+  background: color-mix(in oklab, var(--pk-accent) 11%, transparent);
+  box-shadow: inset 2px 0 0 var(--pk-accent);
+}
+.json pre.src {
+  max-height: 24rem;
+  overflow: auto;
+}
+.k {
+  color: var(--syn-key);
+}
+.s {
+  color: var(--syn-str);
+}
+.l {
+  color: var(--syn-lit);
+}
+.n {
+  color: var(--syn-num);
+}
+.kw {
+  color: var(--syn-kw);
+}
+.fn {
+  color: var(--syn-fn);
+  font-weight: 500;
+}
+.c {
+  color: var(--syn-com);
+}
+.p {
+  color: var(--syn-pun);
+}
+/* The caller's own key never renders: a chip that reads the environment. */
+.envchip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  border-radius: 4px;
+  color: var(--pk-accent-fg);
+  background: var(--pk-accent-subtle);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--pk-accent) 40%, transparent);
+}
+.inline-code {
+  font: 500 12.5px var(--pk-font-mono);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--pk-surface-sunken);
+  border: 1px solid var(--pk-border-subtle);
+  color: var(--pk-text-strong);
+}
+.cmd {
+  min-width: 0;
+  max-width: 22.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-sunken);
+  font: 500 12.5px var(--pk-font-mono);
+  color: var(--pk-text-strong);
+}
+.cmd code {
+  font: inherit;
+}
+.cmd .p {
+  user-select: none;
+  color: var(--pk-text-muted);
+}
+.cmd .copy {
+  margin-left: auto;
+}
+[data-copy][data-state="copied"] {
+  color: var(--pk-success);
+}
+[data-copy][data-state="failed"] {
+  color: var(--pk-danger);
+}
+
+/* ---------- Parameters ---------- */
+.params > div {
+  padding: 14px 0;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.params .pn {
+  font: 600 13px var(--pk-font-mono);
+  color: var(--pk-text-strong);
+}
+.params .pt {
+  font: 400 12px var(--pk-font-mono);
+  color: var(--pk-text-muted);
+  overflow-wrap: anywhere;
+}
+.params .req {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pk-danger);
+}
+.params .pd {
+  margin-top: 4px;
+  color: var(--pk-text-default);
+}
+.params .kids {
+  margin: 10px 0 0 4px;
+  padding-left: 14px;
+  border-left: 2px solid var(--pk-border-subtle);
+}
+.params .kids > .params > div {
+  padding: 8px 0;
+}
+.params .kids > .params > div:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* ---------- Errors table ---------- */
+.table-wrap {
+  overflow-x: auto;
+}
+.errs {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.errs th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pk-text-subtle);
+  padding: 8px 12px 8px 0;
+}
+.errs td {
+  padding: 12px 12px 12px 0;
+  border-top: 1px solid var(--pk-border-subtle);
+  vertical-align: top;
+}
+.errs td.mono {
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.errs td.mono a {
+  color: var(--pk-accent-fg);
+}
+
+.code-f {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--pk-border-subtle);
+  background: var(--dp-glass);
+}
+.linkbtn {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--pk-text-muted);
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.linkbtn:hover {
+  color: var(--pk-text-strong);
+}
+.linkbtn:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.linkbtn[data-state="copied"]::after {
+  content: " · copied";
+}
+.linkbtn[data-state="failed"]::after {
+  content: " · blocked";
+}
+.examples {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.example > summary {
+  cursor: pointer;
+  padding: 6px 0;
+  color: var(--pk-text-default);
+}

@@ -30,6 +30,7 @@ export function PaperChannel({
       manifest={manifest}
       templateId={templateId}
       orgId={orgId}
+      testBand={source.testBand}
     />
   );
 }

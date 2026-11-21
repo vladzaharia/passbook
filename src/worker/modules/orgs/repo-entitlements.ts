@@ -30,6 +30,12 @@ export interface PresetRow {
 export const orgExists = async (db: D1Database, orgId: string): Promise<boolean> =>
   (await first<{ x: number }>(db, 'SELECT 1 AS x FROM orgs WHERE id = ?', [orgId])) !== null;
 
+/** The `developer` preset belongs to developer orgs, and they take no other (a trigger holds the same). */
+export const orgIsDeveloper = async (db: D1Database, orgId: string): Promise<boolean> =>
+  (await first<{ x: number }>(db, "SELECT 1 AS x FROM orgs WHERE id = ? AND kind = 'developer'", [
+    orgId,
+  ])) !== null;
+
 export const orgEntitlementsRow = (db: D1Database, orgId: string) =>
   first<OrgEntitlementsRow>(
     db,

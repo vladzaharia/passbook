@@ -1,0 +1,14 @@
+curl -X POST "https://passbook.mobile/api/v1/templates/0193a1b2-7c00-7000-8000-0000000000b1/preview" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "input": {
+    "eventName": "Harbor Night",
+    "venueName": "Harbor Hall",
+    "venueRegion": "Cupertino, CA",
+    "startsAt": "2030-06-01T19:00:00-07:00",
+    "endsAt": "2030-06-01T22:00:00-07:00",
+    "attendee": "Ada Example",
+    "ticketId": "TICKET-0001"
+  }
+}'

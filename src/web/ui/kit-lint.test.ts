@@ -52,7 +52,14 @@ describe('kit lint', () => {
   });
 
   it('copies through CopyButton or copyText, never the clipboard directly', () => {
-    const allowed = new Set(['ui/copy-button.tsx', 'lib/clipboard.ts']);
+    // developers/shell/copy.ts: the portal's first load cannot carry React and the toaster.
+    // developers/playground/copy.ts: the island says "Copied" in place; the portal has no toaster.
+    const allowed = new Set([
+      'ui/copy-button.tsx',
+      'lib/clipboard.ts',
+      'developers/shell/copy.ts',
+      'developers/playground/copy.ts',
+    ]);
     for (const { path, text } of files) {
       if (allowed.has(path)) continue;
       expect(text, path).not.toMatch(/navigator\.clipboard/);

@@ -1,4 +1,5 @@
 import { first } from '../../platform/db.ts';
+import { notPreviewOnlySql } from '../developer/repo-fence.ts';
 import type { WalletProvider } from './instance-types.ts';
 
 export interface EnrolmentGateRow {
@@ -30,9 +31,11 @@ export async function walletEntitled(
   provider: WalletProvider,
   orgId: string,
 ): Promise<boolean> {
+  // A developer org's plan never includes a wallet, whatever an override says.
   const row = await first<{ value: string }>(
     db,
-    'SELECT value FROM org_entitlement_values WHERE org_id = ? AND key = ?',
+    `SELECT v.value FROM org_entitlement_values v JOIN orgs o ON o.id = v.org_id
+     WHERE v.org_id = ? AND v.key = ? AND o.kind != 'developer'`,
     [orgId, `wallet.${provider}`],
   );
   return row?.value === '1';
@@ -54,5 +57,6 @@ export function walletEnrolmentIssuesSql(
     AND gate_a.revoked_at IS NULL AND gate_a.platform_hold_at IS NULL
     AND (gate_a.credential_id IS NOT NULL OR gate_a.enabled_at IS NOT NULL))
     AND EXISTS (SELECT 1 FROM org_entitlement_values gate_e WHERE gate_e.org_id = ${orgSql}
-    AND gate_e.key = 'wallet.' || ${providerSql} AND gate_e.value = '1')`;
+    AND gate_e.key = 'wallet.' || ${providerSql} AND gate_e.value = '1')
+    AND ${notPreviewOnlySql(orgSql)}`;
 }

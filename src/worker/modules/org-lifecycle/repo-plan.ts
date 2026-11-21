@@ -36,6 +36,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('scanning_sessions'),
   inOrg('scan_zones'),
   inOrg('webhook_endpoints'),
+  inOrg('webhook_capture_hours'),
   inOrg('api_keys'),
   inOrg('outbox'),
   inOrg('captured_emails'),
@@ -59,6 +60,8 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('workflow_runs'),
   inOrg('idempotency_keys'),
   inOrg('idempotent_requests'),
+  { ...inOrg('request_log'), slices: true },
+  inOrg('request_log_budget'),
   inOrg('org_entitlement_overrides'),
   inOrg('branding_gc_queue'),
   inOrg('org_reply_to'),
@@ -115,6 +118,8 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
   pass_credential_tombstones: 'revocation evidence: refs only, no personal data',
   org_entitlements:
     'the stub keeps its plan row: a trigger refuses deleting it while the org exists',
+  developer_sandboxes:
+    'the one-per-person record: ids and times only, so a closed sandbox is not made again; a trigger refuses deleting it',
 };
 
 /** Tables with no tenant rows. The authority tables (grants live inside one batch and are swept) count as well. */
@@ -135,6 +140,7 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   retired_session_ids: 'retired ids, never reused',
   sessions: 'user sessions, not org data',
   signing_identity_revision_sequence: 'platform sequence',
+  status_incidents: 'platform incident notes for the public status page',
   template_version_tombstones: 'retired ids, never reused',
   user_emails: 'user accounts',
   users: 'user accounts',

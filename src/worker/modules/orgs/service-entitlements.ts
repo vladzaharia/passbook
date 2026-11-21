@@ -20,6 +20,7 @@ import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
 import {
   orgEntitlementsRow,
   orgExists,
+  orgIsDeveloper,
   presetRows,
   presetValueRows,
   standingOverrides,
@@ -69,11 +70,13 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
   const db = ctx.env.DB;
   if (!(await orgExists(db, orgId))) throw notFound();
   const row = await orgEntitlementsRow(db, orgId);
-  const [presets, values, stored] = await Promise.all([
+  const [allPresets, developer, values, stored] = await Promise.all([
     presetRows(db),
+    orgIsDeveloper(db, orgId),
     presetValueRows(db),
     standingOverrides(db, orgId, ctx.clock.now()),
   ]);
+  const presets = allPresets.filter((p) => (p.preset === 'developer') === developer);
   const byPreset = new Map<string, EntitlementValues>();
   for (const v of values) {
     const known = ENTITLEMENT_KEYS.find((k) => k === v.key);

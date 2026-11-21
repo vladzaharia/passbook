@@ -5,6 +5,7 @@ import {
   IdSchema,
   OkSchema,
 } from '../../../shared/contracts/common.ts';
+import { SendTestEventSchema } from '../../../shared/contracts/webhook-captures.ts';
 import {
   CreateWebhookEndpointSchema,
   RotateWebhookSecretSchema,
@@ -12,6 +13,7 @@ import {
   WebhookEndpointCreatedSchema,
   WebhookEndpointListSchema,
   WebhookEndpointSchema,
+  type WebhookEventType,
   WebhookSecretSchema,
   WebhookTestResultSchema,
 } from '../../../shared/contracts/webhooks.ts';
@@ -20,6 +22,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requireTenantSessionOrApiKey } from '../passes/http.ts';
 import { authorizeStoredEndpoint, authorizeWebhooks, webhookOrg } from './access.ts';
+import { registerCaptureRoutes } from './routes-captures.ts';
 import { registerDeliveryRoutes } from './routes-deliveries.ts';
 import * as service from './service.ts';
 import * as secrets from './service-secrets.ts';
@@ -152,15 +155,20 @@ register(
   {
     method: 'post',
     path: '/{id}/test',
-    summary: 'Send a test event to this endpoint',
+    summary: 'Send a test event to this endpoint (any type; a sample for all but webhook.test)',
     params: IdParamSchema,
+    body: SendTestEventSchema,
+    bodyOptional: true,
     response: WebhookTestResultSchema,
   },
   async (c) => {
     const ctx = serviceContext(c);
     const id = c.req.valid('param').id;
     const access = await authorizeStoredEndpoint(ctx, c.var.auth, id, 'integrations:manage');
-    return c.json(await test.sendTest(ctx, actorOf(c.var.auth), access, id));
+    // No body, no type: the older `webhook.test` call keeps working.
+    const type = (c.req.valid('json') as { type?: WebhookEventType } | undefined)?.type;
+    return c.json(await test.sendTest(ctx, actorOf(c.var.auth), access, id, type));
   },
 );
+registerCaptureRoutes(webhookEndpointsRoutes);
 registerDeliveryRoutes(webhookEndpointsRoutes);

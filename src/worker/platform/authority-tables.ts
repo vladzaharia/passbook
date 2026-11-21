@@ -132,6 +132,9 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   webhook_endpoint_secrets: { org: 'org_id', mode: 'mode' },
   webhook_deliveries: { org: 'org_id', mode: 'mode', conflict: ['endpoint_id', 'event_seq'] },
   webhook_attempts: { org: 'org_id', mode: 'mode' },
+  // The webhook tester (0158): stored requests of a capture endpoint, and the per-hour count that caps them.
+  webhook_captures: { org: 'org_id', mode: 'mode' },
+  webhook_capture_hours: { org: 'org_id' },
   event_feed: { org: 'org_id', mode: 'mode' },
   // A remote tag request: its triggers check scanner and pass share the tenant and that a user scope names the pass's owner.
   tag_enrollments: { org: 'org_id', mode: 'mode' },
@@ -187,6 +190,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   // An enrolment's events (the account row itself is written by `include` parts, tied to {org} and {mode}).
   wallet_enrolment_events: { org: 'org_id', mode: 'mode' },
   org_entitlements: { org: 'org_id' },
+  // A person's developer sandbox (0156): made once with its org, closed by the idle sweep; funnel columns are set once.
+  developer_sandboxes: { org: 'org_id' },
   org_entitlement_overrides: { org: 'org_id', conflict: ['org_id', 'key'] },
   entitlement_preset_meta: {
     org: null,
@@ -209,6 +214,7 @@ export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
   org_entitlements: [
     'platform.org.create',
     'platform.job.template_sync',
+    'platform.job.developer_sandbox.create',
     'platform.org.entitlements_set',
   ],
   org_entitlement_overrides: ['platform.org.entitlements_set'],
@@ -224,7 +230,11 @@ export const RESTRICTED_TABLES: Readonly<Record<string, readonly string[]>> = {
  * sync creates the platform org with its `legacy` row, and must never change an org's entitlements.
  */
 const INSERT_ONLY_PURPOSES: Readonly<Record<string, readonly string[]>> = {
-  org_entitlements: ['platform.job.template_sync', 'platform.org.create'],
+  org_entitlements: [
+    'platform.job.template_sync',
+    'platform.job.developer_sandbox.create',
+    'platform.org.create',
+  ],
 };
 
 /** Why `purpose` may not write `table` this way (`op`), or null: the restricted-table and insert-only rules. */

@@ -3,6 +3,7 @@ import type { Channel, EffectiveChannels } from '../../../shared/contracts/chann
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertNotPreviewOnly } from '../developer/fence.ts';
 import * as repo from './repo.ts';
 import { loadMany, loadPass } from './service.ts';
 
@@ -52,6 +53,12 @@ export async function channelOn(
   channel: Channel,
 ): Promise<boolean> {
   return (await holderChannels(ctx, pass)).effective[channel].on;
+}
+
+/** The file routes' gate: a developer org's pass answers SANDBOX_PREVIEW_ONLY, before any channel reads as off. */
+export async function appleFileGate(ctx: ServiceContext, pass: GatePass): Promise<void> {
+  await assertNotPreviewOnly(ctx.env.DB, pass.orgId);
+  await channelGate(ctx, pass, 'apple');
 }
 
 /** Guards every holder artifact: a turned-off channel reads as not found. */

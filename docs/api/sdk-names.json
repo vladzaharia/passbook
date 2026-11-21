@@ -307,6 +307,54 @@
     "resource": "deliveries",
     "method": "list"
   },
+  "developer.deleteSandbox": {
+    "resource": "developer.sandbox",
+    "method": "close",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.deleteTryToken": {
+    "resource": "developer.tryTokens",
+    "method": "revokeAll",
+    "sdk": false,
+    "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
+  },
+  "developer.getLog": {
+    "resource": "developer.requestLogs",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal request log: a signed-in person in a browser, not an integration."
+  },
+  "developer.getLogs": {
+    "resource": "developer.requestLogs",
+    "method": "list",
+    "sdk": false,
+    "reason": "Developer portal request log: a signed-in person in a browser, not an integration."
+  },
+  "developer.getRail": {
+    "resource": "developer.rail",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal rail: a signed-in person in a browser, not an integration."
+  },
+  "developer.getSandbox": {
+    "resource": "developer.sandbox",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.postSandbox": {
+    "resource": "developer.sandbox",
+    "method": "create",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.postTryToken": {
+    "resource": "developer.tryTokens",
+    "method": "create",
+    "sdk": false,
+    "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
+  },
   "entitlements.getOrgsByIdEntitlements": {
     "resource": "orgs.entitlements",
     "method": "retrieve"
@@ -1123,6 +1171,18 @@
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
   },
+  "public.getPreviewByToken": {
+    "resource": "public.testPreviews",
+    "method": "retrievePage",
+    "sdk": false,
+    "reason": "Public page of a sandbox pass; the signed link in the URL is the credential."
+  },
+  "public.getPreviewByTokenAssetsByName": {
+    "resource": "public.testPreviews",
+    "method": "downloadAsset",
+    "sdk": false,
+    "reason": "Public page or capability link; the signed link in the URL is the credential."
+  },
   "public.getWIByFile": {
     "resource": "public.walletImages",
     "method": "download",
@@ -1779,6 +1839,10 @@
     "resource": "templates.channels",
     "method": "listRuns"
   },
+  "templates.getTemplatesByIdInputSchema": {
+    "resource": "templates",
+    "method": "retrieveInputSchema"
+  },
   "templates.getTemplatesByIdPackage": {
     "resource": "templates",
     "method": "downloadPackage"
@@ -2062,6 +2126,26 @@
   "webhooks.getWebhookEndpointsById": {
     "resource": "webhookEndpoints",
     "method": "retrieve"
+  },
+  "webhooks.getWebhookEndpointsByIdCaptures": {
+    "resource": "webhookEndpoints.captures",
+    "method": "list"
+  },
+  "webhooks.getWebhookEndpointsByIdCapturesByCaptureId": {
+    "resource": "webhookEndpoints.captures",
+    "method": "retrieve"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
+    "resource": "webhookEndpoints.captures",
+    "method": "replay"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesSecret": {
+    "resource": "webhookEndpoints.captures",
+    "method": "revealSecret"
+  },
+  "webhooks.postWebhookEndpointsCapture": {
+    "resource": "webhookEndpoints",
+    "method": "ensureCapture"
   },
   "webhooks.getWebhookEndpointsByIdDeliveries": {
     "resource": "webhookEndpoints.deliveries",

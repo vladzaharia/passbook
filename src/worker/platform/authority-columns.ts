@@ -76,7 +76,8 @@ export const EPOCH_TABLES: EpochTable[] = [
       'purge_voided_at',
       'purged_at',
     ],
-    fixed: ['id', 'created_at'],
+    // `kind` is set when the org is made and never changes (a trigger, 0156).
+    fixed: ['id', 'created_at', 'kind'],
   },
   {
     table: 'users',

@@ -1,0 +1,194 @@
+/* The playground: a two-column page (inputs, previews) in the portal's own vocabulary. */
+.pg {
+  display: grid;
+  grid-template-columns: 22rem minmax(0, 1fr);
+  min-height: calc(100dvh - 59px);
+}
+.pg-fallback {
+  grid-column: 1 / -1;
+  padding: 32px 40px;
+}
+.pg-fail {
+  grid-column: 1 / -1;
+  padding: 32px 40px;
+}
+.pg .edit {
+  border-right: 1px solid var(--pk-border-subtle);
+  background: var(--pk-surface-raised);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 59px;
+  align-self: start;
+  height: calc(100dvh - 59px);
+  overflow: hidden;
+}
+.edit-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.edit-actions {
+  padding: 16px 20px;
+  border-top: 1px solid var(--pk-border-subtle);
+  background: var(--pk-surface-raised);
+}
+.pg .view {
+  padding: 20px 28px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.stage-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ---------- Stage ---------- */
+.stage-wrap .status {
+  min-height: 24px;
+}
+.stage-wrap .status svg {
+  width: 14px;
+  height: 14px;
+}
+.stage-wrap .spin {
+  animation: pg-spin 1s linear infinite;
+}
+@keyframes pg-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.chanwrap {
+  padding: 0;
+}
+.chan {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  padding: 28px 24px 24px;
+  align-items: start;
+}
+.chan figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+.chan figcaption {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pk-text-muted);
+}
+.chan .pg-apple,
+.chan .pg-wallet,
+.chan .pg-paper-img,
+.chan .pg-paper,
+.chan .pg-skel {
+  width: 100%;
+  max-width: 230px;
+}
+.pg-paper-img {
+  display: block;
+  height: auto;
+  border-radius: 4px;
+}
+.one {
+  padding: 24px;
+}
+.pg-skel {
+  border-radius: var(--pk-radius-lg);
+  background: linear-gradient(
+    100deg,
+    var(--pk-state-hover-tint) 30%,
+    color-mix(in oklab, var(--pk-accent) 10%, var(--pk-state-hover-tint)) 50%,
+    var(--pk-state-hover-tint) 70%
+  );
+  background-size: 200% 100%;
+  animation: pg-shimmer 1.4s linear infinite;
+}
+@keyframes pg-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.pg-off {
+  font-size: 12.5px;
+  color: var(--pk-text-muted);
+  text-align: center;
+}
+/* A wallet's card is the front; what a tap opens is the back. */
+.pg-wallet[data-face="front"] .wp-g-details,
+.pg-wallet[data-face="front"] .wp-s-detail,
+.pg-wallet[data-face="back"] .wp-g-card,
+.pg-wallet[data-face="back"] .wp-s-card {
+  display: none;
+}
+
+/* ---------- Narrow ---------- */
+@media (max-width: 1180px) {
+  .chan {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .code-h .file {
+    display: none;
+  }
+  .pg {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pg .edit {
+    position: static;
+    height: auto;
+    overflow: visible;
+    border-right: 0;
+    border-top: 1px solid var(--pk-border-subtle);
+    order: 2;
+  }
+  .edit-body,
+  .edit-actions {
+    padding: 16px;
+  }
+  .edit-body {
+    overflow: visible;
+  }
+  .pg .view {
+    padding: 16px 0 28px;
+    order: 1;
+  }
+  .pg .view > :not(.stage-wrap) {
+    margin-inline: 16px;
+  }
+  .stage-wrap > .wrap-row {
+    margin-inline: 16px;
+  }
+  .stage-wrap .stage {
+    border-radius: 0;
+    border-inline: 0;
+  }
+  .chan {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 20px 16px;
+    gap: 16px;
+  }
+  .chan figure {
+    flex: 0 0 240px;
+    scroll-snap-align: center;
+  }
+  .notes-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

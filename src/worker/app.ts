@@ -12,6 +12,9 @@ import { bundlePublicRoutes } from './modules/bundles/public-routes.ts';
 import { bundlesRoutes } from './modules/bundles/routes.ts';
 import { connectionsRoutes, connectorsRoutes, hooksRoutes } from './modules/connections/routes.ts';
 import { deliveryRoutes } from './modules/delivery/routes.ts';
+import { developerPortalRoutes } from './modules/developer/portal.ts';
+import { requestLog } from './modules/developer/request-log.ts';
+import { developerRoutes } from './modules/developer/routes.ts';
 import { holdersRoutes } from './modules/holders/routes.ts';
 import { identitiesRoutes } from './modules/identities/routes.ts';
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
@@ -36,6 +39,7 @@ import {
 import { passesRoutes } from './modules/passes/routes.ts';
 import { passImportRoutes } from './modules/passes/routes-import.ts';
 import { publicRoutes } from './modules/public/routes.ts';
+import { previewRoutes } from './modules/public/routes-preview.ts';
 import { retentionPlatformRoutes, retentionRoutes } from './modules/retention/routes.ts';
 import { sandboxRoutes } from './modules/sandbox/routes.ts';
 import { rollCallRoutes } from './modules/scan/roll-call/routes-api.ts';
@@ -131,6 +135,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   if (options.hostPolicy) app.use('*', hostPolicy);
   app.use('*', scanGate);
   app.use('*', webhookKick);
+  // PX16: every API-key call is logged after the response (modules/developer/request-log.ts).
+  app.use('/api/v1/*', requestLog);
   app.onError((error, c) => asBrowserPage(c, handleError(error, c) as Response));
   app.notFound(async (c) => (await spaPage(c)) ?? asBrowserPage(c, notFoundHandler(c)));
 
@@ -149,6 +155,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/auth', authRoutes);
   app.route('/api/v1/session', sessionRoutes);
   app.route('/api/v1/me', meRoutes);
+  app.route('/api/v1/developer', developerRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
   app.route('/api/v1/orgs', orgsRoutes);
@@ -210,9 +217,11 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/w/i', walletImageRoutes);
   app.route('/brand', brandAssetRoutes);
   app.route('/p', publicRoutes);
+  app.route('/preview', previewRoutes);
   app.route('/b', bundlePublicRoutes);
   app.route('/j', joinPublicRoutes);
   app.route('/hooks', hooksRoutes);
+  app.route('/developers', developerPortalRoutes);
 
   // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
   // operations an API key can call; signed-in platform admins get the whole document.

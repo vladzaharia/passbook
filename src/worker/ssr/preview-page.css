@@ -1,0 +1,182 @@
+/* The TEST preview page: the bar, a channel switch that needs no script, one stage per channel. */
+body {
+  padding: 0;
+}
+.pv-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--pk-border-subtle);
+  background: var(--pk-surface-page);
+  padding-top: env(safe-area-inset-top);
+}
+.pv-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--wl-foil);
+}
+.pv-bar > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 64rem;
+  height: calc(3.5rem - 1px);
+  margin: 0 auto;
+  padding: 0 max(var(--wl-gutter, 1rem), env(safe-area-inset-left));
+}
+.pv-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--pk-info-border);
+  border-radius: var(--pk-radius-full);
+  background: var(--pk-info-subtle);
+  color: var(--pk-info);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.pv-main {
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem max(var(--wl-gutter, 1rem), env(safe-area-inset-left))
+    max(2rem, env(safe-area-inset-bottom));
+}
+.pv-head h1 {
+  margin: 0;
+  font-size: var(--pk-font-size-2xl);
+  line-height: var(--pk-line-height-2xl);
+  font-weight: var(--pk-font-weight-semibold);
+  letter-spacing: var(--pk-tracking-tight);
+  color: var(--pk-text-strong);
+}
+.pv-head p {
+  margin: 0.25rem 0 0;
+  color: var(--pk-text-muted);
+}
+.pv-head .pv-name {
+  color: var(--pk-text-strong);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.pv-tabs {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.pv-tabs > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.pv-seg {
+  display: flex;
+  max-width: 100%;
+  width: max-content;
+  margin: 0;
+  padding: 2px;
+  overflow-x: auto;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: 0.375rem;
+  background: var(--pk-surface-sunken);
+}
+.pv-seg legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.pv-seg label {
+  display: flex;
+  align-items: center;
+  min-height: 1.875rem;
+  padding: 0 0.75rem;
+  border-radius: 5px;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+@media (pointer: coarse) {
+  .pv-seg label {
+    min-height: 2.375rem;
+  }
+}
+.pv-stage {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 1.5rem 1rem 2rem;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-xl);
+  background:
+    radial-gradient(circle at 1px 1px, var(--pk-border-subtle) 1px, transparent 0) 0 0 / 20px 20px,
+    var(--pk-surface-sunken);
+}
+.pv-panel {
+  display: none;
+  width: 100%;
+  min-width: 0;
+}
+.pv-panel[data-p="apple"] {
+  max-width: 20rem;
+}
+.pv-panel[data-p="google"],
+.pv-panel[data-p="samsung"] {
+  max-width: 46rem;
+}
+.pv-panel[data-p="paper"] {
+  max-width: 26rem;
+}
+.pv-panel[data-p="paper"][data-size="half"] {
+  max-width: 34rem;
+}
+.pv-panel[data-p="paper"][data-size="cr80"] {
+  max-width: 30rem;
+}
+.pv-tabs:has(#pv-apple:checked) .pv-panel[data-p="apple"],
+.pv-tabs:has(#pv-google:checked) .pv-panel[data-p="google"],
+.pv-tabs:has(#pv-samsung:checked) .pv-panel[data-p="samsung"],
+.pv-tabs:has(#pv-paper:checked) .pv-panel[data-p="paper"] {
+  display: block;
+}
+.pv-tabs:has(#pv-apple:checked) label[for="pv-apple"],
+.pv-tabs:has(#pv-google:checked) label[for="pv-google"],
+.pv-tabs:has(#pv-samsung:checked) label[for="pv-samsung"],
+.pv-tabs:has(#pv-paper:checked) label[for="pv-paper"] {
+  background: var(--pk-surface-raised);
+  box-shadow: 0 0 0 1px var(--pk-border-strong);
+  color: var(--pk-text-strong);
+}
+.pv-tabs:has(#pv-apple:focus-visible) label[for="pv-apple"],
+.pv-tabs:has(#pv-google:focus-visible) label[for="pv-google"],
+.pv-tabs:has(#pv-samsung:focus-visible) label[for="pv-samsung"],
+.pv-tabs:has(#pv-paper:focus-visible) label[for="pv-paper"] {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+.pv-note {
+  margin: 0;
+  color: var(--pk-text-muted);
+  text-align: center;
+}
+@media (max-width: 39.99rem) {
+  .pv-stage {
+    padding: 1rem 0.75rem 1.5rem;
+    border-radius: var(--pk-radius-lg);
+  }
+}
