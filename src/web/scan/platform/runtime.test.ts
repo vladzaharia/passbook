@@ -105,6 +105,21 @@ describe('hardware test hold', () => {
   });
 });
 
+describe('native reads the page cannot take', () => {
+  it('says so instead of dropping a native read silently', async () => {
+    const api = {
+      stats: vi.fn().mockResolvedValue(fixtureCounts()),
+      resolve: vi.fn().mockResolvedValue(localOutcome('system', 'server', fixtureCounts())),
+    } as unknown as ScanApi;
+    const announce = vi.fn();
+    runtime = await createRuntime(session('operator', 'choose'), api, () => null, announce);
+    expect(ports.native.read?.({ method: 'wedge', code: 'EARLY-1' })).toBeNull();
+    expect(announce).toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'Not scanning right now. Resume, then scan again.' }),
+    );
+  });
+});
+
 describe('live scanner runtime configuration', () => {
   it('starts an Operator device without opening a camera and updates it without another Start', async () => {
     const { runtime, announce } = await start('operator');

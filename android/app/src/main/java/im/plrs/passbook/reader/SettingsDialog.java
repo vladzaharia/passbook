@@ -32,13 +32,22 @@ public final class SettingsDialog {
             try {
                 ReaderConfig next = new ReaderConfig(url.getText().toString(), ReaderConfig.parseIds(ids.getText().toString()),
                     action.getText().toString().trim(), extra.getText().toString().trim(), config.unverifiedScanners());
-                next.save(activity);
-                saved.accept(next);
-                dialog.dismiss();
+                if (next.origin().equals(config.origin())) { commit(activity, next, saved, dialog); return; }
+                // A new origin gets this device's pairing and sign-in only if the person confirms it by name.
+                new AlertDialog.Builder(activity).setTitle("Switch verifier?")
+                    .setMessage("Open " + next.origin() + " in this reader. Pairing and sign-in on this device are cleared.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Switch", (confirm, which) -> commit(activity, next, saved, dialog)).show();
             } catch (IllegalArgumentException exception) { error.setText(exception.getMessage()); }
         }));
         dialog.setOnDismissListener(ignored -> closed.run());
         dialog.show();
+    }
+
+    private static void commit(Activity activity, ReaderConfig next, Saved saved, AlertDialog dialog) {
+        next.save(activity);
+        saved.accept(next);
+        dialog.dismiss();
     }
 
     private static EditText field(Activity activity, LinearLayout parent, String label, String value, boolean multiline) {
