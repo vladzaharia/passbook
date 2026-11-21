@@ -112,9 +112,16 @@ export async function reopenSandbox(
        AND d.closed_at IS NOT NULL AND d.close_reason IN ('user', 'idle'))`,
     [sandbox.id, by.userId],
   );
+  // The 30-day window, in the write: a window that ended after the service's read refuses the reopen.
+  const window = rawCheck(
+    'config',
+    'EXISTS (SELECT 1 FROM orgs o WHERE o.id = ? AND o.purge_after > ?)',
+    [orgId, now],
+  );
   const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.reopen', [
     liveSession(by, now),
     owner,
+    window,
   ]);
   g.update('orgs', {
     set: {

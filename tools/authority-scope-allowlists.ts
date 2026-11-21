@@ -312,6 +312,8 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
 export const UNTENANTED_CHECK_ALLOWLIST: Record<string, string> = {
   'src/worker/modules/developer/repo-grants.ts#developer_sandboxes':
     "the owner's own close: the check asks that the person has a sandbox, and the grant's org write is pinned to the org id the service read for that person",
+  'src/worker/modules/developer/repo-grants-reset.ts#orgs':
+    "the reopen window: the check reads the one org row by the id the service read from the person's own sandbox, and the same grant's org write is pinned to that id",
   'src/worker/modules/developer/repo-grants-reset.ts#developer_sandboxes':
     "the owner's own reset or reopen: the check names the org id the service read from the person's own sandbox row and the person's user id, and the grant's writes are pinned to that same org id",
   'src/worker/modules/passes/repo-authority.ts#api_keys':

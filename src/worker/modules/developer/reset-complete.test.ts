@@ -5,6 +5,7 @@ import { SandboxResetSchema } from '../../../shared/contracts/index.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { reopenSandbox } from './repo-grants-reset.ts';
 import { logKit } from './request-log-test-fixtures.ts';
 import { resetSandbox } from './reset.ts';
 import { BROWSER, bearer } from './try-token-test-fixtures.ts';
@@ -350,4 +351,28 @@ describe('reset: completeness and resume', () => {
     expect(done.more).toBe(false);
     expect(await count('request_log', org, "AND id = 'newer'")).toBe(1);
   }, 120_000);
+
+  it('the reopen window is in the write: a window that ended after the read refuses the reopen', async () => {
+    const d = await t.developer();
+    expect(
+      (await t.call('/developer/sandbox', { method: 'DELETE', headers: d.browser })).status,
+    ).toBe(200);
+    // The service read saw an open window; by the write it has passed.
+    await run(db(), 'UPDATE orgs SET purge_after = ? WHERE id = ?', [
+      t.kit.clock.now() - 1,
+      d.made.orgId,
+    ]);
+    const { auth } = await fresh(d);
+    const sandbox = { id: d.made.id, orgId: d.made.orgId };
+    await expect(
+      reopenSandbox(t.ctx(), sandbox, { userId: auth.userId, sessionIdHash: auth.sessionId }),
+    ).rejects.toMatchObject({ code: 'SANDBOX_CONFLICT' });
+    expect(
+      (
+        await first<{ status: string }>(db(), 'SELECT status FROM orgs WHERE id = ?', [
+          d.made.orgId,
+        ])
+      )?.status,
+    ).toBe('deleted');
+  }, 60_000);
 });
