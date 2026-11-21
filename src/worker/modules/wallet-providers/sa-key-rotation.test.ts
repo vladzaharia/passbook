@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { all, first, run as sql } from '../../platform/db.ts';
 import { saveOrgCredential } from './credential-service.ts';
 import { readGoogleSecret, saveSystemCredential } from './credential-system-save.ts';
@@ -61,12 +62,16 @@ describe('service-account key rotation', () => {
         orgId: loner.id,
         mode: 'live',
         current: null,
-        secret: { ...(await readGoogleSecret(m.ctx, m.platform.id)).credentials, issuerId: '6200' },
+        secret: {
+          ...(await readGoogleSecret(m.ctx, m.platform.id)).credentials,
+          privateKeyPem: (await createFixtureIdentity()).privateKey,
+          issuerId: '6200',
+        },
         origin: { provenance: 'own', signerRef: null },
       },
       'issuer_provision',
     );
-    const oldPem = await pem(m.platform.id);
+    const _oldPem = await pem(m.platform.id);
     const started = await startKeyRotation(m.ctx, { credentialId: m.platform.id, createdBy: null });
     expect(started.created).toBe(true);
     // One open rotation per credential.
@@ -91,7 +96,7 @@ describe('service-account key rotation', () => {
       managed.revision + 1,
     );
     // An org with its own key is left alone.
-    expect(await pem(own.id)).toBe(oldPem);
+    expect(await pem(own.id)).not.toBe(newPem);
     const platform = await findCredential(db(), m.platform.id, null);
     expect(platform?.next_rotation_at).toBeGreaterThan(Date.now() + 89 * 86_400_000);
     // The uploaded key was adopted, the new one recorded.
@@ -303,7 +308,12 @@ describe('rotation safety', () => {
       credentialId: m.platform.id,
       createdBy: null,
     });
-    await Promise.all([runKeyRotation(m.ctx, runId), runKeyRotation(m.ctx, runId)]);
+    const settled = await Promise.allSettled([
+      runKeyRotation(m.ctx, runId),
+      runKeyRotation(m.ctx, runId),
+    ]);
+    // The loser is told to retry later, not to give up.
+    expect(settled.filter((r) => r.status === 'rejected')).toHaveLength(1);
     expect(m.stub.created).toHaveLength(1);
     expect(await runRow(runId)).toMatchObject({
       state: 'waiting',
@@ -336,6 +346,114 @@ describe('rotation safety', () => {
     expect(m.stub.keys).not.toContain(keyNameOf(5));
     expect((await keyStates()).find((k) => k.key_name === keyNameOf(5))?.state).toBe('retired');
     expect((await keyStates()).filter((k) => k.state === 'active')).toHaveLength(1);
+  });
+
+  it('moves credentials of every mode that hold the key (a test-mode platform credential and its orgs), then deletes the old key', async () => {
+    const live = (await readGoogleSecret(m.ctx, m.platform.id)).credentials;
+    const testPlatform = await saveSystemCredential(
+      m.ctx,
+      {
+        orgId: null,
+        mode: 'test',
+        current: null,
+        secret: { ...live, issuerId: '1000000000000002' },
+      },
+      'sa_key',
+    );
+    const testOrg = await m.org('Test Mode Org');
+    const testOrgCred = await saveSystemCredential(
+      m.ctx,
+      {
+        orgId: testOrg.id,
+        mode: 'test',
+        current: null,
+        secret: { ...live, issuerId: '6500' },
+        origin: { provenance: 'managed', signerRef: testPlatform.id },
+      },
+      'issuer_provision',
+    );
+    const runId = await toCooldown();
+    const newPem = m.stub.created[0];
+    expect(await pem(testPlatform.id)).toBe(newPem);
+    expect(await pem(testOrgCred.id)).toBe(newPem);
+    await afterCooldown(runId);
+    expect(await runRow(runId)).toMatchObject({ state: 'succeeded' });
+    expect(await pem(testOrgCred.id)).toBe(newPem);
+    expect(m.stub.keys).toHaveLength(1);
+  });
+
+  it('a parked old_key_held run is resumed by the daily pass once the holder is gone', async () => {
+    const runId = await toCooldown();
+    const org = await m.org('Busy Again');
+    await sql(
+      db(),
+      "INSERT INTO identity_runs (id, org_id, provider, kind, target_type, target_id, state, lease_until, created_at, updated_at) VALUES ('busy-run-2', ?, 'google', 'provision', 'wallet_credential', 'google:live:busy2', 'running', ?, 1, 1)",
+      [org.id, Date.now() + 600_000],
+    );
+    await afterCooldown(runId);
+    expect(await runRow(runId)).toMatchObject({ state: 'waiting', waiting_for: 'old_key_held' });
+    await sql(db(), "UPDATE identity_runs SET state = 'succeeded' WHERE id = 'busy-run-2'", []);
+    await sql(
+      db(),
+      "UPDATE identity_runs SET external_ref = json_set(external_ref, '$.deleteAfter', 1) WHERE id = ?",
+      [runId],
+    );
+    m.sent.length = 0;
+    await dailyGoogleKeys(m.ctx);
+    expect(m.sent).toContainEqual({ kind: 'wallet.google_key_rotate', runId });
+    await runKeyRotation(m.ctx, runId);
+    expect(await runRow(runId)).toMatchObject({ state: 'succeeded' });
+    expect(m.stub.keys).toHaveLength(1);
+  });
+
+  it('a crashed job: the retry is told to wait, then the planner resumes the run once the lease ran out', async () => {
+    const { runId } = await startKeyRotation(m.ctx, {
+      credentialId: m.platform.id,
+      createdBy: null,
+    });
+    // The first job died holding the run.
+    await sql(db(), "UPDATE identity_runs SET state = 'running', lease_until = ? WHERE id = ?", [
+      Date.now() + 300_000,
+      runId,
+    ]);
+    await expect(runKeyRotation(m.ctx, runId)).rejects.toMatchObject({ code: 'WALLET_RUN_BUSY' });
+    await dailyGoogleKeys(m.ctx);
+    expect((await runRow(runId))?.state).toBe('running');
+    await sql(db(), 'UPDATE identity_runs SET lease_until = ? WHERE id = ?', [
+      Date.now() - 1000,
+      runId,
+    ]);
+    m.sent.length = 0;
+    await dailyGoogleKeys(m.ctx);
+    expect(m.sent).toContainEqual({ kind: 'wallet.google_key_rotate', runId });
+    expect((await runRow(runId))?.state).toBe('queued');
+    await runKeyRotation(m.ctx, runId);
+    expect(await runRow(runId)).toMatchObject({
+      state: 'waiting',
+      waiting_for: 'old_key_cooldown',
+    });
+  });
+
+  it('a rollback restores credentials made while the new key was current, then deletes it', async () => {
+    const before = await pem(m.platform.id);
+    let during = '';
+    m.stub.onToken = async () => {
+      const made = await signedOrg('During Verify', '6600');
+      during = made.id;
+    };
+    m.stub.failTokenAfterCreate = 3;
+    const { runId } = await startKeyRotation(m.ctx, {
+      credentialId: m.platform.id,
+      createdBy: null,
+    });
+    await runKeyRotation(m.ctx, runId);
+    expect(await runRow(runId)).toMatchObject({
+      state: 'failed',
+      error_code: 'WALLET_KEY_VERIFY_FAILED',
+    });
+    expect(during).not.toBe('');
+    expect(await pem(during)).toBe(before);
+    expect(m.stub.keys).toEqual([keyNameOf(1)]);
   });
 
   it('the daily run deletes a pending key no rotation holds', async () => {

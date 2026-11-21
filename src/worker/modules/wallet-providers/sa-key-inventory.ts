@@ -8,6 +8,7 @@ import { managedDeps } from './google-managed-deps.ts';
 import {
   cooledRotationRuns,
   dueKeyRotations,
+  expiredLeaseRuns,
   liveKeysOf,
   orphanKeys,
   platformGoogleCredentials,
@@ -131,6 +132,13 @@ export async function dailyGoogleKeys(ctx: ServiceContext): Promise<void> {
   for (const run of await cooledRotationRuns(ctx.env.DB, now))
     if (await resumeRun(ctx.env.DB, run.id, now))
       await ctx.env.JOBS.send({ kind: 'wallet.google_key_rotate', runId: run.id });
+  // A run whose job died keeps `running` behind a lease: once the lease is over, queue it again.
+  for (const run of await expiredLeaseRuns(ctx.env.DB, now))
+    if (await resumeRun(ctx.env.DB, run.id, now))
+      await ctx.env.JOBS.send({
+        kind: run.kind === 'rotate' ? 'wallet.google_key_rotate' : 'wallet.google_issuer',
+        runId: run.id,
+      });
   await removeOrphans(ctx);
   await runKeyInventory(ctx);
 }

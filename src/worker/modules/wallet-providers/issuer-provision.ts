@@ -1,5 +1,10 @@
 import type { GoogleIssuerRun } from '../../../shared/contracts/wallet-providers.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import {
+  ConflictError,
+  NotFoundError,
+  UnavailableError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import {
@@ -208,7 +213,10 @@ const LEASE_MS = 5 * 60_000;
  */
 export async function runManagedIssuer(ctx: ServiceContext, runId: string): Promise<void> {
   const db = ctx.env.DB;
-  if (!(await claimRun(db, runId, ctx.clock.now(), LEASE_MS))) return;
+  const claim = await claimRun(db, runId, ctx.clock.now(), LEASE_MS);
+  if (claim === 'closed') return;
+  if (claim === 'busy')
+    throw new UnavailableError('Another job holds this run.', 'WALLET_RUN_BUSY');
   try {
     await work(ctx, runId);
   } catch (error) {

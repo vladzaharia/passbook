@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import {
@@ -95,7 +95,10 @@ export async function startKeyRotation(
  */
 export async function runKeyRotation(ctx: ServiceContext, runId: string): Promise<void> {
   const db = ctx.env.DB;
-  if (!(await claimRun(db, runId, ctx.clock.now(), LEASE_MS))) return;
+  const claim = await claimRun(db, runId, ctx.clock.now(), LEASE_MS);
+  if (claim === 'closed') return;
+  if (claim === 'busy')
+    throw new UnavailableError('Another job holds this run.', 'WALLET_RUN_BUSY');
   try {
     await work(ctx, runId);
   } catch (error) {

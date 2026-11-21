@@ -33,19 +33,18 @@ export function activeOrgGoogle(
   );
 }
 
-/** Credentials whose key is the platform credential's, after `after`, oldest id first. */
-export function signedBy(
+/** Every active Google credential (platform and org, any mode) after `after`, by id. */
+export function activeGoogleCredentials(
   db: D1Database,
-  signerId: string,
   after: string,
   limit: number,
 ): Promise<CredentialRow[]> {
   return all<CredentialRow>(
     db,
     `SELECT ${COLUMNS} FROM wallet_credentials
-     WHERE signer_ref = ? AND revoked_at IS NULL AND current_version_id IS NOT NULL AND id > ?
+     WHERE provider = 'google' AND revoked_at IS NULL AND current_version_id IS NOT NULL AND id > ?
      ORDER BY id LIMIT ?`,
-    [signerId, after, limit],
+    [after, limit],
   );
 }
 
@@ -146,7 +145,7 @@ export function cooledRotationRuns(db: D1Database, now: number): Promise<{ id: s
     db,
     `SELECT id FROM identity_runs
      WHERE provider = 'google' AND kind = 'rotate' AND state = 'waiting'
-       AND waiting_for = 'old_key_cooldown'
+       AND waiting_for IN ('old_key_cooldown', 'old_key_held')
        AND CAST(json_extract(external_ref, '$.deleteAfter') AS INTEGER) <= ?
      ORDER BY id LIMIT 25`,
     [now],
@@ -158,8 +157,9 @@ export async function resumeRun(db: D1Database, id: string, now: number): Promis
   const { changes } = await run(
     db,
     `UPDATE identity_runs SET state = 'queued', waiting_for = NULL, lease_until = NULL, updated_at = ?
-     WHERE id = ? AND provider = 'google' AND state = 'waiting'`,
-    [now, id],
+     WHERE id = ? AND provider = 'google'
+       AND (state = 'waiting' OR (state = 'running' AND lease_until < ?))`,
+    [now, id, now],
   );
   return changes === 1;
 }
@@ -182,13 +182,16 @@ export function versionRow(
   );
 }
 
-/** Claims a run for one job: false while another holds an unexpired lease. A crashed holder's lease runs out. */
+/**
+ * Claims a run for one job. `busy`: another job holds an unexpired lease (the caller retries later, so a
+ * crashed holder's run is picked up once its lease ends). `closed`: the run is finished or parked.
+ */
 export async function claimRun(
   db: D1Database,
   id: string,
   now: number,
   leaseMs: number,
-): Promise<boolean> {
+): Promise<'claimed' | 'busy' | 'closed'> {
   const { changes } = await run(
     db,
     `UPDATE identity_runs SET state = 'running', lease_until = ?, attempt = attempt + 1, updated_at = ?
@@ -196,7 +199,27 @@ export async function claimRun(
        AND (lease_until IS NULL OR lease_until < ?)`,
     [now + leaseMs, now, id, now],
   );
-  return changes === 1;
+  if (changes === 1) return 'claimed';
+  const open = await first<{ id: string }>(
+    db,
+    "SELECT id FROM identity_runs WHERE id = ? AND provider = 'google' AND state IN ('queued', 'running')",
+    [id],
+  );
+  return open ? 'busy' : 'closed';
+}
+
+/** Runs whose holder died: running with a lease that ran out. */
+export function expiredLeaseRuns(
+  db: D1Database,
+  now: number,
+): Promise<{ id: string; kind: 'provision' | 'rotate' }[]> {
+  return all<{ id: string; kind: 'provision' | 'rotate' }>(
+    db,
+    `SELECT id, kind FROM identity_runs
+     WHERE provider = 'google' AND state = 'running' AND lease_until IS NOT NULL AND lease_until < ?
+     ORDER BY id LIMIT 25`,
+    [now],
+  );
 }
 
 export async function releaseRun(db: D1Database, id: string): Promise<void> {

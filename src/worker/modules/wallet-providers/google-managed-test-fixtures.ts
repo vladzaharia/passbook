@@ -17,6 +17,8 @@ export interface GoogleStub {
   failTokenTimes: number;
   /** Owner emails by issuer id (`permissions.get`). */
   owners: Map<string, string[]>;
+  /** Runs once, on the first token exchange after a key was created. */
+  onToken: (() => Promise<void>) | null;
   /** The next N `keys.delete` calls answer 503. */
   failDeleteTimes: number;
   /** After `keys.create`, the next N token exchanges answer 400 (the new key does not work yet). */
@@ -43,6 +45,7 @@ export function installGoogleStub(): GoogleStub {
     failTokenAfterCreate: 0,
     owners: new Map(),
     failDeleteTimes: 0,
+    onToken: null,
     keys: [],
     created: [],
     insertStatus: null,
@@ -54,6 +57,11 @@ export function installGoogleStub(): GoogleStub {
     const method = (init?.method ?? 'GET').toUpperCase();
     stub.calls.push(`${method} ${url.hostname}${url.pathname}`);
     if (url.hostname === 'oauth2.googleapis.com') {
+      const hook = stub.onToken;
+      if (hook && stub.created.length > 0) {
+        stub.onToken = null;
+        await hook();
+      }
       if (stub.failTokenTimes > 0) {
         stub.failTokenTimes -= 1;
         return json({ error: 'invalid_grant' }, 400);

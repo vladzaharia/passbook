@@ -1,3 +1,5 @@
+import type { GoogleWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
+import { UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { readGoogleSecret, saveSystemCredential } from './credential-system-save.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
@@ -8,11 +10,10 @@ import { managedDeps } from './google-managed-deps.ts';
 import { getGoogleAccessToken } from './google-oauth.ts';
 import { type CredentialRow, findCredential } from './repo-credentials.ts';
 import {
+  activeGoogleCredentials,
   busyIssuerRuns,
   keyState,
-  platformGoogleCredentials,
   setKeyState,
-  signedBy,
 } from './repo-google-managed.ts';
 import { iamToken } from './sa-key-access.ts';
 import type { Ref } from './sa-key-rotation.ts';
@@ -82,6 +83,12 @@ export async function completeRollback(
       'sa_key',
     );
   if (ref.oldKey) await setKeyState(db, ref.oldKey, 'active', ctx.clock.now());
+  // Credentials saved while the new key was current (a new managed issuer, say) hold it too: put the old
+  // key back on them first, and delete the new key only once nothing holds it.
+  const newPem = await pemOf(ctx, cred.id, ref.newVersionId ?? null);
+  await replaceKey(ctx, newPem, previous.credentials);
+  if (await heldBy(ctx, newPem))
+    throw new UnavailableError('A credential still holds the new key.', 'WALLET_KEY_HELD');
   await deleteServiceAccountKey(
     managedDeps().iam(ctx.env),
     await iamToken(ctx, previous.credentials),
@@ -91,58 +98,72 @@ export async function completeRollback(
 }
 
 /**
- * A new version for every credential that holds PassBook's old key, 50 at a time; a rerun skips the done
- * ones. A credential with another key (an org's own upload) is left alone. Platform credentials of other
- * modes on the same service account follow.
+ * Moves every credential that holds `fromPem` onto `to`'s key, in every mode and for every owner (PassBook's
+ * own credentials, managed and shared orgs): matched by the key itself, not by a link. A credential with
+ * another key (an org's own upload) is left alone. `after` resumes a page walk; ids come in order.
  */
+async function replaceKey(
+  ctx: ServiceContext,
+  fromPem: string,
+  to: GoogleWalletCredentials,
+  skipId?: string,
+  progress?: (after: string) => Promise<void>,
+  start = '',
+): Promise<void> {
+  let after = start;
+  for (;;) {
+    const page = await activeGoogleCredentials(ctx.env.DB, after, FANOUT_PAGE);
+    for (const row of page) {
+      if (row.id === skipId) continue;
+      const own = await readGoogleSecret(ctx, row.id);
+      if (own.credentials.privateKeyPem !== fromPem) continue;
+      await saveSystemCredential(
+        ctx,
+        {
+          orgId: row.org_id,
+          mode: row.mode,
+          current: row,
+          secret: {
+            ...own.credentials,
+            serviceAccountEmail: to.serviceAccountEmail,
+            privateKeyPem: to.privateKeyPem,
+          },
+        },
+        row.org_id === null ? 'sa_key' : 'sa_fanout',
+      );
+    }
+    const last = page.at(-1);
+    if (!last) return;
+    after = last.id;
+    await progress?.(after);
+  }
+}
+
+/** Fan-out after a verified switch: the old key's holders, everywhere, move to the new key. Resumable. */
 export async function fanOut(
   ctx: ServiceContext,
   cred: CredentialRow,
   ref: Ref,
   patch: (p: Partial<Ref>) => Promise<void>,
-  sweep = false,
 ): Promise<void> {
   const { credentials } = await readGoogleSecret(ctx, cred.id);
   const oldPem = await pemOf(ctx, cred.id, ref.prevVersionId ?? null);
-  const move = async (row: CredentialRow) => {
-    const own = await readGoogleSecret(ctx, row.id);
-    if (own.credentials.privateKeyPem !== oldPem) return;
-    await saveSystemCredential(
-      ctx,
-      {
-        orgId: row.org_id,
-        mode: row.mode,
-        current: row,
-        secret: {
-          ...own.credentials,
-          serviceAccountEmail: credentials.serviceAccountEmail,
-          privateKeyPem: credentials.privateKeyPem,
-        },
-      },
-      row.org_id === null ? 'sa_key' : 'sa_fanout',
-    );
-  };
-  let after = sweep ? '' : (ref.fanoutAfter ?? '');
-  for (;;) {
-    const page = await signedBy(ctx.env.DB, cred.id, after, FANOUT_PAGE);
-    for (const row of page) await move(row);
-    const last = page.at(-1);
-    if (!last) break;
-    after = last.id;
-    if (!sweep) await patch({ fanoutAfter: after });
-  }
-  for (const sibling of await platformGoogleCredentials(ctx.env.DB))
-    if (sibling.id !== cred.id) await move(sibling);
+  await replaceKey(
+    ctx,
+    oldPem,
+    credentials,
+    cred.id,
+    (after) => patch({ fanoutAfter: after }),
+    ref.fanoutAfter ?? '',
+  );
 }
 
-/** Does any credential still hold this key's PEM? PassBook's platform credentials of every mode on the account, and the credentials signing with it. */
-async function heldBy(ctx: ServiceContext, cred: CredentialRow, oldPem: string): Promise<boolean> {
-  for (const platform of await platformGoogleCredentials(ctx.env.DB))
-    if ((await pemOf(ctx, platform.id)) === oldPem) return true;
+/** Does any active credential, of any mode or owner, hold this key? */
+async function heldBy(ctx: ServiceContext, pem: string): Promise<boolean> {
   let after = '';
   for (;;) {
-    const page = await signedBy(ctx.env.DB, cred.id, after, FANOUT_PAGE);
-    for (const row of page) if ((await pemOf(ctx, row.id)) === oldPem) return true;
+    const page = await activeGoogleCredentials(ctx.env.DB, after, FANOUT_PAGE);
+    for (const row of page) if ((await pemOf(ctx, row.id)) === pem) return true;
     const last = page.at(-1);
     if (!last) return false;
     after = last.id;
@@ -151,8 +172,8 @@ async function heldBy(ctx: ServiceContext, cred: CredentialRow, oldPem: string):
 
 /**
  * Deletes the replaced key, only when it is `retiring`, past the cooldown that outlives every cached token
- * (a token lasts an hour), after a final fan-out sweep, and when no credential or running issuer run
- * can still use it. `held`: try again later. `refused`: the key is not one this rotation retires.
+ * (a token lasts an hour), after a final sweep, and when no credential (any mode, any owner) or running
+ * issuer run can still use it. `held`: try again later. `refused`: the key is not one this rotation retires.
  */
 export async function retireOld(
   ctx: ServiceContext,
@@ -163,13 +184,12 @@ export async function retireOld(
   if (!ref.oldKey) return 'done';
   if ((await keyState(db, ref.oldKey)) !== 'retiring') return 'refused';
   if (ref.deleteAfter === undefined || ctx.clock.now() < ref.deleteAfter) return 'held';
-  await fanOut(ctx, cred, ref, async () => undefined, true);
+  const { credentials } = await readGoogleSecret(ctx, cred.id);
   const oldPem = await pemOf(ctx, cred.id, ref.prevVersionId ?? null);
   const latest = await findCredential(db, cred.id, null);
   if (latest?.current_version_id !== ref.newVersionId) return 'refused';
-  if ((await heldBy(ctx, cred, oldPem)) || (await busyIssuerRuns(db, ctx.clock.now())) > 0)
-    return 'held';
-  const { credentials } = await readGoogleSecret(ctx, cred.id);
+  await replaceKey(ctx, oldPem, credentials, cred.id);
+  if ((await heldBy(ctx, oldPem)) || (await busyIssuerRuns(db, ctx.clock.now())) > 0) return 'held';
   await deleteServiceAccountKey(
     managedDeps().iam(ctx.env),
     await iamToken(ctx, credentials),

@@ -97,7 +97,7 @@ describe('managed Google issuer', () => {
     const org = await m.org('Racing');
     const { run: started } = await startManagedIssuer(m.ctx, { orgId: org.id, createdBy: null });
     const before = posts().length;
-    await Promise.all([
+    await Promise.allSettled([
       runManagedIssuer(m.ctx, started.runId),
       runManagedIssuer(m.ctx, started.runId),
     ]);
