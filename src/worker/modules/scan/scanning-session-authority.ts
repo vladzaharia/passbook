@@ -28,6 +28,21 @@ export function assertSessionReadAuthority(
   authority: TenantPassWrite,
   countAuthority: SessionReadAuthority,
 ): void {
+  if (authority.kind === 'api_key') {
+    // An org-bound key with `scan-setup:read`: its counts come from the key's own read fence.
+    if (
+      authority.scope !== 'scan-setup:read' ||
+      authority.keyOrgId === null ||
+      countAuthority.key !== true ||
+      countAuthority.tenant !== undefined ||
+      countAuthority.sessionId !== undefined ||
+      authority.mode !== mode ||
+      countAuthority.mode !== mode ||
+      authority.orgId !== countAuthority.orgId
+    )
+      throw new ForbiddenError();
+    return;
+  }
   if (
     authority.kind !== 'session' ||
     authority.capability !== 'scanning:read' ||

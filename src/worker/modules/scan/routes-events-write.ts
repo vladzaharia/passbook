@@ -1,17 +1,19 @@
 import {
   CreateScanEventSchema,
   IdParamSchema,
+  pageOf,
+  ScanEventListQuerySchema,
   ScanEventSchema,
   UpdateScanEventSchema,
 } from '../../../shared/contracts/index.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
-import { type C, tenantAuthorityOf } from '../passes/http.ts';
-import { captureEventAuthority, eventTarget } from './events.ts';
+import { type C, orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
+import { captureEventAuthority, eventTarget, eventView, listEvents } from './events.ts';
 import { archiveEvent, createEvent, updateEvent } from './events-mutations.ts';
 
 type Router = ReturnType<typeof createRouter>;
@@ -27,24 +29,26 @@ const AUTH = {
  * its own principal (the grant re-checks the key at commit). A key bound to another org finds
  * no such org.
  */
-async function writer(c: C, orgId: string, missing: () => NotFoundError) {
+async function writer(
+  c: C,
+  orgId: string,
+  missing: () => NotFoundError,
+  capability: 'scanning:read' | 'scanning:manage' = 'scanning:manage',
+) {
   const ctx = serviceContext(c);
   const auth = c.var.auth as SessionAuth | ApiKeyAuth | undefined;
   if (auth?.kind === 'api_key') {
     if (auth.orgId !== null && auth.orgId !== orgId) throw missing();
-    return {
-      ctx,
-      auth,
-      actorId: auth.keyId,
-      authority: await tenantAuthorityOf(ctx, auth, orgId, 'scanning:manage'),
-    };
+    const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
+    if (authority.kind !== 'api_key') throw new ForbiddenError();
+    return { ctx, auth, actorId: auth.keyId, authority };
   }
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
   if (!(await getOrgAccess(ctx, auth.userId, orgId))) throw missing();
   const authority = await captureEventAuthority(
     ctx,
     auth,
-    await tenantAuthorityOf(ctx, auth, orgId, 'scanning:manage'),
+    await tenantAuthorityOf(ctx, auth, orgId, capability),
   );
   return { ctx, auth, actorId: auth.userId, authority };
 }
@@ -52,15 +56,67 @@ async function writer(c: C, orgId: string, missing: () => NotFoundError) {
 const noOrg = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
 const noEvent = () => new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
 
-async function byId(c: C, id: string) {
+async function byId(
+  c: C,
+  id: string,
+  capability: 'scanning:read' | 'scanning:manage' = 'scanning:manage',
+) {
   const event = await eventTarget(serviceContext(c), id);
   const auth = c.var.auth;
   if (!event || (auth && event.mode !== (auth as { mode?: string }).mode)) throw noEvent();
-  return writer(c, event.orgId, noEvent);
+  return writer(c, event.orgId, noEvent, capability);
 }
+
+/** No `capability` on a read: a caller outside the org gets an empty page, so the handler does not always prove either. */
+const READ = { scope: 'scan-setup:read' } as const;
 
 export function registerEventWrites(router: Router): void {
   router.use('*', limitBody(64 * 1024));
+  register(
+    router,
+    TAG,
+    {
+      method: 'get',
+      path: '/',
+      summary: 'List scan events',
+      auth: READ,
+      query: ScanEventListQuerySchema,
+      response: pageOf(ScanEventSchema),
+    },
+    async (c) => {
+      const given = c.req.valid('query');
+      const auth = c.var.auth;
+      // A key names no org: it reads its own.
+      const orgId = auth?.kind === 'api_key' ? orgIdOf(auth, given.orgId) : given.orgId;
+      if (!orgId) throw new ForbiddenError('Choose an organization.');
+      const query = { ...given, orgId };
+      let w: Awaited<ReturnType<typeof writer>>;
+      try {
+        w = await writer(c, orgId, noOrg, 'scanning:read');
+      } catch (e) {
+        if (e instanceof NotFoundError) return c.json({ items: [], nextCursor: null });
+        throw e;
+      }
+      return c.json(await listEvents(w.ctx, w.auth.mode, query, w.authority));
+    },
+  );
+  register(
+    router,
+    TAG,
+    {
+      method: 'get',
+      path: '/{id}',
+      summary: 'Get a scan event',
+      auth: READ,
+      params: IdParamSchema,
+      response: ScanEventSchema,
+    },
+    async (c) => {
+      const id = c.req.valid('param').id;
+      const w = await byId(c, id, 'scanning:read');
+      return c.json(await eventView(w.ctx, id, w.authority));
+    },
+  );
   register(
     router,
     TAG,

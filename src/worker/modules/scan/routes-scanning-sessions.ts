@@ -9,8 +9,6 @@ import {
   JoinAdminScanningSessionSchema,
   ScanningDeviceSchema,
   ScanningSessionDetailSchema,
-  ScanningSessionListSchema,
-  ScanningSessionQuerySchema,
   SessionHoldRequestSchema,
   UpdateScanningDeviceSchema,
   UpdateScanningSessionSchema,
@@ -21,20 +19,19 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { registerScanSetup } from './routes-scan-setup.ts';
+import { registerSessionReads } from './routes-sessions-key.ts';
 import {
   createScanningDevice,
   joinAdminScanningSession,
   updateScanningDevice,
 } from './scanning-devices.ts';
 import { captureConsoleSessionCountAuthority } from './scanning-session-dto.ts';
-import { listScanningSessions } from './scanning-session-list.ts';
 import {
   createScanningSession,
   loadScanningSession,
-  scanningSessionDetail,
   updateScanningSession,
 } from './scanning-sessions.ts';
-import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
+import { scopedScanningView } from './scanning-workspace.ts';
 import { holdScanningSession } from './session-hold.ts';
 import { consoleSessionSummary } from './summary-session.ts';
 import { sessionAuthority } from './target-authority.ts';
@@ -42,35 +39,8 @@ import { sessionAuthority } from './target-authority.ts';
 export const scanningSessionsRoutes = createRouter();
 /** The one-call setup declares its own `auth` (a console session or a `scanning:write` key): it is registered before the session guard, which applies to what follows. */
 registerScanSetup(scanningSessionsRoutes);
+registerSessionReads(scanningSessionsRoutes);
 guard(scanningSessionsRoutes, requireTenantSession);
-register(
-  scanningSessionsRoutes,
-  'scanners',
-  {
-    method: 'get',
-    path: '/',
-    summary: 'Scanning sessions',
-    query: ScanningSessionQuerySchema,
-    response: ScanningSessionListSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const auth = authOf(c);
-    if (auth.kind !== 'session') throw new UnauthenticatedError();
-    const mode = modeOf(auth);
-    return c.json(
-      await readableScanningPage(ctx, auth, c.req.valid('query'), async (query, authority) =>
-        listScanningSessions(
-          ctx,
-          mode,
-          query,
-          authority,
-          await captureConsoleSessionCountAuthority(ctx, auth, authority),
-        ),
-      ),
-    );
-  },
-);
 register(
   scanningSessionsRoutes,
   'scanners',
@@ -131,32 +101,6 @@ register(
           new URL(c.req.url).origin,
           authority,
         ),
-        row.org_id,
-      ),
-    );
-  },
-);
-register(
-  scanningSessionsRoutes,
-  'scanners',
-  {
-    method: 'get',
-    path: '/{id}',
-    summary: 'Session rules and devices',
-    params: IdParamSchema,
-    response: ScanningSessionDetailSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const auth = authOf(c);
-    if (auth.kind !== 'session') throw new UnauthenticatedError();
-    const mode = modeOf(auth);
-    const row = await loadScanningSession(ctx, c.req.valid('param').id, mode);
-    const authority = await sessionAuthority(ctx, auth, row.org_id, 'scanning:read');
-    const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, authority);
-    return c.json(
-      scopedScanningView(
-        await scanningSessionDetail(ctx, row.id, mode, authority, countAuthority),
         row.org_id,
       ),
     );

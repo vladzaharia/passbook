@@ -20,7 +20,7 @@ import {
   listConsoleEvents,
 } from './repo-events.ts';
 import { addEventCache } from './repo-events-write.ts';
-import { scanReadAuthority } from './repo-read-authority.ts';
+import { keyScanReadAuthority, scanReadAuthority } from './repo-read-authority.ts';
 import { releaseHeadsComplete } from './repo-scope-releases.ts';
 
 export { checkTemplates, checkWindow } from './events-validation.ts';
@@ -68,7 +68,7 @@ function toDto(row: ConsoleEventRow, now: number): ScanEventDto {
 async function refreshExpectedCaches(
   ctx: ServiceContext,
   rows: readonly ConsoleEventRow[],
-  authority: EventAuthority,
+  authority: EventReader,
   budget = Number.POSITIVE_INFINITY,
 ): Promise<void> {
   const now = ctx.clock.now();
@@ -121,10 +121,11 @@ export function committedEventView(ctx: ServiceContext, row: ConsoleEventRow): S
   return toDto(row, ctx.clock.now());
 }
 
-function canReadEvents(authority: EventAuthority): boolean {
+function canReadEvents(authority: EventReader): boolean {
   return (
-    authority.kind === 'session' &&
-    (authority.capability === 'scanning:read' || authority.capability === 'scanning:manage')
+    authority.kind === 'api_key' ||
+    (authority.kind === 'session' &&
+      (authority.capability === 'scanning:read' || authority.capability === 'scanning:manage'))
   );
 }
 
@@ -149,8 +150,15 @@ export async function captureEventAuthority(
   return { ...authority, actor };
 }
 
-const readAuth = (ctx: ServiceContext, authority: EventAuthority) =>
-  scanReadAuthority(authority.actor, { now: ctx.clock.now() });
+/** A console session (its captured actor) or an org-bound `scan-setup:read` key. */
+export type EventReader = EventAuthority | Extract<TenantPassWrite, { kind: 'api_key' }>;
+
+const readAt = (authority: EventReader, now: number) =>
+  authority.kind === 'api_key'
+    ? keyScanReadAuthority(authority, now)
+    : scanReadAuthority(authority.actor, { now });
+const readAuth = (ctx: ServiceContext, authority: EventReader) =>
+  readAt(authority, ctx.clock.now());
 
 /** Where an event lives, before any tenant authority exists for it. */
 export async function eventTarget(ctx: ServiceContext, id: string) {
@@ -161,7 +169,7 @@ export async function listEvents(
   ctx: ServiceContext,
   mode: Mode,
   query: z.infer<typeof ScanEventListQuerySchema>,
-  authority: EventAuthority,
+  authority: EventReader,
 ) {
   if (!canReadEvents(authority) || query.orgId !== authority.orgId || mode !== authority.mode)
     return { items: [], nextCursor: null };
@@ -207,13 +215,13 @@ export async function loadManageEvent(
 async function scopedEventRow(
   ctx: ServiceContext,
   id: string,
-  authority: EventAuthority,
+  authority: EventReader,
   now: number,
 ): Promise<ConsoleEventRow> {
   const { authorized, row } = await getAuthorizedConsoleEvent(
     ctx.env.DB,
     id,
-    scanReadAuthority(authority.actor, { now }),
+    readAt(authority, now),
     now,
   );
   if (!authorized) throw new ForbiddenError();
@@ -224,7 +232,7 @@ async function scopedEventRow(
 export async function eventView(
   ctx: ServiceContext,
   id: string,
-  authority: EventAuthority,
+  authority: EventReader,
 ): Promise<ScanEventDto> {
   if (!canReadEvents(authority)) throw new ForbiddenError();
   const row = await scopedEventRow(ctx, id, authority, ctx.clock.now());

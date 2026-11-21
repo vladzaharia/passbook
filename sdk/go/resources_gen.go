@@ -1548,6 +1548,20 @@ func (r *ScanEventsResource) Create(ctx context.Context, body *ScanEventsCreateB
 	return &out, nil
 }
 
+// List List scan events `GET /api/v1/scan-events`
+func (r *ScanEventsResource) List(ctx context.Context, query *ScanEventsListQuery, opts ...RequestOption) *Pager[ScanEvent] {
+	return newPager[ScanEvent](r.c, call{method: "GET", path: "/api/v1/scan-events", query: queryValues(query)}, "cursor", opts)
+}
+
+// Retrieve Get a scan event `GET /api/v1/scan-events/{id}`
+func (r *ScanEventsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScanEventsRetrieveResult, error) {
+	var out ScanEventsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scan-events/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Update Edit a scan event `PATCH /api/v1/scan-events/{id}`
 func (r *ScanEventsResource) Update(ctx context.Context, id string, body *ScanEventsUpdateBody, opts ...RequestOption) (*ScanEventsUpdateResult, error) {
 	var out ScanEventsUpdateResult
@@ -1689,6 +1703,20 @@ func newScanningSessionsResource(c *core) *ScanningSessionsResource {
 	return &ScanningSessionsResource{
 		c: c,
 	}
+}
+
+// List Scanning sessions `GET /api/v1/scanning-sessions`
+func (r *ScanningSessionsResource) List(ctx context.Context, query *ScanningSessionsListQuery, opts ...RequestOption) *Pager[ScanningSession] {
+	return newPager[ScanningSession](r.c, call{method: "GET", path: "/api/v1/scanning-sessions", query: queryValues(query)}, "cursor", opts)
+}
+
+// Retrieve Session rules and devices `GET /api/v1/scanning-sessions/{id}`
+func (r *ScanningSessionsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScanningSessionsRetrieveResult, error) {
+	var out ScanningSessionsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scanning-sessions/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // Setup Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup`

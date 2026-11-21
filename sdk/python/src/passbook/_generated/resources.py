@@ -1431,6 +1431,26 @@ class ScanEventsResource:
         """Create a scan event `POST /api/v1/scan-events`"""
         return self._core.request("POST", "/api/v1/scan-events", body=body, result=m.ScanEventsCreateResult, **opts)
 
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        status: _Literal["upcoming", "live", "ended", "archived"] | None = None,
+        q: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanEvent]:
+        """List scan events `GET /api/v1/scan-events`"""
+        return self._core.paginate("GET", "/api/v1/scan-events", query={"cursor": cursor, "limit": limit, "status": status, "q": q}, result=m.ScanEventsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsRetrieveResult:
+        """Get a scan event `GET /api/v1/scan-events/{id}`"""
+        return self._core.request("GET", f"/api/v1/scan-events/{_p(id)}", result=m.ScanEventsRetrieveResult, **opts)
+
     def update(
         self,
         id: str,
@@ -1555,6 +1575,24 @@ class TerminalResource:
 class ScanningSessionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanningSession]:
+        """Scanning sessions `GET /api/v1/scanning-sessions`"""
+        return self._core.paginate("GET", "/api/v1/scanning-sessions", query={"cursor": cursor, "limit": limit}, result=m.ScanningSessionsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsRetrieveResult:
+        """Session rules and devices `GET /api/v1/scanning-sessions/{id}`"""
+        return self._core.request("GET", f"/api/v1/scanning-sessions/{_p(id)}", result=m.ScanningSessionsRetrieveResult, **opts)
 
     def setup(
         self,

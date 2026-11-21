@@ -8,11 +8,11 @@ import {
 } from '../../../shared/contracts/scan-access.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
-import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
-import { type C, tenantAuthorityOf } from '../passes/http.ts';
+import { type C, orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
 import { zoneTarget } from './repo-zones.ts';
 import { archiveZone, createZone, listZones, updateZone } from './zones.ts';
 
@@ -77,10 +77,15 @@ export function registerZoneRoutes(router: Router): void {
       response: ScanZoneListSchema,
     },
     async (c) => {
-      const query = c.req.valid('query');
+      const given = c.req.valid('query');
+      const auth = c.var.auth;
+      // A key names no org: it reads its own.
+      const orgId = auth?.kind === 'api_key' ? orgIdOf(auth, given.orgId) : given.orgId;
+      if (!orgId) throw new ForbiddenError('Choose an organization.');
+      const query = { ...given, orgId };
       let w: Awaited<ReturnType<typeof caller>>;
       try {
-        w = await caller(c, query.orgId, 'scanning:read', noOrg);
+        w = await caller(c, orgId, 'scanning:read', noOrg);
       } catch (e) {
         if (e instanceof NotFoundError) return c.json({ items: [], nextCursor: null });
         throw e;

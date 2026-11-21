@@ -3,6 +3,9 @@ import { AuthorityError } from '../../platform/authority-error.ts';
 import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
 import { assertBudget, PARAM_BUDGET } from '../../platform/authority-statements.ts';
 import { exactStmt, type SqlValue } from '../../platform/db.ts';
+import { ForbiddenError } from '../../platform/errors.ts';
+import type { TenantPassWrite } from '../passes/http.ts';
+import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import type { ScanActor } from './actor.ts';
 import {
   type ScanChecksInput,
@@ -167,5 +170,31 @@ export function withSessionRow<A extends ScanReadAuthority>(
       WHERE id = ? AND org_id = ? AND mode = ? AND config_epoch = ?)`,
     params: [...auth.params, row.id, row.org_id, row.mode, row.config_epoch],
     ok: `(${auth.ok} AND EXISTS (SELECT 1 FROM session_row))`,
+  };
+}
+
+/**
+ * The read fence of an org-bound key that holds `scan-setup:read` for its org: the key row is live, holds
+ * the scope (by its scopes or a role's preset) and its org is active, re-derived inside each statement.
+ * Rows are the key's org and mode. A platform key (no bound org) has no fence here.
+ */
+export function keyScanReadAuthority(
+  authority: Extract<TenantPassWrite, { kind: 'api_key' }>,
+  now: number,
+): StrictReadAuthority {
+  if (authority.keyOrgId === null || authority.scope !== 'scan-setup:read')
+    throw new ForbiddenError();
+  const { ctes, params } = authorityPredicate(tenantPrincipal(authority), {
+    scope: 'org_mode',
+    now,
+    checks: capabilityChecks(authority),
+  });
+  assertBudget(ctes, params, PARAM_BUDGET);
+  return {
+    ctes,
+    params,
+    ok: 'EXISTS (SELECT 1 FROM actor_ok)',
+    tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
+    relaxed: false,
   };
 }

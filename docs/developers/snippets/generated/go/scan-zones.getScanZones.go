@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -16,14 +15,7 @@ func main() {
 		panic(err)
 	}
 
-	var query passbook.ScanZonesListQuery
-	if err := json.Unmarshal([]byte(`{
-  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
-}`), &query); err != nil {
-		panic(err)
-	}
-
-	pager := pb.ScanZones.List(ctx, &query)
+	pager := pb.ScanZones.List(ctx, nil)
 	for pager.Next(ctx) {
 		fmt.Printf("%+v\n", pager.Item())
 	}

@@ -1151,6 +1151,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanEvents.list", "GET", "/api/v1/scan-events", false,
+		"", `{"items":[{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanEvents.List(ctx, nil).All(ctx)
+		},
+	},
+	{
 		"scanEvents.create", "POST", "/api/v1/scan-events", false,
 		`{"orgId":"x","name":"x","templateIds":["x"],"opensAt":0,"closesAt":0,"timeZone":"x"}`, `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1159,6 +1166,13 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.ScanEvents.Create(ctx, &b)
+		},
+	},
+	{
+		"scanEvents.retrieve", "GET", "/api/v1/scan-events/id1", false,
+		"", `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanEvents.Retrieve(ctx, "id1")
 		},
 	},
 	{
@@ -1270,6 +1284,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanningSessions.list", "GET", "/api/v1/scanning-sessions", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanningSessions.List(ctx, nil).All(ctx)
+		},
+	},
+	{
 		"scanningSessions.setup", "POST", "/api/v1/scanning-sessions/setup", true,
 		`{"orgId":"x","doors":[{"name":"x","admits":{"any":true}}]}`, `{"replayed":false,"mode":"live","sessions":[{"id":"x","ref":"x","name":"x","devices":[{"id":"x","name":"x","pairing":{"code":"x","url":"x","expiresAt":0}}]}],"zones":[{"id":"x","ref":"x","name":"x","created":false}],"events":[{"id":"x","ref":"x","name":"x","created":false}],"staff":[{"id":"x","name":"x","role":"door","pin":"x"}],"checks":[{"code":"NO_EXIT","level":"error","message":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1278,6 +1299,13 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.ScanningSessions.Setup(ctx, &b, nil)
+		},
+	},
+	{
+		"scanningSessions.retrieve", "GET", "/api/v1/scanning-sessions/id1", false,
+		"", `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanningSessions.Retrieve(ctx, "id1")
 		},
 	},
 	{

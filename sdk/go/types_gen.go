@@ -5634,10 +5634,19 @@ type ScanEventsCreateParams struct {
 
 type ScanEventsCreateResult = ScanEvent
 
+type ScanEventsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+	Status *string `json:"status,omitempty"`
+	Q      *string `json:"q,omitempty"`
+}
+
 type ScanEventsMarkOutParams struct {
 	PassID string `json:"passId"`
 	Place  string `json:"place"`
 }
+
+type ScanEventsRetrieveResult = ScanEvent
 
 type ScanEventsUpdateBody = ScanEventsUpdateParams
 
@@ -7140,6 +7149,11 @@ type ScanningSessionsDevicesUpdateParamsOverrides struct {
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
 
+type ScanningSessionsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
 type ScanningSessionsOverrideHoursParams = any
 
 type ScanningSessionsOverrideHoursParams1 struct {
@@ -7157,6 +7171,8 @@ type ScanningSessionsOverrideHoursParams3 struct {
 	Action   string `json:"action"`
 	Revision *int64 `json:"revision,omitempty"`
 }
+
+type ScanningSessionsRetrieveResult = ScanningSessionDetail
 
 type ScanningSessionsSetupBody = ScanningSessionsSetupParams
 

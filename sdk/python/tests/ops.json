@@ -5425,6 +5425,48 @@
   }
  },
  {
+  "id": "scan-events.getScanEvents",
+  "call": "scan_events.list",
+  "http": "GET",
+  "path": "/api/v1/scan-events",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "name": "x",
+     "templateIds": [
+      "x"
+     ],
+     "match": {
+      "input": "x",
+      "values": [
+       "x"
+      ]
+     },
+     "opensAt": 0,
+     "closesAt": 0,
+     "timeZone": "x",
+     "capacity": 0,
+     "reentry": false,
+     "note": "x",
+     "status": "upcoming",
+     "arrived": 0,
+     "expected": 0,
+     "scanners": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
   "id": "scan-events.postScanEvents",
   "call": "scan_events.create",
   "http": "POST",
@@ -5441,6 +5483,49 @@
    "closesAt": 0,
    "timeZone": "x"
   },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
+  "id": "scan-events.getScanEventsById",
+  "call": "scan_events.retrieve",
+  "http": "GET",
+  "path": "/api/v1/scan-events/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
   "binary": false,
   "idempotent": false,
   "raw": false,
@@ -6658,6 +6743,56 @@
   }
  },
  {
+  "id": "scanners.getScanningSessions",
+  "call": "scanning_sessions.list",
+  "http": "GET",
+  "path": "/api/v1/scanning-sessions",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "orgName": "x",
+     "mode": "live",
+     "name": "x",
+     "status": "active",
+     "accepts": {
+      "templateIds": [
+       "x"
+      ],
+      "eventIds": [
+       "x"
+      ]
+     },
+     "settings": {
+      "flow": "auto",
+      "defaultActionId": "x",
+      "roleWithoutSignIn": "door",
+      "staffSignIn": false,
+      "letInAgain": "anyone",
+      "reader": "none",
+      "lookup": false,
+      "offline": false,
+      "dailyAmount": 0
+     },
+     "timeZone": "x",
+     "createdAt": 0,
+     "updatedAt": 0,
+     "deviceCount": 0,
+     "onlineCount": 0,
+     "today": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
   "id": "scanners.postScanningSessionsSetup",
   "call": "scanning_sessions.setup",
   "http": "POST",
@@ -6729,6 +6864,98 @@
      "code": "NO_EXIT",
      "level": "error",
      "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "scanners.getScanningSessionsById",
+  "call": "scanning_sessions.retrieve",
+  "http": "GET",
+  "path": "/api/v1/scanning-sessions/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgName": "x",
+   "mode": "live",
+   "name": "x",
+   "status": "active",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "createdAt": 0,
+   "updatedAt": 0,
+   "deviceCount": 0,
+   "onlineCount": 0,
+   "today": 0,
+   "devices": [
+    {
+     "id": "x",
+     "sessionId": "x",
+     "name": "x",
+     "surface": "auto",
+     "effectiveSurface": "phone",
+     "overrides": {},
+     "settings": {
+      "flow": "auto",
+      "defaultActionId": "x",
+      "roleWithoutSignIn": "door",
+      "staffSignIn": false,
+      "letInAgain": "anyone",
+      "reader": "none",
+      "lookup": false,
+      "offline": false,
+      "dailyAmount": 0
+     },
+     "capabilities": {
+      "width": 0,
+      "height": 0,
+      "touch": false,
+      "camera": "unknown",
+      "keyboard": false,
+      "nativeBarcode": false,
+      "surfaces": [
+       "phone"
+      ],
+      "preferred": "phone"
+     },
+     "reportedAt": 0,
+     "paired": false,
+     "online": false,
+     "revoked": false,
+     "lastSeenAt": 0,
+     "updatedAt": 0,
+     "signIn": "paired",
+     "adminName": "x"
     }
    ]
   }

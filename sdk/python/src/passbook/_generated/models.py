@@ -819,7 +819,9 @@ __all__ = [
     "ScanEventsCreateBody",
     "ScanEventsCreateParams",
     "ScanEventsCreateResult",
+    "ScanEventsListResult",
     "ScanEventsMarkOutParams",
+    "ScanEventsRetrieveResult",
     "ScanEventsUpdateBody",
     "ScanEventsUpdateParams",
     "ScanEventsUpdateResult",
@@ -992,10 +994,12 @@ __all__ = [
     "ScanningSessionsDevicesCreateParamsOverrides",
     "ScanningSessionsDevicesUpdateParams",
     "ScanningSessionsDevicesUpdateParamsOverrides",
+    "ScanningSessionsListResult",
     "ScanningSessionsOverrideHoursParams",
     "ScanningSessionsOverrideHoursParams1",
     "ScanningSessionsOverrideHoursParams2",
     "ScanningSessionsOverrideHoursParams3",
+    "ScanningSessionsRetrieveResult",
     "ScanningSessionsSetupBody",
     "ScanningSessionsSetupParams",
     "ScanningSessionsSetupParamsDoorsItem",
@@ -6434,6 +6438,10 @@ class ScanEventsCreateParams(_Model):
     hardLimit: bool | None = None
     note: str | None = None
 
+class ScanEventsListResult(_Model):
+    items: _List[ScanEvent]
+    nextCursor: str | None
+
 class ScanEventsMarkOutParams(_Model):
     passId: str
     place: str
@@ -7826,6 +7834,10 @@ class ScanningSessionsDevicesUpdateParamsOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+
+class ScanningSessionsListResult(_Model):
+    items: _List[ScanningSession]
+    nextCursor: str | None
 
 class ScanningSessionsOverrideHoursParams1(_Model):
     action: _Literal["close"] | str
@@ -9412,6 +9424,8 @@ ScanEventsCreateBody = ScanEventsCreateParams
 
 ScanEventsCreateResult = ScanEvent
 
+ScanEventsRetrieveResult = ScanEvent
+
 ScanEventsUpdateBody = ScanEventsUpdateParams
 
 ScanEventsUpdateResult = ScanEvent
@@ -9429,6 +9443,8 @@ ScanZonesCreateBody = ScanZonesCreateParams
 ScanZonesUpdateBody = ScanZonesUpdateParams
 
 ScanningSessionsOverrideHoursParams = ScanningSessionsOverrideHoursParams1 | ScanningSessionsOverrideHoursParams2 | ScanningSessionsOverrideHoursParams3
+
+ScanningSessionsRetrieveResult = ScanningSessionDetail
 
 ScanningSessionsSetupBody = ScanningSessionsSetupParams
 

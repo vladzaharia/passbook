@@ -34,7 +34,7 @@ import {
 } from './zones-statements.ts';
 import { assertPlacement, indexZones, subtree, treeOrder } from './zones-tree.ts';
 
-type Query = z.infer<typeof ScanZoneListQuerySchema>;
+type Query = z.infer<typeof ScanZoneListQuerySchema> & { orgId: string };
 type Create = z.infer<typeof CreateScanZoneSchema>;
 type Update = z.infer<typeof UpdateScanZoneSchema>;
 
