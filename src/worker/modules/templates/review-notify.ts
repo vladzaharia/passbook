@@ -3,6 +3,7 @@ import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import type { ReviewRequested } from './release-flow.ts';
 import { getTemplate } from './repo.ts';
 import { userNames } from './repo-release-names.ts';
@@ -29,6 +30,8 @@ export const notifyReviewers: ReviewRequested = async (ctx: ServiceContext, info
       superseded: await olderOpenVersions(ctx.env.DB, info.templateId, info.orgId, info.version),
     },
   });
+  // A developer org sends no real mail; the audit row above is its record.
+  if (await isPreviewOnlyOrg(ctx.env.DB, info.orgId)) return;
   const [emails, names] = await Promise.all([
     reviewerEmails(ctx.env.DB, info.orgId, candidate.authorId),
     userNames(ctx.env.DB, [candidate.authorId], info.orgId, false),
