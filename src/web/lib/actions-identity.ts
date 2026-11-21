@@ -4,8 +4,9 @@ import type { Tone } from './status.ts';
 
 const a = (label: string, icon: LucideIcon, tone: Tone) => ({ label, icon, tone });
 const rotate = ACTION_ICON.rotate;
+const key = ACTION_ICON.pushKey;
 
-/** Identity expiry, and managed identity runs: setup and certificate renewal. */
+/** Identity expiry, managed identity runs and Google issuer and key events. */
 export const IDENTITY_RUN_ACTIONS = {
   'identity.expired': a('Identity expired', Clock, 'danger'),
   'identity.expiring': a('Identity expiring', Clock, 'warning'),
@@ -17,4 +18,14 @@ export const IDENTITY_RUN_ACTIONS = {
   'identity.rotation_failed': a('Renewal failed', Clock, 'danger'),
   'identity.rotation_overdue': a('Renewal overdue', Clock, 'danger'),
   'identity.provision_failed': a('Identity setup failed', Clock, 'danger'),
+  'identity.renew_requested': a('Renewal requested', rotate, 'info'),
+  'identity.certificate_revoke_requested': a('Revoke requested', rotate, 'warning'),
+  'identity.certificate_revoked': a('Certificate revoked', rotate, 'warning'),
+  'identity.run_retry': a('Run retried', rotate, 'info'),
+  'identity.run_cancel': a('Run cancelled', rotate, 'warning'),
+  'wallet.google_issuer_requested': a('Google issuer requested', key, 'info'),
+  'wallet.google_issuer_entered': a('Google issuer entered', key, 'success'),
+  'wallet.google_issuer_created': a('Google issuer created', key, 'success'),
+  'wallet.google_key_rotated': a('Google key rotated', key, 'success'),
+  'wallet.key_unknown': a('Unknown Google key', key, 'danger'),
 };
