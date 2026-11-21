@@ -57,7 +57,11 @@
     "SUPPORT_EMAIL": "support@passbook.mobile",
     "OIDC_ISSUER": "https://id.plrs.im",
     "OIDC_CLIENT_ID": "https://passbook.mobile/auth/oidc/client-metadata.json",
-    "OIDC_ADMIN_GROUP": "wallet-admins",
+    // Pocket ID groups, matched by exact name. Platform admins: every org and the platform scope, developer implied.
+    "OIDC_PLATFORM_ADMIN_GROUP": "wallet-admins",
+    // May use the console; which orgs is decided by membership in PassBook.
+    "OIDC_ADMIN_GROUP": "wallet-org-admins",
+    "OIDC_DEVELOPER_GROUP": "passbook-developers",
     "OIDC_USER_GROUP": "wallet-users",
     // The ID token's `amr` must contain this (a passkey). Empty turns the check off, for a mock provider.
     "OIDC_REQUIRE_AMR": "",

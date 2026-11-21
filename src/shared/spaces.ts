@@ -41,12 +41,14 @@ export function needsPocketId(
   return space === 'admin' || space === 'developers';
 }
 
+/** Developer features: the `developer` role, which platform admins have implied. */
+export const hasDeveloperAccess = (roles: readonly string[]): boolean =>
+  roles.includes('admin') || roles.includes('developer');
+
 export function canUseSpace(space: Space, access: SpaceAccess): boolean {
   if (space === 'passes' || space === 'account') return true;
   if (needsPocketId(space, access.amr, access.consoleUntil)) return false;
   const admin = access.roles.includes('admin');
-  // Platform admins are developers too. `developer` is read by name until the role exists.
-  if (space === 'developers')
-    return access.amr === 'oidc' && (admin || access.roles.includes('developer'));
+  if (space === 'developers') return access.amr === 'oidc' && hasDeveloperAccess(access.roles);
   return admin || access.orgMember;
 }

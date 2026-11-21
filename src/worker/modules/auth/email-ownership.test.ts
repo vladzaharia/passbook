@@ -243,7 +243,7 @@ describe('positive controls', () => {
       roles: string[];
       user: { primaryEmail: string };
     };
-    expect(body.roles).toEqual(['admin', 'user']);
+    expect(body.roles).toEqual(['admin', 'user', 'developer']);
     expect(body.user.primaryEmail).toBe(email);
   });
 

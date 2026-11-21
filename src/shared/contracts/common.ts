@@ -104,7 +104,8 @@ export const ApiScopeSchema = z.enum([
   /** Reads and edits the org's brand kit: web logo, accent, mark level. */
   'brand:manage',
 ]);
-export const RoleSchema = z.enum(['admin', 'user']);
+/** `developer` comes from the Pocket ID developer group; platform admins have it implied. */
+export const RoleSchema = z.enum(['admin', 'user', 'developer']);
 
 /** Sandbox: test passes, keys and events never mix with live ones in lists or metrics. */
 export const ModeSchema = z.enum(['live', 'test']);

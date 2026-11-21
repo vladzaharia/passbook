@@ -47,6 +47,13 @@ oidc.addUser({
   name: 'E2E Builder',
   groups: ['wallet-users'],
 });
+// In the developer group but no organization: gets Developers and no Admin.
+oidc.addUser({
+  sub: 'e2e-developer',
+  email: 'developer@example.test',
+  name: 'E2E Developer',
+  groups: ['wallet-users', 'passbook-developers'],
+});
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 
 createServer(async (req, res) => {

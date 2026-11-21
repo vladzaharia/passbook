@@ -635,6 +635,12 @@
     "fix": "Sign in with Polaris ID at the signInUrl in the problem, then send the request again. API keys are not affected.",
     "retryable": false
   },
+  "DEVELOPER_ACCESS_REQUIRED": {
+    "title": "Developer access required",
+    "when": "A signed-in person without developer access called a developer sandbox or Try it route.",
+    "fix": "Ask an administrator to add you to the developer group in Polaris ID, then sign in again.",
+    "retryable": false
+  },
   "IDENTITY_PLATFORM_ENV_MISMATCH": {
     "title": "Platform identity mismatch",
     "when": "The platform identity row does not match the deployed signing identity.",

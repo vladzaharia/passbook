@@ -179,3 +179,9 @@ export const DeveloperFunnelSchema = z.object({
   ttfpSamples: z.number().int(),
 });
 export type DeveloperFunnel = z.infer<typeof DeveloperFunnelSchema>;
+
+/** `email`: an email-link session, which opens no developer features. `none`: signed in without the role. */
+export const DeveloperAccessSchema = z.object({
+  access: z.enum(['yes', 'none', 'email']),
+  signInUrl: z.string().optional(),
+});

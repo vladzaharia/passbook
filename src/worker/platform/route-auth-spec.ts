@@ -44,6 +44,8 @@ export type RouteAuth =
        * grace. `any` admits an email link (holder features); `strict` takes no grace.
        */
       signIn?: 'any' | 'strict';
+      /** Needs developer access (the `developer` role, or a platform admin): else 403 DEVELOPER_ACCESS_REQUIRED. */
+      developer?: true;
     }
   /** A platform admin session. Keys never pass until a platform key kind exists. */
   | { platform: PlatformScope };

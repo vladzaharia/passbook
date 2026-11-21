@@ -66,7 +66,7 @@ describe('oidc sign-in', () => {
       csrfToken: string;
     };
     expect(body.authenticated).toBe(true);
-    expect(body.roles).toEqual(['admin', 'user']);
+    expect(body.roles).toEqual(['admin', 'user', 'developer']);
     const sid = jar.get('__Host-wallet_sid') ?? '';
     const rows = await all<{ id_hash: string; roles: string }>(
       h.env.DB,
@@ -92,7 +92,11 @@ describe('oidc sign-in', () => {
     const jar: Jar = new Map();
     const { res } = await oidcSignIn(h, jar, person(['wallet_admins']));
     expect(res.status).toBe(302);
-    expect(((await session(jar)) as { roles: string[] }).roles).toEqual(['admin', 'user']);
+    expect(((await session(jar)) as { roles: string[] }).roles).toEqual([
+      'admin',
+      'user',
+      'developer',
+    ]);
   });
 
   it('refuses users in neither group and creates nothing', async () => {
@@ -123,7 +127,7 @@ describe('oidc sign-in', () => {
 
   it('never grants a role whose group variable is unset', async () => {
     h.restore();
-    h = await harness({ OIDC_ADMIN_GROUP: '' });
+    h = await harness({ OIDC_PLATFORM_ADMIN_GROUP: '' });
     const jar: Jar = new Map();
     expect((await oidcSignIn(h, jar, person(['wallet-admins']))).res.status).toBe(303);
     expect((await oidcSignIn(h, jar, person(['wallet-admins', 'wallet-users']))).res.status).toBe(
@@ -131,7 +135,7 @@ describe('oidc sign-in', () => {
     );
     expect(((await session(jar)) as { roles: string[] }).roles).toEqual(['user']);
     h.restore();
-    h = await harness({ OIDC_ADMIN_GROUP: '', OIDC_USER_GROUP: '' });
+    h = await harness({ OIDC_PLATFORM_ADMIN_GROUP: '', OIDC_USER_GROUP: '' });
     expect(
       (await oidcSignIn(h, new Map(), person(['wallet-users', 'wallet-admins']))).res.status,
     ).toBe(303);
@@ -164,7 +168,7 @@ describe('oidc sign-in', () => {
     });
     const body = (await session(jar)) as { user: { id: string }; roles: string[] };
     expect(body.user.id).toBe(id1);
-    expect(body.roles).toEqual(['admin', 'user']);
+    expect(body.roles).toEqual(['admin', 'user', 'developer']);
     const row = await first<{ groups: string }>(
       h.env.DB,
       'SELECT groups FROM auth_identities WHERE subject = ?',

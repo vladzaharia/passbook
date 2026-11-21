@@ -69,6 +69,7 @@
   "delivery.getDelivery",
   "developer.deleteSandbox",
   "developer.deleteTryToken",
+  "developer.getAccess",
   "developer.getLog",
   "developer.getLogs",
   "developer.getRail",

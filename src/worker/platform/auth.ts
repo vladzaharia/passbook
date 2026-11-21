@@ -9,6 +9,7 @@ import {
   type RoleSchema,
 } from '../../shared/contracts/common.ts';
 import type { SignInAmr, SignInLevel } from '../../shared/sign-in.ts';
+import { hasDeveloperAccess } from '../../shared/spaces.ts';
 import {
   authorityUnproven,
   capabilityState,
@@ -237,6 +238,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const feature = 'platform' in auth ? undefined : auth.feature;
   const tillKey = 'scope' in auth && auth.tillKey === true;
   const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
+  const developer = 'human' in auth && auth.developer === true;
   const sessionKind = sessionKindOf(auth);
   const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
@@ -273,6 +275,13 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       return next();
     }
     const session = await sessionOrThrow(c, level);
+    if (developer && !hasDeveloperAccess(session.roles)) {
+      reportDenied(c, 'FORBIDDEN', session);
+      throw new ForbiddenError(
+        "You don't have developer access. Ask an administrator.",
+        'DEVELOPER_ACCESS_REQUIRED',
+      );
+    }
     if (sessionKind === 'admin') requireAdminRole(c, session);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };

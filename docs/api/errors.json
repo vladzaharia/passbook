@@ -862,6 +862,15 @@
       ]
     },
     {
+      "code": "DEVELOPER_ACCESS_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "DEVICE_INVALID",
       "statuses": [
         400

@@ -319,6 +319,12 @@
     "sdk": false,
     "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
   },
+  "developer.getAccess": {
+    "resource": "developer.access",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal access: a signed-in person in a browser, not an integration."
+  },
   "developer.getLog": {
     "resource": "developer.requestLogs",
     "method": "retrieve",
