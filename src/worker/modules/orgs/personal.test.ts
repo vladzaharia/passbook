@@ -285,7 +285,7 @@ describe('guard rails', () => {
     const refused = await call('POST', '', { slug: 'personal-squat', name: 'Squat' });
     expect(refused.status).toBe(400);
     expect(((await refused.json()) as { code: string }).code).toBe('ORG_SLUG_RESERVED');
-    const ok = await call('POST', '', { slug: 'regular-org', name: 'Regular' });
+    const ok = await call('POST', '', { slug: 'regular-org', name: 'Regular', addMe: false });
     const { id } = (await ok.json()) as { id: string };
     const rename = await call('PATCH', `/${id}`, { slug: 'personal-regular' });
     expect(rename.status).toBe(403);
