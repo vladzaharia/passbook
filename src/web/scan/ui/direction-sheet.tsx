@@ -31,7 +31,7 @@ export function DirectionSheet({
       <SheetContent title={ACCESS_COPY.direction.title} className="scan-detail-sheet">
         <div className="scan-dir-sheet">
           <RadioGroup
-            legend={ACCESS_COPY.direction.title}
+            legend={<span className="sr-only">{ACCESS_COPY.direction.title}</span>}
             value={value}
             onValueChange={(next) => onPick(next === 'auto' ? null : (next as Direction))}
             options={ROWS.map(({ key, Glyph }) => ({
