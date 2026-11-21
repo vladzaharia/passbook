@@ -198,7 +198,6 @@ export function TemplateStep({
               ? 'No eligible templates on this page'
               : 'No eligible templates for this organization and mode'
           }
-          description="Make one from a blueprint, or release one in this mode."
           action={browse}
         />
       </div>
