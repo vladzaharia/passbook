@@ -81,6 +81,7 @@ import {
 
 export { ScanApiError } from './errors.ts';
 export type { ScanApiDeps } from './scan-api-support.ts';
+
 const BASE = '/api/v1/scan';
 
 export function createScanApi(deps: ScanApiDeps) {

@@ -45,7 +45,7 @@ export function StaffPinReset({
     }
     setBusy(true);
     try {
-      await api.staffSetPin({ pin: digits });
+      await api.staffSetPin(digits);
       await refetch();
     } catch (cause) {
       setFirst(null);

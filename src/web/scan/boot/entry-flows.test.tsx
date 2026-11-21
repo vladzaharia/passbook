@@ -282,7 +282,7 @@ describe('a shared PIN: choosing a new one', () => {
     expect(screen.getByText('Enter it again')).toBeInTheDocument();
     await key(user, '497205');
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
-    expect(setPin).toHaveBeenCalledExactlyOnceWith({ pin: '497205' });
+    expect(setPin).toHaveBeenCalledExactlyOnceWith('497205');
   });
   it('says when the two entries differ, and sends nothing', async () => {
     const setPin = vi.fn<ScanApi['staffSetPin']>();
