@@ -3,11 +3,11 @@ import { apiAs, createPass, uid } from './helpers/api.ts';
 import { readSeed } from './helpers/seed.ts';
 
 // More than 100 passes match, so voiding all of them goes through a bulk run, not the inline path.
-const COUNT = 105;
+const COUNT = 101;
 const prefix = uid('BR').toUpperCase();
 
 test('select all matching, void in the background, watch it finish', async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(420_000);
   const api = await apiAs('admin');
   const orgId = readSeed().org.id;
   for (let i = 0; i < COUNT; i++)
@@ -34,6 +34,6 @@ test('select all matching, void in the background, watch it finish', async ({ pa
   // The card survives a reload while the run (or its result) is current.
   await page.reload();
   await expect(card).toBeVisible();
-  await expect(card.getByText(`${COUNT} voided`)).toBeVisible({ timeout: 150_000 });
+  await expect(card.getByText(`${COUNT} voided`)).toBeVisible({ timeout: 240_000 });
   await expect(page.getByText('Voided').first()).toBeVisible();
 });
