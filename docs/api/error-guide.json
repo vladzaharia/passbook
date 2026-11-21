@@ -1073,16 +1073,16 @@
     "fix": "Check orgId with GET /api/v1/orgs.",
     "retryable": false
   },
-  "ORG_REQUIRED": {
-    "title": "Organization required",
-    "when": "The request spans organizations and does not name one.",
-    "fix": "Send orgId with the request, or use a key scoped to one organization.",
-    "retryable": false
-  },
   "ORG_PERSONAL_SINGLE_MEMBER": {
     "title": "Personal organization has one member",
     "when": "You invited a member to, or revoked the owner of, a personal organization.",
     "fix": "Use a regular organization to work with others.",
+    "retryable": false
+  },
+  "ORG_REQUIRED": {
+    "title": "Organization required",
+    "when": "The request spans organizations and does not name one.",
+    "fix": "Send orgId with the request, or use a key scoped to one organization.",
     "retryable": false
   },
   "ORG_SLUG_RESERVED": {
@@ -1577,6 +1577,12 @@
     "fix": "Resume the session, then scan again.",
     "retryable": false
   },
+  "SCANNING_SESSION_REMOVE_DEVICES": {
+    "title": "Devices stay",
+    "when": "removeDevices was sent without ending the session.",
+    "fix": "Set status to ended, or leave removeDevices out.",
+    "retryable": false
+  },
   "SCANNING_SESSION_SCOPE_INVALID": {
     "title": "Session scope invalid",
     "when": "The session's scope or settings are invalid, so devices cannot be added.",
@@ -1763,10 +1769,46 @@
     "fix": "Correct the settings named in issues, then retry.",
     "retryable": false
   },
+  "SCAN_SETUP_CHECKS_FAILED": {
+    "title": "Setup has problems",
+    "when": "A check with level error stops the setup.",
+    "fix": "Fix what the issues name, then send it again.",
+    "retryable": false
+  },
   "SCAN_SETUP_CONFLICT": {
     "title": "Template already scanned",
     "when": "Another session already scans this template.",
     "fix": "Remove the template from the other session, or reuse that session.",
+    "retryable": true
+  },
+  "SCAN_SETUP_CONSOLE_ONLY": {
+    "title": "Console sign-in needed",
+    "when": "A key asked for new places or staff.",
+    "fix": "Use existing places, or run the setup from the console.",
+    "retryable": false
+  },
+  "SCAN_SETUP_INVALID": {
+    "title": "Setup needs changes",
+    "when": "The setup names something that does not exist or breaks a rule.",
+    "fix": "Fix the paths in issues, then send it again.",
+    "retryable": false
+  },
+  "SCAN_SETUP_KEY_REQUIRED": {
+    "title": "Idempotency-Key missing",
+    "when": "A setup that writes needs an Idempotency-Key header.",
+    "fix": "Send one, or add dryRun=true to only see the plan.",
+    "retryable": false
+  },
+  "SCAN_SETUP_KEY_REUSED": {
+    "title": "Key used for another setup",
+    "when": "This Idempotency-Key went with a different body.",
+    "fix": "Use a new key for a different setup.",
+    "retryable": false
+  },
+  "SCAN_SETUP_NAME_TAKEN": {
+    "title": "Name taken meanwhile",
+    "when": "A name or key was taken while the setup ran. Nothing was written.",
+    "fix": "Send the setup again.",
     "retryable": true
   },
   "SCAN_STAFF_CHANGED": {

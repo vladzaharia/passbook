@@ -40,11 +40,9 @@ import { consoleSessionSummary } from './summary-session.ts';
 import { sessionAuthority } from './target-authority.ts';
 
 export const scanningSessionsRoutes = createRouter();
-/** The one-call setup declares its own `auth` (a console session or a `scanning:write` key): the guard steps aside for it. */
-const SETUP = /^\/api\/v1\/scanning-sessions\/setup$/;
-guard(scanningSessionsRoutes, (c, next) =>
-  c.req.method === 'POST' && SETUP.test(c.req.path) ? next() : requireTenantSession(c, next),
-);
+/** The one-call setup declares its own `auth` (a console session or a `scanning:write` key): it is registered before the session guard, which applies to what follows. */
+registerScanSetup(scanningSessionsRoutes);
+guard(scanningSessionsRoutes, requireTenantSession);
 register(
   scanningSessionsRoutes,
   'scanners',
@@ -138,7 +136,6 @@ register(
     );
   },
 );
-registerScanSetup(scanningSessionsRoutes);
 register(
   scanningSessionsRoutes,
   'scanners',

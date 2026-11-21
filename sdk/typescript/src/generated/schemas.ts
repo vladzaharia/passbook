@@ -2588,6 +2588,229 @@ export type ScanSession = {
   counts: ScanCounts;
 };
 
+export type ScanSetupAnswer = {
+  replayed: boolean;
+  mode: "live" | "test";
+  sessions: Array<{
+    id: string;
+    ref: string;
+    name: string;
+    devices: Array<{
+      id: string;
+      name: string;
+      pairing: {
+        code: string;
+        url: string;
+        expiresAt: number;
+      } | null;
+    }>;
+  }>;
+  pairingReissued?: boolean;
+  zones: Array<{
+    id: string;
+    ref: string | null;
+    name: string;
+    created: boolean;
+  }>;
+  events: Array<{
+    id: string;
+    ref: string | null;
+    name: string;
+    created: boolean;
+  }>;
+  staff: Array<{
+    id: string;
+    name: string;
+    role: "door" | "desk" | "manager";
+    pin: string | null;
+  }>;
+  checks: Array<{
+    code: "NO_EXIT" | "NO_MANAGER" | "NO_STAFF" | "PLAN_MISSES_PLACE" | "HOURS_DIFFER" | "EVENT_NO_PASSES" | "READER_BOTH" | "PLACE_ON_EVENT" | "TEST_ONLY" | "DIRECTION_NEEDS_TRACKING";
+    level: "error" | "warn" | "info";
+    message: string;
+    params?: Record<string, string>;
+    door?: string;
+    subject?: {
+      kind: "session" | "device" | "zone" | "event" | "template" | "staff";
+      ref: string;
+    };
+    fix?: {
+      kind: "device_direction";
+      device: string;
+      direction: "in" | "both";
+    } | {
+      kind: "add_device";
+      session: string;
+      direction: "out";
+    } | {
+      kind: "add_staff";
+      role: "manager";
+    } | {
+      kind: "remove_place";
+      session: string;
+    } | {
+      kind: "track_in_out";
+      session: string;
+    } | {
+      kind: "open_template";
+      templateId: string;
+    };
+  }>;
+} | {
+  mode: "live" | "test";
+  timeZone: string;
+  preset: "front_desk" | "event_night" | "venue" | null;
+  zones: Array<{
+    occupancy: "off" | "track" | "enforce";
+    capacity: number | null;
+    maxStayMinutes: number | null;
+    hardLimit?: boolean;
+    clearAt: string | null;
+    ref: string;
+    key: string;
+    name: string;
+    parent: {
+      ref: string;
+    } | {
+      id: string;
+    } | null;
+    timeZone: string | null;
+  }>;
+  events: Array<{
+    ref: string;
+    name: string;
+    templateIds: Array<string>;
+    match: {
+      input: string;
+      values: Array<string>;
+    } | null;
+    opensAt: number;
+    closesAt: number;
+    timeZone: string;
+    capacity: number | null;
+    reentry: boolean;
+  }>;
+  staff: Array<{
+    ref: string;
+    name: string;
+    role: "door" | "desk" | "manager";
+  }>;
+  sessions: Array<{
+    ref: string;
+    name: string;
+    timeZone: string;
+    accepts: {
+      templateIds: Array<string>;
+      events: Array<{
+        ref: string;
+      } | {
+        id: string;
+      }>;
+    } | null;
+    zones: Array<{
+      ref: string;
+    } | {
+      id: string;
+    }>;
+    hours: {
+      mon?: Array<string>;
+      tue?: Array<string>;
+      wed?: Array<string>;
+      thu?: Array<string>;
+      fri?: Array<string>;
+      sat?: Array<string>;
+      sun?: Array<string>;
+      dates?: Record<string, Array<string>>;
+    } | null;
+    settings: {
+      checkIn?: {
+        mode?: "single" | "daily" | "unlimited" | "in_out";
+        eventId?: string | null;
+        validFrom?: number | null;
+        validUntil?: number | null;
+        durationMinutes?: number | null;
+        durationFrom?: "first_scan" | "issued";
+        days?: number | null;
+      };
+      direction?: "in" | "out" | "both";
+      showPhoto?: boolean;
+      acceptAllTemplates?: boolean;
+      flow?: "auto" | "choose";
+      defaultActionId?: string | null;
+      roleWithoutSignIn?: "door" | "desk";
+      staffSignIn?: boolean;
+      letInAgain?: "anyone" | "manager" | "never";
+      reader?: "none" | "barcode" | "nfc";
+      lookup?: boolean;
+      offline?: boolean;
+      whenOffline?: "stop" | "decide" | "list";
+      dailyAmount?: number | null;
+      deskActions?: boolean;
+      hardLimit?: boolean;
+      approvals?: "managers" | "desk";
+      tags?: {
+        assign?: "desk" | "manager" | "never";
+        assignAll?: "desk" | "manager" | "never";
+        level?: "off" | "basic" | "secure";
+        types?: Array<string | "standard">;
+        confirmBasic?: "none" | "staff" | "manager";
+      };
+      customer?: {
+        welcome?: string;
+        refusedLine?: string;
+        greet?: boolean;
+        showReady?: boolean;
+        showDraft?: boolean;
+      };
+    };
+    devices: Array<{
+      name: string;
+      surface: "auto" | "phone" | "operator" | "desk" | "customer";
+      overrides: {
+        flow?: "auto" | "choose";
+        reader?: "none" | "barcode" | "nfc";
+        direction?: "in" | "out" | "both";
+        lookup?: boolean;
+        showPhoto?: boolean;
+      };
+      ref: string;
+      role: "scan" | "customer" | "monitor";
+    }>;
+  }>;
+  checks: Array<{
+    code: "NO_EXIT" | "NO_MANAGER" | "NO_STAFF" | "PLAN_MISSES_PLACE" | "HOURS_DIFFER" | "EVENT_NO_PASSES" | "READER_BOTH" | "PLACE_ON_EVENT" | "TEST_ONLY" | "DIRECTION_NEEDS_TRACKING";
+    level: "error" | "warn" | "info";
+    message: string;
+    params?: Record<string, string>;
+    door?: string;
+    subject?: {
+      kind: "session" | "device" | "zone" | "event" | "template" | "staff";
+      ref: string;
+    };
+    fix?: {
+      kind: "device_direction";
+      device: string;
+      direction: "in" | "both";
+    } | {
+      kind: "add_device";
+      session: string;
+      direction: "out";
+    } | {
+      kind: "add_staff";
+      role: "manager";
+    } | {
+      kind: "remove_place";
+      session: string;
+    } | {
+      kind: "track_in_out";
+      session: string;
+    } | {
+      kind: "open_template";
+      templateId: string;
+    };
+  }>;
+};
+
 export type ScanSetupsCreateParams = {
   orgId: string;
   name: string;
@@ -3261,7 +3484,7 @@ export type ScanningSessionsCreateParams = {
 };
 
 export type ScanningSessionsDevicesCreateParams = {
-  name: string;
+  name?: string;
   surface?: "auto" | "phone" | "operator" | "desk" | "customer";
   overrides?: {
     flow?: "auto" | "choose";
@@ -3295,6 +3518,117 @@ export type ScanningSessionsOverrideHoursParams = {
 } | {
   action: "clear";
   revision?: number;
+};
+
+export type ScanningSessionsSetupParams = {
+  orgId: string;
+  preset?: "front_desk" | "event_night" | "venue";
+  timeZone?: string;
+  places?: Array<{
+    zoneId: string;
+  } | {
+    ref: string;
+    name: string;
+    key?: string;
+    inside?: string;
+    max?: number;
+    count?: boolean;
+    tapOut?: boolean;
+    maxStayMinutes?: number;
+    clearAt?: string;
+  }>;
+  events?: Array<{
+    eventId: string;
+  } | {
+    fromTemplate: string;
+    ref?: string;
+  } | {
+    ref: string;
+    name: string;
+    templateIds: Array<string>;
+    opensAt: number;
+    closesAt: number;
+    max?: number;
+    reentry?: boolean;
+  }>;
+  staff?: Array<{
+    name: string;
+    role: "door" | "desk" | "manager";
+  }>;
+  doors: Array<{
+    name: string;
+    place?: string | null;
+    admits: {
+      any: true;
+    } | {
+      templateIds?: Array<string>;
+      events?: Array<string>;
+    };
+    hours?: "always" | {
+      every?: Array<string>;
+      mon?: Array<string>;
+      tue?: Array<string>;
+      wed?: Array<string>;
+      thu?: Array<string>;
+      fri?: Array<string>;
+      sat?: Array<string>;
+      sun?: Array<string>;
+      closed?: Array<string>;
+    };
+    scanners?: {
+      by: "anyone";
+      as?: "door" | "desk";
+    } | {
+      by: "staff";
+    };
+    devices?: Array<{
+      name?: string;
+      layout?: "auto" | "phone" | "operator" | "customer";
+      direction?: "in" | "out" | "both";
+      reader?: "camera" | "barcode";
+    }>;
+    more?: {
+      checkIn?: {
+        mode?: "single" | "daily" | "unlimited" | "in_out";
+        eventId?: string | null;
+        validFrom?: number | null;
+        validUntil?: number | null;
+        durationMinutes?: number | null;
+        durationFrom?: "first_scan" | "issued";
+        days?: number | null;
+      };
+      direction?: "in" | "out" | "both";
+      showPhoto?: boolean;
+      acceptAllTemplates?: boolean;
+      flow?: "auto" | "choose";
+      defaultActionId?: string | null;
+      roleWithoutSignIn?: "door" | "desk";
+      staffSignIn?: boolean;
+      letInAgain?: "anyone" | "manager" | "never";
+      reader?: "none" | "barcode" | "nfc";
+      lookup?: boolean;
+      offline?: boolean;
+      whenOffline?: "stop" | "decide" | "list";
+      dailyAmount?: number | null;
+      deskActions?: boolean;
+      hardLimit?: boolean;
+      approvals?: "managers" | "desk";
+      tags?: {
+        assign?: "desk" | "manager" | "never";
+        assignAll?: "desk" | "manager" | "never";
+        level?: "off" | "basic" | "secure";
+        types?: Array<string | "standard">;
+        confirmBasic?: "none" | "staff" | "manager";
+      };
+      customer?: {
+        welcome?: string;
+        refusedLine?: string;
+        greet?: boolean;
+        showReady?: boolean;
+        showDraft?: boolean;
+      };
+    };
+  }>;
 };
 
 export type ScanningSessionsUpdateParams = {
@@ -3361,6 +3695,7 @@ export type ScanningSessionsUpdateParams = {
     dates?: Record<string, Array<string>>;
   } | null;
   status?: "active" | "paused" | "ended";
+  removeDevices?: boolean;
   revision?: number;
 };
 
