@@ -9,7 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { addDueRecompute } from './occupancy/recompute.ts';
 import { addZoneTapOut } from './occupancy/service.ts';
 import { accessTemplates } from './repo-access.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited } from './repo-admin-grant.ts';
 import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
   addZoneArchive,
@@ -199,8 +199,7 @@ export async function updateZone(
   g.add(
     audited(g, ctx, {
       orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: archive ? 'scan_zone.archive' : restore ? 'scan_zone.restore' : 'scan_zone.update',
       targetType: 'scan_zone',
       targetId: id,

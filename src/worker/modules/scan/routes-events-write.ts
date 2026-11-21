@@ -76,10 +76,7 @@ export function registerEventWrites(router: Router): void {
     async (c) => {
       const input = c.req.valid('json');
       const w = await writer(c, input.orgId, noOrg);
-      return c.json(
-        await createEvent(w.ctx, w.actorId, w.auth.mode, input, w.authority),
-        201,
-      );
+      return c.json(await createEvent(w.ctx, w.actorId, w.auth.mode, input, w.authority), 201);
     },
   );
   register(

@@ -1467,6 +1467,55 @@ class ScanSetupsResource:
         return self._core.request("GET", f"/api/v1/scan-setups/{_p(id)}", result=m.ScanSetupsRetrieveResult, **opts)
 
 
+class ScanZonesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def archive(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesArchiveResult:
+        """Archive a zone and the zones below it `POST /api/v1/scan-zones/{id}/archive`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/{_p(id)}/archive", result=m.ScanZonesArchiveResult, **opts)
+
+    def create(
+        self,
+        body: m.ScanZonesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesCreateResult:
+        """Create a zone `POST /api/v1/scan-zones`"""
+        return self._core.request("POST", "/api/v1/scan-zones", body=body, result=m.ScanZonesCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        archived: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanZonesListItem]:
+        """List zones `GET /api/v1/scan-zones`"""
+        return self._core.paginate("GET", "/api/v1/scan-zones", query={"cursor": cursor, "limit": limit, "archived": archived}, result=m.ScanZonesListResult, cursor_param="cursor", **opts)
+
+    def restore(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesRestoreResult:
+        """Restore a zone and the zones below it `POST /api/v1/scan-zones/{id}/restore`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/{_p(id)}/restore", result=m.ScanZonesRestoreResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanZonesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesUpdateResult:
+        """Edit a zone `PATCH /api/v1/scan-zones/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-zones/{_p(id)}", body=body, result=m.ScanZonesUpdateResult, **opts)
+
+
 class TerminalScansResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2128,6 +2177,7 @@ class Resources:
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)
+        self.scan_zones = ScanZonesResource(core)
         self.terminal = TerminalResource(core)
         self.scanning_sessions = ScanningSessionsResource(core)
         self.scans = ScansResource(core)

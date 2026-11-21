@@ -1581,6 +1581,57 @@ func (r *ScanSetupsResource) Retrieve(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
+type ScanZonesResource struct {
+	c *core
+}
+
+func newScanZonesResource(c *core) *ScanZonesResource {
+	return &ScanZonesResource{
+		c: c,
+	}
+}
+
+// Archive Archive a zone and the zones below it `POST /api/v1/scan-zones/{id}/archive`
+func (r *ScanZonesResource) Archive(ctx context.Context, id string, opts ...RequestOption) (*ScanZonesArchiveResult, error) {
+	var out ScanZonesArchiveResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones/" + pathEscape(id) + "/archive"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Create Create a zone `POST /api/v1/scan-zones`
+func (r *ScanZonesResource) Create(ctx context.Context, body *ScanZonesCreateBody, opts ...RequestOption) (*ScanZonesCreateResult, error) {
+	var out ScanZonesCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List zones `GET /api/v1/scan-zones`
+func (r *ScanZonesResource) List(ctx context.Context, query *ScanZonesListQuery, opts ...RequestOption) *Pager[ScanZonesListItem] {
+	return newPager[ScanZonesListItem](r.c, call{method: "GET", path: "/api/v1/scan-zones", query: queryValues(query)}, "cursor", opts)
+}
+
+// Restore Restore a zone and the zones below it `POST /api/v1/scan-zones/{id}/restore`
+func (r *ScanZonesResource) Restore(ctx context.Context, id string, opts ...RequestOption) (*ScanZonesRestoreResult, error) {
+	var out ScanZonesRestoreResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones/" + pathEscape(id) + "/restore"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Edit a zone `PATCH /api/v1/scan-zones/{id}`
+func (r *ScanZonesResource) Update(ctx context.Context, id string, body *ScanZonesUpdateBody, opts ...RequestOption) (*ScanZonesUpdateResult, error) {
+	var out ScanZonesUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scan-zones/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type TerminalScansResource struct {
 	c *core
 }
@@ -2217,6 +2268,7 @@ type Resources struct {
 	RollCalls        *RollCallsResource
 	ScanEvents       *ScanEventsResource
 	ScanSetups       *ScanSetupsResource
+	ScanZones        *ScanZonesResource
 	Terminal         *TerminalResource
 	ScanningSessions *ScanningSessionsResource
 	Scans            *ScansResource
@@ -2248,6 +2300,7 @@ func newResources(c *core) Resources {
 		RollCalls:        newRollCallsResource(c),
 		ScanEvents:       newScanEventsResource(c),
 		ScanSetups:       newScanSetupsResource(c),
+		ScanZones:        newScanZonesResource(c),
 		Terminal:         newTerminalResource(c),
 		ScanningSessions: newScanningSessionsResource(c),
 		Scans:            newScansResource(c),

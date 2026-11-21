@@ -18,6 +18,7 @@ import { PrintJobsResource } from './resources/print-jobs.ts';
 import { RollCallsResource } from './resources/roll-calls.ts';
 import { ScanEventsResource } from './resources/scan-events.ts';
 import { ScanSetupsResource } from './resources/scan-setups.ts';
+import { ScanZonesResource } from './resources/scan-zones.ts';
 import { TerminalResource } from './resources/terminal.ts';
 import { ScanningSessionsResource } from './resources/scanning-sessions.ts';
 import { ScansResource } from './resources/scans.ts';
@@ -48,6 +49,7 @@ export class Resources {
   readonly rollCalls: RollCallsResource;
   readonly scanEvents: ScanEventsResource;
   readonly scanSetups: ScanSetupsResource;
+  readonly scanZones: ScanZonesResource;
   readonly terminal: TerminalResource;
   readonly scanningSessions: ScanningSessionsResource;
   readonly scans: ScansResource;
@@ -76,6 +78,7 @@ export class Resources {
     this.rollCalls = new RollCallsResource(core);
     this.scanEvents = new ScanEventsResource(core);
     this.scanSetups = new ScanSetupsResource(core);
+    this.scanZones = new ScanZonesResource(core);
     this.terminal = new TerminalResource(core);
     this.scanningSessions = new ScanningSessionsResource(core);
     this.scans = new ScansResource(core);

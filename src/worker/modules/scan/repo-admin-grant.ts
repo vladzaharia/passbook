@@ -50,6 +50,8 @@ const KEY_PURPOSES: ReadonlySet<string> = new Set([
   'org_mode.scan.session.create',
   'org_mode.scan.session.update',
   SETUP_APPLY,
+  'org.scan.zone.create',
+  'org.scan.zone.update',
 ]);
 
 /**
@@ -73,6 +75,8 @@ export function grantAuthorityOf(
     (admin &&
       (purpose !== SETUP_APPLY || authority.keyOrgId !== orgId || authority.mode !== 'live')) ||
     (!admin && authority.scope !== 'scanning:write') ||
+    // Zones belong to the org, not a mode: only a live key writes them.
+    (purpose?.startsWith('org.scan.zone.') === true && authority.mode !== 'live') ||
     authority.keyId !== actorId ||
     authority.orgId !== orgId
   )

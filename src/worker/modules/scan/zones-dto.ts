@@ -9,7 +9,8 @@ import { checkedAtByZone, orgZoneRows, type ZoneRow } from './repo-zones.ts';
 import { plansByZone } from './zones-plans.ts';
 import { depthOf, effectiveTimeZone, indexZones } from './zones-tree.ts';
 
-export type Authority = Extract<TenantPassWrite, { kind: 'session' }>;
+/** A console session, or a key whose verified scope `tenantAuthorityOf` proved for the capability. */
+export type Authority = TenantPassWrite;
 export const notFound = () => new NotFoundError('Zone not found.', 'ZONE_NOT_FOUND');
 
 export function assertAuthority(
@@ -18,9 +19,8 @@ export function assertAuthority(
   capability: 'scanning:read' | 'scanning:manage',
 ): void {
   if (
-    authority.kind !== 'session' ||
     authority.orgId !== orgId ||
-    authority.capability !== capability
+    (authority.kind === 'session' && authority.capability !== capability)
   )
     throw new ForbiddenError();
 }

@@ -5684,6 +5684,255 @@
   }
  },
  {
+  "id": "scan-zones.getScanZones",
+  "call": "scan_zones.list",
+  "http": "GET",
+  "path": "/api/v1/scan-zones",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "occupancy": "off",
+     "capacity": 0,
+     "maxStayMinutes": 0,
+     "clearAt": "x",
+     "id": "x",
+     "orgId": "x",
+     "key": "x",
+     "name": "x",
+     "parentId": "x",
+     "timeZone": "x",
+     "effectiveTimeZone": "x",
+     "sort": 0,
+     "depth": 0,
+     "sessions": 0,
+     "checkedAt": [
+      {
+       "id": "x",
+       "name": "x"
+      }
+     ],
+     "plans": [
+      {
+       "templateId": "x",
+       "templateName": "x",
+       "planId": "x",
+       "label": "x"
+      }
+     ],
+     "inNow": 0,
+     "archivedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "scan-zones.postScanZones",
+  "call": "scan_zones.create",
+  "http": "POST",
+  "path": "/api/v1/scan-zones",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "key": "x",
+   "name": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "scan-zones.patchScanZonesById",
+  "call": "scan_zones.update",
+  "http": "PATCH",
+  "path": "/api/v1/scan-zones/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "scan-zones.postScanZonesByIdArchive",
+  "call": "scan_zones.archive",
+  "http": "POST",
+  "path": "/api/v1/scan-zones/{id}/archive",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "scan-zones.postScanZonesByIdRestore",
+  "call": "scan_zones.restore",
+  "http": "POST",
+  "path": "/api/v1/scan-zones/{id}/restore",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
+  }
+ },
+ {
   "id": "scan.postScanActions",
   "call": "terminal.act",
   "http": "POST",
