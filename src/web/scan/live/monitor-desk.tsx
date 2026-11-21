@@ -68,7 +68,7 @@ export function StaffControl({
         // A person who has not taken their new PIN cannot dismiss the sheet.
         onOpenChange={(next) => !reset && setOpen(next)}
       >
-        <SheetContent title="Staff sign-in" hideTitle>
+        <SheetContent title="Staff sign-in" hideTitle hideClose={reset}>
           {reset ? (
             <StaffPinReset session={session} api={api} refetch={refetch} />
           ) : (

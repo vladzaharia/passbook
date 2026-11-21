@@ -33,6 +33,8 @@ export interface SheetContentProps
   title: ReactNode;
   side?: 'left' | 'right';
   hideTitle?: boolean;
+  /** No Close button: the sheet cannot be dismissed (a step that must be finished). */
+  hideClose?: boolean;
   /** Visible header content (the wordmark on the nav sheet); the title stays the name. */
   header?: ReactNode;
 }
@@ -104,6 +106,7 @@ export function SheetContent({
   title,
   side = 'right',
   hideTitle,
+  hideClose,
   header,
   className,
   children,
@@ -138,12 +141,14 @@ export function SheetContent({
           <DialogPrimitive.Title className={cn(OVERLAY_TITLE, (hideTitle || header) && 'sr-only')}>
             {title}
           </DialogPrimitive.Title>
-          <DialogPrimitive.Close
-            aria-label="Close"
-            className="relative ml-auto inline-flex size-8 items-center justify-center rounded-md text-fg-muted wl-colors hover:bg-state-hover-tint hover:text-fg-strong pointer-coarse:size-11"
-          >
-            <X aria-hidden className="size-4" />
-          </DialogPrimitive.Close>
+          {hideClose ? null : (
+            <DialogPrimitive.Close
+              aria-label="Close"
+              className="relative ml-auto inline-flex size-8 items-center justify-center rounded-md text-fg-muted wl-colors hover:bg-state-hover-tint hover:text-fg-strong pointer-coarse:size-11"
+            >
+              <X aria-hidden className="size-4" />
+            </DialogPrimitive.Close>
+          )}
         </div>
         <div className="min-h-0 flex-1 overflow-auto">{children}</div>
       </DialogPrimitive.Content>
