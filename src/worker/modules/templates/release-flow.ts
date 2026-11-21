@@ -20,6 +20,7 @@ import {
 import { loadReleaseState } from './release-state-facts.ts';
 import { approveCandidate, createCandidate, publishRelease } from './releases.ts';
 import { listVersions } from './repo.ts';
+import { countEligibleReviewers } from './repo-sole-reviewer.ts';
 
 type ModeResult = NonNullable<ReleaseResult['modes'][Mode]>;
 
@@ -116,11 +117,15 @@ async function runMode(
     } catch (error) {
       // Why: a reviewer added since the plan was made takes the sole rule away (the grant refuses it
       // as a conflict); the caller needs a review.
-      const lostSole =
+      const refused =
         mode === 'live' &&
         ((error instanceof ForbiddenError && error.code === 'TEMPLATE_SELF_APPROVAL') ||
           (error instanceof ConflictError && error.code === 'TEMPLATE_RELEASE_CONFLICT'));
-      if (lostSole) throw await reviewRequired(ctx, p, mode);
+      // Why: only a changed reviewer set is "review required"; any other conflict keeps its own code.
+      if (refused && (await countEligibleReviewers(ctx.env.DB, p.orgId)) !== 1)
+        throw await reviewRequired(ctx, p, mode);
+      if (error instanceof ForbiddenError && error.code === 'TEMPLATE_SELF_APPROVAL')
+        throw await reviewRequired(ctx, p, mode);
       throw error;
     }
   }
