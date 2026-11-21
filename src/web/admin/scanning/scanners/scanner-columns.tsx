@@ -1,15 +1,10 @@
-import { Ban, QrCode } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import type { ScannerSetup as ScannerDto } from '@/shared/contracts/scan-setups.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
-import { Badge, Button, RowActions, RowLink, StatusPill } from '@/web/ui/index.ts';
+import { Badge, RowLink, StatusPill } from '@/web/ui/index.ts';
 import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
 import { RelTime } from '../../../ui/rel-time.tsx';
 import { acceptsText, scannerStatus } from './labels.ts';
-
-export interface ScannerActions {
-  onPair: (s: ScannerDto) => void;
-  onRevoke: (s: ScannerDto) => void;
-}
 
 /** The second line under a name: what paired, or that nothing has. */
 export const deviceLine = (s: ScannerDto): string =>
@@ -23,29 +18,10 @@ export const deviceLine = (s: ScannerDto): string =>
           ? 'Till · token'
           : (s.pairedLabel ?? 'Not paired');
 
-export function scannerActions(s: ScannerDto, a: ScannerActions) {
-  const revoked = s.status === 'revoked';
-  return [
-    ...(revoked || s.adminSession || s.kind === 'terminal'
-      ? []
-      : [
-          {
-            label: s.status === 'paired' ? 'Pair again' : 'Pair',
-            icon: QrCode,
-            onSelect: () => a.onPair(s),
-          },
-        ]),
-    ...(revoked
-      ? []
-      : [{ label: 'Revoke', icon: Ban, destructive: true, onSelect: () => a.onRevoke(s) }]),
-  ];
-}
-
 export function scannerColumns(
-  a: ScannerActions,
   now: number,
   eventName: (id: string) => string | undefined,
-  canManage: boolean,
+  session: (id: string | undefined) => { id: string; name: string; orgId: string } | undefined,
 ): DataColumnDef<ScannerDto, never>[] {
   return [
     {
@@ -82,6 +58,25 @@ export function scannerColumns(
           <ModePill mode={row.original.mode} compact />
         </span>
       ),
+    },
+    {
+      header: 'Session',
+      id: 'session',
+      meta: { nowrap: true },
+      cell: ({ row }) => {
+        const found = session(row.original.sessionId);
+        return found ? (
+          <Link
+            to="/admin/o/$orgId/scanning/sessions/$sessionId"
+            params={{ orgId: found.orgId, sessionId: found.id }}
+            className="font-medium text-accent-fg"
+          >
+            {found.name}
+          </Link>
+        ) : (
+          <span className="text-fg-muted">—</span>
+        );
+      },
     },
     {
       header: 'Accepts',
@@ -123,32 +118,6 @@ export function scannerColumns(
         ) : (
           <RelTime at={row.original.lastSeenAt} now={now} />
         ),
-    },
-    {
-      header: () => <span className="sr-only">Actions</span>,
-      id: 'actions',
-      cell: ({ row }) => {
-        if (!canManage) return null;
-        const s = row.original;
-        const menu = scannerActions(s, a);
-        // A scanner nobody has paired shows the safe action as a button, the rest in the menu.
-        const unpaired = s.status === 'not_paired' && !s.adminSession && s.kind !== 'terminal';
-        return (
-          <div className="flex items-center justify-end gap-1">
-            {unpaired ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                iconStart={<QrCode aria-hidden />}
-                onClick={() => a.onPair(s)}
-              >
-                Pair
-              </Button>
-            ) : null}
-            <RowActions label={`Actions for ${s.name}`} actions={unpaired ? menu.slice(1) : menu} />
-          </div>
-        );
-      },
     },
   ];
 }

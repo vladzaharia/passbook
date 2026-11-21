@@ -132,6 +132,8 @@ export interface PairTarget {
   mode: Mode;
   name: string;
   orgName: string;
+  /** The scanning session the device belongs to; null for a legacy scanner. */
+  sessionName: string | null;
   credentialEpoch: number;
 }
 
@@ -143,11 +145,13 @@ export const findByPairCode = (db: Db, hash: string, now: number): Promise<PairT
     mode: Mode;
     name: string;
     org_name: string;
+    session_name: string | null;
     credential_epoch: number;
   }>(
     db,
-    `SELECT s.id, s.org_id, s.mode, s.name, o.name AS org_name, s.credential_epoch
+    `SELECT s.id, s.org_id, s.mode, s.name, o.name AS org_name, w.name AS session_name, s.credential_epoch
      FROM scanners s JOIN orgs o ON o.id = s.org_id AND o.status = 'active'
+     LEFT JOIN scanning_devices d ON d.scanner_id = s.id LEFT JOIN scanning_sessions w ON w.id = d.session_id AND w.org_id = d.org_id
      WHERE s.pair_code_hash = ? AND s.pair_expires_at > ? AND s.kind IN ('device','display') AND NOT EXISTS (SELECT 1 FROM scanner_setups m WHERE m.scanner_id=s.id AND m.admin_session=1)`,
     [hash, now],
   ).then((r) =>
@@ -158,6 +162,7 @@ export const findByPairCode = (db: Db, hash: string, now: number): Promise<PairT
           mode: r.mode,
           name: r.name,
           orgName: r.org_name,
+          sessionName: r.session_name,
           credentialEpoch: r.credential_epoch,
         }
       : null,

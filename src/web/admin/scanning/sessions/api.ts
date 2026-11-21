@@ -101,3 +101,11 @@ export function useRevokeSessionDevice(id: string) {
     onSuccess: refresh,
   });
 }
+/** Revokes a device chosen at call time: the pair sheet's one unpaired row. */
+export function useRevokeDeviceById() {
+  const refresh = useRefreshSessions();
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/api/v1/scanners/${id}/revoke`, ScannerSchema),
+    onSuccess: refresh,
+  });
+}

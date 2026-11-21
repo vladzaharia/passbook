@@ -33,7 +33,7 @@ describe('SessionActivity', () => {
         ]}
       />,
     );
-    expect(screen.getByRole('heading', { name: /New York time/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Activity' })).toBeInTheDocument();
     expect(screen.getAllByText('Done')).toHaveLength(2);
     expect(screen.getAllByText(/Door · 1:00\s?AM/)).toHaveLength(2);
     expect(screen.getByText(/· Check out/)).toBeInTheDocument();

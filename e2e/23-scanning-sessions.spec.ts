@@ -181,6 +181,59 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
   }
 });
 
+test('two devices pair from one rolling sheet', async ({ browser }) => {
+  const api = await apiAs('admin');
+  const contexts: BrowserContext[] = [];
+  try {
+    const orgId = readSeed().org.id;
+    const name = uid('Rolling pair');
+    const session = await api.send('POST', '/api/v1/scanning-sessions', {
+      orgId,
+      name,
+      timeZone: 'UTC',
+    });
+    const admin = await browser.newContext({
+      storageState: stateFile('admin'),
+      reducedMotion: 'reduce',
+    });
+    contexts.push(admin);
+    const page = await admin.newPage();
+    await page.goto(`/admin/o/${orgId}/scanning/sessions/${session.id}`);
+    await page.getByRole('button', { name: 'Pair devices', exact: true }).click();
+    const sheet = page.getByRole('dialog', { name: 'Pair devices', exact: true });
+    const codeOf = async () =>
+      ((await sheet.locator('code').first().textContent()) ?? '').replace('-', '');
+    const first = await codeOf();
+    const join = async (code: string) => {
+      const context = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+        reducedMotion: 'reduce',
+      });
+      contexts.push(context);
+      const scanner = await context.newPage();
+      await pairScanner(scanner, code);
+      await expect(scanner.getByTestId('scan-start')).toBeVisible();
+    };
+    await join(first);
+    await expect(sheet.getByText('1 paired', { exact: true })).toBeVisible();
+    await expect.poll(codeOf).not.toBe(first);
+    await join(await codeOf());
+    await expect(sheet.getByText('2 paired', { exact: true })).toBeVisible();
+    await sheet.getByRole('button', { name: 'Done', exact: true }).click();
+    const devices = async () =>
+      (await api.get(`/api/v1/scanning-sessions/${session.id}`)).devices as {
+        paired: boolean;
+        revoked: boolean;
+      }[];
+    expect((await devices()).filter((d) => d.paired)).toHaveLength(2);
+    // Closing revokes the unpaired row; the request settles after the dialog closes.
+    await expect.poll(async () => (await devices()).filter((d) => !d.revoked).length).toBe(2);
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+    await api.dispose();
+  }
+});
+
 test('signed-out people and regular users have pairing without administrator entry', async ({
   browser,
 }) => {
