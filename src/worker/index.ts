@@ -9,6 +9,7 @@ export { Broadcast } from './workflows/broadcast.ts';
 export { BulkReissue } from './workflows/bulk-reissue.ts';
 export { ChannelApply } from './workflows/channel-apply.ts';
 export { ConnectionSync } from './workflows/connection-sync.ts';
+export { IdentityProvision } from './workflows/identity-provision.ts';
 export { OrgExport } from './workflows/org-export.ts';
 export { OrgPurge } from './workflows/org-purge.ts';
 export { PassImport } from './workflows/pass-import.ts';

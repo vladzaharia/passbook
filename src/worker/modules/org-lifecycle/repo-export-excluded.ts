@@ -92,6 +92,8 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   settings: 'org settings, some of them secret: set again in the console',
   identity_certificates:
     'certificate history links to stored credentials: upload the certificate again',
+  identity_handles: 'reserved platform names, kept after a purge',
+  identity_runs: BOOKKEEPING,
   signing_identities: 'certificate and push key links: upload the certificate again',
   tag_enrollments: BOOKKEEPING,
   template_approvals: DERIVED,

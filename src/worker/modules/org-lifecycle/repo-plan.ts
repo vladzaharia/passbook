@@ -58,6 +58,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('pass_imports'),
   inOrg('template_imports'),
   inOrg('workflow_runs'),
+  inOrg('identity_runs'),
   inOrg('idempotency_keys'),
   inOrg('idempotent_requests'),
   { ...inOrg('request_log'), slices: true },
@@ -116,6 +117,7 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
   retention_receipt_anchors: 'the anchor of the receipt chain',
   retention_holds: 'a hold cannot be deleted while its org exists; released before a purge starts',
   pass_credential_tombstones: 'revocation evidence: refs only, no personal data',
+  identity_handles: 'a handle is reserved forever: no reuse after a purge',
   org_entitlements:
     'the stub keeps its plan row: a trigger refuses deleting it while the org exists',
   developer_sandboxes:

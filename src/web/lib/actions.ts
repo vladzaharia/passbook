@@ -31,6 +31,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { ACTION_ICON } from './action-icons.ts';
+import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -284,6 +285,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'join_link.rotate': a('Join link replaced', I.rotate, 'info'),
   'join_link.update': a('Join link changed', I.edit, 'info'),
   'identity.expired': a('Identity expired', Clock, 'danger'),
+  ...IDENTITY_RUN_ACTIONS,
   'identity.expiring': a('Identity expiring', Clock, 'warning'),
   'identity.push_key_remove': a('Push key removed', I.pushKey, 'warning'),
   'identity.push_key_rotate': a('Push key rotated', I.rotate, 'info'),

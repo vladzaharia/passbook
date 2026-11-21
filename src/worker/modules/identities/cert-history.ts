@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, UpstreamError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { CertDetails } from './cert.ts';
@@ -27,14 +27,29 @@ export interface PendingCsr {
 export type ActivatedCertificate = Pick<CertDetails, 'sha256' | 'notBefore' | 'notAfter'>;
 
 /** The certificate in a provisioner listing whose public key is `pubkeySha256`, if an earlier attempt got one issued. */
-export async function adoptByPubkey<T extends { der: Uint8Array | null }>(
+export async function adoptByPubkey<
+  T extends { der: Uint8Array | null; expiresAt?: number | null },
+>(
   certificates: readonly T[],
   pubkeySha256: string,
+  log?: ServiceContext['log'],
 ): Promise<T | null> {
-  for (const candidate of certificates) {
-    if (candidate.der && (await certPubkeySha256(candidate.der)) === pubkeySha256) return candidate;
-  }
-  return null;
+  // A listing entry without its certificate might be ours: ordering again would orphan one more.
+  if (certificates.some((c) => !c.der))
+    throw new UpstreamError(
+      'Apple listed a certificate without its content.',
+      'ASC_CERT_DER_MISSING',
+    );
+  const matches: T[] = [];
+  for (const candidate of certificates)
+    if (candidate.der && (await certPubkeySha256(candidate.der)) === pubkeySha256)
+      matches.push(candidate);
+  if (matches.length > 1)
+    log?.warn('identity.cert_duplicate', {
+      count: matches.length,
+      code: 'IDENTITY_CERT_DUPLICATE',
+    });
+  return matches.sort((a, b) => (b.expiresAt ?? 0) - (a.expiresAt ?? 0))[0] ?? null;
 }
 
 /** New key and CSR for an identity, with the key sealed as a pending credential and a pending history row. */

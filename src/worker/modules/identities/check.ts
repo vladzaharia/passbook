@@ -69,6 +69,8 @@ export async function runDailyIdentityChecks(ctx: ServiceContext): Promise<void>
     ctx.log.info('identity.platform_not_configured', { code: error.code });
   }
   for (const row of await listIdentityRows(ctx.env.DB)) {
+    // A managed identity mid-provision has no certificate yet; its run owns it.
+    if (row.source === 'db' && row.cert_pem === null) continue;
     const result = await checkIdentityRow(ctx, row);
     if (!result.ok)
       ctx.log.warn('identity.check_failed', { identityId: row.id, code: result.code });
