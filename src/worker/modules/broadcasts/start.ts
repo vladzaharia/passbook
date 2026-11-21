@@ -43,13 +43,14 @@ export async function launchBroadcast(
   const db = ctx.env.DB;
   if (!(await casState(db, row.id, ['scheduled'], 'sending', { startedAt: ctx.clock.now() })))
     return false;
-  const instanceId = instanceIdOf(row.id);
   // The caller may hold a stale row. The committed broadcast is authoritative for the workflow.
   const stored = await getBroadcast(db, row.id, null);
   if (!stored) {
     ctx.log.warn('broadcast.blocked', { broadcastId: row.id, code: 'BROADCAST_NOT_FOUND' });
     return false;
   }
+  // An undo that restarted runs under its own instance: Workflows never reuse an id.
+  const instanceId = stored.instance ?? instanceIdOf(row.id);
   const blocked = await launchBlocker(ctx, stored);
   if (blocked) {
     ctx.log.warn('broadcast.blocked', { broadcastId: row.id, code: blocked });
@@ -117,7 +118,7 @@ const STUCK_AFTER_MS = 5 * 60_000;
 export async function failStuckBroadcasts(ctx: ServiceContext): Promise<void> {
   const stuck = await sendingSince(ctx.env.DB, ctx.clock.now() - STUCK_AFTER_MS, DUE_BATCH);
   for (const row of stuck) {
-    const instanceId = instanceIdOf(row.id);
+    const instanceId = row.instance ?? instanceIdOf(row.id);
     if (!(await instanceEnded(ctx, instanceId))) {
       await markChecked(ctx.env.DB, row.id, ctx.clock.now());
       continue;

@@ -7,6 +7,10 @@ export interface ItemRow {
   passId: string;
   outcome: Outcome;
   silent: boolean;
+  /** A change run's `{from, to}` of the touched inputs (JSON), which its undo restores. */
+  before?: string | null;
+  /** The pass version the run wrote. */
+  version?: number | null;
 }
 
 /** Idempotent: a pass that already has an outcome keeps it. */
@@ -20,12 +24,21 @@ export async function insertItems(
     items.map((i) =>
       stmt(
         db,
-        `INSERT OR IGNORE INTO broadcast_items (broadcast_id, pass_id, outcome, silent)
-         SELECT ?, ?, ?, ? WHERE EXISTS (
+        `INSERT OR IGNORE INTO broadcast_items (broadcast_id, pass_id, outcome, silent, before, version)
+         SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (
            SELECT 1 FROM broadcasts b JOIN passes p ON p.org_id = b.org_id AND p.mode = b.mode
            WHERE b.id = ? AND p.id = ?
          )`,
-        [broadcastId, i.passId, i.outcome, i.silent ? 1 : 0, broadcastId, i.passId],
+        [
+          broadcastId,
+          i.passId,
+          i.outcome,
+          i.silent ? 1 : 0,
+          i.before ?? null,
+          i.version ?? null,
+          broadcastId,
+          i.passId,
+        ],
       ),
     ),
   );

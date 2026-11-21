@@ -5,6 +5,7 @@ import { ruleWindowWhere } from '../message-rules/repo-window.ts';
 import type { RuleWindow } from '../message-rules/windows.ts';
 import { notifiedWhere } from '../passes/repo-budget.ts';
 import { type PassListFilter, passFilterSql } from '../passes/repo-list.ts';
+import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from '../passes/repo-map.ts';
 
 type TargetFilter = PassListFilter & {
   orgId: string;
@@ -15,8 +16,8 @@ type TargetFilter = PassListFilter & {
   ruleId?: string;
   /** The run itself: its own fire rows do not exclude a pass. */
   broadcastId?: string;
-  /** One pass only: a test send. */
-  passId?: string;
+  /** Only these passes: a test send (one) or a change run's chosen passes (up to 5,000). */
+  passIds?: string[];
   /** Only passes this broadcast updated: a follow-up that clears its message. */
   sentBy?: string;
 };
@@ -47,9 +48,10 @@ function targetWhere(filter: TargetFilter, now: number) {
     where.push(w.sql);
     params.push(...(w.params as (string | number)[]));
   }
-  if (filter.passId) {
-    where.push('passes.id = ?');
-    params.push(filter.passId);
+  if (filter.passIds) {
+    // json_each keeps the statement under D1's 100 bound parameters.
+    where.push('passes.id IN (SELECT value FROM json_each(?))');
+    params.push(JSON.stringify(filter.passIds));
   }
   if (filter.sentBy) {
     where.push(`EXISTS (SELECT 1 FROM broadcast_items bi WHERE bi.broadcast_id = ?
@@ -61,12 +63,44 @@ function targetWhere(filter: TargetFilter, now: number) {
   return { where, params: [...params, now] };
 }
 
+/** Chosen passes are read this many at a time. */
+const SLICE = 500;
+
+function slicesOf(filter: TargetFilter): TargetFilter[] {
+  const ids = filter.passIds;
+  if (!ids || ids.length <= SLICE) return [filter];
+  const out: TargetFilter[] = [];
+  for (let i = 0; i < ids.length; i += SLICE)
+    out.push({ ...filter, passIds: ids.slice(i, i + SLICE) });
+  return out;
+}
+
 /** One page of target pass ids, newest first, after `cursor`. */
 export async function targetPage(
   db: D1Database,
   filter: TargetFilter,
   now: number,
 ): Promise<{ ids: string[]; nextCursor: string | null }> {
+  if (filter.passIds) {
+    // Chosen passes page through the list itself; the cursor is the last candidate, so passes the
+    // filters leave out never stall it.
+    const candidates = [...filter.passIds]
+      .sort()
+      .reverse()
+      .filter((id) => !filter.cursor || id < filter.cursor)
+      .slice(0, filter.limit);
+    if (candidates.length === 0) return { ids: [], nextCursor: null };
+    const { where, params } = targetWhere({ ...filter, passIds: candidates }, now);
+    const rows = await all<{ id: string }>(
+      db,
+      `SELECT id FROM passes WHERE ${where.join(' AND ')} ORDER BY id DESC`,
+      params,
+    );
+    return {
+      ids: rows.map((r) => r.id),
+      nextCursor: candidates.length === filter.limit ? (candidates.at(-1) ?? null) : null,
+    };
+  }
   const { where, params } = targetWhere(filter, now);
   const rows = await all<{ id: string }>(
     db,
@@ -91,19 +125,25 @@ export async function countTarget(
   since: number,
   limit: number,
 ): Promise<TargetCounts> {
-  const { where, params } = targetWhere(filter, now);
-  const row = await first<TargetCounts>(
-    db,
-    `SELECT COUNT(*) AS targeted,
+  const total: TargetCounts = { targeted: 0, onDevice: 0, overBudget: 0 };
+  for (const slice of slicesOf(filter)) {
+    const { where, params } = targetWhere(slice, now);
+    const row = await first<TargetCounts>(
+      db,
+      `SELECT COUNT(*) AS targeted,
        COALESCE(SUM(EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = passes.id)), 0) AS onDevice,
        COALESCE(SUM(EXISTS (SELECT 1 FROM pass_events e
                            WHERE e.pass_id = passes.id AND e.org_id = passes.org_id
                              AND e.mode = passes.mode AND ${notifiedWhere}
                            GROUP BY e.pass_id HAVING COUNT(*) >= ?)), 0) AS overBudget
      FROM passes WHERE ${where.join(' AND ')}`,
-    [since, limit, ...params],
-  );
-  return row ?? { targeted: 0, onDevice: 0, overBudget: 0 };
+      [since, limit, ...params],
+    );
+    total.targeted += row?.targeted ?? 0;
+    total.onDevice += row?.onDevice ?? 0;
+    total.overBudget += row?.overBudget ?? 0;
+  }
+  return total;
 }
 
 /** The count as a statement, so many windows run in one batch. */
@@ -117,11 +157,36 @@ export async function countTargeted(
   filter: TargetFilter,
   now: number,
 ): Promise<number> {
-  const { where, params } = targetWhere(filter, now);
-  const row = await first<{ n: number }>(
-    db,
-    `SELECT COUNT(*) AS n FROM passes WHERE ${where.join(' AND ')}`,
-    params,
-  );
-  return row?.n ?? 0;
+  let n = 0;
+  for (const slice of slicesOf(filter)) {
+    const { where, params } = targetWhere(slice, now);
+    const row = await first<{ n: number }>(
+      db,
+      `SELECT COUNT(*) AS n FROM passes WHERE ${where.join(' AND ')}`,
+      params,
+    );
+    n += row?.n ?? 0;
+  }
+  return n;
+}
+
+/** Up to `limit` of the newest target passes with their inputs, for a preview's samples. */
+export async function targetRows(
+  db: D1Database,
+  filter: TargetFilter,
+  now: number,
+  limit: number,
+): Promise<Pass[]> {
+  const rows: Pass[] = [];
+  for (const slice of slicesOf(filter)) {
+    if (rows.length >= limit) break;
+    const { where, params } = targetWhere(slice, now);
+    const page = await all<PassDbRow>(
+      db,
+      `${PASS_SELECT} WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
+      [...params, limit - rows.length],
+    );
+    rows.push(...page.map(mapPass));
+  }
+  return rows;
 }

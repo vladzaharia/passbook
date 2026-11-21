@@ -2,14 +2,15 @@ import type {
   BroadcastDto,
   BroadcastItemDto,
   BroadcastOutcome,
-  CreateBroadcastBody,
 } from '../../../shared/contracts/broadcasts.ts';
+import type { CreateBroadcastBody } from '../../../shared/contracts/broadcasts-change.ts';
 import { batch } from '../../platform/db.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
+import { prepareTarget, storedTargetOf } from './change-target.ts';
 import {
   assertCanChange,
   type BroadcastScope,
@@ -22,21 +23,23 @@ import {
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { listItems } from './repo-items.ts';
+import { childOf } from './repo-undo.ts';
 import { getBroadcastDto, insertBroadcast } from './service.ts';
 import { launchBroadcast } from './start.ts';
+import type { StoredBroadcastTarget } from './stored-target.ts';
 
 /** Saves new values over a draft or a scheduled message that has not started. */
 export async function updateBroadcast(
   ctx: ServiceContext,
   actor: Actor,
   id: string,
-  body: CreateBroadcastBody,
+  input: CreateBroadcastBody,
   scope: BroadcastScope,
 ): Promise<BroadcastDto> {
   const row = await requireWritableBroadcast(ctx, id, scope);
   assertCanChange(scope, row.kind);
-  assertCanChange(scope, body.kind);
-  if (body.orgId !== row.org_id)
+  assertCanChange(scope, input.kind);
+  if (input.orgId !== row.org_id)
     throw new ValidationError(
       'A message cannot move to another organization.',
       [],
@@ -47,7 +50,8 @@ export async function updateBroadcast(
       'Only a draft or scheduled message can be edited.',
       'BROADCAST_NOT_EDITABLE',
     );
-  if (body.at !== undefined) checkTime(ctx, body.at);
+  if (input.at !== undefined) checkTime(ctx, input.at);
+  const body = await prepareTarget(ctx, row.mode, input);
   await checkTemplates(ctx, body);
   const now = ctx.clock.now();
   const [edited] = await batch(ctx.env.DB, [
@@ -58,7 +62,7 @@ export async function updateBroadcast(
       {
         name: nameOf(body),
         kind: body.kind,
-        target: body.target,
+        target: storedTargetOf(body),
         patch: body.patch,
         notify: body.notify,
         state: body.send === 'draft' ? 'draft' : 'scheduled',
@@ -101,6 +105,11 @@ export async function retryBroadcast(
       'Only a failed or cancelled message can be sent again.',
       'BROADCAST_NOT_RETRYABLE',
     );
+  const stored = JSON.parse(row.target) as StoredBroadcastTarget;
+  // An undo is asked for again with /undo; a run that was undone is not run again over its undo.
+  if (stored.revertOf || (await childOf(ctx.env.DB, id, row.org_id, row.mode)))
+    throw new ConflictError('This change was undone.', 'BROADCAST_NOT_RETRYABLE');
+  const { window, sentBy, message, expectCount: _seen, ...target } = stored;
   return insertBroadcast(
     ctx,
     actor,
@@ -109,15 +118,19 @@ export async function retryBroadcast(
       orgId: row.org_id,
       kind: row.kind,
       name: plainLine(row.name).slice(0, 80) || 'Message',
-      target: JSON.parse(row.target),
+      target: target as CreateBroadcastBody['target'],
       patch: JSON.parse(row.patch),
       notify: row.notify === 1,
       send: 'now',
       clearAfter: row.clear_after,
+      ...(message ? { message } : {}),
     },
     scope.authority,
     'broadcast.retry',
-    { retryOf: id },
+    {
+      detail: { retryOf: id },
+      keep: { ...(window ? { window } : {}), ...(sentBy ? { sentBy } : {}) },
+    },
   );
 }
 

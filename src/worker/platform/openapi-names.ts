@@ -7,6 +7,8 @@ import {
   RetiredApiKeySchema,
   RotatedApiKeySchema,
 } from '../../shared/contracts/api-keys.ts';
+import { BroadcastSchema } from '../../shared/contracts/broadcasts.ts';
+import { BroadcastUndoResultSchema } from '../../shared/contracts/broadcasts-change.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import {
@@ -128,6 +130,8 @@ const names = {
   Org: OrgSchema,
   OrgSummary: OrgSummarySchema,
   OrgBranding: OrgBrandingSchema,
+  Broadcast: BroadcastSchema,
+  BroadcastUndo: BroadcastUndoResultSchema,
   PassImportMappings: SavedImportMappingsResultSchema,
   PassImportUndo: PassImportUndoResultSchema,
   PassSummary: PassSummarySchema,

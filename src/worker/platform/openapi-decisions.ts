@@ -30,6 +30,7 @@ const IDEMPOTENT = [
   'post /api/v1/passes',
   'post /api/v1/passes/{id}/resend-email',
   'post /api/v1/passes/bulk',
+  'post /api/v1/broadcasts',
   'post /api/v1/bundles/{id}/send-email',
   'post /api/v1/orgs/{orgId}/identities/apple',
   'post /api/v1/scanning-sessions/setup',

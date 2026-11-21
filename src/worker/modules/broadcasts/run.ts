@@ -2,6 +2,7 @@ import {
   type BroadcastState,
   BroadcastTargetSchema,
 } from '../../../shared/contracts/broadcasts.ts';
+import { selectionDrifted } from '../../../shared/contracts/pass-selection.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -17,7 +18,9 @@ import {
   setTargeted,
 } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
+import { countRevertable } from './repo-items.ts';
 import { countTargeted } from './repo-target.ts';
+import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
 /** First workflow step: counts the target. False when the broadcast cannot be sent (cancelled, already settled). */
 export async function startedBroadcast(
@@ -46,11 +49,23 @@ export async function startedBroadcast(
     });
     return false;
   }
-  await setTargeted(
-    ctx.env.DB,
-    broadcastId,
-    await countTargeted(ctx.env.DB, filter, ctx.clock.now()),
-  );
+  const stored = StoredBroadcastTargetSchema.parse(JSON.parse(row.target));
+  const targeted = stored.revertOf
+    ? await countRevertable(ctx.env.DB, stored.revertOf, row.org_id, row.mode)
+    : await countTargeted(ctx.env.DB, filter, ctx.clock.now());
+  // The admin confirmed a count; a selection that moved since (a schedule, a retry) applies nothing.
+  if (stored.expectCount !== undefined && selectionDrifted(stored.expectCount, targeted)) {
+    ctx.log.warn('broadcast.blocked', { broadcastId, code: 'SELECTION_CHANGED' });
+    await casState(ctx.env.DB, broadcastId, ['sending'], 'failed', {
+      finishedAt: ctx.clock.now(),
+      errorCode: 'SELECTION_CHANGED',
+    });
+    await finishRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), {
+      errorCode: 'SELECTION_CHANGED',
+    });
+    return false;
+  }
+  await setTargeted(ctx.env.DB, broadcastId, targeted);
   await finishRun(ctx.env.DB, instanceId, 'running', ctx.clock.now());
   return true;
 }
@@ -101,11 +116,13 @@ export async function finishBroadcast(
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
   if (!row) return 'failed';
   const counts = countsOf(row, await countItems(ctx.env.DB, [broadcastId], row.org_id, row.mode));
-  const state = errorCode ? 'failed' : endState(counts);
+  // A stop asked for while sending ends the run as cancelled, after its last chunk.
+  const stopped = !errorCode && row.stop_at !== null;
+  const state = errorCode ? 'failed' : stopped ? 'cancelled' : endState(counts);
   const now = ctx.clock.now();
   const won = await casState(ctx.env.DB, broadcastId, ['sending'], state, {
     finishedAt: now,
-    errorCode,
+    errorCode: stopped ? 'BROADCAST_STOPPED' : errorCode,
   });
   if (won) ctx.log.info('broadcast.done', { broadcastId, state, ...counts });
   // A retry after a failed follow-up insert loses the CAS but still owes the follow-up; the
@@ -113,7 +130,8 @@ export async function finishBroadcast(
   const settled = won ? state : row.state;
   if (settled === 'sent' || settled === 'partial') await scheduleClear(ctx, row);
   await finishRun(ctx.env.DB, instanceId, errorCode ? 'errored' : 'complete', now, {
-    errorCode: errorCode ?? (state === 'sent' ? null : 'PARTIAL_FAILURE'),
+    errorCode:
+      errorCode ?? (stopped ? 'BROADCAST_STOPPED' : state === 'sent' ? null : 'PARTIAL_FAILURE'),
   });
   return state;
 }
@@ -125,7 +143,7 @@ export async function finishBroadcast(
  */
 export async function sendStepAllowed(ctx: ServiceContext, broadcastId: string): Promise<boolean> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
-  if (row?.state !== 'sending') return false;
+  if (row?.state !== 'sending' || row.stop_at !== null) return false;
   try {
     await jobGrant(ctx, {
       purpose: 'org_mode.job.broadcast.send',

@@ -1,19 +1,22 @@
 import {
+  ChangePreviewBodySchema,
+  ChangeRunPreviewSchema,
+  CreateBroadcastBodySchema,
+  UpdateBroadcastBodySchema,
+} from '../../../shared/contracts/broadcasts-change.ts';
+import {
   BroadcastItemListQuerySchema,
   BroadcastItemListSchema,
   BroadcastListQuerySchema,
   BroadcastListSchema,
-  BroadcastPreviewBodySchema,
-  BroadcastPreviewSchema,
   BroadcastSchema,
-  CreateBroadcastSchema,
   IdParamSchema,
   SendBroadcastSchema,
-  UpdateBroadcastSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { activeMembership } from '../orgs/repo-members.ts';
 import {
   actorFor,
@@ -26,13 +29,14 @@ import {
   type TenantPassWrite,
   tenantAuthorityOf,
 } from '../passes/http.ts';
+import { previewChange } from './change-preview.ts';
 import { type BroadcastScope, requireBroadcast } from './guards.ts';
+import { limitKeyChanges, registerChangeRoutes } from './routes-change.ts';
 import {
   cancelBroadcast,
   createBroadcast,
   getBroadcastDto,
   listBroadcastDtos,
-  previewTarget,
   sendBroadcast,
 } from './service.ts';
 import { listBroadcastItems, retryBroadcast, updateBroadcast } from './service-edit.ts';
@@ -113,8 +117,8 @@ register(
   {
     method: 'post',
     path: '/',
-    summary: 'Save, send or schedule a message or change',
-    body: CreateBroadcastSchema,
+    summary: 'Save, send or schedule a message or change (Idempotency-Key)',
+    body: CreateBroadcastBodySchema,
     status: 201,
     response: BroadcastSchema,
   },
@@ -126,7 +130,28 @@ register(
     const authority = await tenantAuthorityOf(ctx, auth, body.orgId, 'messages:manage');
     if (body.kind === 'change' && !canChange(c))
       throw new ForbiddenError('Changing passes needs the passes:write scope.', 'MISSING_SCOPE');
-    return c.json(await createBroadcast(ctx, actorFor(c), modeOf(auth), body, authority), 201);
+    if (body.kind === 'change' && auth.kind === 'api_key') await limitKeyChanges(ctx, auth.keyId);
+    const mode = modeOf(auth);
+    let inserted = false;
+    const create = () =>
+      createBroadcast(ctx, actorFor(c), mode, body, authority, () => {
+        inserted = true;
+      });
+    const key = idempotencyKeyOf(c.req.header('idempotency-key'));
+    if (key === undefined) return c.json(await create(), 201);
+    const { value } = await sendOnce(
+      ctx,
+      {
+        orgId: body.orgId,
+        scope: `broadcast-create:${mode}`,
+        key,
+        request: body,
+        authority,
+        progress: () => inserted,
+      },
+      create,
+    );
+    return c.json(value, 201);
   },
 );
 
@@ -137,8 +162,8 @@ register(
     method: 'post',
     path: '/preview',
     summary: 'Count the passes a target matches',
-    body: BroadcastPreviewBodySchema,
-    response: BroadcastPreviewSchema,
+    body: ChangePreviewBodySchema,
+    response: ChangeRunPreviewSchema,
   },
   async (c) => {
     const ctx = svc(c);
@@ -146,7 +171,7 @@ register(
     const body = c.req.valid('json');
     assertOrg(c, body.orgId);
     await tenantAuthorityOf(ctx, auth, body.orgId, 'messages:read');
-    return c.json(await previewTarget(ctx, modeOf(auth), body.orgId, body.target));
+    return c.json(await previewChange(ctx, modeOf(auth), body));
   },
 );
 
@@ -210,7 +235,7 @@ register(
     path: '/{id}',
     summary: 'Edit a draft or a scheduled message that has not started',
     params: IdParamSchema,
-    body: UpdateBroadcastSchema,
+    body: UpdateBroadcastBodySchema,
     response: BroadcastSchema,
   },
   async (c) => {
@@ -262,3 +287,5 @@ register(
     return c.json(await listBroadcastItems(svc(c), id, scope, c.req.valid('query')));
   },
 );
+
+registerChangeRoutes(broadcastsRoutes, scopeOf);

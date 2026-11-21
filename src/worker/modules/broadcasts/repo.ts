@@ -6,6 +6,7 @@ import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/rep
 import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 import { planGate } from './repo-day-limit.ts';
 
+export { followUpsOf } from './repo-followup.ts';
 export type { CountRow, ItemRow } from './repo-outcomes.ts';
 export { countItems, handledPassIds, insertItems } from './repo-outcomes.ts';
 export type { BroadcastKind, BroadcastState };
@@ -34,6 +35,10 @@ export interface BroadcastRow {
   checked_at: number | null;
   rule_id: string | null;
   window_key: string | null;
+  /** A stop was asked for: the run ends after its chunk. */
+  stop_at: number | null;
+  /** The workflow instance when not `broadcast-<id>` (a restarted undo). */
+  instance: string | null;
 }
 
 export interface NewBroadcast {
@@ -115,17 +120,19 @@ export function insertAuthorizedBroadcastStmt(
   b: NewBroadcast,
   authority: TenantPassWrite,
   now: number,
+  /** A further condition held in the same write (an undo's parent is still undoable). */
+  extra: { sql: string; params: SqlValue[] } = { sql: '', params: [] },
 ): D1PreparedStatement {
   const guard = broadcastAuthority(authority, now, b.kind === 'change');
-  const plan = planGate(b.ruleId, b.orgId, b.mode, b.now);
+  const plan = planGate(b.ruleId ?? b.parentId, b.orgId, b.mode, b.now, b.kind);
   const tenant = [b.orgId, authority.orgId, b.mode, authority.mode];
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
        clear_after, expect, parent_id, rule_id, window_key, created_by_type, created_by_id, created_at, started_at)
      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-     WHERE ? = ? AND ? = ? AND (${guard.sql})${plan.sql}`,
-    [...broadcastValues(b), ...tenant, ...guard.params, ...plan.params],
+     WHERE ? = ? AND ? = ? AND (${guard.sql})${plan.sql}${extra.sql}`,
+    [...broadcastValues(b), ...tenant, ...guard.params, ...plan.params, ...extra.params],
   );
 }
 
@@ -305,22 +312,3 @@ export function updateBroadcastStmt(
 
 export const setTargeted = (db: D1Database, id: string, targeted: number) =>
   run(db, 'UPDATE broadcasts SET targeted = ? WHERE id = ?', [targeted, id]);
-
-/** The clearing follow-up of each broadcast that has one. */
-export const followUpsOf = (
-  db: D1Database,
-  parentIds: readonly string[],
-  orgId: string,
-  mode: Mode,
-) =>
-  parentIds.length === 0
-    ? Promise.resolve([] as { id: string; parent_id: string; at: number | null }[])
-    : all<{ id: string; parent_id: string; at: number | null }>(
-        db,
-        `SELECT child.id, child.parent_id, child.at
-         FROM broadcasts child JOIN broadcasts parent ON parent.id = child.parent_id
-           AND parent.org_id = child.org_id AND parent.mode = child.mode
-         WHERE parent.org_id = ? AND parent.mode = ?
-           AND child.parent_id IN (SELECT value FROM json_each(?))`,
-        [orgId, mode, JSON.stringify(parentIds)],
-      );

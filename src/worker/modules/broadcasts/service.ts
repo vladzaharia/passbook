@@ -1,9 +1,5 @@
-import type {
-  BroadcastDto,
-  BroadcastPreviewDto,
-  BroadcastTarget,
-  CreateBroadcastBody,
-} from '../../../shared/contracts/broadcasts.ts';
+import type { BroadcastDto } from '../../../shared/contracts/broadcasts.ts';
+import type { CreateBroadcastBody } from '../../../shared/contracts/broadcasts-change.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { batch } from '../../platform/db.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
@@ -18,12 +14,10 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
-import { getPlatformSettings } from '../settings/service.ts';
-import { targetFilter } from './apply.ts';
+import { prepareTarget, storedTargetOf } from './change-target.ts';
 import { toDto } from './dto.ts';
 import {
   assertCanChange,
@@ -35,9 +29,9 @@ import {
   requireWritableBroadcast,
 } from './guards.ts';
 import * as repo from './repo.ts';
-import { manualBroadcastsToday } from './repo-day-limit.ts';
-import { countTarget } from './repo-target.ts';
+import { DAY_LIMIT_KEY, manualBroadcastsToday } from './repo-day-limit.ts';
 import { launchBroadcast } from './start.ts';
+import type { StoredBroadcastTarget } from './stored-target.ts';
 
 export async function createBroadcast(
   ctx: ServiceContext,
@@ -45,22 +39,30 @@ export async function createBroadcast(
   mode: Mode,
   body: CreateBroadcastBody,
   authority: TenantPassWrite,
+  onInserted?: () => void,
 ): Promise<BroadcastDto> {
-  return insertBroadcast(ctx, actor, mode, body, authority, 'broadcast.create');
+  return insertBroadcast(ctx, actor, mode, body, authority, 'broadcast.create', { onInserted });
 }
 
 export async function insertBroadcast(
   ctx: ServiceContext,
   actor: Actor,
   mode: Mode,
-  body: CreateBroadcastBody,
+  input: CreateBroadcastBody,
   authority: TenantPassWrite,
   action: string,
-  detail: Record<string, unknown> = {},
+  options: {
+    detail?: Record<string, unknown>;
+    onInserted?: () => void;
+    /** What only the server sets on a target, kept when a run is sent again. */
+    keep?: Pick<StoredBroadcastTarget, 'window' | 'sentBy'>;
+  } = {},
 ): Promise<BroadcastDto> {
-  if (!(await orgIsActive(ctx.env.DB, body.orgId)))
+  const { detail = {}, onInserted, keep } = options;
+  if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  if (body.at !== undefined) checkTime(ctx, body.at);
+  if (input.at !== undefined) checkTime(ctx, input.at);
+  const body = await prepareTarget(ctx, mode, input);
   await checkTemplates(ctx, body);
   const now = ctx.clock.now();
   const id = ctx.ids.id();
@@ -75,7 +77,7 @@ export async function insertBroadcast(
         kind: body.kind,
         name: nameOf(body),
         state: body.send === 'draft' ? 'draft' : 'scheduled',
-        target: body.target,
+        target: { ...storedTargetOf(body), ...keep },
         patch: body.patch,
         notify: body.notify,
         at: body.send === 'draft' ? null : at,
@@ -87,7 +89,9 @@ export async function insertBroadcast(
       now,
     ),
   ]);
-  if ((inserted?.meta.changes ?? 0) !== 1) throw await insertRefusal(ctx, body.orgId, mode, now);
+  if ((inserted?.meta.changes ?? 0) !== 1)
+    throw await insertRefusal(ctx, body.orgId, mode, now, body.kind);
+  onInserted?.();
   await recordAudit(ctx, {
     orgId: body.orgId,
     actorType: actor.type,
@@ -107,13 +111,15 @@ async function insertRefusal(
   orgId: string,
   mode: Mode,
   now: number,
+  kind: CreateBroadcastBody['kind'],
 ): Promise<Error> {
-  const limit = (await entitlementsOf(ctx, orgId))['messages.perDay'];
-  const used = await manualBroadcastsToday(ctx.env.DB, orgId, mode, now);
+  const key = DAY_LIMIT_KEY[kind];
+  const limit = (await entitlementsOf(ctx, orgId))[key];
+  const used = await manualBroadcastsToday(ctx.env.DB, orgId, mode, now, kind);
   return typeof limit === 'number' && used >= limit
     ? (await isPreviewOnlyOrg(ctx.env.DB, orgId))
-      ? new SandboxQuotaError({ key: 'messages.perDay', limit, used })
-      : new FeatureLimitError({ key: 'messages.perDay', limit, used })
+      ? new SandboxQuotaError({ key, limit, used })
+      : new FeatureLimitError({ key, limit, used })
     : new ForbiddenError();
 }
 
@@ -205,23 +211,4 @@ export async function listBroadcastDtos(
     filter.mode,
   );
   return { items: rows.map((r) => toDto(r, counts, followUps)), nextCursor };
-}
-
-/** The live count behind the composer: matches, on-device and already at the daily limit. */
-export async function previewTarget(
-  ctx: ServiceContext,
-  mode: Mode,
-  orgId: string,
-  target: BroadcastTarget,
-): Promise<BroadcastPreviewDto> {
-  const limit = (await getPlatformSettings(ctx))['push.budgetPerDay'];
-  const filter = targetFilter({ org_id: orgId, mode, target: JSON.stringify(target) }, null, 1);
-  const counts = await countTarget(
-    ctx.env.DB,
-    filter,
-    ctx.clock.now(),
-    ctx.clock.now() - BUDGET_WINDOW_MS,
-    limit,
-  );
-  return { ...counts, limit };
 }

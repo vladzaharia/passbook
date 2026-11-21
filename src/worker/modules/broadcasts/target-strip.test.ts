@@ -6,31 +6,34 @@ import { broadcastAuth, broadcastKit } from './test-kit.ts';
 const ORIGIN = 'https://wallet.test';
 
 describe('POST /broadcasts target', () => {
-  it('drops window, sentBy and passIds and keeps match', async () => {
+  it('drops window and sentBy, keeps match, and refuses passIds on a message', async () => {
     const kit = await broadcastKit();
     const auth = await broadcastAuth(kit, ORIGIN);
     const app = createApp({ stores: auth.stores, clock: kit.clock });
-    const res = await app.request(
-      `${ORIGIN}/api/v1/broadcasts`,
-      {
-        method: 'POST',
-        headers: { ...auth.admin(), 'content-type': 'application/json' },
-        body: JSON.stringify({
-          orgId: kit.org.id,
-          kind: 'message',
-          send: 'draft',
-          target: {
-            templateIds: [kit.messaging.id],
-            match: [{ input: 'gate', values: ['A'] }],
-            window: { from: 1, to: 2 },
-            sentBy: 'rule-1',
-            passIds: ['p1'],
-          },
-          patch: { message: 'Hi' },
-        }),
-      },
-      kit.env,
-    );
+    const send = (target: Record<string, unknown>) =>
+      app.request(
+        `${ORIGIN}/api/v1/broadcasts`,
+        {
+          method: 'POST',
+          headers: { ...auth.admin(), 'content-type': 'application/json' },
+          body: JSON.stringify({
+            orgId: kit.org.id,
+            kind: 'message',
+            send: 'draft',
+            target,
+            patch: { message: 'Hi' },
+          }),
+        },
+        kit.env,
+      );
+    // A message never takes a pass list (a change run does): it is refused, not quietly dropped.
+    expect((await send({ templateIds: [kit.messaging.id], passIds: ['p1'] })).status).toBe(422);
+    const res = await send({
+      templateIds: [kit.messaging.id],
+      match: [{ input: 'gate', values: ['A'] }],
+      window: { from: 1, to: 2 },
+      sentBy: 'rule-1',
+    });
     expect(res.status).toBe(201);
     const { id } = (await res.json()) as { id: string };
     const row = await first<{ target: string }>(

@@ -25,6 +25,8 @@ export interface BroadcastKit extends Kit {
     holderEmail?: string;
     gate?: string;
     message?: string;
+    expires?: string;
+    points?: number;
   }): Promise<Pass>;
 }
 
@@ -40,12 +42,16 @@ const manifest = (messaging: boolean): TemplateManifest => ({
       message: { type: 'string', maxLength: 256 },
       // Bound to nothing: changing it never changes the rendered pass.
       note: { type: 'string', maxLength: 40 },
+      expires: { type: 'string', format: 'date', title: 'Expires' },
+      points: { type: 'integer', minimum: 0, title: 'Points' },
     },
   },
   sample: { memberName: 'Alex Morgan' },
   bindings: [
     { to: { field: 'name' }, value: '{{memberName}}' },
     { to: { field: 'gate' }, value: '{{gate}}' },
+    { to: { field: 'expires' }, value: '{{expires}}' },
+    { to: { field: 'points' }, value: '{{points}}' },
     ...(messaging ? [{ to: { field: 'message' }, value: '{{message}}' }] : []),
   ],
   display: { title: '{{memberName}}' },
@@ -63,6 +69,10 @@ const passJson = (messaging: boolean): PassJson =>
     generic: {
       primaryFields: [{ key: 'name', label: 'Member', value: '' }],
       headerFields: [{ key: 'gate', label: 'Gate', value: '', changeMessage: 'Gate is now %@.' }],
+      secondaryFields: [
+        { key: 'expires', label: 'Expires', value: '' },
+        { key: 'points', label: 'Points', value: '' },
+      ],
       backFields: messaging
         ? [{ key: 'message', label: 'Message', value: '', changeMessage: '%@' }]
         : [],
@@ -209,6 +219,8 @@ export async function broadcastKit(): Promise<BroadcastKit> {
           memberName: 'Alex',
           ...(input.gate !== undefined ? { gate: input.gate } : {}),
           ...(input.message !== undefined ? { message: input.message } : {}),
+          ...(input.expires !== undefined ? { expires: input.expires } : {}),
+          ...(input.points !== undefined ? { points: input.points } : {}),
         },
         holderEmail: input.holderEmail ?? null,
         source: 'manual',
