@@ -124,6 +124,13 @@ export async function activateCertificate(db: D1Database, a: Activation): Promis
         a.identityId,
       ],
     ),
+    // The identities trigger records every certificate change as an active row. This row is the
+    // richer record (origin, Apple id), so the trigger's duplicate goes.
+    stmt(
+      db,
+      `DELETE FROM identity_certificates WHERE identity_id = ?2 AND state = 'active' AND id != ?1 AND ${stillPending}`,
+      [a.certId, a.identityId],
+    ),
     ...(a.oldCredentialId
       ? [
           stmt(db, `DELETE FROM credentials WHERE id = ?2 AND id != ?3 AND ${stillPending}`, [
