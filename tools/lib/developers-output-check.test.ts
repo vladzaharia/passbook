@@ -29,6 +29,17 @@ describe('outputFailures', () => {
     expect(outputFailures(files)[0]).toMatch(/^\/developers\/big: \d+ kB of HTML, over the 300 kB/);
   });
 
+  it('names a file that mentions the CLI while it is unpublished', () => {
+    const files = [
+      { file: '/developers/webhooks.html', body: 'npx @passbook/cli listen' },
+      NOT_FOUND,
+    ];
+    expect(outputFailures(files)).toEqual([
+      '/developers/webhooks.html: names @passbook/cli while sdk-status.json has cli: false',
+    ]);
+    expect(outputFailures(files, true)).toEqual([]);
+  });
+
   it('names an llms.txt link to a file that is not there, and a missing 404 page', () => {
     const llms = {
       file: '/developers/llms.txt',

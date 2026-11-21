@@ -14,10 +14,12 @@ export const PAGE_BUDGET_OVERRIDES: Record<string, number> = {
   '/developers/reference/passes': 600 * 1024,
 };
 
-export function outputFailures(files: BuiltFile[]): string[] {
+export function outputFailures(files: BuiltFile[], cliPublished = false): string[] {
   const out: string[] = [];
   const have = new Set(files.map((f) => f.file));
   for (const f of files) {
+    if (!cliPublished && f.body.includes('@passbook/cli'))
+      out.push(`${f.file}: names @passbook/cli while sdk-status.json has cli: false`);
     if (!f.url || !f.file.endsWith('.html')) continue;
     if (!have.has(twin(f.url))) out.push(`${f.url}: no markdown twin (${twin(f.url)})`);
     const budget = PAGE_BUDGET_OVERRIDES[f.url] ?? PAGE_BUDGET;

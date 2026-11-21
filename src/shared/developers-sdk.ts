@@ -5,7 +5,11 @@ export interface SdkStatus {
   typescript: boolean;
   python: boolean;
   go: boolean;
+  cli: boolean;
 }
+
+/** The languages that have samples. */
+export type SampleSdks = Pick<SdkStatus, 'typescript' | 'python' | 'go'>;
 
 export const SDK_STATUS: SdkStatus = sdkStatus;
 

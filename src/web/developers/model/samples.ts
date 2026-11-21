@@ -1,4 +1,4 @@
-import { SDK_STATUS, type SdkStatus } from '../../../shared/developers-sdk.ts';
+import { type SampleSdks, SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { goName, pascal, pyName } from '../../../shared/sdk-names.ts';
 import {
   goRawString,
@@ -269,7 +269,7 @@ function go(op: SampleOp): string {
 }
 
 /** The request in four languages: curl, then each language through its SDK once published, else plain HTTP. */
-export function samplesFor(op: SampleOp, base: string, sdk: SdkStatus = SDK_STATUS): Sample[] {
+export function samplesFor(op: SampleOp, base: string, sdk: SampleSdks = SDK_STATUS): Sample[] {
   return [
     { lang: 'curl', label: 'curl', file: 'request.sh', code: curl(op, base) },
     {
@@ -292,7 +292,7 @@ export function samplesFor(op: SampleOp, base: string, sdk: SdkStatus = SDK_STAT
  * A hand-written example's tabs: curl, and the TypeScript that imports the SDK once it is published.
  * An example with no curl keeps its TypeScript, which is all it has.
  */
-export function exampleSamples(e: Example, sdk: SdkStatus = SDK_STATUS): Sample[] {
+export function exampleSamples(e: Example, sdk: SampleSdks = SDK_STATUS): Sample[] {
   const curlTab: Sample[] = e.curl
     ? [{ lang: 'curl', label: 'curl', file: `${e.id}.sh`, code: e.curl }]
     : [];

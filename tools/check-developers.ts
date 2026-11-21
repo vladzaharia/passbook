@@ -4,6 +4,7 @@
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { SDK_STATUS } from '../src/shared/developers-sdk.ts';
 import { readGuideFiles } from '../src/web/developers/guide/load.ts';
 import { guideExamples, loadInputs } from '../src/web/developers/model/load.ts';
 import { buildSite } from '../src/web/developers/model/site.ts';
@@ -48,7 +49,9 @@ failures.push(
 // The prerendered portal: a twin for every page, a size budget for each, llms.txt that lists only what exists.
 const scratch = mkdtempSync(join(tmpdir(), 'check-developers-'));
 try {
-  failures.push(...outputFailures((await buildDevelopers({ out: scratch, head: '' })).built));
+  failures.push(
+    ...outputFailures((await buildDevelopers({ out: scratch, head: '' })).built, SDK_STATUS.cli),
+  );
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }
