@@ -3,6 +3,7 @@ import {
   daysUntil,
   formatCount,
   formatDateTime,
+  formatExpiry,
   formatDay,
   formatEndedOn,
   formatRelative,
