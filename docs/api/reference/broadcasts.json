@@ -47,5 +47,20 @@
       "startedAt": 1795000000000,
       "finishedAt": null
     }
+  },
+  "broadcasts.postBroadcastsPreview": {
+    "description": "Counts the passes a target matches. With `patch` (and `notify`) it also previews a change: up to 20 sample passes with their field changes, passes already at the new values, passes it cannot change by reason, and how many holders would be told. Samples show each pass's own values, so a key needs passes:read. Counts and samples come from the 200 newest passes of the target and who is told is an estimate (`estimated`).",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+      },
+      "patch": {
+        "plan": {
+          "set": "monthly"
+        }
+      },
+      "notify": false
+    }
   }
 }

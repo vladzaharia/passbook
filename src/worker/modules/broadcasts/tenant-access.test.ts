@@ -793,7 +793,18 @@ describe('authority at the D1 mutation commit', () => {
       const change = message(kit.org.id, { kind: 'change', patch: { gate: 'A1' } });
       let id = '';
       if (action !== 'create') {
-        const initial = action === 'edit-to-change' ? message() : change;
+        // A change is resumed over passes it already holds: choose one, so the retry has something left.
+        const chosen = action === 'retry' ? [(await kit.makePass()).id] : null;
+        const initial =
+          action === 'edit-to-change'
+            ? message()
+            : chosen
+              ? message(kit.org.id, {
+                  kind: 'change',
+                  target: { passIds: chosen },
+                  patch: { gate: 'A1' },
+                })
+              : change;
         const created = await call('POST', '/broadcasts', manager.session.headers, initial);
         expect(created.status).toBe(201);
         id = BroadcastSchema.parse(await created.json()).id;
@@ -815,7 +826,7 @@ describe('authority at the D1 mutation commit', () => {
             return call('PATCH', `/broadcasts/${id}`, key.headers, change);
           return call(
             'POST',
-            `/broadcasts/${id}/${action}`,
+            `/broadcasts/${id}/${action}${action === 'retry' ? '?expectCount=1' : ''}`,
             key.headers,
             action === 'send' ? {} : undefined,
           );
