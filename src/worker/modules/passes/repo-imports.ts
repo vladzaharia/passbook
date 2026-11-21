@@ -26,6 +26,10 @@ export interface ImportRow {
   skip_invalid: number;
   starter: string | null;
   email_budget: number | null;
+  email_hold_ms: number | null;
+  email_hold_until: number | null;
+  reverted: number;
+  undo_cancelled: number;
   rows: number;
   to_create: number;
   to_update: number;
@@ -187,6 +191,8 @@ export async function beginCheck(
   authority: TenantPassWrite,
   id: string,
   s: CheckStart,
+  /** False for a re-check of some rows: the others stay. */
+  clearRows = true,
 ): Promise<void> {
   const g = importGrant(ctx, authority, id, stateIn(['mapping', 'checking', 'ready', 'stale']));
   g.update('pass_imports', {
@@ -204,11 +210,38 @@ export async function beginCheck(
     },
   });
   // Rows an earlier commit created stay: remove-created and undo still reach those passes.
-  g.joined('pass_import_rows', {
-    where: { import_id: id, result: orNull(ne('created')) },
-    delete: true,
-  });
+  if (clearRows)
+    g.joined('pass_import_rows', {
+      where: { import_id: id, result: orNull(ne('created')) },
+      delete: true,
+    });
   await g.commit();
+}
+
+/** Rows per delete: D1 binds at most 100 values a statement. */
+const RECHECK_ROWS = 50;
+
+/** `checking` for a re-check of some rows: only those rows go, the rest keep their checked state. */
+export async function beginRecheck(
+  ctx: ServiceContext,
+  authority: TenantPassWrite,
+  id: string,
+  s: CheckStart,
+  rows: readonly number[],
+): Promise<void> {
+  await beginCheck(ctx, authority, id, s, false);
+  for (let i = 0; i < rows.length; i += RECHECK_ROWS) {
+    const g = importGrant(ctx, authority, id, { state: 'checking', check_id: s.checkId });
+    g.joined('pass_import_rows', {
+      where: {
+        import_id: id,
+        row_no: inList(rows.slice(i, i + RECHECK_ROWS)),
+        result: orNull(ne('created')),
+      },
+      delete: true,
+    });
+    await g.commit();
+  }
 }
 
 export interface CheckCounts {

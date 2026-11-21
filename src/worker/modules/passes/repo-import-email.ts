@@ -9,6 +9,7 @@ const ENDED = ['done', 'failed', 'stale', 'expired'];
 export interface EmailRow {
   row_no: number;
   pass_id: string;
+  holder_email: string;
 }
 
 /** Created rows of live passes with an address and no mail yet, in file order after `after`. */
@@ -21,7 +22,7 @@ export function emailCandidates(
 ): Promise<EmailRow[]> {
   return all<EmailRow>(
     db,
-    `SELECT r.row_no, r.pass_id FROM pass_import_rows r JOIN passes p ON p.id = r.pass_id
+    `SELECT r.row_no, r.pass_id, r.holder_email FROM pass_import_rows r JOIN passes p ON p.id = r.pass_id
      WHERE r.import_id = ? AND r.result = 'created' AND r.emailed = 0 AND r.holder_email IS NOT NULL
        AND p.org_id = ? AND p.removed_at IS NULL AND r.row_no > ?
      ORDER BY r.row_no LIMIT ?`,

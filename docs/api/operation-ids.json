@@ -214,6 +214,7 @@
   "pass-imports.postPassImportsByIdCommit",
   "pass-imports.postPassImportsByIdEmailRest",
   "pass-imports.postPassImportsByIdRemoveCreated",
+  "pass-imports.postPassImportsByIdUndo",
   "pass-imports.putPassImportsMappings",
   "passes.deletePassesById",
   "passes.deletePassesByIdAssetsByName",

@@ -969,6 +969,10 @@
     "resource": "passImports",
     "method": "removeCreated"
   },
+  "pass-imports.postPassImportsByIdUndo": {
+    "resource": "passImports",
+    "method": "undo"
+  },
   "pass-imports.putPassImportsMappings": {
     "resource": "passImports.mappings",
     "method": "save"

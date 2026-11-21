@@ -104,5 +104,20 @@
     "response": {
       "saved": []
     }
+  },
+  "pass-imports.postPassImportsByIdUndo": {
+    "description": "Undoes an ended import for 24 hours after it ends, as a background run. Passes it created are removed unless they were edited or scanned since. Passes it updated get their earlier values back while still at the version the import wrote. Anything else is kept and listed in `kept`. Held emails are cancelled; emails already sent are not recalled. Asking again returns the same run. Poll GET /pass-imports/{id} for `undo`.",
+    "request": {},
+    "requests": {
+      "Undo the import": {}
+    },
+    "response": {
+      "state": "running",
+      "removed": 0,
+      "restored": 0,
+      "keptTotal": 0,
+      "kept": [],
+      "emailsCancelled": 3
+    }
   }
 }

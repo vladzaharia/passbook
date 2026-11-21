@@ -934,6 +934,15 @@ func (r *PassImportsResource) SendEmails(ctx context.Context, id string, body *P
 	return &out, nil
 }
 
+// Undo Undo an ended import: remove the passes it made and restore the ones it changed, unless edited since `POST /api/v1/pass-imports/{id}/undo`
+func (r *PassImportsResource) Undo(ctx context.Context, id string, body *PassImportsUndoBody, opts ...RequestOption) (*PassImportsUndoResult, error) {
+	var out PassImportsUndoResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/pass-imports/" + pathEscape(id) + "/undo", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassesAssetsResource struct {
 	c *core
 }

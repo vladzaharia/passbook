@@ -1792,6 +1792,15 @@
       ]
     },
     {
+      "code": "IMPORT_UNDO_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "INTERNAL",
       "statuses": [
         500
