@@ -1,1 +1,130 @@
-[]
+[
+  {
+    "key": "DELETE /api/v1/brand/web-logo 200.personal: field added",
+    "class": "additive",
+    "operationId": "brand.deleteBrandWebLogo",
+    "op": "DELETE /api/v1/brand/web-logo",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
+    "op": "DELETE /api/v1/orgs/{id}/branding/{slot}",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/orgs 200.items[].personal: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgs",
+    "op": "GET /api/v1/orgs",
+    "change": "200.items[].personal: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/orgs 200.items[].personalOwner: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgs",
+    "op": "GET /api/v1/orgs",
+    "change": "200.items[].personalOwner: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/orgs/{id} 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgsById",
+    "op": "GET /api/v1/orgs/{id}",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/orgs/{id} 200.personalOwner: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgsById",
+    "op": "GET /api/v1/orgs/{id}",
+    "change": "200.personalOwner: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/workspace 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgsByIdWorkspace",
+    "op": "GET /api/v1/orgs/{id}/workspace",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/workspace 200.personalOwner: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgsByIdWorkspace",
+    "op": "GET /api/v1/orgs/{id}/workspace",
+    "change": "200.personalOwner: field added",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/brand 200.personal: field added",
+    "class": "additive",
+    "operationId": "brand.patchBrand",
+    "op": "PATCH /api/v1/brand",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{id} 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.patchOrgsById",
+    "op": "PATCH /api/v1/orgs/{id}",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/orgs 201.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "201.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgsByIdStatus",
+    "op": "POST /api/v1/orgs/{id}/status",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/status 200.personalOwner: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgsByIdStatus",
+    "op": "POST /api/v1/orgs/{id}/status",
+    "change": "200.personalOwner: field added",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "PUT /api/v1/brand/web-logo 200.personal: field added",
+    "class": "additive",
+    "operationId": "brand.putBrandWebLogo",
+    "op": "PUT /api/v1/brand/web-logo",
+    "change": "200.personal: field added",
+    "note": ""
+  },
+  {
+    "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.putOrgsByIdBrandingBySlot",
+    "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
+    "change": "200.personal: field added",
+    "note": ""
+  }
+]

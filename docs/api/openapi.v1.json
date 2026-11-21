@@ -1518,6 +1518,10 @@
               "deleted"
             ]
           },
+          "personal": {
+            "type": "boolean",
+            "default": false
+          },
           "defaultIdentityId": {
             "type": [
               "string",
@@ -1693,6 +1697,10 @@
               "deleted"
             ]
           },
+          "personal": {
+            "type": "boolean",
+            "default": false
+          },
           "defaultIdentityId": {
             "type": [
               "string",
@@ -1746,6 +1754,29 @@
           },
           "countsCapped": {
             "type": "boolean"
+          },
+          "personalOwner": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
           }
         },
         "required": [
@@ -28476,6 +28507,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -28531,6 +28563,7 @@
           "MEMBERSHIP_CONFLICT",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -28585,6 +28618,10 @@
                     },
                     "orgSlug": {
                       "type": "string"
+                    },
+                    "personal": {
+                      "type": "boolean",
+                      "default": false
                     },
                     "userId": {
                       "type": "string",
@@ -28700,6 +28737,7 @@
           "MEMBERSHIP_CONFLICT",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -28790,6 +28828,7 @@
           "MEMBERSHIP_CONFLICT",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -28843,6 +28882,10 @@
                           },
                           "orgSlug": {
                             "type": "string"
+                          },
+                          "personal": {
+                            "type": "boolean",
+                            "default": false
                           },
                           "userId": {
                             "type": "string",
@@ -28970,6 +29013,7 @@
           "MEMBERSHIP_CONFLICT",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29034,6 +29078,10 @@
                           },
                           "orgSlug": {
                             "type": "string"
+                          },
+                          "personal": {
+                            "type": "boolean",
+                            "default": false
                           },
                           "userId": {
                             "type": "string",
@@ -29175,6 +29223,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29343,6 +29392,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29492,6 +29542,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29590,6 +29641,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29688,6 +29740,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29764,6 +29817,33 @@
                               "active",
                               "suspended",
                               "deleted"
+                            ]
+                          },
+                          "personal": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "personalOwner": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 64
+                              },
+                              "name": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
                             ]
                           },
                           "createdAt": {
@@ -29864,6 +29944,7 @@
           "MEMBERSHIP_CONFLICT",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29936,6 +30017,7 @@
           "MEMBERSHIP_CONFLICT",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -29988,6 +30070,33 @@
                         "active",
                         "suspended",
                         "deleted"
+                      ]
+                    },
+                    "personal": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "personalOwner": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
                       ]
                     },
                     "createdAt": {
@@ -30076,6 +30185,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30161,6 +30271,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30247,6 +30358,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30324,6 +30436,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30386,6 +30499,33 @@
                         "active",
                         "suspended",
                         "deleted"
+                      ]
+                    },
+                    "personal": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "personalOwner": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
                       ]
                     },
                     "createdAt": {
@@ -30474,6 +30614,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30573,6 +30714,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30660,6 +30802,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30754,6 +30897,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -30874,6 +31018,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -31051,6 +31196,7 @@
           "MISSING_SCOPE",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -31143,6 +31289,7 @@
           "MISSING_SCOPE",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -31237,6 +31384,7 @@
           "MISSING_SCOPE",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -31330,6 +31478,7 @@
           "MISSING_SCOPE",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -36546,6 +36695,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -36830,6 +36980,7 @@
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
@@ -70253,6 +70404,7 @@
           "MISSING_SCOPE",
           "ORG_CONFLICT",
           "ORG_NOT_FOUND",
+          "ORG_SLUG_RESERVED",
           "ORG_SLUG_TAKEN",
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
