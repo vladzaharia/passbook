@@ -6,6 +6,7 @@ import {
   ReleaseTemplateSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
+import { proveCapability } from '../../platform/auth-capability.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import {
   BadRequestError,
@@ -76,7 +77,7 @@ export function registerTemplateReleaseFlow(router: Router): void {
       const orgId = orgIdOf(auth, body.orgId);
       const ctx = serviceContext(c);
       // Why: a dry run writes nothing, so a reviewer may read the plan they are asked to approve.
-      const preview = !request && c.req.valid('query').dryRun === true;
+      const preview = !request && auth.kind === 'session' && c.req.valid('query').dryRun === true;
       const options = {
         scope: request
           ? ('templates:write' as const)
@@ -96,6 +97,8 @@ export function registerTemplateReleaseFlow(router: Router): void {
       await authorizeTemplateWrite(ctx, auth, orgId, options.capability, {
         liveRequest: request,
       });
+      // Why: the route declares publish; a preview proves review instead and writes nothing.
+      if (preview) proveCapability(auth, 'templates:publish');
       try {
         if (c.req.valid('query').dryRun)
           return c.json(
