@@ -4,13 +4,19 @@ import type {
   ScanSetupResult,
   SetupLink,
 } from '../../../shared/contracts/scan-setup-intent.ts';
+import type { Grant } from '../../platform/authority.ts';
+import { grantedBatchWith } from '../../platform/authority-batch.ts';
+import type { Check } from '../../platform/authority-checks.ts';
+import { bump } from '../../platform/counters.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError, RateLimitedError } from '../../platform/errors.ts';
+import type { IdempotencyId } from '../../platform/repo-idempotency.ts';
+import { settleStatement } from '../../platform/repo-idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { scanningDeviceStatements } from './device-statements.ts';
 import { eventStatements } from './events-statements.ts';
-import { adminActorOf, adminGrant, audited } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited, SETUP_APPLY, setupTables } from './repo-admin-grant.ts';
 import { sessionStatements } from './scanning-session-insert.ts';
 import { newCapture } from './setup-capture.ts';
 import type { SetupFacts } from './setup-intent-load.ts';
@@ -19,26 +25,68 @@ import { staffStatements } from './staff-statements.ts';
 import { zoneStatements } from './zones-statements.ts';
 
 /** Every object's rules share one grant, so a refusal answers with one code: the plan changed under the call. */
-export const SETUP_APPLY_CODES = {
-  config: 'SCAN_SETUP_CHANGED',
-  lineage: 'SCAN_SETUP_CHANGED',
-  release: 'SCAN_SETUP_CHANGED',
-  stale: 'SCAN_SETUP_CHANGED',
+export const SETUP_GRANT = {
+  codes: {
+    config: 'SCAN_SETUP_CHANGED',
+    lineage: 'SCAN_SETUP_CHANGED',
+    release: 'SCAN_SETUP_CHANGED',
+    stale: 'SCAN_SETUP_CHANGED',
+  },
 } as const;
 
 export interface ApplyOptions {
   origin: string;
   /** Scan passes: the one session of this template. It makes no device, as it never did. */
   setupTemplateId?: string;
+  /** The idempotency claim of this call: its answer commits in the same batch as the work. */
+  settle?: IdempotencyId;
 }
 
-/** Zones and staff are console work: a key that names a new place or person is refused whole. */
-export function assertKeyScope(authority: TenantPassWrite, plan: ScanSetupPlan): void {
-  if (authority.kind === 'api_key' && (plan.zones.length > 0 || plan.staff.length > 0))
+/** Credentials (staff PINs, pairing codes) need `scanning:admin`, org-bound and live; zones need a live key. */
+const mayMintSecrets = (authority: TenantPassWrite) =>
+  authority.kind === 'session' ||
+  (authority.scope === 'scanning:admin' &&
+    authority.keyOrgId !== null &&
+    authority.mode === 'live');
+
+/** Devices come with a pairing code for those who may see one. A template setup makes none. */
+export const pairsNow = (authority: TenantPassWrite, options: { setupTemplateId?: string }) =>
+  mayMintSecrets(authority) && options.setupTemplateId === undefined;
+
+/** What a key may name, checked the same for a dry run and an apply. */
+export function assertSetupScope(authority: TenantPassWrite, plan: ScanSetupPlan): void {
+  if (authority.kind === 'session') return;
+  if (plan.zones.length > 0 && authority.mode !== 'live')
     throw new ForbiddenError(
-      'Places and staff are made from a console sign-in. Use existing places or leave staff out.',
-      'SCAN_SETUP_CONSOLE_ONLY',
+      'Places are shared with live mode. Make them with a live key.',
+      'SCAN_SETUP_LIVE_ONLY',
     );
+  if (plan.staff.length > 0 && !mayMintSecrets(authority))
+    throw new ForbiddenError(
+      authority.scope === 'scanning:admin'
+        ? 'Staff are shared with live mode. Add them with an org-bound live key.'
+        : 'Adding staff needs the scanning:admin scope.',
+      authority.scope === 'scanning:admin' ? 'SCAN_SETUP_LIVE_ONLY' : 'SCAN_SETUP_ADMIN_SCOPE',
+    );
+}
+
+/** Devices per grant: each adds about three lineage checks to its grant row (90 binds). */
+const DEVICES_PER_GRANT = 10;
+
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+/** A key that mints secrets: this many setups an hour, this many PINs and codes a day. */
+const SECRET_CALLS_PER_HOUR = 10;
+const SECRETS_PER_DAY = 100;
+
+async function limitSecrets(ctx: ServiceContext, authority: TenantPassWrite, secrets: number) {
+  if (authority.kind !== 'api_key' || secrets === 0) return;
+  const now = ctx.clock.now();
+  const window = (ms: number) => Math.floor(now / ms) * ms;
+  const calls = await bump(ctx.env.DB, `scan-setup:calls:${authority.keyId}`, window(HOUR));
+  const day = await bump(ctx.env.DB, `scan-setup:secrets:${authority.keyId}`, window(DAY), secrets);
+  if (calls > SECRET_CALLS_PER_HOUR || day > SECRETS_PER_DAY)
+    throw new RateLimitedError(Math.max(1, Math.ceil((window(HOUR) + HOUR - now) / 1000)));
 }
 
 const links = (all: SetupLink[][]) => {
@@ -115,9 +163,48 @@ function resultOf(
   };
 }
 
+/** The stored answer holds no secret: PINs and pairing codes are shown to the first caller only. */
+export const redacted = (r: ScanSetupResult): ScanSetupResult => ({
+  ...r,
+  staff: r.staff.map((s) => ({ ...s, pin: null })),
+  sessions: r.sessions.map((s) => ({
+    ...s,
+    devices: s.devices.map((d) => ({ ...d, pairing: null })),
+  })),
+});
+
+/** The setup as the capture and the plan functions see it: the rules of apply, with nothing written. */
+export async function prepareForCaller(
+  ctx: ServiceContext,
+  actorId: string,
+  authority: TenantPassWrite,
+  plan: ScanSetupPlan,
+  facts: SetupFacts,
+  options: ApplyOptions,
+) {
+  assertSetupScope(authority, plan);
+  // Scan passes made a session and nothing else, and never stopped on a check.
+  const setup: ScanSetupPlan = options.setupTemplateId
+    ? { ...plan, sessions: plan.sessions.map((s) => ({ ...s, devices: [] })) }
+    : plan;
+  const capture = newCapture({
+    userId: actorId,
+    authority,
+    orgId: authority.orgId,
+    mode: authority.mode,
+    origin: options.origin,
+  });
+  const prepared = await prepareSetup(ctx, setup, capture, facts, {
+    pairNow: pairsNow(authority, options),
+    ...(options.setupTemplateId ? { setupTemplateId: options.setupTemplateId } : {}),
+  });
+  return { setup, capture, prepared };
+}
+
 /**
- * One batch: every statement of every object, and the setup's audit row, under one grant. Any
- * failure writes nothing. The PINs and pairing codes are in the answer and nowhere else.
+ * One batch: every statement of every object, the setup's audit row and the idempotency answer,
+ * under one grant. Any failure writes nothing. The PINs and pairing codes are in the answer and
+ * nowhere else.
  */
 export async function applySetupPlan(
   ctx: ServiceContext,
@@ -128,46 +215,62 @@ export async function applySetupPlan(
   options: ApplyOptions,
 ): Promise<ScanSetupResult> {
   const { orgId, mode } = authority;
-  assertKeyScope(authority, plan);
-  // Scan passes made a session and nothing else, and never stopped on a check.
-  const setup: ScanSetupPlan = options.setupTemplateId
-    ? { ...plan, sessions: plan.sessions.map((s) => ({ ...s, devices: [] })) }
-    : plan;
-  const capture = newCapture({ userId: actorId, authority, orgId, mode, origin: options.origin });
-  const prepared = await prepareSetup(ctx, setup, capture, facts, {
-    pairNow: authority.kind === 'session' && options.setupTemplateId === undefined,
-    ...(options.setupTemplateId ? { setupTemplateId: options.setupTemplateId } : {}),
-  });
-  const g = adminGrant(
+  const { setup, capture, prepared } = await prepareForCaller(
     ctx,
-    'org_mode.scan.setup.apply',
     actorId,
     authority,
-    orgId,
-    prepared.checks,
-    SETUP_APPLY_CODES,
+    plan,
+    facts,
+    options,
   );
-  for (const z of prepared.zones) zoneStatements(g, ctx, z, capture);
-  for (const e of prepared.events) eventStatements(g, ctx, e, capture);
+  const pairs = pairsNow(authority, options);
+  const secrets =
+    prepared.staff.length +
+    (pairs ? prepared.sessions.reduce((n, s) => n + s.devices.length, 0) : 0);
+  await limitSecrets(ctx, authority, secrets);
+  // Each grant row has a bind budget and every write adds lineage checks to its row, so the batch is
+  // several grants in order (a later one sees the earlier ones' writes), sharing their refusal codes.
+  const grant = (checks: Check[] = []) =>
+    adminGrant(
+      ctx,
+      SETUP_APPLY,
+      actorId,
+      authority,
+      orgId,
+      checks,
+      SETUP_GRANT.codes,
+      undefined,
+      setupTables(authority),
+    );
+  const grants: Grant[] = [grant(prepared.checks)];
+  const [shared] = grants;
+  if (!shared) throw new Error('No grant.');
+  for (const z of prepared.zones) zoneStatements(shared, ctx, z, capture);
+  for (const e of prepared.events) eventStatements(shared, ctx, e, capture);
+  const people = grant();
+  grants.push(people);
   const staff = new Map<string, string>();
   for (const s of prepared.staff) {
-    const made = staffStatements(g, ctx, s, capture);
+    const made = staffStatements(people, ctx, s, capture);
     staff.set(made.id, made.pin);
   }
   const pairing = new Map<
     string,
     ScanSetupResult['sessions'][number]['devices'][number]['pairing']
   >();
-  for (const s of prepared.sessions) {
-    sessionStatements(g, ctx, s.plan, capture);
-    for (const d of s.devices) {
+  for (const s of prepared.sessions) sessionStatements(people, ctx, s.plan, capture);
+  const devices = prepared.sessions.flatMap((s) => s.devices);
+  for (let at = 0; at < devices.length; at += DEVICES_PER_GRANT) {
+    const g = grant();
+    grants.push(g);
+    for (const d of devices.slice(at, at + DEVICES_PER_GRANT)) {
       const made = scanningDeviceStatements(g, ctx, d, capture);
       pairing.set(made.id, made.pairing);
     }
   }
   if (options.setupTemplateId === undefined)
-    g.add(
-      audited(g, ctx, {
+    people.add(
+      audited(people, ctx, {
         orgId,
         ...adminActorOf(authority, actorId),
         action: 'scan.setup.apply',
@@ -180,12 +283,19 @@ export async function applySetupPlan(
           events: plan.events.length,
           staff: plan.staff.length,
           sessions: plan.sessions.length,
-          devices: plan.sessions.reduce((n, s) => n + s.devices.length, 0),
+          devices: devices.length,
+          pins: staff.size,
+          pairingCodes: [...pairing.values()].filter((p) => p !== null).length,
         },
       }),
     );
+  // The ids are made before the commit, so the answer is too: its redacted copy commits with the work.
+  const result = resultOf(setup, facts, prepared, { staff, pairing }, mode);
+  const settle = options.settle
+    ? [settleStatement(ctx.env.DB, options.settle, 200, JSON.stringify(redacted(result)))]
+    : [];
   try {
-    await g.commit();
+    await grantedBatchWith(ctx.env.DB, grants, [], settle);
   } catch (error) {
     if (classifyD1Error(error)?.kind === 'unique')
       throw new ConflictError(
@@ -194,5 +304,5 @@ export async function applySetupPlan(
       );
     throw error;
   }
-  return resultOf(setup, facts, prepared, { staff, pairing }, mode);
+  return result;
 }

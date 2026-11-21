@@ -82,7 +82,7 @@ export interface NewStaff {
   pinHash: string;
   /** The MAC root the hash was made under. */
   pinMacVersion: number;
-  createdBy: string;
+  createdBy: string | null;
   now: number;
 }
 

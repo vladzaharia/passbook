@@ -4,10 +4,18 @@ import type {
   ScanSetupPlan,
   SetupLink,
 } from './contracts/scan-setup-intent.ts';
+import { settingsOfflineVerdict } from './scan-offline.ts';
 import type { DoorFacts, SetupCheckFacts } from './scan-setup-checks.ts';
 import type { SetupPlanContext } from './scan-setup-plan-types.ts';
 
 const linkId = (l: SetupLink) => ('ref' in l ? l.ref : l.id);
+
+const offlineBlocked = (s: PlannedSession): string | null => {
+  const mode = s.settings.whenOffline ?? (s.settings.offline ? 'list' : 'stop');
+  if (mode !== 'list') return null;
+  const verdict = settingsOfflineVerdict(s.settings, s.zones.length);
+  return verdict.ok ? null : verdict.message;
+};
 
 /** The plan as the checks see it: the same shape the session page builds from a live session. */
 export function planCheckFacts(
@@ -84,6 +92,7 @@ export function planCheckFacts(
     direction: s.settings.direction ?? null,
     tracks: s.settings.checkIn?.mode === 'in_out',
     staffSignIn: s.settings.staffSignIn === true,
+    offlineBlocked: offlineBlocked(s),
     devices: s.devices.map((d) => ({
       ref: d.ref,
       name: d.name,

@@ -1534,7 +1534,7 @@ func newScanningSessionsResource(c *core) *ScanningSessionsResource {
 // Setup Set up scanning in one call: places, events, staff, sessions and devices `POST /api/v1/scanning-sessions/setup`
 func (r *ScanningSessionsResource) Setup(ctx context.Context, body *ScanningSessionsSetupBody, query *ScanningSessionsSetupQuery, opts ...RequestOption) (ScanningSessionsSetupResult, error) {
 	var out ScanningSessionsSetupResult
-	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/setup", query: queryValues(query), body: body}, &out, opts)
+	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/setup", query: queryValues(query), body: body, idempotent: true}, &out, opts)
 	return out, err
 }
 

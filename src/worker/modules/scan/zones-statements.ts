@@ -11,7 +11,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import { audited } from './repo-admin-grant.ts';
+import { adminActorOf, audited, createdByOf } from './repo-admin-grant.ts';
 import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
   addZoneInsert,
@@ -71,8 +71,11 @@ export async function planZone(
   input: CreateZone,
   capture: SetupCapture,
 ): Promise<ZonePlan> {
-  if (capture.authority.kind !== 'session') throw new ForbiddenError();
-  assertAuthority(capture.authority, input.orgId, 'scanning:manage');
+  const { authority } = capture;
+  // Zones are org-wide, not moded: a key makes them in live mode only (the one-call setup).
+  if (authority.kind === 'api_key') {
+    if (authority.orgId !== input.orgId || authority.mode !== 'live') throw new ForbiddenError();
+  } else assertAuthority(authority, input.orgId, 'scanning:manage');
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const rows = [...(await orgZoneRows(ctx.env.DB, input.orgId)), ...capture.zones.values()];
@@ -125,12 +128,11 @@ export function zoneStatements(
 ): { id: string } {
   const { values } = plan;
   const now = ctx.clock.now();
-  addZoneInsert(g, values, capture.userId, now);
+  addZoneInsert(g, values, createdByOf(capture.authority, capture.userId), now);
   g.add(
     audited(g, ctx, {
       orgId: capture.orgId,
-      actorType: 'user',
-      actorId: capture.userId,
+      ...adminActorOf(capture.authority, capture.userId),
       action: 'scan_zone.create',
       targetType: 'scan_zone',
       targetId: values.id,

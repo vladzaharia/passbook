@@ -24,6 +24,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scanning:admin\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"scanning:admin\" added",
+    "note": "Keys may hold scanning:admin: staff PINs and pairing codes in the one-call setup."
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",

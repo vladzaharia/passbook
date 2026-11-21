@@ -1417,7 +1417,7 @@ class ScanningSessionsResource:
         **opts: _Unpack[RequestOptions],
     ) -> m.ScanningSessionsSetupResult:
         """Set up scanning in one call: places, events, staff, sessions and devices `POST /api/v1/scanning-sessions/setup`"""
-        return self._core.request("POST", "/api/v1/scanning-sessions/setup", body=body, query={"dryRun": dry_run}, result=m.ScanningSessionsSetupResult, **opts)
+        return self._core.request("POST", "/api/v1/scanning-sessions/setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.ScanningSessionsSetupResult, **opts)
 
 
 class ScansResource:

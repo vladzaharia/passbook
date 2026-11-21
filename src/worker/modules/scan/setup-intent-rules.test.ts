@@ -166,20 +166,74 @@ describe('who may call', () => {
     ).toEqual({ t: 'api_key', a: k.id });
   });
 
-  it('refuses a key that names a new place or person, writing nothing', async () => {
+  it('lets a write key make zones in live mode, but not staff or pairing codes', async () => {
     const k = await keyOf(['scanning:write']);
-    const before = await count('scanning_sessions');
-    await expectProblem(
-      await send(k.headers, intent('Key zone', { places: [{ ref: 'z', name: 'Key zone' }] })),
-      403,
-      'SCAN_SETUP_CONSOLE_ONLY',
+    const zoned = (await (
+      await send(k.headers, intent('Key zone', { places: [{ ref: 'z', name: 'Key zone place' }] }))
+    ).json()) as ScanSetupResult;
+    expect(zoned.zones[0]?.created).toBe(true);
+    const zone = await first<{ created_by: string | null }>(
+      fixture.kit.env.DB,
+      'SELECT created_by FROM scan_zones WHERE id = ?',
+      [zoned.zones[0]?.id ?? ''],
     );
+    expect(zone?.created_by).toBeNull();
+    const before = await count('scanning_sessions');
     await expectProblem(
       await send(k.headers, intent('Key staff', { staff: [{ name: 'Key Kim', role: 'door' }] })),
       403,
-      'SCAN_SETUP_CONSOLE_ONLY',
+      'SCAN_SETUP_ADMIN_SCOPE',
     );
     expect(await count('scanning_sessions')).toBe(before);
+  });
+
+  it('refuses zones to a test-mode key', async () => {
+    const k = await keyOf(['scanning:write'], { mode: 'test' });
+    await expectProblem(
+      await send(
+        k.headers,
+        intent('Test zone', { places: [{ ref: 'z', name: 'Test zone place' }] }),
+      ),
+      403,
+      'SCAN_SETUP_LIVE_ONLY',
+    );
+  });
+
+  it('gives a scanning:admin key its PINs and pairing codes, once, and counts them in the audit', async () => {
+    const k = await keyOf(['scanning:admin']);
+    const result = (await (
+      await send(
+        k.headers,
+        intent('Admin key door', { staff: [{ name: 'Admin Ada', role: 'desk' }] }),
+      )
+    ).json()) as ScanSetupResult;
+    expect(result.staff[0]?.pin).toMatch(/^\d{6}$/);
+    expect(result.sessions[0]?.devices.every((d) => d.pairing?.code.length === 10)).toBe(true);
+    const audit = await first<{ detail: string; actor_type: string }>(
+      fixture.kit.env.DB,
+      "SELECT detail, actor_type FROM audit_log WHERE action = 'scan.setup.apply' AND target_id = ?",
+      [result.sessions[0]?.id ?? ''],
+    );
+    expect(audit?.actor_type).toBe('api_key');
+    expect(JSON.parse(audit?.detail ?? '{}')).toMatchObject({ pins: 1, pairingCodes: 1 });
+  });
+
+  it('rate limits a key that mints secrets', async () => {
+    const k = await keyOf(['scanning:admin']);
+    for (let n = 0; n < 10; n++)
+      expect(
+        (
+          await send(
+            k.headers,
+            intent(`Burst ${n}`, { staff: [{ name: `Burst ${n}`, role: 'door' }] }),
+          )
+        ).status,
+      ).toBe(200);
+    await expectProblem(
+      await send(k.headers, intent('Burst x', { staff: [{ name: 'Burst x', role: 'door' }] })),
+      429,
+      'RATE_LIMITED',
+    );
   });
 
   it('turns away another org, a read-only key and a session without manage', async () => {

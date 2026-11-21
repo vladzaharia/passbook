@@ -4,6 +4,7 @@ import type { Mode } from '../../platform/authority-principal.ts';
 import { templatesUsable } from './repo-admin-grant.ts';
 import type { ConsoleEventRow } from './repo-events.ts';
 import type { TemplateStamps } from './repo-scope-releases.ts';
+import { tagged } from './setup-check-merge.ts';
 
 /**
  * Every approved release an event's templates were validated against is still the head for this
@@ -15,15 +16,13 @@ export const eventReleaseChecks = (
   mode: Mode,
   kept: readonly string[] = [],
 ): Check[] =>
-  (stamps?.releases ?? []).map((s) =>
-    releaseHead(
-      s.templateId,
-      mode,
-      'apple',
-      s.id,
-      kept.includes(s.templateId) ? 'existing' : 'issue',
-    ),
-  );
+  (stamps?.releases ?? []).map((s) => {
+    const status = kept.includes(s.templateId) ? 'existing' : 'issue';
+    return tagged(
+      releaseHead(s.templateId, mode, 'apple', s.id, status),
+      `release:${s.templateId}:${s.id}:${status}`,
+    );
+  });
 
 /** A cache fill derived from this exact read of the event: same epoch, same cached value. */
 export const eventCacheChecks = (row: ConsoleEventRow): Check[] => [

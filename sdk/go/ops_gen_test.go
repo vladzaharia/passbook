@@ -1148,7 +1148,7 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"scanningSessions.setup", "POST", "/api/v1/scanning-sessions/setup", false,
+		"scanningSessions.setup", "POST", "/api/v1/scanning-sessions/setup", true,
 		`{"orgId":"x","doors":[{"name":"x","admits":{"any":true}}]}`, `{"replayed":false,"mode":"live","sessions":[{"id":"x","ref":"x","name":"x","devices":[{"id":"x","name":"x","pairing":{"code":"x","url":"x","expiresAt":0}}]}],"zones":[{"id":"x","ref":"x","name":"x","created":false}],"events":[{"id":"x","ref":"x","name":"x","created":false}],"staff":[{"id":"x","name":"x","role":"door","pin":"x"}],"checks":[{"code":"NO_EXIT","level":"error","message":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b ScanningSessionsSetupBody

@@ -3,6 +3,7 @@ import { type Check, exactlyOne } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import { inList, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
+import { tagged } from './setup-check-merge.ts';
 
 type Db = D1Database;
 
@@ -148,7 +149,7 @@ export interface ZoneInsert {
 export const addZoneInsert = (
   g: Grant,
   z: ZoneInsert,
-  createdBy: string,
+  createdBy: string | null,
   now: number,
 ): GrantedStatement =>
   g.insertSelect(
@@ -237,9 +238,20 @@ export function addZoneArchive(
 
 /** Every zone is in the grant's org and not archived (the body names ids; the grant proves them). */
 export const zonesOpen = (ids: readonly string[]): Check[] =>
-  [...new Set(ids)].map((id) =>
-    exactlyOne('scan_zones', { id, archived_at: null }, undefined, 'config'),
-  );
+  ids.length === 0
+    ? []
+    : [
+        tagged(
+          tenantCheck(
+            'config',
+            `NOT EXISTS (SELECT 1 FROM json_each(?) j WHERE NOT EXISTS (SELECT 1 FROM scan_zones z
+            WHERE z.id = j.value AND z.archived_at IS NULL AND z.org_id = {org}))`,
+            [JSON.stringify([...new Set(ids)])],
+          ),
+          'zones',
+          [...new Set(ids)],
+        ),
+      ];
 
 /** The zone and the zones below it are exactly these ids, in the grant's org. */
 export const zoneSubtreeIs = (id: string, ids: readonly string[]): Check =>

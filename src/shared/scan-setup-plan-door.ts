@@ -1,6 +1,7 @@
 import type { PlannedSession, SetupDoor, SetupLink } from './contracts/scan-setup-intent.ts';
 import { ADMITS_TEMPLATE_CAP } from './contracts/scanners.ts';
 import type { ScanDeviceOverrides } from './contracts/scanning-sessions.ts';
+import { settingsOfflineVerdict } from './scan-offline.ts';
 import { deviceName, isTracked, sessionHoursOf } from './scan-setup-plan-derive.ts';
 import { type DoorPlanEnv, isRef } from './scan-setup-plan-types.ts';
 import { roleForSurface } from './scan-surfaces.ts';
@@ -129,6 +130,18 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
   const directed = direction !== undefined || devices.some((d) => d.overrides.direction);
   if ((directed || reentry) && more.checkIn?.mode === undefined)
     settings.checkIn = { ...more.checkIn, mode: 'in_out' };
+  // event_night keeps the line moving offline, but only for a door that needs no exits.
+  const desk = devices.some((d) => d.surface === 'operator');
+  if (
+    env.intent.preset === 'event_night' &&
+    !desk &&
+    more.offline === undefined &&
+    more.whenOffline === undefined &&
+    settingsOfflineVerdict(settings, zone ? 1 : 0).ok
+  ) {
+    settings.offline = true;
+    settings.whenOffline = 'list';
+  }
   return {
     ref,
     name: door.name,

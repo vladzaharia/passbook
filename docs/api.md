@@ -43,6 +43,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
+| `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, rate limited. Only `org_admin` can mint it |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
 
 ### Token types
@@ -803,7 +804,10 @@ The call writes everything in one batch: a failure writes nothing. Names that ar
 
 - **Replay.** The same `Idempotency-Key` and body returns the same ids with `replayed: true` and no PINs or codes. A device that was never paired and whose code ran out gets a new one, and `pairingReissued` is true. The same key with another body is 409 `SCAN_SETUP_KEY_REUSED`.
 - **Errors.** A plan problem is 422 `SCAN_SETUP_INVALID`, an `error` check 422 `SCAN_SETUP_CHECKS_FAILED`; both carry `issues` with a path. A name or key taken during the call is 409 `SCAN_SETUP_NAME_TAKEN`: send it again. A key for another org gets 404.
-- **Keys.** A `scanning:write` key makes events, sessions and devices. New zones and staff are console work (403 `SCAN_SETUP_CONSOLE_ONLY`), and a key's devices come with no pairing code: pair them from the console. Its rows have no user creator and the audit row names the key.
+- **Keys.** `scanning:write` makes events, sessions, new places (live keys only) and devices with no pairing code; its rows have no user creator and the audit row names the key. `scanning:admin` (org-bound, live keys only; only `org_admin` can mint it) also makes staff and gives PINs and pairing codes once, up to 10 such setups an hour and 100 PINs and codes a day per key (429 `RATE_LIMITED`). Without it, staff are 403 `SCAN_SETUP_ADMIN_SCOPE`; places or staff from a test key are 403 `SCAN_SETUP_LIVE_ONLY`. The grant itself refuses the tables a key's scope does not cover. Test mode: places and staff are shared with live.
+- **Replay and pairing.** A replay reissues expired codes for a console session only, one commit per device: two replays at once can each mint a code, and the later one wins.
+- **Offline.** `event_night` gives a door the offline list only when it needs no exits (no tracked place, no re-entry, no direction). An explicit list on a door that needs exits is the error check `OFFLINE_LIST_BLOCKED`.
+- **Limits.** At most 10 new events in all, counting each `fromTemplate` entry's events (422 `SCAN_SETUP_INVALID`).
 - **Devices.** `name` is optional on `POST /scanning-sessions/{id}/devices`: the session's name and the next free number.
 - **End.** `PATCH /scanning-sessions/{id}` with `{ "status": "ended", "removeDevices": true }` revokes every device of the session in the same write. It defaults to false and needs a console session.
 

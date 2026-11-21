@@ -17,12 +17,13 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import { idempotencyKeyHeader, principalOf, withIdempotency } from '../../platform/idempotency.ts';
+import type { IdempotencyId } from '../../platform/repo-idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { createPairing } from './pairing.ts';
 import { unpairedExpired } from './repo-setup-intent.ts';
 import { loadScanner } from './scanner-views.ts';
-import { applySetupPlan, assertKeyScope } from './setup-intent-apply.ts';
+import { applySetupPlan, prepareForCaller, redacted } from './setup-intent-apply.ts';
 import { loadSetupFacts, type SetupFacts } from './setup-intent-load.ts';
 import { withFreeNames } from './setup-intent-plan.ts';
 
@@ -31,7 +32,7 @@ const fill = (text: string, params: Record<string, string> = {}) =>
 
 /** A check as a problem entry: the door it is about as the path, the check's code, its copy. */
 export const checkIssue = (c: ScanSetupCheck): FieldIssue => ({
-  path: c.door ? `doors.${c.door}` : '',
+  path: c.door ? `doors.${Number(c.door.replace('door-', '')) - 1}` : '',
   code: c.code,
   message: fill(
     SCAN_SETUP_COPY.checks[c.message as keyof typeof SCAN_SETUP_COPY.checks] ?? c.message,
@@ -57,7 +58,7 @@ export async function planSetupIntent(
       })),
       'SCAN_SETUP_INVALID',
     );
-  return { plan: withFreeNames(planned.plan, facts.taken), facts };
+  return { plan: withFreeNames(planned.plan, facts.taken, intent), facts };
 }
 
 /** A key bound to another org finds no such org, rather than learning it exists. */
@@ -78,18 +79,14 @@ export async function dryRunSetup(
   intent: ScanSetupIntent,
 ): Promise<ScanSetupPlan> {
   const authority = await authorityOf(ctx, auth, intent.orgId);
-  return (await planSetupIntent(ctx, authority, intent)).plan;
+  const { plan, facts } = await planSetupIntent(ctx, authority, intent);
+  // The same per-object and scope rules as apply, over the same plan; nothing is written.
+  const actorId = auth.kind === 'api_key' ? auth.keyId : auth.userId;
+  // An error check already says what is wrong, and the object rules would stop on the same thing first.
+  if (!plan.checks.some((c) => c.level === 'error'))
+    await prepareForCaller(ctx, actorId, authority, plan, facts, { origin: '' });
+  return plan;
 }
-
-/** The stored answer holds no secret: PINs and pairing codes are shown to the first caller only. */
-const redacted = (r: ScanSetupResult): ScanSetupResult => ({
-  ...r,
-  staff: r.staff.map((s) => ({ ...s, pin: null })),
-  sessions: r.sessions.map((s) => ({
-    ...s,
-    devices: s.devices.map((d) => ({ ...d, pairing: null })),
-  })),
-});
 
 /** A replay: the same ids, no PINs; a device whose code ran out and was never paired gets a new one. */
 async function replayOf(
@@ -142,19 +139,22 @@ export async function applyScanSetup(
     throw new BadRequestError('Send an Idempotency-Key header.', 'SCAN_SETUP_KEY_REQUIRED');
   const actorId = auth.kind === 'api_key' ? auth.keyId : auth.userId;
   let fresh: ScanSetupResult | null = null;
+  const scope = {
+    orgId: authority.orgId,
+    mode: authority.mode as Mode,
+    principal: principalOf(auth),
+    operation: 'POST /scanning-sessions/setup',
+    key,
+  };
+  const settle: IdempotencyId = [scope.orgId, scope.mode, scope.principal, scope.operation, key];
   const outcome = await withIdempotency(
     ctx,
     {
-      orgId: authority.orgId,
-      mode: authority.mode as Mode,
-      principal: principalOf(auth),
-      operation: 'POST /scanning-sessions/setup',
-      key,
+      ...scope,
       request: { method: request.method, path: request.path, body: intent },
     },
     async () => {
       const { plan, facts } = await planSetupIntent(ctx, authority, intent);
-      assertKeyScope(authority, plan);
       const errors = plan.checks.filter((c) => c.level === 'error');
       if (errors.length > 0)
         throw new ValidationError(
@@ -162,7 +162,7 @@ export async function applyScanSetup(
           errors.map(checkIssue),
           'SCAN_SETUP_CHECKS_FAILED',
         );
-      fresh = await applySetupPlan(ctx, actorId, authority, plan, facts, { origin });
+      fresh = await applySetupPlan(ctx, actorId, authority, plan, facts, { origin, settle });
       return { status: 200, body: redacted(fresh) };
     },
   ).catch((error: unknown) => {

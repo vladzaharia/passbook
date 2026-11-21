@@ -30,7 +30,7 @@ export type ApiKeyCurrent = {
   orgId: string | null;
   name: string;
   prefix: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scanning:admin" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
   mode?: "live" | "test";
   createdAt: number;
   lastUsedAt: number | null;
@@ -46,7 +46,7 @@ export type ApiKeyDetail = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scanning:admin" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -81,7 +81,7 @@ export type ApiKeyMinted = {
   name: string;
   prefix: string;
   secretPrefix?: string;
-  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
+  scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scanning:admin" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
   mode?: "live" | "test";
   createdBy: string | null;
   createdByName?: string | null;
@@ -112,7 +112,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scanning:admin" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -136,7 +136,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scanning:admin" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -160,7 +160,7 @@ export type ApiKeyRotation = {
     name: string;
     prefix: string;
     secretPrefix?: string;
-    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scanning:admin" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
     mode?: "live" | "test";
     createdBy: string | null;
     createdByName?: string | null;
@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "scanning:write" | "api-keys:write">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "scanning:write" | "scanning:admin" | "api-keys:write">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;
@@ -2635,7 +2635,7 @@ export type ScanSetupAnswer = {
     pin: string | null;
   }>;
   checks: Array<{
-    code: "NO_EXIT" | "NO_MANAGER" | "NO_STAFF" | "PLAN_MISSES_PLACE" | "HOURS_DIFFER" | "EVENT_NO_PASSES" | "READER_BOTH" | "PLACE_ON_EVENT" | "TEST_ONLY" | "DIRECTION_NEEDS_TRACKING";
+    code: "NO_EXIT" | "NO_MANAGER" | "NO_STAFF" | "PLAN_MISSES_PLACE" | "HOURS_DIFFER" | "EVENT_NO_PASSES" | "READER_BOTH" | "PLACE_ON_EVENT" | "TEST_ONLY" | "DIRECTION_NEEDS_TRACKING" | "OFFLINE_LIST_BLOCKED";
     level: "error" | "warn" | "info";
     message: string;
     params?: Record<string, string>;
@@ -2788,7 +2788,7 @@ export type ScanSetupAnswer = {
     }>;
   }>;
   checks: Array<{
-    code: "NO_EXIT" | "NO_MANAGER" | "NO_STAFF" | "PLAN_MISSES_PLACE" | "HOURS_DIFFER" | "EVENT_NO_PASSES" | "READER_BOTH" | "PLACE_ON_EVENT" | "TEST_ONLY" | "DIRECTION_NEEDS_TRACKING";
+    code: "NO_EXIT" | "NO_MANAGER" | "NO_STAFF" | "PLAN_MISSES_PLACE" | "HOURS_DIFFER" | "EVENT_NO_PASSES" | "READER_BOTH" | "PLACE_ON_EVENT" | "TEST_ONLY" | "DIRECTION_NEEDS_TRACKING" | "OFFLINE_LIST_BLOCKED";
     level: "error" | "warn" | "info";
     message: string;
     params?: Record<string, string>;

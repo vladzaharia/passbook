@@ -1769,6 +1769,18 @@
     "fix": "Correct the settings named in issues, then retry.",
     "retryable": false
   },
+  "SCAN_SETUP_ADMIN_SCOPE": {
+    "title": "Staff need scanning:admin",
+    "when": "A key without scanning:admin named new staff.",
+    "fix": "Use a scanning:admin key, or leave staff out.",
+    "retryable": false
+  },
+  "SCAN_SETUP_CHANGED": {
+    "title": "Setup changed",
+    "when": "Something the setup relies on changed while it ran. Nothing was written.",
+    "fix": "Send the setup again.",
+    "retryable": true
+  },
   "SCAN_SETUP_CHECKS_FAILED": {
     "title": "Setup has problems",
     "when": "A check with level error stops the setup.",
@@ -1780,12 +1792,6 @@
     "when": "Another session already scans this template.",
     "fix": "Remove the template from the other session, or reuse that session.",
     "retryable": true
-  },
-  "SCAN_SETUP_CONSOLE_ONLY": {
-    "title": "Console sign-in needed",
-    "when": "A key asked for new places or staff.",
-    "fix": "Use existing places, or run the setup from the console.",
-    "retryable": false
   },
   "SCAN_SETUP_INVALID": {
     "title": "Setup needs changes",
@@ -1803,6 +1809,12 @@
     "title": "Key used for another setup",
     "when": "This Idempotency-Key went with a different body.",
     "fix": "Use a new key for a different setup.",
+    "retryable": false
+  },
+  "SCAN_SETUP_LIVE_ONLY": {
+    "title": "Live key needed",
+    "when": "Places and staff are shared with live mode, so a test key cannot make them.",
+    "fix": "Use a live key.",
     "retryable": false
   },
   "SCAN_SETUP_NAME_TAKEN": {
@@ -2027,6 +2039,12 @@
     "fix": "Fetch the tag and send the request again.",
     "retryable": false
   },
+  "TAG_ID_INVALID": {
+    "title": "Tag ID not valid",
+    "when": "The typed tag ID is not 4, 7 or 10 bytes in the chosen format.",
+    "fix": "Check the ID against the reader or the supplier's list.",
+    "retryable": false
+  },
   "TAG_KEY_UNREADABLE": {
     "title": "Tag key unreadable",
     "when": "A stored tag key could not be decrypted.",
@@ -2169,12 +2187,6 @@
     "title": "Tag type is for another tag system",
     "when": "The tag type is for Basic tags and the tag is Secure, or the reverse.",
     "fix": "Choose a tag type for this tag's system.",
-    "retryable": false
-  },
-  "TAG_ID_INVALID": {
-    "title": "Tag ID not valid",
-    "when": "The typed tag ID is not 4, 7 or 10 bytes in the chosen format.",
-    "fix": "Check the ID against the reader or the supplier's list.",
     "retryable": false
   },
   "TAG_UID_RANDOM": {

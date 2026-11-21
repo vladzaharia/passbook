@@ -74,6 +74,8 @@ export const ApiScopeSchema = z.enum([
   'templates:publish',
   'messages:read',
   'scanning:write',
+  /** Staff PINs and paired devices (codes shown once) in the one-call setup: org-bound, live keys only. */
+  'scanning:admin',
   'nfc:read',
   'nfc:write',
   'wallet:read',

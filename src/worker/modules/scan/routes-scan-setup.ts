@@ -22,7 +22,11 @@ export function registerScanSetup(router: Router): void {
       method: 'post',
       path: '/setup',
       summary: 'Set up scanning in one call: places, events, staff, sessions and devices',
-      auth: { scope: 'scanning:write', capability: 'scanning:manage', feature: 'scanning.devices' },
+      auth: {
+        scope: ['scanning:admin', 'scanning:write'],
+        capability: 'scanning:manage',
+        feature: 'scanning.devices',
+      },
       query: z.object({ dryRun: z.enum(['true', 'false']).optional() }),
       body: ScanSetupIntentSchema,
       response: ScanSetupAnswerSchema,
@@ -34,15 +38,15 @@ export function registerScanSetup(router: Router): void {
       const intent = c.req.valid('json');
       if (c.req.valid('query').dryRun === 'true')
         return c.json(await dryRunSetup(ctx, auth, intent));
-      return c.json(
-        await applyScanSetup(ctx, auth, {
-          intent,
-          idempotencyKey: c.req.header('idempotency-key'),
-          method: c.req.method,
-          path: c.req.path,
-          origin: new URL(c.req.url).origin,
-        }),
-      );
+      const result = await applyScanSetup(ctx, auth, {
+        intent,
+        idempotencyKey: c.req.header('idempotency-key'),
+        method: c.req.method,
+        path: c.req.path,
+        origin: new URL(c.req.url).origin,
+      });
+      if (result.replayed) c.header('Idempotent-Replayed', 'true');
+      return c.json(result);
     },
   );
 }

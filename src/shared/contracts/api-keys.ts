@@ -27,6 +27,7 @@ export const MINTABLE_SCOPES = [
   'webhooks:manage',
   'brand:manage',
   'scanning:write',
+  'scanning:admin',
   'api-keys:write',
 ] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
 export const MintableScopeSchema = z.enum(MINTABLE_SCOPES);

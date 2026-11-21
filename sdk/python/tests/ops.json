@@ -6003,7 +6003,7 @@
    ]
   },
   "binary": false,
-  "idempotent": false,
+  "idempotent": true,
   "raw": false,
   "cursor": null,
   "result": {

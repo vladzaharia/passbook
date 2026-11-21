@@ -155,6 +155,7 @@ describe('API key scopes', () => {
       'templates:publish',
       'messages:read',
       'scanning:write',
+      'scanning:admin',
       'nfc:read',
       'nfc:write',
       'wallet:read',

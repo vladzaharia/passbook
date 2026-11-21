@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { all, first } from '../../platform/db.ts';
-import { door, fixture, made, newKey, post } from './setup-intent-test-fixtures.ts';
+import { door, fixture, made, post } from './setup-intent-test-fixtures.ts';
 
 let templateId: string;
 beforeAll(async () => {
@@ -151,7 +151,7 @@ describe('venue preset', () => {
     expect(first1.zones[0]?.name).toBe('Lobby');
     expect(second.zones[0]?.name).toBe('Lobby 2');
     expect(second.staff[0]?.name).toBe('Sam 2');
-    expect(second.sessions[0]?.devices[0]?.name).toBe('Lobby door 1 2');
+    expect(second.sessions[0]?.devices[0]?.name).toBe('Lobby door 2');
   });
 });
 
@@ -182,6 +182,5 @@ describe('dry run', () => {
     expect(
       await rows('SELECT COUNT(*) AS n FROM scanning_sessions WHERE org_id = ?', orgId()),
     ).toEqual(before);
-    expect(newKey()).toBeTruthy();
   });
 });

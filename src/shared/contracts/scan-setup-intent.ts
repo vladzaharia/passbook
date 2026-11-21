@@ -203,6 +203,7 @@ export const ScanSetupCheckCodeSchema = z.enum([
   'PLACE_ON_EVENT',
   'TEST_ONLY',
   'DIRECTION_NEEDS_TRACKING',
+  'OFFLINE_LIST_BLOCKED',
 ]);
 export type ScanSetupCheckCode = z.infer<typeof ScanSetupCheckCodeSchema>;
 

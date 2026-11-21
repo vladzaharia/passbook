@@ -282,6 +282,7 @@ describe('mintable scopes', () => {
       ...Object.keys(LEGACY_SCOPE_CAPABILITY),
       'brand:manage',
       'scanning:write',
+      'scanning:admin',
       'api-keys:write',
     ]);
   });

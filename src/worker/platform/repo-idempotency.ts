@@ -63,6 +63,19 @@ export async function settleRequest(
   );
 }
 
+/** `settleRequest` as a statement, for a batch that commits the answer with the work it answers. */
+export const settleStatement = (
+  db: D1Database,
+  id: IdempotencyId,
+  status: number,
+  body: string,
+): D1PreparedStatement =>
+  db
+    .prepare(
+      `UPDATE idempotent_requests SET status = ?, body = ? WHERE ${WHERE} AND status IS NULL`,
+    )
+    .bind(status, body, ...id);
+
 export async function deleteExpiredRequests(db: D1Database, now: number): Promise<number> {
   return (await run(db, 'DELETE FROM idempotent_requests WHERE expires_at < ?', [now])).changes;
 }

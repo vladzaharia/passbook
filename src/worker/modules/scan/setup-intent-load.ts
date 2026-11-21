@@ -10,6 +10,7 @@ import type {
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { syncBakedTemplates } from '../templates/sync.ts';
 import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
   activeStaff,
@@ -32,12 +33,9 @@ const DAY = 86_400_000;
 export interface SetupFacts {
   plan: SetupPlanContext;
   taken: { zones: TakenNames; staff: TakenNames; scanners: TakenNames };
-  /** A planned event's Scan passes key and venue note, by template, name and window: one live event per key. */
+  /** A planned fromTemplate event's Scan passes key (one live event per key) and venue note, by its ref. */
   eventKeys: Map<string, { key: string; note: string | null }>;
 }
-
-export const eventKeyOf = (templateId: string, name: string, opensAt: number, closesAt: number) =>
-  `${templateId}|${name}|${opensAt}|${closesAt}`;
 
 const planFacts = (manifest: TemplateManifest): TemplateFacts['plans'] => {
   const access = manifest.scan?.access as AccessManifest | undefined;
@@ -75,7 +73,7 @@ async function upcomingOf(
   mode: Mode,
   templateId: string,
   manifest: TemplateManifest,
-  keys: SetupFacts['eventKeys'],
+  keys: Map<string, { key: string; note: string | null }[]>,
 ): Promise<NonNullable<TemplateFacts['upcomingEvents']>> {
   const db = ctx.env.DB;
   const source = eventSource(manifest);
@@ -85,6 +83,12 @@ async function upcomingOf(
     source.own ? ownEventValues(db, orgId, mode, templateId, source.own, since) : empty,
     source.list ? listedEventValues(db, orgId, mode, templateId, source.list, since) : empty,
   ]);
+  if (own.unparsed + listed.unparsed > 0)
+    ctx.log.warn('scan.template_setup.start_skipped', {
+      orgId,
+      code: 'START_NOT_ISO',
+      count: own.unparsed + listed.unparsed,
+    });
   const planned = planEvents(
     templateId,
     source,
@@ -92,6 +96,7 @@ async function upcomingOf(
     ctx.clock.now(),
   ).events;
   const out: NonNullable<TemplateFacts['upcomingEvents']> = [];
+  const extras: { key: string; note: string | null }[] = [];
   for (const e of planned) {
     // An event its create schema would refuse is skipped, as Scan passes always did.
     if (
@@ -105,9 +110,11 @@ async function upcomingOf(
         note: e.venue,
         match: e.match ? { input: e.match.input, values: [e.match.value] } : null,
       }).success
-    )
+    ) {
+      ctx.log.warn('scan.template_setup.event_skipped', { orgId, code: 'EVENT_INVALID' });
       continue;
-    keys.set(eventKeyOf(templateId, e.name, e.opensAt, e.closesAt), { key: e.key, note: e.venue });
+    }
+    extras.push({ key: e.key, note: e.venue });
     out.push({
       name: e.name,
       opensAt: e.opensAt,
@@ -117,6 +124,7 @@ async function upcomingOf(
       existingId: (await setupEvent(db, orgId, mode, e.key))?.id ?? null,
     });
   }
+  keys.set(templateId, extras);
   return out;
 }
 
@@ -126,10 +134,11 @@ async function loadTemplates(
   mode: Mode,
   ids: string[],
   fromTemplate: Set<string>,
-  keys: SetupFacts['eventKeys'],
+  keys: Map<string, { key: string; note: string | null }[]>,
 ): Promise<TemplateFacts[]> {
   if (ids.length === 0) return [];
   const db = ctx.env.DB;
+  if (ids.some((id) => id.startsWith('baked:'))) await syncBakedTemplates(ctx);
   const [rows, issued] = await Promise.all([
     visibleTemplates(db, orgId, ids),
     issuedCounts(db, orgId, ids),
@@ -186,10 +195,10 @@ export async function loadSetupFacts(
   const fromTemplate = new Set(
     intent.events.flatMap((e) => ('fromTemplate' in e ? [e.fromTemplate] : [])),
   );
-  const eventKeys: SetupFacts['eventKeys'] = new Map();
+  const extras = new Map<string, { key: string; note: string | null }[]>();
   const [orgTimeZone, templates, zones, staff, taken] = await Promise.all([
     readOrgTimeZone(db, orgId),
-    loadTemplates(ctx, orgId, mode, wanted.templates, fromTemplate, eventKeys),
+    loadTemplates(ctx, orgId, mode, wanted.templates, fromTemplate, extras),
     orgZoneRows(db, orgId),
     activeStaff(db, orgId),
     Promise.all([
@@ -198,6 +207,13 @@ export async function loadSetupFacts(
       takenScannerNames(db, orgId, mode),
     ]),
   ]);
+  const eventKeys: SetupFacts['eventKeys'] = new Map();
+  intent.events.forEach((e, i) => {
+    if (!('fromTemplate' in e)) return;
+    (extras.get(e.fromTemplate) ?? []).forEach((x, n) =>
+      eventKeys.set(`${e.ref ?? `template-${i + 1}`}-${n + 1}`, x),
+    );
+  });
   for (const t of templates)
     for (const u of t.upcomingEvents ?? []) if (u.existingId) wanted.events.add(u.existingId);
   return {
