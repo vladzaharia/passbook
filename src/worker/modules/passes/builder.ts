@@ -20,13 +20,12 @@ import { isPreviewOnlyOrg, PREVIEW_PASS_IDENTITY } from '../developer/fence.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
-import { readBranding, type TenantBranding, tenantPassJson } from './branding.ts';
+import { readBranding, type TenantBranding } from './branding.ts';
 import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
 import { type BuildInputs, readBuildInputs } from './build-reads.ts';
-import { artifactOf, editPass } from './builder-finish.ts';
-import { backContactsFor, withBackContacts } from './contacts.ts';
+import { artifactOf, editPass, tenantOf } from './builder-finish.ts';
+import { backContactsFor } from './contacts.ts';
 import { depsOf } from './deps.ts';
-import { issuerName } from './issuer.ts';
 import type { Removal } from './remove-build.ts';
 import type { PassStatus } from './repo.ts';
 import type { AssetRow } from './repo-history-assets.ts';
@@ -229,18 +228,14 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
   const passOverrides = photo
     ? [...originalOverrides.filter((a) => parseAssetName(a.name).slot !== 'thumbnail'), photo]
     : originalOverrides;
-  const tenant = withBackContacts(
-    tenantPassJson(resolved.passJson, req.orgName, branding, req.personal),
-    contacts,
-  );
+  const tenant = tenantOf(req, resolved, branding, contacts);
   const { template, registry } = await withOverrides(
-    { ...resolved, passJson: tenant },
+    { ...resolved, passJson: tenant.passJson },
     deps.registry,
     ctx.env.BUCKET,
     await brandedOverrides(ctx.env.BUCKET, req.orgId, passOverrides, branding),
   );
   const now = new Date(ctx.clock.now());
-  const issuer = issuerName(req.orgName, req.personal, resolved.passJson);
   try {
     if (identity === null) {
       // A developer org: the same build, stopped before the signature. The stored object is the pass JSON.
@@ -252,7 +247,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
           serial: req.serial,
           authToken,
           webServiceURL: req.webServiceUrl,
-          organizationName: issuer,
+          organizationName: tenant.issuer,
           identity: PREVIEW_PASS_IDENTITY,
           ...(req.scanCode ? { scanCode: req.scanCode } : {}),
         },
@@ -281,7 +276,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
         serial: req.serial,
         authToken,
         webServiceURL: req.webServiceUrl,
-        organizationName: issuer,
+        organizationName: tenant.issuer,
         identity,
         ...(req.scanCode ? { scanCode: req.scanCode } : {}),
       },

@@ -1,3 +1,5 @@
+import { PlainLineSchema } from '../../../shared/contracts/common.ts';
+
 /**
  * The issuer name a pass prints for an org. A personal org holds one person's passes for other places,
  * so its passes keep the template's own `organizationName`; the org name is the fallback when the template
@@ -10,6 +12,6 @@ export function issuerName(
   template: { organizationName?: unknown },
 ): string {
   if (!personal) return orgName;
-  const own = typeof template.organizationName === 'string' ? template.organizationName.trim() : '';
-  return own || orgName;
+  const own = PlainLineSchema(64).safeParse(template.organizationName);
+  return own.success ? own.data : orgName;
 }

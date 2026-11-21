@@ -18,6 +18,7 @@ import {
   tenantPassJson,
 } from '../passes/branding.ts';
 import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
+import { issuerName } from '../passes/issuer.ts';
 import { getOrg as getPassOrg } from '../passes/repo-read-issuance.ts';
 import { previewPass } from './build-check.ts';
 import { createTemplateRegistry } from './registry.ts';
@@ -94,7 +95,9 @@ export async function preview(
       template,
       body.input ?? template.manifest.sample,
       // A shared template has no org: a placeholder, never the template's name, signs the back.
-      org?.name ?? 'Organization',
+      tenant
+        ? issuerName(tenant.name, tenant.personal, resolved.passJson)
+        : (org?.name ?? 'Organization'),
       new Date(ctx.clock.now()),
     );
     // A stamp card shows the strip drawn for the input's count under the plain strip name.
