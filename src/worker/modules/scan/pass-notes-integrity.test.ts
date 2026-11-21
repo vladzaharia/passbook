@@ -99,11 +99,34 @@ describe('notes under a retention hold', () => {
     await hold(pass.id);
     const admin = fake.admin();
     const scope = { orgId: kit.org.id, timeZone: 'UTC' };
+    const edit = await verb('PATCH', admin, path(pass.id, made.id), { body: 'x', scope });
+    expect(edit.status).toBe(409);
+    expect(await code(edit)).toBe('NOTE_HELD');
     const del = await verb('DELETE', admin, path(pass.id, made.id), { scope });
+    expect(del.status).toBe(409);
     expect(await code(del)).toBe('NOTE_HELD');
     expect(
       await first(kit.env.DB, 'SELECT 1 AS x FROM pass_notes WHERE id = ?', [made.id]),
     ).not.toBeNull();
+  });
+});
+
+describe('notes from the console', () => {
+  it('a console edit and delete go through over HTTP, and need the org scope', async () => {
+    const pass = await kit.scanPass(templateId);
+    const mia = await manager('Mia console ok');
+    const made = (await (
+      await kit.post(mia.headers, path(pass.id), body('Console ok'))
+    ).json()) as PassNote;
+    const admin = fake.admin();
+    const scope = { orgId: kit.org.id, timeZone: 'UTC' };
+    expect((await verb('PATCH', admin, path(pass.id, made.id), { body: 'No scope' })).status).toBe(
+      422,
+    );
+    const edit = await verb('PATCH', admin, path(pass.id, made.id), { body: 'Fixed', scope });
+    expect(edit.status, await edit.clone().text()).toBe(200);
+    expect(await edit.json()).toMatchObject({ body: 'Fixed', edited: true });
+    expect((await verb('DELETE', admin, path(pass.id, made.id), { scope })).status).toBe(200);
   });
 });
 
