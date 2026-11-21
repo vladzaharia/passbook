@@ -28,6 +28,7 @@ import { useTemplateChannels } from './channels/api.ts';
 import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
+import { PreviewToggle, type PreviewView } from './preview-toggle.tsx';
 import { ReleaseStrip } from './releases/release-strip.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
 import { useReleaseControls } from './releases/use-release-controls.tsx';
@@ -69,13 +70,21 @@ export function TemplateDetailContent({
     (scope.membership?.capabilities.includes('templates:publish') ?? false) &&
     (t.orgId !== null || isAdmin);
   const canOperate = scope.membership?.capabilities.includes('passes:operate') ?? false;
+  // Live and a newer draft: the preview toggles between them, the draft first.
+  const [view, setView] = useState<PreviewView>('draft');
+  const newerDraft = t.release?.draft
+    ? t.versions.find((v) => v.version === t.release?.draft?.version)
+    : undefined;
+  const toggle = Boolean(t.activeVersion && newerDraft);
   const candidate =
     t.activeVersion === null
       ? t.versions.reduce<Template['versions'][number] | undefined>(
           (latest, version) => (!latest || version.createdAt > latest.createdAt ? version : latest),
           undefined,
         )
-      : undefined;
+      : toggle && view === 'draft'
+        ? newerDraft
+        : undefined;
   const preview = useTemplatePreview(
     t.activeVersion || candidate ? t.id : '',
     scope.orgId,
@@ -125,7 +134,7 @@ export function TemplateDetailContent({
   };
   const importedLabel = labelOf(importedVersion.mark);
 
-  const stage = (size: 'column' | 'card' | 'sheet') =>
+  const panel = (size: 'column' | 'card' | 'sheet') =>
     !t.activeVersion && !candidate ? (
       <EmptyState inline art="template" title="No preview available" />
     ) : preview.data ? (
@@ -158,6 +167,15 @@ export function TemplateDetailContent({
       <ErrorState inline error={preview.error} onRetry={() => void preview.refetch()} />
     ) : (
       <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
+    );
+
+  const stage = (size: 'column' | 'card' | 'sheet') =>
+    toggle ? (
+      <PreviewToggle view={view} onView={setView}>
+        {panel(size)}
+      </PreviewToggle>
+    ) : (
+      panel(size)
     );
 
   return (

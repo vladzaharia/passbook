@@ -5,7 +5,6 @@ import type {
   TemplateApproval,
   TemplateCandidate,
   TemplateRelease,
-  TemplateReleaseImpact,
 } from '@/shared/contracts/template-releases.ts';
 import { json, stubFetch } from '../../../lib/test-utils.tsx';
 import { TooltipProvider } from '../../../ui/tooltip.tsx';
@@ -55,17 +54,54 @@ export function approval(overrides: Partial<TemplateApproval> = {}): TemplateApp
   };
 }
 
-export const IMPACT: TemplateReleaseImpact = {
+const MODE_PLAN = {
+  outcome: 'release',
+  from: 'version-1',
+  expectedGeneration: 1,
+  candidate: { action: 'reuse', id: 'candidate-1' },
+  approval: { action: 'reuse', kind: 'peer' },
+  impact: { passes: { count: 12, capped: false }, devices: { count: 9, capped: false } },
+} as const;
+
+/** The dry run of `/release`: what the publish and restore dialogs show. */
+export const PLAN = {
+  version: 'version-2',
   fromVersion: 'version-1',
-  toVersion: 'version-2',
-  passes: { count: 12, capped: false },
-  diff: {
-    fields: [{ label: 'Seat', kind: 'changed', from: 'A1', to: 'B2' }],
-    images: [],
-    barcode: [{ label: 'Format', kind: 'added', from: null, to: 'QR' }],
-    colors: [{ label: 'Background', kind: 'changed', from: '#000000', to: '#ffffff' }],
+  modes: { live: MODE_PLAN },
+  diff: [
+    {
+      group: 'colors',
+      more: 0,
+      rows: [
+        {
+          label: 'Background',
+          kind: 'changed',
+          from: { type: 'color', color: '#000000' },
+          to: { type: 'color', color: '#ffffff' },
+        },
+      ],
+    },
+    {
+      group: 'front',
+      more: 3,
+      rows: [
+        {
+          label: 'Seat',
+          kind: 'changed',
+          from: { type: 'text', text: 'A1' },
+          to: { type: 'text', text: 'B2' },
+        },
+      ],
+    },
+  ],
+  state: {
+    live: null,
+    test: null,
+    draft: null,
+    review: { state: 'none' },
+    alone: false,
+    next: null,
   },
-  more: { fields: 0, images: 0, barcode: 0, colors: 0 },
 };
 
 export function release(overrides: Partial<TemplateRelease> = {}): TemplateRelease {
@@ -147,7 +183,7 @@ export function releaseServer(
     active?: TemplateRelease | null;
     history?: TemplateRelease[];
     promotable?: string[];
-    impact?: () => Response;
+    plan?: () => Response;
     publishError?: () => Response;
     rollbackError?: () => Response;
   } = {},
@@ -158,6 +194,8 @@ export function releaseServer(
     history: options.history ?? [],
     promotable: options.promotable ?? [],
     requests: [] as SeenRequest[],
+    /** Dry runs of `/release`, apart from the writes in `requests`. */
+    plans: [] as { url: URL; body: Record<string, unknown> }[],
   };
   const headId = () =>
     state.history.reduce<TemplateRelease | null>(
@@ -207,9 +245,12 @@ export function releaseServer(
       );
       return json(created, 201);
     },
-    [`${base}/releases/impact`]: (url, init) => {
-      record(url, init);
-      return options.impact ? options.impact() : json(IMPACT);
+    [`${base}/release`]: (url, init) => {
+      state.plans.push({
+        url,
+        body: JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>,
+      });
+      return options.plan ? options.plan() : json(PLAN);
     },
     [`${base}/releases`]: (url, init) => {
       const request = record(url, init);

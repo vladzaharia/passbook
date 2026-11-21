@@ -219,11 +219,8 @@ function Ready({
   base: DesignDoc;
   readOnly: ReadOnlyDesign | undefined;
 }) {
-  const { authed, isAdmin } = useSession();
+  const { authed } = useSession();
   const scope = useOrgScope();
-  const canPublish =
-    (scope.membership?.capabilities.includes('templates:publish') ?? false) &&
-    (t.orgId !== null || isAdmin);
   const key = draftKey(authed?.user.id ?? 'anonymous', t.orgId, t.id);
   // Read once on open. Saving and activating refetch the template and rewrite the draft
   // under a newer base; re-reading storage then would raise a false stale-draft prompt.
@@ -262,7 +259,6 @@ function Ready({
     <Designer
       key={`${t.id}:${answer === 'restore' ? 'restore' : 'open'}`}
       template={t}
-      canPublish={canPublish}
       selectedOrg={scope.orgId}
       draftKey={key}
       base={{ version: version.version, doc: base }}

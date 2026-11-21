@@ -4,7 +4,6 @@ import {
   type RollbackTemplateRelease,
   RollbackTemplateReleaseSchema,
   TemplateCandidateListSchema,
-  TemplateReleaseImpactSchema,
   TemplateReleaseListSchema,
   TemplateReleaseSchema,
   type TemplateReleaseScope,
@@ -39,20 +38,6 @@ export function useReleaseLists(templateId: string, scope: TemplateReleaseScope)
       }),
   });
   return { releases, candidates };
-}
-
-/** What making `version` current would change; read-only, fetched when a dialog opens. */
-export function useReleaseImpact(templateId: string, scope: TemplateReleaseScope, version: string) {
-  return useQuery({
-    queryKey: [...key(templateId, scope), 'impact', version],
-    queryFn: ({ signal }) =>
-      api.get(
-        `/api/v1/templates/${encodeURIComponent(templateId)}/releases/impact`,
-        TemplateReleaseImpactSchema,
-        { headers: { [MODE_HEADER]: scope.mode }, query: { ...scope, version }, signal },
-      ),
-    staleTime: 0,
-  });
 }
 
 /** A mutation never retries a CAS operation with a new head on the user's behalf. */
