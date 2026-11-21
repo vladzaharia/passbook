@@ -20,7 +20,6 @@ import { applyAction, type DesignCache } from './apply-action.ts';
 import { fillTokens, resolveOps } from './change-ops.ts';
 import { type BroadcastRow, type ItemRow, setIntent } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
-import { hasVersionFrom } from './repo-items.ts';
 import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
 /** A change run read once per chunk: the ops, and the text with its tokens. */
@@ -164,10 +163,8 @@ export async function applyChange(
           before: JSON.stringify(seen.values),
           version: result.pass.version,
         };
-      // A run that died after publishing leaves the new version but no item: count it once. Its
-      // earlier values are gone, so the undo keeps this pass.
-      const written = await hasVersionFrom(ctx.env.DB, pass.id, 'schedule', row.started_at ?? 0);
-      return { ...base, outcome: written ? 'updated' : 'unchanged' };
+      // Settling a step that died after its write finds it by its stamp (change-intent.ts).
+      return { ...base, outcome: 'unchanged' };
     }
     const providers =
       plan.notify && !result.silenced

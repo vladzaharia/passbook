@@ -1,4 +1,3 @@
--- Change runs: stop, instance, plan cap, the passes a run acts on, one resume per run, snapshot mark.
 -- Change runs: a stop asked for while a run sends (the run ends itself after its chunk), the run's own
 -- workflow instance (an undo that died restarts under a new one), and the plan's daily cap, seeded like
 -- `messages.perDay` and held equal by the entitlements registry.

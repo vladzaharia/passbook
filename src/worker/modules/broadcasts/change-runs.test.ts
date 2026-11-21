@@ -302,3 +302,19 @@ describe('the push budget', () => {
     expect(items.find((i) => i.pass_id === fresh.id)?.silent).toBe(0);
   });
 });
+
+describe('history', () => {
+  it("reads a change run's write as source schedule", async () => {
+    const a = await ck.kit.makePass({ gate: 'A' });
+    await ck.change({ target: { passIds: [a.id] }, patch: { gate: 'B' } });
+    const row = await first<{ source: string }>(
+      ck.kit.env.DB,
+      'SELECT source FROM pass_versions WHERE pass_id = ? ORDER BY version DESC LIMIT 1',
+      [a.id],
+    );
+    expect(row?.source).toMatch(/^schedule:/);
+    const res = await ck.api(`/passes/${a.id}`, { headers: ck.auth.admin() });
+    const body = (await res.json()) as { versions: { source: string | null }[] };
+    expect(body.versions[0]?.source).toBe('schedule');
+  });
+});
