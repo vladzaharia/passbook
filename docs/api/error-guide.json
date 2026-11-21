@@ -3143,12 +3143,6 @@
     "fix": "Check the zone id.",
     "retryable": false
   },
-  "PIN_WEAK": {
-    "title": "Choose a different PIN",
-    "when": "The new PIN is all one digit, a run of digits, or one that someone else in the organization has. The answer never says which.",
-    "fix": "Send another six-digit PIN.",
-    "retryable": false
-  },
   "STAFF_PIN_RESET_NOT_REQUIRED": {
     "title": "PIN does not need replacing",
     "when": "The signed-in person's PIN is not flagged for a reset.",

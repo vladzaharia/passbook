@@ -5,6 +5,7 @@ import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { ThemeProvider } from '../../lib/theme.tsx';
 import { ScanApiError } from '../api/errors.ts';
 import type { ScanApi } from '../api/scan-api.ts';
+import { issuedPins } from '../boot/pin-reset-state.ts';
 import { sessionFixture } from '../boot/session.test-support.ts';
 import { insideRow } from '../inside/inside-fake.test-support.ts';
 import type { InsideList } from '../inside/inside-types.ts';
@@ -100,6 +101,7 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
+  issuedPins.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -133,6 +135,25 @@ describe('monitor Desk actions', () => {
     expect(screen.getByText('Sign in to act')).toBeInTheDocument();
     expect(api.inside).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: /let in/i })).toBeNull();
+  });
+
+  it('asks a flagged person for their new PIN on the monitor, with the same step as the scanner', async () => {
+    const api = { ...fakeApi(), staffNewPin: vi.fn().mockResolvedValue({ pin: '497205' }) };
+    const session = monitor({ deskActions: true }, true);
+    render(
+      <ThemeProvider>
+        <LiveScreen
+          session={{
+            ...session,
+            staff: { id: ID, name: 'Ana Ruiz', role: 'desk', pinResetRequired: true },
+          }}
+          refetch={async () => {}}
+          api={api as unknown as ScanApi}
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Get new PIN' }));
+    expect(await screen.findByTestId('new-pin')).toHaveTextContent('497205');
   });
 
   it('lists who is inside from the server payload, photos only when sent', async () => {

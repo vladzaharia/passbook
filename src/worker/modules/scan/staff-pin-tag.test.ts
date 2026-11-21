@@ -84,9 +84,14 @@ describe('the PIN tag', () => {
     );
   });
 
-  describe('setting your own new PIN', () => {
-    const setPin = (headers: Record<string, string>, pin: string) =>
-      fixture.call('POST', '/scan/staff/pin', headers, { pin });
+  describe('getting a new PIN', () => {
+    const getPin = (headers: Record<string, string>) =>
+      fixture.call('POST', '/scan/staff/pin', headers);
+    const issued = async (response: Response) => {
+      expect(response.status).toBe(200);
+      expect(response.headers.get('cache-control')).toContain('no-store');
+      return (await response.json()) as { pin: string; session: { staff: unknown } };
+    };
     async function flagged(pin: string) {
       const { kit, signIn } = fixture;
       const person = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin });
@@ -98,35 +103,38 @@ describe('the PIN tag', () => {
       return { person, scanner };
     }
 
-    it('replaces the PIN, clears the flag, audits, and the new PIN signs in', async () => {
-      const { kit, session, signIn } = fixture;
+    it('sets a random unique PIN, returns it once, clears the flag, audits, and it signs in', async () => {
+      const { kit, session, signIn, call } = fixture;
+      const other = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '730482' });
       const { person, scanner } = await flagged('381726');
-      const body = await session(await setPin(scanner.headers, '497205'), '497205');
-      expect(body.staff).toEqual({ id: person.id, name: person.name, role: expect.any(String) });
+      const done = await issued(await getPin(scanner.headers));
+      expect(done.pin).toMatch(/^\d{6}$/);
+      expect(done.pin).not.toBe('381726');
+      expect(done.pin).not.toBe(other.pin);
+      expect(done.session.staff).toEqual({
+        id: person.id,
+        name: person.name,
+        role: expect.any(String),
+      });
       expect(await row(person.id)).toEqual({
-        pin_tag: await pinTag(kit.env, kit.org.id, '497205'),
+        pin_tag: await pinTag(kit.env, kit.org.id, done.pin),
         pin_reset_required: 0,
       });
       expect((await audits('scan_staff.pin_self_reset')).map((r) => r.target_id)).toEqual([
         person.id,
       ]);
-      await session(await signIn((await device()).headers, person, '497205'));
-    });
-
-    it('refuses a weak PIN and one someone else has, with the same answer', async () => {
-      const { kit, problem } = fixture;
-      const other = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '730482' });
-      const { scanner } = await flagged('381727');
-      const weak = await problem(await setPin(scanner.headers, '111111'), 400, 'PIN_WEAK');
-      const taken = await problem(
-        await setPin(scanner.headers, other.pin),
-        400,
-        'PIN_WEAK',
-        other.id,
-      );
-      expect(taken).toEqual(weak);
-      await problem(await setPin(scanner.headers, '123456'), 400, 'PIN_WEAK');
-      await problem(await setPin(scanner.headers, '381727'), 400, 'PIN_WEAK');
+      // The new PIN signs in alone; the old one is a miss.
+      expect(
+        (
+          await session(
+            await call('POST', '/scan/staff', (await device()).headers, { pin: done.pin }),
+          )
+        ).staff?.id,
+      ).toBe(person.id);
+      expect(
+        (await call('POST', '/scan/staff', (await device()).headers, { pin: '381726' })).status,
+      ).toBe(400);
+      await session(await signIn((await device()).headers, person, done.pin));
     });
 
     it('is only for a person whose PIN needs replacing, and is rate limited', async () => {
@@ -134,16 +142,18 @@ describe('the PIN tag', () => {
       const fine = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '264813' });
       const scanner = await device();
       await signIn(scanner.headers, fine);
-      await problem(await setPin(scanner.headers, '497205'), 409, 'STAFF_PIN_RESET_NOT_REQUIRED');
-      const { scanner: mine } = await flagged('381728');
-      for (let i = 0; i < 6; i++) await setPin(mine.headers, '000000');
-      await problem(await setPin(mine.headers, '497206'), 429, 'RATE_LIMITED');
+      await problem(await getPin(scanner.headers), 409, 'STAFF_PIN_RESET_NOT_REQUIRED');
+      const { person, scanner: mine } = await flagged('381728');
+      await issued(await getPin(mine.headers));
+      for (let i = 0; i < 5; i++) await getPin(mine.headers);
+      await problem(await getPin(mine.headers), 429, 'RATE_LIMITED');
+      expect(person.id).toBeTruthy();
     });
 
     it('needs a signed-in person', async () => {
       const { problem } = fixture;
       const scanner = await device();
-      await problem(await setPin(scanner.headers, '497207'), 409, 'STAFF_SIGN_IN_REQUIRED');
+      await problem(await getPin(scanner.headers), 409, 'STAFF_SIGN_IN_REQUIRED');
     });
   });
 

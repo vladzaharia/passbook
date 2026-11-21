@@ -10,6 +10,8 @@ import './monitor-why.css';
 import { toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
+import { needsPinReset } from '../boot/pin-reset-state.ts';
+import { StaffPinReset } from '../boot/staff-pin-reset.tsx';
 import { StaffStart } from '../boot/staff-start.tsx';
 import type { PinNote } from '../machine/fail.ts';
 import { scanId } from '../platform/id.ts';
@@ -35,7 +37,9 @@ export function StaffControl({
   refetch: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [resetClosed, setResetClosed] = useState(false);
   const staff = session.staff;
+  const reset = needsPinReset(session) && !resetClosed;
   if (!session.scanner?.settings.deskActions || !session.scanner.settings.staffSignIn) return null;
   const switchStaff = async () => {
     try {
@@ -60,16 +64,23 @@ export function StaffControl({
       ) : (
         <Button onClick={() => setOpen(true)}>{SCAN_COPY.actions.signInToAct}</Button>
       )}
-      <Sheet open={open && !staff} onOpenChange={setOpen}>
+      <Sheet
+        open={reset || (open && !staff)}
+        onOpenChange={(next) => (reset ? setResetClosed(!next) : setOpen(next))}
+      >
         <SheetContent title="Staff sign-in" hideTitle>
-          <StaffStart
-            session={session}
-            api={api}
-            refetch={async () => {
-              await refetch();
-              setOpen(false);
-            }}
-          />
+          {reset ? (
+            <StaffPinReset session={session} api={api} refetch={refetch} />
+          ) : (
+            <StaffStart
+              session={session}
+              api={api}
+              refetch={async () => {
+                await refetch();
+                setOpen(false);
+              }}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </>

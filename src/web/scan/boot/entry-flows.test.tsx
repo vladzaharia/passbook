@@ -8,6 +8,7 @@ import { ApiError } from '../../lib/errors.ts';
 import { json, sessionFixture as platformSession, stubFetch } from '../../lib/test-utils.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { AdminStart } from './admin-start.tsx';
+import { issuedPins, needsPinReset } from './pin-reset-state.ts';
 import { sessionFixture } from './session.test-support.ts';
 import { StaffPinReset } from './staff-pin-reset.tsx';
 import { StaffStart } from './staff-start.tsx';
@@ -256,52 +257,61 @@ describe('scanner entry flows', () => {
   });
 });
 
-describe('a shared PIN: choosing a new one', () => {
+describe('a shared PIN: getting a new one', () => {
+  afterEach(() => issuedPins.clear());
+  const session = () =>
+    sessionFixture({
+      staff: { id: 'staff-r', name: 'Dana', role: 'door', pinResetRequired: true },
+    });
   const reset = (
-    setPin: ScanApi['staffSetPin'],
+    newPin: ScanApi['staffNewPin'],
     refetch = vi.fn().mockResolvedValue(undefined),
   ) => {
     render(
       wrapper(
-        <StaffPinReset
-          session={sessionFixture()}
-          api={{ staffSetPin: setPin }}
-          refetch={refetch}
-        />,
+        <StaffPinReset session={session()} api={{ staffNewPin: newPin }} refetch={refetch} />,
       ),
     );
     return { refetch, user: userEvent.setup() };
   };
+  const issue = () =>
+    vi.fn<ScanApi['staffNewPin']>().mockResolvedValue({ pin: '497205', session: sessionFixture() });
   const key = async (user: ReturnType<typeof userEvent.setup>, digits: string) => {
     for (const digit of digits) await user.click(screen.getByRole('button', { name: digit }));
   };
-  it('asks twice, then sends the PIN once', async () => {
-    const setPin = vi.fn<ScanApi['staffSetPin']>().mockResolvedValue(sessionFixture());
-    const { user, refetch } = reset(setPin);
-    await key(user, '497205');
-    expect(screen.getByText('Enter it again')).toBeInTheDocument();
+  it('shows the server PIN once, then asks it back before going on', async () => {
+    const newPin = issue();
+    const { user, refetch } = reset(newPin);
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    expect(await screen.findByTestId('new-pin')).toHaveTextContent('497205');
+    expect(screen.getByText('Remember this PIN')).toBeInTheDocument();
+    expect(refetch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'I remember it' }));
+    expect(screen.queryByTestId('new-pin')).not.toBeInTheDocument();
     await key(user, '497205');
     await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
-    expect(setPin).toHaveBeenCalledExactlyOnceWith('497205');
+    expect(newPin).toHaveBeenCalledOnce();
+    expect(needsPinReset(session())).toBe(true);
   });
-  it('says when the two entries differ, and sends nothing', async () => {
-    const setPin = vi.fn<ScanApi['staffSetPin']>();
-    const { user } = reset(setPin);
-    await key(user, '497205');
+  it('says when the typed PIN is not it, and can show it again', async () => {
+    const { user, refetch } = reset(issue());
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    await user.click(await screen.findByRole('button', { name: 'I remember it' }));
     await key(user, '497206');
-    expect(await screen.findByText("The PINs don't match.")).toBeInTheDocument();
-    expect(setPin).not.toHaveBeenCalled();
+    expect(await screen.findByText("That's not it. Try again.")).toBeInTheDocument();
+    expect(refetch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Show it again' }));
+    expect(await screen.findByTestId('new-pin')).toHaveTextContent('497205');
   });
-  it('shows the refusal and starts over', async () => {
-    const setPin = vi
-      .fn<ScanApi['staffSetPin']>()
+  it('shows a refusal and offers the button again', async () => {
+    const newPin = vi
+      .fn<ScanApi['staffNewPin']>()
       .mockRejectedValue(
-        new ApiError({ status: 400, code: 'PIN_WEAK', detail: 'Choose a different PIN.' }),
+        new ApiError({ status: 429, code: 'RATE_LIMITED', detail: 'Too many requests.' }),
       );
-    const { user } = reset(setPin);
-    await key(user, '111111');
-    await key(user, '111111');
-    expect(await screen.findByText('Choose a different PIN.')).toBeInTheDocument();
-    expect(screen.getByText('Your PIN is shared. Choose a new one.')).toBeInTheDocument();
+    const { user } = reset(newPin);
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    expect(await screen.findByText('Too many requests.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Get new PIN' })).toBeInTheDocument();
   });
 });

@@ -4,7 +4,7 @@ import { CursorQuerySchema } from '../../../shared/contracts/common.ts';
 import {
   type ScanSession,
   ScanSessionSchema,
-  ScanStaffPinSchema,
+  ScanStaffNewPinSchema,
   ScanStaffSearchSchema,
   ScanStaffSignInSchema,
 } from '../../../shared/contracts/scan-session.ts';
@@ -65,17 +65,14 @@ export function registerScanStaffRoutes(scanRoutes: OpenAPIHono<AppBindings>): v
     {
       method: 'post',
       path: '/staff/pin',
-      summary: 'Replace your own PIN while a reset is required',
-      body: ScanStaffPinSchema,
-      response: ScanSessionSchema,
+      summary: 'Get a new PIN while a reset is required',
+      response: ScanStaffNewPinSchema,
     },
-    async (c) =>
-      c.json(
-        withCsrf(
-          c.var.auth,
-          await setOwnPin(serviceContext(c), scanActorOf(c), c.req.valid('json').pin),
-        ),
-      ),
+    async (c) => {
+      const done = await setOwnPin(serviceContext(c), scanActorOf(c));
+      c.header('cache-control', 'no-store');
+      return c.json({ pin: done.pin, session: withCsrf(c.var.auth, done.session) });
+    },
   );
 
   register(

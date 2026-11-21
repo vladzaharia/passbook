@@ -2,36 +2,30 @@ import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { bump } from '../../platform/counters.ts';
 import { macKeyVersion } from '../../platform/crypto.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { AppError, ConflictError, RateLimitedError } from '../../platform/errors.ts';
+import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import type { ScanActor } from './actor.ts';
 import { pinTagStateStatement, setOwnPinGrant } from './repo-pin-tag.ts';
 import { getStaff } from './repo-staff.ts';
 import { hashPin, pinTag } from './staff-pin-hash.ts';
-import { pinInUse } from './staff-pin-unique.ts';
+import { newUniquePin } from './staff-pin-unique.ts';
 import { requireSignIn, staffSession } from './staff-session.ts';
 
 const HOUR = 3_600_000;
 /** Tries an hour per person, however many devices. */
 export const SELF_PIN_TRIES = 6;
 
-/** The same answer for a weak PIN and for one someone else has: it never says who. */
-const weak = () => new AppError('PIN_WEAK', 400, 'Choose a different PIN.');
-
-/** All one digit, or a run up or down. */
-export const isWeakPin = (pin: string) =>
-  /^(\d)\1+$/.test(pin) || '0123456789'.includes(pin) || '9876543210'.includes(pin);
-
 /**
- * `POST /scan/staff/pin`: the signed-in person replaces their own PIN. Only while `pin_reset_required`
- * (a shared PIN was seen), so a stolen session cannot rotate a PIN that is fine.
+ * `POST /scan/staff/pin`: the server replaces the signed-in person's PIN with a random one, unique in
+ * the org, and returns it once. The person never chooses, so no guess can ask whether a PIN is taken.
+ * Only while `pin_reset_required` (a shared PIN was seen), so a stolen session cannot rotate a PIN
+ * that is fine.
  */
 export async function setOwnPin(
   ctx: ServiceContext,
   actor: ScanActor,
-  pin: string,
-): Promise<ScanSession> {
+): Promise<{ pin: string; session: ScanSession }> {
   const scanner = requireSignIn(actor);
   const bound = actor.staff;
   if (!bound) throw new ConflictError('Sign in first.', 'STAFF_SIGN_IN_REQUIRED');
@@ -46,23 +40,27 @@ export async function setOwnPin(
   const staff = await getStaff(db, orgId, bound.id);
   if (!state?.pin_reset_required || !staff || staff.authEpoch === undefined)
     throw new ConflictError('Your PIN does not need replacing.', 'STAFF_PIN_RESET_NOT_REQUIRED');
-  if (isWeakPin(pin) || (await pinInUse(ctx, orgId, pin, staff.id, staff.pinHash))) throw weak();
-  try {
-    await setOwnPinGrant(
-      ctx,
-      scanner,
-      { id: staff.id, authEpoch: staff.authEpoch },
-      {
-        pinHash: await hashPin(ctx.env, staff.id, pin),
-        pinTag: await pinTag(ctx.env, orgId, pin),
-        macVersion: macKeyVersion(ctx.env),
-        now,
-      },
-    );
-  } catch (error) {
-    // Two people choosing the same PIN at once: the second is told as a weak one.
-    if (classifyD1Error(error)?.kind === 'unique') throw weak();
-    throw error;
+  // A clash with a PIN set at the same instant is drawn again.
+  let pin = '';
+  for (let attempt = 0; ; attempt++) {
+    pin = await newUniquePin(ctx, orgId, staff.id, staff.pinHash);
+    try {
+      await setOwnPinGrant(
+        ctx,
+        scanner,
+        { id: staff.id, authEpoch: staff.authEpoch },
+        {
+          pinHash: await hashPin(ctx.env, staff.id, pin),
+          pinTag: await pinTag(ctx.env, orgId, pin),
+          macVersion: macKeyVersion(ctx.env),
+          now,
+        },
+      );
+      break;
+    } catch (error) {
+      if (attempt < 2 && classifyD1Error(error)?.kind === 'unique') continue;
+      throw error;
+    }
   }
   await auditStmt(db, ctx, {
     orgId,
@@ -72,5 +70,5 @@ export async function setOwnPin(
     targetType: 'scan_staff',
     targetId: staff.id,
   }).run();
-  return staffSession(ctx, actor);
+  return { pin, session: await staffSession(ctx, actor) };
 }

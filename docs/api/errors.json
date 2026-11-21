@@ -2825,15 +2825,6 @@
       ]
     },
     {
-      "code": "PIN_WEAK",
-      "statuses": [
-        400
-      ],
-      "modules": [
-        "scan"
-      ]
-    },
-    {
       "code": "PRIMARY_EMAIL",
       "statuses": [
         409

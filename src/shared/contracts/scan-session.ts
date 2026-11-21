@@ -104,8 +104,11 @@ export const ScanStaffSignInSchema = z.object({
   staffId: IdSchema.optional(),
   pin: z.string().regex(/^\d{6}$/),
 });
-/** `POST /scan/staff/pin`: the signed-in person's own new PIN, while a reset is required. */
-export const ScanStaffPinSchema = z.object({ pin: z.string().regex(/^\d{6}$/) });
+/** `POST /scan/staff/pin`: the server's new PIN for the signed-in person, shown once, while a reset is required. */
+export const ScanStaffNewPinSchema = z.object({
+  pin: z.string().regex(/^\d{6}$/),
+  session: ScanSessionSchema,
+});
 export const ScanLookupRequestSchema = z.object({
   q: z.string().trim().min(1).max(120),
   scope: ScanAdminScopeSchema.optional(),

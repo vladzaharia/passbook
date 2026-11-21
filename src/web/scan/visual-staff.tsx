@@ -10,9 +10,7 @@ const api = {
   staffSignIn: async () => {
     throw new Error('Wrong PIN. 4 tries left.');
   },
-  staffSetPin: async () => {
-    throw new Error('Choose a different PIN.');
-  },
+  staffNewPin: async () => ({ pin: '497205', session: {} as ScanSession }),
 } as unknown as ScanApi;
 
 export function StaffVisual({ by }: { by: string }) {

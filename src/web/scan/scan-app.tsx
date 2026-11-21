@@ -6,6 +6,7 @@ import { SCAN_COPY } from '../../shared/copy/scan.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { buttonVariants } from '../ui/button-variants.ts';
 import { createLazyScanApi } from './api/lazy-api.ts';
+import { needsPinReset } from './boot/pin-reset-state.ts';
 import { useDeviceReport } from './boot/use-device-report.ts';
 import { usePlatformSession } from './boot/use-platform-session.ts';
 import { useScanManageAccess } from './boot/use-scan-manage-access.ts';
@@ -36,6 +37,7 @@ const ClosedCard = lazy(() =>
 const StaffPinReset = lazy(() =>
   import('./boot/staff-pin-reset.tsx').then((m) => ({ default: m.StaffPinReset })),
 );
+
 const StaffStart = lazy(() =>
   import('./boot/staff-start.tsx').then((m) => ({ default: m.StaffStart })),
 );
@@ -162,7 +164,7 @@ function ScanBoot() {
           card={<StaffStart session={session.session} api={api} refetch={session.refetch} />}
         />
       );
-    if (session.session.staff?.pinResetRequired)
+    if (needsPinReset(session.session))
       return (
         <ScanShell
           branding={session.session.branding}

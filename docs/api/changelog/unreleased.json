@@ -1061,7 +1061,7 @@
     "operationId": "scan.postScanStaffPin",
     "op": "POST /api/v1/scan/staff/pin",
     "change": "new operation",
-    "note": "Staff set their own new PIN with POST /scan/staff/pin while pinResetRequired is set. A weak PIN, or one someone else has, answers PIN_WEAK."
+    "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware: field added",
