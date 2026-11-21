@@ -374,7 +374,7 @@ export async function makeSession(
   f: Fixtures,
   options: {
     userId: string;
-    roles?: ('admin' | 'user')[];
+    roles?: ('admin' | 'user' | 'developer' | 'console')[];
     amr?: 'oidc' | 'magic_link' | 'breakglass';
     /** Idle and absolute lifetime, for suites that advance their clock past the defaults. */
     lifetimeMs?: number;

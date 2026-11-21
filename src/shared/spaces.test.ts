@@ -9,6 +9,17 @@ const access = (amr: SignInMethod, roles: string[] = ['user'], orgMember = false
 });
 
 describe('canUseSpace', () => {
+  it('hides Admin from a Polaris ID member without the console role when the group is required', () => {
+    const member = (roles: string[], amr: SignInMethod = 'oidc'): SpaceAccess => ({
+      ...access(amr, roles, true),
+      consoleGroupRequired: true,
+    });
+    expect(usable(member(['user']))).toEqual(['passes', 'account']);
+    expect(usable(member(['user', 'console']))).toContain('admin');
+    expect(usable(member(['admin', 'user']))).toContain('admin');
+    expect(usable({ ...member(['user']), consoleGroupRequired: false })).toContain('admin');
+  });
+
   it('gives a holder My passes and Account', () => {
     expect(usable(access('oidc'))).toEqual(['passes', 'account']);
   });

@@ -755,6 +755,18 @@
     "fix": "Set rotation to manual, or upload a certificate.",
     "retryable": false
   },
+  "CONSOLE_ACCESS_REQUIRED": {
+    "title": "Console access required",
+    "when": "The platform requires the admin group for organization console routes, and this session has neither the group nor platform admin.",
+    "fix": "Ask an administrator to add you to the admin group in Polaris ID, then sign in again.",
+    "retryable": false
+  },
+  "DEVELOPER_ACCESS_REQUIRED": {
+    "title": "Developer access required",
+    "when": "A signed-in person without developer access called a developer sandbox or Try it route.",
+    "fix": "Ask an administrator to add you to the developer group in Polaris ID, then sign in again.",
+    "retryable": false
+  },
   "IDENTITY_PLATFORM_ENV_MISMATCH": {
     "title": "Platform identity mismatch",
     "when": "The platform identity row does not match the deployed signing identity.",

@@ -794,6 +794,15 @@
       ]
     },
     {
+      "code": "CONSOLE_ACCESS_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
+      ]
+    },
+    {
       "code": "CREATE_STALE",
       "statuses": [
         409
@@ -859,6 +868,15 @@
         "bundles",
         "delivery",
         "passes"
+      ]
+    },
+    {
+      "code": "DEVELOPER_ACCESS_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "platform"
       ]
     },
     {

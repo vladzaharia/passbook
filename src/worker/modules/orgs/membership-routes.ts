@@ -15,8 +15,8 @@ import {
   OrgMembershipSchema,
 } from '../../../shared/contracts/index.ts';
 import {
+  requireConsoleSession,
   requireHolderSession,
-  requireSession,
   requireStrictSession,
   type SessionAuth,
 } from '../../platform/auth.ts';
@@ -53,9 +53,9 @@ membershipRoutes.use('/invitations/accept', (c, next) =>
 );
 // The caller's own list is read by the account menu and the setup banner; an email link may read it.
 membershipRoutes.use('/memberships/me', requireHolderSession);
-membershipRoutes.use('/:id/memberships', requireSession);
-membershipRoutes.use('/:id/memberships/:membershipId', requireSession);
-membershipRoutes.use('/:id/invitations', requireSession);
+membershipRoutes.use('/:id/memberships', requireConsoleSession);
+membershipRoutes.use('/:id/memberships/:membershipId', requireConsoleSession);
+membershipRoutes.use('/:id/invitations', requireConsoleSession);
 // Inviting someone into a role that administers the org (or mints keys) hands over its credentials.
 membershipRoutes.post(
   '/:id/invitations',
@@ -67,7 +67,7 @@ membershipRoutes.post(
     );
   }),
 );
-membershipRoutes.use('/:id/invitations/:invitationId', requireSession);
+membershipRoutes.use('/:id/invitations/:invitationId', requireConsoleSession);
 
 register(
   membershipRoutes,

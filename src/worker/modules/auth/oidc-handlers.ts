@@ -240,7 +240,7 @@ export async function callbackOidc(c: Context<AppBindings>) {
       },
     );
     setSessionCookie(c, result.session.cookieValue, result.session.maxAgeSeconds);
-    return c.redirect(await landingFor(ctx, result.userId, result.roles, next), 302);
+    return c.redirect(await landingFor(ctx, result.userId, result.roles, next, true), 302);
   } catch (cause) {
     if (!(cause instanceof AppError) || !isSignInErrorCode(cause.code)) throw cause;
     ctx.log.info('auth.oidc_refused', { code: cause.code });
