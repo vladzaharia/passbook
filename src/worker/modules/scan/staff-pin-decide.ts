@@ -89,6 +89,8 @@ export function pinOnlyDecision(
   roster: readonly PinStaffSnapshot[],
   pin: string,
   matches: PinMatches,
+  /** No row had the PIN's tag: one more dummy match, so a tag hit costs the same as a miss. */
+  tagMiss = false,
 ) {
   const matched: PinStaffSnapshot[] = [];
   let found: PinStaffSnapshot | null = null;
@@ -99,6 +101,7 @@ export function pinOnlyDecision(
         if (usable && (await matches(pinEnv, person.id, pin, person.pinHash))) matched.push(person);
       }
       await matches(pinEnv, staffId, pin, DUMMY_PIN_HASH);
+      if (tagMiss) await matches(pinEnv, staffId, pin, DUMMY_PIN_HASH);
       const [only] = matched;
       found = matched.length === 1 && only && only.role !== 'manager' ? only : null;
       return found ? 'match' : 'miss';

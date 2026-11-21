@@ -7,5 +7,10 @@ import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 export const issuedPins = new Map<string, string>();
 
 /** The signed-in person has a new PIN to take in: flagged, or issued and not yet confirmed. */
-export const needsPinReset = (session: ScanSession): boolean =>
-  Boolean(session.staff && (session.staff.pinResetRequired || issuedPins.has(session.staff.id)));
+export const needsPinReset = (session: ScanSession): boolean => {
+  // The PIN never outlives its person's sign-in: signing out or switching staff drops it from memory.
+  for (const id of issuedPins.keys()) if (id !== session.staff?.id) issuedPins.delete(id);
+  return Boolean(
+    session.staff && (session.staff.pinResetRequired || issuedPins.has(session.staff.id)),
+  );
+};

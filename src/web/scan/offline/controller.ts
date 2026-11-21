@@ -80,15 +80,17 @@ export function createOfflineController(d: OfflineDeps) {
     try {
       if (d.online()) {
         const now = d.clock.now();
-        if (d.mode === 'list' && now - refreshedAt >= REFRESH_MS) {
-          await d.roster.refresh(d.api, now, d.scope(), dayOf);
-          refreshedAt = now;
-        }
+        // The queue goes first: the server dates a read no earlier than the last list it served, so a
+        // refresh before the send would make every read queued on the old list late.
         if ((await d.queue.all()).length > 0) {
           await publish(true);
           const result = await syncQueue(d.api, d.queue, await d.roster.meta());
           conflicts += result.conflicts;
           if (result.conflicts > 0) await d.meta.set(CONFLICTS, conflicts);
+        }
+        if (d.mode === 'list' && now - refreshedAt >= REFRESH_MS) {
+          await d.roster.refresh(d.api, now, d.scope(), dayOf);
+          refreshedAt = now;
         }
       }
       failures = 0;

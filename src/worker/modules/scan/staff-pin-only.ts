@@ -83,7 +83,7 @@ async function recordMiss(
   }
   if (!audits.length) return;
   if (matched.length > 1) {
-    // Both people sign in only after an admin resets their PINs.
+    // Both are flagged: at their next sign-in by name the server sets each a new PIN (a Manager needs an admin).
     const g = pinStateGrant(ctx, scanner);
     for (const person of matched) flagPinReset(g, person.id);
     await g.commit();
@@ -145,6 +145,7 @@ export async function checkPinOnly(
       pinStaffListFromResult(results[0]),
       pin,
       await pinMatcher(keyEnv),
+      !(results[0]?.results as { tag_hit?: number }[] | undefined)?.some((r) => r.tag_hit === 1),
     );
     try {
       const verified = await reservation.verifyOnly(results.slice(1), only);

@@ -23,7 +23,7 @@ export function StaffPinReset({
   refetch,
 }: {
   session: ScanSession;
-  api: Pick<ScanApi, 'staffNewPin'>;
+  api: Pick<ScanApi, 'staffNewPin' | 'staffSignOut'>;
   refetch: () => Promise<void>;
 }) {
   const id = session.staff?.id ?? '';
@@ -41,6 +41,18 @@ export function StaffPinReset({
       issuedPins.set(id, done.pin);
       setPhase('show');
       redraw((n) => n + 1);
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function signOut() {
+    setBusy(true);
+    try {
+      await api.staffSignOut();
+      issuedPins.delete(id);
+      await refetch();
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -75,6 +87,9 @@ export function StaffPinReset({
           {error ? <Callout tone="danger">{error}</Callout> : null}
           <Button type="button" loading={busy} onClick={() => void get()}>
             {COPY.resetGet}
+          </Button>
+          <Button type="button" variant="ghost" disabled={busy} onClick={() => void signOut()}>
+            {COPY.signOut}
           </Button>
         </div>
       ) : phase === 'show' ? (

@@ -270,6 +270,8 @@ export const ScanStaffSchema = z.object({
   pinSetAt: TimestampSchema,
   /** A shared PIN was seen: the person sets a new one at their next sign-in. */
   pinResetRequired: z.boolean(),
+  /** 50 wrong PINs named this person today: named sign-in is locked until tomorrow or an admin unlocks it. */
+  pinLockedToday: z.boolean(),
   locked: z.boolean(),
   disabledAt: TimestampSchema.nullable(),
   today: z.number().int(),

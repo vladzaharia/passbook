@@ -4202,7 +4202,25 @@
       ]
     },
     {
+      "code": "STAFF_PIN_ADMIN_RESET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "STAFF_PIN_RESET_NOT_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_RESET_REQUIRED",
       "statuses": [
         409
       ],

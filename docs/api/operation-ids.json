@@ -310,6 +310,8 @@
   "scan-staff.patchScanStaffById",
   "scan-staff.postScanStaff",
   "scan-staff.postScanStaffByIdResetPin",
+  "scan-staff.postScanStaffByIdUnlockPin",
+  "scan-staff.postScanStaffResetUntagged",
   "scan-zones.getScanZones",
   "scan-zones.getScanZonesByIdInside",
   "scan-zones.patchScanZonesById",

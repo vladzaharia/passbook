@@ -1,33 +1,22 @@
 import { type Grant, grant } from '../../platform/authority.ts';
 import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
-import { stmt } from '../../platform/db.ts';
+import { all, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { grantedAudit } from '../audit/repo-granted.ts';
+import type { AuditEntry } from '../audit/types.ts';
 import { type ScannerRow, scannerEpochsOf } from './repo-device.ts';
 import { STAFF_CODES } from './staff-statements.ts';
 
 type Db = D1Database;
 
-/** The person's tag and reset flag, org-scoped. */
+/** The person's tag, reset flag and the record of the PIN the server issued, org-scoped. */
 export const pinTagStateStatement = (db: Db, orgId: string, id: string) =>
-  stmt(db, 'SELECT pin_tag, pin_reset_required FROM scan_staff WHERE id = ? AND org_id = ?', [
-    id,
-    orgId,
-  ]);
-
-/** Whether this scanner gave this person a new PIN since `since` (the window for a repeat after a reload). */
-export const recentSelfResetStatement = (
-  db: Db,
-  orgId: string,
-  scannerId: string,
-  staffId: string,
-  since: number,
-) =>
   stmt(
     db,
-    `SELECT 1 AS one FROM audit_log WHERE org_id = ? AND action = 'scan_staff.pin_self_reset'
-       AND actor_id = ? AND target_id = ? AND at >= ? LIMIT 1`,
-    [orgId, scannerId, staffId, since],
+    `SELECT pin_tag, pin_reset_required, pin_issued_at, pin_issued_binding, pin_issue_repeats
+     FROM scan_staff WHERE id = ? AND org_id = ?`,
+    [id, orgId],
   );
 
 /** The active person who has this tag. */
@@ -61,22 +50,33 @@ export const fillPinTag = (g: Grant, id: string, tag: string) =>
     where: { id, pin_tag: null, disabled_at: null },
   });
 
-/** Sign-in is refused until an admin resets the PIN (which clears the flag). */
+/** The person takes a new PIN at their next sign-in (taking it clears the flag). */
 export const flagPinReset = (g: Grant, id: string) =>
   g.update('scan_staff', { set: { pin_reset_required: 1 }, where: { id } });
 
+export interface OwnPinChange {
+  pinHash: string;
+  pinTag: string;
+  macVersion: number;
+  now: number;
+  /** `first` while flagged; `repeat` is the one more draw inside the window, on the same sign-in. */
+  issue: { kind: 'first'; binding: string } | { kind: 'repeat'; binding: string };
+  audit: AuditEntry;
+}
+
 /**
- * The signed-in person's own new PIN, while a reset is required. It moves with the epoch they were
- * read at, so a PIN an admin reset in between is not overwritten.
+ * The signed-in person's new PIN, set by the server. It moves with the epoch they were read at, so a
+ * PIN an admin reset in between is not overwritten. The sign-in restarts here (a PIN set after a
+ * sign-in began ends that sign-in on every other device), and the audit row is in the same batch.
  */
 export async function setOwnPinGrant(
   ctx: ServiceContext,
   scanner: ScannerRow,
   staff: { id: string; authEpoch: number },
-  change: { pinHash: string; pinTag: string; macVersion: number; now: number },
-  /** A repeat inside the window: the flag is already clear. */
-  repeat = false,
+  change: OwnPinChange,
 ): Promise<void> {
+  const { issue, now } = change;
+  const first = issue.kind === 'first';
   const g = grant(ctx, {
     purpose: 'org_mode.scan.staff.pin_self',
     principal: {
@@ -92,7 +92,13 @@ export async function setOwnPinGrant(
         {
           auth_epoch: staff.authEpoch,
           disabled_at: null,
-          ...(repeat ? {} : { pin_reset_required: 1 }),
+          ...(first
+            ? { pin_reset_required: 1 }
+            : {
+                pin_reset_required: 0,
+                pin_issue_repeats: 0,
+                pin_issued_binding: issue.binding,
+              }),
         },
         'config',
       ),
@@ -105,12 +111,69 @@ export async function setOwnPinGrant(
       pin_hash: change.pinHash,
       pin_tag: change.pinTag,
       pin_mac_version: change.macVersion,
-      pin_set_at: change.now,
+      pin_set_at: now,
       pin_reset_required: 0,
-      updated_at: maxNow(change.now),
+      ...(first
+        ? { pin_issued_at: now, pin_issued_binding: issue.binding, pin_issue_repeats: 0 }
+        : { pin_issue_repeats: 1 }),
+      updated_at: maxNow(now),
     },
     where: { id: staff.id },
     require: 'one',
   });
+  g.update('scanners', {
+    set: { staff_since: now, staff_seen_at: now, updated_at: maxNow(now) },
+    where: { id: scanner.id, staff_id: staff.id },
+  });
+  g.add(grantedAudit(g, ctx, change.audit));
   await g.commit();
 }
+
+/** Wrong PINs counted today against one person, and against the whole org (named sign-in and approval). */
+export const namedDayKey = (staffId: string) => `scan:pinday:${staffId}`;
+export const orgDayKey = (orgId: string) => `scan:pinday-org:${orgId}`;
+
+/** Which of these people are locked for the day: their counter reached `cap` in the window. */
+export async function lockedToday(
+  db: Db,
+  ids: readonly string[],
+  window: number,
+  cap: number,
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const keys = ids.map(namedDayKey);
+  const rows = await all<{ key: string }>(
+    db,
+    `SELECT key FROM counters WHERE window_start = ? AND count >= ?
+       AND key IN (SELECT value FROM json_each(?))`,
+    [window, cap, JSON.stringify(keys)],
+  );
+  const hit = new Set(rows.map((r) => r.key));
+  return new Set(ids.filter((id) => hit.has(namedDayKey(id))));
+}
+
+/** An admin's PIN reset or Unlock: the person's wrong PINs of the day no longer count. */
+export const clearNamedDayStatement = (db: Db, staffId: string) =>
+  stmt(db, 'DELETE FROM counters WHERE key = ?', [namedDayKey(staffId)]);
+
+/** A day's events for the admin digest, newest last. */
+export const digestEvents = (db: Db, since: number, until: number) =>
+  all<{
+    org_id: string;
+    action: string;
+    at: number;
+    actor_id: string;
+    target_id: string;
+    person: string | null;
+    scanner: string | null;
+  }>(
+    db,
+    `SELECT a.org_id, a.action, a.at, a.actor_id, a.target_id, st.name AS person, sc.name AS scanner
+     FROM audit_log a
+     LEFT JOIN scan_staff st ON st.id = a.target_id AND a.target_type = 'scan_staff'
+     LEFT JOIN scanners sc ON sc.id = a.actor_id AND a.actor_type = 'scanner'
+     WHERE a.at >= ? AND a.at < ? AND a.org_id IS NOT NULL
+       AND a.action IN ('scan_staff.pin_shared', 'scan_staff.pin_self_reset', 'scan.pin_named_org_cap')
+     ORDER BY a.org_id, a.at`,
+    [since, until],
+  );

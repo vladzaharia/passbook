@@ -408,6 +408,14 @@
     "note": "New entitlement identity.managed gates managed Apple identities."
   },
   {
+    "key": "GET /api/v1/scan-staff 200.items[].pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "200.items[].pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
     "key": "GET /api/v1/scan-staff 200.items[].pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan-staff.getScanStaff",
@@ -670,6 +678,14 @@
     "op": "PATCH /api/v1/orgs/{id}",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} 200.pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "200.pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
   },
   {
     "key": "PATCH /api/v1/scan-staff/{id} 200.pinResetRequired: field added",
@@ -976,12 +992,36 @@
     "note": "Starts a service account key rotation."
   },
   {
+    "key": "POST /api/v1/scan-staff 201.staff.pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.staff.pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
     "key": "POST /api/v1/scan-staff 201.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan-staff.postScanStaff",
     "op": "POST /api/v1/scan-staff",
     "change": "201.staff.pinResetRequired: field added",
     "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffByIdUnlockPin",
+    "op": "POST /api/v1/scan-staff/{id}/unlock-pin",
+    "change": "new operation",
+    "note": "Admins lift a staff member's daily PIN lock with POST /scan-staff/{id}/unlock-pin."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/reset-untagged new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffResetUntagged",
+    "op": "POST /api/v1/scan-staff/reset-untagged",
+    "change": "new operation",
+    "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",

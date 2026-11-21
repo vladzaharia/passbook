@@ -37,9 +37,8 @@ export function StaffControl({
   refetch: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
-  const [resetClosed, setResetClosed] = useState(false);
   const staff = session.staff;
-  const reset = needsPinReset(session) && !resetClosed;
+  const reset = needsPinReset(session);
   if (!session.scanner?.settings.deskActions || !session.scanner.settings.staffSignIn) return null;
   const switchStaff = async () => {
     try {
@@ -66,7 +65,8 @@ export function StaffControl({
       )}
       <Sheet
         open={reset || (open && !staff)}
-        onOpenChange={(next) => (reset ? setResetClosed(!next) : setOpen(next))}
+        // A person who has not taken their new PIN cannot dismiss the sheet.
+        onOpenChange={(next) => !reset && setOpen(next)}
       >
         <SheetContent title="Staff sign-in" hideTitle>
           {reset ? (

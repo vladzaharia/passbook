@@ -110,7 +110,7 @@ export async function signInStaff(
     : await checkPinOnly(ctx, scanner, pin);
   if (staffId) {
     // Only a person who exists is counted, so unknown names cannot grow the counters.
-    if (staff) await guardNamedDay(ctx, staffId);
+    if (staff) await guardNamedDay(ctx, actor.orgId, staffId);
     await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin }).catch(
       async (error: unknown) => {
         if (staff)

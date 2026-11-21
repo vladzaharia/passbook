@@ -3160,5 +3160,17 @@
     "when": "A new PIN was sent before any staff member signed in on this scanner.",
     "fix": "Sign in with POST /scan/staff, then send the new PIN.",
     "retryable": false
+  },
+  "STAFF_PIN_ADMIN_RESET": {
+    "title": "Admin reset needed",
+    "when": "A Manager whose PIN is shared asked for a new PIN themselves. Only an admin resets a Manager's PIN.",
+    "fix": "Ask an admin to reset the PIN in the Staff tab.",
+    "retryable": false
+  },
+  "STAFF_PIN_RESET_REQUIRED": {
+    "title": "New PIN needed",
+    "when": "The signed-in person has a shared PIN and has not taken the new one the server sets.",
+    "fix": "Call POST /scan/staff/pin, or sign out.",
+    "retryable": false
   }
 }

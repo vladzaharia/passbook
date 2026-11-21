@@ -1389,6 +1389,14 @@
     "resource": "scanStaff",
     "method": "resetPin"
   },
+  "scan-staff.postScanStaffByIdUnlockPin": {
+    "resource": "scanStaff",
+    "method": "unlockPin"
+  },
+  "scan-staff.postScanStaffResetUntagged": {
+    "resource": "scanStaff",
+    "method": "resetUntagged"
+  },
   "scan-zones.getScanZones": {
     "resource": "scanZones",
     "method": "list"

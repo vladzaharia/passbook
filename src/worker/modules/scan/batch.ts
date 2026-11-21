@@ -18,9 +18,9 @@ import { requireOfflineQueue } from './offline-policy.ts';
 import { unknownOutcome } from './outcome.ts';
 import { markScanOffline } from './repo-act-claim.ts';
 import {
+  offlineFloorOf,
   offlineReadRecorded,
   offlineReadScan,
-  onlineAtOf,
   recordOfflineRead,
   type SessionChange,
   sessionChanges,
@@ -82,18 +82,6 @@ async function doorOf(
   if (!safeEqualBytes(enc.encode(want), enc.encode(roster.sig)))
     return { door: 'unverified', expired: false };
   return { door: 'listed', expired: item.clientTs > roster.validUntil };
-}
-
-/** When the list the request carries was cut, if this server signed it; else 0. */
-async function signedRosterAsOf(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  roster: Request['roster'],
-): Promise<number> {
-  if (!roster) return 0;
-  const want = await rosterSig(ctx, actor, roster.asOf, roster.validUntil);
-  const enc = new TextEncoder();
-  return safeEqualBytes(enc.encode(want), enc.encode(roster.sig)) ? roster.asOf : 0;
 }
 
 interface StateAt {
@@ -190,18 +178,20 @@ export async function syncBatch(
   const results: Result[] = [];
   const sessionId = scopeSessionId(actor);
   const changes = sessionId ? await sessionChanges(ctx.env.DB, sessionId) : [];
-  const onlineAt = actor.scanner ? await onlineAtOf(ctx.env.DB, actor.scanner.id) : 0;
-  const floor = Math.max(onlineAt, await signedRosterAsOf(ctx, actor, request.roster));
+  const floor = actor.scanner ? await offlineFloorOf(ctx.env.DB, actor.scanner.id) : 0;
   for (const { item, index } of order) {
     const { door, expired } = await doorOf(ctx, actor, item, request.roster);
-    // A date before the door's last contact or its list is no honest read: it is taken at server time.
-    const late = door !== 'refused' && item.clientTs < floor - ONLINE_SLACK_MS;
+    // The door's own date is trusted only for a read the list vouched for (a roster this server signed),
+    // and only after the floor the server keeps (last online contact, last list download). Any other
+    // read is taken at server time.
+    const late =
+      door !== 'refused' && item.clientTs < (door === 'listed' ? floor : now) - ONLINE_SLACK_MS;
     const clientTs = late || item.clientTs > now + CLIENT_TS_SLACK_MS ? now : item.clientTs;
     let outcome: ScanOutcome;
     let scanId: string | null = null;
     const taken =
       door === 'refused' ||
-      sessionAcceptsAt(actor, clientTs, changes, onlineAt) ||
+      sessionAcceptsAt(actor, clientTs, changes) ||
       (await offlineReadScan(ctx.env.DB, actor.actorKey, item.idempotencyKey)) !== null;
     if (door === 'refused') outcome = bare(unknownOutcome().outcome);
     else if (expired || !taken || now - item.clientTs > CLIENT_TS_MAX_AGE_MS)

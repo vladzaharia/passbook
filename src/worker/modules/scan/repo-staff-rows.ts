@@ -44,6 +44,7 @@ export function staffItem(row: StaffActivityRaw, scannerName: string | null): St
     role: row.m_role,
     pinSetAt: row.m_pin_set_at,
     pinResetRequired: row.m_pin_reset === 1,
+    pinLockedToday: false,
     locked: Boolean(row.m_locked),
     disabledAt: row.m_disabled_at,
     today: row.m_today,

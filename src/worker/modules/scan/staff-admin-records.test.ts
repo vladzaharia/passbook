@@ -62,6 +62,7 @@ describe('staff records and credentials', () => {
           'role',
           'pinSetAt',
           'pinResetRequired',
+          'pinLockedToday',
           'disabledAt',
           'locked',
           'today',

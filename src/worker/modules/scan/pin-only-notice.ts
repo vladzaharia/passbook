@@ -20,12 +20,23 @@ export async function mailPinOnlyOff(ctx: ServiceContext, orgId: string): Promis
   if (!org) return;
   const mail = pinOnlyOffEmail(baseUrl(ctx.env), org.name);
   const mailer = createEmailBindingMailer(ctx.env);
+  let sent = 0;
+  let failed = 0;
   for (const to of await readOrgAdminEmails(db, orgId)) {
     try {
       await mailer.send({ to, ...mail });
+      sent++;
     } catch {
       // Provider errors can carry message content, so none is logged.
-      ctx.log.error('scan.pin_only_mail_failed', { orgId, code: 'PIN_ONLY_MAIL_FAILED' });
+      failed++;
     }
   }
+  // The day is claimed before the send, so a failed send is not retried today: the log says so.
+  ctx.log[failed ? 'error' : 'info']('scan.pin_only_mail', {
+    orgId,
+    code: failed ? 'PIN_ONLY_MAIL_FAILED' : 'PIN_ONLY_MAIL',
+    claimed: true,
+    sent,
+    failed,
+  });
 }

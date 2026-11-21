@@ -14,4 +14,5 @@ export const SCAN_STAFF_COPY = {
   resetTypeBack: 'Type your new PIN',
   resetWrong: "That's not it. Try again.",
   resetShowAgain: 'Show it again',
+  signOut: 'Sign out',
 } as const;

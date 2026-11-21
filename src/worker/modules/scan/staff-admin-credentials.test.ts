@@ -335,3 +335,60 @@ describe('staff PIN tag', () => {
     });
   });
 });
+
+describe('staff daily PIN lock and untagged PINs', () => {
+  const lockKey = (id: string) => `scan:pinday:${id}`;
+  const lock = (id: string) =>
+    run(env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, ?, 50)', [
+      lockKey(id),
+      clock.now() - (clock.now() % 86_400_000),
+    ]);
+  const listed = async (id: string) => (await list()).find((p) => p.id === id);
+
+  it('shows Locked today, lifts it with Unlock (audited) and with an admin reset', async () => {
+    const a = await makeScanStaff(f, { orgId, pin: '482914' });
+    const b = await makeScanStaff(f, { orgId, pin: '482915' });
+    await lock(a.id);
+    await lock(b.id);
+    expect((await listed(a.id))?.pinLockedToday).toBe(true);
+    const unlock = await send(
+      'POST',
+      resetPath(a.id).replace('reset-pin', 'unlock-pin'),
+      undefined,
+      admin('test'),
+    );
+    expect(unlock.status).toBe(200);
+    expect((await listed(a.id))?.pinLockedToday).toBe(false);
+    expect(
+      await all(
+        env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'scan_staff.pin_unlock' AND target_id = ?",
+        [a.id],
+      ),
+    ).toHaveLength(1);
+    expect((await send('POST', resetPath(b.id), undefined, admin('test'))).status).toBe(200);
+    expect((await listed(b.id))?.pinLockedToday).toBe(false);
+  });
+
+  it('flags only active people with no PIN tag, and audits', async () => {
+    const untagged = await makeScanStaff(f, { orgId, pin: '482916' });
+    const made = await create('Has a tag', 'door');
+    const res = await send(
+      'POST',
+      resetPath('x').replace('/x/reset-pin', '/reset-untagged'),
+      undefined,
+      admin('test'),
+    );
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { flagged: number }).flagged).toBeGreaterThan(0);
+    expect((await listed(untagged.id))?.pinResetRequired).toBe(true);
+    expect((await listed(made.staff.id))?.pinResetRequired).toBe(false);
+    expect(
+      await all(
+        env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'scan_staff.reset_untagged' AND org_id = ?",
+        [orgId],
+      ),
+    ).toHaveLength(1);
+  });
+});

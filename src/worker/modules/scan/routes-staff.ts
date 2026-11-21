@@ -16,6 +16,7 @@ import { getOrgAccess } from '../orgs/access.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { STAFF_PAGE_MAX } from './repo-staff-page.ts';
 import {
+  committedStaffOf,
   createStaff,
   listStaff,
   resetStaffPin,
@@ -24,6 +25,7 @@ import {
   staffTarget,
   updateStaff,
 } from './staff-admin.ts';
+import { resetUntaggedPins, unlockStaffPin } from './staff-admin-pins.ts';
 
 /** Console staff: /api/v1/scan-staff. Staff records are shared by an org's modes. */
 export const scanStaffRoutes = createRouter();
@@ -151,6 +153,52 @@ register(
     return c.json(
       await updateStaff(ctx, auth, authority, staff, modeOf(auth), c.req.valid('json')),
     );
+  },
+);
+register(
+  scanStaffRoutes,
+  'scan-staff',
+  {
+    method: 'post',
+    path: '/{id}/unlock-pin',
+    summary: 'Lift a staff member’s daily PIN lock',
+    params: IdParamSchema,
+    query: OrgQuery,
+    response: ScanStaffSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const auth = authOf(c);
+    if (auth.kind !== 'session') throw new UnauthenticatedError();
+    const { staff, authority } = await authorizedStaff(
+      ctx,
+      auth,
+      c.req.valid('query').orgId,
+      c.req.valid('param').id,
+    );
+    await unlockStaffPin(ctx, authority, staff);
+    return c.json(await committedStaffOf(ctx, auth, authority, staff.id));
+  },
+);
+register(
+  scanStaffRoutes,
+  'scan-staff',
+  {
+    method: 'post',
+    path: '/reset-untagged',
+    summary: 'Ask everyone whose PIN predates PIN tags for a new PIN at their next sign-in',
+    query: OrgQuery,
+    response: z.object({ flagged: z.number().int() }),
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const auth = authOf(c);
+    if (auth.kind !== 'session') throw new UnauthenticatedError();
+    const { orgId } = c.req.valid('query');
+    if (!(await membershipFor(ctx, auth, orgId)))
+      throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+    const authority = await staffAuthority(ctx, auth, orgId, 'scanning:manage');
+    return c.json(await resetUntaggedPins(ctx, authority, orgId));
   },
 );
 register(

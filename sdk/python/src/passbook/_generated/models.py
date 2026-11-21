@@ -6905,6 +6905,7 @@ class ScanStaff(_Model):
     role: _Literal["door", "desk", "manager"] | str
     pinSetAt: int
     pinResetRequired: bool
+    pinLockedToday: bool
     locked: bool
     disabledAt: int | None
     today: int

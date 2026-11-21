@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { makeScanStaff } from '../../../../test/helpers/index.ts';
 import { all, first, run } from '../../platform/db.ts';
-import { pinOnlyCandidatesStatement } from './repo-staff.ts';
+import { approverStatement, pinOnlyCandidatesStatement } from './repo-staff.ts';
 import { PIN_MISSES_PER_STAFF_DAY } from './staff-pin-day.ts';
 import { pinTag } from './staff-pin-hash.ts';
 import { staffSessionFixture } from './staff-session-test-fixtures.ts';
@@ -161,6 +161,68 @@ describe('the PIN tag', () => {
       await problem(await getPin(scanner.headers), 409, 'STAFF_PIN_RESET_NOT_REQUIRED');
     });
 
+    it('is refused for a flagged Manager: only an admin resets that PIN', async () => {
+      const { kit, problem, signIn } = fixture;
+      const manager = await makeScanStaff(kit.fx, {
+        orgId: kit.org.id,
+        role: 'manager',
+        pin: '381730',
+      });
+      await run(kit.env.DB, 'UPDATE scan_staff SET pin_reset_required = 1 WHERE id = ?', [
+        manager.id,
+      ]);
+      const scanner = await device();
+      await signIn(scanner.headers, manager);
+      await problem(await getPin(scanner.headers), 409, 'STAFF_PIN_ADMIN_RESET');
+    });
+
+    it("allows one repeat only, without extending the window, and ends the person's other sign-ins", async () => {
+      const { kit, problem, signIn, session, getSession } = fixture;
+      const { person, scanner } = await flagged('381731');
+      const elsewhere = await device();
+      await signIn(elsewhere.headers, person);
+      kit.clock.advance(1000);
+      await issued(await getPin(scanner.headers));
+      // The other device is signed out by the new PIN; this one keeps its sign-in.
+      expect((await session(await getSession(elsewhere.headers))).staff).toBeNull();
+      expect((await session(await getSession(scanner.headers))).staff?.id).toBe(person.id);
+      kit.clock.advance(6 * 60_000);
+      await issued(await getPin(scanner.headers));
+      kit.clock.advance(60_000);
+      await problem(await getPin(scanner.headers), 409, 'STAFF_PIN_RESET_NOT_REQUIRED');
+    });
+
+    it('works from a desk monitor', async () => {
+      const { kit, signIn } = fixture;
+      const person = await makeScanStaff(kit.fx, {
+        orgId: kit.org.id,
+        role: 'desk',
+        pin: '381732',
+      });
+      await run(kit.env.DB, 'UPDATE scan_staff SET pin_reset_required = 1 WHERE id = ?', [
+        person.id,
+      ]);
+      const monitor = await kit.scanner({
+        deviceRole: 'monitor',
+        templateIds: [fixture.deskTemplate],
+        settings: { staffSignIn: true, deskActions: true },
+      });
+      await signIn(monitor.headers, person);
+      await issued(await getPin(monitor.headers));
+    });
+
+    it('keeps a flagged person off every other route until they take the PIN', async () => {
+      const { problem, call } = fixture;
+      const { scanner } = await flagged('381733');
+      await problem(
+        await call('GET', '/scan/summary', scanner.headers),
+        409,
+        'STAFF_PIN_RESET_REQUIRED',
+      );
+      await issued(await getPin(scanner.headers));
+      expect((await call('GET', '/scan/summary', scanner.headers)).status).not.toBe(409);
+    });
+
     it('is only for a person whose PIN needs replacing, and is rate limited', async () => {
       const { kit, problem, signIn } = fixture;
       const fine = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '264813' });
@@ -181,12 +243,50 @@ describe('the PIN tag', () => {
     });
   });
 
+  it('leaves a flagged Manager out of approvals: their PIN is a plain miss', async () => {
+    const { kit } = fixture;
+    const manager = await makeScanStaff(kit.fx, {
+      orgId: kit.org.id,
+      role: 'manager',
+      pin: '119290',
+    });
+    const rows = async () => ({
+      named: (await approverStatement(kit.env.DB, kit.org.id, manager.id).all()).results.length,
+      roster: (
+        await approverStatement(kit.env.DB, kit.org.id, undefined).all<{ id: string }>()
+      ).results.filter((r) => r.id === manager.id).length,
+    });
+    expect(await rows()).toEqual({ named: 1, roster: 1 });
+    await run(kit.env.DB, 'UPDATE scan_staff SET pin_reset_required = 1 WHERE id = ?', [
+      manager.id,
+    ]);
+    expect(await rows()).toEqual({ named: 0, roster: 0 });
+  });
+
   it('keeps a wrong PIN a plain wrong PIN for a flagged person', async () => {
     const { kit, problem, signIn } = fixture;
     const a = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '448812' });
     await run(kit.env.DB, 'UPDATE scan_staff SET pin_reset_required = 1 WHERE id = ?', [a.id]);
     const scanner = await device();
     await problem(await signIn(scanner.headers, a, '000000'), 400, 'PIN_INVALID');
+  });
+});
+
+describe('wrong named PINs across the org', () => {
+  it('answers a named sign-in as a lockout once the org day is spent, and audits the cap', async () => {
+    const { kit, problem, signIn } = fixture;
+    const person = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '270915' });
+    const now = kit.clock.now();
+    await run(
+      kit.env.DB,
+      'INSERT INTO counters (key, window_start, count) VALUES (?, ?, 299) ON CONFLICT (key, window_start) DO UPDATE SET count = 299',
+      [`scan:pinday-org:${kit.org.id}`, now - (now % 86_400_000)],
+    );
+    const scanner = await device();
+    await problem(await signIn(scanner.headers, person, '000000'), 400, 'PIN_INVALID');
+    expect((await audits('scan.pin_named_org_cap')).length).toBe(1);
+    await problem(await signIn(scanner.headers, person), 429, 'RATE_LIMITED', person.pin);
+    await run(kit.env.DB, 'DELETE FROM counters WHERE key = ?', [`scan:pinday-org:${kit.org.id}`]);
   });
 });
 

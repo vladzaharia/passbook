@@ -3127,6 +3127,7 @@ export type ScanStaff = {
   role: "door" | "desk" | "manager";
   pinSetAt: number;
   pinResetRequired: boolean;
+  pinLockedToday: boolean;
   locked: boolean;
   disabledAt: number | null;
   today: number;

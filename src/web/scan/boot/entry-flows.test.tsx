@@ -266,10 +266,15 @@ describe('a shared PIN: getting a new one', () => {
   const reset = (
     newPin: ScanApi['staffNewPin'],
     refetch = vi.fn().mockResolvedValue(undefined),
+    staffSignOut: ScanApi['staffSignOut'] = vi.fn().mockResolvedValue(sessionFixture()),
   ) => {
     render(
       wrapper(
-        <StaffPinReset session={session()} api={{ staffNewPin: newPin }} refetch={refetch} />,
+        <StaffPinReset
+          session={session()}
+          api={{ staffNewPin: newPin, staffSignOut }}
+          refetch={refetch}
+        />,
       ),
     );
     return { refetch, user: userEvent.setup() };
@@ -313,5 +318,17 @@ describe('a shared PIN: getting a new one', () => {
     await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
     expect(await screen.findByText('Too many requests.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Get new PIN' })).toBeInTheDocument();
+  });
+  it('lets the person sign out instead, and drops an unconfirmed PIN from memory', async () => {
+    const out = vi.fn<ScanApi['staffSignOut']>().mockResolvedValue(sessionFixture());
+    const { user, refetch } = reset(issue(), undefined, out);
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    await screen.findByTestId('new-pin');
+    expect(issuedPins.size).toBe(1);
+    // The session no longer has this person: the PIN is forgotten.
+    expect(needsPinReset(sessionFixture())).toBe(false);
+    expect(issuedPins.size).toBe(0);
+    expect(out).not.toHaveBeenCalled();
+    expect(refetch).not.toHaveBeenCalled();
   });
 });

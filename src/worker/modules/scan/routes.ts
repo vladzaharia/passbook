@@ -83,11 +83,11 @@ register(
     response: ScanSessionSchema,
   },
   async (c) => {
-    const { dayStart, pending } = c.req.valid('query');
+    const { dayStart } = c.req.valid('query');
     const actor = scanActorOf(c);
     const ctx = serviceContext(c);
-    // Online with nothing waiting to sync: no queued read may be dated before now (batch.ts).
-    if (pending === 0 && actor.principal === 'scanner' && actor.scanner)
+    // Online contact moves the floor for queued reads, whatever the device says it has queued (batch.ts).
+    if (actor.principal === 'scanner' && actor.scanner)
       await touchOnlineAt(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
     const session = await buildSession(ctx, actor, dayStart);
     const auth = c.var.auth;
@@ -220,6 +220,8 @@ register(
         false,
         'code' in input,
       );
+    if (actor.principal === 'scanner' && actor.scanner)
+      await touchOnlineAt(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
     notifyHostOfArrival(ctx, actor, outcome, evaluatedSnapshot);
     // The door asks which bundle only for a pass that is in one (read with the pass, no extra trip).
     const shown = evaluatedSnapshot?.inBundle ? { ...outcome, inBundle: true } : outcome;

@@ -36,7 +36,7 @@ export function mountScanGuards(router: OpenAPIHono<AppBindings>): void {
   );
   router.use(
     '/staff/pin',
-    requireScanActor({ capability: 'scanning:manage', staffOptional: true }),
+    requireScanActor({ capability: 'scanning:manage', staffOptional: true, screenActions: true }),
   );
   router.use('/actions', (c, next) =>
     (c.req.method === 'POST' ? operateActor : manageActor)(c, next),

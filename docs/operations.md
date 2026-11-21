@@ -619,6 +619,10 @@ The console, the developer tools and every API key mint need a Polaris ID sign-i
 - Non-admin Polaris ID sessions last 7 days idle and 30 days in all.
 - Step-up: sensitive actions (key mint and rotate, org close, reopen and export, admin and integration invitations, webhook and connection secrets, signing identities, `auth.*` and `oidc.*` settings) need a sign-in within the last 10 minutes (`auth_time`). Otherwise 403 `STEP_UP_REQUIRED` with a `signInUrl` that sends Pocket ID `prompt=login&max_age=0`. Pocket ID must honour `max_age=0` and put the new `auth_time` in the ID token. The callback checks it: a step-up whose `auth_time` is older than the flow's start (migration 0179, `oidc_flows.step_up_started_at`, 2 minutes of clock skew allowed) fails with `STEP_UP_NOT_FRESH` ("Polaris ID didn't ask you to sign in again") and logs `STEP_UP_NOT_FRESH`; the old session stays as it was. If every step-up lands there, Pocket ID is ignoring `max_age`. A session with no `auth_time` (an email link, or a provider that sends none) is always stale. Break-glass sessions step up by entering the token again.
 
+### Staff PIN tags
+
+A staff PIN tag is `HMAC(scan-pin-tag.v1, orgId:pin)` under MAC root 1, so root 1 plus the database recovers every PIN (a 10^6 search per org). If root 1 is compromised, reset every PIN (Staff tab, "Reset untagged PINs" after clearing the tags, or an admin reset each) and move to a `scan-pin-tag.v2` label in `staff-pin-hash.ts`.
+
 ### Closing and purging an organization
 
 `POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 1 hour and one download. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.

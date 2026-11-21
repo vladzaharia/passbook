@@ -41,6 +41,7 @@ import { resolvedRowOf } from './auth-store.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { API_KEY_TOKEN, type KeyTerminal, keyTerminalOf } from './guard-api-key.ts';
+import { pinResetExempt, pinResetRequired } from './guard-pin-reset.ts';
 import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
@@ -282,6 +283,9 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         }
       }
       withRole(actor, actor.settings.staffSignIn ? actor.staff : null);
+      // A person who has not taken the new PIN the server set may only fetch it, sign out or look at the session.
+      if (actor.staff?.pinResetRequired && !pinResetExempt(c.req.method, c.req.path))
+        throw pinResetRequired();
     }
     await captureScanEpochs(ctx.env.DB, actor, scannerEpochs, pendingStaff?.pinHash);
     if (actor.role === null && !options.staffOptional)

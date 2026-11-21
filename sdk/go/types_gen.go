@@ -6169,6 +6169,7 @@ type ScanStaff struct {
 	Role             string         `json:"role"`
 	PINSetAt         int64          `json:"pinSetAt"`
 	PINResetRequired bool           `json:"pinResetRequired"`
+	PINLockedToday   bool           `json:"pinLockedToday"`
 	Locked           bool           `json:"locked"`
 	DisabledAt       *int64         `json:"disabledAt"`
 	Today            int64          `json:"today"`

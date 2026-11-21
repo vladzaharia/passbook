@@ -4,9 +4,8 @@ import { macKeyVersion } from '../../platform/crypto.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, RateLimitedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
 import type { ScanActor } from './actor.ts';
-import { pinTagStateStatement, recentSelfResetStatement, setOwnPinGrant } from './repo-pin-tag.ts';
+import { pinTagStateStatement, setOwnPinGrant } from './repo-pin-tag.ts';
 import { getStaff } from './repo-staff.ts';
 import { hashPin, pinTag } from './staff-pin-hash.ts';
 import { newUniquePin } from './staff-pin-unique.ts';
@@ -15,15 +14,17 @@ import { requireSignIn, staffSession } from './staff-session.ts';
 const HOUR = 3_600_000;
 /** Tries an hour per person, however many devices. */
 export const SELF_PIN_TRIES = 6;
-/** After a reset, the same scanner may draw another PIN this long: a reload must not lose the first. */
+/** One more draw is allowed this long after the first, on the same sign-in: a reload must not lose the PIN. */
 export const SELF_PIN_REPEAT_MS = 10 * 60_000;
 
 /**
  * `POST /scan/staff/pin`: the server replaces the signed-in person's PIN with a random one, unique in
  * the org, and returns it once. The person never chooses, so no guess can ask whether a PIN is taken.
- * Only while `pin_reset_required` (a shared PIN was seen), or within 10 minutes of
- * this scanner's last reset for the same person (a reload before the PIN was typed back), so a stolen
- * session cannot rotate a PIN that is fine. A repeat voids the PIN drawn before it.
+ * Only while `pin_reset_required` (a shared PIN was seen), and never for a Manager: whoever signed in
+ * as a Manager with a shared PIN cannot be told apart from the Manager, so an admin resets that PIN.
+ * One repeat is allowed within 10 minutes of the first draw, on the same sign-in, without extending
+ * the window; it voids the PIN drawn before it. Every draw is audited in the batch that sets it, and
+ * ends the person's sign-in on every other device.
  */
 export async function setOwnPin(
   ctx: ServiceContext,
@@ -39,20 +40,26 @@ export async function setOwnPin(
     throw new RateLimitedError(Math.ceil((HOUR - (now % HOUR)) / 1000));
   const state = await pinTagStateStatement(db, orgId, bound.id).first<{
     pin_reset_required: number;
+    pin_issued_at: number | null;
+    pin_issued_binding: string | null;
+    pin_issue_repeats: number;
   }>();
   const staff = await getStaff(db, orgId, bound.id);
-  const flagged = state?.pin_reset_required === 1;
+  if (!state || !staff || staff.authEpoch === undefined)
+    throw new ConflictError('Your PIN does not need replacing.', 'STAFF_PIN_RESET_NOT_REQUIRED');
+  // The sign-in as the grant restarts it: the first draw sets staff_since to `now`, the repeat checks it.
+  const current = `${scanner.id}:${scanner.staffSince ?? 0}`;
+  const flagged = state.pin_reset_required === 1;
   const repeat =
     !flagged &&
-    (await recentSelfResetStatement(
-      db,
-      orgId,
-      scanner.id,
-      bound.id,
-      now - SELF_PIN_REPEAT_MS,
-    ).first()) !== null;
-  if ((!flagged && !repeat) || !staff || staff.authEpoch === undefined)
+    state.pin_issued_at !== null &&
+    now - state.pin_issued_at < SELF_PIN_REPEAT_MS &&
+    state.pin_issued_binding === current &&
+    state.pin_issue_repeats === 0;
+  if (!flagged && !repeat)
     throw new ConflictError('Your PIN does not need replacing.', 'STAFF_PIN_RESET_NOT_REQUIRED');
+  if (flagged && staff.role === 'manager')
+    throw new ConflictError('Ask an admin to reset your PIN.', 'STAFF_PIN_ADMIN_RESET');
   // A clash with a PIN set at the same instant is drawn again.
   let pin = '';
   for (let attempt = 0; ; attempt++) {
@@ -67,8 +74,18 @@ export async function setOwnPin(
           pinTag: await pinTag(ctx.env, orgId, pin),
           macVersion: macKeyVersion(ctx.env),
           now,
+          issue: repeat
+            ? { kind: 'repeat', binding: current }
+            : { kind: 'first', binding: `${scanner.id}:${now}` },
+          audit: {
+            orgId,
+            actorType: 'scanner',
+            actorId: scanner.id,
+            action: 'scan_staff.pin_self_reset',
+            targetType: 'scan_staff',
+            targetId: staff.id,
+          },
         },
-        repeat,
       );
       break;
     } catch (error) {
@@ -76,13 +93,5 @@ export async function setOwnPin(
       throw error;
     }
   }
-  await auditStmt(db, ctx, {
-    orgId,
-    actorType: 'scanner',
-    actorId: scanner.id,
-    action: 'scan_staff.pin_self_reset',
-    targetType: 'scan_staff',
-    targetId: staff.id,
-  }).run();
   return { pin, session: await staffSession(ctx, actor) };
 }
