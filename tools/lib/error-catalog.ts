@@ -21,7 +21,7 @@ export interface ErrorCatalog {
 const DECLARED: Record<string, { status: number; module: string }> = {
   SANDBOX_QUOTA: { status: 403, module: 'sandbox' },
   SANDBOX_PREVIEW_ONLY: { status: 409, module: 'sandbox' },
-  STAFF_PIN_AMBIGUOUS: { status: 409, module: 'scan' },
+  STAFF_NAME_REQUIRED: { status: 409, module: 'scan' },
   VALIDATION: { status: 422, module: 'platform' },
   INTERNAL: { status: 500, module: 'platform' },
   HTTP_ERROR: { status: 400, module: 'platform' },
