@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
+import { publishClock } from '../console/run-clock.ts';
+import { loadSession, updateSession } from '../console/session.ts';
 import { fetchCalls, fetchHome, HomeError } from './api.ts';
 import { Workbench, type WorkbenchLinks } from './workbench.tsx';
 
@@ -15,6 +17,28 @@ function firstVisit(): boolean {
     // Storage blocked (private mode, a sandboxed frame): wave every time rather than never.
     return true;
   }
+}
+
+/** The header chip reads the session and the run clock: one read of the home updates both. */
+export async function syncChip(home: DeveloperHome): Promise<void> {
+  publishClock(home);
+  const session = await loadSession();
+  if (session.kind === 'out' || !home.sandbox) return;
+  const siteKey = session.kind === 'none' || session.kind === 'ready' ? session.siteKey : '';
+  updateSession(
+    home.state === 'open'
+      ? {
+          kind: 'ready',
+          csrf: session.csrf,
+          siteKey,
+          sandbox: {
+            id: home.sandbox.id,
+            orgSlug: home.sandbox.orgSlug,
+            templateId: home.sandbox.templateId,
+          },
+        }
+      : { kind: 'closed', csrf: session.csrf },
+  );
 }
 
 type Load =
@@ -47,7 +71,10 @@ export function WorkbenchIsland({
   /** After a reset or reopen: the new home replaces the old one in place, with no loading flash. */
   const refresh = useCallback(() => {
     fetchHome(fetchFn).then(
-      (home) => setLoad({ kind: 'ready', home }),
+      (home) => {
+        setLoad({ kind: 'ready', home });
+        syncChip(home);
+      },
       () => undefined,
     );
   }, [fetchFn]);
