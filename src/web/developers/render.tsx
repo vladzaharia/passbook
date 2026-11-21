@@ -8,9 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
 import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
-import { DEVELOPERS_INDEXABLE, NOT_FOUND_FILE, PATHS, twin } from '../../shared/developers.ts';
-import { escapeHtml } from '../../shared/html.ts';
-import { HEAD_HTML } from '../../worker/ssr/head.ts';
+import { NOT_FOUND_FILE, PATHS, twin } from '../../shared/developers.ts';
 import { runFile, runFileUrl, runIndex } from './console/run-spec.ts';
 import type { GuideInputs } from './guide/load.ts';
 import { guideMarkdown } from './guide/markdown.ts';
@@ -54,52 +52,9 @@ import { StatusView } from './pages/status.tsx';
 import type { BlueprintPreviews } from './playground/model.ts';
 import { PlaygroundPage } from './playground/page.tsx';
 import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
-
-interface Doc {
-  url: string;
-  title: string;
-  description: string;
-  body: string;
-  /** Pages with a twin name it. */
-  md?: boolean;
-  /** The twin's text: written next to the page as its `.md`. */
-  twin?: string;
-  /** Extra `<link>`s for the head. */
-  head?: string;
-}
-
-const ROBOTS = DEVELOPERS_INDEXABLE ? '' : '<meta name="robots" content="noindex, nofollow">';
-
-function document(doc: Doc, origin: string, assets: string): string {
-  const url = `${origin}${doc.url}`;
-  const md =
-    doc.md || doc.twin !== undefined
-      ? `<link rel="alternate" type="text/markdown" href="${twin(doc.url)}">`
-      : '';
-  return (
-    '<!doctype html><html lang="en" data-theme-pref="system"><head>' +
-    `${HEAD_HTML}${ROBOTS}<title>${escapeHtml(doc.title)}</title>` +
-    `<meta name="description" content="${escapeHtml(doc.description)}">` +
-    `<link rel="canonical" href="${url}">${md}${doc.head ?? ''}` +
-    `<link rel="alternate" type="application/json" href="${PATHS.openapi}">` +
-    `<meta property="og:site_name" content="PassBook Developers"><meta property="og:title" content="${escapeHtml(doc.title)}">` +
-    `<meta property="og:url" content="${url}"><script src="/theme-init.js"></script>${assets}` +
-    `</head><body>${doc.body}</body></html>`
-  );
-}
+import { type Doc, document, fileOf, opIndex } from './render-doc.ts';
 
 const html = (node: ReactElement) => renderToStaticMarkup(node);
-
-/** `METHOD /api/v1/path/{id}` to operationId, for the request log's "Open in builder" (the console takes an operation id). */
-const opIndex = (site: Site): Record<string, string> =>
-  Object.fromEntries(
-    site.pages.flatMap((p) =>
-      p.ops.map((o) => [`${o.method.toUpperCase()} ${o.path}`, o.operationId]),
-    ),
-  );
-
-/** `/developers/reference/passes` is `developers/reference/passes.html`; a directory page is `index.html`. */
-const fileOf = (url: string, dir: boolean) => (dir ? `${url}/index.html` : `${url}.html`);
 
 export function renderSite(
   site: Site,
@@ -123,25 +78,22 @@ export function renderSite(
     description: string,
     active: NavKey | undefined,
     child: ReactElement,
-    withSide?: ReactElement,
-    dir = false,
-    head?: string,
-    markdown?: string,
+    o: { side?: ReactElement; dir?: boolean; head?: string; md?: string } = {},
   ) =>
     add(
       {
         url,
         title: `${title} · ${base}`,
         description,
-        head,
-        twin: markdown,
+        head: o.head,
+        twin: o.md,
         body: html(
-          <Shell site={site} active={active} side={withSide}>
+          <Shell site={site} active={active} side={o.side}>
             {child}
           </Shell>,
         ),
       },
-      dir,
+      o.dir,
     );
 
   // Home is a document of its own: no docs grid.
@@ -172,10 +124,7 @@ export function renderSite(
     DEV_COPY.reference.lede,
     'reference',
     <ReferenceIndex site={site} />,
-    side(),
-    true,
-    undefined,
-    referenceIndexMarkdown(site),
+    { side: side(), dir: true, md: referenceIndexMarkdown(site) },
   );
   for (const p of site.pages) {
     const url = pagePath(p);
@@ -209,10 +158,7 @@ export function renderSite(
     'Apple, scanner and public routes.',
     'reference',
     <ProtocolsView site={site} />,
-    side(),
-    false,
-    undefined,
-    protocolsMarkdown(site),
+    { side: side(), md: protocolsMarkdown(site) },
   );
   page(
     PATHS.errors,
@@ -220,10 +166,7 @@ export function renderSite(
     'Error codes and their fixes.',
     'reference',
     <ErrorsIndex site={site} />,
-    side(),
-    true,
-    undefined,
-    errorsIndexMarkdown(site),
+    { side: side(), dir: true, md: errorsIndexMarkdown(site) },
   );
   for (const e of site.errors)
     page(
@@ -232,10 +175,7 @@ export function renderSite(
       e.fix || e.title,
       'reference',
       <ErrorEntryView entry={e} />,
-      side(),
-      false,
-      undefined,
-      errorMarkdown(e),
+      { side: side(), md: errorMarkdown(e) },
     );
   // Wide, no docs grid: the tester needs two columns.
   add({
@@ -255,10 +195,10 @@ export function renderSite(
     'Changes to the API.',
     undefined,
     <ChangelogView site={site} />,
-    undefined,
-    false,
-    `<link rel="alternate" type="application/atom+xml" title="PassBook API changelog" href="${PATHS.changelogFeed}">`,
-    changelogMarkdown(site),
+    {
+      head: `<link rel="alternate" type="application/atom+xml" title="PassBook API changelog" href="${PATHS.changelogFeed}">`,
+      md: changelogMarkdown(site),
+    },
   );
   out.push({ file: PATHS.changelogFeed, body: atomFeed(site, origin) });
   add({
@@ -268,17 +208,9 @@ export function renderSite(
     twin: appTwins.playground(),
     body: html(<PlaygroundPage site={site} previews={previews} />),
   });
-  page(
-    PATHS.console,
-    DEV_COPY.console.title,
-    DEV_COPY.console.line,
-    'console',
-    <ConsoleView />,
-    undefined,
-    false,
-    undefined,
-    appTwins.console(),
-  );
+  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'console', <ConsoleView />, {
+    md: appTwins.console(),
+  });
   // What the Run island reads: per page the operations it can run, and one index for the console.
   for (const p of site.pages)
     out.push({
@@ -291,40 +223,15 @@ export function renderSite(
       ),
     });
   out.push({ file: runFileUrl('index'), body: JSON.stringify(runIndex(site)) });
-  page(
-    PATHS.logs,
-    LOGS_COPY.title,
-    LOGS_COPY.lede,
-    'logs',
-    <LogsView />,
-    undefined,
-    false,
-    undefined,
-    appTwins.logs(),
-  );
-  page(
-    PATHS.status,
-    STATUS_COPY.title,
-    STATUS_COPY.lede,
-    undefined,
-    <StatusView />,
-    undefined,
-    false,
-    undefined,
-    appTwins.status(),
-  );
+  page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'logs', <LogsView />, { md: appTwins.logs() });
+  page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />, {
+    md: appTwins.status(),
+  });
   out.push({ file: PATHS.logsOps, body: JSON.stringify(opIndex(site)) });
-  page(
-    PATHS.quickstart,
-    QS_COPY.title,
-    QS_COPY.lede,
-    'quickstart',
-    <QuickstartView />,
-    <QuickstartSide />,
-    false,
-    undefined,
-    quickstartMarkdown(),
-  );
+  page(PATHS.quickstart, QS_COPY.title, QS_COPY.lede, 'quickstart', <QuickstartView />, {
+    side: <QuickstartSide />,
+    md: quickstartMarkdown(),
+  });
   const guides = guideInputs.docs.map(({ doc }) => resolveGuide(doc, site, guideInputs.examples));
   page(
     PATHS.guides,
@@ -332,10 +239,7 @@ export function renderSite(
     DEV_COPY.slots.guides.line,
     'guides',
     <GuidesIndex guides={guides} />,
-    undefined,
-    true,
-    undefined,
-    guidesIndexMarkdown(guides),
+    { dir: true, md: guidesIndexMarkdown(guides) },
   );
   for (const g of guides) {
     const markdown = guideMarkdown(g, guideInputs.examples, site.baseUrl || origin);

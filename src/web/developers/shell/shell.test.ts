@@ -155,7 +155,7 @@ describe('personal snippets', () => {
   });
 
   it('asks nothing of the sandbox endpoint when there is no session', async () => {
-    const fetchMock = vi.fn(async () => json({ authenticated: false }));
+    const fetchMock = vi.fn(async (..._args: unknown[]) => json({ authenticated: false }));
     vi.stubGlobal('fetch', fetchMock);
     vi.resetModules();
     document.body.innerHTML = '<div data-samples><code>org</code></div>';

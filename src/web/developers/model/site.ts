@@ -1,5 +1,6 @@
 import { runOp } from '../console/run-spec.ts';
 import { buildChangelog } from './changelog.ts';
+import { errorStatuses } from './error-status.ts';
 import { minimalExample } from './example.ts';
 import { GROUP_ORDER, groupOf, labelOf, slugOf } from './resources.ts';
 import { bodyFields, paramFields, refName, resolve } from './schema.ts';
@@ -54,24 +55,6 @@ const isConsoleOnly = (op: RawOp) =>
   op['x-sdk'] !== undefined &&
   op['x-sdk'].sdk !== false &&
   !op['x-sdk'].resource.startsWith('platform');
-
-const asNumbers = (v: unknown): number[] =>
-  Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : [];
-
-/** Status and code rows from the PX4 catalog, whichever of the two shapes it takes. */
-function statusByCode(errors: unknown): Map<string, number> {
-  const out = new Map<string, number>();
-  const list = Array.isArray(errors) ? errors : asDict(errors).codes;
-  const rows: Dict[] = Array.isArray(list)
-    ? list.map((e) => asDict(e))
-    : Object.entries(asDict(errors)).map(([code, e]) => ({ code, ...asDict(e) }));
-  for (const r of rows) {
-    // A code raised with several statuses shows the first; the catalog lists them sorted.
-    const status = typeof r.status === 'number' ? r.status : asNumbers(r.statuses)[0];
-    if (typeof r.code === 'string' && status !== undefined) out.set(r.code, status);
-  }
-  return out;
-}
 
 function errorRows(
   op: RawOp,
@@ -217,7 +200,7 @@ function webhookEvents(doc: RawDoc): WebhookEvent[] {
 
 export function buildSite(inputs: Inputs): Site {
   const { doc } = inputs;
-  const status = statusByCode(inputs.errors);
+  const status = errorStatuses(inputs.errors);
   const pages = new Map<string, ResourcePage>();
   const consoleOps = new Map<string, ConsoleOp[]>();
   const protocols: ProtocolOp[] = [];
