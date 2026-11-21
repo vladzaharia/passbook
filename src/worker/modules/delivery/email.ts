@@ -27,7 +27,7 @@ import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { matchesPass, PassEmailIntentSchema } from './binding.ts';
 import { finishSent } from './email-finish.ts';
-import { orgFromName } from './email-from.ts';
+import { orgFromName, passEmailOrgName } from './email-from.ts';
 import {
   failEmail,
   PermanentEmailError,
@@ -145,7 +145,7 @@ export async function deliverEmail(ctx: ServiceContext, outboxId: string): Promi
   const support = emailSupport(ctx.env, orgSettings, branding);
   const fromName = orgFromName(ctx, orgSettings['email.fromName'], platform['email.senderName']);
   const replyTo = await replyToFor(ctx, pass.orgId, orgSettings['support.email']);
-  const orgName = org?.name ?? 'PassBook';
+  const orgName = passEmailOrgName(org);
   const templateKey = {
     orgId: pass.orgId,
     templateId: pass.templateId,
