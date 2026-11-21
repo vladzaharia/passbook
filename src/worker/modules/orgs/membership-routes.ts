@@ -15,15 +15,17 @@ import {
   OrgMembershipSchema,
 } from '../../../shared/contracts/index.ts';
 import {
+  requireConsoleSession,
   requireHolderSession,
-  requireSession,
   requireStrictSession,
   type SessionAuth,
 } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
+import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
 import { listMyOrgMemberships } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
@@ -51,10 +53,21 @@ membershipRoutes.use('/invitations/accept', (c, next) =>
 );
 // The caller's own list is read by the account menu and the setup banner; an email link may read it.
 membershipRoutes.use('/memberships/me', requireHolderSession);
-membershipRoutes.use('/:id/memberships', requireSession);
-membershipRoutes.use('/:id/memberships/:membershipId', requireSession);
-membershipRoutes.use('/:id/invitations', requireSession);
-membershipRoutes.use('/:id/invitations/:invitationId', requireSession);
+membershipRoutes.use('/:id/memberships', requireConsoleSession);
+membershipRoutes.use('/:id/memberships/:membershipId', requireConsoleSession);
+membershipRoutes.use('/:id/invitations', requireConsoleSession);
+// Inviting someone into a role that administers the org (or mints keys) hands over its credentials.
+membershipRoutes.post(
+  '/:id/invitations',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const { roles } = await peekBody(c);
+    return (
+      Array.isArray(roles) &&
+      roles.some((role) => (ADMINISTERING_ROLES as readonly unknown[]).includes(role))
+    );
+  }),
+);
+membershipRoutes.use('/:id/invitations/:invitationId', requireConsoleSession);
 
 register(
   membershipRoutes,

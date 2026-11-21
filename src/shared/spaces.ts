@@ -9,12 +9,14 @@ export type SignInMethod = 'oidc' | 'magic_link' | 'breakglass';
 
 export interface SpaceAccess {
   amr: SignInMethod;
-  /** The session's roles. `developer` comes from the Pocket ID group `passbook-developers`. */
+  /** The session's roles. `developer` comes from the Pocket ID group `passbook_developers`. */
   roles: readonly string[];
   /** The person has an active membership in at least one organization. */
   orgMember: boolean;
   /** An email session's console grace end (ms), when it has one. */
   consoleUntil?: number | null;
+  /** The platform requires the admin group (`console` role) for Admin: Polaris ID sessions only. */
+  consoleGroupRequired?: boolean;
 }
 
 /** The order the account menu lists them in. */
@@ -41,12 +43,20 @@ export function needsPocketId(
   return space === 'admin' || space === 'developers';
 }
 
+/** Developer features: the `developer` role, which platform admins have implied. */
+export const hasDeveloperAccess = (roles: readonly string[]): boolean =>
+  roles.includes('admin') || roles.includes('developer');
+
+/** Console access by group: the admin group (`console`), or a platform admin. */
+export const hasConsoleGroup = (roles: readonly string[]): boolean =>
+  roles.includes('admin') || roles.includes('console');
+
 export function canUseSpace(space: Space, access: SpaceAccess): boolean {
   if (space === 'passes' || space === 'account') return true;
   if (needsPocketId(space, access.amr, access.consoleUntil)) return false;
   const admin = access.roles.includes('admin');
-  // Platform admins are developers too. `developer` is read by name until the role exists.
-  if (space === 'developers')
-    return access.amr === 'oidc' && (admin || access.roles.includes('developer'));
+  if (space === 'developers') return access.amr === 'oidc' && hasDeveloperAccess(access.roles);
+  if (access.consoleGroupRequired && access.amr === 'oidc' && !hasConsoleGroup(access.roles))
+    return false;
   return admin || access.orgMember;
 }

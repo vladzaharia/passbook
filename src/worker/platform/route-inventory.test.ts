@@ -216,6 +216,7 @@ const SIGN_IN_ANY = [
   'DELETE /api/v1/me/emails/:email',
   'DELETE /api/v1/me/passes/:id',
   'DELETE /api/v1/me/sessions/:id',
+  'GET /api/v1/developer/access',
   'GET /api/v1/me/emails',
   'GET /api/v1/me/pass-removals/:id',
   'GET /api/v1/me/passes',
