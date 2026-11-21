@@ -215,30 +215,36 @@ export function HolderTab({ pass, readOnly }: { pass: PassDetailDto; readOnly: b
         <KeyValue
           items={[
             { label: 'State', value: <StatusPill status={pass.holderState} /> },
-            {
-              label: 'Holder',
-              value: who ? (
-                <span className="inline-flex min-w-0 items-center gap-2">
-                  {owner ? <EntityAvatar kind="user" id={owner} name={who} /> : null}
-                  {owner ? (
-                    <Link
-                      to="/admin/users/$userId"
-                      params={{ userId: owner }}
-                      className="flex min-w-0 items-baseline gap-2 underline-offset-2 hover:underline"
-                    >
-                      <span className="truncate text-fg-strong">
-                        {pass.ownerName ?? pass.ownerEmail}
+            ...(who
+              ? [
+                  {
+                    label: 'Holder',
+                    value: (
+                      <span className="inline-flex min-w-0 items-center gap-2">
+                        {owner ? <EntityAvatar kind="user" id={owner} name={who} /> : null}
+                        {owner ? (
+                          <Link
+                            to="/admin/users/$userId"
+                            params={{ userId: owner }}
+                            className="flex min-w-0 items-baseline gap-2 underline-offset-2 hover:underline"
+                          >
+                            <span className="truncate text-fg-strong">
+                              {pass.ownerName ?? pass.ownerEmail}
+                            </span>
+                            {pass.ownerName && pass.ownerEmail ? (
+                              <span className="truncate text-xs text-fg-muted">
+                                {pass.ownerEmail}
+                              </span>
+                            ) : null}
+                          </Link>
+                        ) : (
+                          <span className="truncate">{pass.holderEmail}</span>
+                        )}
                       </span>
-                      {pass.ownerName && pass.ownerEmail ? (
-                        <span className="truncate text-xs text-fg-muted">{pass.ownerEmail}</span>
-                      ) : null}
-                    </Link>
-                  ) : (
-                    <span className="truncate">{pass.holderEmail}</span>
-                  )}
-                </span>
-              ) : null,
-            },
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
         {pass.blockedUsers.length > 0 ? (
