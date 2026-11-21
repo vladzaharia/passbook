@@ -73,7 +73,7 @@ const send = (method: string, path: string, headers: Record<string, string>, bod
 
 async function person() {
   const user = await makeUser(kit.f);
-  const session = await makeSession(kit.f, { userId: user.id });
+  const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
   return { user, headers: session.headers };
 }
 
@@ -597,7 +597,8 @@ describe('idle close', () => {
     // The key of a closed sandbox no longer opens anything, and the person cannot make another.
     const call = await send('GET', '/passes', idle.key);
     expect(call.status).toBeGreaterThanOrEqual(401);
-    const fresh = (await makeSession(kit.f, { userId: idle.user.id })).headers;
+    const fresh = (await makeSession(kit.f, { userId: idle.user.id, roles: ['user', 'developer'] }))
+      .headers;
     const again = await send('POST', '/developer/sandbox', fresh, { turnstileToken: 'ok' });
     await expectProblem(again, 409, 'SANDBOX_EXISTS');
     // A second sweep changes nothing.

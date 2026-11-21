@@ -31,6 +31,8 @@ export function authorizationUrl(
     codeChallenge: string;
     /** `login` makes the provider ask who is signing in (another account). */
     prompt?: 'login';
+    /** `0` asks for a fresh authentication; the ID token then carries a new `auth_time`. */
+    maxAge?: 0;
   },
 ): string {
   const u = new URL(discovered.authorizationEndpoint);
@@ -43,6 +45,7 @@ export function authorizationUrl(
   u.searchParams.set('code_challenge', flow.codeChallenge);
   u.searchParams.set('code_challenge_method', 'S256');
   if (flow.prompt) u.searchParams.set('prompt', flow.prompt);
+  if (flow.maxAge === 0) u.searchParams.set('max_age', '0');
   return u.toString();
 }
 

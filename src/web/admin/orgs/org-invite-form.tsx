@@ -49,6 +49,7 @@ export function InviteForm({ pending, onInvite }: { pending: boolean; onInvite: 
         {(props) => (
           <Input
             {...props}
+            data-draft
             type="text"
             inputMode="email"
             autoComplete="email"

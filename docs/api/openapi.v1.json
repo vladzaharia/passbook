@@ -27602,7 +27602,9 @@
                             "type": "string",
                             "enum": [
                               "admin",
-                              "user"
+                              "user",
+                              "developer",
+                              "console"
                             ]
                           }
                         },
@@ -27623,6 +27625,9 @@
                             "null"
                           ],
                           "minimum": 0
+                        },
+                        "consoleGroupRequired": {
+                          "type": "boolean"
                         },
                         "expiresAt": {
                           "type": "integer",
@@ -31454,6 +31459,81 @@
         ]
       }
     },
+    "/api/v1/developer/access": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Whether you have developer access: yes, none, or an email sign-in that needs Polaris ID",
+        "operationId": "developer.getAccess",
+        "tags": [
+          "developer"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access": {
+                      "type": "string",
+                      "enum": [
+                        "yes",
+                        "none",
+                        "email"
+                      ]
+                    },
+                    "signInUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "access"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk": {
+          "resource": "developer.access",
+          "method": "retrieve",
+          "sdk": false,
+          "reason": "Developer portal access: a signed-in person in a browser, not an integration."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "RATE_LIMITED",
+          "REQUEST_LOG_NOT_FOUND",
+          "RESOLVE_NOT_FOUND",
+          "SANDBOX_CONFLICT",
+          "SANDBOX_EXISTS",
+          "SANDBOX_KEY_MISSING",
+          "SANDBOX_NOT_FOUND",
+          "TURNSTILE_FAILED",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND"
+        ]
+      }
+    },
     "/api/v1/developer/sandbox": {
       "post": {
         "security": [
@@ -33229,6 +33309,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
@@ -33254,6 +33338,7 @@
           "ORG_STATUS_ALONE",
           "RATE_LIMITED",
           "SETTINGS_CHANGED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39056,6 +39141,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39068,6 +39157,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39175,6 +39265,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39187,6 +39281,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39468,6 +39563,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39480,6 +39579,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39559,6 +39659,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
@@ -39571,6 +39675,7 @@
           "ORG_PURGING",
           "ORG_REOPEN_WINDOW",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -39966,11 +40071,16 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -78709,6 +78819,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -78726,6 +78840,7 @@
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -79802,6 +79917,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -79820,6 +79939,7 @@
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -80950,6 +81070,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -80968,6 +81092,7 @@
           "ORG_NOT_FOUND",
           "PASS_CONFLICT",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_REQUIRED",
@@ -82350,6 +82475,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -82369,6 +82498,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -82582,6 +82712,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -82602,6 +82736,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -82792,6 +82927,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -82812,6 +82951,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -83497,6 +83637,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -83517,6 +83661,7 @@
           "RETENTION_RECEIPT_BUSY",
           "SAMPLE_EVENT_LIVE",
           "SECRET_UNAVAILABLE",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "UNKNOWN_TEMPLATE",
           "UNSAFE_URL",
@@ -85209,6 +85354,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -85259,6 +85408,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -86578,6 +86728,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -86629,6 +86783,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -87146,6 +87301,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -87197,6 +87356,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -88171,6 +88331,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -88222,6 +88386,7 @@
           "PUSH_KEY_NONE",
           "PUSH_KEY_UNREADABLE",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -89333,11 +89498,16 @@
           "method": "startManaged"
         },
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -90759,7 +90929,9 @@
                               "type": "string",
                               "enum": [
                                 "admin",
-                                "user"
+                                "user",
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -90912,7 +91084,9 @@
                         "type": "string",
                         "enum": [
                           "admin",
-                          "user"
+                          "user",
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -91034,7 +91208,9 @@
                               "type": "string",
                               "enum": [
                                 "admin",
-                                "user"
+                                "user",
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -91282,7 +91458,9 @@
                         "type": "string",
                         "enum": [
                           "admin",
-                          "user"
+                          "user",
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -91416,7 +91594,9 @@
                         "type": "string",
                         "enum": [
                           "admin",
-                          "user"
+                          "user",
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -91538,7 +91718,9 @@
                               "type": "string",
                               "enum": [
                                 "admin",
-                                "user"
+                                "user",
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -91705,6 +91887,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
@@ -91716,6 +91902,7 @@
           "RATE_LIMITED",
           "SELF_DISABLE",
           "SESSION_NOT_FOUND",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION"
@@ -91786,7 +91973,9 @@
                         "type": "string",
                         "enum": [
                           "admin",
-                          "user"
+                          "user",
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -91908,7 +92097,9 @@
                               "type": "string",
                               "enum": [
                                 "admin",
-                                "user"
+                                "user",
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -92156,7 +92347,9 @@
                         "type": "string",
                         "enum": [
                           "admin",
-                          "user"
+                          "user",
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -92278,7 +92471,9 @@
                               "type": "string",
                               "enum": [
                                 "admin",
-                                "user"
+                                "user",
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -92829,6 +93024,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -92852,6 +93051,7 @@
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -92985,6 +93185,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -93009,6 +93213,7 @@
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -93849,6 +94054,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -93872,6 +94081,7 @@
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -94101,7 +94311,19 @@
                         "issuer": {
                           "type": "string"
                         },
+                        "platformAdminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "adminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "developerGroup": {
                           "type": [
                             "string",
                             "null"
@@ -94112,12 +94334,18 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "consoleGroupRequired": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "issuer",
+                        "platformAdminGroup",
                         "adminGroup",
-                        "userGroup"
+                        "developerGroup",
+                        "userGroup",
+                        "consoleGroupRequired"
                       ]
                     },
                     "released": {
@@ -94284,7 +94512,19 @@
                         "issuer": {
                           "type": "string"
                         },
+                        "platformAdminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "adminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "developerGroup": {
                           "type": [
                             "string",
                             "null"
@@ -94295,12 +94535,18 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "consoleGroupRequired": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "issuer",
+                        "platformAdminGroup",
                         "adminGroup",
-                        "userGroup"
+                        "developerGroup",
+                        "userGroup",
+                        "consoleGroupRequired"
                       ]
                     },
                     "released": {
@@ -94348,6 +94594,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -94355,6 +94605,7 @@
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
           "SETTINGS_CHANGED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -139072,6 +139323,10 @@
           }
         ],
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": false
+        },
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
@@ -139093,6 +139348,7 @@
           "SCANNER_NO_TAGS",
           "SCANNER_OFFLINE",
           "SCANNER_REQUESTS_OFF",
+          "STEP_UP_REQUIRED",
           "TAGS_OFF",
           "TAG_ALREADY_ASSIGNED",
           "TAG_ASSURANCE_LOW",

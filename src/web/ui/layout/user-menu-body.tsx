@@ -39,6 +39,7 @@ export function SignedInUserMenu({
       roles: authed.roles,
       orgMember,
       consoleUntil: authed.consoleUntil,
+      consoleGroupRequired: authed.consoleGroupRequired,
     }),
   ).map((space) => ({
     space,

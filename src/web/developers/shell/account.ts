@@ -5,6 +5,7 @@ interface SessionBody {
   authenticated?: boolean;
   amr?: SignInMethod;
   roles?: string[];
+  consoleGroupRequired?: boolean;
   csrfToken?: string;
   user?: MountedUser;
 }
@@ -39,7 +40,12 @@ export async function mountAccount(host: HTMLElement): Promise<() => void> {
     } | null;
     orgMember = list?.items?.some((m) => m.revokedAt === null) === true;
   }
-  const access = { amr: me.amr, roles, orgMember };
+  const access = {
+    amr: me.amr,
+    roles,
+    orgMember,
+    consoleGroupRequired: me.consoleGroupRequired,
+  };
   const spaces = SPACES.filter((space) => canUseSpace(space, access)).map((space) => ({
     space,
     href: SPACE_HOME[space],
