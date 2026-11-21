@@ -79,3 +79,38 @@ describe('ORG_TEST_ONLY', () => {
     }
   });
 });
+
+describe('the sandbox key ceiling (scope)', () => {
+  it('holds for a key made or rolled in the portal: a subset passes, key minting and a role bundle beyond it do not', async () => {
+    const user = await makeUser(kit.f);
+    const session = await makeSession(kit.f, { userId: user.id, roles: ['user', 'developer'] });
+    const made = await send('POST', '/developer/sandbox', session.headers, {
+      turnstileToken: 'ok',
+    });
+    const o = CreatedDeveloperSandboxSchema.parse(await made.json()).orgId;
+    const h = { ...session.headers, 'x-passbook-mode': 'test' };
+    const mint = (extra: Record<string, unknown>) =>
+      send('POST', '/api-keys', h, {
+        orgId: o,
+        name: 'CI',
+        kind: 'personal',
+        mode: 'test',
+        expiresAt: kit.clock.now() + 30 * 86_400_000,
+        ...extra,
+      });
+    const ok = await mint({ scopes: ['passes:read', 'templates:read'] });
+    expect(ok.status, await ok.clone().text()).toBe(201);
+    const key = (await ok.json()) as { id: string; scopes: string[] };
+    const over = await mint({ scopes: ['api-keys:write'] });
+    await expectProblem(over, 403, 'API_KEY_SCOPE_EXCEEDS_CREATOR');
+    // Roll keeps the scopes and answers a new secret once.
+    const rolled = await send('POST', `/api-keys/${key.id}/rotate`, h, {
+      orgId: o,
+      overlapHours: 1,
+    });
+    expect(rolled.status).toBe(201);
+    const body = (await rolled.json()) as { key: { scopes: string[]; secret: string } };
+    expect(body.key.scopes).toEqual(key.scopes);
+    expect(body.key.secret).toMatch(/^pbp_test_/);
+  });
+});

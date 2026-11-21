@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
 import type { CreateApiKeySchema } from '../../../shared/contracts/index.ts';
 import { type ApiKeyKind, secretLabel } from '../../platform/api-key-token.ts';
 import { effectiveScopes } from '../../platform/api-scopes.ts';
@@ -8,6 +9,7 @@ import { ipListTooBroad, parseCidr } from '../../platform/ip-allow.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { orgIsDeveloper } from '../orgs/repo-entitlements.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId, delegableScopes } from './access.ts';
 import { attenuate } from './attenuate.ts';
 import { countOpenChildren, getKey, keyResources } from './repo.ts';
@@ -204,6 +206,19 @@ export async function createApiKey(
   }
   if (orgId && !(await orgIsActive(ctx.env.DB, orgId))) {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+  }
+  // A sandbox holds the sandbox ceiling, whoever mints (a role's bundle counts too): never key minting or terminals.
+  if (
+    orgId &&
+    effectiveScopes(input.scopes, input.roles).some(
+      (scope) => !(SANDBOX_KEY_SCOPES as readonly string[]).includes(scope),
+    ) &&
+    (await orgIsDeveloper(ctx.env.DB, orgId))
+  ) {
+    throw new ForbiddenError(
+      'A sandbox key cannot hold this scope.',
+      'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    );
   }
   const mode = authority.kind === 'platform' ? input.mode : authority.mode;
   assertScanningAdminKey(effectiveScopes(input.scopes, input.roles), kind, mode);
