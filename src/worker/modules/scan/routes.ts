@@ -32,7 +32,6 @@ import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
 import { withParentHint } from './occupancy/parent-hint.ts';
-import { touchOnlineAt } from './repo-roster.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
@@ -86,9 +85,6 @@ register(
     const { dayStart } = c.req.valid('query');
     const actor = scanActorOf(c);
     const ctx = serviceContext(c);
-    // Online contact moves the floor for queued reads, whatever the device says it has queued (batch.ts).
-    if (actor.principal === 'scanner' && actor.scanner)
-      await touchOnlineAt(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
     const session = await buildSession(ctx, actor, dayStart);
     const auth = c.var.auth;
     if (auth?.kind === 'session' || (auth?.kind === 'scanner' && auth.transport === 'cookie'))
@@ -220,8 +216,6 @@ register(
         false,
         'code' in input,
       );
-    if (actor.principal === 'scanner' && actor.scanner)
-      await touchOnlineAt(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
     notifyHostOfArrival(ctx, actor, outcome, evaluatedSnapshot);
     // The door asks which bundle only for a pass that is in one (read with the pass, no extra trip).
     const shown = evaluatedSnapshot?.inBundle ? { ...outcome, inBundle: true } : outcome;

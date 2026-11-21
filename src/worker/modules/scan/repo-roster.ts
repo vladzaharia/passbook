@@ -149,18 +149,6 @@ export const sessionChanges = (db: D1Database, sessionId: string) =>
     [sessionId],
   );
 
-/**
- * The door's last online contact (a session poll or an online scan, whatever it still has queued);
- * only ever moves forward. The server writes it, so the device cannot hold it back.
- */
-export const touchOnlineAt = (db: D1Database, scannerId: string, orgId: string, now: number) =>
-  run(
-    db,
-    `INSERT INTO scan_offline_state (scanner_id, org_id, online_at) VALUES (?, ?, ?)
-     ON CONFLICT (scanner_id) DO UPDATE SET online_at = excluded.online_at WHERE excluded.online_at > online_at`,
-    [scannerId, orgId, now],
-  );
-
 /** When the door last downloaded its list: a listed read cannot be older. */
 export const touchRosterAt = (db: D1Database, scannerId: string, orgId: string, now: number) =>
   run(
@@ -170,14 +158,12 @@ export const touchRosterAt = (db: D1Database, scannerId: string, orgId: string, 
     [scannerId, orgId, now],
   );
 
-/** The later of the two server-kept times: before it, a door could not have been offline with that list. */
-export const offlineFloorOf = async (db: D1Database, scannerId: string): Promise<number> => {
-  const row = (
-    await all<{ online_at: number; roster_at: number }>(
+/** When the door last downloaded its list, or 0. */
+export const rosterAtOf = async (db: D1Database, scannerId: string): Promise<number> =>
+  (
+    await all<{ roster_at: number }>(
       db,
-      'SELECT online_at, roster_at FROM scan_offline_state WHERE scanner_id = ?',
+      'SELECT roster_at FROM scan_offline_state WHERE scanner_id = ?',
       [scannerId],
     )
-  )[0];
-  return Math.max(row?.online_at ?? 0, row?.roster_at ?? 0);
-};
+  )[0]?.roster_at ?? 0;

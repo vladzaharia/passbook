@@ -18,10 +18,10 @@ import { requireOfflineQueue } from './offline-policy.ts';
 import { unknownOutcome } from './outcome.ts';
 import { markScanOffline } from './repo-act-claim.ts';
 import {
-  offlineFloorOf,
   offlineReadRecorded,
   offlineReadScan,
   recordOfflineRead,
+  rosterAtOf,
   type SessionChange,
   sessionChanges,
 } from './repo-roster.ts';
@@ -178,7 +178,12 @@ export async function syncBatch(
   const results: Result[] = [];
   const sessionId = scopeSessionId(actor);
   const changes = sessionId ? await sessionChanges(ctx.env.DB, sessionId) : [];
-  const floor = actor.scanner ? await offlineFloorOf(ctx.env.DB, actor.scanner.id) : 0;
+  // Both are kept by the server, none by the device: the last list it served, and the last request this
+  // door made before this one (`last_seen_at` as read at the start of the request, so this upload does not
+  // move it; it is stamped at most once a minute, which is the slack on top of the clock drift below).
+  const floor = actor.scanner
+    ? Math.max(await rosterAtOf(ctx.env.DB, actor.scanner.id), actor.scanner.lastSeenAt ?? 0)
+    : 0;
   for (const { item, index } of order) {
     const { door, expired } = await doorOf(ctx, actor, item, request.roster);
     // The door's own date is trusted only for a read the list vouched for (a roster this server signed),
