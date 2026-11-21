@@ -184,7 +184,16 @@ export async function updateIdentity(
         { path: 'apnsBinding', message: 'Use a binding name such as APNS_ACME.' },
       ]);
   }
+  if (patch.rotation === 'auto' && (row.provenance !== 'managed' || row.cert_pem === null))
+    throw new ConflictError(
+      'Only a managed identity with a certificate renews automatically.',
+      'IDENTITY_NOT_ROTATABLE',
+    );
+  if (patch.issuing === true && row.source === 'db' && row.cert_pem === null)
+    throw new ConflictError('The identity has no certificate yet.', 'IDENTITY_NOT_READY');
   const next = {
+    issuing: patch.issuing ?? row.issuing === 1,
+    rotation: patch.rotation ?? row.rotation,
     label: patch.label ?? row.label,
     nfcEnabled: patch.nfcEnabled ?? row.nfc_enabled === 1,
     apnsBinding: patch.apnsBinding === undefined ? row.apns_binding : patch.apnsBinding,

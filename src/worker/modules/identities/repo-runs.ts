@@ -1,4 +1,4 @@
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 
 export type RunKind = 'provision' | 'rotate';
 export type RunState = 'queued' | 'running' | 'waiting' | 'succeeded' | 'failed' | 'cancelled';
@@ -178,4 +178,66 @@ export function runByCert(db: D1Database, certId: string) {
      WHERE json_extract(external_ref, '$.certId') = ? ORDER BY created_at DESC, id DESC LIMIT 1`,
     [certId],
   );
+}
+
+export interface RunQuery {
+  orgId?: string | undefined;
+  targetId?: string | undefined;
+  after?: string | undefined;
+  limit: number;
+}
+
+/** Newest first, one page after the `after` id. */
+export function pageRuns(db: D1Database, q: RunQuery): Promise<RunRow[]> {
+  const where = ["provider = 'apple'"];
+  const params: (string | number)[] = [];
+  if (q.orgId) {
+    where.push('org_id = ?');
+    params.push(q.orgId);
+  }
+  if (q.targetId) {
+    where.push('target_id = ?');
+    params.push(q.targetId);
+  }
+  if (q.after) {
+    where.push('(created_at, id) < (SELECT created_at, id FROM identity_runs WHERE id = ?)');
+    params.push(q.after);
+  }
+  return all<RunRow>(
+    db,
+    `SELECT ${COLUMNS} FROM identity_runs WHERE ${where.join(' AND ')}
+     ORDER BY created_at DESC, id DESC LIMIT ?`,
+    [...params, q.limit],
+  );
+}
+
+/** The state of the newest run per `identity:<id>` and `org:<id>` key, for the targets asked about. */
+export async function latestRunStates(
+  db: D1Database,
+  identityIds: readonly string[],
+  orgIds: readonly string[],
+): Promise<Map<string, RunState>> {
+  const ids = [...new Set([...identityIds, ...orgIds])];
+  const states = new Map<string, RunState>();
+  if (ids.length === 0) return states;
+  const rows = await all<{ target_type: string; target_id: string; state: RunState }>(
+    db,
+    `SELECT target_type, target_id, state FROM identity_runs
+     WHERE provider = 'apple' AND target_id IN (${ids.map(() => '?').join(', ')})
+     ORDER BY created_at, id`,
+    ids,
+  );
+  for (const r of rows) states.set(`${r.target_type}:${r.target_id}`, r.state);
+  return states;
+}
+
+/** Closes an open run. The Workflow instance sees it at its next step and stops. */
+export async function cancelRunRow(db: D1Database, id: string, now: number): Promise<boolean> {
+  const { changes } = await run(
+    db,
+    `UPDATE identity_runs SET state = 'cancelled', waiting_for = NULL, updated_at = ?, finished_at = ?
+     WHERE id = ? AND state IN ${OPEN_STATES}`,
+    [now, now, id],
+  );
+  return changes === 1;
 }

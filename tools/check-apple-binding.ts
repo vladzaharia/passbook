@@ -1,12 +1,12 @@
-// The APPLE service binding reaches the App Store Connect key. Only the provisioning workflow and
-// its client may name it, or import the client. Run in `npm run check:rules`.
+// The APPLE service binding reaches the App Store Connect key. Only the provisioning workflow, its
+// client and the two admin calls that use it (the call ledger, certificate revoke) may name it or import the client. Run in `npm run check:rules`.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 const root = resolve(import.meta.dirname, '..');
 const ALLOWED =
-  /^src\/worker\/(workflows\/identity-provision|modules\/identities\/asc-client)(\.test)?\.ts$/;
+  /^src\/worker\/(workflows\/identity-provision|modules\/identities\/(asc-client|apple-calls|cert-admin))(\.test)?\.ts$/;
 
 function* sources(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
