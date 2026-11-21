@@ -99,10 +99,8 @@ describe('the app save client', () => {
       const host = document.querySelector('[data-save-phone]') as HTMLElement;
       (host.querySelector('[data-save-do]') as HTMLElement).click();
       await vi.waitFor(() => expect(host.getAttribute('data-save')).toBe('saved'));
-      const [[name, entry]] = [...stores.entries()].map(
-        ([n, m]) => [n, [...m.entries()][0]] as const,
-      );
-      const [key, res] = entry as [string, Response];
+      const [name, store] = [...stores.entries()][0] as [string, Map<string, Response>];
+      const [key, res] = [...store.entries()][0] as [string, Response];
       entries[impl] = [
         name,
         key,
