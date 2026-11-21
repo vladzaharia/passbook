@@ -20,7 +20,6 @@ import {
 } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { createInviteSignInLink } from '../auth/invite-link.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import {
@@ -152,13 +151,6 @@ export async function inviteOrgMember(
     targetId: row.id,
   });
   const accept = `/api/v1/orgs/invitations/accept#${token}`;
-  // An address with no account gets the sign-in link in this one mail; it joins the org when used.
-  const signIn = await createInviteSignInLink(ctx, {
-    email: row.email,
-    invitationId: row.id,
-    ttlMs: TTL,
-    usable: !(await repo.hasAccountEmail(ctx.env.DB, row.email)),
-  });
   const acceptLink = `${baseUrl(ctx.env)}${accept}`;
   const org = await repo.orgName(ctx.env.DB, orgId);
   await assertNotPreviewOnly(ctx.env.DB, orgId);
@@ -169,8 +161,7 @@ export async function inviteOrgMember(
         orgName: org?.name ?? 'an organization',
         roles: parsed.data.roles,
         inviter: await repo.userName(ctx.env.DB, auth.userId),
-        link: signIn ?? acceptLink,
-        ...(signIn ? { acceptLink } : {}),
+        link: acceptLink,
         base: baseUrl(ctx.env),
       }),
     });

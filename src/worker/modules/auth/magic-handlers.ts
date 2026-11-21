@@ -126,6 +126,7 @@ async function runConsume(c: Context<AppBindings>, body: unknown): Promise<Magic
     previousCookie,
     sessionUserId: session?.userId ?? null,
     sessionAmr: session?.amr ?? null,
+    sessionRoles: session?.roles,
   };
   const data = parsed.data;
   return 'token' in data
@@ -169,6 +170,8 @@ async function targetOf(c: Context<AppBindings>, outcome: MagicOutcome): Promise
     const next = safeNext(outcome.next);
     return next ? `/auth/oidc/start?next=${encodeURIComponent(next)}` : '/auth/oidc/start';
   }
+  if (outcome.kind === 'kept')
+    return landingFor(serviceContext(c), outcome.userId, outcome.roles, outcome.next);
   return landingFor(serviceContext(c), outcome.result.userId, outcome.result.roles, outcome.next);
 }
 
