@@ -11,7 +11,11 @@ export const SCAN_PIN_ACTIONS = {
   'scan_staff.pin_self_reset': a('Staff chose a new PIN', Lock, 'info'),
   'scan_staff.pin_unlock': a('Daily PIN lock lifted', Lock, 'info'),
   'scan_staff.reset_untagged': a('Untagged PINs flagged for replacement', Lock, 'warning'),
-  'scan.pin_named_org_cap': a('Named sign-in locked for the day after 300 wrong PINs', Lock, 'danger'),
+  'scan.pin_named_org_cap': a(
+    'Named sign-in locked for the day after 300 wrong PINs',
+    Lock,
+    'danger',
+  ),
   'scan_staff.pin_day_limit': a('PIN locked for the day after 50 tries', Lock, 'warning'),
   'scan_staff.pin_only_manager': a('Manager PIN tried on its own', Lock, 'warning'),
   'scanner.pin_only_locked': a('Scanner PIN-only sign-in locked', Lock, 'warning'),
