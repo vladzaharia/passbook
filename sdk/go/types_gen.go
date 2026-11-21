@@ -5747,8 +5747,6 @@ type ScanSetupAnswer2ZonesItemParent2 struct {
 	ID string `json:"id"`
 }
 
-type ScanSetupsCreateBody = ScanSetupsCreateParams
-
 type ScanSetupsCreateParams struct {
 	OrgID       string                          `json:"orgId"`
 	Name        string                          `json:"name"`
@@ -5806,45 +5804,6 @@ type ScanSetupsCreateParamsSettingsTags struct {
 	Level        *string  `json:"level,omitempty"`
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
-}
-
-type ScanSetupsCreateResult struct {
-	ID           string          `json:"id"`
-	OrgID        string          `json:"orgId"`
-	Mode         string          `json:"mode"`
-	Kind         string          `json:"kind"`
-	DeviceRole   string          `json:"deviceRole"`
-	Name         string          `json:"name"`
-	Accepts      any             `json:"accepts"`
-	Settings     ScannerSettings `json:"settings"`
-	TimeZone     string          `json:"timeZone"`
-	Status       string          `json:"status"`
-	Online       bool            `json:"online"`
-	PairedAt     *int64          `json:"pairedAt"`
-	PairedLabel  *string         `json:"pairedLabel"`
-	LastSeenAt   *int64          `json:"lastSeenAt"`
-	ExpiresAt    *int64          `json:"expiresAt"`
-	Staff        map[string]any  `json:"staff"`
-	Today        int64           `json:"today"`
-	CreatedAt    int64           `json:"createdAt"`
-	SessionID    *string         `json:"sessionId,omitempty"`
-	AdminSession *bool           `json:"adminSession,omitempty"`
-	AdminUser    map[string]any  `json:"adminUser"`
-	Watch        map[string]any  `json:"watch"`
-	Pairing      map[string]any  `json:"pairing"`
-}
-
-type ScanSetupsCreateResultAccepts1 struct {
-	TemplateIds []string `json:"templateIds"`
-	EventIds    []string `json:"eventIds"`
-}
-
-type ScanSetupsCreateResultAccepts2 struct {
-	EventID string `json:"eventId"`
-}
-
-type ScanSetupsCreateResultAccepts3 struct {
-	TemplateIds []string `json:"templateIds"`
 }
 
 type ScanSetupsListItem struct {
@@ -5931,8 +5890,6 @@ type ScanSetupsRetrieveResultAccepts3 struct {
 	TemplateIds []string `json:"templateIds"`
 }
 
-type ScanSetupsUpdateBody = ScanSetupsUpdateParams
-
 type ScanSetupsUpdateParams struct {
 	Name       *string                         `json:"name,omitempty"`
 	DeviceRole *string                         `json:"deviceRole,omitempty"`
@@ -5986,44 +5943,6 @@ type ScanSetupsUpdateParamsSettingsTags struct {
 	Level        *string  `json:"level,omitempty"`
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
-}
-
-type ScanSetupsUpdateResult struct {
-	ID           string          `json:"id"`
-	OrgID        string          `json:"orgId"`
-	Mode         string          `json:"mode"`
-	Kind         string          `json:"kind"`
-	DeviceRole   string          `json:"deviceRole"`
-	Name         string          `json:"name"`
-	Accepts      any             `json:"accepts"`
-	Settings     ScannerSettings `json:"settings"`
-	TimeZone     string          `json:"timeZone"`
-	Status       string          `json:"status"`
-	Online       bool            `json:"online"`
-	PairedAt     *int64          `json:"pairedAt"`
-	PairedLabel  *string         `json:"pairedLabel"`
-	LastSeenAt   *int64          `json:"lastSeenAt"`
-	ExpiresAt    *int64          `json:"expiresAt"`
-	Staff        map[string]any  `json:"staff"`
-	Today        int64           `json:"today"`
-	CreatedAt    int64           `json:"createdAt"`
-	SessionID    *string         `json:"sessionId,omitempty"`
-	AdminSession *bool           `json:"adminSession,omitempty"`
-	AdminUser    map[string]any  `json:"adminUser"`
-	Watch        map[string]any  `json:"watch"`
-}
-
-type ScanSetupsUpdateResultAccepts1 struct {
-	TemplateIds []string `json:"templateIds"`
-	EventIds    []string `json:"eventIds"`
-}
-
-type ScanSetupsUpdateResultAccepts2 struct {
-	EventID string `json:"eventId"`
-}
-
-type ScanSetupsUpdateResultAccepts3 struct {
-	TemplateIds []string `json:"templateIds"`
 }
 
 type ScanStaff struct {

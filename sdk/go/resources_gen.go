@@ -1482,15 +1482,6 @@ func newScanSetupsResource(c *core) *ScanSetupsResource {
 	}
 }
 
-// Create Create a managed scanner or screen `POST /api/v1/scan-setups`
-func (r *ScanSetupsResource) Create(ctx context.Context, body *ScanSetupsCreateBody, opts ...RequestOption) (*ScanSetupsCreateResult, error) {
-	var out ScanSetupsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-setups", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 // List Managed scanner and screen setups `GET /api/v1/scan-setups`
 func (r *ScanSetupsResource) List(ctx context.Context, query *ScanSetupsListQuery, opts ...RequestOption) *Pager[ScanSetupsListItem] {
 	return newPager[ScanSetupsListItem](r.c, call{method: "GET", path: "/api/v1/scan-setups", query: queryValues(query)}, "cursor", opts)
@@ -1500,15 +1491,6 @@ func (r *ScanSetupsResource) List(ctx context.Context, query *ScanSetupsListQuer
 func (r *ScanSetupsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScanSetupsRetrieveResult, error) {
 	var out ScanSetupsRetrieveResult
 	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scan-setups/" + pathEscape(id)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Update Update a managed scanner or screen `PATCH /api/v1/scan-setups/{id}`
-func (r *ScanSetupsResource) Update(ctx context.Context, id string, body *ScanSetupsUpdateBody, opts ...RequestOption) (*ScanSetupsUpdateResult, error) {
-	var out ScanSetupsUpdateResult
-	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scan-setups/" + pathEscape(id), body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

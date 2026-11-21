@@ -812,17 +812,12 @@ __all__ = [
     "ScanSetupAnswer2ZonesItem",
     "ScanSetupAnswer2ZonesItemParent1",
     "ScanSetupAnswer2ZonesItemParent2",
-    "ScanSetupsCreateBody",
     "ScanSetupsCreateParams",
     "ScanSetupsCreateParamsAccepts1",
     "ScanSetupsCreateParamsAccepts2",
     "ScanSetupsCreateParamsSettings",
     "ScanSetupsCreateParamsSettingsCheckIn",
     "ScanSetupsCreateParamsSettingsTags",
-    "ScanSetupsCreateResult",
-    "ScanSetupsCreateResultAccepts1",
-    "ScanSetupsCreateResultAccepts2",
-    "ScanSetupsCreateResultAccepts3",
     "ScanSetupsListItem",
     "ScanSetupsListItemAccepts1",
     "ScanSetupsListItemAccepts2",
@@ -836,17 +831,12 @@ __all__ = [
     "ScanSetupsRetrieveResultAccepts1",
     "ScanSetupsRetrieveResultAccepts2",
     "ScanSetupsRetrieveResultAccepts3",
-    "ScanSetupsUpdateBody",
     "ScanSetupsUpdateParams",
     "ScanSetupsUpdateParamsAccepts1",
     "ScanSetupsUpdateParamsAccepts2",
     "ScanSetupsUpdateParamsSettings",
     "ScanSetupsUpdateParamsSettingsCheckIn",
     "ScanSetupsUpdateParamsSettingsTags",
-    "ScanSetupsUpdateResult",
-    "ScanSetupsUpdateResultAccepts1",
-    "ScanSetupsUpdateResultAccepts2",
-    "ScanSetupsUpdateResultAccepts3",
     "ScanStaff",
     "ScanStaffCreateParams",
     "ScanStaffUpdateParams",
@@ -6533,41 +6523,6 @@ class ScanSetupsCreateParamsSettingsTags(_Model):
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
-class ScanSetupsCreateResult(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
-    name: str
-    accepts: ScanSetupsCreateResultAccepts1 | ScanSetupsCreateResultAccepts2 | ScanSetupsCreateResultAccepts3 | None
-    settings: ScannerSettings
-    timeZone: str
-    status: _Literal["not_paired", "paired", "revoked"] | str
-    online: bool
-    pairedAt: int | None
-    pairedLabel: str | None
-    lastSeenAt: int | None
-    expiresAt: int | None
-    staff: _Dict[str, _Any] | None
-    today: int
-    createdAt: int
-    sessionId: str | None = None
-    adminSession: bool | None = None
-    adminUser: _Dict[str, _Any] | None
-    watch: _Dict[str, _Any] | None
-    pairing: _Dict[str, _Any] | None
-
-class ScanSetupsCreateResultAccepts1(_Model):
-    templateIds: _List[str]
-    eventIds: _List[str]
-
-class ScanSetupsCreateResultAccepts2(_Model):
-    eventId: str
-
-class ScanSetupsCreateResultAccepts3(_Model):
-    templateIds: _List[str]
-
 class ScanSetupsListItem(_Model):
     id: str
     orgId: str
@@ -6722,40 +6677,6 @@ class ScanSetupsUpdateParamsSettingsTags(_Model):
     level: _Literal["off", "basic", "secure"] | str | None = None
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
-
-class ScanSetupsUpdateResult(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["device", "terminal", "display"] | str
-    deviceRole: _Literal["scan", "customer", "monitor"] | str
-    name: str
-    accepts: ScanSetupsUpdateResultAccepts1 | ScanSetupsUpdateResultAccepts2 | ScanSetupsUpdateResultAccepts3 | None
-    settings: ScannerSettings
-    timeZone: str
-    status: _Literal["not_paired", "paired", "revoked"] | str
-    online: bool
-    pairedAt: int | None
-    pairedLabel: str | None
-    lastSeenAt: int | None
-    expiresAt: int | None
-    staff: _Dict[str, _Any] | None
-    today: int
-    createdAt: int
-    sessionId: str | None = None
-    adminSession: bool | None = None
-    adminUser: _Dict[str, _Any] | None
-    watch: _Dict[str, _Any] | None
-
-class ScanSetupsUpdateResultAccepts1(_Model):
-    templateIds: _List[str]
-    eventIds: _List[str]
-
-class ScanSetupsUpdateResultAccepts2(_Model):
-    eventId: str
-
-class ScanSetupsUpdateResultAccepts3(_Model):
-    templateIds: _List[str]
 
 class ScanStaff(_Model):
     id: str
@@ -8879,10 +8800,6 @@ ScanDeviceCapabilities = _Dict[str, _Any] | None
 ScanPrevious = _Dict[str, _Any] | None
 
 ScanSetupAnswer = ScanSetupAnswer1 | ScanSetupAnswer2
-
-ScanSetupsCreateBody = ScanSetupsCreateParams
-
-ScanSetupsUpdateBody = ScanSetupsUpdateParams
 
 ScanTemplateRef = _Dict[str, _Any] | None
 

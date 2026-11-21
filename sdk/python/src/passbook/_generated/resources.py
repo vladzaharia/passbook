@@ -1373,14 +1373,6 @@ class ScanSetupsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
 
-    def create(
-        self,
-        body: m.ScanSetupsCreateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.ScanSetupsCreateResult:
-        """Create a managed scanner or screen `POST /api/v1/scan-setups`"""
-        return self._core.request("POST", "/api/v1/scan-setups", body=body, result=m.ScanSetupsCreateResult, **opts)
-
     def list(
         self,
         *,
@@ -1401,15 +1393,6 @@ class ScanSetupsResource:
     ) -> m.ScanSetupsRetrieveResult:
         """Scanner setup and view settings `GET /api/v1/scan-setups/{id}`"""
         return self._core.request("GET", f"/api/v1/scan-setups/{_p(id)}", result=m.ScanSetupsRetrieveResult, **opts)
-
-    def update(
-        self,
-        id: str,
-        body: m.ScanSetupsUpdateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.ScanSetupsUpdateResult:
-        """Update a managed scanner or screen `PATCH /api/v1/scan-setups/{id}`"""
-        return self._core.request("PATCH", f"/api/v1/scan-setups/{_p(id)}", body=body, result=m.ScanSetupsUpdateResult, **opts)
 
 
 class TerminalScansResource:

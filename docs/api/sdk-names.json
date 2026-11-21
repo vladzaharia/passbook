@@ -1731,9 +1731,7 @@
   },
   "scanners.patchScanSetupsById": {
     "resource": "scanSetups",
-    "method": "update",
-    "sdk": false,
-    "reason": "Needs a signed-in person as the setup’s creator; no key may write setups."
+    "method": "update"
   },
   "scanners.patchScannersById": {
     "resource": "scanners",
@@ -1749,9 +1747,7 @@
   },
   "scanners.postScanSetups": {
     "resource": "scanSetups",
-    "method": "create",
-    "sdk": false,
-    "reason": "Needs a signed-in person as the setup’s creator; no key may write setups."
+    "method": "create"
   },
   "scanners.postScanSetupsAdminSession": {
     "resource": "scanSetups",

@@ -112798,6 +112798,12 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "Create a managed scanner or screen",
         "tags": [
           "scanners"
@@ -113134,16 +113140,6 @@
           "resource": "scanSetups",
           "method": "create"
         },
-        "security": [
-          {
-            "apiKey": [
-              "scan-setup:write"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
@@ -114120,6 +114116,12 @@
         ]
       },
       "patch": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
         "summary": "Update a managed scanner or screen",
         "tags": [
           "scanners"
@@ -114444,16 +114446,6 @@
           "resource": "scanSetups",
           "method": "update"
         },
-        "security": [
-          {
-            "apiKey": [
-              "scan-setup:write"
-            ]
-          },
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
