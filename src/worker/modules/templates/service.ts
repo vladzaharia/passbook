@@ -14,6 +14,7 @@ import { type AuthContext, assertOrgAccess, modeOf } from '../../platform/auth.t
 import { NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createTemplateRegistry } from './registry.ts';
+import { loadReleaseState } from './release-state-facts.ts';
 import {
   countPassesByVersion,
   getImport,
@@ -158,6 +159,10 @@ export async function detail(
       : passOrgId === undefined
         ? await olderLivePasses(ctx.env.DB, id, modeOf(auth))
         : await olderLivePassesForOrg(ctx.env.DB, id, modeOf(auth), passOrgId);
+  const releaseOrg =
+    row.origin === 'uploaded' && !row.blueprint
+      ? (row.orgId ?? orgId ?? (auth?.kind === 'api_key' ? auth.orgId : null))
+      : null;
   return {
     ...summaryOf(
       row,
@@ -180,6 +185,7 @@ export async function detail(
       row.status === 'archived' &&
       row.origin === 'uploaded' &&
       !(await hasApprovedLiveHead(ctx.env.DB, id)),
+    ...(releaseOrg ? { release: await loadReleaseState(ctx, auth, id, releaseOrg, versions) } : {}),
   };
 }
 

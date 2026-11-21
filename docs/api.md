@@ -365,6 +365,36 @@ approved head; that also creates a new generation. An archived template with no 
 not block it; a shared template needs a platform administrator. There is no activate route. A released candidate cannot be republished
 directly; use rollback or a new reviewed candidate. Uploads and version edits remain drafts.
 
+### Release state
+
+`GET /templates/{id}` returns `release` for an uploaded template the caller's org can release
+(not for baked templates, blueprints or staged uploads). The server computes it; clients read it
+rather than deriving it from candidates and releases.
+
+```json
+{ "live": { "version": "v1", "at": 1763700000000, "by": "Alex Kim" },
+  "test": { "version": "v2", "at": 1763710000000, "state": "ahead" },
+  "draft": { "version": "v2", "at": 1763705000000 },
+  "review": { "state": "open", "version": "v2", "by": "Sam Rivera", "at": 1763706000000 },
+  "alone": false, "next": "review" }
+```
+
+- `live` and `test` are the Apple heads. `test.state` is `ahead` when Test holds a newer version
+  than Live (a Try), otherwise `following`.
+- `draft` is the newest valid saved version when it is newer than Live.
+- `review` covers the draft in Live: `open` is an unreleased candidate with no independent
+  approval, `approved` has one.
+- `alone` is the sole-approval rule for the caller: they author, review and publish, are the org's
+  only review-capable member, and no reviewer was removed in the last 7 days. The database still
+  decides at commit.
+- `next` is the caller's step: `design`, `try` (no Live head and Test lacks the draft), `release`,
+  `request_review`, `review`, `wait` (in review, or approved for someone else to publish), or
+  `null` (nothing newer than Live, or no template capability).
+
+`POST /templates/{id}/candidates` returns the existing unreleased candidate when the same author
+already sealed the same version, content and release policy in that scope, with its approvals,
+instead of creating a duplicate.
+
 ## Google and Samsung Wallet providers
 
 Provider accounts and projections are scoped by `orgId`, `mode` (`live` or `test`) and
