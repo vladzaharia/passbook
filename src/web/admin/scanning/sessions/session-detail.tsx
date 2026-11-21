@@ -1,39 +1,31 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Copy, Pause, Play, Plus, ScanLine, Square } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { z } from 'zod';
+import type { ScanRole } from '@/shared/contracts/scan.ts';
 import type {
   ScanningDevice,
   ScanningSession,
   ScanningSessionDetailSchema,
 } from '@/shared/contracts/scanning-sessions.ts';
-import {
-  Badge,
-  Button,
-  CheckboxField,
-  ConfirmDialog,
-  DropdownMenuItem,
-  EmptyState,
-  MoreMenu,
-  PageHeader,
-  TwoPane,
-  toast,
-} from '@/web/ui/index.ts';
-import { ModePill } from '@/web/ui/layout/mode-pill.tsx';
+import { BELOW_XL, useMediaQuery } from '@/web/lib/media.ts';
+import { Badge, Button, CheckboxField, EmptyState, PageHeader, TwoPane } from '@/web/ui/index.ts';
 import { CreatedCallout, useCreated } from '../../passes/created.tsx';
 import { AddDeviceDialog } from './add-device-dialog.tsx';
 import { useUpdateSession } from './api.ts';
 import { DeviceCard } from './device-card.tsx';
 import { DeviceSheet } from './device-sheet.tsx';
+import { EndSessionDialog } from './end-session-dialog.tsx';
+import { PairSheet } from './pair-sheet.tsx';
+import { SessionActions } from './session-actions.tsx';
 import { SessionActivity } from './session-activity.tsx';
+import { SessionChecks } from './session-checks.tsx';
 import { SessionPairDialog, SessionRevokeDialog } from './session-device-dialogs.tsx';
 import { SessionRulesDialog } from './session-dialog.tsx';
-import {
-  HoursBanner,
-  type HoursDialog,
-  HoursDialogs,
-  HoursMenuItems,
-} from './session-hours-actions.tsx';
+import { useSessionFixes } from './session-fixes.ts';
+import { HoursBanner, type HoursDialog, HoursDialogs } from './session-hours-actions.tsx';
+import { useSessionLive } from './session-live.ts';
+import { SessionSetup } from './session-setup.tsx';
 import { SessionStatePill } from './session-state.tsx';
 import { SessionSummary } from './session-summary.tsx';
 import { SessionTonight } from './session-tonight.tsx';
@@ -53,7 +45,7 @@ export function SessionDetail({
 }) {
   const update = useUpdateSession(s.id);
   const setupNote = useCreated<string>(`scan-setup:${s.id}`);
-  const [dialog, setDialog] = useState<'rules' | 'add' | 'end' | HoursDialog | undefined>(
+  const [dialog, setDialog] = useState<'rules' | 'add' | 'pair' | 'end' | HoursDialog | undefined>(
     canManage && addDevice ? 'add' : undefined,
   );
   const navigate = useNavigate();
@@ -69,72 +61,33 @@ export function SessionDetail({
   const [pairing, setPairing] = useState<string>();
   const [revoking, setRevoking] = useState<ScanningDevice>();
   const [showRevoked, setShowRevoked] = useState(false);
-  const device = s?.devices.find((d) => d.id === selected);
+  const [adding, setAdding] = useState<ScanRole>();
+  const live = useSessionLive(s);
+  const fixes = useSessionFixes(s, live.staff.data?.items ?? [], {
+    device: () => setDialog('add'),
+    person: setAdding,
+  });
+  // Stacked layouts show open checks first, so the fix is seen before the setup.
+  const stacked = useMediaQuery(BELOW_XL);
+  const onTop = stacked && live.checks.some((c) => c.level !== 'info');
+  const device = s.devices.find((d) => d.id === selected);
   const crumbs = [{ label: 'Scanning', to: '/admin/scanning' }, { label: s.name }];
   const active = s.status === 'active';
   const devices = s.devices.filter((d) => showRevoked || !d.revoked);
-  async function change(status: 'active' | 'paused' | 'ended') {
-    try {
-      await update.mutateAsync({ status, revision: s?.updatedAt });
-    } catch (error) {
-      toast.error(error, 'Could not change session');
-    }
-  }
   return (
     <>
       <PageHeader
         title={s.name}
         breadcrumbs={crumbs}
-        meta={
-          <>
-            <SessionStatePill session={s} />
-            <ModePill mode={s.mode} />
-            <span>
-              {s.status === 'ended' ? 'Stopped' : `${s.onlineCount} online`} · {s.deviceCount}{' '}
-              {s.deviceCount === 1 ? 'device' : 'devices'} · {s.today} done today
-            </span>
-          </>
-        }
+        meta={<SessionStatePill session={s} />}
         actions={
           canManage ? (
-            <>
-              <Button
-                iconStart={<Plus aria-hidden />}
-                disabled={!active}
-                onClick={() => setDialog('add')}
-              >
-                Add device
-              </Button>
-              <Button
-                variant="outline"
-                iconStart={<ScanLine aria-hidden />}
-                disabled={!active}
-                asChild
-              >
-                <a
-                  href={`/scan?admin=1&orgId=${encodeURIComponent(s.orgId)}&sessionId=${encodeURIComponent(s.id)}`}
-                >
-                  Scan as Admin
-                </a>
-              </Button>
-              <MoreMenu>
-                <DropdownMenuItem onSelect={() => void change(active ? 'paused' : 'active')}>
-                  {active ? <Pause aria-hidden /> : <Play aria-hidden />}
-                  {active ? 'Pause session' : 'Resume session'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => onDuplicate(s)}>
-                  <Copy aria-hidden />
-                  Duplicate session
-                </DropdownMenuItem>
-                <HoursMenuItems session={s} onDialog={setDialog} />
-                {s.status !== 'ended' ? (
-                  <DropdownMenuItem destructive onSelect={() => setDialog('end')}>
-                    <Square aria-hidden />
-                    End session
-                  </DropdownMenuItem>
-                ) : null}
-              </MoreMenu>
-            </>
+            <SessionActions
+              session={s}
+              onPair={() => setDialog('pair')}
+              onDuplicate={() => onDuplicate(s)}
+              onEnd={() => setDialog('end')}
+            />
           ) : undefined
         }
       />
@@ -149,9 +102,9 @@ export function SessionDetail({
             <Button
               variant="outline"
               loading={update.isPending}
-              onClick={() => void change('active')}
+              onClick={() => void update.mutateAsync({ status: 'active', revision: s.updatedAt })}
             >
-              Resume session
+              Resume
             </Button>
           ) : null}
         </div>
@@ -164,19 +117,41 @@ export function SessionDetail({
       <HoursBanner session={s} canManage={canManage} onDialog={setDialog} />
       <TwoPane
         aside={
-          <SessionSummary session={s} onEdit={canManage ? () => setDialog('rules') : undefined} />
+          <>
+            {canManage ? <SessionTonight sessionId={s.id} /> : null}
+            {onTop ? null : <SessionChecks live={live} fixes={fixes} canManage={canManage} />}
+            <SessionSummary session={s} onEdit={canManage ? () => setDialog('rules') : undefined} />
+          </>
         }
       >
+        {onTop ? <SessionChecks live={live} fixes={fixes} canManage={canManage} /> : null}
+        <SessionSetup
+          session={s}
+          live={live}
+          canManage={canManage}
+          adding={adding}
+          setAdding={setAdding}
+          onDialog={setDialog}
+        />
         <section className="grid gap-4" aria-labelledby="session-devices-title">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2
-                id="session-devices-title"
-                className="flex items-center gap-2 text-base font-semibold"
+            <h2
+              id="session-devices-title"
+              className="flex items-center gap-2 text-base font-semibold"
+            >
+              Devices <Badge>{s.deviceCount}</Badge>
+            </h2>
+            {canManage && devices.length ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                iconStart={<Plus aria-hidden />}
+                disabled={!active}
+                onClick={() => setDialog('add')}
               >
-                Devices <Badge>{s.deviceCount}</Badge>
-              </h2>
-            </div>
+                Add device
+              </Button>
+            ) : null}
             {s.devices.some((d) => d.revoked) ? (
               <CheckboxField
                 label="Show revoked devices"
@@ -211,7 +186,6 @@ export function SessionDetail({
             />
           )}
         </section>
-        {canManage ? <SessionTonight sessionId={s.id} /> : null}
         <SessionActivity items={s.activity} timeZone={s.timeZone} />
       </TwoPane>
       {canManage && dialog === 'rules' ? (
@@ -232,19 +206,11 @@ export function SessionDetail({
           onClose={() => setDialog(undefined)}
         />
       ) : null}
+      {canManage && dialog === 'pair' ? (
+        <PairSheet sessionId={s.id} onClose={() => setDialog(undefined)} />
+      ) : null}
       {canManage && dialog === 'end' ? (
-        <ConfirmDialog
-          open
-          title="End scanning session?"
-          description="Check-ins stop on every device. You can resume this session later."
-          confirmLabel="End session"
-          destructive
-          onOpenChange={(open) => !open && setDialog(undefined)}
-          onConfirm={async () => {
-            await update.mutateAsync({ status: 'ended', revision: s.updatedAt });
-            setDialog(undefined);
-          }}
-        />
+        <EndSessionDialog session={s} onClose={() => setDialog(undefined)} />
       ) : null}
       {device ? (
         <DeviceSheet

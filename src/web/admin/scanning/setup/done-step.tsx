@@ -1,7 +1,8 @@
-import { Check, ChevronRight, Hourglass } from 'lucide-react';
+import { Check, ChevronRight, Hourglass, QrCode } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import type { ScanSetupResult } from '@/shared/contracts/scan-setup-intent.ts';
 import { Badge, Button, type Crumb, PageHeader } from '@/web/ui/index.ts';
+import { PairSheet } from '../sessions/pair-sheet.tsx';
 import { type PairDevice, PairRoll } from './pair-roll.tsx';
 import { PinList } from './pin-list.tsx';
 
@@ -21,6 +22,7 @@ export function DoneStep({
   pollMs?: number;
 }) {
   const session = result.sessions[0];
+  const [sheet, setSheet] = useState(false);
   const [paired, setPaired] = useState<ReadonlySet<string>>(new Set());
   const onPaired = useCallback(
     (id: string) => setPaired((p) => (p.has(id) ? p : new Set(p).add(id))),
@@ -42,11 +44,23 @@ export function DoneStep({
         title={`${session.name} is ready`}
         breadcrumbs={crumbs}
         actions={
-          <Button iconEnd={<ChevronRight aria-hidden />} onClick={() => onOpen(session.id)}>
-            Open session
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              iconStart={<QrCode aria-hidden />}
+              onClick={() => setSheet(true)}
+            >
+              Pair devices
+            </Button>
+            <Button iconEnd={<ChevronRight aria-hidden />} onClick={() => onOpen(session.id)}>
+              Open session
+            </Button>
+          </>
         }
       />
+      {sheet ? (
+        <PairSheet sessionId={session.id} onClose={() => setSheet(false)} pollMs={pollMs} />
+      ) : null}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <div className="rounded-lg border border-border bg-surface-raised p-4 pt-0">
           <PairRoll devices={devices} paired={paired} onPaired={onPaired} pollMs={pollMs} />

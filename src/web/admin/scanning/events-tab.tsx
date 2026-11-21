@@ -1,14 +1,15 @@
 import { Link } from '@tanstack/react-router';
-import { useState } from 'react';
-import type { ScanEventDto } from '@/shared/contracts/scanners.ts';
+import { useMemo, useState } from 'react';
+import { admitsOf, type ScanEventDto } from '@/shared/contracts/scanners.ts';
 import { formatEventTime } from '@/web/lib/format.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
 import { Button, DataTable, EmptyState, ErrorState, StatusPill } from '@/web/ui/index.ts';
 import { EventDialog } from './events/event-dialog.tsx';
 import { useScanEvents } from './scanner-api.ts';
+import { useScanningSessions } from './sessions/api.ts';
 
-const columns: DataColumnDef<ScanEventDto>[] = [
+const eventColumns = (sessionsOf: (id: string) => number): DataColumnDef<ScanEventDto>[] => [
   {
     accessorKey: 'name',
     header: 'Event',
@@ -37,7 +38,11 @@ const columns: DataColumnDef<ScanEventDto>[] = [
     header: 'Arrived',
     cell: ({ row }) => `${row.original.arrived} / ${row.original.expected}`,
   },
-  { accessorKey: 'scanners', header: 'Scanners' },
+  {
+    id: 'sessions',
+    header: 'Sessions',
+    cell: ({ row }) => sessionsOf(row.original.id),
+  },
 ];
 
 export function EventsTab() {
@@ -45,6 +50,16 @@ export function EventsTab() {
   const canManage = Boolean(orgId && membership?.capabilities.includes('scanning:manage'));
   const query = useScanEvents(orgId, Boolean(orgId));
   const [creating, setCreating] = useState(false);
+  const sessions = useScanningSessions(orgId);
+  const columns = useMemo(() => {
+    const rows = sessions.data?.pages.flatMap((p) => p.items) ?? [];
+    return eventColumns(
+      (id) =>
+        rows.filter(
+          (s) => s.status !== 'ended' && s.accepts && admitsOf(s.accepts).eventIds.includes(id),
+        ).length,
+    );
+  }, [sessions.data]);
   const items = query.data?.items.filter((event) => event.orgId === orgId) ?? [];
   if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   const action = canManage ? <Button onClick={() => setCreating(true)}>New event</Button> : null;

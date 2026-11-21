@@ -56,3 +56,7 @@ export const hoursSummary = (hours: SessionHours | null | undefined): string[] =
     );
   return [...hoursText(hours).split(' · ').filter(Boolean), ...exceptions];
 };
+
+/** The weekly hours as one sentence, without the dated exceptions. */
+export const hoursSentence = (hours: SessionHours | null | undefined): string =>
+  hours ? hoursText(weekOf(hours)).split(' · ').filter(Boolean).join(', ') : '';
