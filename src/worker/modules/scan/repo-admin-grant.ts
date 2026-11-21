@@ -46,6 +46,7 @@ export type KeyAdminAuthority = Extract<TenantPassWrite, { kind: 'api_key' }>;
 const KEY_PURPOSES: ReadonlySet<string> = new Set([
   'org_mode.scan.event.create',
   'org_mode.scan.event.archive',
+  'org_mode.scan.event.update',
   'org_mode.scan.session.create',
   'org_mode.scan.session.update',
   SETUP_APPLY,

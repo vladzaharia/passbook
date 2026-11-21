@@ -75,7 +75,7 @@ export async function updateEvent(
   userId: string,
   id: string,
   input: z.infer<typeof UpdateScanEventSchema>,
-  authority: EventAuthority,
+  authority: TenantPassWrite,
 ) {
   const row = await loadManageEvent(ctx, id, userId, authority);
   const match =
@@ -151,8 +151,7 @@ export async function updateEvent(
   g.add(
     audited(g, ctx, {
       orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: archive ? 'scan_event.archive' : 'scan_event.update',
       targetType: 'scan_event',
       targetId: id,

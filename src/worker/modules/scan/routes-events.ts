@@ -1,11 +1,9 @@
 import {
-  CreateScanEventSchema,
   IdParamSchema,
   pageOf,
   ScanEventAssignSchema,
   ScanEventListQuerySchema,
   ScanEventSchema,
-  UpdateScanEventSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
@@ -15,11 +13,14 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { captureEventAuthority, eventTarget, eventView, listEvents } from './events.ts';
-import { archiveEvent, assignScanners, createEvent, updateEvent } from './events-mutations.ts';
+import { assignScanners } from './events-mutations.ts';
+import { registerEventWrites } from './routes-events-write.ts';
 import { registerConsoleInsideRoutes } from './routes-occupancy-console.ts';
 
 /** Console events: /api/v1/scan-events. Mode comes from the console's header, never the body. */
 export const scanEventsRoutes = createRouter();
+/** Create, edit and archive take a console session or a `scanning:write` key, so they register before the session guard. */
+registerEventWrites(scanEventsRoutes);
 guard(scanEventsRoutes, requireTenantSession);
 scanEventsRoutes.use('*', limitBody(64 * 1024));
 
@@ -71,32 +72,6 @@ register(
   scanEventsRoutes,
   TAG,
   {
-    method: 'post',
-    path: '/',
-    summary: 'Create a scan event',
-    body: CreateScanEventSchema,
-    status: 201,
-    response: ScanEventSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const auth = c.var.auth;
-    if (auth?.kind !== 'session') throw new UnauthenticatedError();
-    const input = c.req.valid('json');
-    if (!(await getOrgAccess(ctx, auth.userId, input.orgId)))
-      throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-    const authority = await captureEventAuthority(
-      ctx,
-      auth,
-      await tenantAuthorityOf(ctx, auth, input.orgId, 'scanning:manage'),
-    );
-    return c.json(await createEvent(ctx, currentUserId(c), modeOf(auth), input, authority), 201);
-  },
-);
-register(
-  scanEventsRoutes,
-  TAG,
-  {
     method: 'get',
     path: '/{id}',
     summary: 'Get a scan event',
@@ -107,39 +82,6 @@ register(
     const id = c.req.valid('param').id;
     const { ctx, authority } = await eventAuthority(c, id, 'scanning:read');
     return c.json(await eventView(ctx, id, authority));
-  },
-);
-register(
-  scanEventsRoutes,
-  TAG,
-  {
-    method: 'patch',
-    path: '/{id}',
-    summary: 'Edit a scan event',
-    params: IdParamSchema,
-    body: UpdateScanEventSchema,
-    response: ScanEventSchema,
-  },
-  async (c) => {
-    const id = c.req.valid('param').id;
-    const { ctx, authority } = await eventAuthority(c, id, 'scanning:manage');
-    return c.json(await updateEvent(ctx, currentUserId(c), id, c.req.valid('json'), authority));
-  },
-);
-register(
-  scanEventsRoutes,
-  TAG,
-  {
-    method: 'post',
-    path: '/{id}/archive',
-    summary: 'Archive a scan event (its scanners are detached)',
-    params: IdParamSchema,
-    response: ScanEventSchema,
-  },
-  async (c) => {
-    const id = c.req.valid('param').id;
-    const { ctx, authority } = await eventAuthority(c, id, 'scanning:manage');
-    return c.json(await archiveEvent(ctx, currentUserId(c), id, authority));
   },
 );
 register(
