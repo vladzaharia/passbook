@@ -34,6 +34,7 @@ import {
   messageText,
   plural,
   SCOPE_CHANGED,
+  SENDING_TOAST,
   stopLine,
 } from './labels.ts';
 import { SendConfirm } from './send-confirm.tsx';
@@ -138,6 +139,10 @@ function LoadedMessageDetail({
       mounted.current = false;
     };
   }, []);
+  useEffect(() => {
+    if (b.state !== 'draft' && b.state !== 'scheduled' && b.state !== 'sending')
+      toast.dismiss(SENDING_TOAST);
+  }, [b.state]);
   const mode = useMode();
   const { cancel, send, retry } = useBroadcastActions();
   const orgs = useOrgOptions();
@@ -184,7 +189,7 @@ function LoadedMessageDetail({
     try {
       const made = await retry.mutateAsync(b.id);
       if (made.orgId !== b.orgId || !isCurrent()) return;
-      toast.info('Sending');
+      toast.info('Sending', SENDING_TOAST);
       void navigate({ to: '/admin/messages/$broadcastId', params: { broadcastId: made.id } });
     } catch (cause) {
       if (isCurrent()) toast.error(cause, 'Could not send');
@@ -290,7 +295,8 @@ function LoadedMessageDetail({
             onConfirm={async () => {
               if (!isCurrent()) throw new Error(SCOPE_CHANGED);
               const made = await send.mutateAsync({ id: b.id });
-              if (made.id === b.id && made.orgId === b.orgId && isCurrent()) toast.info('Sending');
+              if (made.id === b.id && made.orgId === b.orgId && isCurrent())
+                toast.info('Sending', SENDING_TOAST);
             }}
           />
           <ConfirmDialog

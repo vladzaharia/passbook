@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
+import { toast } from '@/web/ui/index.ts';
 import { ORG, templateDetail } from '../passes/test-fixtures.ts';
 import { broadcast } from './test-fixtures.ts';
 
@@ -49,6 +50,21 @@ const item = (over: Record<string, unknown> = {}) => ({
 });
 
 describe('Message detail', () => {
+  it('takes the Sending toast down once the message has an outcome', async () => {
+    const dismiss = vi.spyOn(toast, 'dismiss');
+    await renderApp('/admin/messages/b1', {
+      session: 'user',
+      ...orgAccess,
+      handlers: {
+        ...base,
+        '/api/v1/broadcasts/b1': () => json(broadcast({ orgId: 'o1', state: 'sent' })),
+      },
+    });
+    await screen.findByRole('heading', { level: 1 });
+    await waitFor(() => expect(dismiss).toHaveBeenCalledWith('broadcast-sending'));
+    dismiss.mockRestore();
+  });
+
   it('resolves a bare message link to its authorized organization instead of the remembered one', async () => {
     localStorage.setItem('wallet-org-filter', messageOrg.id);
     let requests = 0;
