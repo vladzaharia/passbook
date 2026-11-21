@@ -133,7 +133,7 @@ export function FindBar({
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
           onKeyDown={onKey}
-          className="h-7 min-w-28 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-(--wl-placeholder) pointer-coarse:text-[max(16px,1rem)]"
+          className="h-7 min-w-16 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-(--wl-placeholder) pointer-coarse:text-[max(16px,1rem)]"
         />
       </div>
       {templates.length > 1 ? (
@@ -170,7 +170,7 @@ export function FindBar({
               onMouseEnter={() => setAt(i)}
               className={cn(
                 'flex cursor-pointer items-center gap-1.5 px-3 py-2 pointer-coarse:py-3',
-                i === at && 'bg-surface-sunken',
+                i === at && 'bg-accent-subtle',
               )}
             >
               {s.chip.k === ANY_KEY ? (
