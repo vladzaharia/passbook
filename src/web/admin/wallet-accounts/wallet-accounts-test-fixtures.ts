@@ -27,6 +27,7 @@ export const credential = (over: Partial<WalletCredential> = {}): WalletCredenti
   mode: 'test',
   provider: 'google',
   identityHint: '4321',
+  provenance: 'own',
   revision: 1,
   verifiedAt: null,
   revokedAt: null,

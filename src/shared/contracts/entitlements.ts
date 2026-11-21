@@ -95,6 +95,7 @@ export const ENTITLEMENTS = {
   'brand.mark': level(['none', 'quiet', 'full'], 'full', 'full', 'quiet', 'full'),
   domains: limit(0, 0, 1, 0),
   'identity.own': flag(1, 0, 1, 0),
+  'identity.managed': flag(1, 0, 1, 0),
 } as const satisfies Record<string, EntitlementDef>;
 
 export type EntitlementKey = keyof typeof ENTITLEMENTS;

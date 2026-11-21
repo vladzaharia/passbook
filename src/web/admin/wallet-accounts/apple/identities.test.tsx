@@ -81,43 +81,62 @@ describe('remainingDays', () => {
   });
 });
 
+const row = (over: Record<string, unknown> = {}) => ({
+  id: 'i1',
+  provider: 'apple',
+  orgId: null,
+  label: 'Platform',
+  identifier: 'pass.im.plrs.wallet',
+  kind: 'platform',
+  status: 'active',
+  notBefore: 1_600_000_000_000,
+  notAfter: Date.now() + 100.5 * DAY,
+  rotation: 'manual',
+  nextRotationAt: null,
+  issuing: true,
+  isDefault: true,
+  passCount: 12,
+  createdAt: 1_600_000_000_000,
+  ...over,
+});
+const page = (items: unknown[]) => () => json({ items, nextCursor: null });
+
 describe('identities list', () => {
-  it('shows expiry countdown and APNs health, accessible', async () => {
+  it('shows kind, status, expiry, renewal and pass count, accessible', async () => {
     const { container } = await renderApp('/admin/identities', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities': () =>
-          json({
-            items: [
-              identity(),
-              identity({
-                id: 'i2',
-                label: 'Acme',
-                isDefault: false,
-                notAfter: Date.now() + 4.5 * DAY,
-                apnsAvailable: false,
-                pushMethod: 'none',
-                apnsBinding: null,
-                apnsHealth: 'unknown',
-              }),
-              identity({
-                id: 'i3',
-                label: 'Old',
-                isDefault: false,
-                notAfter: Date.now() - 2.5 * DAY,
-                apnsHealth: 'failing',
-              }),
-            ],
-            nextCursor: null,
+        '/api/v1/wallet-identities': page([
+          row({ passCount: 1204 }),
+          row({
+            id: 'i2',
+            identifier: 'pass.mobile.passbook.acme',
+            kind: 'managed',
+            status: 'renewing',
+            isDefault: false,
+            rotation: 'auto',
+            nextRotationAt: Date.UTC(2027, 9, 1, 12),
+            passCount: 3,
           }),
+          row({
+            id: 'i3',
+            label: 'Old',
+            identifier: 'pass.old',
+            kind: 'own',
+            status: 'expired',
+            notAfter: Date.now() - 2.5 * DAY,
+            isDefault: false,
+          }),
+        ]),
       },
     });
-    expect(await screen.findByText('100 days left')).toBeInTheDocument();
-    expect(screen.getByText('4 days left')).toBeInTheDocument();
-    expect(screen.getByText('Expired 3 days ago')).toBeInTheDocument();
-    expect(screen.getAllByText('Not set up').length).toBeGreaterThan(0);
-    expect(screen.getByText('Healthy')).toBeInTheDocument();
-    expect(screen.getByText('Failing')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'pass.mobile.passbook.acme' })).toHaveAttribute(
+      'href',
+      '/admin/platform/wallet-accounts/i2',
+    );
+    for (const text of ['Managed', 'Renewing', 'Expired', 'Active', 'Oct 1, 2027', 'Manual'])
+      expect(screen.getAllByText(text).length).toBeGreaterThan(0);
+    expect(screen.getByText('1,204')).toBeInTheDocument();
     expect(screen.getByText(/Old: certificate has expired/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
@@ -126,25 +145,34 @@ describe('identities list', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it('sends the filters to the server', async () => {
+    const seen: string[] = [];
+    await renderApp('/admin/identities', {
+      session: 'admin',
+      handlers: {
+        '/api/v1/wallet-identities': (url) => {
+          seen.push(url.search);
+          return json({ items: [], nextCursor: null });
+        },
+      },
+    });
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('combobox', { name: /Kind/ }));
+    await ui.click(await screen.findByRole('option', { name: 'Managed' }));
+    await waitFor(() => expect(seen.some((q) => q.includes('kind=managed'))).toBe(true));
+    expect(await screen.findByText('No matches')).toBeInTheDocument();
+  });
+
   it.each([
-    [0.5, 'Edge: certificate expires today', 'alert'],
-    [30.5, 'Edge: certificate expires in 30 days', undefined],
+    [0.5, 'pass.edge: certificate expires today', 'alert'],
+    [30.5, 'pass.edge: certificate expires in 30 days', undefined],
   ])('banners a certificate with %s days left', async (days, title, role) => {
     await renderApp('/admin/identities', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities': () =>
-          json({
-            items: [
-              identity({
-                id: 'e1',
-                label: 'Edge',
-                notAfter: Date.now() + days * DAY,
-                daysRemaining: Math.floor(days),
-              }),
-            ],
-            nextCursor: null,
-          }),
+        '/api/v1/wallet-identities': page([
+          row({ id: 'e1', label: 'pass.edge', notAfter: Date.now() + days * DAY }),
+        ]),
       },
     });
     const banner = (await screen.findByText(title)).closest('div[class*="rounded-lg"]');
@@ -152,31 +180,19 @@ describe('identities list', () => {
     expect(banner?.getAttribute('role') ?? undefined).toBe(role);
   });
 
-  it('does not invent a certificate warning or readiness when expiry is unknown', async () => {
+  it('does not invent a certificate warning when expiry is unknown', async () => {
     await renderApp('/admin/identities', {
       session: 'admin',
-      handlers: {
-        '/api/v1/identities': () =>
-          json({
-            items: [identity({ notAfter: null, daysRemaining: null, apnsHealth: 'unknown' })],
-            nextCursor: null,
-          }),
-      },
+      handlers: { '/api/v1/wallet-identities': page([row({ notAfter: null })]) },
     });
-    expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'pass.im.plrs.wallet' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open identity' })).toBeNull();
   });
 
   it('flags a certificate whose validity period has not begun', async () => {
     await renderApp('/admin/identities', {
       session: 'admin',
-      handlers: {
-        '/api/v1/identities': () =>
-          json({
-            items: [identity({ notBefore: Date.now() + DAY })],
-            nextCursor: null,
-          }),
-      },
+      handlers: { '/api/v1/wallet-identities': page([row({ notBefore: Date.now() + DAY })]) },
     });
     expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
       'href',
@@ -189,17 +205,17 @@ describe('identities list', () => {
     await renderApp('/admin/identities', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities': (url) =>
+        '/api/v1/wallet-identities': (url) =>
           url.searchParams.get('cursor')
             ? json({
-                items: [identity({ id: 'i2', label: 'Due', notAfter: Date.now() + DAY })],
+                items: [row({ id: 'i2', label: 'Due', notAfter: Date.now() + DAY })],
                 nextCursor: null,
               })
-            : json({ items: [identity()], nextCursor: 'next' }),
+            : json({ items: [row()], nextCursor: 'next' }),
       },
     });
     const ui = userEvent.setup();
-    expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'pass.im.plrs.wallet' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open identity' })).toBeNull();
     await ui.click(await screen.findByRole('button', { name: 'Load more' }));
     expect(await screen.findByRole('link', { name: 'Open identity' })).toHaveAttribute(
@@ -208,24 +224,21 @@ describe('identities list', () => {
     );
   });
 
-  it('shows the certificate empty state and the certificate drop in the upload dialog', async () => {
+  it('shows the empty state with both actions', async () => {
     const { container } = await renderApp('/admin/identities', {
       session: 'admin',
-      handlers: { '/api/v1/identities': () => json({ items: [], nextCursor: null }) },
+      handlers: { '/api/v1/wallet-identities': page([]) },
     });
     expect(await screen.findByText('No identities')).toBeInTheDocument();
     expect(container.querySelector('[data-art="certificate"]')).not.toBeNull();
-    const ui = userEvent.setup();
-    await ui.click(screen.getByRole('button', { name: 'Upload' }));
-    const dialog = await screen.findByRole('dialog');
-    await ui.click(within(dialog).getByLabelText('.p12 file'));
-    expect(dialog.querySelector('[data-art="certificate"]')).not.toBeNull();
+    expect(screen.getAllByRole('button', { name: 'New managed ID' }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Upload' })).toBeInTheDocument();
   });
 
   it('shows an error', async () => {
     await renderApp('/admin/identities', {
       session: 'admin',
-      handlers: { '/api/v1/identities': () => problem(500, 'x', 'x') },
+      handlers: { '/api/v1/wallet-identities': () => problem(500, 'x', 'x') },
     });
     expect(await screen.findByText('Something went wrong. Try again.')).toBeInTheDocument();
   });
@@ -235,6 +248,7 @@ describe('identities list', () => {
     await renderApp('/admin/identities', {
       session: 'admin',
       handlers: {
+        '/api/v1/wallet-identities': page([]),
         '/api/v1/identities': (_u, init) => {
           if (init?.method === 'POST') {
             posted++;
@@ -450,7 +464,7 @@ describe('identity detail', () => {
     const { router } = await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities': () => json({ items: [], nextCursor: null }),
+        '/api/v1/wallet-identities': page([]),
         '/api/v1/identities/i1': (_u, init) => {
           if (init?.method === 'DELETE') {
             deleted = true;
@@ -478,10 +492,9 @@ describe('identity detail', () => {
     const { router } = await renderApp('/admin/identities', {
       session: 'admin',
       handlers: {
-        '/api/v1/identities': (_u, init) =>
-          init?.method === 'POST'
-            ? json(identity({ id: 'i9', label: 'Acme', isDefault: false }), 201)
-            : json({ items: [], nextCursor: null }),
+        '/api/v1/wallet-identities': page([]),
+        '/api/v1/identities': () =>
+          json(identity({ id: 'i9', label: 'Acme', isDefault: false }), 201),
         '/api/v1/identities/i9': () =>
           json(identity({ id: 'i9', label: 'Acme', isDefault: false })),
       },

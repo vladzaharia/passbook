@@ -6,6 +6,8 @@ import { daysRemaining } from './expiry.ts';
 import { pushMethodOf } from './push-method.ts';
 import { type IdentityRow, identityFacts } from './repo.ts';
 import { bindingsOfTeams, listPushKeyMeta, type PushKeyMeta } from './repo-push-keys.ts';
+import { latestRunStates } from './repo-runs.ts';
+import { identityStatus, type RunStates } from './status.ts';
 
 /** Apple's reason code from a probe's audit detail; null when it passed or none was given. */
 function probeReason(detail: string | null): string | null {
@@ -22,6 +24,16 @@ function probeReason(detail: string | null): string | null {
 interface TeamKeys {
   meta: Map<string, PushKeyMeta>;
   bindings: Map<string, { id: string; apns_binding: string | null }[]>;
+  runs: RunStates;
+}
+
+/** The newest run state per identity and per org, in one query. */
+export function loadRunStates(ctx: ServiceContext, rows: readonly IdentityRow[]) {
+  return latestRunStates(
+    ctx.env.DB,
+    rows.map((r) => r.id),
+    rows.flatMap((r) => (r.org_id ? [r.org_id] : [])),
+  );
 }
 
 /** Push key facts of the identities' teams, in two queries however many identities there are. */
@@ -33,7 +45,7 @@ async function loadTeamKeys(ctx: ServiceContext, rows: readonly IdentityRow[]): 
   const bindings = new Map<string, { id: string; apns_binding: string | null }[]>();
   for (const b of await bindingsOfTeams(ctx.env.DB, [...meta.keys()]))
     bindings.set(b.team_identifier, [...(bindings.get(b.team_identifier) ?? []), b]);
-  return { meta, bindings };
+  return { meta, bindings, runs: await loadRunStates(ctx, rows) };
 }
 
 export async function toDtos(
@@ -98,6 +110,12 @@ async function dtoOf(ctx: ServiceContext, row: IdentityRow, keys: TeamKeys): Pro
     nfcEnabled: row.nfc_enabled === 1,
     isDefault: row.is_default === 1,
     createdAt: row.created_at,
+    kind: row.provenance,
+    status: identityStatus(row, keys.runs, ctx.clock.now()),
+    rotation: row.rotation,
+    issuing: row.issuing === 1,
+    nextRotationAt: row.next_rotation_at,
+    handle: row.handle,
   };
 }
 

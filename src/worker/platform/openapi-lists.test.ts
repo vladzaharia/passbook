@@ -26,6 +26,8 @@ const NOT_COLLECTIONS = new Set([
   '/api/v1/settings',
   '/api/v1/scan/passes/{passId}/notes',
   '/api/v1/scan/devices',
+  '/api/v1/identities/{id}/certificates',
+  '/api/v1/platform/apple-calls',
 ]);
 /** Streams keep `after`: a position in an ordered log, not a page. */
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);

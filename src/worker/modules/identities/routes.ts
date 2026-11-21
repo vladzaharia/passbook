@@ -22,6 +22,7 @@ import { requestActor } from '../audit/http.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { probeApns } from './apns-probe.ts';
 import { removePushKey, setPushKey } from './push-key-service.ts';
+import { registerManagedRoutes } from './routes-managed.ts';
 import {
   deleteIdentity,
   getIdentity,
@@ -35,9 +36,11 @@ import {
 export const identitiesRoutes = createRouter();
 
 const isOrgList = (c: Parameters<typeof requireAdmin>[0]) =>
-  c.req.method === 'GET' && !!c.req.query('orgId') && /\/identities\/?$/.test(c.req.path);
+  c.req.method === 'GET' &&
+  ((!!c.req.query('orgId') && /\/identities\/?$/.test(c.req.path)) ||
+    /\/identities\/[^/]+\/certificates\/?$/.test(c.req.path));
 
-/** The list with `orgId` is an org read (org:read, checked in the handler); everything else is platform-admin only. */
+/** The list with `orgId` and the certificate history are org reads (checked in the handler); everything else is platform-admin only. */
 guard(
   identitiesRoutes,
   createMiddleware<AppBindings>((c, next) =>
@@ -202,3 +205,5 @@ register(
   async (c) =>
     c.json(await removePushKey(serviceContext(c), requestActor(c), c.req.valid('param').id)),
 );
+
+registerManagedRoutes(identitiesRoutes);

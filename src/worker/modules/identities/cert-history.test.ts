@@ -144,12 +144,16 @@ describe('certificate history', () => {
         ascId: 'b',
         der: await issueFromCsr(pending.csrDer, ca, subject, { now: kit.clock.now() }),
       },
-      { ascId: 'c', der: null },
     ];
     const adopted = await adoptByPubkey(listing, pending.pubkeySha256);
     expect(adopted?.ascId).toBe('b');
     expect(await certPubkeySha256(adopted?.der ?? new Uint8Array())).toBe(pending.pubkeySha256);
     expect(await adoptByPubkey(listing, 'nope')).toBeNull();
+    await expect(
+      adoptByPubkey([...listing, { ascId: 'c', der: null }], 'nope'),
+    ).rejects.toMatchObject({
+      code: 'ASC_CERT_DER_MISSING',
+    });
   });
 
   it('refuses a certificate for the wrong pass type and leaves everything as it was', async () => {

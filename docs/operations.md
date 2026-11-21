@@ -151,6 +151,14 @@ Trust boundary: the service binding, not the lint rule (`tools/check-apple-bindi
 
 Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
 
+## Managed identity runs
+
+`IdentityProvision` (workflow binding `IDENTITY_PROVISION`) provisions a managed pass type and certificate for an org (`provision`) and replaces a certificate (`rotate`). The daily hook `identities.rotation_plan` starts a rotate run 60 days before expiry for every `rotation='auto'` identity with no open run. Adding the binding needs `npm run deploy -- --first`.
+
+- Runs are rows in `identity_runs`: `step`, `state`, `error_code`. A run waits as `waiting: apple_unavailable` while the `APPLE` binding is missing and tries again daily for 45 days.
+- A failed run is retried by the planner the next day. At 45 days to expiry platform admins get an email and an audit row (`identity.rotation_overdue`); status goes amber at 30 days and red at 14; from 7 days an email goes out daily.
+- A rotation never revokes the old certificate.
+
 ## Google and Samsung Wallet accounts
 
 Keep Apple signing and push in place. Provider accounts and reviews are isolated by organization,
@@ -177,6 +185,20 @@ mode and provider; Test configuration is not Live readiness. See the
   permissions: Samsung's [badge guidance](https://developer.samsung.com/wallet/add-to-wallet.html)
   and [developer terms](https://developer.samsung.com/terms?location=us) do not by themselves
   establish a redistribution license.
+
+### Google managed issuers and key rotation (owner steps)
+
+- **Aggregator access.** `issuer.insert` works only for a trusted aggregator's parent issuer. Until Google
+  grants it, a managed-issuer run waits as `google_manual_issuer`: make the issuer in the Google Pay &
+  Wallet Console, share it with PassBook's service account, then complete the run in Platform.
+- **IAM role.** Rotation and the daily key inventory call the IAM API as PassBook's own service account. Grant
+  it `roles/iam.serviceAccountKeyAdmin` on itself only (not on the project), and keep the IAM API enabled.
+- **First rotation.** Rotate once by hand (`POST /api/v1/platform/wallet-credentials/{id}/rotate-key`);
+  that arms the 90-day schedule. The new key replaces the old one in every managed and shared org
+  credential, and the old key is deleted a day later. At most two keys exist at once.
+- **Alert.** More than two keys, or a key PassBook did not create, raises `wallet.key_unknown` (audit row,
+  error log, email to platform admins) once a day. PassBook never deletes such a key: remove it in Google
+  Cloud. One key found before the first rotation is the uploaded one and is adopted.
 
 The Google callback at `POST /wallet/v1/google/{accountId}` verifies Google's signed event; the
 Samsung interaction at `GET` or `POST /wallet/v1/samsung/cards/{cardId}/{refId}` authenticates
