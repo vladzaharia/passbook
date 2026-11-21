@@ -471,6 +471,10 @@ __all__ = [
     "PassImportsCheckParamsPlanMappingValueTransform",
     "PassImportsCheckResult",
     "PassImportsCheckResultColumnsItem",
+    "PassImportsCheckResultMapping",
+    "PassImportsCheckResultMappingFieldsItem",
+    "PassImportsCheckResultMappingFieldsItemValuesItem",
+    "PassImportsCheckResultMappingUnusedItem",
     "PassImportsCheckResultPreviewsItem",
     "PassImportsCheckResultProblemTotals",
     "PassImportsCheckResultProblemsItem",
@@ -479,6 +483,10 @@ __all__ = [
     "PassImportsCommitParams",
     "PassImportsCommitResult",
     "PassImportsCommitResultColumnsItem",
+    "PassImportsCommitResultMapping",
+    "PassImportsCommitResultMappingFieldsItem",
+    "PassImportsCommitResultMappingFieldsItemValuesItem",
+    "PassImportsCommitResultMappingUnusedItem",
     "PassImportsCommitResultPreviewsItem",
     "PassImportsCommitResultProblemTotals",
     "PassImportsCommitResultProblemsItem",
@@ -492,6 +500,10 @@ __all__ = [
     "PassImportsCreateParamsSource2",
     "PassImportsCreateResult",
     "PassImportsCreateResultColumnsItem",
+    "PassImportsCreateResultMapping",
+    "PassImportsCreateResultMappingFieldsItem",
+    "PassImportsCreateResultMappingFieldsItemValuesItem",
+    "PassImportsCreateResultMappingUnusedItem",
     "PassImportsCreateResultPreviewsItem",
     "PassImportsCreateResultProblemTotals",
     "PassImportsCreateResultProblemsItem",
@@ -499,6 +511,10 @@ __all__ = [
     "PassImportsDeleteResult",
     "PassImportsListItem",
     "PassImportsListItemColumnsItem",
+    "PassImportsListItemMapping",
+    "PassImportsListItemMappingFieldsItem",
+    "PassImportsListItemMappingFieldsItemValuesItem",
+    "PassImportsListItemMappingUnusedItem",
     "PassImportsListItemPreviewsItem",
     "PassImportsListItemProblemTotals",
     "PassImportsListItemProblemsItem",
@@ -506,6 +522,10 @@ __all__ = [
     "PassImportsListResult",
     "PassImportsListResultItemsItem",
     "PassImportsListResultItemsItemColumnsItem",
+    "PassImportsListResultItemsItemMapping",
+    "PassImportsListResultItemsItemMappingFieldsItem",
+    "PassImportsListResultItemsItemMappingFieldsItemValuesItem",
+    "PassImportsListResultItemsItemMappingUnusedItem",
     "PassImportsListResultItemsItemPreviewsItem",
     "PassImportsListResultItemsItemProblemTotals",
     "PassImportsListResultItemsItemProblemsItem",
@@ -513,13 +533,19 @@ __all__ = [
     "PassImportsRemoveCreatedParams",
     "PassImportsRetrieveResult",
     "PassImportsRetrieveResultColumnsItem",
+    "PassImportsRetrieveResultMapping",
+    "PassImportsRetrieveResultMappingFieldsItem",
+    "PassImportsRetrieveResultMappingFieldsItemValuesItem",
+    "PassImportsRetrieveResultMappingUnusedItem",
     "PassImportsRetrieveResultPreviewsItem",
     "PassImportsRetrieveResultProblemTotals",
     "PassImportsRetrieveResultProblemsItem",
     "PassImportsRetrieveResultSource",
     "PassImportsRowsListItem",
+    "PassImportsRowsListItemChangesItem",
     "PassImportsRowsListResult",
     "PassImportsRowsListResultItemsItem",
+    "PassImportsRowsListResultItemsItemChangesItem",
     "PassImportsSendEmailsBody",
     "PassImportsSendEmailsParams",
     "PassImportsSendEmailsResult",
@@ -786,18 +812,41 @@ __all__ = [
     "ScanSetupAnswer2ZonesItem",
     "ScanSetupAnswer2ZonesItemParent1",
     "ScanSetupAnswer2ZonesItemParent2",
+    "ScanSetupsCreateBody",
     "ScanSetupsCreateParams",
     "ScanSetupsCreateParamsAccepts1",
     "ScanSetupsCreateParamsAccepts2",
     "ScanSetupsCreateParamsSettings",
     "ScanSetupsCreateParamsSettingsCheckIn",
     "ScanSetupsCreateParamsSettingsTags",
+    "ScanSetupsCreateResult",
+    "ScanSetupsCreateResultAccepts1",
+    "ScanSetupsCreateResultAccepts2",
+    "ScanSetupsCreateResultAccepts3",
+    "ScanSetupsListItem",
+    "ScanSetupsListItemAccepts1",
+    "ScanSetupsListItemAccepts2",
+    "ScanSetupsListItemAccepts3",
+    "ScanSetupsListResult",
+    "ScanSetupsListResultItemsItem",
+    "ScanSetupsListResultItemsItemAccepts1",
+    "ScanSetupsListResultItemsItemAccepts2",
+    "ScanSetupsListResultItemsItemAccepts3",
+    "ScanSetupsRetrieveResult",
+    "ScanSetupsRetrieveResultAccepts1",
+    "ScanSetupsRetrieveResultAccepts2",
+    "ScanSetupsRetrieveResultAccepts3",
+    "ScanSetupsUpdateBody",
     "ScanSetupsUpdateParams",
     "ScanSetupsUpdateParamsAccepts1",
     "ScanSetupsUpdateParamsAccepts2",
     "ScanSetupsUpdateParamsSettings",
     "ScanSetupsUpdateParamsSettingsCheckIn",
     "ScanSetupsUpdateParamsSettingsTags",
+    "ScanSetupsUpdateResult",
+    "ScanSetupsUpdateResultAccepts1",
+    "ScanSetupsUpdateResultAccepts2",
+    "ScanSetupsUpdateResultAccepts3",
     "ScanStaff",
     "ScanStaffCreateParams",
     "ScanStaffUpdateParams",
@@ -910,6 +959,9 @@ __all__ = [
     "SettingsReplyToResendConfirmationParams",
     "SettingsUpdateParams",
     "TemplateDetail",
+    "TemplateDetailRelease",
+    "TemplateDetailReleaseReview1",
+    "TemplateDetailReleaseReview2",
     "TemplateDetailVersionsItem",
     "TemplateDetailVersionsItemAssetsItem",
     "TemplateDetailVersionsItemReport",
@@ -1127,7 +1179,7 @@ class ApiKeyCurrent(_Model):
     orgId: str | None
     name: str
     prefix: str
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdAt: int
     lastUsedAt: int | None
@@ -1142,7 +1194,7 @@ class ApiKeyDetail(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1170,7 +1222,7 @@ class ApiKeyMinted(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1202,7 +1254,7 @@ class ApiKeyRotationKey1(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1227,7 +1279,7 @@ class ApiKeyRotationKey2(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1251,7 +1303,7 @@ class ApiKeyRotationPrevious(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1273,7 +1325,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "scanning:write", "scanning:admin", "api-keys:write"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "scanning:write", "scan-setup:read", "scanning:admin", "api-keys:write"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -1288,7 +1340,7 @@ class ApiKeysListItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -1317,7 +1369,7 @@ class ApiKeysListResultItemsItem(_Model):
     name: str
     prefix: str
     secretPrefix: str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "templates:write", "templates:review", "templates:publish", "messages:read", "scanning:write", "scan-setup:read", "scan-setup:write", "scanning:admin", "nfc:read", "nfc:write", "wallet:read", "wallet:write", "api-keys:write", "org:read", "org:write", "members:read", "members:write", "audit:read", "platform:orgs", "platform:users", "platform:identities", "platform:wallet", "platform:settings", "platform:status", "platform:templates", "platform:audit", "brand:manage"] | str]
     mode: _Literal["live", "test"] | str | None = None
     createdBy: str | None
     createdByName: str | None = None
@@ -4223,11 +4275,41 @@ class PassImportsCheckResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsCheckResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsCheckResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsCheckResultMapping(_Model):
+    fields: _List[PassImportsCheckResultMappingFieldsItem]
+    unused: _List[PassImportsCheckResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsCheckResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsCheckResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsCheckResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsCheckResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsCheckResultPreviewsItem(_Model):
     row: int
@@ -4278,11 +4360,41 @@ class PassImportsCommitResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsCommitResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsCommitResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsCommitResultMapping(_Model):
+    fields: _List[PassImportsCommitResultMappingFieldsItem]
+    unused: _List[PassImportsCommitResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsCommitResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsCommitResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsCommitResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsCommitResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsCommitResultPreviewsItem(_Model):
     row: int
@@ -4359,11 +4471,41 @@ class PassImportsCreateResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsCreateResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsCreateResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsCreateResultMapping(_Model):
+    fields: _List[PassImportsCreateResultMappingFieldsItem]
+    unused: _List[PassImportsCreateResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsCreateResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsCreateResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsCreateResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsCreateResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsCreateResultPreviewsItem(_Model):
     row: int
@@ -4413,11 +4555,41 @@ class PassImportsListItem(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsListItemMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsListItemColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsListItemMapping(_Model):
+    fields: _List[PassImportsListItemMappingFieldsItem]
+    unused: _List[PassImportsListItemMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsListItemMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsListItemMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsListItemMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsListItemMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsListItemPreviewsItem(_Model):
     row: int
@@ -4468,11 +4640,41 @@ class PassImportsListResultItemsItem(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsListResultItemsItemMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsListResultItemsItemColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsListResultItemsItemMapping(_Model):
+    fields: _List[PassImportsListResultItemsItemMappingFieldsItem]
+    unused: _List[PassImportsListResultItemsItemMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsListResultItemsItemMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsListResultItemsItemMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsListResultItemsItemMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsListResultItemsItemMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsListResultItemsItemPreviewsItem(_Model):
     row: int
@@ -4522,11 +4724,41 @@ class PassImportsRetrieveResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
+    mapping: PassImportsRetrieveResultMapping | None = None
+    emailHoldUntil: int | None = None
 
 class PassImportsRetrieveResultColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
+
+class PassImportsRetrieveResultMapping(_Model):
+    fields: _List[PassImportsRetrieveResultMappingFieldsItem]
+    unused: _List[PassImportsRetrieveResultMappingUnusedItem]
+    columns: int
+    used: int
+    missing: _List[str]
+
+class PassImportsRetrieveResultMappingFieldsItem(_Model):
+    role: _Literal["holderEmail", "externalId", "input"] | str
+    target: str
+    label: str
+    required: bool
+    from_: _List[str] = _Field(alias="from")
+    confidence: _Literal["exact", "similar", "values", "join", None] | str
+    matchBy: bool
+    entry: _Dict[str, _Any] | None
+    values: _List[PassImportsRetrieveResultMappingFieldsItemValuesItem]
+    date: _Dict[str, _Any] | None
+
+class PassImportsRetrieveResultMappingFieldsItemValuesItem(_Model):
+    value: str
+    count: int
+    to: str | None
+
+class PassImportsRetrieveResultMappingUnusedItem(_Model):
+    pointer: str
+    label: str
 
 class PassImportsRetrieveResultPreviewsItem(_Model):
     row: int
@@ -4559,6 +4791,14 @@ class PassImportsRowsListItem(_Model):
     code: str | None
     message: str | None
     emailed: bool
+    changes: _List[PassImportsRowsListItemChangesItem] | None = None
+    wouldBe: _Literal["create", "update", None] | str = None
+
+class PassImportsRowsListItemChangesItem(_Model):
+    key: str
+    label: str
+    from_: str | None = _Field(alias="from")
+    to: str | None
 
 class PassImportsRowsListResult(_Model):
     items: _List[PassImportsRowsListResultItemsItem]
@@ -4574,6 +4814,14 @@ class PassImportsRowsListResultItemsItem(_Model):
     code: str | None
     message: str | None
     emailed: bool
+    changes: _List[PassImportsRowsListResultItemsItemChangesItem] | None = None
+    wouldBe: _Literal["create", "update", None] | str = None
+
+class PassImportsRowsListResultItemsItemChangesItem(_Model):
+    key: str
+    label: str
+    from_: str | None = _Field(alias="from")
+    to: str | None
 
 class PassImportsSendEmailsParams(_Model):
     cursor: str | None
@@ -6285,6 +6533,147 @@ class ScanSetupsCreateParamsSettingsTags(_Model):
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
+class ScanSetupsCreateResult(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsCreateResultAccepts1 | ScanSetupsCreateResultAccepts2 | ScanSetupsCreateResultAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+    pairing: _Dict[str, _Any] | None
+
+class ScanSetupsCreateResultAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsCreateResultAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsCreateResultAccepts3(_Model):
+    templateIds: _List[str]
+
+class ScanSetupsListItem(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsListItemAccepts1 | ScanSetupsListItemAccepts2 | ScanSetupsListItemAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsListItemAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsListItemAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsListItemAccepts3(_Model):
+    templateIds: _List[str]
+
+class ScanSetupsListResult(_Model):
+    items: _List[ScanSetupsListResultItemsItem]
+    nextCursor: str | None
+
+class ScanSetupsListResultItemsItem(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsListResultItemsItemAccepts1 | ScanSetupsListResultItemsItemAccepts2 | ScanSetupsListResultItemsItemAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsListResultItemsItemAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsListResultItemsItemAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsListResultItemsItemAccepts3(_Model):
+    templateIds: _List[str]
+
+class ScanSetupsRetrieveResult(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsRetrieveResultAccepts1 | ScanSetupsRetrieveResultAccepts2 | ScanSetupsRetrieveResultAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsRetrieveResultAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsRetrieveResultAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsRetrieveResultAccepts3(_Model):
+    templateIds: _List[str]
+
 class ScanSetupsUpdateParams(_Model):
     name: str | None = None
     deviceRole: _Literal["scan", "customer", "monitor"] | str | None = None
@@ -6333,6 +6722,40 @@ class ScanSetupsUpdateParamsSettingsTags(_Model):
     level: _Literal["off", "basic", "secure"] | str | None = None
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
+
+class ScanSetupsUpdateResult(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsUpdateResultAccepts1 | ScanSetupsUpdateResultAccepts2 | ScanSetupsUpdateResultAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsUpdateResultAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsUpdateResultAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsUpdateResultAccepts3(_Model):
+    templateIds: _List[str]
 
 class ScanStaff(_Model):
     id: str
@@ -7182,6 +7605,24 @@ class TemplateDetail(_Model):
     passesOnOlderVersions: int | None = None
     passesBlocked: int | None = None
     restorable: bool | None = None
+    release: TemplateDetailRelease | None = None
+
+class TemplateDetailRelease(_Model):
+    live: _Dict[str, _Any] | None
+    test: _Dict[str, _Any] | None
+    draft: _Dict[str, _Any] | None
+    review: TemplateDetailReleaseReview1 | TemplateDetailReleaseReview2
+    alone: bool
+    next: _Literal["design", "try", "release", "request_review", "review", "wait", None] | str
+
+class TemplateDetailReleaseReview1(_Model):
+    state: _Literal["none"] | str
+
+class TemplateDetailReleaseReview2(_Model):
+    state: _Literal["open", "approved"] | str
+    version: str
+    by: str | None
+    at: int
 
 class TemplateDetailVersionsItem(_Model):
     version: str
@@ -8438,6 +8879,10 @@ ScanDeviceCapabilities = _Dict[str, _Any] | None
 ScanPrevious = _Dict[str, _Any] | None
 
 ScanSetupAnswer = ScanSetupAnswer1 | ScanSetupAnswer2
+
+ScanSetupsCreateBody = ScanSetupsCreateParams
+
+ScanSetupsUpdateBody = ScanSetupsUpdateParams
 
 ScanTemplateRef = _Dict[str, _Any] | None
 

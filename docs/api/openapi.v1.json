@@ -2276,6 +2276,158 @@
           "restorable": {
             "type": "boolean",
             "default": false
+          },
+          "release": {
+            "type": "object",
+            "properties": {
+              "live": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "version": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "version",
+                  "at",
+                  "by"
+                ]
+              },
+              "test": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "version": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "following",
+                      "ahead"
+                    ]
+                  }
+                },
+                "required": [
+                  "version",
+                  "at",
+                  "state"
+                ]
+              },
+              "draft": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "version": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "version",
+                  "at"
+                ]
+              },
+              "review": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "none"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "state"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "open",
+                          "approved"
+                        ]
+                      },
+                      "version": {
+                        "type": "string"
+                      },
+                      "by": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "version",
+                      "by",
+                      "at"
+                    ]
+                  }
+                ]
+              },
+              "alone": {
+                "type": "boolean"
+              },
+              "next": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "design",
+                  "try",
+                  "release",
+                  "request_review",
+                  "review",
+                  "wait",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "live",
+              "test",
+              "draft",
+              "review",
+              "alone",
+              "next"
+            ]
           }
         },
         "required": [
@@ -4363,6 +4515,8 @@
                 "templates:publish",
                 "messages:read",
                 "scanning:write",
+                "scan-setup:read",
+                "scan-setup:write",
                 "scanning:admin",
                 "nfc:read",
                 "nfc:write",
@@ -4507,6 +4661,8 @@
                         "templates:publish",
                         "messages:read",
                         "scanning:write",
+                        "scan-setup:read",
+                        "scan-setup:write",
                         "scanning:admin",
                         "nfc:read",
                         "nfc:write",
@@ -4736,6 +4892,8 @@
                         "templates:publish",
                         "messages:read",
                         "scanning:write",
+                        "scan-setup:read",
+                        "scan-setup:write",
                         "scanning:admin",
                         "nfc:read",
                         "nfc:write",
@@ -4963,6 +5121,8 @@
                     "templates:publish",
                     "messages:read",
                     "scanning:write",
+                    "scan-setup:read",
+                    "scan-setup:write",
                     "scanning:admin",
                     "nfc:read",
                     "nfc:write",
@@ -5194,6 +5354,8 @@
                 "templates:publish",
                 "messages:read",
                 "scanning:write",
+                "scan-setup:read",
+                "scan-setup:write",
                 "scanning:admin",
                 "nfc:read",
                 "nfc:write",
@@ -5602,6 +5764,8 @@
                 "templates:publish",
                 "messages:read",
                 "scanning:write",
+                "scan-setup:read",
+                "scan-setup:write",
                 "scanning:admin",
                 "nfc:read",
                 "nfc:write",
@@ -21166,6 +21330,7 @@
                 "webhooks:manage",
                 "brand:manage",
                 "scanning:write",
+                "scan-setup:read",
                 "scanning:admin",
                 "api-keys:write"
               ]
@@ -30122,6 +30287,8 @@
                           "templates:publish",
                           "messages:read",
                           "scanning:write",
+                          "scan-setup:read",
+                          "scan-setup:write",
                           "scanning:admin",
                           "nfc:read",
                           "nfc:write",
@@ -42116,6 +42283,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -42249,6 +42417,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -42459,6 +42628,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -42687,6 +42857,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -42805,6 +42976,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -43001,6 +43173,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -43315,6 +43488,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -43477,6 +43651,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -43593,6 +43768,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -43718,6 +43894,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -43836,6 +44013,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -43954,6 +44132,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -44146,6 +44325,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -44289,6 +44469,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -44576,6 +44757,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -44727,6 +44909,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -45254,6 +45437,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -45901,6 +46085,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -46108,6 +46293,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -46386,6 +46572,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -46549,6 +46736,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -46673,6 +46861,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -46951,6 +47140,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -47136,6 +47326,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -47244,6 +47435,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -47352,6 +47544,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -47470,6 +47663,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -47822,6 +48016,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -48119,6 +48314,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -48412,6 +48608,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -48591,6 +48788,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -49071,6 +49269,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -49338,6 +49537,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -49713,6 +49913,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -49976,6 +50177,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
           "TEMPLATE_VERSION_CONFLICT",
@@ -60201,6 +60403,240 @@
                     "expiresAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "mapping": {
+                      "type": "object",
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "holderEmail",
+                                  "externalId",
+                                  "input"
+                                ]
+                              },
+                              "target": {
+                                "type": "string",
+                                "maxLength": 64
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "from": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "maxItems": 4
+                              },
+                              "confidence": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "exact",
+                                  "similar",
+                                  "values",
+                                  "join",
+                                  null
+                                ]
+                              },
+                              "matchBy": {
+                                "type": "boolean"
+                              },
+                              "entry": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "maxLength": 500
+                                  },
+                                  "transform": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "enum",
+                                          "bool-status",
+                                          "date",
+                                          "constant",
+                                          "trim",
+                                          "upper",
+                                          "lower",
+                                          "join"
+                                        ]
+                                      },
+                                      "options": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      }
+                                    },
+                                    "required": [
+                                      "kind"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "from"
+                                ]
+                              },
+                              "values": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "maxLength": 80
+                                    },
+                                    "count": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "to": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "count",
+                                    "to"
+                                  ]
+                                },
+                                "maxItems": 20
+                              },
+                              "date": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "format": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "iso",
+                                      "ymd",
+                                      "mdy",
+                                      "dmy",
+                                      null
+                                    ]
+                                  },
+                                  "choices": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": [
+                                        "iso",
+                                        "ymd",
+                                        "mdy",
+                                        "dmy"
+                                      ]
+                                    },
+                                    "maxItems": 4
+                                  },
+                                  "parsed": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "total": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "format",
+                                  "choices",
+                                  "parsed",
+                                  "total"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "target",
+                              "label",
+                              "required",
+                              "from",
+                              "confidence",
+                              "matchBy",
+                              "entry",
+                              "values",
+                              "date"
+                            ]
+                          },
+                          "maxItems": 200
+                        },
+                        "unused": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "pointer": {
+                                "type": "string",
+                                "maxLength": 500
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "pointer",
+                              "label"
+                            ]
+                          }
+                        },
+                        "columns": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "used": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 64
+                          }
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "unused",
+                        "columns",
+                        "used",
+                        "missing"
+                      ]
+                    },
+                    "emailHoldUntil": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -60873,6 +61309,240 @@
                           "expiresAt": {
                             "type": "integer",
                             "minimum": 0
+                          },
+                          "mapping": {
+                            "type": "object",
+                            "properties": {
+                              "fields": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "role": {
+                                      "type": "string",
+                                      "enum": [
+                                        "holderEmail",
+                                        "externalId",
+                                        "input"
+                                      ]
+                                    },
+                                    "target": {
+                                      "type": "string",
+                                      "maxLength": 64
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "maxLength": 200
+                                    },
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "from": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "maxLength": 500
+                                      },
+                                      "maxItems": 4
+                                    },
+                                    "confidence": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ],
+                                      "enum": [
+                                        "exact",
+                                        "similar",
+                                        "values",
+                                        "join",
+                                        null
+                                      ]
+                                    },
+                                    "matchBy": {
+                                      "type": "boolean"
+                                    },
+                                    "entry": {
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "properties": {
+                                        "from": {
+                                          "type": "string",
+                                          "maxLength": 500
+                                        },
+                                        "transform": {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "type": "string",
+                                              "enum": [
+                                                "enum",
+                                                "bool-status",
+                                                "date",
+                                                "constant",
+                                                "trim",
+                                                "upper",
+                                                "lower",
+                                                "join"
+                                              ]
+                                            },
+                                            "options": {
+                                              "type": "object",
+                                              "additionalProperties": {}
+                                            }
+                                          },
+                                          "required": [
+                                            "kind"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "from"
+                                      ]
+                                    },
+                                    "values": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "string",
+                                            "maxLength": 80
+                                          },
+                                          "count": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                          },
+                                          "to": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "count",
+                                          "to"
+                                        ]
+                                      },
+                                      "maxItems": 20
+                                    },
+                                    "date": {
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "properties": {
+                                        "format": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ],
+                                          "enum": [
+                                            "iso",
+                                            "ymd",
+                                            "mdy",
+                                            "dmy",
+                                            null
+                                          ]
+                                        },
+                                        "choices": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string",
+                                            "enum": [
+                                              "iso",
+                                              "ymd",
+                                              "mdy",
+                                              "dmy"
+                                            ]
+                                          },
+                                          "maxItems": 4
+                                        },
+                                        "parsed": {
+                                          "type": "integer",
+                                          "minimum": 0
+                                        },
+                                        "total": {
+                                          "type": "integer",
+                                          "minimum": 0
+                                        }
+                                      },
+                                      "required": [
+                                        "format",
+                                        "choices",
+                                        "parsed",
+                                        "total"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "role",
+                                    "target",
+                                    "label",
+                                    "required",
+                                    "from",
+                                    "confidence",
+                                    "matchBy",
+                                    "entry",
+                                    "values",
+                                    "date"
+                                  ]
+                                },
+                                "maxItems": 200
+                              },
+                              "unused": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointer": {
+                                      "type": "string",
+                                      "maxLength": 500
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "maxLength": 200
+                                    }
+                                  },
+                                  "required": [
+                                    "pointer",
+                                    "label"
+                                  ]
+                                }
+                              },
+                              "columns": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "used": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "missing": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 64
+                                }
+                              }
+                            },
+                            "required": [
+                              "fields",
+                              "unused",
+                              "columns",
+                              "used",
+                              "missing"
+                            ]
+                          },
+                          "emailHoldUntil": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
                           }
                         },
                         "required": [
@@ -61544,6 +62214,240 @@
                     },
                     "expiresAt": {
                       "type": "integer",
+                      "minimum": 0
+                    },
+                    "mapping": {
+                      "type": "object",
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "holderEmail",
+                                  "externalId",
+                                  "input"
+                                ]
+                              },
+                              "target": {
+                                "type": "string",
+                                "maxLength": 64
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "from": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "maxItems": 4
+                              },
+                              "confidence": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "exact",
+                                  "similar",
+                                  "values",
+                                  "join",
+                                  null
+                                ]
+                              },
+                              "matchBy": {
+                                "type": "boolean"
+                              },
+                              "entry": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "maxLength": 500
+                                  },
+                                  "transform": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "enum",
+                                          "bool-status",
+                                          "date",
+                                          "constant",
+                                          "trim",
+                                          "upper",
+                                          "lower",
+                                          "join"
+                                        ]
+                                      },
+                                      "options": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      }
+                                    },
+                                    "required": [
+                                      "kind"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "from"
+                                ]
+                              },
+                              "values": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "maxLength": 80
+                                    },
+                                    "count": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "to": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "count",
+                                    "to"
+                                  ]
+                                },
+                                "maxItems": 20
+                              },
+                              "date": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "format": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "iso",
+                                      "ymd",
+                                      "mdy",
+                                      "dmy",
+                                      null
+                                    ]
+                                  },
+                                  "choices": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": [
+                                        "iso",
+                                        "ymd",
+                                        "mdy",
+                                        "dmy"
+                                      ]
+                                    },
+                                    "maxItems": 4
+                                  },
+                                  "parsed": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "total": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "format",
+                                  "choices",
+                                  "parsed",
+                                  "total"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "target",
+                              "label",
+                              "required",
+                              "from",
+                              "confidence",
+                              "matchBy",
+                              "entry",
+                              "values",
+                              "date"
+                            ]
+                          },
+                          "maxItems": 200
+                        },
+                        "unused": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "pointer": {
+                                "type": "string",
+                                "maxLength": 500
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "pointer",
+                              "label"
+                            ]
+                          }
+                        },
+                        "columns": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "used": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 64
+                          }
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "unused",
+                        "columns",
+                        "used",
+                        "missing"
+                      ]
+                    },
+                    "emailHoldUntil": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
                       "minimum": 0
                     }
                   },
@@ -62381,6 +63285,240 @@
                     "expiresAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "mapping": {
+                      "type": "object",
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "holderEmail",
+                                  "externalId",
+                                  "input"
+                                ]
+                              },
+                              "target": {
+                                "type": "string",
+                                "maxLength": 64
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "from": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "maxItems": 4
+                              },
+                              "confidence": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "exact",
+                                  "similar",
+                                  "values",
+                                  "join",
+                                  null
+                                ]
+                              },
+                              "matchBy": {
+                                "type": "boolean"
+                              },
+                              "entry": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "maxLength": 500
+                                  },
+                                  "transform": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "enum",
+                                          "bool-status",
+                                          "date",
+                                          "constant",
+                                          "trim",
+                                          "upper",
+                                          "lower",
+                                          "join"
+                                        ]
+                                      },
+                                      "options": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      }
+                                    },
+                                    "required": [
+                                      "kind"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "from"
+                                ]
+                              },
+                              "values": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "maxLength": 80
+                                    },
+                                    "count": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "to": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "count",
+                                    "to"
+                                  ]
+                                },
+                                "maxItems": 20
+                              },
+                              "date": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "format": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "iso",
+                                      "ymd",
+                                      "mdy",
+                                      "dmy",
+                                      null
+                                    ]
+                                  },
+                                  "choices": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": [
+                                        "iso",
+                                        "ymd",
+                                        "mdy",
+                                        "dmy"
+                                      ]
+                                    },
+                                    "maxItems": 4
+                                  },
+                                  "parsed": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "total": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "format",
+                                  "choices",
+                                  "parsed",
+                                  "total"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "target",
+                              "label",
+                              "required",
+                              "from",
+                              "confidence",
+                              "matchBy",
+                              "entry",
+                              "values",
+                              "date"
+                            ]
+                          },
+                          "maxItems": 200
+                        },
+                        "unused": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "pointer": {
+                                "type": "string",
+                                "maxLength": 500
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "pointer",
+                              "label"
+                            ]
+                          }
+                        },
+                        "columns": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "used": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 64
+                          }
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "unused",
+                        "columns",
+                        "used",
+                        "missing"
+                      ]
+                    },
+                    "emailHoldUntil": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -63051,6 +64189,240 @@
                     "expiresAt": {
                       "type": "integer",
                       "minimum": 0
+                    },
+                    "mapping": {
+                      "type": "object",
+                      "properties": {
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "holderEmail",
+                                  "externalId",
+                                  "input"
+                                ]
+                              },
+                              "target": {
+                                "type": "string",
+                                "maxLength": 64
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "from": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "maxItems": 4
+                              },
+                              "confidence": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "exact",
+                                  "similar",
+                                  "values",
+                                  "join",
+                                  null
+                                ]
+                              },
+                              "matchBy": {
+                                "type": "boolean"
+                              },
+                              "entry": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "maxLength": 500
+                                  },
+                                  "transform": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "enum",
+                                          "bool-status",
+                                          "date",
+                                          "constant",
+                                          "trim",
+                                          "upper",
+                                          "lower",
+                                          "join"
+                                        ]
+                                      },
+                                      "options": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      }
+                                    },
+                                    "required": [
+                                      "kind"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "from"
+                                ]
+                              },
+                              "values": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "maxLength": 80
+                                    },
+                                    "count": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "to": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "count",
+                                    "to"
+                                  ]
+                                },
+                                "maxItems": 20
+                              },
+                              "date": {
+                                "type": [
+                                  "object",
+                                  "null"
+                                ],
+                                "properties": {
+                                  "format": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "enum": [
+                                      "iso",
+                                      "ymd",
+                                      "mdy",
+                                      "dmy",
+                                      null
+                                    ]
+                                  },
+                                  "choices": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": [
+                                        "iso",
+                                        "ymd",
+                                        "mdy",
+                                        "dmy"
+                                      ]
+                                    },
+                                    "maxItems": 4
+                                  },
+                                  "parsed": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "total": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "format",
+                                  "choices",
+                                  "parsed",
+                                  "total"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "target",
+                              "label",
+                              "required",
+                              "from",
+                              "confidence",
+                              "matchBy",
+                              "entry",
+                              "values",
+                              "date"
+                            ]
+                          },
+                          "maxItems": 200
+                        },
+                        "unused": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "pointer": {
+                                "type": "string",
+                                "maxLength": 500
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "pointer",
+                              "label"
+                            ]
+                          }
+                        },
+                        "columns": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "used": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 64
+                          }
+                        }
+                      },
+                      "required": [
+                        "fields",
+                        "unused",
+                        "columns",
+                        "used",
+                        "missing"
+                      ]
+                    },
+                    "emailHoldUntil": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -63326,6 +64698,52 @@
                           },
                           "emailed": {
                             "type": "boolean"
+                          },
+                          "changes": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string",
+                                  "maxLength": 64
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "maxLength": 200
+                                },
+                                "from": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "to": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "label",
+                                "from",
+                                "to"
+                              ]
+                            },
+                            "maxItems": 100
+                          },
+                          "wouldBe": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "create",
+                              "update",
+                              null
+                            ]
                           }
                         },
                         "required": [
@@ -90735,6 +92153,8 @@
                                 "templates:publish",
                                 "messages:read",
                                 "scanning:write",
+                                "scan-setup:read",
+                                "scan-setup:write",
                                 "scanning:admin",
                                 "nfc:read",
                                 "nfc:write",
@@ -94755,6 +96175,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -94996,6 +96417,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -95210,6 +96632,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -95456,6 +96879,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -95739,6 +97163,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -95982,6 +97407,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -96201,6 +97627,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -96638,6 +98065,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -97062,6 +98490,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -97501,6 +98930,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -98030,6 +99460,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -98470,6 +99901,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -98760,6 +100192,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -99071,6 +100504,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -99323,6 +100757,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -99665,6 +101100,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -99948,6 +101384,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -100223,6 +101660,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -100603,6 +102041,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -101151,6 +102590,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -101400,6 +102840,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -101696,6 +103137,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -101966,6 +103408,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -102299,6 +103742,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -102544,6 +103988,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -102801,6 +104246,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -103115,6 +104561,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -103340,6 +104787,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -103635,6 +105083,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -104028,6 +105477,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -104307,6 +105757,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -104599,6 +106050,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -104935,6 +106387,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -105188,6 +106641,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -105422,6 +106876,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -105695,6 +107150,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -105958,6 +107414,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -106194,6 +107651,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -106430,6 +107888,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -106664,6 +108123,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -106925,6 +108385,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -107160,6 +108621,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -107401,6 +108863,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -107696,6 +109159,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -107945,6 +109409,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -108249,6 +109714,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -108478,6 +109944,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -108712,6 +110179,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -108954,6 +110422,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -109216,6 +110685,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -109481,6 +110951,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -109728,6 +111199,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -109986,6 +111458,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -110220,6 +111693,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -110464,6 +111938,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -110714,6 +112189,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -111130,6 +112606,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "scan-setup:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -111289,6 +112770,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -111654,284 +113136,10 @@
         },
         "security": [
           {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ACTOR_CHANGED",
-          "ADMITS_TOO_MANY",
-          "API_KEY_NO_APPROVAL",
-          "API_KEY_ORG_REQUIRED",
-          "API_KEY_ROUTE",
-          "ASSET_NOT_FOUND",
-          "BLUEPRINT_NOT_SCANNABLE",
-          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
-          "CSRF_ORIGIN",
-          "DEVICE_REQUIRED",
-          "ENROLLMENT_ENDED",
-          "ENROLLMENT_NOT_FOUND",
-          "EVENT_ARCHIVED",
-          "EVENT_IN_USE",
-          "EVENT_MATCH_INPUT",
-          "EVENT_NEEDS_CAPACITY",
-          "EVENT_NOT_FOUND",
-          "EVENT_TEMPLATE_NO_CHECK_IN",
-          "EVENT_TEMPLATE_RELEASE_REQUIRED",
-          "FORBIDDEN",
-          "GROUP_ENTRY_ONLY",
-          "IDEMPOTENCY_KEY_REUSED",
-          "IDP_SIGN_IN_REQUIRED",
-          "IMAGE_NOT_FOUND",
-          "INVALID_API_KEY",
-          "INVALID_CURSOR",
-          "MISSING_SCOPE",
-          "NOTE_CAP",
-          "NOTE_DEVICE_CAP",
-          "NOTE_HELD",
-          "NOTE_NOT_FOUND",
-          "NOTE_ROLE",
-          "NOT_INSIDE",
-          "OFFLINE_OFF",
-          "OFFLINE_TOO_BIG",
-          "ORG_INACTIVE",
-          "ORG_NOT_FOUND",
-          "ORG_REQUIRED",
-          "PAIRING_INVALID",
-          "PASS_CONFLICT",
-          "PASS_NOT_FOUND",
-          "PHOTO_PASS_INACTIVE",
-          "PHOTO_ROLE",
-          "PIN_GENERATION_FAILED",
-          "PIN_INVALID",
-          "PIN_MANAGER_REQUIRED",
-          "RATE_LIMITED",
-          "ROLE_NOT_ALLOWED",
-          "ROLL_CALL_ENDED",
-          "ROLL_CALL_NOT_FOUND",
-          "ROLL_CALL_NO_PLACES",
-          "ROLL_CALL_NO_SESSION",
-          "ROLL_CALL_TOO_LARGE",
-          "SAMPLE_TEST_ONLY",
-          "SCANNER_ADMIN_ROLE",
-          "SCANNER_ADMIN_SETUP_EXISTS",
-          "SCANNER_ADMIN_USER",
-          "SCANNER_CANNOT_SCAN",
-          "SCANNER_CHANGED",
-          "SCANNER_EXPIRED",
-          "SCANNER_NAME_TAKEN",
-          "SCANNER_NOT_FOUND",
-          "SCANNER_NOT_PAIRABLE",
-          "SCANNER_NOT_TERMINAL",
-          "SCANNER_REPAIR",
-          "SCANNER_REVOKED",
-          "SCANNER_ROLE_INVALID",
-          "SCANNER_SETUP_EXISTS",
-          "SCANNER_UNASSIGNED",
-          "SCANNER_UNAUTHENTICATED",
-          "SCANNER_WATCH_INVALID",
-          "SCANNER_WATCH_MODE",
-          "SCANNER_WATCH_NOT_FOUND",
-          "SCANNING_DEVICE_CHANGED",
-          "SCANNING_DEVICE_NOT_FOUND",
-          "SCANNING_HOLD_RANGE",
-          "SCANNING_HOURS_NONE",
-          "SCANNING_SESSION_CHANGED",
-          "SCANNING_SESSION_CLOSED",
-          "SCANNING_SESSION_CONFIG_REQUIRED",
-          "SCANNING_SESSION_COUNTS_UNAVAILABLE",
-          "SCANNING_SESSION_MODE",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCANNING_SESSION_OPEN",
-          "SCANNING_SESSION_PAUSED",
-          "SCANNING_SESSION_REMOVE_DEVICES",
-          "SCANNING_SESSION_SCOPE_INVALID",
-          "SCANNING_SESSION_SETTINGS_INVALID",
-          "SCAN_ACCESS_CHANGED",
-          "SCAN_ADMIN_SETUP_REQUIRED",
-          "SCAN_BODY_INVALID",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_COUNTS_UNAVAILABLE",
-          "SCAN_CREDENTIAL_CHANGED",
-          "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
-          "SCAN_EVENT_CHANGED",
-          "SCAN_EXPORT_RANGE",
-          "SCAN_EXPORT_TOO_LARGE",
-          "SCAN_HISTORY_UNAVAILABLE",
-          "SCAN_IN_PROGRESS",
-          "SCAN_KEY_REUSED",
-          "SCAN_LIVE_ORIGIN",
-          "SCAN_LOOKUP_DISABLED",
-          "SCAN_MARK_OUT_INVALID",
-          "SCAN_MODE_MISMATCH",
-          "SCAN_NOT_FOUND",
-          "SCAN_NO_SESSION",
-          "SCAN_OVERRIDE_FORBIDDEN",
-          "SCAN_OVERRIDE_INVALID",
-          "SCAN_OVERRIDE_NOTE_CLOSED",
-          "SCAN_OVERRIDE_TAKEN",
-          "SCAN_PASS_CHANGED",
-          "SCAN_SCOPE_NOT_ALLOWED",
-          "SCAN_SCOPE_REQUIRED",
-          "SCAN_SEARCH_FORBIDDEN",
-          "SCAN_SETTINGS_INVALID",
-          "SCAN_SETUP_ADMIN_SCOPE",
-          "SCAN_SETUP_CHANGED",
-          "SCAN_SETUP_CHECKS_FAILED",
-          "SCAN_SETUP_CONFLICT",
-          "SCAN_SETUP_INVALID",
-          "SCAN_SETUP_KEY_REQUIRED",
-          "SCAN_SETUP_KEY_REUSED",
-          "SCAN_SETUP_LIVE_ONLY",
-          "SCAN_SETUP_NAME_TAKEN",
-          "SCAN_STAFF_CHANGED",
-          "SCAN_STAFF_CURSOR",
-          "SCAN_STAFF_NOT_FOUND",
-          "SCAN_SUMMARY_SESSION_FORBIDDEN",
-          "SCAN_SURFACE_UNSUPPORTED",
-          "SCAN_TOO_MANY_MISSES",
-          "SCAN_TOO_MANY_OVERRIDES",
-          "SCAN_UNDO_EXPIRED",
-          "SCAN_UNDO_FORBIDDEN",
-          "SCREEN_ONLY",
-          "SCREEN_REQUIRED",
-          "SESSION_OPEN_FORBIDDEN",
-          "STAFF_NAME_REQUIRED",
-          "STAFF_NAME_TAKEN",
-          "STAFF_REQUIRED",
-          "STAFF_SIGN_IN_DISABLED",
-          "STAFF_SIGN_IN_UNAVAILABLE",
-          "TAG_APPROVAL_REQUIRED",
-          "TAG_ASSIGN_FORBIDDEN",
-          "TAG_CARD_AMBIGUOUS",
-          "TAG_CHECK_FAILED",
-          "TAG_HOLDER_CHANGED",
-          "TAG_LIMIT",
-          "TAG_NOT_FOUND",
-          "TAG_NO_ACCOUNT",
-          "TAG_PASS_NOT_ACCEPTED",
-          "TAG_POOL_UNSUPPORTED",
-          "TAG_REQUEST_EXPIRED",
-          "TAG_SCANNER_ONLY",
-          "TAG_SUN_REPLAY",
-          "TAG_UID_RANDOM",
-          "TAG_UNDO_EXPIRED",
-          "TAG_UNDO_FORBIDDEN",
-          "TAG_UNREADABLE",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_NOT_FOUND",
-          "TEMPLATE_NOT_RELEASED",
-          "TEMPLATE_RELEASE_CONFLICT",
-          "TERMINAL_NOT_FOUND",
-          "TERMINAL_ONLY",
-          "UNAUTHENTICATED",
-          "UNDO_SUPERSEDED",
-          "UNDO_UNCONFIRMED",
-          "UNLOCK_REQUIRED",
-          "USER_NOT_FOUND",
-          "VALIDATION",
-          "ZONE_ARCHIVED",
-          "ZONE_CYCLE",
-          "ZONE_DEPTH",
-          "ZONE_EVENT_SESSION",
-          "ZONE_KEY_TAKEN",
-          "ZONE_NAME_TAKEN",
-          "ZONE_NOT_FOUND"
-        ]
-      }
-    },
-    "/api/v1/scan-setups/admin-session": {
-      "post": {
-        "summary": "Create or reuse this admin’s scanner setup",
-        "tags": [
-          "scanners"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "orgId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64
-                  },
-                  "timeZone": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64
-                  }
-                },
-                "required": [
-                  "orgId",
-                  "timeZone"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "setupId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "orgId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "live",
-                        "test"
-                      ]
-                    },
-                    "timeZone": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    }
-                  },
-                  "required": [
-                    "setupId",
-                    "orgId",
-                    "mode",
-                    "timeZone"
-                  ]
-                }
-              }
-            }
+            "apiKey": [
+              "scan-setup:write"
+            ]
           },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.postScanSetupsAdminSession",
-        "x-sdk": {
-          "resource": "scanSetups",
-          "method": "createAdminSession",
-          "sdk": false,
-          "reason": "Binds the calling browser or the signed-in admin as a scanner device."
-        },
-        "security": [
           {
             "session": []
           }
@@ -112092,6 +113300,288 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
+          "TAG_SUN_REPLAY",
+          "TAG_UID_RANDOM",
+          "TAG_UNDO_EXPIRED",
+          "TAG_UNDO_FORBIDDEN",
+          "TAG_UNREADABLE",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_RELEASED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TERMINAL_NOT_FOUND",
+          "TERMINAL_ONLY",
+          "UNAUTHENTICATED",
+          "UNDO_SUPERSEDED",
+          "UNDO_UNCONFIRMED",
+          "UNLOCK_REQUIRED",
+          "USER_NOT_FOUND",
+          "VALIDATION",
+          "ZONE_ARCHIVED",
+          "ZONE_CYCLE",
+          "ZONE_DEPTH",
+          "ZONE_EVENT_SESSION",
+          "ZONE_KEY_TAKEN",
+          "ZONE_NAME_TAKEN",
+          "ZONE_NOT_FOUND"
+        ]
+      }
+    },
+    "/api/v1/scan-setups/admin-session": {
+      "post": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-human-only": true,
+        "summary": "Create or reuse this admin’s scanner setup",
+        "tags": [
+          "scanners"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orgId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "orgId",
+                  "timeZone"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "setupId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "orgId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "live",
+                        "test"
+                      ]
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "setupId",
+                    "orgId",
+                    "mode",
+                    "timeZone"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScanSetupsAdminSession",
+        "x-sdk": {
+          "resource": "scanSetups",
+          "method": "createAdminSession",
+          "sdk": false,
+          "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ACTOR_CHANGED",
+          "ADMITS_TOO_MANY",
+          "API_KEY_NO_APPROVAL",
+          "API_KEY_ORG_REQUIRED",
+          "API_KEY_ROUTE",
+          "ASSET_NOT_FOUND",
+          "BLUEPRINT_NOT_SCANNABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "CSRF_ORIGIN",
+          "DEVICE_REQUIRED",
+          "ENROLLMENT_ENDED",
+          "ENROLLMENT_NOT_FOUND",
+          "EVENT_ARCHIVED",
+          "EVENT_IN_USE",
+          "EVENT_MATCH_INPUT",
+          "EVENT_NEEDS_CAPACITY",
+          "EVENT_NOT_FOUND",
+          "EVENT_TEMPLATE_NO_CHECK_IN",
+          "EVENT_TEMPLATE_RELEASE_REQUIRED",
+          "FORBIDDEN",
+          "GROUP_ENTRY_ONLY",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMAGE_NOT_FOUND",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOTE_CAP",
+          "NOTE_DEVICE_CAP",
+          "NOTE_HELD",
+          "NOTE_NOT_FOUND",
+          "NOTE_ROLE",
+          "NOT_INSIDE",
+          "OFFLINE_OFF",
+          "OFFLINE_TOO_BIG",
+          "ORG_INACTIVE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PAIRING_INVALID",
+          "PASS_CONFLICT",
+          "PASS_NOT_FOUND",
+          "PHOTO_PASS_INACTIVE",
+          "PHOTO_ROLE",
+          "PIN_GENERATION_FAILED",
+          "PIN_INVALID",
+          "PIN_MANAGER_REQUIRED",
+          "RATE_LIMITED",
+          "ROLE_NOT_ALLOWED",
+          "ROLL_CALL_ENDED",
+          "ROLL_CALL_NOT_FOUND",
+          "ROLL_CALL_NO_PLACES",
+          "ROLL_CALL_NO_SESSION",
+          "ROLL_CALL_TOO_LARGE",
+          "SAMPLE_TEST_ONLY",
+          "SCANNER_ADMIN_ROLE",
+          "SCANNER_ADMIN_SETUP_EXISTS",
+          "SCANNER_ADMIN_USER",
+          "SCANNER_CANNOT_SCAN",
+          "SCANNER_CHANGED",
+          "SCANNER_EXPIRED",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_PAIRABLE",
+          "SCANNER_NOT_TERMINAL",
+          "SCANNER_REPAIR",
+          "SCANNER_REVOKED",
+          "SCANNER_ROLE_INVALID",
+          "SCANNER_SETUP_EXISTS",
+          "SCANNER_UNASSIGNED",
+          "SCANNER_UNAUTHENTICATED",
+          "SCANNER_WATCH_INVALID",
+          "SCANNER_WATCH_MODE",
+          "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_DEVICE_CHANGED",
+          "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_HOLD_RANGE",
+          "SCANNING_HOURS_NONE",
+          "SCANNING_SESSION_CHANGED",
+          "SCANNING_SESSION_CLOSED",
+          "SCANNING_SESSION_CONFIG_REQUIRED",
+          "SCANNING_SESSION_COUNTS_UNAVAILABLE",
+          "SCANNING_SESSION_MODE",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCANNING_SESSION_OPEN",
+          "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_REMOVE_DEVICES",
+          "SCANNING_SESSION_SCOPE_INVALID",
+          "SCANNING_SESSION_SETTINGS_INVALID",
+          "SCAN_ACCESS_CHANGED",
+          "SCAN_ADMIN_SETUP_REQUIRED",
+          "SCAN_BODY_INVALID",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_COUNTS_UNAVAILABLE",
+          "SCAN_CREDENTIAL_CHANGED",
+          "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
+          "SCAN_EVENT_CHANGED",
+          "SCAN_EXPORT_RANGE",
+          "SCAN_EXPORT_TOO_LARGE",
+          "SCAN_HISTORY_UNAVAILABLE",
+          "SCAN_IN_PROGRESS",
+          "SCAN_KEY_REUSED",
+          "SCAN_LIVE_ORIGIN",
+          "SCAN_LOOKUP_DISABLED",
+          "SCAN_MARK_OUT_INVALID",
+          "SCAN_MODE_MISMATCH",
+          "SCAN_NOT_FOUND",
+          "SCAN_NO_SESSION",
+          "SCAN_OVERRIDE_FORBIDDEN",
+          "SCAN_OVERRIDE_INVALID",
+          "SCAN_OVERRIDE_NOTE_CLOSED",
+          "SCAN_OVERRIDE_TAKEN",
+          "SCAN_PASS_CHANGED",
+          "SCAN_SCOPE_NOT_ALLOWED",
+          "SCAN_SCOPE_REQUIRED",
+          "SCAN_SEARCH_FORBIDDEN",
+          "SCAN_SETTINGS_INVALID",
+          "SCAN_SETUP_ADMIN_SCOPE",
+          "SCAN_SETUP_CHANGED",
+          "SCAN_SETUP_CHECKS_FAILED",
+          "SCAN_SETUP_CONFLICT",
+          "SCAN_SETUP_INVALID",
+          "SCAN_SETUP_KEY_REQUIRED",
+          "SCAN_SETUP_KEY_REUSED",
+          "SCAN_SETUP_LIVE_ONLY",
+          "SCAN_SETUP_NAME_TAKEN",
+          "SCAN_STAFF_CHANGED",
+          "SCAN_STAFF_CURSOR",
+          "SCAN_STAFF_NOT_FOUND",
+          "SCAN_SUMMARY_SESSION_FORBIDDEN",
+          "SCAN_SURFACE_UNSUPPORTED",
+          "SCAN_TOO_MANY_MISSES",
+          "SCAN_TOO_MANY_OVERRIDES",
+          "SCAN_UNDO_EXPIRED",
+          "SCAN_UNDO_FORBIDDEN",
+          "SCREEN_ONLY",
+          "SCREEN_REQUIRED",
+          "SESSION_OPEN_FORBIDDEN",
+          "STAFF_NAME_REQUIRED",
+          "STAFF_NAME_TAKEN",
+          "STAFF_REQUIRED",
+          "STAFF_SIGN_IN_DISABLED",
+          "STAFF_SIGN_IN_UNAVAILABLE",
+          "TAG_APPROVAL_REQUIRED",
+          "TAG_ASSIGN_FORBIDDEN",
+          "TAG_CARD_AMBIGUOUS",
+          "TAG_CHECK_FAILED",
+          "TAG_HOLDER_CHANGED",
+          "TAG_LIMIT",
+          "TAG_NOT_FOUND",
+          "TAG_NO_ACCOUNT",
+          "TAG_PASS_NOT_ACCEPTED",
+          "TAG_POOL_UNSUPPORTED",
+          "TAG_REQUEST_EXPIRED",
+          "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -112437,6 +113927,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "scan-setup:read"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -112597,6 +114092,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -112950,6 +114446,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "scan-setup:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -113110,6 +114611,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -113155,7 +114657,7 @@
           }
         ],
         "x-feature": "scanning.devices",
-        "summary": "Set up scanning in one call: places, events, staff, sessions and devices",
+        "summary": "Set up scanning in one call (Idempotency-Key supported)",
         "tags": [
           "scanners"
         ],
@@ -113209,8 +114711,7 @@
                     "place": "gym",
                     "admits": {
                       "templateIds": [
-                        "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "0193a1b2-7c00-7000-8000-0000000000b2"
+                        "0193a1b2-7c00-7000-8000-0000000000b1"
                       ]
                     },
                     "hours": {
@@ -113250,8 +114751,7 @@
                         "place": "gym",
                         "admits": {
                           "templateIds": [
-                            "0193a1b2-7c00-7000-8000-0000000000b1",
-                            "0193a1b2-7c00-7000-8000-0000000000b2"
+                            "0193a1b2-7c00-7000-8000-0000000000b1"
                           ]
                         },
                         "hours": {
@@ -113428,6 +114928,7 @@
           "method": "setup"
         },
         "description": "Makes the zones, events, staff, sessions and devices for a set of doors in one batch. Send an `Idempotency-Key`: the same key and body replays the answer with `replayed: true` and no PINs or pairing codes (codes that ran out are reissued, `pairingReissued: true`); the same key with another body is 409 `SCAN_SETUP_KEY_REUSED`. PINs and pairing codes appear once. `?dryRun=true` returns the plan and its checks with refs in place of ids and writes nothing. Any `error` check is 422 `SCAN_SETUP_CHECKS_FAILED`. `dryRun` needs no key and runs the same rules. A `scanning:write` key makes places (live) and devices with no pairing code; staff and pairing codes need `scanning:admin`.",
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -113451,6 +114952,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -113582,6 +115084,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -113854,6 +115357,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -114083,6 +115587,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -114362,6 +115867,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -114596,6 +116102,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -114838,6 +116345,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -115072,6 +116580,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -115316,6 +116825,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -115560,6 +117070,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -115814,6 +117325,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -117618,6 +119130,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -117855,6 +119368,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -118275,6 +119789,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -118706,6 +120221,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -118943,6 +120459,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -119238,6 +120755,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -119467,6 +120985,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -119701,6 +121220,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -119943,6 +121463,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -120177,6 +121698,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -120421,6 +121943,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -120706,6 +122229,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -120948,6 +122472,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -121203,6 +122728,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -121457,6 +122983,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -121888,6 +123415,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -122125,6 +123653,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -122580,6 +124109,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -122980,6 +124510,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -123395,6 +124926,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -123800,6 +125332,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -124205,6 +125738,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -124456,6 +125990,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -124929,6 +126464,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -125311,6 +126847,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -125545,6 +127082,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -125789,6 +127327,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -126255,6 +127794,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -126708,6 +128248,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -127174,6 +128715,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -127685,6 +129227,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -128151,6 +129694,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",
@@ -128439,6 +129983,7 @@
           "TAG_POOL_UNSUPPORTED",
           "TAG_REQUEST_EXPIRED",
           "TAG_SCANNER_ONLY",
+          "TAG_SUN_RATE_LIMITED",
           "TAG_SUN_REPLAY",
           "TAG_UID_RANDOM",
           "TAG_UNDO_EXPIRED",

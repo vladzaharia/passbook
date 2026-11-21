@@ -8,7 +8,7 @@ export class ScanningSessionsResource {
     this.core = core;
   }
 
-  /** Set up scanning in one call: places, events, staff, sessions and devices `POST /api/v1/scanning-sessions/setup` */
+  /** Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup` */
   setup(body: ScanningSessionsSetupBody, options?: RequestOptions<ScanningSessionsSetupQuery>): Promise<ScanningSessionsSetupResult> {
     return this.core.request({ method: 'POST', path: '/api/v1/scanning-sessions/setup', body, idempotent: true }, options);
   }

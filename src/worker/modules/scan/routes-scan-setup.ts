@@ -21,7 +21,7 @@ export function registerScanSetup(router: Router): void {
     {
       method: 'post',
       path: '/setup',
-      summary: 'Set up scanning in one call: places, events, staff, sessions and devices',
+      summary: 'Set up scanning in one call (Idempotency-Key supported)',
       auth: {
         scope: ['scanning:admin', 'scanning:write'],
         capability: 'scanning:manage',

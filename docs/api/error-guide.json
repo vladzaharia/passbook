@@ -2135,6 +2135,12 @@
     "fix": "Use a Secure (SUN) tag, or lower the session's tag level.",
     "retryable": false
   },
+  "TAG_SUN_RATE_LIMITED": {
+    "title": "Tag reads limited",
+    "when": "This device failed too many tag signature checks in the window.",
+    "fix": "Wait for Retry-After seconds, then scan again. Check the tag is one of the org’s own.",
+    "retryable": true
+  },
   "TAG_SUN_REPLAY": {
     "title": "Tag read replayed",
     "when": "The tag's one-time read counter was already used, so the read looks copied.",

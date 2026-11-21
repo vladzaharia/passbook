@@ -870,7 +870,7 @@ describe('read', () => {
     const back = passJson.coupon.backFields;
     // The message field stays so the first message changes a field instead of adding one.
     expect(back.filter((f) => f.value === '').map((f) => f.key)).toEqual(['message']);
-    expect(back.find((f) => f.key === 'pass-service')?.value).toBe(env.PUBLIC_BASE_URL);
+    expect(back.find((f) => f.key === 'pass-service')?.value).toBeUndefined();
   });
 });
 

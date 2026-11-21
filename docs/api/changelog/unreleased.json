@@ -88,6 +88,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"scan-setup:read\" added",
+    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
+  },
+  {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"scan-setup:write\" added",
+    "note": "scan-setup:write is reserved: setup writes need a person, so no key route accepts it yet."
+  },
+  {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scanning:admin\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysMe",
@@ -312,6 +328,22 @@
     "note": "Lists the org's shared Google issuers."
   },
   {
+    "key": "GET /api/v1/pass-imports/{id}/rows 200.items[].changes: field added",
+    "class": "additive",
+    "operationId": "pass-imports.getPassImportsByIdRows",
+    "op": "GET /api/v1/pass-imports/{id}/rows",
+    "change": "200.items[].changes: field added",
+    "note": "Each import row shows the fields it changes and what the pass would look like (changes, wouldBe)."
+  },
+  {
+    "key": "GET /api/v1/pass-imports/{id}/rows 200.items[].wouldBe: field added",
+    "class": "additive",
+    "operationId": "pass-imports.getPassImportsByIdRows",
+    "op": "GET /api/v1/pass-imports/{id}/rows",
+    "change": "200.items[].wouldBe: field added",
+    "note": "Each import row shows the fields it changes and what the pass would look like (changes, wouldBe)."
+  },
+  {
     "key": "GET /api/v1/platform/apple-calls new operation",
     "class": "additive",
     "operationId": "wallet-identities.getPlatformAppleCalls",
@@ -358,6 +390,14 @@
     "op": "GET /api/v1/session",
     "change": "200|0.consoleUntil: field added",
     "note": "An email-link session still inside the console grace window reports when it ends; null otherwise."
+  },
+  {
+    "key": "GET /api/v1/templates/{id} 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesById",
+    "op": "GET /api/v1/templates/{id}",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
     "key": "GET /api/v1/wallet-identities new operation",
@@ -486,6 +526,14 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/templates/{id} 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.patchTemplatesById",
+    "op": "PATCH /api/v1/templates/{id}",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
@@ -808,6 +856,62 @@
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
   },
   {
+    "key": "POST /api/v1/templates/{id}/archive 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdArchive",
+    "op": "POST /api/v1/templates/{id}/archive",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/clone 201.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdClone",
+    "op": "POST /api/v1/templates/{id}/clone",
+    "change": "201.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/restore 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdRestore",
+    "op": "POST /api/v1/templates/{id}/restore",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/share 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdShare",
+    "op": "POST /api/v1/templates/{id}/share",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use 201.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUse",
+    "op": "POST /api/v1/templates/{id}/use",
+    "change": "201.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use/check 200.template.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUseCheck",
+    "op": "POST /api/v1/templates/{id}/use/check",
+    "change": "200.template.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/versions 200.template.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdVersions",
+    "op": "POST /api/v1/templates/{id}/versions",
+    "change": "200.template.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.putBrandWebLogo",
@@ -910,5 +1014,13 @@
     "op": "PUT /api/v1/platform/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/manifest 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdManifest",
+    "op": "PUT /api/v1/templates/{id}/manifest",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
   }
 ]

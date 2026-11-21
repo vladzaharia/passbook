@@ -5260,6 +5260,262 @@
   }
  },
  {
+  "id": "scanners.getScanSetups",
+  "call": "scan_setups.list",
+  "http": "GET",
+  "path": "/api/v1/scan-setups",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "kind": "device",
+     "deviceRole": "scan",
+     "name": "x",
+     "accepts": {
+      "templateIds": [
+       "x"
+      ],
+      "eventIds": [
+       "x"
+      ]
+     },
+     "settings": {
+      "flow": "auto",
+      "defaultActionId": "x",
+      "roleWithoutSignIn": "door",
+      "staffSignIn": false,
+      "letInAgain": "anyone",
+      "reader": "none",
+      "lookup": false,
+      "offline": false,
+      "dailyAmount": 0
+     },
+     "timeZone": "x",
+     "status": "not_paired",
+     "online": false,
+     "pairedAt": 0,
+     "pairedLabel": "x",
+     "lastSeenAt": 0,
+     "expiresAt": 0,
+     "staff": {
+      "id": "x",
+      "name": "x"
+     },
+     "today": 0,
+     "createdAt": 0,
+     "adminUser": {
+      "id": "x",
+      "name": "x"
+     },
+     "watch": {}
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "scanners.postScanSetups",
+  "call": "scan_setups.create",
+  "http": "POST",
+  "path": "/api/v1/scan-setups",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "timeZone": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "device",
+   "deviceRole": "scan",
+   "name": "x",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "status": "not_paired",
+   "online": false,
+   "pairedAt": 0,
+   "pairedLabel": "x",
+   "lastSeenAt": 0,
+   "expiresAt": 0,
+   "staff": {
+    "id": "x",
+    "name": "x"
+   },
+   "today": 0,
+   "createdAt": 0,
+   "adminUser": {
+    "id": "x",
+    "name": "x"
+   },
+   "watch": {},
+   "pairing": {
+    "code": "x",
+    "url": "x",
+    "expiresAt": 0
+   }
+  }
+ },
+ {
+  "id": "scanners.getScanSetupsById",
+  "call": "scan_setups.retrieve",
+  "http": "GET",
+  "path": "/api/v1/scan-setups/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "device",
+   "deviceRole": "scan",
+   "name": "x",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "status": "not_paired",
+   "online": false,
+   "pairedAt": 0,
+   "pairedLabel": "x",
+   "lastSeenAt": 0,
+   "expiresAt": 0,
+   "staff": {
+    "id": "x",
+    "name": "x"
+   },
+   "today": 0,
+   "createdAt": 0,
+   "adminUser": {
+    "id": "x",
+    "name": "x"
+   },
+   "watch": {}
+  }
+ },
+ {
+  "id": "scanners.patchScanSetupsById",
+  "call": "scan_setups.update",
+  "http": "PATCH",
+  "path": "/api/v1/scan-setups/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "device",
+   "deviceRole": "scan",
+   "name": "x",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "status": "not_paired",
+   "online": false,
+   "pairedAt": 0,
+   "pairedLabel": "x",
+   "lastSeenAt": 0,
+   "expiresAt": 0,
+   "staff": {
+    "id": "x",
+    "name": "x"
+   },
+   "today": 0,
+   "createdAt": 0,
+   "adminUser": {
+    "id": "x",
+    "name": "x"
+   },
+   "watch": {}
+  }
+ },
+ {
   "id": "scan.postScanActions",
   "call": "terminal.act",
   "http": "POST",

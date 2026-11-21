@@ -28,6 +28,7 @@ const GROUPS: Record<string, (typeof GROUP_ORDER)[number]> = {
   terminal: 'Scanning',
   scans: 'Scanning',
   scanningSessions: 'Scanning',
+  scanSetups: 'Scanning',
   rollCalls: 'Scanning',
   visitors: 'Scanning',
   nfc: 'NFC',

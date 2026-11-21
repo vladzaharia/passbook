@@ -121,6 +121,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/scanning/setup",
+    "name": "admin-scanning-setup"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/scanning/events/{eventId}",
     "name": "admin-scan-event"
   },

@@ -3256,12 +3256,46 @@ type PassImportsCheckResult struct {
 	CommittedAt       *int64                               `json:"committedAt"`
 	FinishedAt        *int64                               `json:"finishedAt"`
 	ExpiresAt         int64                                `json:"expiresAt"`
+	Mapping           *PassImportsCheckResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                               `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsCheckResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsCheckResultMapping struct {
+	Fields  []PassImportsCheckResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsCheckResultMappingUnusedItem `json:"unused"`
+	Columns int64                                     `json:"columns"`
+	Used    int64                                     `json:"used"`
+	Missing []string                                  `json:"missing"`
+}
+
+type PassImportsCheckResultMappingFieldsItem struct {
+	Role       string                                              `json:"role"`
+	Target     string                                              `json:"target"`
+	Label      string                                              `json:"label"`
+	Required   bool                                                `json:"required"`
+	From       []string                                            `json:"from"`
+	Confidence *string                                             `json:"confidence"`
+	MatchBy    bool                                                `json:"matchBy"`
+	Entry      map[string]any                                      `json:"entry"`
+	Values     []PassImportsCheckResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                      `json:"date"`
+}
+
+type PassImportsCheckResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsCheckResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsCheckResultPreviewsItem struct {
@@ -3320,12 +3354,46 @@ type PassImportsCommitResult struct {
 	CommittedAt       *int64                                `json:"committedAt"`
 	FinishedAt        *int64                                `json:"finishedAt"`
 	ExpiresAt         int64                                 `json:"expiresAt"`
+	Mapping           *PassImportsCommitResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsCommitResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsCommitResultMapping struct {
+	Fields  []PassImportsCommitResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsCommitResultMappingUnusedItem `json:"unused"`
+	Columns int64                                      `json:"columns"`
+	Used    int64                                      `json:"used"`
+	Missing []string                                   `json:"missing"`
+}
+
+type PassImportsCommitResultMappingFieldsItem struct {
+	Role       string                                               `json:"role"`
+	Target     string                                               `json:"target"`
+	Label      string                                               `json:"label"`
+	Required   bool                                                 `json:"required"`
+	From       []string                                             `json:"from"`
+	Confidence *string                                              `json:"confidence"`
+	MatchBy    bool                                                 `json:"matchBy"`
+	Entry      map[string]any                                       `json:"entry"`
+	Values     []PassImportsCommitResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                       `json:"date"`
+}
+
+type PassImportsCommitResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsCommitResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsCommitResultPreviewsItem struct {
@@ -3415,12 +3483,46 @@ type PassImportsCreateResult struct {
 	CommittedAt       *int64                                `json:"committedAt"`
 	FinishedAt        *int64                                `json:"finishedAt"`
 	ExpiresAt         int64                                 `json:"expiresAt"`
+	Mapping           *PassImportsCreateResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                                `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsCreateResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsCreateResultMapping struct {
+	Fields  []PassImportsCreateResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsCreateResultMappingUnusedItem `json:"unused"`
+	Columns int64                                      `json:"columns"`
+	Used    int64                                      `json:"used"`
+	Missing []string                                   `json:"missing"`
+}
+
+type PassImportsCreateResultMappingFieldsItem struct {
+	Role       string                                               `json:"role"`
+	Target     string                                               `json:"target"`
+	Label      string                                               `json:"label"`
+	Required   bool                                                 `json:"required"`
+	From       []string                                             `json:"from"`
+	Confidence *string                                              `json:"confidence"`
+	MatchBy    bool                                                 `json:"matchBy"`
+	Entry      map[string]any                                       `json:"entry"`
+	Values     []PassImportsCreateResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                       `json:"date"`
+}
+
+type PassImportsCreateResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsCreateResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsCreateResultPreviewsItem struct {
@@ -3476,12 +3578,46 @@ type PassImportsListItem struct {
 	CommittedAt       *int64                            `json:"committedAt"`
 	FinishedAt        *int64                            `json:"finishedAt"`
 	ExpiresAt         int64                             `json:"expiresAt"`
+	Mapping           *PassImportsListItemMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                            `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsListItemColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsListItemMapping struct {
+	Fields  []PassImportsListItemMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsListItemMappingUnusedItem `json:"unused"`
+	Columns int64                                  `json:"columns"`
+	Used    int64                                  `json:"used"`
+	Missing []string                               `json:"missing"`
+}
+
+type PassImportsListItemMappingFieldsItem struct {
+	Role       string                                           `json:"role"`
+	Target     string                                           `json:"target"`
+	Label      string                                           `json:"label"`
+	Required   bool                                             `json:"required"`
+	From       []string                                         `json:"from"`
+	Confidence *string                                          `json:"confidence"`
+	MatchBy    bool                                             `json:"matchBy"`
+	Entry      map[string]any                                   `json:"entry"`
+	Values     []PassImportsListItemMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                   `json:"date"`
+}
+
+type PassImportsListItemMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsListItemMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsListItemPreviewsItem struct {
@@ -3542,12 +3678,46 @@ type PassImportsRetrieveResult struct {
 	CommittedAt       *int64                                  `json:"committedAt"`
 	FinishedAt        *int64                                  `json:"finishedAt"`
 	ExpiresAt         int64                                   `json:"expiresAt"`
+	Mapping           *PassImportsRetrieveResultMapping       `json:"mapping,omitempty"`
+	EmailHoldUntil    *int64                                  `json:"emailHoldUntil,omitempty"`
 }
 
 type PassImportsRetrieveResultColumnsItem struct {
 	Pointer string   `json:"pointer"`
 	Label   string   `json:"label"`
 	Samples []string `json:"samples"`
+}
+
+type PassImportsRetrieveResultMapping struct {
+	Fields  []PassImportsRetrieveResultMappingFieldsItem `json:"fields"`
+	Unused  []PassImportsRetrieveResultMappingUnusedItem `json:"unused"`
+	Columns int64                                        `json:"columns"`
+	Used    int64                                        `json:"used"`
+	Missing []string                                     `json:"missing"`
+}
+
+type PassImportsRetrieveResultMappingFieldsItem struct {
+	Role       string                                                 `json:"role"`
+	Target     string                                                 `json:"target"`
+	Label      string                                                 `json:"label"`
+	Required   bool                                                   `json:"required"`
+	From       []string                                               `json:"from"`
+	Confidence *string                                                `json:"confidence"`
+	MatchBy    bool                                                   `json:"matchBy"`
+	Entry      map[string]any                                         `json:"entry"`
+	Values     []PassImportsRetrieveResultMappingFieldsItemValuesItem `json:"values"`
+	Date       map[string]any                                         `json:"date"`
+}
+
+type PassImportsRetrieveResultMappingFieldsItemValuesItem struct {
+	Value string  `json:"value"`
+	Count int64   `json:"count"`
+	To    *string `json:"to"`
+}
+
+type PassImportsRetrieveResultMappingUnusedItem struct {
+	Pointer string `json:"pointer"`
+	Label   string `json:"label"`
 }
 
 type PassImportsRetrieveResultPreviewsItem struct {
@@ -3576,15 +3746,24 @@ type PassImportsRetrieveResultSource struct {
 }
 
 type PassImportsRowsListItem struct {
-	Row        int64   `json:"row"`
-	Action     string  `json:"action"`
-	State      string  `json:"state"`
-	Result     *string `json:"result"`
-	PassID     *string `json:"passId"`
-	ExternalID *string `json:"externalId"`
-	Code       *string `json:"code"`
-	Message    *string `json:"message"`
-	Emailed    bool    `json:"emailed"`
+	Row        int64                                `json:"row"`
+	Action     string                               `json:"action"`
+	State      string                               `json:"state"`
+	Result     *string                              `json:"result"`
+	PassID     *string                              `json:"passId"`
+	ExternalID *string                              `json:"externalId"`
+	Code       *string                              `json:"code"`
+	Message    *string                              `json:"message"`
+	Emailed    bool                                 `json:"emailed"`
+	Changes    []PassImportsRowsListItemChangesItem `json:"changes,omitempty"`
+	WouldBe    *string                              `json:"wouldBe,omitempty"`
+}
+
+type PassImportsRowsListItemChangesItem struct {
+	Key   string  `json:"key"`
+	Label string  `json:"label"`
+	From  *string `json:"from"`
+	To    *string `json:"to"`
 }
 
 type PassImportsRowsListQuery struct {
@@ -5568,6 +5747,8 @@ type ScanSetupAnswer2ZonesItemParent2 struct {
 	ID string `json:"id"`
 }
 
+type ScanSetupsCreateBody = ScanSetupsCreateParams
+
 type ScanSetupsCreateParams struct {
 	OrgID       string                          `json:"orgId"`
 	Name        string                          `json:"name"`
@@ -5627,6 +5808,131 @@ type ScanSetupsCreateParamsSettingsTags struct {
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
 
+type ScanSetupsCreateResult struct {
+	ID           string          `json:"id"`
+	OrgID        string          `json:"orgId"`
+	Mode         string          `json:"mode"`
+	Kind         string          `json:"kind"`
+	DeviceRole   string          `json:"deviceRole"`
+	Name         string          `json:"name"`
+	Accepts      any             `json:"accepts"`
+	Settings     ScannerSettings `json:"settings"`
+	TimeZone     string          `json:"timeZone"`
+	Status       string          `json:"status"`
+	Online       bool            `json:"online"`
+	PairedAt     *int64          `json:"pairedAt"`
+	PairedLabel  *string         `json:"pairedLabel"`
+	LastSeenAt   *int64          `json:"lastSeenAt"`
+	ExpiresAt    *int64          `json:"expiresAt"`
+	Staff        map[string]any  `json:"staff"`
+	Today        int64           `json:"today"`
+	CreatedAt    int64           `json:"createdAt"`
+	SessionID    *string         `json:"sessionId,omitempty"`
+	AdminSession *bool           `json:"adminSession,omitempty"`
+	AdminUser    map[string]any  `json:"adminUser"`
+	Watch        map[string]any  `json:"watch"`
+	Pairing      map[string]any  `json:"pairing"`
+}
+
+type ScanSetupsCreateResultAccepts1 struct {
+	TemplateIds []string `json:"templateIds"`
+	EventIds    []string `json:"eventIds"`
+}
+
+type ScanSetupsCreateResultAccepts2 struct {
+	EventID string `json:"eventId"`
+}
+
+type ScanSetupsCreateResultAccepts3 struct {
+	TemplateIds []string `json:"templateIds"`
+}
+
+type ScanSetupsListItem struct {
+	ID           string          `json:"id"`
+	OrgID        string          `json:"orgId"`
+	Mode         string          `json:"mode"`
+	Kind         string          `json:"kind"`
+	DeviceRole   string          `json:"deviceRole"`
+	Name         string          `json:"name"`
+	Accepts      any             `json:"accepts"`
+	Settings     ScannerSettings `json:"settings"`
+	TimeZone     string          `json:"timeZone"`
+	Status       string          `json:"status"`
+	Online       bool            `json:"online"`
+	PairedAt     *int64          `json:"pairedAt"`
+	PairedLabel  *string         `json:"pairedLabel"`
+	LastSeenAt   *int64          `json:"lastSeenAt"`
+	ExpiresAt    *int64          `json:"expiresAt"`
+	Staff        map[string]any  `json:"staff"`
+	Today        int64           `json:"today"`
+	CreatedAt    int64           `json:"createdAt"`
+	SessionID    *string         `json:"sessionId,omitempty"`
+	AdminSession *bool           `json:"adminSession,omitempty"`
+	AdminUser    map[string]any  `json:"adminUser"`
+	Watch        map[string]any  `json:"watch"`
+}
+
+type ScanSetupsListItemAccepts1 struct {
+	TemplateIds []string `json:"templateIds"`
+	EventIds    []string `json:"eventIds"`
+}
+
+type ScanSetupsListItemAccepts2 struct {
+	EventID string `json:"eventId"`
+}
+
+type ScanSetupsListItemAccepts3 struct {
+	TemplateIds []string `json:"templateIds"`
+}
+
+type ScanSetupsListQuery struct {
+	Cursor  *string `json:"cursor,omitempty"`
+	Limit   *int64  `json:"limit,omitempty"`
+	Status  *string `json:"status,omitempty"`
+	EventID *string `json:"eventId,omitempty"`
+	Q       *string `json:"q,omitempty"`
+}
+
+type ScanSetupsRetrieveResult struct {
+	ID           string          `json:"id"`
+	OrgID        string          `json:"orgId"`
+	Mode         string          `json:"mode"`
+	Kind         string          `json:"kind"`
+	DeviceRole   string          `json:"deviceRole"`
+	Name         string          `json:"name"`
+	Accepts      any             `json:"accepts"`
+	Settings     ScannerSettings `json:"settings"`
+	TimeZone     string          `json:"timeZone"`
+	Status       string          `json:"status"`
+	Online       bool            `json:"online"`
+	PairedAt     *int64          `json:"pairedAt"`
+	PairedLabel  *string         `json:"pairedLabel"`
+	LastSeenAt   *int64          `json:"lastSeenAt"`
+	ExpiresAt    *int64          `json:"expiresAt"`
+	Staff        map[string]any  `json:"staff"`
+	Today        int64           `json:"today"`
+	CreatedAt    int64           `json:"createdAt"`
+	SessionID    *string         `json:"sessionId,omitempty"`
+	AdminSession *bool           `json:"adminSession,omitempty"`
+	AdminUser    map[string]any  `json:"adminUser"`
+	Watch        map[string]any  `json:"watch"`
+}
+
+type ScanSetupsRetrieveResultAccepts1 struct {
+	TemplateIds []string `json:"templateIds"`
+	EventIds    []string `json:"eventIds"`
+}
+
+type ScanSetupsRetrieveResultAccepts2 struct {
+	EventID string `json:"eventId"`
+}
+
+type ScanSetupsRetrieveResultAccepts3 struct {
+	TemplateIds []string `json:"templateIds"`
+}
+
+type ScanSetupsUpdateBody = ScanSetupsUpdateParams
+
 type ScanSetupsUpdateParams struct {
 	Name       *string                         `json:"name,omitempty"`
 	DeviceRole *string                         `json:"deviceRole,omitempty"`
@@ -5680,6 +5986,44 @@ type ScanSetupsUpdateParamsSettingsTags struct {
 	Level        *string  `json:"level,omitempty"`
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
+}
+
+type ScanSetupsUpdateResult struct {
+	ID           string          `json:"id"`
+	OrgID        string          `json:"orgId"`
+	Mode         string          `json:"mode"`
+	Kind         string          `json:"kind"`
+	DeviceRole   string          `json:"deviceRole"`
+	Name         string          `json:"name"`
+	Accepts      any             `json:"accepts"`
+	Settings     ScannerSettings `json:"settings"`
+	TimeZone     string          `json:"timeZone"`
+	Status       string          `json:"status"`
+	Online       bool            `json:"online"`
+	PairedAt     *int64          `json:"pairedAt"`
+	PairedLabel  *string         `json:"pairedLabel"`
+	LastSeenAt   *int64          `json:"lastSeenAt"`
+	ExpiresAt    *int64          `json:"expiresAt"`
+	Staff        map[string]any  `json:"staff"`
+	Today        int64           `json:"today"`
+	CreatedAt    int64           `json:"createdAt"`
+	SessionID    *string         `json:"sessionId,omitempty"`
+	AdminSession *bool           `json:"adminSession,omitempty"`
+	AdminUser    map[string]any  `json:"adminUser"`
+	Watch        map[string]any  `json:"watch"`
+}
+
+type ScanSetupsUpdateResultAccepts1 struct {
+	TemplateIds []string `json:"templateIds"`
+	EventIds    []string `json:"eventIds"`
+}
+
+type ScanSetupsUpdateResultAccepts2 struct {
+	EventID string `json:"eventId"`
+}
+
+type ScanSetupsUpdateResultAccepts3 struct {
+	TemplateIds []string `json:"templateIds"`
 }
 
 type ScanStaff struct {
@@ -6656,6 +7000,27 @@ type TemplateDetail struct {
 	PassesOnOlderVersions *int64                       `json:"passesOnOlderVersions,omitempty"`
 	PassesBlocked         *int64                       `json:"passesBlocked,omitempty"`
 	Restorable            *bool                        `json:"restorable,omitempty"`
+	Release               *TemplateDetailRelease       `json:"release,omitempty"`
+}
+
+type TemplateDetailRelease struct {
+	Live   map[string]any `json:"live"`
+	Test   map[string]any `json:"test"`
+	Draft  map[string]any `json:"draft"`
+	Review any            `json:"review"`
+	Alone  bool           `json:"alone"`
+	Next   *string        `json:"next"`
+}
+
+type TemplateDetailReleaseReview1 struct {
+	State string `json:"state"`
+}
+
+type TemplateDetailReleaseReview2 struct {
+	State   string  `json:"state"`
+	Version string  `json:"version"`
+	By      *string `json:"by"`
+	At      int64   `json:"at"`
 }
 
 type TemplateDetailVersionsItem struct {

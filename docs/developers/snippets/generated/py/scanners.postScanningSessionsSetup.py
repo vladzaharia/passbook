@@ -32,7 +32,6 @@ result = pb.scanning_sessions.setup(
                 "admits": {
                     "templateIds": [
                         "0193a1b2-7c00-7000-8000-0000000000b1",
-                        "0193a1b2-7c00-7000-8000-0000000000b2",
                     ],
                 },
                 "hours": {

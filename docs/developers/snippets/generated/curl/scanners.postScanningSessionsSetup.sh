@@ -1,5 +1,6 @@
 curl -X POST "https://passbook.mobile/api/v1/scanning-sessions/setup" \
   -H "Authorization: Bearer $PASSBOOK_KEY" \
+  -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
@@ -27,8 +28,7 @@ curl -X POST "https://passbook.mobile/api/v1/scanning-sessions/setup" \
       "place": "gym",
       "admits": {
         "templateIds": [
-          "0193a1b2-7c00-7000-8000-0000000000b1",
-          "0193a1b2-7c00-7000-8000-0000000000b2"
+          "0193a1b2-7c00-7000-8000-0000000000b1"
         ]
       },
       "hours": {

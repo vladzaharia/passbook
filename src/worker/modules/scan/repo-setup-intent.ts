@@ -29,12 +29,14 @@ export interface TemplateRow {
   manifest: string;
 }
 
-/** The active, non-blueprint templates the org may see among `ids`, with their active manifest. */
+/** The active, non-blueprint templates the org may see among `ids`, with their active manifest, or the newest version's while a release is the only activation. */
 export const visibleTemplates = (db: Db, orgId: string, ids: string[]) =>
   all<TemplateRow>(
     db,
     `SELECT t.id AS id, t.name AS name, tv.manifest AS manifest FROM templates t
-     JOIN template_versions tv ON tv.template_id = t.id AND tv.version = t.active_version
+     JOIN template_versions tv ON tv.template_id = t.id AND tv.version = COALESCE(t.active_version,
+       (SELECT v.version FROM template_versions v WHERE v.template_id = t.id
+        ORDER BY v.created_at DESC, v.version DESC LIMIT 1))
      WHERE ${templateVisibleSql('t', '?')} AND t.status = 'active' AND t.blueprint = 0
        AND t.id IN (SELECT value FROM json_each(?))`,
     [...visibleBinds(orgId), JSON.stringify(ids)],

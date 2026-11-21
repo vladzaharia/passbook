@@ -33,7 +33,8 @@ const step = {
   do: async (_name: string, a: unknown, b?: unknown) => call(a, b),
 } as unknown as Parameters<typeof runBulkReissue>[3];
 
-const SLOT = [{ key: 'pass-service', label: 'Pass service', value: '' }];
+/** What v2 adds: a back field v1 lacks, so a reissue visibly changes the pass. */
+const SLOT = [{ key: 'terms', label: 'Terms', value: 'Version two' }];
 let seq = 0;
 
 /** Registers a version with the registry the builder reads and with D1 the cron reads. */
@@ -426,7 +427,7 @@ describe('template reissue', () => {
       key: string;
       value: string;
     }[];
-    expect(back.find((f) => f.key === 'pass-service')?.value).toContain('support@passbook.mobile');
+    expect(back.find((f) => f.key === 'terms')?.value).toBe('Version two');
     expect((await olderLivePasses(kit.env.DB, id, 'live', kit.org.id)).older).toBe(0);
   });
 
@@ -655,9 +656,7 @@ describe('template reissue', () => {
         key: string;
         value: string;
       }[];
-      expect(back.find((f) => f.key === 'pass-service')?.value).toBe(
-        `PassBook · support@passbook.mobile\n${kit.env.PUBLIC_BASE_URL}`,
-      );
+      expect(back.find((f) => f.key === 'terms')?.value).toBe('Version two');
     } finally {
       Object.assign(kit.env, { ASSETS: previousAssets, CF_VERSION: previousVersion });
       Object.assign(generatedSource, previousSource);
