@@ -2,6 +2,8 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
+import { newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { clearPreviewBatches } from '../../lib/preview-batch.ts';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import {
@@ -127,6 +129,16 @@ describe('gallery groups and search', () => {
   });
 });
 
+type Body = {
+  orgId: string;
+  name: string;
+  version: {
+    passJson: Record<string, string>;
+    manifest: Record<string, unknown>;
+    assets: { name: string; upload?: string }[];
+  };
+};
+const emptyImpact = { passesToUpdate: 0, channelStops: [], enrolments: [] };
 const ID = 'baked:starter-store-card';
 const made = templateDetail({
   id: 'made1',
@@ -147,63 +159,151 @@ function logoFile(width: number, height: number) {
 }
 
 describe('quick setup', () => {
-  it('on a phone makes a branded template from the blueprint, with the logo and colour', async () => {
-    phone();
-    const user = userEvent.setup();
+  /** The blueprint, its use route and the org's pass setup: what Use blueprint reads and writes. */
+  const useHandlers = (
+    setup: PassSetup,
+    bodies: { template: Body[]; patch: Record<string, unknown>[]; staged: unknown[] },
+  ) => {
     const doc = sampleDoc();
-    const bodies: {
-      orgId: string;
-      name: string;
-      version: {
-        passJson: Record<string, string>;
-        manifest: Record<string, unknown>;
-        assets: { name: string; upload?: string }[];
-      };
-    }[] = [];
-    await renderApp('/admin/blueprints', {
-      session: 'admin',
-      ...access,
-      handlers: {
-        ...catalog([bp('store-card', 'Balance card', { group: 'save-spend' })]),
-        [`/api/v1/templates/${ID}/versions/v1`]: () =>
-          json({
-            version: 'v1',
-            createdAt: 1,
-            createdBy: null,
-            assets: [],
-            report: { ok: true, issues: [] },
-            active: true,
-            displayOnly: false,
-            passCount: 0,
-            manifest: { ...doc.manifest, blueprint: true },
-            passJson: doc.passJson,
-          }),
-        [`/api/v1/templates/${ID}/use`]: (_u: URL, init?: RequestInit) => {
-          bodies.push(JSON.parse(String(init?.body)));
-          return json(made, 201);
-        },
-        '/api/v1/templates/made1': () => json(made),
-        '/api/v1/templates/made1/preview': preview,
+    return {
+      ...catalog([bp('store-card', 'Balance card', { group: 'save-spend' })]),
+      [`/api/v1/templates/${ID}/versions/v1`]: () =>
+        json({
+          version: 'v1',
+          createdAt: 1,
+          createdBy: null,
+          assets: [],
+          report: { ok: true, issues: [] },
+          active: true,
+          displayOnly: false,
+          passCount: 0,
+          manifest: { ...doc.manifest, blueprint: true },
+          passJson: doc.passJson,
+        }),
+      [`/api/v1/templates/${ID}/use`]: (_u: URL, init?: RequestInit) => {
+        bodies.template.push(JSON.parse(String(init?.body)));
+        return json(made, 201);
       },
-    });
+      '/api/v1/templates/made1': () => json(made),
+      '/api/v1/templates/made1/preview': preview,
+      [`/api/v1/orgs/${ORG.id}/pass-setup`]: (_u: URL, init?: RequestInit) => {
+        if (init?.method !== 'PATCH') return json(setup);
+        bodies.patch.push(JSON.parse(String(init.body)));
+        return json({ dryRun: false, view: setup, diff: [], impact: emptyImpact });
+      },
+      [`/api/v1/orgs/${ORG.id}/brand-assets`]: (_u: URL, init?: RequestInit) => {
+        bodies.staged.push(JSON.parse(String(init?.body)));
+        return json({
+          slot: 'logo',
+          sha: 'c'.repeat(64),
+          version: 'c'.repeat(64),
+          w: 200,
+          h: 60,
+          expiresAt: 2_000_000_000_000,
+        });
+      },
+    };
+  };
+  const pickLogoAndColour = async (user: ReturnType<typeof userEvent.setup>) => {
     await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
     const dialog = await screen.findByRole('dialog', { name: 'Use blueprint' });
-    expect(within(dialog).queryByRole('button', { name: 'Open designer' })).toBeNull();
+    await waitFor(() => expect(dialog).toHaveTextContent('Colour'));
+    return dialog;
+  };
+  const addLogo = async (user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) => {
     await user.upload(
       within(dialog).getByLabelText('Choose a PNG logo', { selector: 'input' }),
       logoFile(200, 60),
     );
     expect(await within(dialog).findByText('logo.png')).toBeInTheDocument();
     fireColor(within(dialog).getByLabelText('Custom colour'), '#aa3311');
+  };
+  const sent = () => ({ template: [] as Body[], patch: [], staged: [] });
+
+  it('with no organization brand yet, the logo and colour become the organization brand', async () => {
+    phone();
+    const user = userEvent.setup();
+    const bodies = sent();
+    await renderApp('/admin/blueprints', {
+      session: 'admin',
+      ...access,
+      handlers: useHandlers(viewOf(newOrgFacts()), bodies),
+    });
+    const dialog = await pickLogoAndColour(user);
+    expect(within(dialog).queryByRole('button', { name: 'Open designer' })).toBeNull();
+    await addLogo(user, dialog);
+    expect(within(dialog).getByText('Saved as the organization logo.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Saved as the organization colours.')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
-    await waitFor(() => expect(bodies).toHaveLength(1));
-    const [body] = bodies;
-    expect(body).toMatchObject({ orgId: ORG.id, name: 'Balance card' });
-    expect(body?.version.passJson.backgroundColor).toBe('rgb(170,51,17)');
-    expect(body?.version.passJson.foregroundColor).toBe('rgb(255,255,255)');
-    expect('blueprint' in (body?.version.manifest ?? {})).toBe(false);
-    expect(body?.version.assets.some((a) => a.name.startsWith('logo') && a.upload)).toBe(true);
+    await waitFor(() => expect(bodies.template).toHaveLength(1));
+    // One staged save of the organization brand: the logo by its hash and the colours.
+    expect(bodies.staged).toHaveLength(1);
+    expect(bodies.patch).toHaveLength(1);
+    expect(bodies.patch[0]).toMatchObject({
+      expectedRevision: 'r1',
+      brand: {
+        logo: { sha: 'c'.repeat(64) },
+        passColors: { background: 'rgb(170,51,17)', foreground: 'rgb(255,255,255)' },
+      },
+    });
+    // The template is the blueprint as it is: no logo, no colours, no opt-out.
+    expect(bodies.template[0]).toMatchObject({ orgId: ORG.id, name: 'Balance card' });
+    expect('version' in (bodies.template[0] ?? {})).toBe(false);
     expect(await screen.findByText('Template created')).toBeInTheDocument();
+  });
+
+  it('with an organization brand, shows it read only and keeps the template own only on Override', async () => {
+    phone();
+    const user = userEvent.setup();
+    const bodies = sent();
+    await renderApp('/admin/blueprints', {
+      session: 'admin',
+      ...access,
+      handlers: useHandlers(viewOf(readyFacts()), bodies),
+    });
+    const dialog = await pickLogoAndColour(user);
+    expect(within(dialog).getAllByText('From organization')).toHaveLength(2);
+    expect(within(dialog).queryByLabelText('Choose a PNG logo', { selector: 'input' })).toBeNull();
+    const [logo, colour] = within(dialog).getAllByRole('button', {
+      name: 'Override for this template',
+    });
+    await user.click(logo as HTMLElement);
+    await user.click(colour as HTMLElement);
+    await addLogo(user, dialog);
+    await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
+    await waitFor(() => expect(bodies.template).toHaveLength(1));
+    expect(bodies.patch).toHaveLength(0);
+    const body = bodies.template[0];
+    expect(body?.version.passJson.backgroundColor).toBe('rgb(170,51,17)');
+    expect(body?.version.manifest.brand).toEqual({ colors: 'template', logo: 'template' });
+    expect(body?.version.assets.some((a) => a.name.startsWith('logo') && a.upload)).toBe(true);
+  });
+
+  it('without the right to change the organization brand, the template keeps its own and says so', async () => {
+    phone();
+    const user = userEvent.setup();
+    const bodies = sent();
+    const author = membershipFixture(ORG.id, {
+      orgName: ORG.name,
+      orgSlug: ORG.slug,
+      capabilities: ['templates:author', 'templates:read'],
+    });
+    await renderApp('/admin/blueprints', {
+      session: 'admin',
+      memberships: [author],
+      selectedOrg: ORG.id,
+      handlers: useHandlers(viewOf(newOrgFacts()), bodies),
+    });
+    const dialog = await pickLogoAndColour(user);
+    await addLogo(user, dialog);
+    expect(within(dialog).queryByText('Saved as the organization logo.')).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
+    await waitFor(() => expect(bodies.template).toHaveLength(1));
+    expect(bodies.patch).toHaveLength(0);
+    expect(bodies.template[0]?.version.manifest.brand).toEqual({
+      colors: 'template',
+      logo: 'template',
+    });
   });
 
   it('offers the stamps goal and the currency, and sends the choices', async () => {

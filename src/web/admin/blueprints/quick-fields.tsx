@@ -1,7 +1,9 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
 import { cn } from '../../lib/cn.ts';
-import { FileDrop, FormField, IconButton, Select } from '../../ui/index.ts';
+import { Button, FileDrop, FormField, IconButton, Select } from '../../ui/index.ts';
+import { SourceTag } from '../brand/source-tag.tsx';
 import { MAX_ASSET_BYTES, TOO_BIG } from '../passes/png.ts';
 import { parseColor, type Rgb, toHex } from '../templates/designer/contrast.ts';
 import type { DraftAsset } from '../templates/designer/model.ts';
@@ -12,7 +14,19 @@ import { type Choices, logoColors, placeLogo } from './quick-setup.ts';
 const objectUrl = (file: Blob) =>
   typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
 
+const COPY = TEMPLATE_BRAND_COPY.designer;
+
+/** What the organization already sets, and whether this person may write the organization's brand. */
+export interface OrgBrandInfo {
+  logoUrl: string | null;
+  colors: Rgb | null;
+  canWrite: boolean;
+}
+
 export interface QuickState {
+  /** The part is the template's own although the organization sets one. */
+  override: { logo: boolean; colors: boolean };
+  setOverride: (part: 'logo' | 'colors', on: boolean) => void;
   goal: number | undefined;
   currency: string | undefined;
   setGoal: (goal: number | undefined) => void;
@@ -35,6 +49,7 @@ export function useQuickFields(): QuickState {
   const [problem, setProblem] = useState<string>();
   const [goal, setGoal] = useState<number>();
   const [currency, setCurrency] = useState<string>();
+  const [override, setOverrides] = useState({ logo: false, colors: false });
   const url = logo?.url;
   useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
 
@@ -50,6 +65,12 @@ export function useQuickFields(): QuickState {
   }
 
   return {
+    override,
+    setOverride: (part, on) => {
+      setOverrides((o) => ({ ...o, [part]: on }));
+      if (!on && part === 'logo') setLogo(null);
+      if (!on && part === 'colors') setColor(undefined);
+    },
     logo,
     color,
     swatches,
@@ -71,74 +92,148 @@ export function useQuickFields(): QuickState {
 
 const same = (a: Rgb | undefined, b: Rgb) => a?.r === b.r && a.g === b.g && a.b === b.b;
 
-export function QuickFields({ state, choices }: { state: QuickState; choices: Choices }) {
+/** A part the organization sets: shown as it is, with the way to keep the template's own. */
+function FromOrg({
+  label,
+  children,
+  onOverride,
+}: {
+  label: string;
+  children: React.ReactNode;
+  onOverride: () => void;
+}) {
+  return (
+    <FormField label={label}>
+      {() => (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-surface-sunken p-2">
+          {children}
+          <SourceTag source="org" label={COPY.fromOrg} />
+          <Button variant="link" size="sm" className="ml-auto" onClick={onOverride}>
+            {COPY.override}
+          </Button>
+        </div>
+      )}
+    </FormField>
+  );
+}
+
+/** Under a part the organization could own: where it is saved, or the way back to the organization's. */
+function orgHelp(
+  state: QuickState,
+  part: 'logo' | 'colors',
+  orgSets: boolean,
+  canWrite: boolean,
+): React.ReactNode {
+  if (orgSets)
+    return (
+      <Button variant="link" size="sm" onClick={() => state.setOverride(part, false)}>
+        {COPY.useOrg}
+      </Button>
+    );
+  return canWrite ? (part === 'logo' ? COPY.logoToOrg : COPY.colorsToOrg) : undefined;
+}
+
+export function QuickFields({
+  state,
+  choices,
+  org,
+}: {
+  state: QuickState;
+  choices: Choices;
+  org: OrgBrandInfo;
+}) {
   const { logo, color, swatches } = state;
+  const logoFromOrg = org.logoUrl !== null && !state.override.logo;
+  const colorFromOrg = org.colors !== null && !state.override.colors;
   return (
     <div className="flex flex-col gap-4">
-      <FormField label="Logo" error={state.problem}>
-        {(c) =>
-          logo ? (
-            <div className="flex items-center gap-3 rounded-md border border-border bg-surface-sunken p-2">
-              {logo.url ? (
-                <img src={logo.url} alt="" className="h-10 max-w-24 object-contain" />
+      {logoFromOrg ? (
+        <FromOrg label="Logo" onOverride={() => state.setOverride('logo', true)}>
+          <img src={org.logoUrl ?? ''} alt="" className="h-10 max-w-24 object-contain" />
+        </FromOrg>
+      ) : (
+        <FormField
+          label="Logo"
+          error={state.problem}
+          help={orgHelp(state, 'logo', org.logoUrl !== null, org.canWrite)}
+        >
+          {(c) =>
+            logo ? (
+              <div className="flex items-center gap-3 rounded-md border border-border bg-surface-sunken p-2">
+                {logo.url ? (
+                  <img src={logo.url} alt="" className="h-10 max-w-24 object-contain" />
+                ) : null}
+                <span className="min-w-0 flex-1 truncate text-sm text-fg-muted">{logo.name}</span>
+                <IconButton
+                  label="Remove logo"
+                  icon={<X aria-hidden />}
+                  variant="ghost"
+                  onClick={state.clearLogo}
+                />
+              </div>
+            ) : (
+              <FileDrop
+                accept=".png,image/png"
+                maxBytes={MAX_ASSET_BYTES}
+                label="Choose a PNG logo"
+                invalid={c['aria-invalid'] === true}
+                className="[&_.wl-file-drop]:py-4"
+                onFiles={([file]) => file && void state.takeLogo(file)}
+              />
+            )
+          }
+        </FormField>
+      )}
+      {colorFromOrg ? (
+        <FromOrg label="Colour" onOverride={() => state.setOverride('colors', true)}>
+          <span
+            aria-hidden
+            className="size-8 rounded-full border border-border-strong"
+            style={{ background: org.colors ? toHex(org.colors) : undefined }}
+          />
+        </FromOrg>
+      ) : (
+        <FormField
+          label="Colour"
+          help={orgHelp(state, 'colors', org.colors !== null, org.canWrite)}
+        >
+          {() => (
+            <fieldset className="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0">
+              <legend className="sr-only">Card colour</legend>
+              {swatches.map((s) => (
+                <button
+                  key={toHex(s)}
+                  type="button"
+                  aria-pressed={same(color, s)}
+                  aria-label={toHex(s)}
+                  onClick={() => state.pick(s)}
+                  style={{ background: toHex(s) }}
+                  className={cn(
+                    'size-8 rounded-full border border-border-strong wl-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+                    same(color, s) && 'outline-2 outline-offset-2 outline-fg-strong',
+                  )}
+                />
+              ))}
+              <input
+                type="color"
+                aria-label="Custom colour"
+                className="bp-swatch"
+                value={color ? toHex(color) : '#1d3aba'}
+                onChange={(e) => state.pick(parseColor(e.target.value) ?? undefined)}
+              />
+              {color ? (
+                <button
+                  type="button"
+                  className="text-xs text-fg-muted underline underline-offset-2 hover:text-fg-strong"
+                  onClick={() => state.pick(undefined)}
+                >
+                  Keep blueprint colours
+                </button>
               ) : null}
-              <span className="min-w-0 flex-1 truncate text-sm text-fg-muted">{logo.name}</span>
-              <IconButton
-                label="Remove logo"
-                icon={<X aria-hidden />}
-                variant="ghost"
-                onClick={state.clearLogo}
-              />
-            </div>
-          ) : (
-            <FileDrop
-              accept=".png,image/png"
-              maxBytes={MAX_ASSET_BYTES}
-              label="Choose a PNG logo"
-              invalid={c['aria-invalid'] === true}
-              className="[&_.wl-file-drop]:py-4"
-              onFiles={([file]) => file && void state.takeLogo(file)}
-            />
-          )
-        }
-      </FormField>
-      <FormField label="Colour">
-        {() => (
-          <fieldset className="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0">
-            <legend className="sr-only">Card colour</legend>
-            {swatches.map((s) => (
-              <button
-                key={toHex(s)}
-                type="button"
-                aria-pressed={same(color, s)}
-                aria-label={toHex(s)}
-                onClick={() => state.pick(s)}
-                style={{ background: toHex(s) }}
-                className={cn(
-                  'size-8 rounded-full border border-border-strong wl-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-                  same(color, s) && 'outline-2 outline-offset-2 outline-fg-strong',
-                )}
-              />
-            ))}
-            <input
-              type="color"
-              aria-label="Custom colour"
-              className="bp-swatch"
-              value={color ? toHex(color) : '#1d3aba'}
-              onChange={(e) => state.pick(parseColor(e.target.value) ?? undefined)}
-            />
-            {color ? (
-              <button
-                type="button"
-                className="text-xs text-fg-muted underline underline-offset-2 hover:text-fg-strong"
-                onClick={() => state.pick(undefined)}
-              >
-                Keep blueprint colours
-              </button>
-            ) : null}
-          </fieldset>
-        )}
-      </FormField>
+            </fieldset>
+          )}
+        </FormField>
+      )}
       {choices.goal ? (
         <FormField label="Stamps for a reward">
           {(c) => (
