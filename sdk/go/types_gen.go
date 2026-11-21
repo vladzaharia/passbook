@@ -4717,6 +4717,7 @@ type Problem struct {
 	Feature   *string             `json:"feature,omitempty"`
 	Limit     *int64              `json:"limit,omitempty"`
 	Used      *int64              `json:"used,omitempty"`
+	SignInURL *string             `json:"signInUrl,omitempty"`
 }
 
 type ProblemIssuesItem struct {
