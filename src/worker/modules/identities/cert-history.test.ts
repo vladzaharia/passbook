@@ -239,4 +239,55 @@ describe('certificate history', () => {
     const failed = (await listCertificateRows(ctx.env.DB, ID)).find((r) => r.id === pending.certId);
     expect(failed).toMatchObject({ state: 'failed', credential_id: null });
   });
+
+  it('lets one of two racing activations win and leaves the loser pending with the key intact', async () => {
+    const { kit, ca, ctx, row, PTI, ID, OLD } = await setup();
+    const stale = await row();
+    const subject = { passTypeIdentifier: PTI, teamIdentifier: TEAM };
+    const a = await beginPendingCertificate(ctx, stale);
+    const b = await beginPendingCertificate(ctx, stale);
+    const now = kit.clock.now();
+    const derA = await issueFromCsr(a.csrDer, ca, subject, { now });
+    const derB = await issueFromCsr(b.csrDer, ca, subject, { now });
+    const attempt = (p: typeof a, der: Uint8Array) =>
+      activatePendingCertificate(ctx, stale, p.certId, {
+        certificateDer: der,
+        ascCertificateId: null,
+      });
+
+    const results = await Promise.allSettled([attempt(a, derA), attempt(b, derB)]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const lost = results.find((r) => r.status === 'rejected');
+    expect(lost).toMatchObject({ reason: { code: 'IDENTITY_CHANGED' } });
+
+    const winner = results[0]?.status === 'fulfilled' ? a : b;
+    const loser = winner === a ? b : a;
+    const rows = await listCertificateRows(ctx.env.DB, ID);
+    expect(rows.filter((r) => r.state === 'active').map((r) => r.id)).toEqual([winner.certId]);
+    expect(rows.find((r) => r.id === loser.certId)?.state).toBe('pending');
+    const identity = await row();
+    expect(identity.credential_id).toBe(rows.find((r) => r.id === winner.certId)?.credential_id);
+    expect(await all(ctx.env.DB, 'SELECT id FROM credentials WHERE id = ?', [OLD])).toHaveLength(0);
+    clearIdentityKeyCache();
+    expect(await loadIdentityKey(ctx.env, identity)).toContain('BEGIN PRIVATE KEY');
+  });
+
+  it('refuses a stale snapshot after a completed rotation', async () => {
+    const { kit, ca, ctx, row, PTI } = await setup();
+    const stale = await row();
+    const subject = { passTypeIdentifier: PTI, teamIdentifier: TEAM };
+    const a = await beginPendingCertificate(ctx, stale);
+    const b = await beginPendingCertificate(ctx, stale);
+    const now = kit.clock.now();
+    await activatePendingCertificate(ctx, stale, a.certId, {
+      certificateDer: await issueFromCsr(a.csrDer, ca, subject, { now }),
+      ascCertificateId: null,
+    });
+    await expect(
+      activatePendingCertificate(ctx, stale, b.certId, {
+        certificateDer: await issueFromCsr(b.csrDer, ca, subject, { now }),
+        ascCertificateId: null,
+      }),
+    ).rejects.toMatchObject({ code: 'IDENTITY_CHANGED' });
+  });
 });

@@ -85,8 +85,9 @@ export interface Activation {
   certId: string;
   identityId: string;
   pendingCredentialId: string;
-  /** The credential the identity points at now; dropped with the swap. */
-  oldCredentialId: string | null;
+  /** The identity as the caller read it. The swap only happens if it is still exactly this. */
+  expectedRevision: number;
+  expectedCredentialId: string | null;
   certPem: string;
   certSha256: string;
   notBefore: number;
@@ -96,58 +97,64 @@ export interface Activation {
 }
 
 /**
- * Pending to active in one batch: the old active row becomes superseded, the identity points at the
- * pending key and certificate, the old key goes. Every statement requires the row to still be
- * pending, so a concurrent activation changes nothing.
+ * Pending to active in one batch, compare-and-swap on the identity's revision and credential. The
+ * old active row becomes superseded, the identity points at the pending key and certificate, and
+ * the credential it replaced is deleted. Returns false, with nothing changed, when the identity
+ * moved since it was read (a racing activation or upload). The identities triggers see the active
+ * row for this certificate and add no history of their own.
  */
-export async function activateCertificate(db: D1Database, a: Activation): Promise<void> {
-  const stillPending = `EXISTS (SELECT 1 FROM identity_certificates WHERE id = ?1 AND state = 'pending')`;
-  await batch(db, [
+export async function activateCertificate(db: D1Database, a: Activation): Promise<boolean> {
+  const identityUnchanged = `EXISTS (SELECT 1 FROM signing_identities WHERE id = ? AND revision = ? AND credential_id IS ?)`;
+  const identityParams = [a.identityId, a.expectedRevision, a.expectedCredentialId];
+  const results = await batch(db, [
     stmt(
       db,
-      `UPDATE identity_certificates SET state = 'superseded', ended_at = ?2
-       WHERE identity_id = ?3 AND state = 'active' AND ${stillPending}`,
-      [a.certId, a.now, a.identityId],
+      `UPDATE identity_certificates SET state = 'superseded', ended_at = ?
+       WHERE identity_id = ? AND state = 'active'
+         AND EXISTS (SELECT 1 FROM identity_certificates WHERE id = ? AND state = 'pending')
+         AND ${identityUnchanged}`,
+      [a.now, a.identityId, a.certId, ...identityParams],
+    ),
+    stmt(
+      db,
+      `UPDATE identity_certificates
+         SET state = 'active', cert_sha256 = ?, not_before = ?, not_after = ?, asc_certificate_id = ?, activated_at = ?
+       WHERE id = ? AND state = 'pending' AND ${identityUnchanged}`,
+      [
+        a.certSha256,
+        a.notBefore,
+        a.notAfter,
+        a.ascCertificateId,
+        a.now,
+        a.certId,
+        ...identityParams,
+      ],
     ),
     stmt(
       db,
       `UPDATE signing_identities
-         SET credential_id = ?2, cert_pem = ?3, cert_sha256 = ?4, not_before = ?5, not_after = ?6, apns_health = 'unknown'
-       WHERE id = ?7 AND ${stillPending}`,
+         SET credential_id = ?, cert_pem = ?, cert_sha256 = ?, not_before = ?, not_after = ?, apns_health = 'unknown'
+       WHERE id = ? AND revision = ? AND credential_id IS ?
+         AND EXISTS (SELECT 1 FROM identity_certificates WHERE id = ? AND state = 'active' AND cert_sha256 = ?)`,
       [
-        a.certId,
         a.pendingCredentialId,
         a.certPem,
         a.certSha256,
         a.notBefore,
         a.notAfter,
-        a.identityId,
+        ...identityParams,
+        a.certId,
+        a.certSha256,
       ],
     ),
-    // The identities trigger records every certificate change as an active row. This row is the
-    // richer record (origin, Apple id), so the trigger's duplicate goes.
     stmt(
       db,
-      `DELETE FROM identity_certificates WHERE identity_id = ?2 AND state = 'active' AND id != ?1 AND ${stillPending}`,
-      [a.certId, a.identityId],
-    ),
-    ...(a.oldCredentialId
-      ? [
-          stmt(db, `DELETE FROM credentials WHERE id = ?2 AND id != ?3 AND ${stillPending}`, [
-            a.certId,
-            a.oldCredentialId,
-            a.pendingCredentialId,
-          ]),
-        ]
-      : []),
-    stmt(
-      db,
-      `UPDATE identity_certificates
-         SET state = 'active', cert_sha256 = ?2, not_before = ?3, not_after = ?4, asc_certificate_id = ?5, activated_at = ?6
-       WHERE id = ?1 AND state = 'pending'`,
-      [a.certId, a.certSha256, a.notBefore, a.notAfter, a.ascCertificateId, a.now],
+      `DELETE FROM credentials WHERE id = ? AND id != ?
+         AND EXISTS (SELECT 1 FROM signing_identities WHERE id = ? AND credential_id = ?)`,
+      [a.expectedCredentialId, a.pendingCredentialId, a.identityId, a.pendingCredentialId],
     ),
   ]);
+  return results[2]?.meta.changes === 1;
 }
 
 /** Pending to failed; the unused key is deleted. */

@@ -98,11 +98,12 @@ export async function activatePendingCertificate(
     intermediatePem: intermediatePem(ctx.env),
     now,
   });
-  await activateCertificate(ctx.env.DB, {
+  const swapped = await activateCertificate(ctx.env.DB, {
     certId,
     identityId: row.id,
     pendingCredentialId: pending.credential_id,
-    oldCredentialId: row.credential_id,
+    expectedRevision: row.revision,
+    expectedCredentialId: row.credential_id,
     certPem: checked.certificatePem,
     certSha256: checked.details.sha256,
     notBefore: checked.details.notBefore,
@@ -110,6 +111,11 @@ export async function activatePendingCertificate(
     ascCertificateId: issued.ascCertificateId,
     now,
   });
+  if (!swapped)
+    throw new ConflictError(
+      'The identity changed while its certificate was being activated.',
+      'IDENTITY_CHANGED',
+    );
   clearIdentityKeyCache();
   ctx.log.info('identity.cert_activated', { identityId: row.id, certId });
   const { details } = checked;
