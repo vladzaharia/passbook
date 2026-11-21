@@ -100,5 +100,5 @@ test('a pass shows its channels that are off as locked tabs with why', async ({ 
   // The pass card's chain ends in This pass, and Use template drops its own choice.
   await page.getByRole('tab', { name: 'Holder' }).click();
   await expect(page.getByRole('list', { name: 'Chain' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Use template' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use template', exact: true })).toBeVisible();
 });

@@ -2,7 +2,11 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
+import {
+  type PassSetup,
+  PassSetupPatchSchema,
+  StageBrandAssetSchema,
+} from '@/shared/contracts/pass-setup.ts';
 import { newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { clearPreviewBatches } from '../../lib/preview-batch.ts';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
@@ -239,11 +243,14 @@ describe('quick setup', () => {
     // One staged save of the organization brand: the logo by its hash and the colours.
     expect(bodies.staged).toHaveLength(1);
     expect(bodies.patch).toHaveLength(1);
+    // Both bodies are what the server's own schemas accept.
+    expect(StageBrandAssetSchema.safeParse(bodies.staged[0]).success).toBe(true);
+    expect(PassSetupPatchSchema.safeParse(bodies.patch[0]).success).toBe(true);
     expect(bodies.patch[0]).toMatchObject({
       expectedRevision: 'r1',
       brand: {
         logo: { sha: 'c'.repeat(64) },
-        passColors: { background: 'rgb(170,51,17)', foreground: 'rgb(255,255,255)' },
+        passColors: { background: '#aa3311', foreground: '#ffffff' },
       },
     });
     // The template is the blueprint as it is: no logo, no colours, no opt-out.

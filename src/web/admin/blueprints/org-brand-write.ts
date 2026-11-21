@@ -1,6 +1,6 @@
 import { getPassSetup, patchPassSetup, stageBrandAsset } from '../brand/api.ts';
 import type { Rgb } from '../templates/designer/contrast.ts';
-import { toRgbText } from '../templates/designer/contrast.ts';
+import { toHex } from '../templates/designer/contrast.ts';
 import { textColors } from './quick-setup.ts';
 
 /**
@@ -24,9 +24,9 @@ export async function writeOrgBrand(
         ...(brand.color && colors
           ? {
               passColors: {
-                background: toRgbText(brand.color),
-                foreground: toRgbText(colors.foreground),
-                label: toRgbText(colors.label),
+                background: toHex(brand.color),
+                foreground: toHex(colors.foreground),
+                label: toHex(colors.label),
               },
             }
           : {}),
