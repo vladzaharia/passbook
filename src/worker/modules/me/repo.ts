@@ -60,7 +60,7 @@ const SELECT = `
   JOIN templates t ON t.id = p.template_id
   JOIN orgs o ON o.id = p.org_id`;
 
-const NO_PENDING_TRANSFER = `NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
+export const NO_PENDING_TRANSFER = `NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
   WHERE transfer.pass_id = p.id AND transfer.state = 'pending')`;
 
 export const listMyPasses = (db: Db, userId: string, cursor: string | undefined, limit: number) =>
@@ -171,75 +171,3 @@ export async function hasActiveMembership(db: Db, userId: string): Promise<boole
     ])) !== null
   );
 }
-
-// A pass already in someone's Wallet leaves the Add all bundle (re-adding stays per pass).
-const NOT_IN_WALLET = 'NOT EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id)';
-
-export interface BundleRow {
-  id: string;
-  org_id: string;
-  mode: 'live' | 'test';
-  template_id: string;
-  template_version: string;
-  object_key: string;
-  object_size: number | null;
-  version: number;
-  revision: number;
-  credential_generation: number;
-  lifecycle_generation: number;
-  link_generation: number;
-}
-
-const BUNDLE_WHERE = `p.owner_user_id = ? AND p.status = 'active' AND p.deleted_at IS NULL
-  AND p.removed_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
-  AND ${NOT_IN_WALLET}`;
-const ACTIVE_ORG = "JOIN orgs AS o ON o.id = p.org_id AND o.status = 'active'";
-
-/** Every pass Add all would bundle, newest first: the snapshot's ordered ids. */
-export const listBundleCandidates = (db: Db, userId: string) =>
-  all<Pick<BundleRow, 'id' | 'org_id' | 'mode' | 'template_id' | 'template_version'>>(
-    db,
-    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version
-     FROM passes AS p ${ACTIVE_ORG} WHERE ${BUNDLE_WHERE} ORDER BY p.id DESC`,
-    [userId],
-  );
-
-/** One part, by id range from the snapshot: a pass leaving the set never shifts its neighbours. */
-export const listBundlePasses = (
-  db: Db,
-  userId: string,
-  range: { first: string; after: string | null },
-  limit: number,
-) =>
-  all<BundleRow>(
-    db,
-    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version, p.object_key, p.object_size, p.version, p.revision,
-       p.credential_generation, p.lifecycle_generation, p.link_generation
-     FROM passes AS p ${ACTIVE_ORG}
-     WHERE ${BUNDLE_WHERE} AND p.id <= ? ${range.after === null ? '' : 'AND p.id > ?'}
-     ORDER BY p.id DESC LIMIT ?`,
-    [userId, range.first, ...(range.after === null ? [] : [range.after]), limit],
-  );
-
-/** Recheck each archive entry after its object read and before any bytes are emitted. */
-export const bundlePassIsCurrent = async (db: Db, userId: string, row: BundleRow) =>
-  (await first(
-    db,
-    `SELECT 1 FROM passes AS p ${ACTIVE_ORG} WHERE p.id = ? AND p.owner_user_id = ?
-    AND p.object_key = ? AND p.object_size IS ? AND p.version = ? AND p.revision = ?
-    AND p.credential_generation = ? AND p.lifecycle_generation = ? AND p.link_generation = ?
-    AND p.status = 'active' AND p.deleted_at IS NULL AND p.removed_at IS NULL
-    AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
-    AND ${NOT_IN_WALLET}`,
-    [
-      row.id,
-      userId,
-      row.object_key,
-      row.object_size,
-      row.version,
-      row.revision,
-      row.credential_generation,
-      row.lifecycle_generation,
-      row.link_generation,
-    ],
-  )) !== null;

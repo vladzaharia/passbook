@@ -27,7 +27,7 @@ export type MembershipLiveness =
 /**
  * How a pass holder proves itself, evaluated in SQL against the pass row at commit. The org and mode are the
  * pass row's own. `session`: the live session of the current owner (self-remove). `verified_email`: an active
- * user who verified the pass's holder email, for a pass with no owner (attach). `device`: the credential
+ * user who verified the pass's holder email, for a pass with no owner (attach), whatever the pass's state. `device`: the credential
  * snapshot the serial resolved to (Apple personalize).
  */
 export type HolderProof =
@@ -146,7 +146,8 @@ function holderProof(proof: HolderProof, now: number, b: Binds): string {
         WHERE s.id_hash = ${b.bind(proof.sessionIdHash)} AND s.user_id = p.owner_user_id AND u.status = 'active'
           AND s.revoked_at IS NULL AND s.expires_at > ${b.bind(now)} AND s.idle_expires_at > ${b.bind(now)})`;
     case 'verified_email':
-      return `p.owner_user_id IS NULL AND p.status = 'active' AND p.removed_at IS NULL
+      // Any state: a pass voided or removed before the first sign-in still lists, as ended.
+      return `p.owner_user_id IS NULL
         AND EXISTS (SELECT 1 FROM users u JOIN user_emails e ON e.user_id = u.id
           WHERE u.id = ${b.bind(proof.userId)} AND u.status = 'active' AND e.email = p.holder_email)
         AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks blk WHERE blk.pass_id = p.id AND blk.user_id = ${b.bind(proof.userId)})`;
