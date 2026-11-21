@@ -18,6 +18,8 @@ export interface WizardProps {
   current: number;
   /** A done step was clicked: go back to it (its state is kept by the caller). */
   onStep: (index: number) => void;
+  /** Ids of steps this run does not need: a dashed circle and a struck label; Next hops over them. */
+  skipped?: readonly string[];
   /** Live preview or summary: a stage right of the steps at 1024 and up, hidden below. */
   aside?: ReactNode;
   /** The stage's visible label and landmark name. */
@@ -50,7 +52,8 @@ export function Stepper({
   steps,
   current,
   onStep,
-}: Pick<WizardProps, 'steps' | 'current' | 'onStep'>) {
+  skipped = [],
+}: Pick<WizardProps, 'steps' | 'current' | 'onStep' | 'skipped'>) {
   const progress = steps.length > 1 ? current / (steps.length - 1) : 1;
   const step = steps[current];
   return (
@@ -83,7 +86,8 @@ export function Stepper({
           />
         </span>
         {steps.map((s, i) => {
-          const done = i < current;
+          const skip = skipped.includes(s.id) && i !== current;
+          const done = i < current && !skip;
           const here = i === current;
           const circle = (
             <span
@@ -92,14 +96,20 @@ export function Stepper({
                 done && 'wl-step-done border-accent bg-accent text-accent-on',
                 here && 'border-accent bg-surface-page text-accent-fg',
                 !done && !here && 'border-border-strong bg-surface-page text-fg-muted',
+                skip && 'border-dashed',
               )}
             >
-              {done ? <Tick draw className="size-3" /> : i + 1}
+              {done ? <Tick draw className="size-3" /> : skip ? '–' : i + 1}
             </span>
           );
           return (
             <li key={s.id} className="relative flex min-w-0 flex-col items-center gap-1.5">
-              {done ? (
+              {skip ? (
+                <span className="flex flex-col items-center gap-1.5" data-skipped="">
+                  {circle}
+                  <span className="text-xs text-fg-muted line-through">{s.title}</span>
+                </span>
+              ) : done ? (
                 <button
                   type="button"
                   onClick={() => onStep(i)}
@@ -195,6 +205,7 @@ export function Wizard({
   steps,
   current,
   onStep,
+  skipped,
   aside,
   asideLabel = 'Preview',
   children,
@@ -237,7 +248,7 @@ export function Wizard({
     : undefined;
   return (
     <div data-staged={staged || undefined} className="wl-wizard flex min-w-0 flex-col gap-6 pb-24">
-      <Stepper steps={steps} current={current} onStep={onStep} />
+      <Stepper steps={steps} current={current} onStep={onStep} skipped={skipped} />
       {body}
       {staged ? <WizardStage label={asideLabel}>{aside}</WizardStage> : null}
       <WizardBar {...bar} onNext={next} />

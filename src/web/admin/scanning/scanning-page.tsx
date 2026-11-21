@@ -1,5 +1,5 @@
-import { useNavigate } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Plus, WandSparkles } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { useMode } from '@/web/lib/mode.ts';
@@ -128,6 +128,14 @@ function ScopedScanningPage({
         New scanning session
       </Button>
     ) : null;
+  const setUp =
+    canManage && !noSessions ? (
+      <Button asChild iconStart={<WandSparkles aria-hidden />}>
+        <Link to="/admin/o/$orgId/scanning/setup" params={{ orgId }}>
+          Set up scanning
+        </Link>
+      </Button>
+    ) : null;
   const setTab = (next: string) =>
     void navigate({
       to: '.',
@@ -140,15 +148,18 @@ function ScopedScanningPage({
       <PageHeader
         title="Scanning"
         actions={
-          tab === 'sessions'
-            ? noSessions
-              ? undefined
-              : newSession('primary')
-            : tab === 'scanners'
-              ? noScanners
-                ? undefined
-                : newSession('primary')
-              : undefined
+          tab === 'sessions' ? (
+            noSessions ? undefined : (
+              <>
+                {setUp}
+                {newSession('outline')}
+              </>
+            )
+          ) : tab === 'scanners' ? (
+            noScanners ? undefined : (
+              newSession('primary')
+            )
+          ) : undefined
         }
       />
       <Tabs value={tab} onValueChange={setTab}>
