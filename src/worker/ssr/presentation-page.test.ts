@@ -32,15 +32,17 @@ describe('presentation page', () => {
     expect(renderPresentationPage({ ...props, theme: 'dark' })).toContain('data-theme="light"');
   });
 
-  it('offers the saved note, wake lock and its own manifest only on a saveable door view', () => {
+  it('offers the saved note and wake lock only on a saveable door view, with no token and no manifest', () => {
     const saveable = renderPresentationPage({ ...props, offline: true });
     expect(saveable).toContain('data-door-saved');
     expect(saveable).toContain('Works offline');
     expect(saveable).toContain('wakeLock');
-    expect(saveable).toContain('<link rel="manifest" href="/p/t/barcode/manifest.webmanifest">');
+    expect(saveable).not.toContain('manifest');
+    expect(saveable).not.toContain('/p/t');
+    expect(saveable).toContain('href="./"');
     const member = renderPresentationPage(props);
     expect(member).not.toContain('data-door-saved');
-    expect(member).not.toContain('rel="manifest"');
+    expect(member).toContain('href="/p/t"');
     expect(member).not.toMatch(/<script\b/);
   });
 

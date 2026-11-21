@@ -71,8 +71,6 @@ export const HOLDER_COPY = {
   homeStepMenu: 'the browser menu',
   homeStepChoose: 'Choose Add to Home screen',
   done: 'Done',
-  /** The door view's install button, only where the browser offers it. */
-  installDoor: 'Add to Home screen',
   connectToRefresh: 'Connect to refresh this pass.',
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */

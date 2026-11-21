@@ -44,7 +44,8 @@
       "!/pass-tilt.js",
       "!/robots.txt",
       "!/templates/*",
-      "!/theme-init.js"
+      "!/theme-init.js",
+      "!/zod-jitless.js"
     ]
   },
 

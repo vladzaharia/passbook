@@ -165,11 +165,8 @@ async function presentationHtml(res: Response, secrets: string[]): Promise<strin
   // The pass title can be a holder's name: the tab, the link preview and the manifest stay neutral.
   expect(html).toContain('<title>Barcode · ');
   expect(html).toContain('<meta property="og:title" content="Barcode">');
-  // Only a bearer door view links a manifest, and it is that page's own, never the app's.
-  const manifests = html.match(/<link rel="manifest" href="([^"]+)">/g) ?? [];
-  expect(manifests.length).toBe(html.includes('data-door-saved') ? 1 : 0);
-  for (const m of manifests)
-    expect(m).toMatch(/href="\/p\/[\w-]+\/barcode\/manifest\.webmanifest"/);
+  // No page links a manifest: a shortcut opens the saved door view in the browser, not as an app.
+  expect(html.match(/rel=["']?manifest/gi) ?? []).toEqual([]);
   return html;
 }
 
@@ -580,7 +577,12 @@ describe('presentation barcode', () => {
     for (const path of ['/p/short/barcode', `/p/${'z'.repeat(43)}/barcode`, oldPath]) {
       const res = await publicGet(path);
       expect(res.status).toBe(404);
-      expect(await res.clone().text()).not.toMatch(/<script\b/i);
+      // Only the nonced drop script (static; it names no token), never anything else.
+      expect(
+        ((await res.clone().text()).match(/<script\b[^>]*>/gi) ?? []).filter(
+          (t) => !/^<script nonce="[^"]+">$/.test(t),
+        ),
+      ).toEqual([]);
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
     const html = await presentationHtml(
@@ -636,42 +638,45 @@ describe('presentation barcode', () => {
     expect(owner).not.toMatch(/<script\b/);
   });
 
-  it('serves a door-view manifest scoped to that one page, naming the org and never the pass or its code', async () => {
-    const pass = await passWith({ json: primaryJson });
-    const door = await publicPath(pass);
-    const res = await publicGet(`${door}/manifest.webmanifest`);
-    expect(res.status).toBe(200);
-    expect(res.headers.get('content-type')).toContain('application/manifest+json');
-    expect(res.headers.get('cache-control')).toContain('no-store');
-    const text = await res.text();
-    const manifest = JSON.parse(text);
-    expect(manifest).toMatchObject({
-      name: 'Cedar Gate',
-      start_url: door,
-      scope: door,
-      id: door,
-      display: 'standalone',
+  it('sends the pass expiry as a header and keeps the token out of the saved page', async () => {
+    const pass = await passWith({
+      json: { ...primaryJson, expirationDate: '2099-01-01T00:00:00Z' },
     });
-    expect(manifest.icons[0].src).toBe(`${door.replace('/barcode', '')}/assets/icon@3x.png`);
-    for (const secret of [PRIMARY, SECONDARY, LEGACY, SCAN_CODE, ALT_TEXT]) {
-      expect(text).not.toContain(secret);
-    }
-    const page = await (await publicGet(door)).text();
-    expect(page).toContain(`<link rel="manifest" href="${door}/manifest.webmanifest">`);
+    const door = await publicPath(pass);
+    const token = door.split('/')[2] as string;
+    const res = await publicGet(door);
+    expect(res.headers.get('x-pass-expires-at')).toBe(String(Date.parse('2099-01-01T00:00:00Z')));
+    const html = await res.text();
+    expect(html).not.toContain(token);
+    expect(html).not.toContain('data-expires');
+    expect(html).toContain('href="./"');
+    // The way back lands on the pass page.
+    const back = await publicGet(`/p/${token}/`);
+    expect(back.status).toBe(308);
+    expect(back.headers.get('location')).toBe(`/p/${token}`);
+    expect((await publicGet('/p/short/')).status).toBe(404);
   });
 
-  it('refuses the door-view manifest for malformed, unknown and rotated links and ended passes', async () => {
+  it('has no door-view manifest', async () => {
+    const pass = await passWith({ json: primaryJson });
+    const res = await publicGet(`${await publicPath(pass)}/manifest.webmanifest`);
+    expect(res.headers.get('content-type') ?? '').not.toContain('manifest');
+  });
+
+  it('drops the saved copy from the 404 page of a retired pass or door link, with no token in it', async () => {
     const pass = await passWith({ json: primaryJson });
     const old = await publicPath(pass);
     await rotateLink(ctx, { type: 'user', id: user.id }, pass.id, null);
-    for (const path of [
-      '/p/short/barcode/manifest.webmanifest',
-      `/p/${'z'.repeat(43)}/barcode/manifest.webmanifest`,
-      `${old}/manifest.webmanifest`,
-    ]) {
+    for (const path of [old, old.replace('/barcode', '')]) {
       const res = await publicGet(path);
       expect(res.status).toBe(404);
-      expect(res.headers.get('content-type') ?? '').not.toContain('manifest');
+      const html = await res.text();
+      const nonce = /script-src 'self' 'nonce-([^']+)'/.exec(
+        res.headers.get('content-security-policy') ?? '',
+      )?.[1];
+      expect(html).toContain(`<script nonce="${nonce}">`);
+      expect(html).toContain("caches.delete('barcode:'");
+      expect(html).not.toContain(old.split('/')[2] as string);
     }
   });
 
@@ -682,17 +687,6 @@ describe('presentation barcode', () => {
       expect(res.headers.get('content-type')).toContain('text/javascript');
       expect(await res.text()).not.toMatch(/[A-Za-z0-9_-]{43}/);
     }
-  });
-
-  it("hands the saved copy the pass's own expiry", async () => {
-    const pass = await passWith({
-      json: { ...primaryJson, expirationDate: '2099-01-01T00:00:00Z' },
-    });
-    expect((await presentationForPass(ctx, pass)).expiresAt).toBe(
-      Date.parse('2099-01-01T00:00:00Z'),
-    );
-    const html = await (await publicGet(await publicPath(pass))).text();
-    expect(html).toContain(`data-expires="${Date.parse('2099-01-01T00:00:00Z')}"`);
   });
 
   it('serves the barcode page worker from /p/sw.js, which no token can reach', async () => {

@@ -1,7 +1,6 @@
 import { Check, MoreVertical, ScanLine, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
-import { PASS_SAVE_PATH } from '../../shared/pass-offline.ts';
 import type { RenderBuddy } from './add/scan.tsx';
 import './save-phone.css';
 
@@ -105,37 +104,13 @@ export function SaveSheet() {
   );
 }
 
-interface ScriptEl {
-  src: string;
-  addEventListener(type: 'load', fn: () => void): void;
-}
-/** The browser's parts this file touches; the worker project has no DOM types. */
-interface Browser {
-  PassSave?: { mount: (root: unknown) => void };
-  document: {
-    querySelector(selector: string): ScriptEl | null;
-    createElement(tag: 'script'): ScriptEl;
-    head: { append(el: ScriptEl): void };
-  };
-}
-
-/** In the app, loads the shared script once and wires the page; /p includes it in its head. */
+/** save.js is a static script of the app's page (index.html); this wires the page it is on. */
 export function SaveMount({ door }: { door: string | null }) {
   useEffect(() => {
     if (!door) return;
-    const w = globalThis as unknown as Browser;
-    if (w.PassSave) {
-      w.PassSave.mount(w.document);
-      return;
-    }
-    let script = w.document.querySelector(`script[src="${PASS_SAVE_PATH}"]`);
-    if (!script) {
-      script = w.document.createElement('script');
-      script.src = PASS_SAVE_PATH;
-      w.document.head.append(script);
-    }
-    // The script mounts the page itself when it runs, and again here for a page that arrived after.
-    script.addEventListener('load', () => w.PassSave?.mount(w.document));
+    const saver = (globalThis as unknown as { PassSave?: { mount: (root: unknown) => void } })
+      .PassSave;
+    saver?.mount((globalThis as unknown as { document: unknown }).document);
   }, [door]);
   return null;
 }

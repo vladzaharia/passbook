@@ -72,18 +72,16 @@ export function renderPresentationPage(props: PresentationPageProps): string {
     <PresentationCode barcode={props.barcode} orgName={props.orgName} />,
   );
   const saveable = Boolean(props.offline && props.barcode);
-  const back = actionHtml({ label: HOLDER_COPY.backToPass, href: props.backHref, icon: ArrowLeft });
-  // The expiry rides in the page so the worker can refuse a saved copy past it.
-  const expires = saveable && props.expiresAt ? ` data-expires="${props.expiresAt}"` : '';
-  const foot = `<div class="door-foot"${expires}>${
-    saveable
-      ? `<p data-door-saved hidden>${escapeHtml(HOLDER_COPY.worksOffline)}</p><button type="button" class="btn outline" data-door-install hidden>${escapeHtml(HOLDER_COPY.installDoor)}</button>`
-      : ''
+  // A saved page keeps no token in its HTML: the way back is relative (/p/<token>/barcode -> /p/<token>/).
+  const back = actionHtml({
+    label: HOLDER_COPY.backToPass,
+    href: saveable ? './' : props.backHref,
+    icon: ArrowLeft,
+  });
+  const foot = `<div class="door-foot">${
+    saveable ? `<p data-door-saved hidden>${escapeHtml(HOLDER_COPY.worksOffline)}</p>` : ''
   }${back}</div>`;
   const logo = props.brand?.logo ? `<div class="brand">${orgLogoHtml(props.brand)}</div>` : '';
   const head = `<div class="door-head">${logo}<h1>${escapeHtml(props.passTitle)}</h1><p>${escapeHtml(props.orgName)}</p></div>`;
-  const manifest = saveable
-    ? `<link rel="manifest" href="${escapeHtml(props.backHref)}/barcode/manifest.webmanifest">`
-    : '';
-  return `${documentStart('light')}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><meta property="og:title" content="${escapeHtml(HOLDER_COPY.barcodeTitle)}"><meta name="apple-mobile-web-app-title" content="${escapeHtml(props.orgName || 'Pass')}">${manifest}<title>${escapeHtml(HOLDER_COPY.barcodeTitle)} · ${escapeHtml(props.brand?.name || props.orgName || 'PassBook')}</title><style nonce="${props.nonce}">${THEME_CSS}${props.brand ? `${ORG_SHELL_CSS}\n${brandCss(props.brand)}` : ''}${CSS}</style></head><body><main class="door">${ribbon}${head}${code}${foot}${orgMarkHtml(props.brand)}</main>${saveable ? `<script nonce="${props.nonce}">${DOOR_SCRIPT}</script>` : ''}</body></html>`;
+  return `${documentStart('light')}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer"><meta property="og:title" content="${escapeHtml(HOLDER_COPY.barcodeTitle)}"><meta name="apple-mobile-web-app-title" content="${escapeHtml(props.orgName || 'Pass')}"><title>${escapeHtml(HOLDER_COPY.barcodeTitle)} · ${escapeHtml(props.brand?.name || props.orgName || 'PassBook')}</title><style nonce="${props.nonce}">${THEME_CSS}${props.brand ? `${ORG_SHELL_CSS}\n${brandCss(props.brand)}` : ''}${CSS}</style></head><body><main class="door">${ribbon}${head}${code}${foot}${orgMarkHtml(props.brand)}</main>${saveable ? `<script nonce="${props.nonce}">${DOOR_SCRIPT}</script>` : ''}</body></html>`;
 }

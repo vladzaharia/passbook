@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DOOR_SCRIPT, PASS_SAVE_SOURCE, PASS_SW_SOURCE, SAVED_MAX_DAYS } from './pass-offline.ts';
+import {
+  DOOR_SCRIPT,
+  DROP_SCRIPT,
+  PASS_SAVE_SOURCE,
+  PASS_SW_SOURCE,
+  SAVED_MAX_DAYS,
+} from './pass-offline.ts';
 
 const ORIGIN = 'https://wallet.test';
 const TOKEN = 'abcdefghijklmnop0123';
@@ -27,6 +33,7 @@ function fakeCaches() {
   return {
     stores,
     has: async (name: string) => stores.has(name),
+    keys: async () => [...stores.keys()],
     delete: async (name: string) => stores.delete(name),
     open: async (name: string) => ({
       put: async (key: string, res: Response) => {
@@ -125,7 +132,7 @@ describe('the barcode page worker', () => {
     let online = true;
     const w = loadWorker(caches, async () => {
       if (!online) throw new TypeError('offline');
-      return page('fresh<div data-expires="1999999999999">');
+      return page('fresh', 200, { 'x-pass-expires-at': '1999999999999' });
     });
     expect(await (await w.request(URL_))?.text()).toContain('fresh');
     online = false;
@@ -163,7 +170,7 @@ describe('the barcode page worker', () => {
     expect(w.self.registration.unregister).toHaveBeenCalledOnce();
   });
 
-  it('refuses a copy past the pass expiry or 30 days, and deletes it', async () => {
+  it('refuses a copy past the pass expiry or 7 days, and deletes it', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     const now = Date.now();
     for (const [at, expires] of [
@@ -177,6 +184,10 @@ describe('the barcode page worker', () => {
       });
       const res = await w.request(URL_);
       expect(res?.status).toBe(503);
+      expect(res?.headers.get('content-security-policy')).toBe(
+        "default-src 'none'; frame-ancestors 'none'",
+      );
+      expect(res?.headers.get('x-content-type-options')).toBe('nosniff');
       expect(await res?.text()).toContain('Connect to refresh this pass.');
       expect(caches.stores.size).toBe(0);
       expect(w.self.registration.unregister).toHaveBeenCalledOnce();
@@ -191,7 +202,15 @@ type Handler = (e: unknown) => Promise<void>;
 async function loadPage(
   caches: Caches,
   fetchImpl: () => Promise<Response>,
-  opts: { ready?: Promise<void>; href?: string; ended?: boolean; workers?: boolean } = {},
+  opts: {
+    ready?: Promise<void>;
+    href?: string;
+    ended?: boolean;
+    workers?: boolean;
+    tt?: unknown;
+    win?: Record<string, unknown>;
+    regs?: { scope: string; unregister: () => Promise<boolean> }[];
+  } = {},
 ) {
   const attrs: Attrs = {};
   const handlers: Record<string, Handler> = {};
@@ -231,9 +250,11 @@ async function loadPage(
   const sw = {
     register: vi.fn(async () => reg),
     getRegistration: vi.fn(async () => reg),
+    getRegistrations: vi.fn(async () => opts.regs ?? []),
   };
   const globals: Record<string, unknown> = {};
-  const win = { crypto, caches, PassSave: undefined as unknown };
+  const win = opts.win ?? ({ crypto, caches, PassSave: undefined } as Record<string, unknown>);
+  if (opts.tt) win.trustedTypes = opts.tt;
   const doc = {
     readyState: 'complete',
     addEventListener: () => {},
@@ -266,13 +287,15 @@ async function loadPage(
     const target = { closest: () => ({ hasAttribute: (k: string) => k === control }) };
     await handlers.click?.({ target, preventDefault: () => {} });
   };
-  return { host, reg, sw, press, state: () => attrs['data-save'] };
+  return { host, reg, sw, press, win, state: () => attrs['data-save'] };
 }
 
 describe('the save controls', () => {
   it('saves only the door view, scoped to its own path, then removes it', async () => {
     const caches = fakeCaches();
-    const p = await loadPage(caches, async () => page('the page <i data-expires="4102444800000">'));
+    const p = await loadPage(caches, async () =>
+      page('the page', 200, { 'x-pass-expires-at': '4102444800000' }),
+    );
     expect(p.host.attrs['data-save-ready']).toBe('');
     await p.press('data-save-do');
     expect(p.sw.register).toHaveBeenCalledWith('/p/sw.js', { scope: PATH });
@@ -339,6 +362,70 @@ describe('the save controls', () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(caches.stores.size).toBe(0);
     expect(p.reg.unregister).toHaveBeenCalled();
+  });
+});
+
+describe('save.js hardening', () => {
+  it('registers the worker through a passbook-save policy that admits only /p/sw.js', async () => {
+    const rules: { createScriptURL?: (u: string) => string } = {};
+    const tt = {
+      createPolicy: vi.fn((_n: string, r: typeof rules) => {
+        Object.assign(rules, r);
+        return { createScriptURL: (u: string) => r.createScriptURL?.(u) };
+      }),
+    };
+    const p = await loadPage(fakeCaches(), async () => page('x'), { tt });
+    await p.press('data-save-do');
+    await p.press('data-save-drop');
+    await p.press('data-save-do');
+    expect(tt.createPolicy).toHaveBeenCalledOnce();
+    expect(tt.createPolicy.mock.calls[0]?.[0]).toBe('passbook-save');
+    expect(p.sw.register).toHaveBeenCalledWith('/p/sw.js', { scope: PATH });
+    expect(() => rules.createScriptURL?.('/evil.js')).toThrow(TypeError);
+  });
+
+  it('is safe to load twice', async () => {
+    const first = await loadPage(fakeCaches(), vi.fn());
+    const again = await loadPage(fakeCaches(), vi.fn(), { win: first.win });
+    expect(again.host.attrs['data-save-ready']).toBeUndefined();
+    expect(first.win.PassSave).toBeDefined();
+  });
+
+  it('clears every saved copy and every door worker on sign-out', async () => {
+    const caches = fakeCaches();
+    await seed(caches);
+    await (await caches.open('other')).put('k', page('keep'));
+    const mine = { scope: `${ORIGIN}${PATH}`, unregister: vi.fn(async () => true) };
+    const foreign = { scope: `${ORIGIN}/scan/`, unregister: vi.fn(async () => true) };
+    const p = await loadPage(caches, vi.fn(), { regs: [mine, foreign] });
+    await (p.win.PassSave as { clearAll(): Promise<void> }).clearAll();
+    expect([...caches.stores.keys()]).toEqual(['other']);
+    expect(mine.unregister).toHaveBeenCalled();
+    expect(foreign.unregister).not.toHaveBeenCalled();
+  });
+});
+
+describe('the retired-link drop script', () => {
+  it("deletes that token's copy and its worker, and only on a pass or door path", async () => {
+    for (const [pathname, expected] of [
+      [PATH, true],
+      [`/p/${TOKEN}`, true],
+      ['/p/short', false],
+    ] as const) {
+      const caches = fakeCaches();
+      await seed(caches);
+      const reg = { unregister: vi.fn(async () => true) };
+      new Function('navigator', 'caches', 'location', 'crypto', 'window', DROP_SCRIPT)(
+        { serviceWorker: { getRegistration: async () => reg } },
+        caches,
+        { pathname },
+        crypto,
+        { crypto, caches },
+      );
+      await new Promise((r) => setTimeout(r, 20));
+      expect(caches.stores.size).toBe(expected ? 0 : 1);
+      expect(reg.unregister).toHaveBeenCalledTimes(expected ? 1 : 0);
+    }
   });
 });
 

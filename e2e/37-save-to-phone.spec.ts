@@ -57,16 +57,21 @@ test('save to this phone: save, sheet, door view offline, remove', async ({ brow
     await expect(page.getByRole('button', { name: 'Remove from this phone' })).toBeVisible();
     await shoot(page, 'pass-saved', theme);
 
-    // One cache, named by a hash: the token string is nowhere in Cache Storage or its keys.
+    // One cache: the token string is nowhere in Cache Storage, in a name, a key or a saved body.
     const stored = await page.evaluate(async () => {
       const out: string[] = [];
       for (const name of await caches.keys()) {
         out.push(name);
-        for (const req of await (await caches.open(name)).keys()) out.push(req.url);
+        const cache = await caches.open(name);
+        for (const req of await cache.keys()) {
+          out.push(req.url);
+          out.push((await (await cache.match(req))?.text()) ?? '');
+          out.push([...((await cache.match(req))?.headers.entries() ?? [])].join(' '));
+        }
       }
       return out;
     });
-    expect(stored.length).toBe(2);
+    expect(stored.length).toBe(4);
     for (const s of stored) expect(s).not.toContain(token);
     const regs = await page.evaluate(async () =>
       (await navigator.serviceWorker.getRegistrations()).map((r) => new URL(r.scope).pathname),
@@ -80,11 +85,9 @@ test('save to this phone: save, sheet, door view offline, remove', async ({ brow
     expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
       'rgb(255, 255, 255)',
     );
-    const manifest = await page.locator('link[rel=manifest]').getAttribute('href');
-    expect(manifest).toBe(`${pagePath}/barcode/manifest.webmanifest`);
-    const m = await (await page.request.get(manifest as string)).json();
-    expect(m.scope).toBe(`${pagePath}/barcode`);
-    expect(m.start_url).toBe(`${pagePath}/barcode`);
+    // No manifest: the shortcut opens the saved door view in the browser.
+    await expect(page.locator('link[rel=manifest]')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Back to pass' })).toHaveAttribute('href', './');
     await shoot(page, 'door', theme);
 
     // The worker answers the door view with no network.

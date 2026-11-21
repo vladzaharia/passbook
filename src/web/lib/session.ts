@@ -8,6 +8,7 @@ import { clearLocalDrafts } from './local-drafts.ts';
 import { setTestOnlyOrgs } from './mode.ts';
 import { clearPreviewBatches } from './preview-batch.ts';
 import { loginHref } from './redirect.ts';
+import { clearSavedPasses } from './saved-passes.ts';
 
 export type AuthedSession = Extract<SessionResponse, { authenticated: true }>;
 
@@ -242,5 +243,7 @@ export function leaveSignedOut(target: string, next?: string): void {
 }
 
 export async function signOut(csrfToken?: string, options: SignOutOptions = {}): Promise<void> {
-  leaveSignedOut(await endSession(csrfToken, options), options.next);
+  const target = await endSession(csrfToken, options);
+  await clearSavedPasses();
+  leaveSignedOut(target, options.next);
 }

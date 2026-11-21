@@ -13,7 +13,7 @@ import type {
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { type DeviceInfo, MAC_REVEAL_SCRIPT } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
-import { PASS_SAVE_PATH } from '../../shared/pass-offline.ts';
+import { DROP_SCRIPT, PASS_SAVE_PATH } from '../../shared/pass-offline.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import cardBase from '../../web/pass-card/pass-card-base.css?raw';
@@ -31,6 +31,7 @@ import holderPassCss from '../../web/portal/holder-pass.css?raw';
 import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
 import { PassDetails } from '../../web/portal/pass-details.tsx';
 import savePhoneCss from '../../web/portal/save-phone.css?raw';
+import { doorPathOf } from '../../web/portal/save-phone.tsx';
 import artBase from '../../web/ui/art/art.css?raw';
 import artWallet from '../../web/ui/art/art-wallet.css?raw';
 import common from '../../web/ui/art/scenes/common.css?raw';
@@ -202,7 +203,7 @@ export function renderPassPage(props: PassPageProps): string {
   const title = headingOf(props).title;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
   // Save to this phone and dropping a copy once the pass ended; both are no-ops without a host.
-  const save = props.barcodeHref ? `<script src="${PASS_SAVE_PATH}" defer></script>` : '';
+  const save = doorPathOf(props.publicUrl) ? `<script src="${PASS_SAVE_PATH}" defer></script>` : '';
   // A Mac agent may be an iPad: the Mac's badge shows only once the browser says it is a Mac.
   const mac =
     props.device.device === 'mac'
@@ -235,7 +236,11 @@ const DEAD_LINK_ACTION: PageAction = {
 export function renderNotFoundPage(
   nonce: string,
   theme?: PageTheme,
-  { what = 'pass', replay = true }: { what?: 'pass' | 'bundle'; replay?: boolean } = {},
+  {
+    what = 'pass',
+    replay = true,
+    drop = false,
+  }: { what?: 'pass' | 'bundle'; replay?: boolean; drop?: boolean } = {},
 ): string {
   return hostedPage({
     nonce,
@@ -245,5 +250,7 @@ export function renderNotFoundPage(
     lede: escapeHtml(HOLDER_COPY.deadLinkLine),
     body: actionHtml(DEAD_LINK_ACTION),
     replay,
+    // A retired /p link also retires this phone's saved copy of it (DROP_SCRIPT).
+    ...(drop ? { after: `<script nonce="${nonce}">${DROP_SCRIPT}</script>` } : {}),
   });
 }

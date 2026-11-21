@@ -112,6 +112,7 @@ export async function runIdentityProvision(
       await viaApple('issue', (rpc) => issue(ctx, rpc, runId));
       await guarded('validate', () => stepValidate(ctx, runId));
       await guarded('activate', () => stepActivate(ctx, runId));
+      await viaApple('report', (rpc) => reportActive(ctx, rpc, runId));
       if (start.kind === 'provision') await guarded('default', () => stepDefault(ctx, runId));
       await guarded('post-check', () => postCheck(ctx, runId));
     }
@@ -162,6 +163,12 @@ async function issue(ctx: ServiceContext, rpc: AppleRpc, runId: string): Promise
   const cert =
     adopted ?? (await rpc.createCertificate(input.ascPassTypeId, input.csrDer, input.nfc, runId));
   await recordIssued(ctx, runId, cert);
+}
+
+/** Tells the provisioner the new certificate is live: until then it refuses to revoke (it fails closed). Safe to repeat. */
+async function reportActive(ctx: ServiceContext, rpc: AppleRpc, runId: string): Promise<void> {
+  const { ref } = await beginStep(ctx, runId, 'report');
+  if (ref.ascCertificateId) await rpc.reportCertificateActive(ref.ascCertificateId, runId);
 }
 
 export class IdentityProvision extends WorkflowEntrypoint<AppEnv, IdentityProvisionParams> {

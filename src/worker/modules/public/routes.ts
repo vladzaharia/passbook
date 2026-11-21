@@ -1,6 +1,7 @@
 import { PublicAssetParamSchema, PublicTokenParamSchema } from '../../../shared/contracts/index.ts';
 import { passDevice } from '../../../shared/device.ts';
 import { formatEndedOn } from '../../../shared/format-date.ts';
+import { EXPIRES_HEADER } from '../../../shared/pass-offline.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
 import { writeEvent } from '../../platform/analytics.ts';
@@ -27,7 +28,6 @@ import { holderPrintRoutes } from '../prints/routes-holder.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
-import { doorManifestRoutes } from './routes-door-manifest.ts';
 import { holderMailProps, resendRoutes } from './routes-resend.ts';
 import { signInRoutes } from './routes-signin.ts';
 import { swRoutes } from './routes-sw.ts';
@@ -56,8 +56,12 @@ publicRoutes.use('/:token', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/pass.pkpass', rateLimit('RL_PUBLIC'));
 publicRoutes.use('/:token/barcode', rateLimit('RL_PUBLIC'));
 
+// The saved door view's relative "back" link (./) lands here: its HTML carries no token.
+publicRoutes.get('/:token/', (c) => {
+  const token = c.req.param('token');
+  return isTokenShape(token) ? c.redirect(`/p/${token}`, 308) : c.text('Not found', 404);
+});
 publicRoutes.route('/', resendRoutes);
-publicRoutes.route('/', doorManifestRoutes);
 publicRoutes.route('/', signInRoutes);
 publicRoutes.route('/', holderPrintRoutes);
 
@@ -191,7 +195,7 @@ register(
       return new Response(html, { headers: PAGE_HEADERS });
     } catch (error) {
       if (error instanceof AppError && error.status === 404)
-        return new Response(renderNotFoundPage(c.var.nonce, theme), {
+        return new Response(renderNotFoundPage(c.var.nonce, theme, { drop: true }), {
           status: 404,
           headers: PAGE_HEADERS,
         });
@@ -226,10 +230,16 @@ register(
       });
       await assertPassSnapshot(ctx, snapshot);
       ctx.waitUntil(recordCopy(ctx, pass, 'mobile'));
-      return new Response(html, { headers: PRESENTATION_HEADERS });
+      return new Response(html, {
+        headers: {
+          ...PRESENTATION_HEADERS,
+          // The saved copy reads the pass's expiry from here, not from the page.
+          ...(model.expiresAt ? { [EXPIRES_HEADER]: String(model.expiresAt) } : {}),
+        },
+      });
     } catch (error) {
       if (error instanceof AppError && error.status === 404) {
-        return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false }), {
+        return new Response(renderNotFoundPage(c.var.nonce, theme, { replay: false, drop: true }), {
           status: 404,
           headers: PRESENTATION_HEADERS,
         });
