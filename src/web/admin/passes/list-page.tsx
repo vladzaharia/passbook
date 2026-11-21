@@ -20,8 +20,11 @@ import {
 import { useTemplates } from '../templates/api.ts';
 import { usePassList } from './api.ts';
 import { downloadText, toCsv } from './csv.ts';
+import { allChips, chipFilter, toPassFilter } from './find-query.ts';
+import { SelectAllBanner } from './find-select.tsx';
+import { PassFindToolbar } from './find-toolbar.tsx';
 import { PassListContext, passColumns } from './list-columns.tsx';
-import { CLEARED, type ListSearch, PassListFilters } from './list-filters.tsx';
+import { CLEARED, type ListSearch } from './list-filters.tsx';
 import { SelectionBar } from './selection-bar.tsx';
 import './passes.css';
 
@@ -50,7 +53,8 @@ export function PassesListPage({
       scope.membership?.capabilities.includes('passes:operate'),
   );
   const mode = useMode();
-  const list = usePassList({ ...search, orgId });
+  const chips = useMemo(() => allChips(search), [search]);
+  const list = usePassList({ ...search, ...chipFilter(chips), orgId });
   const templates = useTemplates({ orgId });
   const orgs = useOrgOptions(!orgId);
   const rows = useMemo(
@@ -62,12 +66,17 @@ export function PassesListPage({
     [canRead, list.data, orgId],
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [allMatching, setAllMatching] = useState(false);
+  const count = list.data?.pages[0]?.count ?? rows.length;
   const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
   const truth = !list.isPending && !filtered && rows.length === 0;
 
   // A new filter, scope or mode is a new list: the selection does not carry over.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on the query key only
-  useEffect(() => setSelected(new Set()), [orgId, mode, JSON.stringify(search)]);
+  useEffect(() => {
+    setSelected(new Set());
+    setAllMatching(false);
+  }, [orgId, mode, JSON.stringify(search)]);
 
   const templateNames = useMemo(
     () => new Map((templates.data?.items ?? []).map((t) => [t.id, t.name])),
@@ -99,10 +108,10 @@ export function PassesListPage({
     [],
   );
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
-  const toggleAll = useCallback(
-    () => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id))),
-    [allSelected, rows],
-  );
+  const toggleAll = useCallback(() => {
+    setAllMatching(false);
+    setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)));
+  }, [allSelected, rows]);
 
   const bundleOrgId = useMemo(() => {
     const orgs = new Set(rows.filter((r) => selected.has(r.id)).map((r) => r.orgId));
@@ -174,7 +183,7 @@ export function PassesListPage({
   );
 
   return (
-    <div className={selected.size > 0 ? 'pb-20' : undefined}>
+    <div className={selected.size > 0 || allMatching ? 'pb-20' : undefined}>
       <PageHeader title="Passes" actions={canOperate && !truth ? create('primary') : undefined} />
       <PassListContext.Provider value={context}>
         {list.isError ? (
@@ -190,12 +199,27 @@ export function PassesListPage({
             virtualHeight={rows.length > VIRTUALIZE_ABOVE ? 640 : undefined}
             filtered={filtered}
             toolbar={
-              <PassListFilters
-                search={search}
-                orgId={orgId}
-                templates={templates.data?.items ?? []}
-                onChange={onSearch}
-              />
+              <>
+                <PassFindToolbar
+                  search={search}
+                  orgId={orgId}
+                  templates={templates.data?.items ?? []}
+                  canOperate={canOperate}
+                  onChange={onSearch}
+                />
+                {canOperate && allSelected ? (
+                  <SelectAllBanner
+                    count={count}
+                    shown={rows.length}
+                    all={allMatching}
+                    onAll={() => setAllMatching(true)}
+                    onClear={() => {
+                      setAllMatching(false);
+                      setSelected(new Set());
+                    }}
+                  />
+                ) : null}
+              </>
             }
             empty={
               <EmptyState
@@ -227,8 +251,12 @@ export function PassesListPage({
         orgId={orgId}
         canOperate={canOperate}
         bundleOrgId={bundleOrgId}
-        onClear={() => setSelected(new Set())}
+        onClear={() => {
+          setAllMatching(false);
+          setSelected(new Set());
+        }}
         onExport={exportCsv}
+        all={allMatching ? { filter: toPassFilter({ ...search, chips }), count } : undefined}
       />
     </div>
   );

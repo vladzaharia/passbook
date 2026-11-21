@@ -8,9 +8,11 @@ import {
 } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { AuditListSchema } from '@/shared/contracts/audit.ts';
+import type { PassMatch } from '@/shared/contracts/broadcasts.ts';
 import { OkSchema } from '@/shared/contracts/common.ts';
 import { HolderSchema } from '@/shared/contracts/holders.ts';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
+import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
 import {
   BulkPassActionResponseSchema,
   PassActionResponseSchema,
@@ -41,6 +43,8 @@ export interface PassFilters {
   onDevice?: 'true' | 'false' | undefined;
   /** No completed scan in this many days. */
   noScanDays?: 30 | 90 | undefined;
+  /** Query-bar chips on inputs. */
+  match?: PassMatch | undefined;
 }
 
 /** Body of PUT /passes/{id}/connection; null ids unbind. */
@@ -103,11 +107,13 @@ export function usePassList(filters: PassFilters) {
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) => {
       if (!allowed || !scope.orgId) throw new Error('Choose an authorized organization.');
-      const { noScanDays, ...rest } = filters;
+      const { noScanDays, match, ...rest } = filters;
       return api.get('/api/v1/passes', PassListSchema, {
         query: {
           ...rest,
           ...(noScanDays ? { scan: JSON.stringify({ noScanDays }) } : {}),
+          ...(match ? { match: JSON.stringify(match) } : {}),
+          ...(pageParam ? {} : { count: true }),
           orgId: scope.orgId,
           cursor: pageParam,
           limit: 50,
@@ -130,7 +136,9 @@ export function useBulkPassAction() {
   return useMutation({
     mutationFn: (body: {
       action: 'void' | 'send_email' | 'remove';
-      ids: string[];
+      /** Either the ids, or the filter and the count the admin saw (all matching). */
+      ids?: string[];
+      selection?: { filter: PassFilter; expectCount: number };
       message?: string;
       orgId?: string;
       /** One key per intent: a retry of the same selection cannot email twice. */
