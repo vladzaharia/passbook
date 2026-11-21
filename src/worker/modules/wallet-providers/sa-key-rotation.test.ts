@@ -1,12 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { all, first, run as sql } from '../../platform/db.ts';
+import { saveOrgCredential } from './credential-service.ts';
 import { readGoogleSecret, saveSystemCredential } from './credential-system-save.ts';
 import { setManagedDeps } from './google-managed-deps.ts';
 import { type ManagedKit, managedKit } from './google-managed-kit-fixtures.ts';
 import { keyNameOf } from './google-managed-test-fixtures.ts';
 import { findCredential } from './repo-credentials.ts';
 import { resumeRun } from './repo-google-managed.ts';
-import { runKeyInventory } from './sa-key-inventory.ts';
+import { dailyGoogleKeys, runKeyInventory } from './sa-key-inventory.ts';
 import { runKeyRotation, startKeyRotation } from './sa-key-rotation.ts';
 
 let m: ManagedKit;
@@ -167,6 +168,185 @@ describe('service-account key rotation', () => {
     });
     expect(m.stub.created).toHaveLength(0);
     expect(m.stub.keys).toHaveLength(2);
+  });
+});
+
+/** Runs a rotation to its cooldown: the new key is in and verified, orgs follow, the old key waits. */
+async function toCooldown() {
+  const { runId } = await startKeyRotation(m.ctx, { credentialId: m.platform.id, createdBy: null });
+  await runKeyRotation(m.ctx, runId);
+  expect(await runRow(runId)).toMatchObject({ state: 'waiting', waiting_for: 'old_key_cooldown' });
+  return runId;
+}
+/** The cooldown is over: resume the run. */
+async function afterCooldown(runId: string) {
+  await sql(
+    db(),
+    "UPDATE identity_runs SET external_ref = json_set(external_ref, '$.deleteAfter', 1) WHERE id = ?",
+    [runId],
+  );
+  expect(await resumeRun(db(), runId, Date.now())).toBe(true);
+  await runKeyRotation(m.ctx, runId);
+}
+const keyStates = () =>
+  all<{ key_name: string; state: string }>(
+    db(),
+    'SELECT key_name, state FROM wallet_sa_keys ORDER BY created_at, key_name',
+  );
+
+describe('rotation safety', () => {
+  beforeEach(async () => {
+    await sql(db(), 'DELETE FROM wallet_sa_keys', []);
+    await sql(
+      db(),
+      "UPDATE identity_runs SET state = 'cancelled' WHERE provider = 'google' AND state IN ('queued', 'running', 'waiting')",
+      [],
+    );
+  });
+
+  it('a rollback whose delete fails is finished on retry, and the restored key is never retired', async () => {
+    const before = await pem(m.platform.id);
+    const { runId } = await startKeyRotation(m.ctx, {
+      credentialId: m.platform.id,
+      createdBy: null,
+    });
+    m.stub.failTokenAfterCreate = 3;
+    m.stub.failDeleteTimes = 1;
+    await expect(runKeyRotation(m.ctx, runId)).rejects.toThrow();
+    // The old key is current again, and the run is marked before anything was restored.
+    expect(await pem(m.platform.id)).toBe(before);
+    expect(
+      (
+        await first<{ s: string }>(
+          db(),
+          "SELECT json_extract(external_ref, '$.stage') AS s FROM identity_runs WHERE id = ?",
+          [runId],
+        )
+      )?.s,
+    ).toBe('rolled_back');
+    expect(m.stub.keys).toHaveLength(2);
+    // The retry finishes the rollback: no verify, no fan-out, no retire.
+    await runKeyRotation(m.ctx, runId);
+    expect(await runRow(runId)).toMatchObject({
+      state: 'failed',
+      error_code: 'WALLET_KEY_VERIFY_FAILED',
+    });
+    expect(m.stub.keys).toEqual([keyNameOf(1)]);
+    expect(await pem(m.platform.id)).toBe(before);
+    expect((await keyStates()).map((k) => k.state)).toEqual(['active', 'retired']);
+  });
+
+  it('refuses to delete the old key when the credential left the new version', async () => {
+    const runId = await toCooldown();
+    // An admin re-saves the platform credential with the old key during the cooldown.
+    const cred = await findCredential(db(), m.platform.id, null);
+    const oldSecret = (
+      await readGoogleSecret(
+        m.ctx,
+        m.platform.id,
+        (
+          await first<{ v: string }>(
+            db(),
+            "SELECT json_extract(external_ref, '$.prevVersionId') AS v FROM identity_runs WHERE id = ?",
+            [runId],
+          )
+        )?.v,
+      )
+    ).credentials;
+    await saveSystemCredential(
+      m.ctx,
+      { orgId: null, mode: 'live', current: cred, secret: oldSecret },
+      'sa_key',
+    );
+    await afterCooldown(runId);
+    expect(await runRow(runId)).toMatchObject({
+      state: 'failed',
+      error_code: 'WALLET_KEY_NOT_RETIRING',
+    });
+    expect(m.stub.keys).toHaveLength(2);
+  });
+
+  it('never deletes a key that is active again', async () => {
+    const runId = await toCooldown();
+    const old = (await keyStates()).find((k) => k.state === 'retiring');
+    await sql(db(), "UPDATE wallet_sa_keys SET state = 'active' WHERE key_name = ?", [
+      old?.key_name ?? '',
+    ]);
+    await afterCooldown(runId);
+    expect(await runRow(runId)).toMatchObject({
+      state: 'failed',
+      error_code: 'WALLET_KEY_NOT_RETIRING',
+    });
+    expect(m.stub.keys).toContain(old?.key_name);
+  });
+
+  it('waits while an issuer run is working, then deletes the old key', async () => {
+    const runId = await toCooldown();
+    const org = await m.org('Busy');
+    await sql(
+      db(),
+      "INSERT INTO identity_runs (id, org_id, provider, kind, target_type, target_id, state, lease_until, created_at, updated_at) VALUES ('busy-run', ?, 'google', 'provision', 'wallet_credential', 'google:live:busy', 'running', ?, 1, 1)",
+      [org.id, Date.now() + 600_000],
+    );
+    await afterCooldown(runId);
+    expect(await runRow(runId)).toMatchObject({ state: 'waiting', waiting_for: 'old_key_held' });
+    expect(m.stub.keys).toHaveLength(2);
+    await sql(db(), "UPDATE identity_runs SET state = 'succeeded' WHERE id = 'busy-run'", []);
+    await afterCooldown(runId);
+    expect(await runRow(runId)).toMatchObject({ state: 'succeeded' });
+    expect(m.stub.keys).toHaveLength(1);
+    expect((await keyStates()).map((k) => k.state)).toEqual(['retired', 'active']);
+  });
+
+  it('two deliveries of one run create one key', async () => {
+    const { runId } = await startKeyRotation(m.ctx, {
+      credentialId: m.platform.id,
+      createdBy: null,
+    });
+    await Promise.all([runKeyRotation(m.ctx, runId), runKeyRotation(m.ctx, runId)]);
+    expect(m.stub.created).toHaveLength(1);
+    expect(await runRow(runId)).toMatchObject({
+      state: 'waiting',
+      waiting_for: 'old_key_cooldown',
+    });
+  });
+
+  it("leaves an org's own key alone: a member save ends PassBook's hold on the credential", async () => {
+    const managed = await signedOrg('Own Key', '6400');
+    const { auth } = await m.k.member(managed.org_id ?? '', 'live');
+    await saveOrgCredential(m.ctx, auth, managed.org_id ?? '', {
+      provider: 'google',
+      expectedRevision: managed.revision,
+      credentials: m.k.google('6400'),
+    });
+    expect((await findCredential(db(), managed.id, managed.org_id))?.signer_ref).toBeNull();
+    const own = await pem(managed.id);
+    await toCooldown();
+    expect(await pem(managed.id)).toBe(own);
+  });
+
+  it('removes a key an earlier attempt made and never used, and records the new key before it is used', async () => {
+    await sql(
+      db(),
+      "INSERT INTO wallet_sa_keys (key_name, credential_id, origin, state, created_at) VALUES (?, ?, 'created', 'pending', 1)",
+      [keyNameOf(5), m.platform.id],
+    );
+    m.stub.keys = [keyNameOf(1), keyNameOf(5)];
+    await toCooldown();
+    expect(m.stub.keys).not.toContain(keyNameOf(5));
+    expect((await keyStates()).find((k) => k.key_name === keyNameOf(5))?.state).toBe('retired');
+    expect((await keyStates()).filter((k) => k.state === 'active')).toHaveLength(1);
+  });
+
+  it('the daily run deletes a pending key no rotation holds', async () => {
+    await sql(
+      db(),
+      "INSERT INTO wallet_sa_keys (key_name, credential_id, origin, state, created_at) VALUES (?, ?, 'created', 'pending', 1), (?, ?, 'adopted', 'active', 1)",
+      [keyNameOf(6), m.platform.id, keyNameOf(1), m.platform.id],
+    );
+    m.stub.keys = [keyNameOf(1), keyNameOf(6)];
+    await dailyGoogleKeys(m.ctx);
+    expect(m.stub.keys).toEqual([keyNameOf(1)]);
   });
 });
 

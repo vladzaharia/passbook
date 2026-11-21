@@ -127,6 +127,8 @@ export interface SaveCredentialInput {
   origin?: { provenance: 'managed' | 'own'; signerRef: string | null };
   /** Sets the next service-account key rotation of a platform credential. */
   nextRotationAt?: number | null;
+  /** The org brought its own key: PassBook's key rotation no longer reaches this credential. */
+  clearSigner?: true;
 }
 
 /** The statements of a save, for a grant that also writes the enrolment (the migration commits them as one batch). */
@@ -208,6 +210,7 @@ export function stageCredentialSave(
       current_version_id: input.versionId,
       updated_at: now,
       ...(input.nextRotationAt === undefined ? {} : { next_rotation_at: input.nextRotationAt }),
+      ...(input.clearSigner ? { signer_ref: null } : {}),
     },
     where: { id: input.credentialId, ...(w.platform ? { scope: 'platform' } : {}) },
   });

@@ -3,16 +3,17 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { readGoogleSecret } from './credential-system-save.ts';
-import { listServiceAccountKeys } from './google-iam.ts';
+import { deleteServiceAccountKey, listServiceAccountKeys } from './google-iam.ts';
 import { managedDeps } from './google-managed-deps.ts';
 import {
   cooledRotationRuns,
   dueKeyRotations,
   liveKeysOf,
-  markKeyDeleted,
+  orphanKeys,
   platformGoogleCredentials,
   recordKey,
   resumeRun,
+  setKeyState,
 } from './repo-google-managed.ts';
 import { iamToken, keyAlert } from './sa-key-access.ts';
 import { startKeyRotation } from './sa-key-rotation.ts';
@@ -57,11 +58,12 @@ async function inventoryOf(
   let known = await liveKeysOf(db, email);
   const present = new Set(keys.map((k) => k.name));
   // A key deleted outside PassBook is closed in the table.
-  for (const k of known) if (!present.has(k.key_name)) await markKeyDeleted(db, k.key_name, now);
+  for (const k of known)
+    if (!present.has(k.key_name)) await setKeyState(db, k.key_name, 'retired', now);
   known = known.filter((k) => present.has(k.key_name));
   const [only] = keys;
   if (known.length === 0 && keys.length === 1 && only) {
-    await recordKey(db, { name: only.name, credentialId, origin: 'adopted', now });
+    await recordKey(db, { name: only.name, credentialId, origin: 'adopted', state: 'active', now });
     known = await liveKeysOf(db, email);
   }
   const ours = new Set(known.map((k) => k.key_name));
@@ -91,6 +93,28 @@ async function inventoryOf(
   await writeSystemValue(db, flag, { day }, now);
 }
 
+/**
+ * A key PassBook made and never switched in, with no rotation open for it, is held by nothing: delete it.
+ * (A switch that landed marks its key active before the run moves on.)
+ */
+async function removeOrphans(ctx: ServiceContext): Promise<void> {
+  const now = ctx.clock.now();
+  for (const orphan of await orphanKeys(ctx.env.DB, now - DAY)) {
+    try {
+      const { credentials } = await readGoogleSecret(ctx, orphan.credential_id);
+      await deleteServiceAccountKey(
+        managedDeps().iam(ctx.env),
+        await iamToken(ctx, credentials),
+        orphan.key_name,
+      );
+      await setKeyState(ctx.env.DB, orphan.key_name, 'retired', now);
+      ctx.log.warn('wallet.google_key_orphan_removed', { code: 'WALLET_KEY_ORPHAN_REMOVED' });
+    } catch (error) {
+      ctx.log.error('wallet.key_orphan_failed', { code: 'WALLET_KEY_ORPHAN_FAILED', error });
+    }
+  }
+}
+
 /** Daily cron: start due rotations, finish cooled-down ones, then take the inventory. */
 export async function dailyGoogleKeys(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
@@ -107,5 +131,6 @@ export async function dailyGoogleKeys(ctx: ServiceContext): Promise<void> {
   for (const run of await cooledRotationRuns(ctx.env.DB, now))
     if (await resumeRun(ctx.env.DB, run.id, now))
       await ctx.env.JOBS.send({ kind: 'wallet.google_key_rotate', runId: run.id });
+  await removeOrphans(ctx);
   await runKeyInventory(ctx);
 }

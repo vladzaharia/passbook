@@ -159,6 +159,7 @@ export async function save(
     cardMap: { ...previous, ...identity.cards },
     envelope,
     ...(origin ? { origin } : {}),
+    ...(!origin && current?.signer_ref ? { clearSigner: true as const } : {}),
   });
   await enqueueVersionCheck(ctx, credentialId, versionId);
   const saved = await findCredential(ctx.env.DB, credentialId, scope.orgId);
