@@ -36,7 +36,7 @@ const list = (...items: ReturnType<typeof passFixture>[]) => {
 };
 
 describe('my passes', () => {
-  it('groups voided and removed passes under the live ones', async () => {
+  it('closes voided passes into their own group under the live ones', async () => {
     await renderApp('/', {
       handlers: {
         '/api/v1/me/passes': () =>
@@ -46,10 +46,15 @@ describe('my passes', () => {
           ),
       },
     });
-    const ended = await screen.findByRole('heading', { name: HOLDER_COPY.endedTitle });
-    const group = ended.closest('section') as HTMLElement;
-    expect(within(group).getByRole('link', { name: 'Gone' })).toBeInTheDocument();
-    expect(within(group).queryByRole('link', { name: 'Live' })).toBeNull();
+    const summary = await screen.findByText(HOLDER_COPY.endedTitle);
+    const details = summary.closest('details') as HTMLElement;
+    expect(details).not.toHaveAttribute('open');
+    expect(within(details).getByText('1')).toBeInTheDocument();
+    expect(within(details).getByRole('link', { name: 'Gone', hidden: true })).toHaveAttribute(
+      'href',
+      '/passes/b',
+    );
+    expect(within(details).queryByRole('link', { name: 'Live', hidden: true })).toBeNull();
   });
 
   it('renders the card as the link, one action row, and no a11y violations', async () => {
@@ -78,22 +83,21 @@ describe('my passes', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('lines tiles up as two rows of the grid, with one outline icon-button variant', async () => {
+  it('puts the newest pass in front with its row; the rest peek as links', async () => {
     await renderApp('/', {
       handlers: {
         '/api/v1/me/passes': () =>
           list(passFixture(), passFixture({ id: 'p2', title: 'Old', status: 'voided' })),
       },
     });
-    await screen.findByRole('heading', { name: 'Old', level: 2 });
-    for (const li of screen.getAllByRole('listitem')) {
-      // The card, then the one action row: subgrid rows, so a row of tiles aligns them.
-      expect(li).toHaveClass('row-span-2', 'grid-rows-subgrid');
-      expect(li.firstElementChild).toHaveClass('row-span-2', 'grid-rows-subgrid', 'rounded-xl');
-      // A size container on a subgrid tile collapses its rows (the badge overlaps the title):
-      // the container is the actions row.
-      expect(li.firstElementChild).not.toHaveClass('@container');
-    }
+    await screen.findByRole('heading', { name: 'Gym membership', level: 2 });
+    const front = document.querySelector('.wl-stack-front') as HTMLElement;
+    expect(within(front).getByRole('button', { name: 'More actions' })).toBeInTheDocument();
+    // A peek is the real card clipped, read by its name only.
+    const peek = screen.getByRole('link', { name: 'Old', hidden: true });
+    expect(peek).toHaveClass('wl-peek');
+    expect(peek.querySelector('[aria-hidden] .pc-root')).not.toBeNull();
+    expect(peek).toHaveStyle({ viewTransitionName: 'pass-p2' });
     const icons = [
       ...screen.getAllByRole('button', { name: 'More actions' }),
       screen.getByRole('button', { name: 'Refresh' }),
@@ -180,7 +184,7 @@ describe('my passes', () => {
       },
     });
     await user.click(await screen.findByRole('button', { name: 'Load more' }));
-    expect(await screen.findByRole('heading', { name: 'Second' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Second' })).toHaveClass('wl-peek');
     expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
   });
 

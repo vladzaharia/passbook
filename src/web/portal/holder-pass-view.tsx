@@ -26,6 +26,10 @@ export type { HolderSupport } from './holder-parts.tsx';
 export interface HolderPassViewProps {
   /** The pass stage: the portal's flippable card; /p's script-free one with its own toggle. */
   pass: ReactNode;
+  /** Beside My passes' stack: no card column, and the stack's row is the Apple lead. */
+  panel?: boolean;
+  /** /p, a pass with a holder email: a My passes row in the other ways. */
+  portalHref?: string | undefined;
   /** Under the card: the portal's Front / Details control. */
   toggle?: ReactNode;
   passTitle: string;
@@ -122,20 +126,25 @@ export function HolderPassView(props: HolderPassViewProps) {
   const lead = mode === 'phone' && device.device === 'iphone';
   const apple = area ? <AddBlock {...area} buddy={buddy} /> : null;
   const [first, ...rest] = choices;
+  // Beside the stack, the front's row already carries Apple's badge (or Show QR).
+  const leadChoice = props.panel && first?.id === 'apple' ? undefined : first;
   return (
     <div
       className="wl-holder"
+      data-panel={props.panel || undefined}
       data-lead={lead ? 'add' : state === 'active' ? undefined : 'notice'}
       data-rise={props.rise || undefined}
     >
-      <div className="wl-holder-pass">
-        <div
-          className={`relative isolate w-full ${state === 'active' ? 'max-w-[22rem]' : 'max-w-[16rem]'}`}
-        >
-          {props.pass}
+      {props.panel ? null : (
+        <div className="wl-holder-pass">
+          <div
+            className={`relative isolate w-full ${state === 'active' ? 'max-w-[22rem]' : 'max-w-[16rem]'}`}
+          >
+            {props.pass}
+          </div>
+          {props.toggle}
         </div>
-        {props.toggle}
-      </div>
+      )}
       <div className="wl-holder-add">
         {state === 'active' && props.notice ? (
           <div role="status">
@@ -163,8 +172,8 @@ export function HolderPassView(props: HolderPassViewProps) {
             />
           </div>
         )}
-        {state === 'active' ? (
-          <WalletLead choice={first} apple={apple} buddy={buddy} printHref={printable} />
+        {state === 'active' && (leadChoice || !props.panel) ? (
+          <WalletLead choice={leadChoice} apple={apple} buddy={buddy} printHref={printable} />
         ) : null}
         {nothing ? (
           <div role="status">
@@ -180,6 +189,7 @@ export function HolderPassView(props: HolderPassViewProps) {
             choices={rest}
             apple={apple}
             printHref={first && (first.id !== 'apple' || apple) ? printable : undefined}
+            portalHref={props.portalHref}
             extra={
               props.resend ? (
                 <SendAgain action={props.resend.action} again={props.resend.again} />

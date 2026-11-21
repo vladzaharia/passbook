@@ -61,18 +61,26 @@ describe('/p renders the portal HolderPassView', () => {
   });
 
   const body = (html: string) => html.slice(html.indexOf('<body>'));
-  const PORTAL_LINK =
-    /<p class="text-sm"><a href="\/passes\/p1" class="[^"]*">Open in My passes<\/a><\/p>/;
+  const PORTAL_ROW =
+    /<a class="wl-other" href="\/passes\/p1">(?:(?!<\/a>)[\s\S])*?<span>My passes<\/span>/;
+  const RESEND = { action: '/p/t/resend', again: null } as const;
 
-  it('heads the page with what the pass is: the kind alone (the bar names the org), the portal link beside', () => {
+  it('heads the page with what the pass is: the kind alone (the bar names the org), nothing beside', () => {
     const html = page();
     expect(html).toContain('<title>Example Org example pass</title>');
     const b = body(html);
     expect(b.match(/<h1/g)).toHaveLength(1);
     expect(b).toMatch(/<h1[^>]*>Example pass<\/h1>/);
     expect(b).not.toMatch(/<p class="[^"]*">Example Org<\/p><h1/);
-    expect(b.match(/Open in My passes/g)).toHaveLength(1);
-    expect(b).toMatch(PORTAL_LINK);
+    expect(b).not.toContain('Open in My passes');
+    expect(b).not.toMatch(PORTAL_ROW);
+  });
+
+  it('lists My passes in the other ways, before Email me this pass again, with a holder email', () => {
+    const b = body(page({ resend: RESEND }));
+    expect(b.match(/<span>My passes<\/span>/g)).toHaveLength(1);
+    expect(b).toMatch(PORTAL_ROW);
+    expect(b.indexOf('<span>My passes</span>')).toBeLessThan(b.indexOf('Email me this pass again'));
   });
 
   it('leads with the QR on a computer, the buddy on its card clear of the code, no badge', () => {
@@ -226,11 +234,12 @@ describe('/p renders the portal HolderPassView', () => {
     expect(b).not.toContain('wl-sign');
   });
 
-  it('seats the buddy on a voided notice, sad; no badge, the portal link stays', () => {
-    const b = body(page({ voided: true }));
+  it('seats the buddy on a voided notice, sad; no badge, and no other ways', () => {
+    const b = body(page({ voided: true, resend: RESEND }));
     expect(b).toMatch(/<div class="wl-add-seat"><span [^>]*data-scene="tear"/);
     expect(b).not.toContain('data-awb');
-    expect(b).toMatch(PORTAL_LINK);
+    // The ended card's own action is the way back in.
+    expect(b).not.toMatch(PORTAL_ROW);
   });
 
   it.each([['android'], ['galaxy']] as const)(
