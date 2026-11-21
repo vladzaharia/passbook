@@ -13,6 +13,8 @@ export interface SpaceAccess {
   roles: readonly string[];
   /** The person has an active membership in at least one organization. */
   orgMember: boolean;
+  /** An email session's console grace end (ms), when it has one. */
+  consoleUntil?: number | null;
 }
 
 /** The order the account menu lists them in. */
@@ -27,13 +29,21 @@ export const SPACE_HOME: Record<Space, string> = {
 };
 
 /** Spaces for operators: an email link opens only the holder's spaces. */
-export function needsPocketId(space: Space, amr: SignInMethod): boolean {
-  return (space === 'admin' || space === 'developers') && amr === 'magic_link';
+export function needsPocketId(
+  space: Space,
+  amr: SignInMethod,
+  consoleUntil?: number | null,
+  now: number = Date.now(),
+): boolean {
+  if (amr !== 'magic_link') return false;
+  // An email session still inside the console grace window keeps Admin (not Developers).
+  if (space === 'admin' && consoleUntil != null && now < consoleUntil) return false;
+  return space === 'admin' || space === 'developers';
 }
 
 export function canUseSpace(space: Space, access: SpaceAccess): boolean {
   if (space === 'passes' || space === 'account') return true;
-  if (needsPocketId(space, access.amr)) return false;
+  if (needsPocketId(space, access.amr, access.consoleUntil)) return false;
   const admin = access.roles.includes('admin');
   // Platform admins are developers too. `developer` is read by name until the role exists.
   if (space === 'developers')

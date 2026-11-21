@@ -10,6 +10,7 @@ import { useSession } from '../../lib/session.ts';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
 import { AppShell, type AppShellProps } from './app-shell.tsx';
+import { GraceBanner } from './grace-banner.tsx';
 import { MenubarSearch, shortcutHint } from './menubar.tsx';
 import { ModeBand } from './mode-band.tsx';
 import { ModeSwitch } from './mode-switch.tsx';
@@ -79,6 +80,7 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
           width="console"
           holder={false}
         >
+          <GraceBanner />
           {children ?? <Outlet />}
         </AppShell>
         <Sheet open={navOpen} onOpenChange={setNavOpen}>

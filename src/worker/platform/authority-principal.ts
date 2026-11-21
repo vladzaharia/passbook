@@ -1,5 +1,6 @@
 import type { SqlValue } from './db.ts';
 import { keyHoldsScope, keyLive, withParams } from './repo-api-key-sql.ts';
+import { consoleSessionSql, STRONG_AMR_SQL } from './repo-session-strength-sql.ts';
 
 export type Mode = 'live' | 'test';
 export type GrantScope = 'org' | 'org_mode' | 'platform';
@@ -122,6 +123,7 @@ const adminSession = (b: Binds, now: number, idHash: string, userId: string) =>
   `EXISTS (SELECT 1 FROM sessions s JOIN users u ON u.id = s.user_id
     WHERE s.id_hash = ${b.bind(idHash)} AND s.user_id = ${b.bind(userId)} AND u.status = 'active'
       AND s.revoked_at IS NULL AND s.expires_at > ${b.bind(now)} AND s.idle_expires_at > ${b.bind(now)}
+      AND s.amr IN ${STRONG_AMR_SQL}
       AND json_type(s.roles) = 'array'
       AND EXISTS (SELECT 1 FROM json_each(s.roles) r WHERE r.type = 'text' AND r.value = 'admin'))`;
 
@@ -172,7 +174,7 @@ export function actorSql(p: Principal, now: number, b: Binds): string {
         p.via === 'session'
           ? ` AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ${b.bind(p.sessionIdHash)}
             AND s.user_id = m.user_id AND s.revoked_at IS NULL AND s.expires_at > ${b.bind(now)}
-            AND s.idle_expires_at > ${b.bind(now)})`
+            AND s.idle_expires_at > ${b.bind(now)} AND ${consoleSessionSql('s', b.bind(now))})`
           : '';
       const userEpoch =
         p.via === 'deferred' ? ` AND u.access_revision = ${b.bind(p.userAccessRevision)}` : '';

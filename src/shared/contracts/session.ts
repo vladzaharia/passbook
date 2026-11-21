@@ -14,6 +14,8 @@ export const SessionResponseSchema = z.discriminatedUnion('authenticated', [
     roles: z.array(RoleSchema),
     csrfToken: z.string(),
     amr: z.enum(['oidc', 'magic_link', 'breakglass']),
+    /** An email session still inside the console grace window: when it ends (ms). Null otherwise. */
+    consoleUntil: TimestampSchema.nullable().optional(),
     expiresAt: TimestampSchema,
   }),
   z.object({

@@ -34,12 +34,17 @@ export function SignedInUserMenu({
   const orgMember = ready && scope.memberships.length > 0;
   const current = spaceOf(pathname);
   const spaces: SpaceEntry[] = SPACES.filter((space) =>
-    canUseSpace(space, { amr: authed.amr, roles: authed.roles, orgMember }),
+    canUseSpace(space, {
+      amr: authed.amr,
+      roles: authed.roles,
+      orgMember,
+      consoleUntil: authed.consoleUntil,
+    }),
   ).map((space) => ({
     space,
     // Inside the console Account keeps its sidebar, unless an email link cannot open the console.
     href:
-      space === 'account' && !needsPocketId('admin', authed.amr)
+      space === 'account' && !needsPocketId('admin', authed.amr, authed.consoleUntil)
         ? accountPath(pathname)
         : SPACE_HOME[space],
     current: space === current,

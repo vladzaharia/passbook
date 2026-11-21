@@ -1,6 +1,6 @@
 import { MINTABLE_SCOPES } from '../../../shared/contracts/api-keys.ts';
 import { isPlatformScope, scopeCapability } from '../../platform/api-scopes.ts';
-import type { ApiScope, AuthContext } from '../../platform/auth.ts';
+import type { Amr, ApiScope, AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { rolesGranting } from '../orgs/access.ts';
@@ -11,7 +11,7 @@ export const CHILD_NEVER: readonly ApiScope[] = ['api-keys:write', 'scans:write'
 
 /** A key caller is a service key of the org (it holds `api-keys:write`): it reaches its own children only. */
 export type ApiKeyAuthority =
-  | { kind: 'platform'; userId: string; sessionId: string }
+  | { kind: 'platform'; userId: string; sessionId: string; amr: Amr }
   | Extract<TenantPassWrite, { kind: 'session' | 'api_key' }>;
 
 /** An org filter selects a tenant; it never grants authority over that tenant. */
@@ -31,7 +31,7 @@ export async function authorizeApiKeys(
   if (auth?.kind !== 'session') throw new UnauthenticatedError();
   if (orgId === null) {
     if (!auth.roles.includes('admin')) throw new ForbiddenError();
-    return { kind: 'platform', userId: auth.userId, sessionId: auth.sessionId };
+    return { kind: 'platform', userId: auth.userId, sessionId: auth.sessionId, amr: auth.amr };
   }
   const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
   if (authority.kind !== 'session') throw new ForbiddenError();

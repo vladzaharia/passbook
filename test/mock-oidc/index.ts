@@ -7,6 +7,8 @@ export interface MockOidcUser {
   name?: string;
   groups?: string[];
   emailVerified?: boolean;
+  /** The ID token's `amr`: `['phr']` (a passkey) unless a test says `['otp']` (a login code). */
+  amr?: string[];
 }
 
 export interface MockOidcOptions {
@@ -57,6 +59,7 @@ export async function createMockOidc(options: MockOidcOptions) {
       email_verified: user.emailVerified ?? true,
       name: user.name ?? user.email,
       groups: user.groups ?? [],
+      amr: user.amr ?? ['phr'],
       azp: options.clientId,
       auth_time: Math.floor(extra.authTime / 1000),
       ...(extra.nonce ? { nonce: extra.nonce } : {}),

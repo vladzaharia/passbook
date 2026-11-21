@@ -1,4 +1,5 @@
 import { first } from '../../platform/db.ts';
+import { consoleSessionSql } from '../../platform/repo-session-strength-sql.ts';
 import { RESOLVED_KEY_COLUMNS, type ResolvedKeyRow } from '../api-keys/repo.ts';
 
 /**
@@ -38,7 +39,7 @@ export const tryTokenKeyRow = (
      JOIN developer_sandboxes d ON d.org_id = k.org_id AND d.closed_at IS NULL AND d.try_generation = ?3
      JOIN org_memberships m ON m.id = k.membership_id AND m.org_id = k.org_id AND m.user_id = d.user_id
      JOIN sessions s ON s.id_hash = ?2 AND s.user_id = d.user_id AND s.revoked_at IS NULL
-       AND s.expires_at > ?4 AND s.idle_expires_at > ?4
+       AND s.expires_at > ?4 AND s.idle_expires_at > ?4 AND ${consoleSessionSql('s', '?4')}
      WHERE k.id = ?1 AND k.kind = 'personal' AND k.mode = 'test'`,
     [claims.keyId, claims.sessionIdHash, claims.generation, now],
   );

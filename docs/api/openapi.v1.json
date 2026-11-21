@@ -1486,6 +1486,9 @@
           },
           "used": {
             "type": "integer"
+          },
+          "signInUrl": {
+            "type": "string"
           }
         },
         "required": [
@@ -24319,6 +24322,13 @@
                             "breakglass"
                           ]
                         },
+                        "consoleUntil": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0
+                        },
                         "expiresAt": {
                           "type": "integer",
                           "minimum": 0
@@ -25193,6 +25203,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -25202,6 +25213,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -25273,6 +25285,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -25282,6 +25295,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -25966,6 +25980,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -25975,6 +25990,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26094,6 +26110,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26103,6 +26120,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26165,6 +26183,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26174,6 +26193,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26263,6 +26283,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26272,6 +26293,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26352,6 +26374,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26361,6 +26384,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26451,6 +26475,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26460,6 +26485,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26550,6 +26576,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26559,6 +26586,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26639,6 +26667,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26648,6 +26677,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -26767,6 +26797,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26776,6 +26807,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -26860,6 +26892,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26869,6 +26902,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -26986,6 +27020,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -26995,6 +27030,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -27114,6 +27150,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -27123,6 +27160,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -27240,6 +27278,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -27249,6 +27288,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -27316,6 +27356,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -27325,6 +27366,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NO_RECIPIENT",
           "PASS_CHANGING",
           "PASS_CREDENTIAL_FIXED",
@@ -27403,6 +27445,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_SNAPSHOT_INVALID",
@@ -27412,6 +27455,7 @@
           "EMAIL_RATE_LIMITED",
           "FORBIDDEN",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_RECIPIENT",
           "PASS_CHANGING",
@@ -27662,8 +27706,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -27841,8 +27887,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "NOT_FOUND",
           "RATE_LIMITED",
@@ -27998,8 +28046,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -28087,8 +28137,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -28276,8 +28328,10 @@
           "sdk": false,
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -28396,8 +28450,10 @@
           "sdk": false,
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -28500,8 +28556,10 @@
           "sdk": false,
           "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -28570,8 +28628,10 @@
           "sdk": false,
           "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -28636,8 +28696,10 @@
           "sdk": false,
           "reason": "Developer portal Try it: a signed-in person in a browser, not an integration."
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "RATE_LIMITED",
           "REQUEST_LOG_NOT_FOUND",
@@ -28805,12 +28867,14 @@
           "resource": "orgs.entitlements",
           "method": "retrieve"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -29040,12 +29104,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -29318,12 +29384,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -29528,12 +29596,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -29698,12 +29768,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -29849,12 +29921,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -29949,12 +30023,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30049,12 +30125,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30255,12 +30333,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30329,12 +30409,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30497,12 +30579,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30584,12 +30668,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30672,12 +30758,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30751,12 +30839,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -30930,12 +31020,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31031,12 +31123,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31120,12 +31214,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31216,12 +31312,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31338,12 +31436,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31516,12 +31616,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31610,12 +31712,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31706,12 +31810,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31801,12 +31907,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -31948,6 +32056,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -31957,6 +32066,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -32111,6 +32221,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -32120,6 +32231,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -32319,6 +32431,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -32328,6 +32441,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -32426,6 +32540,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -32435,6 +32550,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -32650,6 +32766,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -32659,6 +32776,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -32843,6 +32961,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -32852,6 +32971,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -33048,6 +33168,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -33057,6 +33178,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -33173,6 +33295,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -33182,6 +33305,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -33325,6 +33449,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -33334,6 +33459,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -33594,6 +33720,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -33603,6 +33730,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -33858,6 +33986,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -33867,6 +33996,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -34122,6 +34252,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -34131,6 +34262,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -34386,6 +34518,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -34395,6 +34528,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -34650,6 +34784,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -34659,6 +34794,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -34843,9 +34979,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -34929,9 +35067,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -35017,9 +35157,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -35177,9 +35319,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -35355,9 +35499,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -35473,9 +35619,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_EXPORT_RUNNING",
@@ -35600,9 +35748,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_EXPORT_RUNNING",
@@ -35717,9 +35867,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_EXPORT_RUNNING",
@@ -35876,9 +36028,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_EXPORT_RUNNING",
@@ -36006,9 +36160,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_EXPORT_RUNNING",
@@ -36095,9 +36251,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "ORG_CONFLICT",
           "ORG_EXPORT_RUNNING",
@@ -36301,8 +36459,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -36426,8 +36586,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -36496,8 +36658,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -36660,8 +36824,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -36802,8 +36968,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -36958,8 +37126,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -37035,8 +37205,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -37139,8 +37311,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -37246,8 +37420,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -37343,8 +37519,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -37522,8 +37700,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -37720,8 +37900,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -37774,8 +37956,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED"
         ]
@@ -37839,8 +38023,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -38097,12 +38283,14 @@
           "resource": "platform.orgs.entitlements",
           "method": "retrieve"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -38384,12 +38572,14 @@
           "resource": "platform.orgs.entitlements",
           "method": "update"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -38559,9 +38749,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -38645,9 +38837,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -38733,9 +38927,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -38893,9 +39089,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -39071,9 +39269,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -39221,9 +39421,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
@@ -39388,9 +39590,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "HOLD_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -39508,9 +39712,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EXPORT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "ORG_CONFLICT",
           "ORG_EXPORT_RUNNING",
           "ORG_HELD",
@@ -39682,11 +39888,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -39814,11 +40022,13 @@
           "resource": "templateImports",
           "method": "create"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -40021,11 +40231,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -40246,11 +40458,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -40363,11 +40577,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -40557,11 +40773,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -40869,11 +41087,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -41028,11 +41248,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -41143,11 +41365,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -41266,11 +41490,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -41382,11 +41608,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -41498,11 +41726,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -41687,11 +41917,13 @@
           "resource": "templates",
           "method": "preview"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -41828,11 +42060,13 @@
           "method": "retrieveInputSchema"
         },
         "description": "Returns the JSON Schema that `input` must satisfy in `POST /passes` for this template's active version. Field labels, groups and order are in the `x-label`, `x-group` and `x-order` keywords. Use it to build a form or generate types.",
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -42113,11 +42347,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -42262,11 +42498,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -42787,11 +43025,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -43433,11 +43673,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -43637,11 +43879,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -43914,11 +44158,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -44074,11 +44320,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -44196,11 +44444,13 @@
           "resource": "blueprints",
           "method": "use"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -44473,11 +44723,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -44655,11 +44907,13 @@
           "resource": "templates",
           "method": "setUpScanning"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -44762,11 +45016,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -44868,11 +45124,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -44983,11 +45241,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -45333,11 +45593,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -45628,11 +45890,13 @@
           "resource": "templates.candidates",
           "method": "create"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -45920,11 +46184,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -46096,11 +46362,13 @@
           "resource": "templates.candidates",
           "method": "approve"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -46574,11 +46842,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -46839,11 +47109,13 @@
           "resource": "templates.releases",
           "method": "create"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -47212,11 +47484,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -47474,11 +47748,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_CONFLICT",
           "INVALID_CURSOR",
           "INVALID_INPUT",
@@ -47750,6 +48026,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -47771,6 +48048,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -47999,6 +48277,7 @@
             "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -48020,6 +48299,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -48219,6 +48499,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -48240,6 +48521,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -48376,6 +48658,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -48397,6 +48680,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -48614,6 +48898,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -48635,6 +48920,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -48769,6 +49055,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -48790,6 +49077,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -48938,6 +49226,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -48959,6 +49248,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -49107,6 +49397,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -49128,6 +49419,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -49267,6 +49559,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -49288,6 +49581,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -49428,6 +49722,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -49449,6 +49744,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -49583,6 +49879,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -49604,6 +49901,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -49770,6 +50068,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -49791,6 +50090,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -49929,6 +50229,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -49950,6 +50251,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -50105,6 +50407,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -50126,6 +50429,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -50311,6 +50615,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -50332,6 +50637,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -50499,6 +50805,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -50520,6 +50827,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -50661,6 +50969,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -50682,6 +50991,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -50844,6 +51154,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -50865,6 +51176,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -51035,6 +51347,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -51056,6 +51369,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -51226,6 +51540,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -51247,6 +51562,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -51407,6 +51723,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -51428,6 +51745,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -51544,6 +51862,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -51565,6 +51884,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -51723,6 +52043,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -51744,6 +52065,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -52073,6 +52395,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -52094,6 +52417,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -52432,6 +52756,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -52453,6 +52778,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -52586,6 +52912,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -52607,6 +52934,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -52740,6 +53068,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -52761,6 +53090,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -52916,6 +53246,7 @@
             "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -52937,6 +53268,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -53065,6 +53397,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -53086,6 +53419,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -53361,6 +53695,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -53382,6 +53717,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -53951,6 +54287,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -53972,6 +54309,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -54550,6 +54888,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -54571,6 +54910,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -54728,6 +55068,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -54749,6 +55090,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -54912,6 +55254,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -54933,6 +55276,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -55059,6 +55403,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -55080,6 +55425,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -55258,6 +55604,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -55279,6 +55626,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -55461,6 +55809,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -55482,6 +55831,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -55665,6 +56015,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -55686,6 +56037,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -55802,6 +56154,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -55823,6 +56176,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -55939,6 +56293,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -55960,6 +56315,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -56085,6 +56441,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -56106,6 +56463,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -56397,6 +56755,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -56418,6 +56777,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -56700,6 +57060,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -56721,6 +57082,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -56882,6 +57244,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -56903,6 +57266,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -57051,6 +57415,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -57072,6 +57437,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -57709,6 +58075,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -57730,6 +58097,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -58392,6 +58760,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -58413,6 +58782,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -59049,6 +59419,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -59070,6 +59441,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -59213,6 +59585,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -59234,6 +59607,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -59881,6 +60255,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -59902,6 +60277,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -60549,6 +60925,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -60570,6 +60947,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -60821,6 +61199,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -60842,6 +61221,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -60969,6 +61349,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -60990,6 +61371,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -61117,6 +61499,7 @@
           "resource": "passImports",
           "method": "downloadResults"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -61138,6 +61521,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -61314,6 +61698,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -61335,6 +61720,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -61498,6 +61884,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
@@ -61519,6 +61906,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IF_MATCH_INVALID",
           "IMPORT_BUSY",
           "IMPORT_COLUMN_MISSING",
@@ -61783,6 +62171,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_EMPTY",
@@ -61792,6 +62181,7 @@
           "DELIVERY_STALE",
           "EMAIL_INVALID",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINK_NOT_FOUND",
           "MISSING_SCOPE",
@@ -61948,6 +62338,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_EMPTY",
@@ -61957,6 +62348,7 @@
           "DELIVERY_STALE",
           "EMAIL_INVALID",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINK_NOT_FOUND",
           "MISSING_SCOPE",
@@ -62117,6 +62509,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_EMPTY",
@@ -62126,6 +62519,7 @@
           "DELIVERY_STALE",
           "EMAIL_INVALID",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINK_NOT_FOUND",
           "MISSING_SCOPE",
@@ -62204,6 +62598,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_EMPTY",
@@ -62213,6 +62608,7 @@
           "DELIVERY_STALE",
           "EMAIL_INVALID",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINK_NOT_FOUND",
           "MISSING_SCOPE",
@@ -62306,6 +62702,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_EMPTY",
@@ -62315,6 +62712,7 @@
           "DELIVERY_STALE",
           "EMAIL_INVALID",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINK_NOT_FOUND",
           "MISSING_SCOPE",
@@ -62476,6 +62874,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_EMPTY",
@@ -62485,6 +62884,7 @@
           "DELIVERY_STALE",
           "EMAIL_INVALID",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "LINK_NOT_FOUND",
           "MISSING_SCOPE",
@@ -62747,9 +63147,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "JOIN_LINK_CHANGED",
           "JOIN_LINK_NOT_FOUND",
           "JOIN_NOT_READY",
@@ -63019,9 +63421,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "JOIN_LINK_CHANGED",
           "JOIN_LINK_NOT_FOUND",
           "JOIN_NOT_READY",
@@ -63283,9 +63687,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "JOIN_LINK_CHANGED",
           "JOIN_LINK_NOT_FOUND",
           "JOIN_NOT_READY",
@@ -63392,9 +63798,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NO_VERIFIED_EMAIL",
@@ -63505,9 +63913,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
@@ -63594,9 +64004,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_VERIFIED_EMAIL",
           "RATE_LIMITED",
@@ -63684,9 +64096,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "NO_VERIFIED_EMAIL",
           "RATE_LIMITED",
@@ -64152,6 +64566,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -64164,6 +64579,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -64551,6 +64967,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -64563,6 +64980,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -64651,6 +65069,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -64663,6 +65082,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -65054,6 +65474,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -65066,6 +65487,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -65466,6 +65888,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -65478,6 +65901,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -65880,6 +66304,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -65892,6 +66317,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -66284,6 +66710,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -66296,6 +66723,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -66688,6 +67116,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -66700,6 +67129,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -66855,6 +67285,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_NOT_CANCELLABLE",
@@ -66867,6 +67298,7 @@
           "BROADCAST_TOO_FAR",
           "BROADCAST_UNKNOWN_INPUT",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -67261,8 +67693,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -67607,8 +68041,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -67957,8 +68393,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -68316,8 +68754,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -68400,8 +68840,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -68751,8 +69193,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -69189,8 +69633,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -69296,8 +69742,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -69705,8 +70153,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -69925,6 +70375,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BLOCK_NOT_FOUND",
           "EMAIL_INVALID",
@@ -69932,6 +70383,7 @@
           "HOLDER_CHANGED",
           "HOLDER_OWNED",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "PASS_CONFLICT",
@@ -70082,6 +70534,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BLOCK_NOT_FOUND",
           "EMAIL_INVALID",
@@ -70089,6 +70542,7 @@
           "HOLDER_CHANGED",
           "HOLDER_OWNED",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
@@ -70238,6 +70692,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BLOCK_NOT_FOUND",
           "EMAIL_INVALID",
@@ -70245,6 +70700,7 @@
           "HOLDER_CHANGED",
           "HOLDER_OWNED",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "PASS_CONFLICT",
@@ -70411,6 +70867,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BLOCK_NOT_FOUND",
           "EMAIL_INVALID",
@@ -70418,6 +70875,7 @@
           "HOLDER_CHANGED",
           "HOLDER_OWNED",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "PASS_CONFLICT",
@@ -70566,6 +71024,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BLOCK_NOT_FOUND",
           "EMAIL_INVALID",
@@ -70573,6 +71032,7 @@
           "HOLDER_CHANGED",
           "HOLDER_OWNED",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "PASS_CONFLICT",
@@ -70721,6 +71181,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BLOCK_NOT_FOUND",
           "EMAIL_INVALID",
@@ -70728,6 +71189,7 @@
           "HOLDER_CHANGED",
           "HOLDER_OWNED",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "PASS_CONFLICT",
@@ -70802,6 +71264,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BLOCK_NOT_FOUND",
           "EMAIL_INVALID",
@@ -70809,6 +71272,7 @@
           "HOLDER_CHANGED",
           "HOLDER_OWNED",
           "HOLDER_TRANSFER_PENDING",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "PASS_CONFLICT",
@@ -71008,8 +71472,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_INSIDE",
@@ -71148,8 +71614,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_INSIDE",
@@ -71273,8 +71741,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_INSIDE",
@@ -71428,8 +71898,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
@@ -71584,8 +72056,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
@@ -71693,8 +72167,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
@@ -71801,12 +72277,14 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "BRAND_IMAGE_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "ENTITLEMENTS_CHANGED",
           "FORBIDDEN",
           "IDENTITY_NOT_FOUND",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
           "IMAGE_INVALID",
           "IMAGE_NOT_FOUND",
@@ -71963,6 +72441,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "DELIVERY_STALE",
           "EMAIL_INVALID",
@@ -71972,6 +72451,7 @@
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "ORG_REQUIRED",
@@ -72127,6 +72607,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -72136,6 +72617,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -72251,6 +72733,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -72260,6 +72743,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -72389,6 +72873,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -72398,6 +72883,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -72846,6 +73332,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -72855,6 +73342,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -73233,6 +73721,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -73242,6 +73731,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -73405,6 +73895,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -73414,6 +73905,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -73920,6 +74412,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -73929,6 +74422,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -74320,6 +74814,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -74329,6 +74824,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -74432,6 +74928,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -74441,6 +74938,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -74569,6 +75067,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -74578,6 +75077,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -74707,6 +75207,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -74716,6 +75217,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -74824,6 +75326,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -74833,6 +75336,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -75052,6 +75556,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -75061,6 +75566,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -75456,6 +75962,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -75465,6 +75972,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -75845,6 +76353,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -75854,6 +76363,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -76220,6 +76730,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -76229,6 +76740,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -76575,6 +77087,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -76584,6 +77097,7 @@
           "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
           "FORBIDDEN",
           "HOLDER_EMAIL_INVALID",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_UNSUPPORTED",
@@ -76718,6 +77232,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -76726,6 +77241,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -76846,6 +77362,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -76854,6 +77371,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -76954,6 +77472,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -76962,6 +77481,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77074,6 +77594,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77082,6 +77603,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77171,6 +77693,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77179,6 +77702,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77280,6 +77804,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77288,6 +77813,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77385,6 +77911,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77393,6 +77920,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77502,6 +78030,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77510,6 +78039,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77657,6 +78187,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77665,6 +78196,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77771,6 +78303,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77779,6 +78312,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77885,6 +78419,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77893,6 +78428,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -77973,6 +78509,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -77981,6 +78518,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -78138,6 +78676,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -78146,6 +78685,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -78274,6 +78814,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -78282,6 +78823,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -78381,6 +78923,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -78389,6 +78932,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -78494,6 +79038,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -78502,6 +79047,7 @@
           "DELIVERY_PENDING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -78653,8 +79199,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -78760,8 +79308,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
           "MISSING_SCOPE",
@@ -79264,6 +79814,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -79307,6 +79858,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
@@ -79669,6 +80221,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -79712,6 +80265,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
@@ -80078,6 +80632,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -80121,6 +80676,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -80496,6 +81052,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -80539,6 +81096,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -80610,6 +81168,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -80653,6 +81212,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -81030,6 +81590,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -81073,6 +81634,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -81174,6 +81736,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -81217,6 +81780,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -81594,6 +82158,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -81637,6 +82202,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -82002,6 +82568,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -82045,6 +82612,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -82206,6 +82774,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -82249,6 +82818,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -82397,6 +82967,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -82440,6 +83011,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -82611,6 +83183,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "APNS_BINDING_MANAGED",
           "ASC_AUTH",
@@ -82654,6 +83227,7 @@
           "IDENTITY_RUN_INCOMPLETE",
           "IDENTITY_RUN_NOT_FOUND",
           "IDENTITY_RUN_OPEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "OIDC_REQUIRED",
           "ORG_NOT_FOUND",
@@ -82865,8 +83439,10 @@
           "resource": "identityRuns",
           "method": "list"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -83023,8 +83599,10 @@
           "resource": "identityRuns",
           "method": "retrieve"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -83182,8 +83760,10 @@
           "resource": "identityRuns",
           "method": "retry"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -83341,8 +83921,10 @@
           "resource": "identityRuns",
           "method": "cancel"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -83589,8 +84171,10 @@
           "resource": "walletIdentities",
           "method": "list"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -83761,8 +84345,10 @@
           "resource": "identityRuns",
           "method": "startManaged"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -83892,8 +84478,10 @@
           "resource": "platform.appleCalls",
           "method": "list"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -83973,6 +84561,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -83982,6 +84571,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -84201,6 +84791,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -84210,6 +84801,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -84400,6 +84992,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -84409,6 +85002,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -84601,6 +85195,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -84610,6 +85205,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "ORG_NOT_FOUND",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
@@ -85034,6 +85630,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "GOOGLE_CALLBACK_INVALID",
@@ -85043,6 +85640,7 @@
           "GOOGLE_UNAVAILABLE",
           "IAM_BAD_ACCOUNT",
           "IAM_BAD_KEY",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
@@ -85254,11 +85852,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
           "SELF_DISABLE",
@@ -85613,11 +86213,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
@@ -85743,11 +86345,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
@@ -86113,11 +86717,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
@@ -86481,11 +87087,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
@@ -86849,11 +87457,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
@@ -86926,11 +87536,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
@@ -87013,11 +87625,13 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "EMAIL_INVALID",
           "EMAIL_NOT_FOUND",
           "EMAIL_TAKEN",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "NOT_FOUND",
           "PRIMARY_EMAIL",
           "RATE_LIMITED",
@@ -87085,6 +87699,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -87102,7 +87717,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -87224,6 +87841,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -87241,7 +87859,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -87377,6 +87997,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -87394,7 +88015,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -87512,6 +88135,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -87529,7 +88153,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -87624,6 +88250,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -87641,7 +88268,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -87767,6 +88396,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -87784,7 +88414,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -88146,6 +88778,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -88163,7 +88796,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -88223,6 +88858,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -88240,7 +88876,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -88322,6 +88960,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
@@ -88339,7 +88978,9 @@
           "API_KEY_TERMINALS_UNUSED",
           "EXPIRY_PAST",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "KEY_OWNER_NEEDS_IDP",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_NOT_FOUND",
@@ -88533,8 +89174,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_SETTING",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -88714,8 +89357,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_SETTING",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -88771,8 +89416,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_SETTING",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -88851,8 +89498,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_SETTING",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -88930,8 +89579,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_SETTING",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -89009,8 +89660,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_SETTING",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -89279,8 +89932,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "ORG_REQUIRED",
           "RATE_LIMITED",
@@ -89548,8 +90203,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "ORG_REQUIRED",
           "RATE_LIMITED",
@@ -89692,8 +90349,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "ORG_REQUIRED",
           "RATE_LIMITED",
@@ -89836,8 +90495,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_CURSOR",
           "ORG_REQUIRED",
           "RATE_LIMITED",
@@ -90021,8 +90682,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -90160,8 +90823,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -90743,8 +91408,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "METRICS_NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -91328,8 +91995,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "METRICS_NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -91551,8 +92220,10 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "METRICS_NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -91655,8 +92326,10 @@
           "sdk": false,
           "reason": "Platform admin console card; needs an admin's session."
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "METRICS_NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
@@ -102848,6 +103521,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -102871,6 +103545,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -103073,6 +103748,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -103096,6 +103772,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -104531,6 +105208,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -104554,6 +105232,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -104825,6 +105504,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -104848,6 +105528,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -105043,6 +105724,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -105066,6 +105748,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -105265,6 +105948,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -105288,6 +105972,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -105496,6 +106181,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -105519,6 +106205,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -105747,6 +106434,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -105770,6 +106458,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -106001,6 +106690,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -106024,6 +106714,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -106237,6 +106928,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -106260,6 +106952,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -106484,6 +107177,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -106507,6 +107201,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -106707,6 +107402,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -106730,6 +107426,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -106940,6 +107637,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -106963,6 +107661,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -107179,6 +107878,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -107202,6 +107902,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -107744,6 +108445,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -107767,6 +108469,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -108257,6 +108960,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -108280,6 +108984,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -108525,6 +109230,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -108548,6 +109254,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -109018,6 +109725,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -109041,6 +109749,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -109520,6 +110229,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -109543,6 +110253,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -109782,6 +110493,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -109805,6 +110517,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -110000,6 +110713,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -110023,6 +110737,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -110268,6 +110983,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -110291,6 +111007,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -110490,6 +111207,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -110513,6 +111231,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -110721,6 +111440,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -110744,6 +111464,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -110944,6 +111665,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -110967,6 +111689,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -111177,6 +111900,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -111200,6 +111924,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -111410,6 +112135,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -111433,6 +112159,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -111653,6 +112380,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -111676,6 +112404,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -114507,6 +115236,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -114530,6 +115260,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -114733,6 +115464,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -114756,6 +115488,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -115018,6 +115751,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -115041,6 +115775,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -115236,6 +115971,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -115259,6 +115995,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -115458,6 +116195,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -115481,6 +116219,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -115689,6 +116428,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -115712,6 +116452,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -115912,6 +116653,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -115935,6 +116677,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -116145,6 +116888,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -116168,6 +116912,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -116414,6 +117159,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -116437,6 +117183,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -116645,6 +117392,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -116668,6 +117416,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -116888,6 +117637,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -116911,6 +117661,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -117131,6 +117882,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -117154,6 +117906,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -117551,6 +118304,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -117574,6 +118328,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -117777,6 +118532,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -117800,6 +118556,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -118222,6 +118979,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -118245,6 +119003,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -118611,6 +119370,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -118634,6 +119394,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -119014,6 +119775,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -119037,6 +119799,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -119408,6 +120171,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -119431,6 +120195,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -119802,6 +120567,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -119825,6 +120591,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -120042,6 +120809,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -120065,6 +120833,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -120505,6 +121274,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -120528,6 +121298,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -120876,6 +121647,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -120899,6 +121671,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -121098,6 +121871,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -121121,6 +121895,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -121331,6 +122106,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -121354,6 +122130,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -121787,6 +122564,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -121810,6 +122588,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -122229,6 +123008,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -122252,6 +123032,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -122683,6 +123464,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -122706,6 +123488,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -123183,6 +123966,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -123206,6 +123990,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -123638,6 +124423,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -123661,6 +124447,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -123916,6 +124703,7 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
           "ADMITS_TOO_MANY",
@@ -123939,6 +124727,7 @@
           "FORBIDDEN",
           "GROUP_ENTRY_ONLY",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "IMAGE_NOT_FOUND",
           "INVALID_API_KEY",
           "INVALID_CURSOR",
@@ -124425,9 +125214,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -124800,9 +125591,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -125163,9 +125956,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -125538,9 +126333,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -125963,9 +126760,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -126325,9 +127124,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -126696,9 +127497,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -127059,9 +127862,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -127422,9 +128227,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -127785,9 +128592,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -127982,9 +128791,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -128349,9 +129160,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -128713,9 +129526,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -129075,9 +129890,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -129452,9 +130269,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -129741,9 +130560,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -130152,9 +130973,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -130408,9 +131231,11 @@
           "resource": "nfc.tagTypes",
           "method": "list"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -130634,9 +131459,11 @@
           "resource": "nfc.tagTypes",
           "method": "create"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -130861,9 +131688,11 @@
           "resource": "nfc.tagTypes",
           "method": "update"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -131089,9 +131918,11 @@
           "resource": "nfc.tagTypes",
           "method": "archive"
         },
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -131314,9 +132145,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -131542,9 +132375,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -131767,9 +132602,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -131972,9 +132809,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -132177,9 +133016,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -132400,9 +133241,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -132579,9 +133422,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
@@ -132774,9 +133619,11 @@
             "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
           "ENROLLMENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",

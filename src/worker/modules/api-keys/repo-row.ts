@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ApiKeyKind } from '../../platform/api-key-token.ts';
+import type { Amr } from '../../platform/auth.ts';
 
 export interface ApiKeyRow {
   id: string;
@@ -27,6 +28,8 @@ export interface ApiKeyRow {
   /** The key that made this row: a child's parent, or a key that replaced itself. Null when a person did. */
   created_by_key: string | null;
   last_ip_prefix: string | null;
+  /** How the creating person signed in (`oidc`, `magic_link`, `breakglass`). Null: made by a key, or before 0169. */
+  created_amr: Amr | null;
 }
 
 /** The key a rotation replaces: it retires at `retireAt` in the batch that mints its successor. */

@@ -7,6 +7,7 @@ export interface SessionRow {
   id_hash: string;
   user_id: string;
   amr: Amr;
+  auth_time: number | null;
   roles: string;
   csrf_secret: string;
   created_at: number;
@@ -17,12 +18,18 @@ export interface SessionRow {
   ip_prefix: string | null;
   user_agent: string | null;
   user_status: 'active' | 'disabled';
+  /** `auth.consoleEmailUntil` for an email session of a user in `console_email_grace`; null otherwise. */
+  console_until: number | null;
 }
 
 export const getSession = (db: Db, idHash: string) =>
   first<SessionRow>(
     db,
-    `SELECT s.*, u.status AS user_status FROM sessions s JOIN users u ON u.id = s.user_id
+    `SELECT s.*, u.status AS user_status,
+       CASE WHEN s.amr = 'magic_link' AND EXISTS (SELECT 1 FROM console_email_grace g WHERE g.user_id = s.user_id)
+         THEN (SELECT CAST(json_extract(st.value, '$') AS INTEGER) FROM settings st
+           WHERE st.scope = 'platform' AND st.key = 'auth.consoleEmailUntil') END AS console_until
+     FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.id_hash = ?`,
     [idHash],
   );
@@ -33,6 +40,7 @@ export async function insertSession(
     idHash: string;
     userId: string;
     amr: Amr;
+    authTime?: number | null;
     roles: string[];
     csrfSecret: string;
     now: number;
@@ -44,13 +52,14 @@ export async function insertSession(
 ): Promise<void> {
   await run(
     db,
-    `INSERT INTO sessions (id_hash, user_id, amr, roles, csrf_secret, created_at, last_seen_at,
+    `INSERT INTO sessions (id_hash, user_id, amr, auth_time, roles, csrf_secret, created_at, last_seen_at,
        idle_expires_at, expires_at, ip_prefix, user_agent)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       s.idHash,
       s.userId,
       s.amr,
+      s.authTime ?? null,
       JSON.stringify(s.roles),
       s.csrfSecret,
       s.now,

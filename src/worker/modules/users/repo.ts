@@ -41,7 +41,7 @@ export async function factsFor(
 export async function setPrimaryEmail(db: Db, userId: string, email: string): Promise<boolean> {
   const { changes } = await run(
     db,
-    `UPDATE users SET primary_email = ?
+    `UPDATE users SET primary_email = ?, primary_set_amr = 'oidc'
      WHERE id = ? AND EXISTS (SELECT 1 FROM user_emails WHERE email = ? AND user_id = ?)`,
     [email, userId, email, userId],
   );
