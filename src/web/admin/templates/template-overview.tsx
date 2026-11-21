@@ -23,7 +23,6 @@ import {
   Callout,
   Card,
   CardBody,
-  CardHeader,
   CountLink,
   EntityAvatar,
   JsonViewer,
@@ -65,7 +64,6 @@ export function TemplateOverview({
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader title="Details" />
         <CardBody>
           <KeyValue
             items={[
@@ -203,7 +201,6 @@ export function TemplateInputs({ schema }: { schema: unknown }) {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader title="Inputs" />
         <CardBody>
           {fields.length === 0 ? (
             <p className="text-sm text-fg-muted">No inputs.</p>

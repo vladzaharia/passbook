@@ -164,9 +164,6 @@ export function TemplateDetailContent({
       />
       <Card className="mb-6">
         <CardBody className="grid gap-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-fg-muted">
-            Active version
-          </p>
           <h2 className="text-xl font-semibold">{activeLabel ?? 'No active version'}</h2>
           {draftLabel ? (
             <p className="text-sm">
