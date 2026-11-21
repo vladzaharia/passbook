@@ -387,7 +387,6 @@ describe('overview page', () => {
       within(directories).getByRole('heading', { name: 'Organizations · filtered' }),
     ).toBeInTheDocument();
     expect(await within(directories).findByText('1')).toBeInTheDocument();
-    expect(await screen.findByText('Live passes and emails for South')).toBeInTheDocument();
     const checklist = screen.getByRole('region', { name: 'Get started' });
     const send = new URL(
       within(checklist).getByRole('link', { name: 'Send email' }).getAttribute('href')!,

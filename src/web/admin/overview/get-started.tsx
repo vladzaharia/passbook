@@ -157,11 +157,9 @@ function StepArt({ name, state }: { name: ArtName; state: 'done' | 'next' | 'lat
 /** "Get started": four steps that check themselves from server counts. */
 export function GetStarted({
   setup,
-  organization,
   onDismiss,
 }: {
   setup: MetricsOverview['setup'];
-  organization?: string | undefined;
   onDismiss: () => void;
 }) {
   const steps = firstRunSteps(setup);
@@ -169,9 +167,6 @@ export function GetStarted({
   return (
     <Card>
       <CardBody>
-        {organization ? (
-          <p className="mb-3 text-xs text-fg-muted">Live passes and emails for {organization}</p>
-        ) : null}
         <Checklist
           title="Get started"
           onDismiss={onDismiss}

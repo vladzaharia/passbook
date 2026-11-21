@@ -271,9 +271,7 @@ export function OverviewPage({
                 }
               />
             )}
-            {checklist ? (
-              <GetStarted setup={data.setup} organization={organizationName} onDismiss={dismiss} />
-            ) : null}
+            {checklist ? <GetStarted setup={data.setup} onDismiss={dismiss} /> : null}
             {/* With no passes yet the checklist stands in for the (empty) charts. */}
             {firstRun ? null : (
               <ChartsCard data={data} range={shownRange} enter={arrived} busy={busy} />
