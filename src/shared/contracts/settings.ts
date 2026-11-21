@@ -142,6 +142,8 @@ export const OrgSettingsSchema = z.object({
     .optional(),
   /** Staff sign-in with a PIN alone on paired scanners. Turned off by the server after repeated wrong PINs; an admin turns it on. */
   'scan.pinOnly': z.boolean().default(true),
+  /** Holder pages and emails use the pass logo as the web logo. On until a web logo is chosen. */
+  'branding.webLogoSameAsLogo': z.boolean().default(true),
   /** Opt-in: the buddy sits on the pass email's card, as in the sign-in email. */
   'email.buddy': z.boolean().default(false),
   /** Third-party NFC tags. On until an admin turns it off. */

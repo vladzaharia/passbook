@@ -264,7 +264,8 @@ export type PassSetupImpact = z.infer<typeof PassSetupImpactSchema>;
 /** The PATCH answer, the same for a dry run. */
 export const PassSetupResultSchema = z.object({
   dryRun: z.boolean(),
-  view: PassSetupSchema.describe('The view after the change.'),
+  /** The view after the change (the saved state for an apply, the would-be state for a dry run). */
+  view: PassSetupSchema,
   diff: z.array(z.object({ field: PassSetupFieldSchema, before: JsonSchema, after: JsonSchema })),
   impact: PassSetupImpactSchema,
 });

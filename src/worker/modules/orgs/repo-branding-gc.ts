@@ -45,3 +45,13 @@ export async function currentBranding(db: D1Database, orgId: string): Promise<st
 export async function dropBrandingKey(db: D1Database, orgId: string, key: string): Promise<void> {
   await run(db, 'DELETE FROM branding_gc_queue WHERE org_id = ? AND r2_key = ?', [orgId, key]);
 }
+
+/** Objects queued for the org: staged uploads still waiting for a save, and superseded ones. */
+export async function queuedBrandingCount(db: D1Database, orgId: string): Promise<number> {
+  const rows = await all<{ n: number }>(
+    db,
+    'SELECT count(*) AS n FROM branding_gc_queue WHERE org_id = ?',
+    [orgId],
+  );
+  return rows[0]?.n ?? 0;
+}

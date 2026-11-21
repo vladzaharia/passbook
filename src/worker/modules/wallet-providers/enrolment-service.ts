@@ -153,20 +153,28 @@ export async function setEnrolmentSource(
   }));
 }
 
-export async function enableEnrolment(
+type EnableActor = EnrolmentStep['event']['actor'];
+
+/**
+ * What turning the enrolment on needs: the plan, a source that is checked (and, in Live, a Test round trip),
+ * no hold. Throws the refusal; `expectedRevision` is the revision the caller read, or the current one when absent.
+ */
+export async function planEnable(
   ctx: ServiceContext,
-  auth: SessionAuth,
   orgId: string,
+  mode: Mode,
   provider: Provider,
-  input: WalletEnrolmentAction,
-): Promise<WalletEnrolment> {
-  const mode = sessionOf(auth).mode;
-  await tenantAuthorityOf(ctx, auth, orgId, 'integrations:manage');
+  expectedRevision?: number,
+): Promise<{ feature: `wallet.${Provider}`; build: (actor: EnableActor) => EnrolmentStep }> {
   // The plan first, in Test and Live alike: a plan without the wallet must not read as a missing prerequisite.
   const feature = `wallet.${provider}` as const;
   if (!isEntitled(await entitlementsOf(ctx, orgId), feature))
     throw new FeatureNotIncludedError(feature, featureNotIncluded(feature));
-  const row = await current(ctx, orgId, mode, provider, input.expectedRevision);
+  const revision =
+    expectedRevision ??
+    (await findEnrolment(ctx.env.DB, orgId, mode, provider))?.enrolment_revision ??
+    0;
+  const row = await current(ctx, orgId, mode, provider, revision);
   if (!row?.credential_source_id || row.revoked_at !== null || row.enabled_at !== null)
     throw changed();
   if (row.platform_hold_at !== null) throw held();
@@ -181,13 +189,9 @@ export async function enableEnrolment(
   const roundTrip = mode === 'live' ? await testRoundTrip(ctx.env.DB, orgId, provider) : null;
   if (mode === 'live' && roundTrip === null) missing.push('round_trip');
   if (missing.length > 0 || checkId === null) throw prerequisite(missing);
-  return orgStep(
-    ctx,
-    auth,
-    orgId,
-    provider,
-    'org_mode.wallet.enrolment_enable',
-    (w) => ({
+  return {
+    feature,
+    build: (actor) => ({
       accountId: row.id,
       isNew: false,
       provider,
@@ -199,12 +203,32 @@ export async function enableEnrolment(
         credentialId: source.id,
         checkId,
         ...(roundTrip ? { roundTrip } : {}),
-        actor: { type: 'user', id: w.userId },
+        actor,
         createdAt: now,
       },
       set: { enabled_at: now },
     }),
-    [entitled(feature)],
+  };
+}
+
+export async function enableEnrolment(
+  ctx: ServiceContext,
+  auth: SessionAuth,
+  orgId: string,
+  provider: Provider,
+  input: WalletEnrolmentAction,
+): Promise<WalletEnrolment> {
+  const mode = sessionOf(auth).mode;
+  await tenantAuthorityOf(ctx, auth, orgId, 'integrations:manage');
+  const plan = await planEnable(ctx, orgId, mode, provider, input.expectedRevision);
+  return orgStep(
+    ctx,
+    auth,
+    orgId,
+    provider,
+    'org_mode.wallet.enrolment_enable',
+    (w) => plan.build({ type: 'user', id: w.userId }),
+    [entitled(plan.feature)],
   );
 }
 
