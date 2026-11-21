@@ -26,7 +26,7 @@ import { all, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
-import { getOrgAccess, requireOrgCapability } from './access.ts';
+import { getOrgAccess, membershipDto, requireOrgCapability } from './access.ts';
 
 const fake = fakeAuth();
 const clock = new ManualClock();
@@ -255,6 +255,25 @@ describe('organization memberships', () => {
       nextCursor: null,
     });
     expect((await call('GET', '/memberships/me', undefined, fake.apiKey())).status).toBe(401);
+  });
+
+  it('marks a developer sandbox membership test-only', () => {
+    const row = {
+      id: 'm1',
+      org_id: 'o1',
+      org_name: 'Sandbox',
+      org_slug: 'sandbox',
+      personal_user_id: null,
+      org_kind: 'developer',
+      user_id: 'u1',
+      user_name: null,
+      user_email: null,
+      roles: '["org_admin"]',
+      created_at: 1,
+      revoked_at: null,
+    };
+    expect(membershipDto(row).testOnly).toBe(true);
+    expect(membershipDto({ ...row, org_kind: 'standard' }).testOnly).toBe(false);
   });
 
   it('delivers a fragment-only secret, grants multiple roles and revokes on the next request', async () => {

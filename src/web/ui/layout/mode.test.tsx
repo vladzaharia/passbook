@@ -5,14 +5,31 @@ import userEvent from '@testing-library/user-event';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { getMode, resetModeForTests } from '../../lib/mode.ts';
+import { trackCurrentPath } from '../../lib/current-path.ts';
+import { getMode, resetModeForTests, setTestOnlyOrgs } from '../../lib/mode.ts';
 import { TooltipProvider } from '../tooltip.tsx';
 import { ModeBand } from './mode-band.tsx';
 import { ModePill } from './mode-pill.tsx';
 import { ModeSwitch } from './mode-switch.tsx';
 import { TestStrip } from './test-strip.tsx';
 
-afterEach(resetModeForTests);
+afterEach(() => {
+  resetModeForTests();
+  setTestOnlyOrgs([]);
+  trackCurrentPath(() => '');
+});
+
+describe('a developer sandbox', () => {
+  it('is always Test, in its own pages only', () => {
+    setTestOnlyOrgs(['sbx']);
+    trackCurrentPath(() => '/admin/o/sbx/passes');
+    expect(getMode()).toBe('test');
+    trackCurrentPath(() => '/admin/o/other/passes');
+    expect(getMode()).toBe('live');
+    trackCurrentPath(() => '/admin/platform/orgs');
+    expect(getMode()).toBe('live');
+  });
+});
 
 describe('ModePill', () => {
   it('marks test and says nothing for live', () => {

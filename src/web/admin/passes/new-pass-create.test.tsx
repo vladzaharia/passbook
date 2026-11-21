@@ -136,7 +136,7 @@ describe('reviewed pass issuance', () => {
         return problem(500, 'failure', 'Try again');
       },
     });
-    expect(screen.getByText(version)).toBeInTheDocument();
+    expect(screen.queryByText(version)).toBeNull();
     expect(screen.queryByText('release1')).toBeNull();
     expect(screen.queryByText('Release generation')).toBeNull();
     expect(screen.getByText('Wallet provider').parentElement).toHaveTextContent('Apple Wallet');
@@ -159,7 +159,6 @@ describe('reviewed pass issuance', () => {
     expect(requests[1]?.key).toBe(requests[0]?.key);
     act(() => setMode('test'));
     expect(screen.getByRole('button', { name: 'Create and send' })).toBeDisabled();
-    await screen.findByText(version);
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -220,7 +219,6 @@ describe('reviewed pass issuance', () => {
       });
       await user.click(screen.getByRole('button', { name: 'Create and send' }));
       await screen.findByText(/active release, mode, or version may have changed/i);
-      await screen.findByText('ffeeddccbbaa9988');
       expect(requests).toHaveLength(1);
       expect(screen.getByRole('button', { name: 'Create and send' })).toBeDisabled();
       await user.click(screen.getByRole('button', { name: 'Back' }));
@@ -305,7 +303,6 @@ describe('reviewed pass issuance', () => {
       },
     });
     await user.click(screen.getByRole('button', { name: 'Create and send' }));
-    await screen.findByText('ffeeddccbbaa9988');
     await user.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Next' }));

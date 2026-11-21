@@ -1,6 +1,6 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Command } from 'cmdk';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { cn } from '../lib/cn.ts';
 import { CONTROL, CONTROL_HEIGHT } from './input.tsx';
@@ -78,7 +78,7 @@ export function Combobox({
             {shown}
           </span>
         </span>
-        <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
+        <ChevronDown aria-hidden className="size-4 shrink-0 text-fg-muted" />
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content

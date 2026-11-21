@@ -6,7 +6,8 @@ import type { DesignDoc } from './model.ts';
 import { type Action, signature } from './reducer.ts';
 
 /**
- * Save version. The saved document is the one sent: edits made while the request ran stay in
+ * Save version. A save asked while the latest edit is still being checked waits for the check.
+ * The saved document is the one sent: edits made while the request ran stay in
  * the designer and keep their draft; only the baseline moves.
  */
 export function useSaveFlow({
@@ -36,6 +37,7 @@ export function useSaveFlow({
 }) {
   const save = useSaveVersion(templateId);
   const [saved, setSaved] = useState(false);
+  const [waiting, setWaiting] = useState(false);
 
   function keepDraft() {
     if (signature(latest.current) !== signature(savedDoc))
@@ -44,8 +46,14 @@ export function useSaveFlow({
 
   async function run(snapshot: DesignDoc): Promise<'saved' | 'refused' | 'failed'> {
     if (checking()) {
-      toast.info('Checking your changes. Save again in a moment.');
-      return 'refused';
+      setWaiting(true);
+      const until = Date.now() + 15_000;
+      while (checking() && Date.now() < until) await new Promise((r) => setTimeout(r, 50));
+      setWaiting(false);
+      if (checking()) {
+        toast.error('The check is taking too long. Try again.', 'Could not save');
+        return 'refused';
+      }
     }
     const errors = blocked();
     if (errors !== 0) {
@@ -83,5 +91,5 @@ export function useSaveFlow({
     }
   }
 
-  return { saving: save.isPending, saved, run };
+  return { saving: save.isPending || waiting, saved, run };
 }

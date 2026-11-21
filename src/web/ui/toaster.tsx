@@ -64,7 +64,8 @@ export const toast = {
   /** A holder emailed: the buddy posts its pass like a letter. */
   sent: (message: string) =>
     sonner.success(message, { duration: 4000, icon: <SuccessMark scene="post" /> }),
-  info: (message: string) => sonner.info(message, { duration: 4000 }),
+  /** `id` lets the page that shows the outcome take the toast down. */
+  info: (message: string, id?: string) => sonner.info(message, { duration: 4000, id }),
   warning: (message: string) => sonner.warning(message, { duration: 6000 }),
   /**
    * Errors stay until dismissed. `title` names what failed, "Could not {verb}" ("Could not save");

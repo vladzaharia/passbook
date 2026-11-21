@@ -109,3 +109,6 @@ export function stopLine(code: string | null): string {
       return 'It stopped before every pass was handled. Send again to finish the rest.';
   }
 }
+
+/** The "Sending" toast: the message page takes it down once the send has an outcome. */
+export const SENDING_TOAST = 'broadcast-sending';
