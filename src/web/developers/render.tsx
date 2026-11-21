@@ -21,7 +21,6 @@ import { operations } from './model/dates.ts';
 import { homeMarkdown, llmsTxt, pageMarkdown, pagePath } from './model/markdown.ts';
 import type { OutFile, Site } from './model/types.ts';
 import { ChangelogView } from './pages/changelog.tsx';
-import type { BlueprintPreviews } from './playground/model.ts';
 import { ConsoleView } from './pages/console.tsx';
 import { HomeView } from './pages/home.tsx';
 import { type NavKey, Shell, SideNav } from './pages/layout.tsx';
@@ -35,6 +34,7 @@ import {
 } from './pages/more.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
+import type { BlueprintPreviews } from './playground/model.ts';
 import { PlaygroundPage } from './playground/page.tsx';
 import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
 
