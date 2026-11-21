@@ -51,6 +51,7 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
   'idempotent_requests',
+  'identity_runs',
   'message_rules',
   'message_rule_fires',
   'scanner_setups',
