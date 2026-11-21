@@ -133,10 +133,9 @@ export async function touchScanner(
 ): Promise<void> {
   await run(
     db,
-    `UPDATE scanners SET last_seen_at = ?, last_ip_prefix = ?,
-       expires_at = CASE WHEN kind = 'device' AND expires_at < ? THEN ? ELSE expires_at END
+    `UPDATE scanners SET last_seen_at = ?, last_ip_prefix = ?
      WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at <= ?)`,
-    [now, ipPrefix, now + DEVICE_IDLE_MS, now + DEVICE_IDLE_MS, id, now - everyMs],
+    [now, ipPrefix, id, now - everyMs],
   );
 }
 

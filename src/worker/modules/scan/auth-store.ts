@@ -17,10 +17,9 @@ export { DEVICE_IDLE_MS };
 const resolvedRows = new WeakMap<ScannerAuth, ScannerRow>();
 export const resolvedRowOf = (auth: ScannerAuth): ScannerRow | undefined => resolvedRows.get(auth);
 
-/** The guard's expiry: past `expires_at`, or a device idle past the window (a terminal never idles). */
+/** The guard's expiry: a terminal ends at `expires_at`; a device only when idle past the window, which each request slides. */
 export function scannerExpired(row: ScannerRow, now: number): boolean {
-  if (row.expiresAt !== null && row.expiresAt <= now) return true;
-  if (row.kind === 'terminal') return false;
+  if (row.kind === 'terminal') return row.expiresAt !== null && row.expiresAt <= now;
   return (row.lastSeenAt ?? row.pairedAt ?? now) + DEVICE_IDLE_MS <= now;
 }
 
