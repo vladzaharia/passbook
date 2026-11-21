@@ -21,13 +21,16 @@ import { releasedCandidateIds } from './repo-release-state.ts';
 import { writeCandidate } from './repo-release-write.ts';
 import { type CandidateRow, listApprovals, listCandidates } from './repo-releases.ts';
 
-type Envelope = Pick<CandidateRow, 'version' | 'contentHash' | 'authorId' | 'versionAuthorId'>;
+export type Envelope = Pick<
+  CandidateRow,
+  'version' | 'contentHash' | 'authorId' | 'versionAuthorId'
+>;
 
 /**
  * An unreleased candidate this one would duplicate: the same sealed envelope but for its creation
  * time, so the same author, version author, content and release policy.
  */
-async function reusable(
+export async function reusable(
   ctx: ServiceContext,
   templateId: string,
   scope: CreateTemplateCandidate,

@@ -6749,6 +6749,52 @@
   }
  },
  {
+  "id": "templates.postTemplatesByIdRelease",
+  "call": "templates.releases.release",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/release",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "version": "x"
+  },
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "version": "x",
+   "modes": {},
+   "state": {
+    "live": {
+     "version": "x",
+     "at": 0,
+     "by": "x"
+    },
+    "test": {
+     "version": "x",
+     "at": 0,
+     "state": "following"
+    },
+    "draft": {
+     "version": "x",
+     "at": 0
+    },
+    "review": {
+     "state": "none"
+    },
+    "alone": false,
+    "next": "design"
+   }
+  }
+ },
+ {
   "id": "templates.getTemplatesByIdReleases",
   "call": "templates.releases.list",
   "http": "GET",
@@ -6939,6 +6985,52 @@
     "images": 0,
     "barcode": 0,
     "colors": 0
+   }
+  }
+ },
+ {
+  "id": "templates.postTemplatesByIdReviewRequests",
+  "call": "templates.reviews.request",
+  "http": "POST",
+  "path": "/api/v1/templates/{id}/review-requests",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "version": "x"
+  },
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "version": "x",
+   "modes": {},
+   "state": {
+    "live": {
+     "version": "x",
+     "at": 0,
+     "by": "x"
+    },
+    "test": {
+     "version": "x",
+     "at": 0,
+     "state": "following"
+    },
+    "draft": {
+     "version": "x",
+     "at": 0
+    },
+    "review": {
+     "state": "none"
+    },
+    "alone": false,
+    "next": "design"
    }
   }
  },

@@ -1290,6 +1290,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.releases.release", "POST", "/api/v1/templates/id1/release", true,
+		`{"version":"x"}`, `{"version":"x","modes":{},"state":{"live":{"version":"x","at":0,"by":"x"},"test":{"version":"x","at":0,"state":"following"},"draft":{"version":"x","at":0},"review":{"state":"none"},"alone":false,"next":"design"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b TemplatesReleasesReleaseBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Templates.Releases.Release(ctx, "id1", &b, nil)
+		},
+	},
+	{
 		"templates.releases.list", "GET", "/api/v1/templates/id1/releases", false,
 		"", `{"active":{"id":"x","templateId":"x","orgId":"x","mode":"live","provider":"apple","version":"x","generation":0,"candidateHash":"x","source":"approved","action":"release","previousReleaseId":"x","createdBy":"x","createdAt":0,"candidateId":"x","approvalId":"x"},"items":[{"id":"x","templateId":"x","orgId":"x","mode":"live","provider":"apple","version":"x","generation":0,"candidateHash":"x","source":"approved","action":"release","previousReleaseId":"x","createdBy":"x","createdAt":0,"candidateId":"x","approvalId":"x"}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1312,6 +1323,17 @@ var generatedOps = []opCase{
 		"", `{"fromVersion":"x","toVersion":"x","passes":{"count":0,"capped":false},"diff":{"fields":[{"label":"x","kind":"added","from":"x","to":"x"}],"images":[{"label":"x","kind":"added","from":"x","to":"x"}],"barcode":[{"label":"x","kind":"added","from":"x","to":"x"}],"colors":[{"label":"x","kind":"added","from":"x","to":"x"}]},"more":{"fields":0,"images":0,"barcode":0,"colors":0}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Templates.Releases.RetrieveImpact(ctx, "id1", nil)
+		},
+	},
+	{
+		"templates.reviews.request", "POST", "/api/v1/templates/id1/review-requests", true,
+		`{"version":"x"}`, `{"version":"x","modes":{},"state":{"live":{"version":"x","at":0,"by":"x"},"test":{"version":"x","at":0,"state":"following"},"draft":{"version":"x","at":0},"review":{"state":"none"},"alone":false,"next":"design"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b TemplatesReviewsRequestBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Templates.Reviews.Request(ctx, "id1", &b, nil)
 		},
 	},
 	{

@@ -258,6 +258,7 @@ export {
   type ReleaseNext,
   type ReleasePlan,
   ReleasePlanSchema,
+  ReleaseResponseSchema,
   type ReleaseResult,
   ReleaseResultSchema,
   type ReleaseTemplate,

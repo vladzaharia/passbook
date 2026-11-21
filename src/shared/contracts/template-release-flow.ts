@@ -141,6 +141,9 @@ export const ReleaseResultSchema = z.object({
 });
 export type ReleaseResult = z.infer<typeof ReleaseResultSchema>;
 
+/** The release route answers a result, or a plan when `dryRun` is set. */
+export const ReleaseResponseSchema = z.union([ReleaseResultSchema, ReleasePlanSchema]);
+
 /** `POST /templates/{id}/review`: peer approvals on both modes' candidates for `version`. */
 export const ReviewTemplateSchema = z.strictObject({
   orgId: IdSchema.optional(),

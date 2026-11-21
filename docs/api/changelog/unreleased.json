@@ -872,12 +872,28 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "POST /api/v1/templates/{id}/release new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdRelease",
+    "op": "POST /api/v1/templates/{id}/release",
+    "change": "new operation",
+    "note": "Releases a saved version to Test and Live in one call, with dryRun to preview. Test follows Live; Idempotency-Key is required."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/restore 200.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdRestore",
     "op": "POST /api/v1/templates/{id}/restore",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/review-requests new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdReviewRequests",
+    "op": "POST /api/v1/templates/{id}/review-requests",
+    "change": "new operation",
+    "note": "Creates or reuses the Test and Live candidates of a version so another reviewer can approve."
   },
   {
     "key": "POST /api/v1/templates/{id}/share 200.release: field added",
