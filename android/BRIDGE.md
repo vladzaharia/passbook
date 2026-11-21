@@ -38,7 +38,7 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | Web → app | `{version:1, op:'haptic', pattern:number[]}` |
 | App → web | `{version:1, event:'timeout'}` |
 
-`cryptogram` is standard Base64 of the VAS `9F27` value. `readAt` is the Android wall clock in milliseconds, useful for display, not authoritative freshness. Barcode values are bounded to 2048 characters without control characters. A single scan may be pending; results expire after 15 seconds. Repeated identical inputs are suppressed for two seconds. Pausing/navigating invalidates pending results. The bundled diagnostics uses a local-only `captured` acknowledgement, which cannot grant acceptance.
+`cryptogram` is standard Base64 of the VAS `9F27` value. `readAt` is the Android wall clock in milliseconds, useful for display, not authoritative freshness. Barcode values are bounded to 2048 characters without control characters. Without `scanAck` (below) a single scan may be pending and results expire after 15 seconds; the app then shows "Unverified · no decision received" and sends `timeout`. The same payload from the same source within 1500 ms is dropped; anything else is forwarded. Pausing/navigating invalidates pending results. The bundled diagnostics uses a local-only `captured` acknowledgement, which cannot grant acceptance.
 
 `haptic` plays one verdict's feedback. `pattern` is on/off durations in milliseconds, starting with an on: at most 8 entries, each 0 to 500; anything else is dropped. The web sends it only when the capability snapshot has `haptics: true`, and uses `navigator.vibrate` otherwise. Android plays the waveform; iOS maps one pulse to an impact, two to a warning and three or more to an error notification.
 
@@ -121,11 +121,28 @@ sends every later message with that version.
 - Capabilities: `nfc.formats` adds `tag-uid` and `tag-sun`. New `nfc.continuous`
   (boolean) is true when the app reads tags without `tagRead`.
 - Android: a tag read ends a pending `tagRead`; a `tagRead` that times out ends
-  with the `cancelled` event. VAS is tried first and a SELECT answer of `6A82`
+  with `{event:'cancelled', id}` (the `tagRead` id), which ends only that read and
+  leaves any in-flight barcode check alone. VAS is tried first and a SELECT answer of `6A82`
   falls through to the tag read. The same tag read again within two seconds is
   dropped. A tag whose NDEF value is over 1024 bytes is sent with `uid` only.
 - Tag data stays out of logs, analytics and URLs. The server stores a keyed hash
   of the UID, never the UID.
+
+## Receipt acknowledgement (`scanAck`, additive, still v2)
+
+A read used to hold the native gate until its verdict, so a second read during review was dropped silently. The web now acknowledges receipt separately.
+
+| Direction | Message |
+|-----------|---------|
+| Web → app | `{version:2, op:'hello', versions:[1,2], features:['scanAck']}` |
+| Web → app | `{version:n, op:'scanAck', id:string}` |
+
+- `features` is an optional array of names (at most 8, each at most 32 characters). Each side ignores names it does not know, so this is not a version bump: the wire stays v2 and a v1 or older app sees an extra `hello` field it ignores.
+- On every valid `scan` event the web posts `scanAck {id}` at once, before any verdict, then sends `result` as before. It sends the ack with the negotiated version.
+- If the web advertised `scanAck`, the app's gate holds only until the ack, at most 2 s. After that the gate is free and the app shows "Verifier did not respond. Scan again." (no `timeout` event). The verdict is matched to its `id` later without blocking further reads. A read that arrives while the gate waits for an ack shows "Finish the current scan first."
+- If the web did not advertise it, the app keeps the old behaviour: one read holds the gate until its `result` or 15 s.
+- The web owns a read that arrives during review or while a result shows: the loop holds it (review), queues it (checking, result) or answers with a chip, and says so on screen. A read the page cannot take (not started, blocked) shows a notice and gets `result` `error`.
+- An older Android app that predates this op shows "Verifier requested an unsupported reader operation." for each ack. Update the app with the web.
 
 ## Backend obligations
 

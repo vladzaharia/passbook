@@ -135,13 +135,16 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         oneShot = null;
         web.send(message("cancelled")); resumeReader(); reportCapabilities();
     };
+    /** Runs only while a read holds the gate: until its acknowledgement, or its verdict on an older web. */
     private final Runnable expiry = new Runnable() {
         @Override public void run() {
-            if (gate.expire(SystemClock.elapsedRealtime())) {
-                notice("Unverified · no decision received");
-                web.send(message("timeout"));
+            long now = SystemClock.elapsedRealtime();
+            switch (gate.expire(now)) {
+                case NO_VERDICT -> { notice("Unverified · no decision received"); web.send(message("timeout")); }
+                case NO_ACK -> notice("Verifier did not respond. Scan again.");
+                case NONE -> { }
             }
-            handler.postDelayed(this, 500);
+            if (gate.busy(now)) handler.postDelayed(this, 250);
         }
     };
 
@@ -154,7 +157,6 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         nfc = new NfcController(this, this);
         buildUi();
         web.load(config);
-        handler.post(expiry);
     }
 
     private void buildUi() {
@@ -235,7 +237,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
     @Override protected void onPause() {
         web.send(message("cancelled"));
-        foreground = false; endOneShot(); nfc.stop(); gate.reset(); unregisterBarcode(); unregisterReceiver(nfcReceiver);
+        foreground = false; endOneShot(); nfc.stop(); gate.reset(); handler.removeCallbacks(expiry); unregisterBarcode(); unregisterReceiver(nfcReceiver);
         if (cameraManager != null) cameraManager.unregisterAvailabilityCallback(cameraAvailability);
         if (inputManager != null) inputManager.unregisterInputDeviceListener(inputListener);
         unregisterReceiver(usbReceiver); handler.removeCallbacks(hardwareReport);
@@ -250,7 +252,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         else super.onBackPressed();
     }
     @Override public void reset() {
-        cameraPermissions.cancel(); gate.reset(); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
+        cameraPermissions.cancel(); gate.reset(); handler.removeCallbacks(expiry); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
     }
     @Override public void notice(String text) { status.setTextColor(0xff34415d); status.setText(text); }
 
@@ -285,6 +287,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
                     endOneShot(); resumeReader(); reportCapabilities();
                 }
                 break;
+            case "scanAck": gate.ack(json.optString("id"), SystemClock.elapsedRealtime()); break;
             case "captured":
                 if (config.isLocal() && gate.finish(json.optString("id"), SystemClock.elapsedRealtime())) {
                     notice("Read captured · unverified");
@@ -378,9 +381,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
 
     private boolean deliver(JSONObject event, String fingerprint) {
         if (!foreground || !web.isReady()) { notice("Connect the verifier before scanning."); return false; }
-        String id = gate.begin(fingerprint, SystemClock.elapsedRealtime());
-        if (id == null) return false;
-        put(event, "id", id); put(event, "readAt", System.currentTimeMillis());
+        boolean acks = web.feature("scanAck") && !config.isLocal();
+        ScanGate.Begin begin = gate.begin(event.optString("source"), fingerprint, SystemClock.elapsedRealtime(), acks);
+        if (begin.admit() == ScanGate.Admit.BUSY) { notice("Finish the current scan first."); return false; }
+        if (begin.admit() == ScanGate.Admit.DUPLICATE) return false;
+        handler.removeCallbacks(expiry); handler.postDelayed(expiry, 250);
+        put(event, "id", begin.id()); put(event, "readAt", System.currentTimeMillis());
         status.setTextColor(0xff34415d);
         notice(config.isLocal() ? "Read captured · unverified" : "Checking…");
         if (!web.send(event)) { gate.reset(); notice("Verifier disconnected. Scan again."); return false; }
