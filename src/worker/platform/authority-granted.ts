@@ -102,6 +102,10 @@ function deniedSql(
     ...when('org'),
   ];
   if (scope !== 'platform') whens.push(`WHEN a.org_id IS NULL THEN 'actor'`);
+  // A developer org never holds Live: a Live request there is a 409, not a lost-access 403.
+  whens.push(
+    `WHEN a.actor_ok = 0 AND a.mode = 'live' AND EXISTS (SELECT 1 FROM orgs d WHERE d.id = a.org_id AND d.kind = 'developer') THEN 'testonly'`,
+  );
   whens.push(`WHEN a.actor_ok = 0 THEN 'actor'`);
   // A key limited to templates holds no grant that writes a table with no template dimension.
   if (limitedRefused) whens.push(`WHEN a.limit_key IS NOT NULL THEN 'actor'`);

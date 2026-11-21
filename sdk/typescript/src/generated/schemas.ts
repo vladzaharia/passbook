@@ -862,6 +862,7 @@ export type Org = {
   name: string;
   status: "active" | "suspended" | "deleted";
   personal?: boolean;
+  kind?: "standard" | "developer";
   defaultIdentityId: string | null;
   branding: OrgBranding;
   createdAt: number;
@@ -904,6 +905,7 @@ export type OrgSummary = {
   name: string;
   status: "active" | "suspended" | "deleted";
   personal?: boolean;
+  kind?: "standard" | "developer";
   defaultIdentityId: string | null;
   branding: OrgBranding;
   createdAt: number;

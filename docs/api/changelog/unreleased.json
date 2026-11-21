@@ -1,11 +1,27 @@
 [
   {
+    "key": "DELETE /api/v1/brand/web-logo 200.kind: field added",
+    "class": "additive",
+    "operationId": "brand.deleteBrandWebLogo",
+    "op": "DELETE /api/v1/brand/web-logo",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
     "key": "DELETE /api/v1/brand/web-logo 200.personal: field added",
     "class": "additive",
     "operationId": "brand.deleteBrandWebLogo",
     "op": "DELETE /api/v1/brand/web-logo",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.kind: field added",
+    "class": "additive",
+    "operationId": "orgs.deleteOrgsByIdBrandingBySlot",
+    "op": "DELETE /api/v1/orgs/{id}/branding/{slot}",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "DELETE /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
@@ -72,6 +88,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgsByIdWorkspace",
+    "op": "GET /api/v1/orgs/{id}/workspace",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/workspace 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgsByIdWorkspace",
@@ -104,12 +128,28 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/brand 200.kind: field added",
+    "class": "additive",
+    "operationId": "brand.patchBrand",
+    "op": "PATCH /api/v1/brand",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
     "key": "PATCH /api/v1/brand 200.personal: field added",
     "class": "additive",
     "operationId": "brand.patchBrand",
     "op": "PATCH /api/v1/brand",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/orgs/{id} 200.kind: field added",
+    "class": "additive",
+    "operationId": "orgs.patchOrgsById",
+    "op": "PATCH /api/v1/orgs/{id}",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "PATCH /api/v1/orgs/{id} 200.personal: field added",
@@ -144,6 +184,14 @@
     "note": "Assign a typed tag ID or a spare tag to a pass without a scanner."
   },
   {
+    "key": "POST /api/v1/orgs 201.kind: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "201.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
     "key": "POST /api/v1/orgs 201.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgs",
@@ -174,6 +222,14 @@
     "op": "POST /api/v1/orgs/invitations/accept",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.testOnly: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.testOnly: field added",
+    "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
   },
   {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
@@ -240,12 +296,28 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
+    "class": "additive",
+    "operationId": "brand.putBrandWebLogo",
+    "op": "PUT /api/v1/brand/web-logo",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
     "key": "PUT /api/v1/brand/web-logo 200.personal: field added",
     "class": "additive",
     "operationId": "brand.putBrandWebLogo",
     "op": "PUT /api/v1/brand/web-logo",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.kind: field added",
+    "class": "additive",
+    "operationId": "orgs.putOrgsByIdBrandingBySlot",
+    "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
   },
   {
     "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",

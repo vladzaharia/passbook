@@ -21,7 +21,22 @@ const listeners = new Set<(mode: Mode) => void>();
 /** Platform pages ignore mode: they read and show Live whatever the browser's choice. */
 const onPlatform = () => parseAdminPath(currentPath() ?? '').scope?.kind === 'platform';
 
-export const getMode = (): Mode => (onPlatform() ? 'live' : current);
+/** Developer sandboxes never hold Live: they open, and stay, in Test whatever the browser chose. */
+let testOnlyOrgs: ReadonlySet<string> = new Set();
+export const inTestOnlyOrg = () => {
+  const scope = parseAdminPath(currentPath() ?? '').scope;
+  return scope?.kind === 'org' && testOnlyOrgs.has(scope.orgId);
+};
+
+export const getMode = (): Mode =>
+  onPlatform() ? 'live' : current === 'test' || inTestOnlyOrg() ? 'test' : 'live';
+
+/** Called with the signed-in person's organizations whenever they load. */
+export function setTestOnlyOrgs(orgIds: readonly string[]): void {
+  if (orgIds.length === testOnlyOrgs.size && orgIds.every((id) => testOnlyOrgs.has(id))) return;
+  testOnlyOrgs = new Set(orgIds);
+  for (const listener of listeners) listener(getMode());
+}
 
 function apply(next: Mode): void {
   if (next === current) return;
@@ -54,6 +69,11 @@ if (typeof window !== 'undefined') {
 
 export function useMode(): Mode {
   return useSyncExternalStore(onModeChange, getMode, () => 'live');
+}
+
+/** True on a developer org's pages: the switch is locked on Test. */
+export function useTestOnlyScope(): boolean {
+  return useSyncExternalStore(onModeChange, inTestOnlyOrg, () => false);
 }
 
 /** The header every admin API request carries while Test mode is on. */

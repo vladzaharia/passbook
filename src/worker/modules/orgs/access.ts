@@ -44,6 +44,7 @@ export function membershipDto(row: MembershipRow, own = false): OrgMembership {
       ? viewerOrgName({ name: row.org_name, personal_user_id: row.personal_user_id }, row.user_id)
       : row.org_name,
     personal: row.personal_user_id !== null,
+    testOnly: row.org_kind === 'developer',
     orgSlug: row.org_slug,
     userId: row.user_id,
     roles,

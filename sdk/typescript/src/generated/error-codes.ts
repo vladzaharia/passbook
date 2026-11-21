@@ -239,6 +239,7 @@ export type ErrorCode =
   | 'ORG_SLUG_RESERVED'
   | 'ORG_SLUG_TAKEN'
   | 'ORG_STATUS_ALONE'
+  | 'ORG_TEST_ONLY'
   | 'PAIRING_INVALID'
   | 'PASS_CHANGING'
   | 'PASS_CONFLICT'
