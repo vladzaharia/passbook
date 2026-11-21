@@ -6,9 +6,11 @@ import { restoreDraft, saveDraft } from './step-up-draft.ts';
 function Form() {
   const [slug, setSlug] = useState('');
   const [secret, setSecret] = useState('');
+  const [ref, setRef] = useState('');
   return (
     <form>
       <input
+        data-draft
         aria-label="Organization slug"
         value={slug}
         onChange={(e) => setSlug(e.target.value)}
@@ -18,6 +20,8 @@ function Form() {
         value={secret}
         onChange={(e) => setSecret(e.target.value)}
       />
+      <input type="password" aria-label="Passphrase" />
+      <input aria-label="Reference" value={ref} onChange={(e) => setRef(e.target.value)} />
     </form>
   );
 }
@@ -25,7 +29,7 @@ function Form() {
 afterEach(() => sessionStorage.clear());
 
 describe('step-up draft', () => {
-  it('puts typed fields back into a controlled form once, and never keeps a credential field', async () => {
+  it('puts marked fields back into a controlled form once, and never keeps an unmarked one', async () => {
     const first = render(<Form />);
     const slug = screen.getByLabelText('Organization slug') as HTMLInputElement;
     const secret = screen.getByLabelText('Webhook secret') as HTMLInputElement;
@@ -33,12 +37,15 @@ describe('step-up draft', () => {
     for (const [el, value] of [
       [slug, 'henrys'],
       [secret, 'whsec_1'],
+      [screen.getByLabelText('Reference') as HTMLInputElement, 'ref-9'],
     ] as const) {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(el, value);
       el.dispatchEvent(new Event('input', { bubbles: true }));
     }
     saveDraft('/admin/o/o1/settings');
-    expect(sessionStorage.getItem('passbook:step-up:/admin/o/o1/settings')).not.toContain('whsec');
+    const kept = sessionStorage.getItem('passbook:step-up:/admin/o/o1/settings') ?? '';
+    expect(kept).not.toContain('whsec');
+    expect(kept).not.toContain('ref-9');
     first.unmount();
 
     render(<Form />);

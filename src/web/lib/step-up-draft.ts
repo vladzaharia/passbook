@@ -1,10 +1,8 @@
-// What the person had typed survives the round trip to Polaris ID: the page's text fields go to
-// sessionStorage under the route, and are put back (once) when the page comes up again. Fields that
-// can hold a credential are never kept.
+// What the person had typed survives the round trip to Polaris ID: only fields marked `data-draft`
+// (names, labels, URLs, descriptions) go to sessionStorage under the route, and are put back (once)
+// when the page comes up again. Nothing is kept by default; never mark a secret, key or token.
 const PREFIX = 'passbook:step-up:';
-const FIELDS =
-  'input:not([type]), input[type=text], input[type=email], input[type=url], input[type=search], input[type=tel], input[type=number], textarea';
-const CREDENTIAL = /secret|token|password|key|code|pin/i;
+const FIELDS = 'input[data-draft], textarea[data-draft]';
 
 type Field = HTMLInputElement | HTMLTextAreaElement;
 interface Saved {
@@ -16,12 +14,7 @@ const sigOf = (el: Field) =>
   el.name || el.id || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '';
 
 const keptFields = (): Field[] =>
-  [...document.querySelectorAll<Field>(FIELDS)].filter((el) => {
-    const sig = sigOf(el);
-    return (
-      sig !== '' && el.value !== '' && !CREDENTIAL.test(sig) && el.autocomplete !== 'one-time-code'
-    );
-  });
+  [...document.querySelectorAll<Field>(FIELDS)].filter((el) => sigOf(el) !== '' && el.value !== '');
 
 export function saveDraft(route: string): void {
   try {
@@ -53,7 +46,7 @@ export function restoreDraft(route: string): () => void {
   const fill = () => {
     for (const el of document.querySelectorAll<Field>(FIELDS)) {
       const at = pending.findIndex((p) => p.sig === sigOf(el));
-      if (at < 0 || el.value !== '' || CREDENTIAL.test(sigOf(el))) continue;
+      if (at < 0 || el.value !== '') continue;
       const [draft] = pending.splice(at, 1);
       if (draft) setValue(el, draft.value);
     }
