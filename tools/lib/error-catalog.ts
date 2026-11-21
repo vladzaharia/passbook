@@ -1,6 +1,7 @@
 // Extracts the API's error codes from source (no runtime), and the webhook event catalog. Pure but for file reads.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { isInternalCode } from '../../src/worker/platform/internal-codes.ts';
 
 const root = resolve(import.meta.dirname, '../..');
 const WORKER = join(root, 'src/worker');
@@ -141,6 +142,7 @@ export function buildErrorCatalog(): ErrorCatalog {
         add(e[2] ?? '', REASON_STATUS[e[1] ?? ''] ?? 403, mod);
   });
   const codes = [...found.entries()]
+    .filter(([code]) => !isInternalCode(code))
     .sort(([a], [b]) => (a < b ? -1 : 1))
     .map(([code, e]) => ({
       code,

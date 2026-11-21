@@ -69,4 +69,6 @@ export interface OccupancyUndo {
   scannedAt: number;
   rows: OccupancyRow[];
   zones: OccZone[];
+  /** The org's clock, when no root zone has one. */
+  orgTimeZone: string | null;
 }

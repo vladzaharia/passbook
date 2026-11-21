@@ -11,12 +11,13 @@ import {
   UnassignHolderSchema,
 } from '../../../shared/contracts/index.ts';
 import { methodScope, modeOf } from '../../platform/auth.ts';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import {
   actorFor,
   authOf,
   type C,
+  orgIdOf,
   passScopeOf,
   requireTenantSessionOrApiKey,
   svc,
@@ -66,9 +67,7 @@ register(
     const ctx = svc(c);
     const q = c.req.valid('query');
     const auth = authOf(c);
-    const orgId = q.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
-    if (!orgId)
-      throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+    const orgId = orgIdOf(auth, q.orgId);
     const authority = await tenantAuthorityOf(ctx, auth, orgId, 'passes:read');
     const page = await listHolders(ctx, { ...q, orgId, mode: modeOf(c.var.auth) });
     if (!(await tenantPassAuthorityValid(ctx.env.DB, authority, ctx.clock.now())))

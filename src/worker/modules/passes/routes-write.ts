@@ -16,6 +16,7 @@ import {
   assertOrg,
   authOf,
   type C,
+  orgIdOf,
   passScopeOf,
   svc,
   tenantAuthorityOf,
@@ -48,9 +49,7 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
     async (c) => {
       const body = c.req.valid('json');
       const auth = authOf(c);
-      const orgId = body.orgId ?? (auth.kind === 'api_key' ? auth.orgId : null);
-      if (!orgId)
-        throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+      const orgId = orgIdOf(auth, body.orgId);
       assertOrg(c, orgId);
       const mode = body.mode ?? (auth.kind === 'api_key' ? modeOf(auth) : undefined);
       if (mode === undefined)

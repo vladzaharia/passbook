@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { localZone } from '@/web/lib/timezones.ts';
 
 const org = {
   id: 'o1',
@@ -212,5 +213,43 @@ describe('org settings inheritance', () => {
     expect(link).toHaveAttribute('href', '/admin/o/o1/wallet-accounts');
     expect(screen.getAllByText('o1').length).toBeGreaterThan(0);
     expect(screen.getByText('Created')).toBeInTheDocument();
+  });
+});
+
+describe('org time zone', () => {
+  it('suggests the browser zone but saves nothing until it is picked and saved', async () => {
+    const puts: unknown[] = [];
+    await setup({ 'org.timeZone': { value: null } }, (put) => puts.push(put));
+    const user = userEvent.setup();
+    const picker = await screen.findByRole('combobox', { name: /Time zone/ });
+    expect(picker).toHaveTextContent('Not set (UTC)');
+    expect(puts).toEqual([]);
+    await user.click(screen.getByRole('button', { name: `Use ${localZone()}` }));
+    expect(screen.queryByRole('button', { name: `Use ${localZone()}` })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(puts).toEqual([{ scope: 'org:o1', values: { 'org.timeZone': localZone() } }]),
+    );
+  });
+
+  it('searches the zones, saves the pick and clears it with null', async () => {
+    const puts: unknown[] = [];
+    await setup({ 'org.timeZone': { value: 'Europe/Paris', source: 'org' } }, (put) =>
+      puts.push(put),
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('combobox', { name: /Time zone/ }));
+    await user.type(screen.getByPlaceholderText('Search time zones'), 'Berlin');
+    await user.click(await screen.findByRole('option', { name: /Berlin/ }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(puts[0]).toEqual({ scope: 'org:o1', values: { 'org.timeZone': 'Europe/Berlin' } }),
+    );
+    await user.click(screen.getByRole('combobox', { name: /Time zone/ }));
+    await user.click(await screen.findByRole('option', { name: 'Not set (UTC)' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(puts[1]).toEqual({ scope: 'org:o1', values: { 'org.timeZone': null } }),
+    );
   });
 });
