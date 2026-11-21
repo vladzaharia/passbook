@@ -64,7 +64,7 @@ export function StaffPinToolDialog({
       description={
         unlock
           ? 'Their wrong PINs today stop counting. They can sign in by name again.'
-          : 'Everyone who has not signed in since PIN tags came is asked for a new PIN at their next sign-in by name.'
+          : 'Door and Desk staff who have not signed in since PIN tags came are asked for a new PIN at their next sign-in by name. Managers are reset one by one.'
       }
       confirmLabel={unlock ? 'Unlock' : 'Reset PINs'}
       onConfirm={async () => {

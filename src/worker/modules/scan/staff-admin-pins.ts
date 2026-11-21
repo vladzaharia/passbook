@@ -46,7 +46,7 @@ export async function unlockStaffPin(
 }
 
 /**
- * Flags every active person whose PIN has no tag yet (they never signed in since tags came): their
+ * Flags every active Door and Desk person whose PIN has no tag yet (they never signed in since tags came): their
  * next sign-in by name sets each a new PIN, and a duplicate among old PINs ends. No automatic cutoff.
  */
 export async function resetUntaggedPins(

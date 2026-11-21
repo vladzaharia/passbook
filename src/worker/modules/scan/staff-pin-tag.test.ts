@@ -272,20 +272,34 @@ describe('the PIN tag', () => {
   });
 });
 
-describe('wrong named PINs across the org', () => {
-  it('answers a named sign-in as a lockout once the org day is spent, and audits the cap', async () => {
+describe('wrong named PINs per device and across the org', () => {
+  const setCount = (key: string, count: number) => {
+    const now = fixture.kit.clock.now();
+    return run(
+      fixture.kit.env.DB,
+      'INSERT INTO counters (key, window_start, count) VALUES (?, ?, ?) ON CONFLICT (key, window_start) DO UPDATE SET count = ?',
+      [key, now - (now % 86_400_000), count, count],
+    );
+  };
+
+  it('refuses the device that spent its day, and signs in on another with the right PIN', async () => {
     const { kit, problem, signIn } = fixture;
     const person = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '270915' });
-    const now = kit.clock.now();
-    await run(
-      kit.env.DB,
-      'INSERT INTO counters (key, window_start, count) VALUES (?, ?, 299) ON CONFLICT (key, window_start) DO UPDATE SET count = 299',
-      [`scan:pinday-org:${kit.org.id}`, now - (now % 86_400_000)],
-    );
+    const spent = await device();
+    await setCount(`scan:pinday-dev:${spent.id}`, 99);
+    await problem(await signIn(spent.headers, person, '000000'), 400, 'PIN_INVALID');
+    await problem(await signIn(spent.headers, person), 429, 'RATE_LIMITED', person.pin);
+    expect((await signIn((await device()).headers, person)).status).toBe(200);
+  });
+
+  it('only alerts at the org level: the audit is written and a right PIN still signs in', async () => {
+    const { kit, problem, signIn } = fixture;
+    const person = await makeScanStaff(kit.fx, { orgId: kit.org.id, pin: '270916' });
+    await setCount(`scan:pinday-org:${kit.org.id}`, 299);
     const scanner = await device();
     await problem(await signIn(scanner.headers, person, '000000'), 400, 'PIN_INVALID');
-    expect((await audits('scan.pin_named_org_cap')).length).toBe(1);
-    await problem(await signIn(scanner.headers, person), 429, 'RATE_LIMITED', person.pin);
+    expect((await audits('scan.pin_named_org_cap')).length).toBeGreaterThan(0);
+    expect((await signIn(scanner.headers, person)).status).toBe(200);
     await run(kit.env.DB, 'DELETE FROM counters WHERE key = ?', [`scan:pinday-org:${kit.org.id}`]);
   });
 });

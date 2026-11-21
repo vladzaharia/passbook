@@ -50,6 +50,33 @@ describe('useScanSession (against a stub server)', () => {
     replace.mockRestore();
   });
 
+  it('does not poll the session on reconnect while reads are queued: the queue is sent first', async () => {
+    const fetchFn = vi.fn(async () => json(sessionFixture()));
+    const holder = createCsrfHolder();
+    const api = createScanApi({ fetch: fetchFn as unknown as typeof fetch, csrf: holder.get });
+    const queued = fixtureState({ queue: { pending: 2, oldestAt: 1, conflicts: 0 } });
+    const { result, rerender } = renderHook(({ machine }) => useScanSession(api, holder, machine), {
+      wrapper: wrapper(),
+      initialProps: { machine: null as ReturnType<typeof fixtureState> | null },
+    });
+    await waitFor(() => expect(result.current.phase).toBe('ready'));
+    rerender({ machine: queued });
+    const before = fetchFn.mock.calls.length;
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event('online'));
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fetchFn.mock.calls.length).toBe(before);
+    // Queue drained: the next reconnect refetches again.
+    rerender({ machine: fixtureState() });
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event('online'));
+    });
+    await waitFor(() => expect(fetchFn.mock.calls.length).toBeGreaterThan(before));
+  });
+
   it('is unpaired on SCANNER_UNAUTHENTICATED, and pair() loads the new session', async () => {
     let paired = false;
     const fetchFn = vi.fn(async (url: string) => {

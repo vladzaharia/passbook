@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { type RetentionKit, retentionKit } from '../retention/retention-test-fixtures.ts';
-import { mailPinOnlyOff } from './pin-only-notice.ts';
+import { mailPinOnlyOff, mailPinOrgCap } from './pin-only-notice.ts';
 
 let rk: RetentionKit;
 beforeAll(async () => {
@@ -18,5 +18,14 @@ describe('the PIN-only lockout mail', () => {
     rk.kit.clock.advance(24 * 3_600_000);
     await mailPinOnlyOff(rk.kit.ctx, orgId);
     expect(sent()).toHaveLength(2);
+  });
+
+  it('mails the org cap alert at once, once a day', async () => {
+    const { orgId, email } = await rk.org();
+    await mailPinOrgCap(rk.kit.ctx, orgId);
+    await mailPinOrgCap(rk.kit.ctx, orgId);
+    const cap = rk.mail.filter((m) => m.subject.includes('Many wrong PINs'));
+    expect(cap.map((m) => m.to)).toEqual([email]);
+    expect(cap[0]?.text).toContain('Correct PINs still work');
   });
 });

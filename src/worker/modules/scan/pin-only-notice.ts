@@ -1,3 +1,4 @@
+import { pinOrgCapEmail } from '../../email/pin-digest.ts';
 import { pinOnlyOffEmail } from '../../email/pin-only-off.ts';
 import { claim } from '../../platform/counters.ts';
 import { baseUrl } from '../../platform/env.ts';
@@ -35,6 +36,34 @@ export async function mailPinOnlyOff(ctx: ServiceContext, orgId: string): Promis
   ctx.log[failed ? 'error' : 'info']('scan.pin_only_mail', {
     orgId,
     code: failed ? 'PIN_ONLY_MAIL_FAILED' : 'PIN_ONLY_MAIL',
+    claimed: true,
+    sent,
+    failed,
+  });
+}
+
+/** Tell every org admin the org's wrong named PINs reached the day's alert level; once an org a day, at once. */
+export async function mailPinOrgCap(ctx: ServiceContext, orgId: string): Promise<void> {
+  const db = ctx.env.DB;
+  const now = ctx.clock.now();
+  if (!(await claim(db, `scan:pincap-mail:${orgId}`, now - (now % DAY)))) return;
+  const org = await orgNameOf(db, orgId);
+  if (!org) return;
+  const mail = pinOrgCapEmail(baseUrl(ctx.env), org.name);
+  const mailer = createEmailBindingMailer(ctx.env);
+  let sent = 0;
+  let failed = 0;
+  for (const to of await readOrgAdminEmails(db, orgId)) {
+    try {
+      await mailer.send({ to, ...mail });
+      sent++;
+    } catch {
+      failed++;
+    }
+  }
+  ctx.log[failed ? 'error' : 'info']('scan.pin_org_cap_mail', {
+    orgId,
+    code: failed ? 'PIN_ORG_CAP_MAIL_FAILED' : 'PIN_ORG_CAP_MAIL',
     claimed: true,
     sent,
     failed,

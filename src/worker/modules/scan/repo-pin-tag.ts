@@ -132,6 +132,7 @@ export async function setOwnPinGrant(
 /** Wrong PINs counted today against one person, and against the whole org (named sign-in and approval). */
 export const namedDayKey = (staffId: string) => `scan:pinday:${staffId}`;
 export const orgDayKey = (orgId: string) => `scan:pinday-org:${orgId}`;
+export const deviceDayKey = (scannerId: string) => `scan:pinday-dev:${scannerId}`;
 
 /** Which of these people are locked for the day: their counter reached `cap` in the window. */
 export async function lockedToday(
@@ -165,10 +166,11 @@ export const digestEvents = (db: Db, since: number, until: number) =>
     actor_id: string;
     target_id: string;
     person: string | null;
+    role: string | null;
     scanner: string | null;
   }>(
     db,
-    `SELECT a.org_id, a.action, a.at, a.actor_id, a.target_id, st.name AS person, sc.name AS scanner
+    `SELECT a.org_id, a.action, a.at, a.actor_id, a.target_id, st.name AS person, st.role AS role, sc.name AS scanner
      FROM audit_log a
      LEFT JOIN scan_staff st ON st.id = a.target_id AND a.target_type = 'scan_staff'
      LEFT JOIN scanners sc ON sc.id = a.actor_id AND a.actor_type = 'scanner'

@@ -10,11 +10,19 @@ import { digestEvents } from './repo-pin-tag.ts';
 const DAY = 24 * 3_600_000;
 const MAX_LINES = 20;
 
-const lineOf = (e: { action: string; person: string | null; scanner: string | null }) =>
+const who = (e: { person: string | null; role: string | null }) =>
+  e.person ? `${e.person} (${e.role ?? 'staff'})` : 'Someone';
+
+const lineOf = (e: {
+  action: string;
+  person: string | null;
+  role: string | null;
+  scanner: string | null;
+}) =>
   e.action === 'scan_staff.pin_shared'
-    ? `${e.person ?? 'Someone'} has a PIN someone else has (seen on ${e.scanner ?? 'a scanner'}).`
+    ? `${who(e)} has a PIN someone else has (seen on ${e.scanner ?? 'a scanner'}).`
     : e.action === 'scan_staff.pin_self_reset'
-      ? `${e.person ?? 'Someone'} was given a new PIN on ${e.scanner ?? 'a scanner'}.`
+      ? `${who(e)} was given a new PIN on ${e.scanner ?? 'a scanner'}.`
       : 'Wrong named PINs reached the daily limit for the organization.';
 
 /**
@@ -33,7 +41,9 @@ export async function dailyPinDigest(ctx: ServiceContext): Promise<void> {
     const org = await orgNameOf(db, orgId);
     if (!org) continue;
     // One line per person and kind: a repeat in the day adds nothing.
-    const lines = [...new Set(rows.map(lineOf))].slice(0, MAX_LINES);
+    const all = [...new Set(rows.map(lineOf))];
+    const lines = all.slice(0, MAX_LINES);
+    if (all.length > MAX_LINES) lines.push(`and ${all.length - MAX_LINES} more.`);
     const mail = pinDigestEmail(baseUrl(ctx.env), org.name, lines);
     const mailer = createEmailBindingMailer(ctx.env);
     let sent = 0;

@@ -28,7 +28,6 @@ export async function verifyApproval(
   const { staffId, pin } = approval;
   const orgId = actor.orgId;
   // The PIN is tested against every manager: that count sets what an attempt costs.
-  if (staffId) await guardNamedDay(ctx, orgId, staffId);
   const testedManagers = staffId
     ? 1
     : (await managerRosterStatement(db, orgId).all()).results.length;
@@ -43,14 +42,18 @@ export async function verifyApproval(
     guard,
   );
   const scannerId = actor.scanner?.id ?? actor.actorKey;
+  if (staffId) await guardNamedDay(ctx, scannerId, staffId);
+  // Only a name that exists is counted, so made-up names cannot fill the counters.
+  let known = false;
   try {
     const results = await db.batch([approverStatement(db, orgId, staffId), ...reservation.stmts]);
+    known = pinStaffFromResult(results[0]) !== null;
     return staffId
       ? await reservation.verify(results.slice(1), pinStaffFromResult(results[0]), pin, true)
       : await reservation.verifyAny(results.slice(1), pinStaffListFromResult(results[0]), pin);
   } catch (error) {
     // A named approval counts against the person's day like a named sign-in does.
-    if (staffId) await countNamedMiss(ctx, { orgId, scannerId, staffId }, error);
+    if (staffId && known) await countNamedMiss(ctx, { orgId, scannerId, staffId }, error);
     throw error;
   } finally {
     await reservation.refund();

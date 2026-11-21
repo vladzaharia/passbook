@@ -373,6 +373,7 @@ describe('staff daily PIN lock and untagged PINs', () => {
   it('flags only active people with no PIN tag, and audits', async () => {
     const untagged = await makeScanStaff(f, { orgId, pin: '482916' });
     const made = await create('Has a tag', 'door');
+    const manager = await makeScanStaff(f, { orgId, role: 'manager', pin: '482918' });
     const res = await send(
       'POST',
       resetPath('x').replace('/x/reset-pin', '/reset-untagged'),
@@ -383,6 +384,8 @@ describe('staff daily PIN lock and untagged PINs', () => {
     expect(((await res.json()) as { flagged: number }).flagged).toBeGreaterThan(0);
     expect((await listed(untagged.id))?.pinResetRequired).toBe(true);
     expect((await listed(made.staff.id))?.pinResetRequired).toBe(false);
+    // A Manager's PIN is reset by an admin, one by one.
+    expect((await listed(manager.id))?.pinResetRequired).toBe(false);
     expect(
       await all(
         env.DB,

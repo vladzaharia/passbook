@@ -65,6 +65,9 @@ export function useScanSession(
   // Read before the first request: the fragment is gone from the address bar by then.
   const [pairCode, setPairCode] = useState(() => takePairCode());
   useEffect(() => watchPairLink(setPairCode), []);
+  // The server dates a queued read no earlier than the last online contact, and every session poll is one:
+  // while reads are queued the offline controller sends them first, and polls and reconnect refetches wait.
+  const queued = (machine?.queue.pending ?? 0) > 0;
   const query = useQuery({
     queryKey: KEY,
     queryFn: async () => {
@@ -83,13 +86,13 @@ export function useScanSession(
       }
     },
     refetchInterval:
-      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)
+      !queued && (!machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay))
         ? REFETCH_MS
         : false,
     refetchOnWindowFocus:
-      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay),
+      !queued && (!machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)),
     refetchOnReconnect:
-      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay),
+      !queued && (!machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)),
     staleTime: 0,
     gcTime: 0,
     retry: false,
