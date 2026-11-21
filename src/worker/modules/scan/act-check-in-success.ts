@@ -33,7 +33,7 @@ import type { Found } from './resolve.ts';
 import { afterReads } from './scan-capture.ts';
 import type { StopAuthority } from './scan-stop-authority.ts';
 import { capacityOpen, SCAN_COMMIT_TABLES, scanWriteGrant } from './scan-write-grant.ts';
-import { admissionConds, allOf, overrideOpen } from './scan-write-statements.ts';
+import { allOf, overrideOpen } from './scan-write-statements.ts';
 import type { PinReservation } from './staff-pin.ts';
 
 interface CheckInSuccessInput {
