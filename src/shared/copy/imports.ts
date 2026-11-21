@@ -8,7 +8,6 @@ const commitLabel = (create: number, update: number) =>
 /** Words of the pass import screens. */
 export const IMPORT_COPY = {
   title: 'Import passes',
-  description: 'Create and update passes from a spreadsheet.',
   sourceTitle: 'Spreadsheet',
   template: 'Template',
   noTemplates: 'No released templates in this mode.',

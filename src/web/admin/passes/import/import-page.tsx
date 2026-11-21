@@ -12,7 +12,7 @@ export function ImportPage() {
   const canOperate = membership?.capabilities.includes('passes:operate') ?? false;
   return (
     <>
-      <PageHeader title={C.title} description={C.description} breadcrumbs={CRUMBS} />
+      <PageHeader title={C.title} breadcrumbs={CRUMBS} />
       {!orgId ? (
         <EmptyState art="people" title={C.chooseOrg} />
       ) : !canOperate ? (

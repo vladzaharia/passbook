@@ -71,6 +71,15 @@ export const MetricsOverviewSchema = z.object({
     /** Paired or created scanners, for the checklist. */
     scanners: z.number().int(),
   }),
+  /** Platform overview only: the directory cards. Follows the organization filter. */
+  directory: z
+    .object({
+      /** Platform users, or the members of the filtered organization. */
+      users: z.number().int(),
+      /** Signing identities plus active Google and Samsung credentials, as the Wallet accounts page lists them. */
+      walletAccounts: z.number().int(),
+    })
+    .optional(),
   /** Events that are open now, at most 3. */
   live: z
     .array(

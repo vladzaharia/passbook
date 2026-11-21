@@ -495,3 +495,59 @@ describe('tenant metrics authorization', () => {
     expect(calls[0]?.params).toMatchObject({ orgId: s.a.id, templateId: s.templateA.resolved.id });
   });
 });
+
+describe('platform directory counts', () => {
+  it('counts users and wallet accounts platform-wide and per organization, for admins only', async () => {
+    const s = await setup();
+    const admin = fake.session({ userId: s.person.id, roles: ['admin', 'user'] });
+    const directory = async (q = '') => {
+      const res = await app.request(
+        `/api/v1/metrics/platform/overview${q}`,
+        { headers: admin },
+        base,
+      );
+      expect(res.status).toBe(200);
+      return MetricsOverviewSchema.parse(await res.json()).directory;
+    };
+    const before = await directory();
+    expect(await directory(`?orgId=${s.a.id}`)).toEqual({ users: 1, walletAccounts: 0 });
+
+    const hash = (n: string) => n.repeat(64).slice(0, 64);
+    const credential = (id: string, orgId: string | null, provider: string, mode = 'live') =>
+      run(
+        base.DB,
+        `INSERT INTO wallet_credentials
+         (id, scope, org_id, mode, provider, identity_hash, identity_hint, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'abcd', 1, 1)`,
+        [id, orgId ? 'org' : 'platform', orgId, mode, provider, hash(id.slice(-2))],
+      );
+    await run(
+      base.DB,
+      `INSERT INTO signing_identities
+       (id, org_id, label, pass_type_identifier, team_identifier, source, env_prefix, created_at)
+       VALUES (?, ?, 'Own', ?, 'TEAM', 'env', 'TEST', ?)`,
+      [s.f.ids.id(), s.a.id, `pass.test.${s.f.ids.id()}`, s.f.clock.now()],
+    );
+    await credential('cred-a1', s.a.id, 'google');
+    await credential('cred-a2', s.a.id, 'samsung');
+    await credential('cred-a3', s.a.id, 'samsung', 'test');
+    await credential('cred-b1', s.b.id, 'google');
+    clearMetricsCache(env.DB);
+
+    expect(await directory(`?orgId=${s.a.id}`)).toEqual({ users: 1, walletAccounts: 4 });
+    expect(await directory(`?orgId=${s.b.id}`)).toEqual({ users: 0, walletAccounts: 1 });
+    const after = await directory();
+    expect(after?.walletAccounts).toBe((before?.walletAccounts ?? 0) + 5);
+    expect(after?.users).toBeGreaterThanOrEqual(1);
+
+    // Tenant responses never carry the directory counts.
+    const tenant = await overview(`?orgId=${s.a.id}`, s.headers);
+    expect(MetricsOverviewSchema.parse(await tenant.json()).directory).toBeUndefined();
+    const user = await app.request(
+      '/api/v1/metrics/platform/overview',
+      { headers: s.headers },
+      base,
+    );
+    expect(user.status).toBe(403);
+  });
+});

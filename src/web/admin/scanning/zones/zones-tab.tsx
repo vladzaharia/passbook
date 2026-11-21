@@ -70,13 +70,11 @@ function OrgZones({ orgId, canManage }: { orgId: string; canManage: boolean }) {
         <EmptyState
           art="building"
           title="No zones yet"
-          description="Zones let a pass open some doors and not others."
           action={canManage ? <Button onClick={create}>New zone</Button> : undefined}
         />
       ) : (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-fg-muted">Zones are used in sessions and in test mode.</p>
+          <div className="flex flex-wrap items-center justify-end gap-3">
             {canManage ? (
               <Button iconStart={<Plus aria-hidden />} onClick={create}>
                 New zone

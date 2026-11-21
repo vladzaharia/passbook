@@ -73,7 +73,6 @@ export function CreateSandbox({
   return (
     <div className="start">
       <h3 className="h2">No sandbox yet</h3>
-      <p className="muted sm">A test organization with a key that never touches a real pass.</p>
       <button
         type="button"
         className="btn"

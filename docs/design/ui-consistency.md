@@ -115,8 +115,9 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 ## Page header
 
 1. Breadcrumbs on detail, new and upload pages only.
-2. `h1` `text-2xl font-semibold`. One-line description at most; no paragraphs. Users and orgs show
-   a 40px `EntityAvatar` left of the `h1`.
+2. `h1` `text-2xl font-semibold`. A description only when it adds a fact, status or instruction the
+   title and page do not; one line, no paragraphs. Users and orgs show a 40px `EntityAvatar` left
+   of the `h1`.
 3. Meta row under the title: status pills, then version or connector, `text-sm fg-muted`. Links
    such as `Audit log` sit here, not as header buttons.
 4. Actions right of the title: at most three visible (one primary or the main state change, then
@@ -129,6 +130,8 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 
 ## Sections and cards
 
+- No subtitles that restate a heading: a muted line under a page, card, section, dialog or tile title
+  stays only if it carries a number, status, date, consequence or instruction. When in doubt, remove it.
 - Card: `rounded-lg border bg-surface-raised shadow-elevation-1` (`CARD_SURFACE`; a table on its
   own uses it too); title `text-sm font-semibold`. The header is 48 px with or without actions.
   Card-header actions are ghost `sm` buttons with a trailing `ChevronRight` (internal) or

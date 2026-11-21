@@ -42,12 +42,10 @@ function Hero() {
       <div className="stack g4">
         <div className="eyebrow">
           <span className="pill accent mono">API v1</span>
-          {h.eyebrow}
         </div>
         <h1>
           {h.title} <em>{h.titleFoil}</em>
         </h1>
-        <p className="lede muted hero-lede">{h.lede}</p>
         <div className="wrap-row g2 mt2">
           <a className="btn" href={PATHS.quickstart}>
             {h.start}
@@ -113,10 +111,7 @@ function Tiles() {
               <span className="glyph">
                 <Icon aria-hidden="true" />
               </span>
-              <div>
-                <div className="h3">{t.title}</div>
-                <p className="muted sm mt2">{t.line}</p>
-              </div>
+              <div className="h3">{t.title}</div>
               <span className="xs muted row g1">
                 {t.foot}
                 <ArrowRight aria-hidden="true" />
@@ -147,7 +142,6 @@ function Sandbox() {
           </div>
         ))}
         <div className="kv cta">
-          <span className="muted">{DEV_COPY.home.sandboxLine}</span>
           <a className="btn sm" href={SIGN_IN}>
             {DEV_COPY.signIn}
           </a>
@@ -170,11 +164,7 @@ function Guides() {
         {DEV_GUIDES.slice(0, 4).map((g) => (
           <a key={g.id} className="row g3" href={`${PATHS.guides}#${g.id}`}>
             <span className={`sw ${g.tone}`} />
-            <span>
-              <span className="strong">{g.title}</span>
-              <br />
-              <span className="xs muted">{g.line}</span>
-            </span>
+            <span className="strong">{g.title}</span>
           </a>
         ))}
       </div>

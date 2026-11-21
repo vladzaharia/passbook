@@ -20,6 +20,7 @@ export const overview = (over: Record<string, unknown> = {}) => ({
   range: '7d',
   bucketMs: 86_400_000,
   unavailable: [],
+  directory: { users: 7, walletAccounts: 4 },
   totals: {
     passes: 1200,
     activePasses: 1100,

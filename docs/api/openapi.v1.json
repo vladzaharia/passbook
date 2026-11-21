@@ -86594,6 +86594,21 @@
                         "scanners"
                       ]
                     },
+                    "directory": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "integer"
+                        },
+                        "walletAccounts": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "users",
+                        "walletAccounts"
+                      ]
+                    },
                     "live": {
                       "type": "array",
                       "items": {
@@ -87162,6 +87177,21 @@
                         "passEmailsSent",
                         "latestPassId",
                         "scanners"
+                      ]
+                    },
+                    "directory": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "integer"
+                        },
+                        "walletAccounts": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "users",
+                        "walletAccounts"
                       ]
                     },
                     "live": {

@@ -38,7 +38,7 @@ function Harness() {
 describe('Counters section', () => {
   it('defines a counter, sets its goal and turns on Use one and Refill', async () => {
     const { container } = render(<Harness />);
-    expect(screen.getByText('Count what is left: visits, uses, credits.')).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'New counter' })).toBeVisible();
     await userEvent.type(screen.getByRole('textbox', { name: 'New counter' }), 'Visits');
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
     expect(screen.getByText('Full: 10 left')).toBeVisible();

@@ -67,10 +67,9 @@ export function CodePanel({
             {all.find((s) => s.lang === l)?.label}
           </button>
         ))}
-        <span className="file push">Updates as you edit</span>
         <button
           type="button"
-          className="iconbtn copy"
+          className="iconbtn copy push"
           aria-label={copied ? 'Copied' : 'Copy code'}
           onClick={() => void copyAndSay(code, setCopied)}
         >

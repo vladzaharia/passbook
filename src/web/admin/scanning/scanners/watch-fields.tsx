@@ -56,7 +56,7 @@ export function WatchFields({
         <fieldset className="grid gap-2">
           <legend className="mb-1 text-sm font-medium">Sessions</legend>
           <p className="text-xs text-fg-muted">
-            Every scan at the devices of these sessions. {picked.length} of {MAX}.
+            {picked.length} of {MAX}.
           </p>
           {allSessions
             .filter((s) => s.orgId === draft.orgId && s.status !== 'ended')
