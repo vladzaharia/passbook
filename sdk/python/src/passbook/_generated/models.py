@@ -176,6 +176,11 @@ __all__ = [
     "CapturedEmail",
     "CapturedEmailDetail",
     "CapturedEmailPage",
+    "ConnectionPreview",
+    "ConnectionPreviewColumnsItem",
+    "ConnectionPreviewColumnsItemValuesItem",
+    "ConnectionPreviewCounts",
+    "ConnectionPreviewSamplesItem",
     "ConnectionsCreateBody",
     "ConnectionsCreateParams",
     "ConnectionsCreateParamsMappingValue",
@@ -195,6 +200,7 @@ __all__ = [
     "ConnectionsListResultItemsItemMappingValue",
     "ConnectionsListResultItemsItemMappingValueTransform",
     "ConnectionsListResultItemsItemVoidWhenItem",
+    "ConnectionsPreviewResult",
     "ConnectionsRetrieveResult",
     "ConnectionsRetrieveResultMappingValue",
     "ConnectionsRetrieveResultMappingValueTransform",
@@ -2276,6 +2282,38 @@ class CapturedEmailPage(_Model):
     items: _List[CapturedEmail]
     nextCursor: str | None
 
+class ConnectionPreview(_Model):
+    ok: bool
+    errorCode: str | None = None
+    records: int
+    counts: ConnectionPreviewCounts
+    samples: _List[ConnectionPreviewSamplesItem]
+    columns: _List[ConnectionPreviewColumnsItem]
+    durationMs: int
+
+class ConnectionPreviewColumnsItem(_Model):
+    pointer: str
+    label: str
+    samples: _List[str]
+    values: _List[ConnectionPreviewColumnsItemValuesItem]
+
+class ConnectionPreviewColumnsItemValuesItem(_Model):
+    value: str
+    count: int
+
+class ConnectionPreviewCounts(_Model):
+    create: int
+    update: int
+    unchanged: int
+    skipped: int
+    errors: int
+
+class ConnectionPreviewSamplesItem(_Model):
+    ref: str
+    action: _Literal["create", "update", "unchanged", "skipped", "error"] | str
+    fields: _Dict[str, _Any]
+    message: str | None = None
+
 class ConnectionsCreateParams(_Model):
     orgId: str
     connectorType: str
@@ -2300,7 +2338,7 @@ class ConnectionsCreateParamsMappingValue(_Model):
     transform: ConnectionsCreateParamsMappingValueTransform | None = None
 
 class ConnectionsCreateParamsMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsCreateParamsVoidWhenItem(_Model):
@@ -2348,7 +2386,7 @@ class ConnectionsCreateResultMappingValue(_Model):
     transform: ConnectionsCreateResultMappingValueTransform | None = None
 
 class ConnectionsCreateResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsCreateResultVoidWhenItem(_Model):
@@ -2399,7 +2437,7 @@ class ConnectionsListItemMappingValue(_Model):
     transform: ConnectionsListItemMappingValueTransform | None = None
 
 class ConnectionsListItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsListItemVoidWhenItem(_Model):
@@ -2451,7 +2489,7 @@ class ConnectionsListResultItemsItemMappingValue(_Model):
     transform: ConnectionsListResultItemsItemMappingValueTransform | None = None
 
 class ConnectionsListResultItemsItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsListResultItemsItemVoidWhenItem(_Model):
@@ -2500,7 +2538,7 @@ class ConnectionsRetrieveResultMappingValue(_Model):
     transform: ConnectionsRetrieveResultMappingValueTransform | None = None
 
 class ConnectionsRetrieveResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRetrieveResultMetrics(_Model):
@@ -2517,6 +2555,9 @@ class ConnectionsRetrieveResultRunsItem(_Model):
     outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
+    passesCreated: int | None
+    passesVoided: int | None
+    recordsFailed: int | None
     errorCode: str | None
     errorDetail: str | None = None
     httpStatus: int | None
@@ -2579,7 +2620,7 @@ class ConnectionsRevokePreviousWebhookSecretResultMappingValue(_Model):
     transform: ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform | None = None
 
 class ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRevokePreviousWebhookSecretResultVoidWhenItem(_Model):
@@ -2627,7 +2668,7 @@ class ConnectionsRotateWebhookSecretResultMappingValue(_Model):
     transform: ConnectionsRotateWebhookSecretResultMappingValueTransform | None = None
 
 class ConnectionsRotateWebhookSecretResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRotateWebhookSecretResultVoidWhenItem(_Model):
@@ -2643,6 +2684,9 @@ class ConnectionsRunsListItem(_Model):
     outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
+    passesCreated: int | None
+    passesVoided: int | None
+    recordsFailed: int | None
     errorCode: str | None
     errorDetail: str | None = None
     httpStatus: int | None
@@ -2660,6 +2704,9 @@ class ConnectionsRunsListResultItemsItem(_Model):
     outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
+    passesCreated: int | None
+    passesVoided: int | None
+    recordsFailed: int | None
     errorCode: str | None
     errorDetail: str | None = None
     httpStatus: int | None
@@ -2721,7 +2768,7 @@ class ConnectionsUpdateParamsMappingValue(_Model):
     transform: ConnectionsUpdateParamsMappingValueTransform | None = None
 
 class ConnectionsUpdateParamsMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsUpdateParamsVoidWhenItem(_Model):
@@ -2769,7 +2816,7 @@ class ConnectionsUpdateResultMappingValue(_Model):
     transform: ConnectionsUpdateResultMappingValueTransform | None = None
 
 class ConnectionsUpdateResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsUpdateResultVoidWhenItem(_Model):
@@ -2854,7 +2901,7 @@ class ConnectorsListItemRecipesItemMappingValue(_Model):
     transform: ConnectorsListItemRecipesItemMappingValueTransform | None = None
 
 class ConnectorsListItemRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsListItemRecipesItemOutputFieldsValue(_Model):
@@ -2913,7 +2960,7 @@ class ConnectorsListResultItemsItemRecipesItemMappingValue(_Model):
     transform: ConnectorsListResultItemsItemRecipesItemMappingValueTransform | None = None
 
 class ConnectorsListResultItemsItemRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsListResultItemsItemRecipesItemOutputFieldsValue(_Model):
@@ -2968,7 +3015,7 @@ class ConnectorsRetrieveResultRecipesItemMappingValue(_Model):
     transform: ConnectorsRetrieveResultRecipesItemMappingValueTransform | None = None
 
 class ConnectorsRetrieveResultRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsRetrieveResultRecipesItemOutputFieldsValue(_Model):
@@ -9059,6 +9106,8 @@ BundlesCreateBody = BundlesCreateParams
 BundlesSendEmailBody = BundlesSendEmailParams
 
 ConnectionsCreateBody = ConnectionsCreateParams
+
+ConnectionsPreviewResult = ConnectionPreview
 
 ConnectionsTestConfigBody = ConnectionsTestConfigParams
 

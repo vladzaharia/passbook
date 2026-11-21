@@ -1158,6 +1158,43 @@ type CapturedEmailPage struct {
 	NextCursor *string         `json:"nextCursor"`
 }
 
+type ConnectionPreview struct {
+	Ok         bool                           `json:"ok"`
+	ErrorCode  *string                        `json:"errorCode,omitempty"`
+	Records    int64                          `json:"records"`
+	Counts     ConnectionPreviewCounts        `json:"counts"`
+	Samples    []ConnectionPreviewSamplesItem `json:"samples"`
+	Columns    []ConnectionPreviewColumnsItem `json:"columns"`
+	DurationMs int64                          `json:"durationMs"`
+}
+
+type ConnectionPreviewColumnsItem struct {
+	Pointer string                                   `json:"pointer"`
+	Label   string                                   `json:"label"`
+	Samples []string                                 `json:"samples"`
+	Values  []ConnectionPreviewColumnsItemValuesItem `json:"values"`
+}
+
+type ConnectionPreviewColumnsItemValuesItem struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
+type ConnectionPreviewCounts struct {
+	Create    int64 `json:"create"`
+	Update    int64 `json:"update"`
+	Unchanged int64 `json:"unchanged"`
+	Skipped   int64 `json:"skipped"`
+	Errors    int64 `json:"errors"`
+}
+
+type ConnectionPreviewSamplesItem struct {
+	Ref     string         `json:"ref"`
+	Action  string         `json:"action"`
+	Fields  map[string]any `json:"fields"`
+	Message *string        `json:"message,omitempty"`
+}
+
 type ConnectionsCreateBody = ConnectionsCreateParams
 
 type ConnectionsCreateParams struct {
@@ -1311,6 +1348,8 @@ type ConnectionsListQuery struct {
 	Limit  *int64  `json:"limit,omitempty"`
 }
 
+type ConnectionsPreviewResult = ConnectionPreview
+
 type ConnectionsRetrieveResult struct {
 	ID                  string                                           `json:"id"`
 	OrgID               string                                           `json:"orgId"`
@@ -1373,6 +1412,9 @@ type ConnectionsRetrieveResultRunsItem struct {
 	Outcome       string  `json:"outcome"`
 	RecordsSeen   *int64  `json:"recordsSeen"`
 	PassesChanged *int64  `json:"passesChanged"`
+	PassesCreated *int64  `json:"passesCreated"`
+	PassesVoided  *int64  `json:"passesVoided"`
+	RecordsFailed *int64  `json:"recordsFailed"`
 	ErrorCode     *string `json:"errorCode"`
 	ErrorDetail   *string `json:"errorDetail,omitempty"`
 	HttpStatus    *int64  `json:"httpStatus"`
@@ -1515,6 +1557,9 @@ type ConnectionsRunsListItem struct {
 	Outcome       string  `json:"outcome"`
 	RecordsSeen   *int64  `json:"recordsSeen"`
 	PassesChanged *int64  `json:"passesChanged"`
+	PassesCreated *int64  `json:"passesCreated"`
+	PassesVoided  *int64  `json:"passesVoided"`
+	RecordsFailed *int64  `json:"recordsFailed"`
 	ErrorCode     *string `json:"errorCode"`
 	ErrorDetail   *string `json:"errorDetail,omitempty"`
 	HttpStatus    *int64  `json:"httpStatus"`

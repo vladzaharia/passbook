@@ -152,6 +152,54 @@
     "note": "Keys may hold scanning:admin: staff PINs and pairing codes in the one-call setup."
   },
   {
+    "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.runs[].passesCreated: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.runs[].passesVoided: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.runs[].passesVoided: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.runs[].recordsFailed: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.runs[].recordsFailed: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/runs 200.items[].passesCreated: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdRuns",
+    "op": "GET /api/v1/connections/{id}/runs",
+    "change": "200.items[].passesCreated: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/runs 200.items[].passesVoided: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdRuns",
+    "op": "GET /api/v1/connections/{id}/runs",
+    "change": "200.items[].passesVoided: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/runs 200.items[].recordsFailed: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdRuns",
+    "op": "GET /api/v1/connections/{id}/runs",
+    "change": "200.items[].recordsFailed: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
@@ -758,6 +806,14 @@
     "op": "PATCH /api/v1/users/{id}",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/preview new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdPreview",
+    "op": "POST /api/v1/connections/{id}/preview",
+    "change": "new operation",
+    "note": "Preview a sync: what the next sync would create, update or skip over at most 200 records, with the source fields and their common values. Writes nothing."
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",

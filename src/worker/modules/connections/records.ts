@@ -93,6 +93,8 @@ export interface Totals {
   created: number;
   missing: number;
   errors: number;
+  /** Passes a record or a missing policy voided; set once there is one. */
+  voided?: number;
 }
 
 export const emptyTotals = (): Totals => ({
@@ -103,8 +105,9 @@ export const emptyTotals = (): Totals => ({
   errors: 0,
 });
 
-export function addOutcome(t: Totals, outcome: Outcome): void {
+export function addOutcome(t: Totals, outcome: Outcome, voided = false): void {
   t.seen += 1;
+  if (voided) t.voided = (t.voided ?? 0) + 1;
   if (outcome === 'changed') t.changed += 1;
   else if (outcome === 'created') t.created += 1;
   else if (outcome === 'missing') t.missing += 1;

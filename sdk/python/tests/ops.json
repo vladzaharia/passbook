@@ -1255,6 +1255,9 @@
      "outcome": "running",
      "recordsSeen": 0,
      "passesChanged": 0,
+     "passesCreated": 0,
+     "passesVoided": 0,
+     "recordsFailed": 0,
      "errorCode": "x",
      "httpStatus": 0,
      "durationMs": 0
@@ -1348,6 +1351,58 @@
   }
  },
  {
+  "id": "connections.postConnectionsByIdPreview",
+  "call": "connections.preview",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/preview",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": false,
+   "records": 0,
+   "counts": {
+    "create": 0,
+    "update": 0,
+    "unchanged": 0,
+    "skipped": 0,
+    "errors": 0
+   },
+   "samples": [
+    {
+     "ref": "x",
+     "action": "create",
+     "fields": {}
+    }
+   ],
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "samples": [
+      "x"
+     ],
+     "values": [
+      {
+       "value": "x",
+       "count": 0
+      }
+     ]
+    }
+   ],
+   "durationMs": 0
+  }
+ },
+ {
   "id": "connections.getConnectionsByIdRuns",
   "call": "connections.runs.list",
   "http": "GET",
@@ -1374,6 +1429,9 @@
      "outcome": "running",
      "recordsSeen": 0,
      "passesChanged": 0,
+     "passesCreated": 0,
+     "passesVoided": 0,
+     "recordsFailed": 0,
      "errorCode": "x",
      "httpStatus": 0,
      "durationMs": 0

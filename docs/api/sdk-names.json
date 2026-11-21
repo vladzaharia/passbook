@@ -265,6 +265,10 @@
     "resource": "connections",
     "method": "create"
   },
+  "connections.postConnectionsByIdPreview": {
+    "resource": "connections",
+    "method": "preview"
+  },
   "connections.postConnectionsByIdSync": {
     "resource": "connections",
     "method": "sync"

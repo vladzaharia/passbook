@@ -28,6 +28,7 @@ import { authorizeConnection, authorizeStoredConnection as authorizeStored } fro
 import * as actions from './actions.ts';
 import { registerConnectorCatalogRoutes } from './catalog-routes.ts';
 import { registerConnectionListRoutes } from './list-routes.ts';
+import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import * as service from './service.ts';
 import { testConfig } from './test-config.ts';
 import { registerConnectionWebhookRoutes } from './webhook-ingress-routes.ts';
@@ -75,6 +76,7 @@ connectionsRoutes.post('/', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
+registerConnectionPreviewRoute(connectionsRoutes);
 register(
   connectionsRoutes,
   'connections',

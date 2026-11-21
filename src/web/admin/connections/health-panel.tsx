@@ -64,6 +64,22 @@ function SampledErrors({ detail }: { detail: string | null | undefined }) {
   );
 }
 
+/** "12 seen · 3 created · 1 voided · 2 failed"; runs from before the counts show seen and changed. */
+export function runCounts(r: Run): string {
+  if (r.recordsSeen === null) return '—';
+  if (r.passesCreated === null) return `${r.recordsSeen} seen, ${r.passesChanged ?? 0} changed`;
+  const updated = Math.max(0, (r.passesChanged ?? 0) - r.passesCreated - (r.passesVoided ?? 0));
+  return [
+    `${r.recordsSeen} seen`,
+    r.passesCreated ? `${r.passesCreated} created` : null,
+    updated ? `${updated} updated` : null,
+    r.passesVoided ? `${r.passesVoided} voided` : null,
+    r.recordsFailed ? `${r.recordsFailed} failed` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
 const columns: DataColumnDef<Run, never>[] = [
   {
     id: 'started',
@@ -84,10 +100,7 @@ const columns: DataColumnDef<Run, never>[] = [
     id: 'records',
     header: 'Records',
     meta: { nowrap: true },
-    cell: ({ row }) =>
-      row.original.recordsSeen === null
-        ? '—'
-        : `${row.original.recordsSeen} seen, ${row.original.passesChanged ?? 0} changed`,
+    cell: ({ row }) => (row.original.recordsSeen === null ? '—' : runCounts(row.original)),
   },
   {
     id: 'code',

@@ -378,6 +378,14 @@ class ConnectionsResource:
         """List connections `GET /api/v1/connections`"""
         return self._core.paginate("GET", "/api/v1/connections", query={"health": health, "q": q, "cursor": cursor, "limit": limit}, result=m.ConnectionsListResult, cursor_param="cursor", **opts)
 
+    def preview(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsPreviewResult:
+        """Preview a sync `POST /api/v1/connections/{id}/preview`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", result=m.ConnectionsPreviewResult, **opts)
+
     def retrieve(
         self,
         id: str,

@@ -16,7 +16,7 @@ export const MappingEntrySchema = z.object({
   from: z.string().max(500),
   transform: z
     .object({
-      kind: z.enum(['enum', 'bool-status', 'date', 'constant', 'trim', 'upper', 'lower']),
+      kind: z.enum(['enum', 'bool-status', 'date', 'constant', 'trim', 'upper', 'lower', 'join']),
       options: z.record(z.string(), JsonSchema).optional(),
     })
     .optional(),
@@ -165,6 +165,10 @@ export const ConnectionRunSchema = z.object({
   outcome: z.enum(['running', 'unchanged', 'changed', 'error', 'skipped']),
   recordsSeen: z.number().int().nullable(),
   passesChanged: z.number().int().nullable(),
+  /** Null on runs from before the counts were kept. */
+  passesCreated: z.number().int().nullable(),
+  passesVoided: z.number().int().nullable(),
+  recordsFailed: z.number().int().nullable(),
   errorCode: z.string().nullable(),
   /** First failing records of the run: `ref: CODE path message`, one per line. */
   errorDetail: z.string().nullable().optional(),
@@ -241,6 +245,45 @@ export const TestConnectionResponseSchema = z.object({
   errorCode: z.string().optional(),
   durationMs: z.number().int(),
   sample: z.array(SampleFieldSchema).optional(),
+});
+/** What a first sync would do with the source's records. Nothing is written. */
+export const ConnectionPreviewSchema = z.object({
+  ok: z.boolean(),
+  errorCode: z.string().optional(),
+  /** Records read, at most 200. */
+  records: z.number().int(),
+  counts: z.object({
+    create: z.number().int(),
+    update: z.number().int(),
+    unchanged: z.number().int(),
+    /** Records that issue nothing: a "Don't issue" value, or issuing is off. */
+    skipped: z.number().int(),
+    errors: z.number().int(),
+  }),
+  /** First records by what they would do, with the template inputs they map to. */
+  samples: z
+    .array(
+      z.object({
+        ref: z.string().max(200),
+        action: z.enum(['create', 'update', 'unchanged', 'skipped', 'error']),
+        fields: z.record(z.string(), JsonSchema),
+        message: z.string().max(300).optional(),
+      }),
+    )
+    .max(10),
+  /** The source's own fields, three cells each, for the Map step. */
+  columns: z
+    .array(
+      z.object({
+        pointer: z.string().max(500),
+        label: z.string().max(200),
+        samples: z.array(z.string().max(80)).max(3),
+        /** Distinct text values of the records read, most common first; empty for a free-form field. */
+        values: z.array(z.object({ value: z.string().max(80), count: z.number().int() })).max(20),
+      }),
+    )
+    .max(60),
+  durationMs: z.number().int(),
 });
 /** Tests an unsaved configuration: nothing is stored; secrets are used once and dropped. */
 export const TestConfigSchema = z.object({
