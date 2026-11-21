@@ -41,6 +41,7 @@ export function CheckList({
   doneText,
   empty,
   inline,
+  fixText,
 }: {
   checks: readonly SetupCheck[];
   onFix: (check: SetupCheck) => void;
@@ -51,6 +52,8 @@ export function CheckList({
   empty?: ReactNode;
   /** The fix sits beside the sentence from sm up (a wide column), not under it. */
   inline?: boolean;
+  /** Replaces a fix button's label. */
+  fixText?: (check: SetupCheck) => string | undefined;
 }) {
   const gone = useResolved(checks);
   if (checks.length === 0 && gone.length === 0) return empty ?? null;
@@ -72,7 +75,7 @@ export function CheckList({
               actions={
                 canFix ? (
                   <Button variant="outline" size="sm" onClick={() => onFix(c)}>
-                    {fixLabel(c.fix.action, c.fix.target)}
+                    {fixText?.(c) ?? fixLabel(c.fix.action, c.fix.target)}
                   </Button>
                 ) : undefined
               }

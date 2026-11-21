@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { MODE_HEADER } from '@/shared/contracts/common.ts';
-import { newOrgFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
+import { newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { resetModeForTests, setMode } from '../../lib/mode.ts';
 import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import {
@@ -1594,6 +1594,41 @@ describe('pass detail: setup rows', () => {
     await user.click(screen.getByRole('button', { name: 'Add logo' }));
     const sheet = await screen.findByRole('dialog', { name: 'Add logo' });
     expect(within(sheet).getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('runs colour fixes in a sheet and labels real setup as Set up', async () => {
+    const user = userEvent.setup();
+    const view = {
+      ...viewOf(readyFacts()),
+      checks: [
+        {
+          code: 'BRAND_CONTRAST',
+          level: 'warn',
+          area: 'brand',
+          message: 'Pass text is hard to read on the background.',
+          fix: { action: 'fix_contrast' },
+        },
+        {
+          code: 'APPLE_ID_FAILED',
+          level: 'error',
+          area: 'channels',
+          message: 'Setting up your Apple ID failed.',
+          fix: { action: 'retry_identity_run' },
+        },
+      ],
+    };
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers(newServer(), {
+        [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => json(view),
+      }),
+    });
+    expect(await screen.findByRole('button', { name: 'Set up' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Fix contrast' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Pass colours' });
+    expect(await within(sheet).findByLabelText('Text')).toBeInTheDocument();
+    expect(within(sheet).getByRole('button', { name: 'Save' })).toBeEnabled();
   });
 
   it('shows no rows when the setup is unreadable and the pass has no placeholder', async () => {

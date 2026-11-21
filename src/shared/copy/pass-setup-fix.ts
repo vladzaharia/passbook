@@ -8,8 +8,12 @@ export const PASS_FIX_COPY = {
     cancel: 'Cancel',
     saved: { logo: 'Logo added for every pass.', icon: 'Icon added for every pass.' },
     stale: 'Someone else changed the brand. Try again.',
+    colorsTitle: 'Pass colours',
+    accentTitle: 'Accent',
+    colorsSaved: 'Pass colours saved for every pass.',
+    accentSaved: 'Accent saved.',
   },
-  rows: { label: 'Setup', fixOn: 'Open Brand and channels' },
+  setUp: 'Set up',
   overview: {
     step: 'Brand and channels',
     toDo: '{n} to do',

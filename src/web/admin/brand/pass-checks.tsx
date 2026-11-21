@@ -5,6 +5,7 @@ import { PASS_FIX_COPY } from '@/shared/copy/pass-setup-fix.ts';
 import { checksForTemplate, PLATFORM_BRANDING_CHECK } from '@/shared/org-setup-checks.ts';
 import { useMemberships, useSession } from '@/web/lib/session.ts';
 import { usePassSetup } from './api.ts';
+import { BrandColorSheet, type ColorKind } from './brand-color-sheet.tsx';
 import { BrandImageSheet } from './brand-image-sheet.tsx';
 import { CheckList } from './check-list.tsx';
 
@@ -35,6 +36,23 @@ function brandChecks(warnings: readonly FixableWarning[]): SetupCheck[] {
   });
 }
 
+/** Fixes that run in a sheet here; the rest are real setup and open the Brand page. */
+const COLOR_FIX: Partial<Record<SetupCheck['fix']['action'], { kind: ColorKind; fix: boolean }>> = {
+  fix_contrast: { kind: 'colors', fix: true },
+  edit_colors: { kind: 'colors', fix: false },
+  use_logo_colors: { kind: 'colors', fix: false },
+  fix_accent: { kind: 'accent', fix: true },
+};
+const SETUP_LINK = new Set<SetupCheck['fix']['action']>([
+  'start_apple_managed',
+  'retry_identity_run',
+  'renew_identity',
+  'replace_certificate',
+  'check_push',
+  'setup_wallet_account',
+  'allow_channel',
+]);
+
 const IMAGE_CODES = new Set(['BRAND_LOGO', 'BRAND_ICON']);
 
 /**
@@ -60,6 +78,7 @@ export function PassChecks({
   const memberships = useMemberships();
   const { isAdmin } = useSession();
   const [sheet, setSheet] = useState<Slot>();
+  const [color, setColor] = useState<{ kind: ColorKind; fix: boolean }>();
   const canFix =
     orgId !== undefined &&
     (isAdmin ||
@@ -78,6 +97,8 @@ export function PassChecks({
   function fix(check: SetupCheck) {
     if (check.fix.action === 'upload_logo') return setSheet('logo');
     if (check.fix.action === 'upload_icon') return setSheet('icon');
+    const sheetOf = COLOR_FIX[check.fix.action];
+    if (sheetOf) return setColor(sheetOf);
     if (orgId) void navigate({ to: '/admin/o/$orgId/brand', params: { orgId }, hash: check.area });
   }
 
@@ -88,12 +109,17 @@ export function PassChecks({
         onFix={fix}
         canFix={canFix}
         inline
+        fixText={(c) => (SETUP_LINK.has(c.fix.action) ? PASS_FIX_COPY.setUp : undefined)}
         doneText={(c) =>
           c.code === 'BRAND_ICON'
             ? PASS_FIX_COPY.sheet.saved.icon
             : c.code === 'BRAND_LOGO'
               ? PASS_FIX_COPY.sheet.saved.logo
-              : c.message
+              : c.code === 'BRAND_CONTRAST'
+                ? PASS_FIX_COPY.sheet.colorsSaved
+                : c.code === 'ACCENT_CONTRAST'
+                  ? PASS_FIX_COPY.sheet.accentSaved
+                  : c.message
         }
       />
       {orgId && sheet ? (
@@ -102,6 +128,16 @@ export function PassChecks({
           slot={sheet}
           open
           onOpenChange={(open) => !open && setSheet(undefined)}
+          onSaved={onFixed}
+        />
+      ) : null}
+      {orgId && color ? (
+        <BrandColorSheet
+          orgId={orgId}
+          kind={color.kind}
+          fix={color.fix}
+          open
+          onOpenChange={(open) => !open && setColor(undefined)}
           onSaved={onFixed}
         />
       ) : null}
