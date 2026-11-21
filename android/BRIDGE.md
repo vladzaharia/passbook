@@ -38,7 +38,7 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | Web → app | `{version:1, op:'haptic', pattern:number[]}` |
 | App → web | `{version:1, event:'timeout'}` |
 
-`cryptogram` is standard Base64 of the VAS `9F27` value. `readAt` is the Android wall clock in milliseconds, useful for display, not authoritative freshness. Barcode values are bounded to 2048 characters without control characters. A single scan may be pending; results expire after 15 seconds. Repeated identical inputs are suppressed for two seconds. Pausing/navigating invalidates pending results. The bundled diagnostics uses a local-only `captured` acknowledgement, which cannot grant acceptance.
+`cryptogram` is standard Base64 of the VAS `9F27` value. `readAt` is the Android wall clock in milliseconds, useful for display, not authoritative freshness. Barcode values are bounded to 2048 characters without control characters. Without `scanAck` (below) a single scan may be pending and results expire after 15 seconds; the app then shows "Unverified · no decision received" and sends `timeout`. The same payload from the same source within 1500 ms is dropped; anything else is forwarded. Pausing/navigating invalidates pending results. The bundled diagnostics uses a local-only `captured` acknowledgement, which cannot grant acceptance.
 
 `haptic` plays one verdict's feedback. `pattern` is on/off durations in milliseconds, starting with an on: at most 8 entries, each 0 to 500; anything else is dropped. The web sends it only when the capability snapshot has `haptics: true`, and uses `navigator.vibrate` otherwise. Android plays the waveform; iOS maps one pulse to an impact, two to a warning and three or more to an error notification.
 
@@ -49,7 +49,7 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | `platform`, `appVersion` | `"android"` and the native application version (at most 32 characters). |
 | `camera.available`, `camera.permission` | A camera is currently enumerated (or a built-in camera is known when enumeration throws). Permission is `granted`, `denied`, `restricted`, `unavailable`, or `unknown` from the current OS state and observed permission results. Android cannot always distinguish a first request from permanent denial, so the app uses `unknown` rather than guessing. Reporting never requests permission. |
 | `keyboard.supported`, `keyboard.connected`, `keyboard.connectionObservable` | `true`, `null`, `false`: keyboard-wedge input uses the OS text-input path, but Android cannot reliably identify a connected barcode wedge. Focus must be in the intended native or web input field. |
-| `nfc.available`, `nfc.reading`, `nfc.formats` | `available` means NFC reader hardware is present and enabled; `reading` means native reader mode is active. Supported hardware reports `["wallet-vas"]`, including while NFC is disabled; no hardware reports `[]`. This implementation does not read NDEF. |
+| `nfc.available`, `nfc.reading`, `nfc.formats` | `available` means NFC reader hardware is present and enabled; `reading` means native reader mode is active. Supported hardware reports `["wallet-vas"]`, including while NFC is disabled; no hardware reports `[]`. With bridge v2 it also reads third-party tags (`tag-uid`, `tag-sun`; see below). |
 | `vas.deviceSupported`, `vas.available`, `vas.reader`, `vas.reason` | Native NFC hardware support is distinct from verification. `available` is always `false`: no dedicated backend verifier is integrated. `reader` is `"android-native"` when supported, otherwise `"none"`; `reason` explains the limitation. |
 | `externalReader.mode`, `externalReader.connected` | `"keyboard"` and `null`; this does not claim a connected scanner or generic USB/Bluetooth serial support. |
 | `haptics` | `true`: the app plays the `haptic` op. |
@@ -69,17 +69,24 @@ Native object: `window.PassBookNative`. Send JSON strings with `postMessage`; re
 | `haptics`, `speaker` | Vibrator present; audio output feature present. | Haptics engine support; always a speaker. |
 | `display` | Not reported. | Not reported. |
 
-Android re-sends `capabilities` on input-device changes, USB attach and detach, NFC adapter changes and resume (debounced 200 ms). iOS re-sends it on keyboard connect and disconnect, and on the other changes above.
+Android re-sends `capabilities` on input-device changes, USB attach and detach, NFC adapter changes and resume (input-device, USB, Bluetooth bond and camera-availability changes are debounced 200 ms). iOS re-sends it on keyboard connect and disconnect, and on the other changes above.
 
 Vendor scan broadcasts: when a vendor scanner service is installed the app also listens for its scan intent and delivers reads as `{event:'scan', source:'barcode', value}`. A broadcast can come from any app, so a value only ever becomes a normal `barcode` scan: 1 to 2048 characters, no control characters, one read at a time and duplicates within two seconds dropped by `ScanGate`, exactly as for typed input. Receivers are registered `RECEIVER_EXPORTED`, which Android 13+ requires for broadcasts from other apps. The manual action and extra in Settings still work, and keyboard output keeps working through the input field.
 
 | Vendor | Action and extra | Status |
 | --- | --- | --- |
-| Zebra DataWedge | `im.plrs.passbook.reader.action.SCAN`, string extra `com.symbol.datawedge.data_string` | Confirmed. The action is chosen in the profile, so the app sends `SET_CONFIG` once (action `com.symbol.datawedge.api.ACTION`, `CONFIG_MODE` `CREATE_IF_NOT_EXIST`, later versions `UPDATE`, no `RESET_CONFIG`) to create its own device-wide profile "PassBook Scanner" bound to this package: barcode input, Intent output as broadcast (`intent_delivery` 2), no intent category, keystroke output left at its default so the keyboard path remains a fallback. It asks for `SEND_RESULT`, stores a done flag only on `SUCCESS`, and logs a failure as `scan.datawedge_config_failed code=<RESULT_CODE>`. The profile stays after uninstall. Receivers also accept the `DEFAULT` category, which DataWedge may add. Not yet run on a Zebra device. [Result codes](https://techdocs.zebra.com/datawedge/latest/guide/api/resultinfo/), [tutorial (category left blank, Broadcast delivery)](https://techdocs.zebra.com/datawedge/latest/guide/api/tutorials/) [Set Config](https://techdocs.zebra.com/datawedge/latest/guide/api/setconfig/), [Intent output](https://techdocs.zebra.com/datawedge/latest/guide/output/intent/) |
+| Zebra DataWedge | `im.plrs.passbook.reader.action.SCAN`, string extra `com.symbol.datawedge.data_string` | Confirmed. The action is chosen in the profile, so the app sends `SET_CONFIG` once (action `com.symbol.datawedge.api.ACTION`, `CONFIG_MODE` `CREATE_IF_NOT_EXIST`, later versions `UPDATE`, no `RESET_CONFIG`) to create its own device-wide profile "PassBook Scanner" bound to this package: barcode input, Intent output as broadcast (`intent_delivery` 2), no intent category, keystroke output off (profile version 2 adds the KEYSTROKE plugin with `keystroke_output_enabled` false through `UPDATE`, so one scan is not delivered twice; version 1 left it on). It asks for `SEND_RESULT`, stores a done flag only on `SUCCESS`, and logs a failure as `scan.datawedge_config_failed code=<RESULT_CODE>`. The profile stays after uninstall. Receivers also accept the `DEFAULT` category, which DataWedge may add. Not yet run on a Zebra device. [Result codes](https://techdocs.zebra.com/datawedge/latest/guide/api/resultinfo/), [tutorial (category left blank, Broadcast delivery)](https://techdocs.zebra.com/datawedge/latest/guide/api/tutorials/) [Set Config](https://techdocs.zebra.com/datawedge/latest/guide/api/setconfig/), [Intent output](https://techdocs.zebra.com/datawedge/latest/guide/output/intent/) |
 | Sunmi | `com.sunmi.scanner.ACTION_DATA_CODE_RECEIVED`, string extra `data` | Confirmed. Broadcast output must be on (the default; mode switch is `com.sunmi.scanner.ACTION_BAR_DEVICES_SETTING`). [Scanner guide](https://file.cdn.sunmi.com/SUNMIDOCS/Barcode-Scanner-User-Guide-20201202.pdf) |
 | Honeywell | `com.honeywell.sample.action.BARCODE_DATA`, `data` | Unverified, off. Honeywell has no fixed action: the app that claims the scanner chooses it (needs the `com.honeywell.decode.permission.DECODE` permission, which this app does not hold) and the sample string is documented as a placeholder. Use the manual action and extra in Settings. [Data Collection Intent API](https://support.honeywellaidc.com/servlet/fileField?entityId=ka02K000000cS1bQAE&field=File_1__Body__s) |
 | Urovo | `android.intent.ACTION_DECODE_DATA`, `barcode_string` | Action and extra confirmed, service package names unverified, so off. Needs the scanner output mode set to intent (`WEDGE_KEYBOARD_ENABLE` 0). [ScanManager](https://en.urovo.com/developer/android/device/ScanManager.html) |
 | Newland | `nlscan.action.SCANNER_RESULT`, `SCAN_BARCODE1` | Action and extra confirmed, service package names unverified, so off. Needs Output Mode "Output via API" in the scanner settings. [ScanDemo](https://github.com/NewlandAutoID/ScanDemo), [API handbook](https://d1bx683snmhtki.cloudfront.net/MobileTerminal/Newland_Android_PDA_API_Handbook.pdf) |
+
+Broadcast hardening, per vendor. The receiver has to be exported because the sender is the vendor's own app, so it cannot be limited with `exported=false`. Instead it is registered only while the activity is resumed, accepts at most 4 broadcast reads per second (excess is dropped and logged as `scan.broadcast_rate_limited`), bounds each value, and shares the 1500 ms same-payload dedupe with keyboard input. On API 34+ a broadcast with no sender package logs `scan.broadcast_unattributed`; it is not refused, because vendor services are not known to set one. The read's origin stays inside the app: the wire `method` enum has no broadcast value, so the server sees a normal `barcode` scan.
+
+- Zebra DataWedge: no sender permission is documented, and broadcast delivery cannot target a component, so the profile uses broadcast (`intent_delivery` 2) with the app's own action. Delivery to an explicit component (`startActivity` or `startService`) is possible but not confirmed on a device; it is not used. The DataWedge result receiver ignores an API 34+ result that names another package.
+- Sunmi: no sender permission is documented. Same hardening as above.
+- Honeywell: the decode service is protected by `com.honeywell.decode.permission.DECODE`, held by the claiming app, not required of a receiver. Unverified and off.
+- Deployment: allow-list installed apps through MDM; a broadcast is as trusted as keyboard entry.
 
 "Confirmed" means the vendor documentation was checked, not the sender: any app can send these broadcasts, so reads are bounded and still need a valid code at the server.
 
@@ -121,11 +128,29 @@ sends every later message with that version.
 - Capabilities: `nfc.formats` adds `tag-uid` and `tag-sun`. New `nfc.continuous`
   (boolean) is true when the app reads tags without `tagRead`.
 - Android: a tag read ends a pending `tagRead`; a `tagRead` that times out ends
-  with the `cancelled` event. VAS is tried first and a SELECT answer of `6A82`
+  with `{event:'cancelled', id}` (the `tagRead` id), which ends only that read and
+  leaves any in-flight barcode check alone. VAS is tried first and a SELECT answer of `6A82`
   falls through to the tag read. The same tag read again within two seconds is
   dropped. A tag whose NDEF value is over 1024 bytes is sent with `uid` only.
 - Tag data stays out of logs, analytics and URLs. The server stores a keyed hash
   of the UID, never the UID.
+
+## Receipt acknowledgement (`scanAck`, additive, still v2)
+
+A read used to hold the native gate until its verdict, so a second read during review was dropped silently. The web now acknowledges receipt separately.
+
+| Direction | Message |
+|-----------|---------|
+| Web → app | `{version:2, op:'hello', versions:[1,2], features:['scanAck']}` |
+| Web → app | `{version:n, op:'scanAck', id:string}` |
+
+- Both sides advertise, and acks happen only when both do. The app lists `features:['scanAck']` as a top-level field of every `ready` and `capabilities` event, beside `capabilities`, never inside the snapshot (the web validates the snapshot strictly). The web sends `scanAck` only after the app advertised it, so an older app never sees the op. An older web ignores the extra event field and keeps the snapshot.
+- `features` is an optional array of names (at most 8, each at most 32 characters). Each side ignores names it does not know, so this is not a version bump: the wire stays v2 and a v1 or older app sees an extra `hello` field it ignores.
+- On every valid `scan` event, when the app advertised `scanAck`, the web posts `scanAck {id}` at once, before any verdict, then sends `result` as before. It sends the ack with the negotiated version.
+- If the web advertised `scanAck`, the app's gate holds only until the ack, at most 2 s. After that the gate is free and the app shows "Verifier did not respond. Scan again." (no `timeout` event). The verdict is matched to its `id` later without blocking further reads. A read that arrives while the gate waits for an ack shows "Finish the current scan first."
+- If the web did not advertise it, the app keeps the old behaviour: one read holds the gate until its `result` or 15 s.
+- The web owns a read that arrives during review or while a result shows: the loop holds it (review), queues it (checking, result) or answers with a chip, and says so on screen. A read the page cannot take (not started, blocked) shows a notice and gets `result` `error`.
+- An app that does not advertise `scanAck` gets today's behaviour: no ack, gate held until the verdict.
 
 ## Backend obligations
 
@@ -133,6 +158,6 @@ For Apple VAS, use the matching pass encryption private key to decrypt the crypt
 
 Authenticate the operator/device and enforce its tenant, venue and operation permissions on the server. Pass identifiers and cryptograms must not enter access logs or analytics. Do not send download links, Apple web-service tokens or pass-signing keys as scan credentials. The web verifier's own authentication and authorization remain required.
 
-Only the configured exact HTTPS origin and main frame can use the bridge. HTTPS identity-provider navigation is supported; NFC stops and pending results are invalidated on navigation. Other origins never receive the bridge. Test your actual OIDC/passkey flow on the P400; WebView identity-provider support varies. Bridge origin checks do not protect against an XSS in the trusted verifier itself.
+Only the configured exact HTTPS origin and main frame can use the bridge. In-app navigation is limited to that origin and PassBook hosts (`passbook.mobile`, `wallet.plrs.im` and their subdomains); any other link opens in the browser, so identity-provider sign-in that leaves those hosts runs in the browser, not the reader. Settings open on press and hold; saving a different origin asks for confirmation naming it, clears cookies, storage and cache, and rebinds the bridge to the new origin. NFC stops and pending results are invalidated on navigation. Other origins never receive the bridge. Test your actual OIDC/passkey flow on the P400; WebView identity-provider support varies. Bridge origin checks do not protect against an XSS in the trusted verifier itself.
 
 Scanner broadcasts are untrusted input from local apps, just like keyboard entry. They grant no extra authority. Install only trusted apps on managed readers.

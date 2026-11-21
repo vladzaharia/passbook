@@ -48,6 +48,21 @@ public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String 
         } catch (java.net.URISyntaxException exception) { return ""; }
     }
 
+    /** PassBook's own hosts: the production origins and their subdomains. */
+    public static boolean isPassBookHost(String url) {
+        String origin = originOf(url);
+        if (origin.isEmpty()) return false;
+        String host = origin.substring("https://".length()).replaceFirst(":\\d+$", "");
+        return host.equals("passbook.mobile") || host.endsWith(".passbook.mobile")
+            || host.equals("wallet.plrs.im") || host.endsWith(".wallet.plrs.im");
+    }
+
+    /** In-app navigation: the configured origin, the bundled page and PassBook hosts. Everything else leaves the app. */
+    public static boolean allowsNavigation(String url, String configuredOrigin) {
+        String origin = originOf(url);
+        return !origin.isEmpty() && (origin.equals(configuredOrigin) || origin.equals(LOCAL_ORIGIN) || isPassBookHost(url));
+    }
+
     private static void validateUrl(String value) {
         if (value.length() > 2048 || originOf(value).isEmpty() || value.contains("#")) {
             invalid("Enter an HTTPS verifier URL without a fragment or credentials.");
@@ -55,10 +70,22 @@ public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String 
         if (originOf(value).equals(LOCAL_ORIGIN)) invalid("Use an external verifier URL or leave it empty.");
     }
 
+    /** Stored settings a stricter rule now rejects fall back to defaults, field by field, instead of crashing onCreate. */
     public static ReaderConfig load(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("reader", Context.MODE_PRIVATE);
-        return new ReaderConfig(prefs.getString("url", DEFAULT_VERIFIER), parseIds(prefs.getString("ids", DEFAULT_ID)),
-            prefs.getString("action", ""), prefs.getString("extra", ""), prefs.getBoolean("unverifiedScanners", false));
+        String url = prefs.getString("url", DEFAULT_VERIFIER), ids = prefs.getString("ids", DEFAULT_ID);
+        String action = prefs.getString("action", ""), extra = prefs.getString("extra", "");
+        boolean unverified = prefs.getBoolean("unverifiedScanners", false);
+        try {
+            return new ReaderConfig(url, parseIds(ids), action, extra, unverified);
+        } catch (IllegalArgumentException rejected) {
+            android.util.Log.w("PassBook", "reader.config_reset");
+        }
+        try {
+            return new ReaderConfig(DEFAULT_VERIFIER, parseIds(ids), "", "", unverified);
+        } catch (IllegalArgumentException rejected) {
+            return new ReaderConfig(DEFAULT_VERIFIER, List.of(DEFAULT_ID), "", "", unverified);
+        }
     }
 
     public void save(Context context) {

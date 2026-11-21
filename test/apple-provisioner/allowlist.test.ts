@@ -10,7 +10,7 @@ const passTypeBody = (id: string, identifier: string) => ({
 beforeEach(resetLedger);
 
 describe('apple-provisioner allowlist', () => {
-  it('exposes exactly the six RPC methods', () => {
+  it('exposes exactly the seven RPC methods', () => {
     expect(Object.getOwnPropertyNames(AppleProvisioner.prototype).sort()).toEqual(
       [
         'calls',
@@ -19,6 +19,7 @@ describe('apple-provisioner allowlist', () => {
         'createPassType',
         'findPassType',
         'listCertificates',
+        'reportCertificateActive',
         'revokeCertificate',
       ].sort(),
     );
