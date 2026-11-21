@@ -1,9 +1,8 @@
 import os
-import httpx
 
-res = httpx.get(
-    "https://passbook.mobile/api/v1/api-keys/me",
-    headers={"Authorization": f"Bearer {os.environ['PASSBOOK_KEY']}"},
-)
-res.raise_for_status()
-print(res.json())
+from passbook import PassBook
+
+pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
+
+result = pb.api_keys.retrieve_current()
+print(result)

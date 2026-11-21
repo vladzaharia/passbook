@@ -21,6 +21,8 @@ const PUBLIC = [
   'GET /api/v1/openapi.json',
   'GET /assets/*',
   'GET /developers/*',
+  // A search that found nothing: no identity is sent or kept, only a plain-words term (same origin, rate limited).
+  'POST /developers/search-miss',
   'GET /preview/:token',
   'GET /preview/:token/assets/:name',
   'GET /brand/:orgId/:file',

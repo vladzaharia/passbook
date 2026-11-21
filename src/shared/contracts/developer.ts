@@ -11,6 +11,8 @@ import {
 /** `POST /developer/sandbox`: the Turnstile token of the widget with action `developer_sandbox`. */
 export const CreateDeveloperSandboxSchema = z.object({
   turnstileToken: z.string().min(1).max(4096),
+  /** When this browser session first opened the quickstart (ms). The server clamps it to the last 24 hours. */
+  viewedAt: TimestampSchema.optional(),
 });
 export type CreateDeveloperSandbox = z.infer<typeof CreateDeveloperSandboxSchema>;
 
@@ -118,3 +120,62 @@ export const ApiRailSchema = z.object({
   key: z.object({ id: IdSchema, name: z.string(), prefix: z.string() }).nullable(),
 });
 export type ApiRail = z.infer<typeof ApiRailSchema>;
+
+/** What a pasted id is: a request id (a Cloudflare ray or a UUID) or the id of an object in the caller's sandbox. */
+export const ResolveQuerySchema = z.object({
+  id: z
+    .string()
+    .regex(
+      /^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[0-9a-fA-F]{16}-[A-Za-z]{3})$/,
+    ),
+});
+export const ResolvedSchema = z.object({
+  kind: z.enum(['request', 'pass', 'template', 'org']),
+  /** Where it opens: the request log row, or the sandbox's admin page. */
+  href: z.string(),
+  /** `GET /passes` for a request; the object's name otherwise. */
+  label: z.string(),
+});
+export type Resolved = z.infer<typeof ResolvedSchema>;
+
+/** `POST /developers/search-miss`: a search term that found nothing. Re-checked on arrival; anything else is dropped. */
+export const SearchMissSchema = z.object({ term: z.string().max(200) });
+/**
+ * The quickstart's steps, as the page reports them. The body names a step and nothing else: the org is the
+ * session's sandbox, so the beacon carries no person, pass or key.
+ */
+export const QUICKSTART_STEPS = [
+  'view',
+  'sandbox',
+  'run',
+  'live',
+  'change',
+  'home',
+  'fail',
+] as const;
+export const QuickstartBeaconSchema = z.object({
+  step: z.enum(QUICKSTART_STEPS),
+  /** A problem code for `fail`; a stable catalog code, never a message. */
+  code: z
+    .string()
+    .regex(/^[A-Z][A-Z0-9_]{1,63}$/)
+    .optional(),
+});
+export type QuickstartBeacon = z.infer<typeof QuickstartBeaconSchema>;
+
+/** What the funnel knows of the last 30 days of sandboxes: counts by step, and time to first pass from the page view. */
+export const DeveloperFunnelSchema = z.object({
+  windowDays: z.number().int(),
+  sandboxes: z.number().int(),
+  viewed: z.number().int(),
+  called: z.number().int(),
+  passed: z.number().int(),
+  previewed: z.number().int(),
+  /** Of the sandboxes that viewed the quickstart, the share that made a pass (0..1); null with none. */
+  completion: z.number().nullable(),
+  /** Page view to first pass, in ms; null until a sandbox has both. */
+  ttfpP50Ms: z.number().int().nullable(),
+  ttfpP90Ms: z.number().int().nullable(),
+  ttfpSamples: z.number().int(),
+});
+export type DeveloperFunnel = z.infer<typeof DeveloperFunnelSchema>;

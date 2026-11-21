@@ -1,5 +1,5 @@
 import { RUN_LIMIT, remaining, subscribe } from './budget.ts';
-import { loadSession, type Session } from './session.ts';
+import { loadSession, onSession, type Session } from './session.ts';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -58,6 +58,10 @@ function chipFor(session: Session): HTMLElement | null {
 
 /** Swaps the signed-out button for the sandbox chip when there is a session to show. */
 export async function mountOrgChip(host: HTMLElement): Promise<void> {
-  const chip = chipFor(await loadSession());
-  if (chip) host.replaceChildren(chip);
+  const show = (session: Session) => {
+    const chip = chipFor(session);
+    if (chip) host.replaceChildren(chip);
+  };
+  show(await loadSession());
+  onSession(show);
 }
