@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ChannelPreviews } from '../../../channel-previews/channel-previews.tsx';
 import type { PreviewSource } from '../../../channel-previews/types.ts';
+import { useTemplateChannels } from '../channels/api.ts';
 import type { DraftAsset } from './model.ts';
 import type { PaperPatch } from './ops-paper.ts';
 import { PaperPreview } from './paper-preview.tsx';
@@ -31,6 +32,7 @@ export function DesignerStage({
   stripUrl?: string | null;
 }) {
   const { passJson, assets, assetBase } = card;
+  const channels = useTemplateChannels(templateId ?? '', orgId ?? '', Boolean(templateId && orgId));
   const source = useMemo<PreviewSource | null>(
     () =>
       passJson
@@ -48,6 +50,7 @@ export function DesignerStage({
   return (
     <ChannelPreviews
       source={source}
+      channels={channels.data?.effective}
       apple={<DesignerPreview {...card} />}
       paper={
         <PaperPreview
