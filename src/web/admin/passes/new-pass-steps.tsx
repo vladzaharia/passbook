@@ -202,12 +202,20 @@ export function TemplateStep({
       </div>
     );
   let i = 0;
+  const groups = groupTemplates(templates, orgName);
   return (
     <ChoiceGroup label="Template" error={choiceError} className="flex flex-col gap-6">
       <LinkedBlueprint orgId={orgId} listed={templates} />
-      {groupTemplates(templates, orgName).map((g) => (
+      {groups.map((g) => (
         <fieldset key={g.key} className="min-w-0">
-          <legend className="mb-3 text-xs font-medium text-fg-muted">{g.label}</legend>
+          <legend
+            className={cn(
+              'text-xs font-medium text-fg-muted',
+              groups.length === 1 ? 'sr-only' : 'mb-3',
+            )}
+          >
+            {g.label}
+          </legend>
           <div className={cn(staged ? NAME_GRID : TILE_GRID, arrived && 'wl-stagger')}>
             {g.items.map(({ template: t, name }) => (
               <div key={t.id} style={{ '--i': i++ } as CSSProperties}>

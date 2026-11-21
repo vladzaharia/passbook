@@ -82,7 +82,9 @@ export function InboxPage({
       <PageHeader
         title="Test inbox"
         description={
-          session.isAdmin && !session.isError && !session.isFetching ? <PlatformRetention /> : null
+          mode === 'test' && session.isAdmin && !session.isError && !session.isFetching ? (
+            <PlatformRetention />
+          ) : null
         }
       />
       {mode !== 'test' ? (

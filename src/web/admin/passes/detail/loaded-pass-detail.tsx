@@ -284,14 +284,6 @@ export function LoadedPassDetail({
             removed={removed}
           />
         }
-        summary={
-          <KeyValue
-            items={[
-              { label: 'Holder', value: p.holderEmail },
-              { label: 'Devices', value: devices(p.deviceCount) },
-            ]}
-          />
-        }
       >
         <Tabs value={tab} onValueChange={(t) => setSearch({ tab: t as Tab })} className="min-w-0">
           <TabsList aria-label="Pass sections">

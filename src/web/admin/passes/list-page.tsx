@@ -175,10 +175,7 @@ export function PassesListPage({
 
   return (
     <div className={selected.size > 0 ? 'pb-20' : undefined}>
-      <PageHeader
-        title="Passes"
-        actions={canOperate ? create(truth ? 'outline' : 'primary') : undefined}
-      />
+      <PageHeader title="Passes" actions={canOperate && !truth ? create('primary') : undefined} />
       <PassListContext.Provider value={context}>
         {list.isError ? (
           <ErrorState error={list.error} onRetry={() => void list.refetch()} />

@@ -105,7 +105,6 @@ export function PhotosPage() {
       ) : (
         <div className="flex flex-col gap-6">
           <Card>
-            <CardHeader title="Choose photos" />
             <CardBody className="flex flex-col gap-3">
               <FileDrop
                 multiple
