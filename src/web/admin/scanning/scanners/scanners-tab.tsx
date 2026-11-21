@@ -80,7 +80,6 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
           <EmptyState
             art="phone"
             title="No devices yet"
-            description="Create a session, then add a scanner, desk or customer display to it."
             action={newButton}
           />
         }

@@ -143,7 +143,6 @@ export function StaffFormDialog({
             <FormField
               label="Name"
               required
-              help="Shown to other staff on the scanner."
               error={check.errors.name}
             >
               {(props) => (

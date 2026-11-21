@@ -61,7 +61,6 @@ export function EventsTab() {
           <EmptyState
             art="passes"
             title="No events yet"
-            description={orgId ? undefined : 'Choose an organization to create an event.'}
             action={action}
           />
         }

@@ -121,7 +121,6 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
       <EmptyState
         art="activity"
         title="Select an organization"
-        description="Choose an organization to view its scan history."
       />
     );
   }

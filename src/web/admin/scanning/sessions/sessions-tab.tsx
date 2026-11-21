@@ -54,7 +54,6 @@ export function SessionsTab({
         <EmptyState
           art="scanner"
           title="No scanning sessions"
-          description="Create a session to share admission rules across devices."
         />
       </div>
     );

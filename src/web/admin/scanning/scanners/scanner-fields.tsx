@@ -63,7 +63,6 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
             label="Name"
             required
             error={errors.name}
-            help="Shown on scans as where they happened."
           >
             {(p) => (
               <Input

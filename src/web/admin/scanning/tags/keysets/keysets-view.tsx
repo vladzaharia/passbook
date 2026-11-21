@@ -83,7 +83,6 @@ export function KeysetsView({
           <EmptyState
             art="badge"
             title={KEYSET_COPY.empty.title}
-            description={KEYSET_COPY.empty.body}
             action={add}
           />
         }

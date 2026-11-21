@@ -51,7 +51,6 @@ export function StaffTab() {
       <EmptyState
         art="people"
         title="Select an organization"
-        description="Choose an organization above to manage its scanning staff."
       />
     );
   }
@@ -243,9 +242,6 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
               <EmptyState
                 art="people"
                 title={q ? 'No staff match' : 'No staff yet'}
-                description={
-                  q ? 'Try another name.' : 'Give each person a PIN to see who scanned what.'
-                }
                 action={
                   canManage && !q ? (
                     <Button onClick={() => setDialog({ type: 'create' })}>Add staff</Button>
