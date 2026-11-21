@@ -173,13 +173,11 @@ export function CertificatesTable({
       {
         header: 'Issued',
         id: 'issued',
-        meta: { nowrap: true },
         cell: ({ row }) => formatDay(row.original.notBefore ?? row.original.createdAt),
       },
       {
         header: 'Expires',
         id: 'expires',
-        meta: { nowrap: true },
         cell: ({ row }) => formatDay(row.original.notAfter, '—'),
       },
       {

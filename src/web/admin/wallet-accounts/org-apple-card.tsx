@@ -36,8 +36,8 @@ export function OrgAppleCard({ orgId, canManage }: { orgId: string; canManage: b
           />
         ) : identity ? (
           <>
-            <p className="min-w-0 break-all text-sm">
-              <span className="font-mono">{identity.identifier}</span>
+            <p className="min-w-0 text-sm">
+              <span className="break-all font-mono">{identity.identifier}</span>
               <span className="text-fg-muted">
                 {' · '}
                 {KIND_LABEL[identity.kind]}

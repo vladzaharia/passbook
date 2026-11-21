@@ -60,17 +60,14 @@ export function AppleApiPanel() {
   if (query.data && !query.data.available)
     return <EmptyState art="certificate" title="Provisioner not connected" />;
   return (
-    <>
-      <h2 className="mb-3 text-base font-semibold text-fg-strong">Apple API calls</h2>
-      <DataTable
-        caption="Apple API calls"
-        loading={query.isPending}
-        fetching={query.isFetching && !query.isPending}
-        data={query.data?.items ?? []}
-        getRowId={(c) => String(c.id)}
-        empty={<EmptyState art="certificate" title="No calls" />}
-        columns={columns}
-      />
-    </>
+    <DataTable
+      caption="Apple API calls"
+      loading={query.isPending}
+      fetching={query.isFetching && !query.isPending}
+      data={query.data?.items ?? []}
+      getRowId={(c) => String(c.id)}
+      empty={<EmptyState art="certificate" title="No calls" />}
+      columns={columns}
+    />
   );
 }
