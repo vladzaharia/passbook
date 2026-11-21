@@ -5,6 +5,7 @@
  * tools/check-bundle.ts holds the initial load to 60 kB gzip.
  */
 import './styles/dev-base.css';
+import '../../generated/menubar-kit.css';
 import './styles/dev-layout.css';
 import './styles/dev-controls.css';
 import './styles/dev-code.css';
@@ -15,7 +16,6 @@ import './styles/dev-webhooks.css';
 import './styles/dev-changelog.css';
 import './styles/dev-run.css';
 import './styles/dev-ops.css';
-import './styles/dev-search-bar.css';
 import './styles/dev-guide.css';
 import './styles/dev-quickstart-card.css';
 import './styles/dev-quickstart.css';

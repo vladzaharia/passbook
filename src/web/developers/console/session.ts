@@ -2,6 +2,8 @@
  * Who is looking: signed out, signed in without a sandbox, or with one. Plain fetches, no React:
  * the answer decides whether the console chunk loads at all.
  */
+import { needsPocketId, type SignInMethod } from '../../../shared/spaces.ts';
+
 export interface Sandbox {
   id: string;
   orgSlug: string;
@@ -30,6 +32,8 @@ async function read(): Promise<Session> {
   const head = { accept: 'application/json' };
   const me = await json(await fetch(`${API}/session`, { headers: head }));
   if (me.authenticated !== true || typeof me.csrfToken !== 'string') return { kind: 'out' };
+  // An email link signs in to the holder's spaces only (shared/spaces.ts): here that is signed out.
+  if (needsPocketId('developers', me.amr as SignInMethod)) return { kind: 'out' };
   const csrf = me.csrfToken;
   const res = await fetch(`${API}/developer/sandbox`, { headers: head });
   if (res.status === 401) return { kind: 'out' };

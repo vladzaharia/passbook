@@ -2,7 +2,7 @@
 .pg {
   display: grid;
   grid-template-columns: 22rem minmax(0, 1fr);
-  min-height: calc(100dvh - 59px);
+  min-height: calc(100dvh - var(--dev-bar));
 }
 .pg-fallback {
   grid-column: 1 / -1;
@@ -18,9 +18,9 @@
   display: flex;
   flex-direction: column;
   position: sticky;
-  top: 59px;
+  top: var(--dev-bar);
   align-self: start;
-  height: calc(100dvh - 59px);
+  height: calc(100dvh - var(--dev-bar));
   overflow: hidden;
 }
 .edit-body {

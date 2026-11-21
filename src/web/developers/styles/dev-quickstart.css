@@ -13,7 +13,7 @@
 .qs {
   display: grid;
   grid-template-columns: minmax(0, 44rem) minmax(0, 1fr);
-  min-height: calc(100dvh - 59px - 64px);
+  min-height: calc(100dvh - var(--dev-bar) - 64px);
 }
 .qs-main {
   padding: 32px 40px 64px;
@@ -30,9 +30,9 @@
   gap: 16px;
   min-width: 0;
   position: sticky;
-  top: 59px;
+  top: var(--dev-bar);
   align-self: start;
-  max-height: calc(100dvh - 59px);
+  max-height: calc(100dvh - var(--dev-bar));
   overflow-y: auto;
 }
 .qs-stage-h {

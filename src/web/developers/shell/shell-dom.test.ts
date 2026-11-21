@@ -125,6 +125,7 @@ describe('islands', () => {
 
   it('registers every island by name', () => {
     expect(Object.keys(ISLANDS).sort()).toEqual([
+      'account',
       'api-rail',
       'logs',
       'org-chip',

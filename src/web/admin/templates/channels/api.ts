@@ -27,9 +27,10 @@ const keys = {
 const path = (templateId: string) => `/api/v1/templates/${encodeURIComponent(templateId)}/channels`;
 
 /** The template's stored policy for the current mode, with what it allows now. */
-export function useTemplateChannels(templateId: string, orgId: string) {
+export function useTemplateChannels(templateId: string, orgId: string, enabled = true) {
   const mode = useMode();
   return useQuery({
+    enabled,
     queryKey: keys.one(templateId, orgId, mode),
     queryFn: ({ signal }) =>
       api.get(path(templateId), TemplateChannelsResponseSchema, { query: { orgId }, signal }),

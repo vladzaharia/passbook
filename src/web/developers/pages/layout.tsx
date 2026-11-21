@@ -1,9 +1,11 @@
-import { FlaskConical, Menu, Search } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { SEARCH_COPY } from '../../../shared/copy/developers-search.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { BrandMark } from '../../ui/layout/brand-mark.tsx';
+import { IconButton } from '../../ui/icon-button.tsx';
+import { Menubar, MenubarNav, MenubarSearch, SignInButton } from '../../ui/layout/menubar.tsx';
+import { Wordmark } from '../../ui/layout/wordmark.tsx';
 import { pagePath } from '../model/markdown.ts';
 import type { ResourcePage, Site } from '../model/types.ts';
 import { MethodPill } from '../ui/method-pill.tsx';
@@ -22,59 +24,47 @@ export const NAV_PATH: Record<NavKey, string> = {
 
 export function TopBar({ active }: { active?: NavKey }) {
   return (
-    <>
-      <div className="foil-edge" />
-      <header className="top">
-        <a className="brand" href={PATHS.home}>
-          <BrandMark />
-          <span>PassBook</span>
-          <span className="sub">{DEV_COPY.brand}</span>
-        </a>
-        <nav className="topnav" aria-label="Sections">
-          {DEV_COPY.nav.map((n) => (
-            <a
-              key={n.key}
-              href={NAV_PATH[n.key]}
-              aria-current={n.key === active ? 'page' : undefined}
-            >
-              {n.label}
-            </a>
-          ))}
-        </nav>
-        <div className="top-end">
-          <button
-            type="button"
-            className="searchbox"
-            data-search
-            aria-label={SEARCH_COPY.button}
-            aria-keyshortcuts="Meta+K Control+K"
-          >
-            <Search aria-hidden="true" />
-            <span className="searchbox-label">{SEARCH_COPY.label}</span>
-            <kbd className="kbd">⌘K</kbd>
-          </button>
-          <span className="mode">
-            <FlaskConical aria-hidden="true" />
-            {DEV_COPY.test}
-          </span>
-          <span data-island="org-chip">
-            <a className="btn outline sm" href={SIGN_IN}>
-              {DEV_COPY.signIn}
-            </a>
-          </span>
-          <button
-            type="button"
-            className="iconbtn menu-btn"
-            data-menu-button
-            aria-label={DEV_COPY.menu}
-            aria-expanded="false"
-            aria-controls="dev-menu"
-          >
-            <Menu aria-hidden="true" />
-          </button>
-        </div>
-      </header>
-    </>
+    <Menubar
+      width="full"
+      start={
+        <IconButton
+          label={DEV_COPY.menu}
+          icon={<Menu aria-hidden="true" />}
+          className="min-[901px]:hidden"
+          data-menu-button
+          aria-expanded="false"
+          aria-controls="dev-menu"
+        />
+      }
+      brand={<Wordmark to={PATHS.home} reload hello={false} sub={DEV_COPY.brand} />}
+      nav={
+        <MenubarNav
+          label="Sections"
+          items={DEV_COPY.nav.map((n) => ({
+            label: n.label,
+            href: NAV_PATH[n.key],
+            current: n.key === active,
+          }))}
+        />
+      }
+      search={
+        <MenubarSearch
+          label={SEARCH_COPY.label}
+          hint="⌘K"
+          data-search
+          aria-keyshortcuts="Meta+K Control+K"
+        />
+      }
+      // The sandbox chip (island) when there is one; nothing otherwise.
+      controls={<span data-island="org-chip" className="empty:hidden" />}
+      account={
+        <span data-island="account">
+          <SignInButton>
+            <a href={SIGN_IN}>{DEV_COPY.signIn}</a>
+          </SignInButton>
+        </span>
+      }
+    />
   );
 }
 
