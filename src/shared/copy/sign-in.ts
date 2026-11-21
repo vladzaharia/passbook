@@ -130,6 +130,12 @@ export const AUTH_PAGE_COPY = {
   breakglassLede: 'Emergency access for platform admins. Use is logged.',
 } as const;
 
+/** An email-link session at a space that needs Polaris ID (shared/spaces.ts). A separate export: the scanner bundles AUTH_PAGE_COPY. */
+export const POLARIS_ID_COPY = {
+  needs: (space: string) => `${space} needs Polaris ID.`,
+  signIn: 'Sign in with Polaris ID',
+} as const;
+
 /**
  * A dead link, by what it was for and how it died. A sign-in link can be resent to the address it
  * was for; an invitation's cannot (a fresh sign-in would not join the org), so it points to the admin.

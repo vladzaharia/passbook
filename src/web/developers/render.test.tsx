@@ -51,4 +51,27 @@ describe('the prerendered portal', () => {
     expect(runs.some((f) => f.file.endsWith('/index.json'))).toBe(true);
     for (const f of runs) expect(() => JSON.parse(f.body)).not.toThrow();
   });
+
+  it('opens every html page with the shared menubar and a Sign in the account island replaces', () => {
+    const pages = files.filter((f) => f.url !== undefined && f.file.endsWith('.html'));
+    for (const f of pages) {
+      expect(f.body, f.file).toContain('<header data-menubar');
+      expect(f.body, f.file).toContain('data-island="account"');
+      expect(f.body, f.file).toMatch(
+        /data-island="account"><a [^>]*href="[^"]*login[^"]*"[^>]*>Sign in</,
+      );
+      // The one-off bar this replaced.
+      expect(f.body, f.file).not.toContain('class="top"');
+      expect(f.body, f.file).not.toContain('foil-edge');
+    }
+  });
+
+  it('links Developers sections from the bar and no other space', () => {
+    const bar =
+      /<header data-menubar[\s\S]*?<\/header>/.exec(
+        files.find((f) => f.url === PATHS.home)?.body ?? '',
+      )?.[0] ?? '';
+    expect(bar).toContain(`href="${PATHS.reference}"`);
+    expect(bar).not.toMatch(/href="\/(admin|account)?"/);
+  });
 });

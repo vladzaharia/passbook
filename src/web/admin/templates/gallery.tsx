@@ -5,13 +5,41 @@ import { cn } from '../../lib/cn.ts';
 import { useArrivalMode } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Badge, EntityAvatar, Skeleton } from '../../ui/index.ts';
+import { OrgMark } from '../../ui/layout/scope-switcher.tsx';
 import { PassPreview } from '../passes/pass-preview.tsx';
 import { displayName } from '../passes/template-groups.ts';
-import { useTemplatePreview } from './api.ts';
+import { useTemplate, useTemplatePreview } from './api.ts';
 
 export const originLabel = (origin: string) => (origin === 'baked' ? 'Built-in' : 'Uploaded');
 
-/** The template's sample pass as a still; archived templates show an empty slot. */
+/**
+ * What a tile previews: the active version, else the newest version of a template that has none
+ * (the detail page's "Latest draft"). Archived templates and ones without versions preview nothing.
+ */
+export function useTemplateStill(template: TemplateSummaryDto) {
+  const { orgId } = useOrgScope();
+  const inScope =
+    Boolean(orgId) &&
+    (template.orgId === null || template.orgId === orgId) &&
+    template.status === 'active';
+  const unreleased = inScope && !template.activeVersion;
+  const detail = useTemplate(unreleased ? template.id : undefined, orgId);
+  const draft = unreleased
+    ? detail.data?.versions.reduce<{ version: string; createdAt: number } | undefined>(
+        (latest, v) => (!latest || v.createdAt > latest.createdAt ? v : latest),
+        undefined,
+      )
+    : undefined;
+  const live = inScope && Boolean(template.activeVersion);
+  const preview = useTemplatePreview(live || draft ? template.id : '', orgId, draft?.version);
+  return {
+    draft: Boolean(draft),
+    preview: live || draft ? preview.data : undefined,
+    pending: (unreleased && detail.isPending) || ((live || Boolean(draft)) && preview.isPending),
+  };
+}
+
+/** The template's sample pass as a still; archived templates and ones without versions show an empty slot. */
 export function TemplateStill({
   template,
   deal,
@@ -21,31 +49,52 @@ export function TemplateStill({
   deal?: boolean;
   className?: string;
 }) {
-  const { orgId } = useOrgScope();
-  const live =
-    Boolean(orgId) &&
-    (template.orgId === null || template.orgId === orgId) &&
-    template.status === 'active' &&
-    Boolean(template.activeVersion);
-  const preview = useTemplatePreview(live ? template.id : '', orgId);
+  const { preview, pending } = useTemplateStill(template);
   return (
     // Decorative: inert keeps the pass's own links out of the tab order and the a11y tree.
     <div inert aria-hidden className={cn('pointer-events-none', className)}>
-      {live && preview.data ? (
+      {preview ? (
         <PassPreview
-          passJson={preview.data.passJson}
-          assetBaseUrl={preview.data.assetBaseUrl}
-          assetNames={preview.data.assetNames}
+          passJson={preview.passJson}
+          assetBaseUrl={preview.assetBaseUrl}
+          assetNames={preview.assetNames}
           still
           enter={deal}
         />
-      ) : live ? (
+      ) : pending ? (
         <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
       ) : (
         <div className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl border border-dashed border-border-strong" />
       )}
     </div>
   );
+}
+
+/** The org's mark as a scope: the user tile for a personal org, else its avatar. */
+export function TemplateOrgMark({ template }: { template: TemplateSummaryDto }) {
+  const { memberships } = useOrgScope();
+  const member = memberships.find((m) => m.orgId === template.orgId);
+  if (member) return <OrgMark org={member} />;
+  return (
+    <EntityAvatar
+      kind="org"
+      id={template.orgId ?? ''}
+      name={template.orgName ?? template.name}
+      size={24}
+    />
+  );
+}
+
+/** The badge a tile carries: Draft before a first release, else Archived or Built-in. */
+function TileBadge({ template }: { template: TemplateSummaryDto }) {
+  const { draft } = useTemplateStill(template);
+  if (draft) return <Badge>Draft</Badge>;
+  // Built-in names a template that ships with PassBook; an uploaded one needs no badge.
+  if (template.status === 'archived' || template.origin === 'baked')
+    return (
+      <Badge>{template.status === 'archived' ? 'Archived' : originLabel(template.origin)}</Badge>
+    );
+  return null;
 }
 
 export const GALLERY_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4';
@@ -116,7 +165,7 @@ export function TemplateGallery({
             )}
           >
             {t.orgId ? (
-              <EntityAvatar kind="org" id={t.orgId} name={t.orgName ?? t.name} size={24} />
+              <TemplateOrgMark template={t} />
             ) : (
               <span aria-hidden className="size-6 shrink-0" />
             )}
@@ -133,10 +182,7 @@ export function TemplateGallery({
                 {t.passCount} {t.passCount === 1 ? 'pass' : 'passes'}
               </p>
             </div>
-            {/* Built-in names a template that ships with PassBook; an uploaded one needs no badge. */}
-            {t.status === 'archived' || t.origin === 'baked' ? (
-              <Badge>{t.status === 'archived' ? 'Archived' : originLabel(t.origin)}</Badge>
-            ) : null}
+            <TileBadge template={t} />
           </div>
         </li>
       ))}
