@@ -51,8 +51,15 @@ const hasExternalIdentity = async (db: Db, userId: string) =>
  * external identity. A primary email on an account that has one is a claim, not ownership (it may
  * come from an identity provider that never proved it), so it never matches here.
  */
-export async function findUserByProvenEmail(db: Db, email: string): Promise<UserRow | null> {
-  const verified = await findUserByEmail(db, email);
+export async function findUserByProvenEmail(
+  db: Db,
+  email: string,
+  options: { primaryOnly?: boolean } = {},
+): Promise<UserRow | null> {
+  // `primaryOnly`: a Polaris ID subject links only by the address the account signed up with. An
+  // address added later through /me was proven to that account's own session, which may be an email
+  // link, so it never names the owner of a console account to a new Polaris ID subject.
+  const verified = options.primaryOnly ? null : await findUserByEmail(db, email);
   if (verified) return verified;
   const byPrimary = await findUserByPrimaryEmail(db, email);
   return byPrimary && !(await hasExternalIdentity(db, byPrimary.id)) ? byPrimary : null;

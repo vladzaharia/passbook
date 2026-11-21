@@ -160,7 +160,7 @@ export async function linkIdentityByMail(
   pending: PendingIdentity,
   sign: SignInContext,
 ): Promise<void> {
-  const user = await accountProvenByMail(ctx, email, sign);
+  const user = await accountProvenByMail(ctx, email, sign, { primaryOnly: true });
   const linked = await repo.insertIdentity(ctx.env.DB, {
     ...pending,
     userId: user.id,

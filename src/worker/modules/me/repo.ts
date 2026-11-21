@@ -158,6 +158,15 @@ export async function setPrimaryEmail(db: Db, userId: string, email: string): Pr
   return changes > 0;
 }
 
+/** The user belongs to an organization now: their primary email is what a Polaris ID sign-in links by. */
+export async function hasActiveMembership(db: Db, userId: string): Promise<boolean> {
+  return (
+    (await first(db, 'SELECT 1 FROM org_memberships WHERE user_id = ? AND revoked_at IS NULL', [
+      userId,
+    ])) !== null
+  );
+}
+
 // A pass already in someone's Wallet leaves the Add all bundle (re-adding stays per pass).
 const NOT_IN_WALLET = 'NOT EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id)';
 

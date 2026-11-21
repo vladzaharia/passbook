@@ -84,7 +84,7 @@ export async function signInOidc(
   if (!user) {
     // Only a proven address names an owner: a primary email on an account that signs in through a
     // provider may be an unverified claim.
-    const owner = await repo.findUserByProvenEmail(db, email);
+    const owner = await repo.findUserByProvenEmail(db, email, { primaryOnly: true });
     if (owner && owner.status !== 'active') {
       throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
     }

@@ -1,6 +1,9 @@
 import { knownEmail, strictEmail } from '../../../shared/email.ts';
+import { isStrongAmr } from '../../../shared/sign-in.ts';
+import type { Amr } from '../../platform/auth.ts';
 import {
   ConflictError,
+  IdpSignInRequiredError,
   NotFoundError,
   RateLimitedError,
   ValidationError,
@@ -67,10 +70,21 @@ export async function removeMyEmail(ctx: ServiceContext, userId: string, rawEmai
   return listMyEmails(ctx, userId);
 }
 
-/** Sign-in emails go to another of my verified addresses. */
-export async function makeMyEmailPrimary(ctx: ServiceContext, userId: string, rawEmail: string) {
+/**
+ * Sign-in emails go to another of my verified addresses. A member's primary email is what a new
+ * Polaris ID subject links by, so an email-link session may not move it (it could aim a stranger's
+ * Polaris ID account at the member).
+ */
+export async function makeMyEmailPrimary(
+  ctx: ServiceContext,
+  userId: string,
+  rawEmail: string,
+  amr: Amr,
+) {
   const email = strictEmail(rawEmail);
   if (!email) throw new ValidationError('Enter a valid email address.', [], 'EMAIL_INVALID');
+  if (!isStrongAmr(amr) && (await repo.hasActiveMembership(ctx.env.DB, userId)))
+    throw new IdpSignInRequiredError('/auth/oidc/start?next=%2Faccount');
   if (!(await repo.setPrimaryEmail(ctx.env.DB, userId, email))) {
     throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
   }

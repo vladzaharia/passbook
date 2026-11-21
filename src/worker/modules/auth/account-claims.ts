@@ -68,9 +68,10 @@ export async function accountForProvenEmail(
   email: string,
   name: string | null,
   sign: ClaimSession = {},
+  options: { primaryOnly?: boolean } = {},
 ): Promise<repo.UserRow> {
   return (
-    (await repo.findUserByProvenEmail(ctx.env.DB, email)) ??
+    (await repo.findUserByProvenEmail(ctx.env.DB, email, options)) ??
     (await createUserForProvenEmail(ctx, email, name, sign))
   );
 }
@@ -95,9 +96,14 @@ export async function createUserForProvenEmail(
 }
 
 /** The account that owns an address its holder just proved by mail; the address is recorded on it. */
-export async function accountProvenByMail(ctx: ServiceContext, email: string, sign: ClaimSession) {
+export async function accountProvenByMail(
+  ctx: ServiceContext,
+  email: string,
+  sign: ClaimSession,
+  options: { primaryOnly?: boolean } = {},
+) {
   const db = ctx.env.DB;
-  const user = await accountForProvenEmail(ctx, email, null, sign);
+  const user = await accountForProvenEmail(ctx, email, null, sign, options);
   if (user.status !== 'active') throw new ForbiddenError('Account disabled.', 'ACCOUNT_DISABLED');
   const { ownerId } = await repo.addUserEmail(db, email, user.id, 'magic_link', ctx.clock.now());
   if (ownerId !== user.id) throw new ForbiddenError('Email conflict.', 'EMAIL_CONFLICT');

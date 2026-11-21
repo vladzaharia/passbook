@@ -42,6 +42,7 @@ import { lostMyPhone, resendMyPass } from './service-help.ts';
 import { reportMyTagLost } from './service-tags.ts';
 
 type C = Context<AppBindings>;
+const authAmr = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.amr : 'magic_link');
 const sessionId = (c: C) => (c.var.auth?.kind === 'session' ? c.var.auth.sessionId : '');
 
 export const meRoutes = createRouter();
@@ -274,7 +275,12 @@ register(
   },
   async (c) =>
     c.json(
-      await makeMyEmailPrimary(serviceContext(c), currentUserId(c), c.req.valid('param').email),
+      await makeMyEmailPrimary(
+        serviceContext(c),
+        currentUserId(c),
+        c.req.valid('param').email,
+        authAmr(c),
+      ),
     ),
 );
 registerMySessionList(meRoutes);
