@@ -1,0 +1,224 @@
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
+import { KEY_PRESETS, presetOf, SANDBOX_CEILING } from '../../../shared/developers-keys.ts';
+import { homeDone, NOW } from '../workbench/home-fixtures.ts';
+import { type KeyApi, KeyError } from './api.ts';
+import { KeysPage } from './keys-page.tsx';
+import { maskSecret } from './model.ts';
+import { HIDE_MS } from './reveal.tsx';
+
+const SECRET = 'pbp_test_Vx9cL2mN7qR4tY8wB3kD5fH1jZ6aQ0sE';
+const DAY = 86_400_000;
+
+beforeAll(() => {
+  // jsdom has no modal dialogs.
+  Object.assign(HTMLDialogElement.prototype, {
+    showModal(this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    },
+    close(this: HTMLDialogElement) {
+      this.removeAttribute('open');
+    },
+  });
+});
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
+const minted = (over: Record<string, unknown> = {}) => ({
+  id: 'k-new',
+  orgId: homeDone.sandbox?.orgId,
+  name: 'CI issuer',
+  scopes: ['passes:read', 'passes:write', 'templates:read'],
+  secret: SECRET,
+  ...over,
+});
+
+function api(over: Partial<KeyApi> = {}): KeyApi {
+  return {
+    mint: vi.fn(async () => minted() as never),
+    roll: vi.fn(
+      async () =>
+        ({
+          key: minted({ name: 'Sandbox key' }),
+          previous: { retireAt: NOW + 3_600_000 },
+        }) as never,
+    ),
+    revoke: vi.fn(async () => ({ ok: true as const })),
+    ...over,
+  };
+}
+
+function page(a: KeyApi, hash = '') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => Response.json(homeDone)),
+  );
+  return render(<KeysPage initial={homeDone} csrf="c" api={a} now={() => NOW} hash={hash} />);
+}
+
+describe('the shared preset map', () => {
+  it('fits under the sandbox ceiling, which holds no key minting or terminal scope', () => {
+    for (const p of KEY_PRESETS) for (const s of p.scopes) expect(SANDBOX_KEY_SCOPES).toContain(s);
+    for (const banned of ['api-keys:write', 'scans:write', 'scanning:admin'])
+      expect(SANDBOX_CEILING).not.toContain(banned);
+    expect(presetOf(['templates:read', 'passes:write', 'passes:read'])).toBe('Issue passes');
+    expect(presetOf(SANDBOX_CEILING)).toBe('Full sandbox');
+    expect(presetOf(['passes:read'])).toBeNull();
+  });
+});
+
+describe('Keys page', () => {
+  it('lists the sandbox keys masked, with access, expiry and last use', () => {
+    page(api());
+    expect(screen.getByRole('heading', { name: 'Keys' })).toBeTruthy();
+    const row = screen.getByText('Sandbox key').closest('tr') as HTMLElement;
+    expect(within(row).getByText('pbp_test_Ab12Cd_…')).toBeTruthy();
+    expect(within(row).getByText('Issue passes')).toBeTruthy();
+    expect(within(row).getByRole('button', { name: 'Roll' })).toBeTruthy();
+    // A rolling key has no Roll of its own.
+    const ci = screen.getByText('CI').closest('tr') as HTMLElement;
+    expect(within(ci).queryByRole('button', { name: 'Roll' })).toBeNull();
+    expect(within(ci).getByText('Rolling')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Rain City Fit/ }).getAttribute('href')).toBe(
+      '/admin/o/019a-live-2/api-keys',
+    );
+  });
+
+  it('mints a personal Test key under the ceiling, shows it once, hides it after Copy and clears it on Done', async () => {
+    const a = api();
+    const user = userEvent.setup();
+    page(a);
+    await user.click(screen.getByRole('button', { name: 'New key' }));
+    await user.type(screen.getByLabelText('Name'), 'CI issuer');
+    await user.click(screen.getByRole('radio', { name: /Issue passes/ }));
+    await user.click(screen.getByRole('radio', { name: '7 days' }));
+    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    expect(a.mint).toHaveBeenCalledWith({
+      orgId: homeDone.sandbox?.orgId,
+      name: 'CI issuer',
+      scopes: ['passes:read', 'passes:write', 'templates:read'],
+      expiresAt: expect.any(Number),
+    });
+    const call = (a.mint as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as { expiresAt: number };
+    expect(Math.abs(call.expiresAt - Date.now() - 7 * DAY)).toBeLessThan(60_000);
+    // Shown once.
+    expect(screen.getByTestId('ks-secret').textContent).toBe(`PASSBOOK_KEY=${SECRET}`);
+    expect(screen.getByText('Shown once')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Copy .env' }));
+    expect(await navigator.clipboard.readText()).toBe(`PASSBOOK_KEY=${SECRET}`);
+    await waitFor(() =>
+      expect(screen.getByTestId('ks-secret').textContent).toContain(maskSecret(SECRET)),
+    );
+    expect(document.body.textContent).not.toContain(SECRET);
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByTestId('ks-secret')).toBeNull();
+    expect(document.body.textContent).not.toContain(SECRET);
+  });
+
+  it('hides an uncopied key after 60 seconds', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    page(api());
+    await user.click(screen.getByRole('button', { name: 'New key' }));
+    await user.type(screen.getByLabelText('Name'), 'CI issuer');
+    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    expect(screen.getByTestId('ks-secret').textContent).toContain(SECRET);
+    // Not copied: the sheet does not close on Escape (the key would be lost).
+    await act(async () => {
+      screen
+        .getByRole('dialog', { hidden: true })
+        .dispatchEvent(new Event('cancel', { cancelable: true }));
+    });
+    expect(screen.getByTestId('ks-secret')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+    await act(async () => {
+      vi.advanceTimersByTime(HIDE_MS + 100);
+    });
+    expect(document.body.textContent).not.toContain(SECRET);
+  });
+
+  it('Pick scopes offers only the sandbox ceiling and needs one scope', async () => {
+    const a = api();
+    const user = userEvent.setup();
+    page(a);
+    await user.click(screen.getByRole('button', { name: 'New key' }));
+    await user.type(screen.getByLabelText('Name'), 'x');
+    await user.click(screen.getByRole('radio', { name: 'Pick scopes' }));
+    const boxes = screen.getAllByRole('checkbox');
+    expect(boxes).toHaveLength(SANDBOX_CEILING.length);
+    expect(document.body.textContent).not.toContain('api-keys:write');
+    expect(document.body.textContent).not.toContain('scans:write');
+    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    expect(screen.getByText('Pick at least one scope.')).toBeTruthy();
+    expect(a.mint).not.toHaveBeenCalled();
+    await user.click(boxes[0] as HTMLElement);
+    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    expect(a.mint).toHaveBeenCalledWith(expect.objectContaining({ scopes: [SANDBOX_CEILING[0]] }));
+  });
+
+  it('a stale sign-in shows one link to Polaris ID that returns to the page', async () => {
+    const a = api({
+      mint: vi.fn(async () => {
+        throw new KeyError(
+          403,
+          'STEP_UP_REQUIRED',
+          'Confirm.',
+          '/auth/oidc/start?prompt=login&max_age=0&next=%2Fadmin',
+        );
+      }),
+    });
+    const user = userEvent.setup();
+    page(a);
+    await user.click(screen.getByRole('button', { name: 'New key' }));
+    await user.type(screen.getByLabelText('Name'), 'CI');
+    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    const link = await screen.findByRole('link', { name: 'Continue' });
+    expect(link.getAttribute('href')).toBe(
+      '/auth/oidc/start?prompt=login&max_age=0&next=%2Fdevelopers%2Fkeys%23new',
+    );
+  });
+
+  it('Roll keeps the access, reveals the new key once and says when the old one stops', async () => {
+    const a = api();
+    const user = userEvent.setup();
+    page(a);
+    const row = screen.getByText('Sandbox key').closest('tr') as HTMLElement;
+    await user.click(within(row).getByRole('button', { name: 'Roll' }));
+    expect(screen.getByText('The old key stops in 1 hour.')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Roll key' }));
+    expect(a.roll).toHaveBeenCalledWith(homeDone.sandbox?.orgId, '019a-key-1', 1);
+    expect(screen.getByTestId('ks-secret').textContent).toContain(SECRET);
+    expect(screen.getByText(/The old key stops \d\d:\d\d\./)).toBeTruthy();
+  });
+
+  it('#<key id> opens the Roll sheet for an active key only', () => {
+    page(api(), '#019a-key-1');
+    expect(screen.getByRole('heading', { name: 'Roll Sandbox key?' })).toBeTruthy();
+  });
+
+  it('a replay that returns no secret says so instead of showing nothing', async () => {
+    const a = api({ mint: vi.fn(async () => minted({ secret: undefined }) as never) });
+    const user = userEvent.setup();
+    page(a);
+    await user.click(screen.getByRole('button', { name: 'New key' }));
+    await user.type(screen.getByLabelText('Name'), 'CI');
+    await user.click(screen.getByRole('button', { name: 'Create key' }));
+    expect(screen.getByText('The key was not returned. Roll it for a new one.')).toBeTruthy();
+  });
+
+  it('Revoke asks first', async () => {
+    const a = api();
+    const user = userEvent.setup();
+    page(a);
+    const row = screen.getByText('Sandbox key').closest('tr') as HTMLElement;
+    await user.click(within(row).getByLabelText('More: Sandbox key'));
+    await user.click(within(row).getByRole('button', { name: 'Revoke' }));
+    expect(a.revoke).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Revoke key' }));
+    expect(a.revoke).toHaveBeenCalledWith(homeDone.sandbox?.orgId, '019a-key-1');
+  });
+});

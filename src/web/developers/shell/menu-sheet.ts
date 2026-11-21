@@ -56,7 +56,7 @@ export function fillMenuSheet(
     sandbox.replaceChildren(
       heading(`${c.sandbox} ${opts.sandbox}`),
       link(`${PATHS.home}#workbench`, c.workbench),
-      ...(shown.some((s) => s.space === 'admin') ? [link('/admin/api-keys', c.keys)] : []),
+      link(PATHS.keys, c.keys),
     );
     sandbox.hidden = false;
   }

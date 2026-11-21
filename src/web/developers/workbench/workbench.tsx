@@ -71,7 +71,7 @@ function Head({
       </div>
       <div className="wrap-row g2 wb-head-actions">
         {closed ? null : (
-          <a className="btn sm" href={links.keys}>
+          <a className="btn sm" href={`${links.keys}#new`}>
             New key
           </a>
         )}

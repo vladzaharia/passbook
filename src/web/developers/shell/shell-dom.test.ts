@@ -127,6 +127,7 @@ describe('islands', () => {
     expect(Object.keys(ISLANDS).sort()).toEqual([
       'account',
       'api-rail',
+      'keys',
       'logs',
       'org-chip',
       'playground',

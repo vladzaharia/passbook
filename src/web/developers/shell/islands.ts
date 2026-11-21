@@ -13,6 +13,7 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   playground: () => import('../playground/index.tsx'),
   quickstart: () => import('../quickstart/index.tsx'),
   workbench: () => import('../workbench/index.tsx'),
+  keys: () => import('../keys/index.tsx'),
   run: () => import('../console/run-entry.ts'),
   account: async () => {
     const { mountAccount } = await import('./account.ts');
