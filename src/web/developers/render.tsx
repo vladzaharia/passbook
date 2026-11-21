@@ -6,6 +6,7 @@
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEV_COPY } from '../../shared/copy/developers.ts';
+import { KEYS_COPY } from '../../shared/copy/developers-keys.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../shared/copy/developers-ops.ts';
 import { QS_COPY } from '../../shared/copy/developers-quickstart.ts';
 import { NOT_FOUND_FILE, PATHS, twin } from '../../shared/developers.ts';
@@ -37,6 +38,7 @@ import type { OutFile, Site } from './model/types.ts';
 import { ChangelogView } from './pages/changelog.tsx';
 import { ConsoleView } from './pages/console.tsx';
 import { HomeView } from './pages/home.tsx';
+import { KeysView } from './pages/keys.tsx';
 import { type NavKey, Shell, SideNav } from './pages/layout.tsx';
 import { LogsView } from './pages/logs.tsx';
 import {
@@ -223,6 +225,18 @@ export function renderSite(
       ),
     });
   out.push({ file: runFileUrl('index'), body: JSON.stringify(runIndex(site)) });
+  // The keys island is wide and has no docs grid.
+  add({
+    url: PATHS.keys,
+    title: `${KEYS_COPY.title} · ${base}`,
+    description: 'Make, roll and revoke the keys of your sandbox.',
+    twin: appTwins.keys(),
+    body: html(
+      <Shell site={site} bare>
+        <KeysView />
+      </Shell>,
+    ),
+  });
   page(PATHS.logs, LOGS_COPY.title, LOGS_COPY.lede, 'logs', <LogsView />, { md: appTwins.logs() });
   page(PATHS.status, STATUS_COPY.title, STATUS_COPY.lede, undefined, <StatusView />, {
     md: appTwins.status(),

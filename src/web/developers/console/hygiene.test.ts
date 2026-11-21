@@ -16,10 +16,11 @@ const files = [
   ...sources(join(dev, 'console')),
   ...sources(join(dev, 'ui')),
   ...sources(join(dev, 'shell')),
+  ...sources(join(dev, 'keys')),
 ];
 const islandFiles = [
   ...files,
-  ...['webhooks', 'playground', 'logs', 'quickstart', 'search'].flatMap((d) =>
+  ...['webhooks', 'playground', 'logs', 'quickstart', 'search', 'keys', 'workbench'].flatMap((d) =>
     sources(join(dev, d)),
   ),
 ];

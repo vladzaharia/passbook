@@ -174,6 +174,15 @@
       ]
     },
     {
+      "code": "API_KEY_SCOPE_EXCEEDS_SANDBOX",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
       "code": "API_KEY_TERMINALS_REQUIRED",
       "statuses": [
         422

@@ -784,6 +784,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
+    "class": "additive",
+    "operationId": "api-keys.createApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
+    "note": "A sandbox key may not hold api-keys:write, scans:write or scanning:admin, at mint or roll: 403, scopes in issues."
+  },
+  {
     "key": "POST /api/v1/identities 201.handle: field added",
     "class": "additive",
     "operationId": "identities.postIdentities",

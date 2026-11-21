@@ -7,6 +7,7 @@ export const PATHS = {
   console: '/developers/console',
   webhooks: '/developers/webhooks',
   logs: '/developers/logs',
+  keys: '/developers/keys',
   status: '/developers/status',
   statusJson: '/developers/status.json',
   logsOps: '/developers/logs-ops.json',
