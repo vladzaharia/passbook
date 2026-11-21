@@ -112,6 +112,16 @@ function handlers(
   };
 }
 
+const channelsWith = (apple: Record<string, unknown>) => ({
+  ...Object.fromEntries(
+    ['mobile', 'google', 'samsung', 'paper', 'nfc'].map((c) => [
+      c,
+      { on: true, source: 'template' },
+    ]),
+  ),
+  apple,
+});
+
 function newServer(over: Record<string, unknown> = {}): Server {
   return { pass: passDetail(over), calls: [] };
 }
@@ -1513,5 +1523,45 @@ describe('pass detail: header actions', () => {
     const link = await screen.findByRole('menuitem', { name: 'Download .pkpass' });
     expect(link).toHaveAttribute('href', '/p/tok/pass.pkpass');
     expect(link).toHaveAttribute('download');
+  });
+
+  it('disables the download with the reason when Apple is off for the pass', async () => {
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers(
+        newServer({
+          channels: channelsWith({ on: false, source: 'pass', reason: 'blocked' }),
+        }),
+      ),
+    });
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'More' }));
+    const item = await screen.findByRole('menuitem', { name: /Download \.pkpass/ });
+    expect(item).toHaveAttribute('aria-disabled', 'true');
+    expect(item).not.toHaveAttribute('href');
+  });
+
+  it('offers the download when Apple is on for the pass', async () => {
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers(newServer({ channels: channelsWith({ on: true, source: 'template' }) })),
+    });
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: 'Download .pkpass' })).toHaveAttribute(
+      'href',
+      '/p/tok/pass.pkpass',
+    );
+  });
+
+  it('has no download on a sandbox pass', async () => {
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers(newServer({ testPreview: true })),
+    });
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'More' }));
+    await screen.findByRole('menuitem', { name: 'Copy link' });
+    expect(screen.queryByRole('menuitem', { name: /Download/ })).toBeNull();
   });
 });

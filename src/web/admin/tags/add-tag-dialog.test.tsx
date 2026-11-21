@@ -180,6 +180,61 @@ describe('Assign tag dialog', () => {
     expect(fetchMock).toBeDefined();
   }, 10_000);
 
+  it("assigns a typed tag ID without a scanner, and shows the server's refusal on the field", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    let refuse = true;
+    const { fetchMock } = renderTags(dialog(onOpenChange), {
+      ...handlers(),
+      '/api/v1/nfc/passes/p1/tags/assign': () =>
+        refuse
+          ? problem(422, 'TAG_ID_INVALID', 'A tag ID has 4, 7 or 10 bytes.')
+          : json(tagFixture()),
+    });
+    await user.click(await screen.findByRole('radio', { name: TAG_COPY.assignMenu.type }));
+    const send = screen.getByRole('button', { name: TAG_COPY.dialog.assign });
+    expect(send).toBeDisabled();
+    await user.type(screen.getByRole('textbox', { name: TAG_COPY.type.field }), '04:A1');
+    await user.click(send);
+    expect(await screen.findByText('A tag ID has 4, 7 or 10 bytes.')).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    refuse = false;
+    await user.click(screen.getByRole('button', { name: TAG_COPY.dialog.assign }));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    const last = calls(fetchMock, 'POST', '/tags/assign').at(-1);
+    expect(JSON.parse(String(last?.[1]?.body))).toEqual({ id: '04:A1', binding: 'user' });
+  });
+
+  it('assigns a spare tag picked from the unassigned ones', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const { fetchMock } = renderTags(dialog(onOpenChange), {
+      ...handlers(),
+      '/api/v1/nfc/tags': () =>
+        page([
+          tagFixture({ id: 't9', label: 'Green fob', hint: '2C4D', binding: null, state: 'spare' }),
+        ]),
+      '/api/v1/nfc/passes/p1/tags/assign': () => json(tagFixture({ id: 't9' })),
+    });
+    await user.click(await screen.findByRole('radio', { name: TAG_COPY.assignMenu.spare }));
+    const send = screen.getByRole('button', { name: TAG_COPY.dialog.assign });
+    expect(send).toBeDisabled();
+    await user.click(await screen.findByRole('radio', { name: /Green fob/ }));
+    await user.click(send);
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    const list = calls(fetchMock, 'GET', '/nfc/tags')[0]?.[0];
+    expect(String(list)).toContain('status=spare');
+    const last = calls(fetchMock, 'POST', '/tags/assign').at(-1);
+    expect(JSON.parse(String(last?.[1]?.body))).toEqual({ tagId: 't9', binding: 'user' });
+  });
+
+  it('says so when no tag is spare', async () => {
+    const user = userEvent.setup();
+    renderTags(dialog(), { ...handlers(), '/api/v1/nfc/tags': () => page([]) });
+    await user.click(await screen.findByRole('radio', { name: TAG_COPY.assignMenu.spare }));
+    expect(await screen.findByText(TAG_COPY.spare.empty)).toBeInTheDocument();
+  });
+
   it.each(AXE_MATRIX)('has no axe violations at %i, %s', async (width, theme) => {
     renderTags(dialog(), handlers());
     const el = await screen.findByRole('dialog');

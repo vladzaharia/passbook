@@ -36,7 +36,9 @@ afterEach(() => {
 
 describe('playground, anonymous', () => {
   it('makes no API call, however much it is used', async () => {
-    stubFetch(() => {
+    stubFetch((url) => {
+      // Only the session check: it answers signed-out with 200, and decides which hint to show.
+      if (url.endsWith('/api/v1/session')) return Response.json({ authenticated: false });
       throw new Error('the anonymous path must not call out');
     });
     const user = userEvent.setup();
@@ -52,7 +54,7 @@ describe('playground, anonymous', () => {
     await user.click(screen.getByRole('radio', { name: 'Paper' }));
     await user.click(screen.getByRole('radio', { name: 'All' }));
 
-    expect(calls).toEqual([]);
+    expect(calls.filter((c) => !c.endsWith('/api/v1/session'))).toEqual([]);
     expect(localStorage.getItem(HINT)).toBeNull();
   });
 

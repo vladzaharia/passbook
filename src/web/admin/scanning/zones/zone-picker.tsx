@@ -1,12 +1,15 @@
 import { ChevronsUpDown, X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
+import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import {
+  Button,
   CheckboxField,
   FormField,
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/web/ui/index.ts';
+import { ZoneDialog } from './zone-dialog.tsx';
 import { zoneNodes } from './zone-tree.ts';
 import { useZones, zonesUnavailable } from './zones-api.ts';
 
@@ -35,6 +38,9 @@ export function ZonePicker({
   status?: ReactNode;
 }) {
   const zones = useZones(orgId || undefined, false, Boolean(orgId));
+  const scope = useOrgScope();
+  const [creating, setCreating] = useState(false);
+  const canCreate = Boolean(scope.membership?.capabilities.includes('scanning:manage'));
   if (zonesUnavailable(zones.error)) return null;
   const nodes = zoneNodes(zones.data ?? []);
   const name = (id: string) => nodes.find((n) => n.zone.id === id)?.zone.name ?? 'Archived zone';
@@ -110,10 +116,18 @@ export function ZonePicker({
                     ))}
                   </ul>
                 )}
+                {canCreate ? (
+                  <Button variant="link" size="sm" onClick={() => setCreating(true)}>
+                    New zone
+                  </Button>
+                ) : null}
               </PopoverContent>
             </Popover>
           </div>
           {status ? <p className="text-xs text-fg-muted">{status}</p> : null}
+          {creating ? (
+            <ZoneDialog orgId={orgId} zones={zones.data ?? []} onClose={() => setCreating(false)} />
+          ) : null}
         </div>
       )}
     </FormField>

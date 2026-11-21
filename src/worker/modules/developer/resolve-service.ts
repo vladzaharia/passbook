@@ -5,7 +5,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { passInOrg, requestByRequestId, templateInOrg } from './repo-resolve.ts';
 import { orgOfCaller } from './request-log-service.ts';
 
-const orgHref = (orgId: string, rest = '') => `/admin/o/${encodeURIComponent(orgId)}${rest}`;
+/** A sandbox owner has no admin pages, so objects open in the portal: the console, or the log filtered to the object's path. */
+const logsFor = (path: string) => `/developers/logs#path=${encodeURIComponent(path)}`;
 
 /**
  * What a pasted id names inside the caller's own sandbox: a request first (its row in the log),
@@ -23,23 +24,23 @@ export async function resolveId(
   if (request)
     return {
       kind: 'request',
-      href: `/developers/logs#${encodeURIComponent(request.id)}`,
+      href: `/developers/logs#${encodeURIComponent(request.request_id)}`,
       label: `${request.method} ${request.path.replace(/^\/api\/v1/, '')}, ${request.status}`,
     };
   if (id === orgId.toLowerCase())
-    return { kind: 'org', href: orgHref(orgId), label: 'Your sandbox' };
+    return { kind: 'org', href: '/developers/console', label: 'Your sandbox' };
   const pass = await passInOrg(ctx.env.DB, orgId, id);
   if (pass)
     return {
       kind: 'pass',
-      href: orgHref(orgId, `/passes/${encodeURIComponent(pass.id)}`),
+      href: logsFor(`/passes/${pass.id}`),
       label: pass.serial,
     };
   const template = await templateInOrg(ctx.env.DB, orgId, id);
   if (template)
     return {
       kind: 'template',
-      href: orgHref(orgId, `/templates/${encodeURIComponent(template.id)}`),
+      href: logsFor(`/templates/${template.id}`),
       label: template.name,
     };
   throw new NotFoundError('Nothing with this id in your sandbox.', 'RESOLVE_NOT_FOUND');

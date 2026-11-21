@@ -27,6 +27,23 @@ export function takePairCode(
   return taken.code;
 }
 
+/**
+ * A new `#pair=` on an already-open /scan (the link opened in the same tab) fires `hashchange`:
+ * read it the same way and hand the code over. Returns the cleanup.
+ */
+export function watchPairLink(
+  onCode: (code: string) => void,
+  win: Pick<Window, 'addEventListener' | 'removeEventListener' | 'location' | 'history'> = window,
+): () => void {
+  const onChange = () => {
+    taken = null;
+    const code = takePairCode(win.location, win.history);
+    if (code) onCode(code);
+  };
+  win.addEventListener('hashchange', onChange);
+  return () => win.removeEventListener('hashchange', onChange);
+}
+
 /** Test seam: forget the fragment, as a fresh page load would. */
 export function resetPairLink(): void {
   taken = null;

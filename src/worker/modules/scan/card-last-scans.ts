@@ -4,6 +4,7 @@ import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { EventRow } from '../events/repo.ts';
 import { sourcePolicyProven, visibleAction } from './card-semantics.ts';
+import { directedLabel } from './direction-label.ts';
 import { type CardPrivacy, record } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
 import { type HistoryPolicy, historyPolicy } from './history-policy.ts';
@@ -184,7 +185,7 @@ export async function cardLastScans(
     return {
       scanId: row.id,
       at: row.at,
-      actionLabel: action.label,
+      actionLabel: directedLabel(action.kind, action.label, row.direction),
       outcome: row.outcome,
       scannerName,
       undoable:

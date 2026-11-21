@@ -7707,7 +7707,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
     },
     {
       "capability": "role.balance",
-      "message": "Carried as a text module.",
+      "message": "Carried elsewhere on the pass.",
       "path": "",
       "support": "text",
     },
@@ -7747,7 +7747,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
     "header": {
       "defaultValue": {
         "language": "en",
-        "value": "25",
+        "value": "25 USD",
       },
     },
     "heroImage": {
@@ -7790,11 +7790,6 @@ exports[`Google compilers over every starter and baked template > starter-store-
         "body": "Balance is not redeemable for cash.",
         "header": "Terms",
         "id": "backFields.terms",
-      },
-      {
-        "body": "25 USD",
-        "header": "Balance",
-        "id": "role.balance",
       },
     ],
   },
@@ -7949,7 +7944,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
     },
     {
       "capability": "role.balance",
-      "message": "Carried as a text module.",
+      "message": "Carried elsewhere on the pass.",
       "path": "",
       "support": "text",
     },
@@ -7995,7 +7990,7 @@ exports[`Google compilers over every starter and baked template > starter-store-
     "header": {
       "defaultValue": {
         "language": "en",
-        "value": "25",
+        "value": "25 USD",
       },
     },
     "heroImage": {
@@ -8027,11 +8022,6 @@ exports[`Google compilers over every starter and baked template > starter-store-
         "body": "Balance is not redeemable for cash.",
         "header": "Terms",
         "id": "backFields.terms",
-      },
-      {
-        "body": "25 USD",
-        "header": "Balance",
-        "id": "role.balance",
       },
     ],
   },

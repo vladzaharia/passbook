@@ -41,17 +41,20 @@ export async function checkAccepts(
   mode: Mode,
   accepts: AdmitsInput,
   attached: readonly string[] = [],
+  /** Events the same batch creates, with their templates: not in the database yet. */
+  made?: ReadonlyMap<string, readonly string[]>,
 ): Promise<CheckedAdmits> {
   const db = ctx.env.DB;
   const admits = admitsOf(accepts);
   const { templateIds, eventIds } = admits;
-  for (const id of eventIds) {
+  const stored = eventIds.filter((id) => !made?.has(id));
+  for (const id of stored) {
     const event = await eventModeOf(db, orgId, id);
     if (!event || event.archived_at !== null)
       throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
     if (event.mode !== mode) throw modeMismatch();
   }
-  const events = await readValidEventScopes(db, orgId, mode, eventIds);
+  const events = await readValidEventScopes(db, orgId, mode, stored);
   if (!events) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   if ((await countOrgTemplates(db, orgId, mode, templateIds)) !== templateIds.length)
     throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
@@ -62,7 +65,11 @@ export async function checkAccepts(
       [{ path: 'accepts.templateIds', message: 'Choose active templates.' }],
       'TEMPLATE_ARCHIVED',
     );
-  const named = new Set([...templateIds, ...events.flatMap((e) => e.templateIds)]);
+  const named = new Set([
+    ...templateIds,
+    ...events.flatMap((e) => e.templateIds),
+    ...eventIds.flatMap((id) => made?.get(id) ?? []),
+  ]);
   if (named.size > ADMITS_TEMPLATE_CAP)
     throw new ValidationError(
       `Admit at most ${ADMITS_TEMPLATE_CAP} pass types, counting each event's.`,

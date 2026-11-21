@@ -56,7 +56,8 @@ describe('Scanning staff', () => {
     const confirm = screen.getByRole('alertdialog', { name: "Reset Sam K.'s PIN?" });
     await user.click(within(confirm).getByRole('button', { name: 'Reset PIN' }));
     const reveal = await screen.findByRole('dialog', { name: "Sam K.'s PIN" });
-    await user.click(within(reveal).getByRole('checkbox', { name: 'I saved the PIN' }));
+    expect(within(reveal).getByRole('status', { name: 'PIN' })).toHaveTextContent('888111');
+    expect(within(reveal).getByRole('button', { name: 'Copy PIN' })).toBeEnabled();
     await user.click(within(reveal).getByRole('button', { name: 'Done' }));
     expect(writeModes).toEqual(['test']);
     await act(async () => setMode('live'));
@@ -95,7 +96,6 @@ describe('Scanning staff', () => {
     await user.type(within(form).getByRole('textbox', { name: 'Name' }), 'Sam K.');
     await user.click(within(form).getByRole('button', { name: 'Add staff' }));
     const reveal = await screen.findByRole('dialog', { name: "Sam K.'s PIN" });
-    await user.click(within(reveal).getByRole('button', { name: 'Show PIN' }));
     expect(within(reveal).getByText('555888')).toBeInTheDocument();
     await act(async () => {
       await router.navigate({ to: '/admin/scanning', search: { tab: 'staff', orgId: 'o2' } });

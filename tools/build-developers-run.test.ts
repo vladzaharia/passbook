@@ -88,12 +88,14 @@ describe('what the Run island reads', () => {
   });
 
   it('draws the slot as a ticket with a stub and a body, the shape the island keeps', () => {
-    for (const file of ['developers/reference/passes.html', 'developers/console.html']) {
-      const html = read(file);
-      expect(html, file).toMatch(
-        /data-island="run"[^>]*><div class="ticket"><div class="stub">.*?<\/div><div class="body">/s,
-      );
-    }
-    expect(read('developers/console.html')).toContain('data-mode="console"');
+    expect(read('developers/reference/passes.html')).toMatch(
+      /data-island="run"[^>]*><div class="ticket"><div class="stub">.*?<\/div><div class="body">/s,
+    );
+  });
+
+  it('draws the console slot as a sign-in card until the island takes over', () => {
+    const html = read('developers/console.html');
+    expect(html).toContain('data-mode="console"');
+    expect(html).toMatch(/data-island="run"[^>]*><div class="card card-b stack g3">/);
   });
 });

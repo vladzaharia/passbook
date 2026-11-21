@@ -5,6 +5,7 @@ import type {
   ScanSummarySchema,
 } from '../../../shared/contracts/scan-session.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { directedLabel } from './direction-label.ts';
 import type { ScanActor } from './guard.ts';
 import type { HistoryRow } from './history-row.ts';
 import {
@@ -14,6 +15,7 @@ import {
   withKeyset,
 } from './history-row-evidence.ts';
 import { undoWindowMinutes } from './outcome.ts';
+import { bucketOutcome } from './outcome-bucket.ts';
 import { readHistoryPage } from './repo-history-rows.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import {
@@ -108,9 +110,14 @@ export async function recentFor(
       return {
         scanId: row.id,
         at: row.at,
-        outcome: row.outcome ?? 'refused',
+        outcome: bucketOutcome(row.outcome, row.reason),
         reason: reason.success ? reason.data : null,
-        actionLabel: row.actionKind === 'undo' ? 'Undo' : (action?.label ?? 'Scan'),
+        actionLabel:
+          row.actionKind === 'undo'
+            ? 'Undo'
+            : action
+              ? directedLabel(action.kind, action.label, row.direction)
+              : 'Scan',
         title: policy.titleVisible(title) ? title : null,
         value: null,
         undoable:

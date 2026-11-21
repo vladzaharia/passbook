@@ -18,6 +18,16 @@ export const ChangeTagBindingSchema = z.strictObject({
 });
 /** Put a removed tag back (Undo): the tag must be unassigned and have been removed from this pass in the last 10 minutes. */
 export const RebindTagSchema = z.strictObject({ tagId: IdSchema, binding: TagScopeSchema });
+/** Assign from the admin without a scanner: a typed tag ID, or an existing spare tag. */
+export const AssignTagSchema = z.union([
+  z.strictObject({
+    id: z.string().trim().min(1).max(40),
+    format: TagIdFormatSchema.optional(),
+    binding: TagScopeSchema,
+    label: PlainLineSchema(40).optional(),
+  }),
+  z.strictObject({ tagId: IdSchema, binding: TagScopeSchema }),
+]);
 export const TagHistoryEventSchema = z.object({
   at: TimestampSchema,
   action: z.enum(['lost', 'retire', 'restore', 'update']),

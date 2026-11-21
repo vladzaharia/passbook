@@ -2,6 +2,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
 import {
+  AssignTagSchema,
   ChangeTagBindingSchema,
   RebindTagSchema,
   TagHistorySchema,
@@ -24,6 +25,7 @@ import {
 import { tagView, tagViewsByIds } from './repo-tags.ts';
 import { actingIn, orgNotFound, passNotFound, tagNotFound, tagOrg } from './route-access.ts';
 import { tagAuthorityOf } from './tags-admin.ts';
+import { assignTag } from './tags-assign.ts';
 import { changeBinding, rebindRemoved } from './tags-rebind.ts';
 
 const TAG = 'nfc-tags';
@@ -73,6 +75,27 @@ export function registerTagMoreRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void
       return c.json(
         await rebindRemoved(ctx, tagAuthorityOf(authority), passId, c.req.valid('json')),
       );
+    },
+  );
+
+  register(
+    nfcRoutes,
+    TAG,
+    {
+      method: 'post',
+      path: '/passes/{passId}/tags/assign',
+      summary: 'Assign a typed tag ID or a spare tag to a pass',
+      xFeature: { key: 'nfc', atLeast: 'basic' },
+      params: z.object({ passId: IdSchema }),
+      body: AssignTagSchema,
+      response: TagSchema,
+    },
+    async (c) => {
+      const { passId } = c.req.valid('param');
+      const pass = await passFacts(serviceContext(c).env.DB, passId);
+      if (!pass) throw passNotFound();
+      const { ctx, authority } = await actingIn(c, pass.orgId, 'passes:operate', passNotFound);
+      return c.json(await assignTag(ctx, tagAuthorityOf(authority), passId, c.req.valid('json')));
     },
   );
 

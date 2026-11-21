@@ -144,7 +144,9 @@ export function InputsPanel(props: {
         ) : null}
         {link.kind === 'anonymous' ? (
           <span className="help">
-            Previews show each blueprint's sample. Sign in to edit them live.
+            {link.signedIn
+              ? `Previews show each blueprint's sample. Use ${SIGN_IN_COPY} to edit them live.`
+              : "Previews show each blueprint's sample. Sign in to edit them live."}
           </span>
         ) : null}
         <button type="button" className="btn outline" onClick={() => void copyLink()}>

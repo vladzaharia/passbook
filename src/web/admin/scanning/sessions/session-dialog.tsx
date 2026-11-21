@@ -75,6 +75,7 @@ export function NewSessionDialog({
         : withOrganization(current, selectedScope ?? ''),
     );
   }, [initial, scope.isError, scope.isLoading, selectedScope]);
+  const [chose, setChose] = useState(false);
   const [error, setError] = useState('');
   // A picker choice is not authority until the selected scope has caught up.
   const authorizedOrg = Boolean(
@@ -96,7 +97,7 @@ export function NewSessionDialog({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()} dirty={!!draft.name}>
       <DialogContent
-        title={initial ? 'Duplicate session' : 'New scanning session'}
+        title={initial ? 'Duplicate session' : 'New session'}
         size="lg"
         footer={
           <>
@@ -114,25 +115,28 @@ export function NewSessionDialog({
         }
       >
         {error ? <Callout tone="danger">{error}</Callout> : null}
-        <FormField label="Organization" required className="mb-4">
-          {(props) => (
-            <Select
-              {...props}
-              value={authorizedOrg ? draft.orgId : ''}
-              options={manageable.map((membership) => ({
-                value: membership.orgId,
-                label: membership.orgName,
-              }))}
-              disabled={scope.isLoading || scope.isError}
-              onValueChange={(orgId) => {
-                if (!manageable.some((membership) => membership.orgId === orgId)) return;
-                setDraft((current) => withOrganization(current, orgId));
-                scope.setOrgId(orgId);
-                setError('');
-              }}
-            />
-          )}
-        </FormField>
+        {selectedScope && draft.orgId === selectedScope && !chose ? null : (
+          <FormField label="Organization" required className="mb-4">
+            {(props) => (
+              <Select
+                {...props}
+                value={authorizedOrg ? draft.orgId : ''}
+                options={manageable.map((membership) => ({
+                  value: membership.orgId,
+                  label: membership.orgName,
+                }))}
+                disabled={scope.isLoading || scope.isError}
+                onValueChange={(orgId) => {
+                  if (!manageable.some((membership) => membership.orgId === orgId)) return;
+                  setChose(true);
+                  setDraft((current) => withOrganization(current, orgId));
+                  scope.setOrgId(orgId);
+                  setError('');
+                }}
+              />
+            )}
+          </FormField>
+        )}
         {allowed ? (
           <SessionFields draft={draft} set={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
         ) : (

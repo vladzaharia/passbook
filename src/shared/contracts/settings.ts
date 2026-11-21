@@ -140,6 +140,8 @@ export const OrgSettingsSchema = z.object({
     .max(500)
     .refine(isHttpsUrl, 'Use an https URL without credentials.')
     .optional(),
+  /** Staff sign-in with a PIN alone on paired scanners. Turned off by the server after repeated wrong PINs; an admin turns it on. */
+  'scan.pinOnly': z.boolean().default(true),
   /** Opt-in: the buddy sits on the pass email's card, as in the sign-in email. */
   'email.buddy': z.boolean().default(false),
   /** Third-party NFC tags. On until an admin turns it off. */
