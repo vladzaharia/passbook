@@ -55,9 +55,6 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
   return (
     <div className="@container grid min-w-0 gap-6">
       <section className="grid min-w-0 gap-4">
-        <div>
-          <h3 className="text-sm font-semibold text-fg-strong">Device details</h3>
-        </div>
         <div className="grid min-w-0 gap-4">
           <FormField
             label="Name"
@@ -155,8 +152,7 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
                     onCheckedChange={(c) => onChange({ staffSignIn: c === true })}
                   />
                   <p className="text-xs text-fg-muted">
-                    The scanner needs a staff PIN to scan. Staff accounts are shared across this
-                    organization’s live and test modes.
+                    Staff accounts are shared by live and test.
                   </p>
                 </div>
               )}
@@ -259,9 +255,6 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
           <section className="grid min-w-0 gap-4 border-t border-border pt-6">
             <div>
               <h3 className="text-sm font-semibold text-fg-strong">Admission rules</h3>
-              <p className="mt-1 text-xs text-fg-muted">
-                Pass and template restrictions still apply.
-              </p>
             </div>
             <CheckInFields
               orgId={draft.orgId}

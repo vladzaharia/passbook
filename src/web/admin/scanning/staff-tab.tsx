@@ -199,13 +199,10 @@ function OrganizationStaff({ orgId, canManage }: { orgId: string; canManage: boo
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-surface-raised p-4">
-        <div>
-          <p className="text-sm font-semibold text-fg-strong">Scanning staff</p>
-          <p className="mt-1 text-sm text-fg-muted">
-            Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans since
-            each scanner's local midnight, not undone.
-          </p>
-        </div>
+        <p className="text-sm text-fg-muted">
+          Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans since each
+          scanner's local midnight, not undone.
+        </p>
         {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (
           <Button iconStart={<Plus aria-hidden />} onClick={() => setDialog({ type: 'create' })}>
             Add staff

@@ -86,7 +86,6 @@ export function SessionsTab({
                     <ArrowUpRight className="size-4 shrink-0" aria-hidden />
                   </Link>
                 </h2>
-                <p className="mt-1 truncate text-xs text-fg-muted">{s.orgName}</p>
               </div>
               {canManage ? <CardMenu session={s} onDuplicate={onDuplicate} /> : null}
             </div>
