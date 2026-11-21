@@ -177,15 +177,22 @@ export default function ReleaseFlowDialog({
             )}
             {impact ? (
               <p className="text-sm text-fg-muted">
-                <b className="text-fg-strong">{formatCount(impact.passes.count)}</b>
-                {impact.passes.capped ? '+' : ''}{' '}
-                {impact.passes.count === 1 ? 'pass updates' : 'passes update'}
-                {impact.devices.count > 0 ? (
+                {impact.passes.count === 0 ? (
+                  'No passes yet'
+                ) : (
                   <>
-                    {' · '}
-                    <b className="text-fg-strong">{formatCount(impact.devices.count)}</b> on phones
+                    <b className="text-fg-strong">{formatCount(impact.passes.count)}</b>
+                    {impact.passes.capped ? '+' : ''}{' '}
+                    {impact.passes.count === 1 ? 'pass updates' : 'passes update'}
+                    {impact.devices.count > 0 ? (
+                      <>
+                        {' · '}
+                        <b className="text-fg-strong">{formatCount(impact.devices.count)}</b> on
+                        phones
+                      </>
+                    ) : null}
                   </>
-                ) : null}
+                )}
               </p>
             ) : null}
             {error ? <Callout tone="danger">{error}</Callout> : null}

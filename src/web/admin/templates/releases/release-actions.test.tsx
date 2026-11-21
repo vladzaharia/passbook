@@ -268,7 +268,7 @@ describe('template release actions', () => {
     const server = releaseServer({ active: head, history: [earlier, head] });
     mountPanel();
     await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Restore Version 1' });
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     expect(reason).toBeRequired();
     expect(reason).toHaveAttribute('maxlength', '500');
@@ -326,7 +326,7 @@ describe('template release actions', () => {
     });
     mountPanel();
     await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Restore Version 1' });
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     await user.type(reason, 'Restore the previous build');
     await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
@@ -350,7 +350,7 @@ describe('template release actions', () => {
     const server = releaseServer({ active: null, history: [head] });
     mountPanel({ templateStatus: 'archived' });
     await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Restore Version 1' });
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     await user.type(
       within(dialog).getByRole('textbox', { name: /Reason/ }),
       'Restore the archived template',
@@ -417,7 +417,7 @@ describe('release review dialog', () => {
     const { user, dialog } = await open();
     expect(within(dialog).getByText('Ada Author')).toBeVisible();
     expect(within(dialog).getByText('Rae Reviewer')).toBeVisible();
-    expect(within(dialog).getByText('Version 2')).toBeVisible();
+    expect(within(dialog).getByText('v2')).toBeVisible();
     const summary = within(dialog).getByText('Technical details');
     const details = summary.closest('details');
     expect(details).not.toHaveAttribute('open');

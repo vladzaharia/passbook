@@ -182,6 +182,7 @@ export function TemplateDetailContent({
           state={state}
           name={(hash) => vOf(t, hash)}
           alt={alt}
+          releaseLabel={state.alone ? 'Release' : 'Request review'}
           onTry={() => void controls.tryVersion(draftHash)}
           onRelease={() => controls.release(draftHash)}
         />

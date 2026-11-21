@@ -17,7 +17,7 @@ import {
   Textarea,
 } from '../../../ui/index.ts';
 import { ReleaseImpact } from './release-details.tsx';
-import { type ReleaseVersion, versionLabel } from './types.ts';
+import { type ReleaseVersion, versionShort } from './types.ts';
 
 export type ReleaseOperation =
   | {
@@ -85,7 +85,7 @@ export function ReleaseDialog({
       }}
     >
       <DialogContent
-        title={rollback ? `Restore ${versionLabel(versions, version)}` : 'Publish release'}
+        title={rollback ? `Restore ${versionShort(versions, version)}` : 'Publish release'}
         footer={
           <>
             <Button variant="outline" disabled={busy} onClick={onClose}>
@@ -111,7 +111,7 @@ export function ReleaseDialog({
           }}
         >
           <KeyValue
-            items={[{ label: 'Version', value: versionLabel(versions, version) }, ...people]}
+            items={[{ label: 'Version', value: versionShort(versions, version) }, ...people]}
           />
           <ReleaseImpact templateId={templateId} scope={scope} version={version} />
           {rollback ? (

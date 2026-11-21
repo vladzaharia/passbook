@@ -392,13 +392,13 @@ describe('template release panel', () => {
     });
     trigger.focus();
     await user.keyboard('{Enter}');
-    const dialog = await screen.findByRole('dialog', { name: 'Restore Version 1' });
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     expect(dialog.contains(document.activeElement)).toBe(true);
     expect(within(dialog).getByRole('textbox', { name: /Reason/ })).toBeInTheDocument();
     expect((await axe(document.body)).violations).toEqual([]);
     await user.keyboard('{Escape}');
     await waitFor(() =>
-      expect(screen.queryByRole('dialog', { name: 'Restore Version 1' })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('dialog', { name: 'Restore v1' })).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(trigger).toHaveFocus());
   });

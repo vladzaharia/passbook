@@ -131,7 +131,7 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     await dialog.getByRole('button', { name: 'Confirm publish' }).click();
     await expect(dialog).toBeHidden();
     await expect(authorPage.getByText('Release published')).toBeVisible();
-    await expect(authorPage.getByText('Published by', { exact: true })).toBeVisible();
+    await expect(authorPage.getByRole('list', { name: 'Releases' })).toContainText('v1');
 
     const release = await requireActiveTemplateRelease(author, org.id, clone.id, 'live');
     expect(release.version).toBe(version);

@@ -98,16 +98,20 @@ export function TemplateDetailHeader({
       description={t.description ?? undefined}
       meta={
         <>
-          <Badge>
-            {t.fromBlueprint ? (
-              <>
+          {t.fromBlueprint ? (
+            <Link
+              to="/admin/blueprints/$blueprintId"
+              params={{ blueprintId: t.fromBlueprint.id }}
+              className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              <Badge>
                 <Compass aria-hidden className="size-3" />
                 From {t.fromBlueprint.name}
-              </>
-            ) : (
-              originLabel(t.origin)
-            )}
-          </Badge>
+              </Badge>
+            </Link>
+          ) : (
+            <Badge>{originLabel(t.origin)}</Badge>
+          )}
           {archived ? <StatusPill status="archived" /> : null}
           <span>
             {t.passCount} {t.passCount === 1 ? 'pass' : 'passes'}

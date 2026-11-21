@@ -54,6 +54,7 @@ export function ReleaseStrip({
   state,
   name,
   alt,
+  releaseLabel = 'Release',
   onTry,
   onRelease,
 }: {
@@ -62,6 +63,8 @@ export function ReleaseStrip({
   name: (hash: string | null) => string;
   /** The alternative to the header's primary, for the viewer who may act. */
   alt: 'try' | 'release' | null;
+  /** "Request review" when the caller cannot release alone. */
+  releaseLabel?: string;
   onTry: () => void;
   onRelease: () => void;
 }) {
@@ -114,7 +117,7 @@ export function ReleaseStrip({
             iconStart={alt === 'try' ? <Smartphone aria-hidden /> : <Rocket aria-hidden />}
             onClick={alt === 'try' ? onTry : onRelease}
           >
-            {alt === 'try' ? 'Try' : 'Release'}
+            {alt === 'try' ? 'Try' : releaseLabel}
           </Button>
         </div>
       ) : null}

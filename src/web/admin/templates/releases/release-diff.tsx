@@ -40,7 +40,7 @@ function Value({
       <img
         src={image(value)}
         alt=""
-        className={`h-7 max-w-24 rounded border border-border bg-surface-sunken object-contain ${struck ? 'opacity-60' : ''}`}
+        className={`h-7 max-w-24 rounded border border-border bg-[#5b6472] object-contain p-0.5 ${struck ? 'opacity-60' : ''}`}
       />
     );
   return <span className={cls}>{value.type === 'date' ? formatDay(value.at) : value.text}</span>;
