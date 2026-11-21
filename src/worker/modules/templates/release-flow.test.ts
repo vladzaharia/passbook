@@ -481,6 +481,24 @@ describe('release in one call', () => {
     await expectProblem(await send(`/${t.templateId}/release`, body, reviewer), 403, 'FORBIDDEN');
   });
 
+  it('keeps the dry run for a publisher who cannot review', async () => {
+    const org = await makeOrg(f);
+    const author = await member(org.id, ['template_author']);
+    const publisher = await member(org.id, ['template_publisher']);
+    const t = await uploaded('Publisher Plan', org, author);
+    const dry = await send(
+      `/${t.templateId}/release`,
+      { orgId: org.id, version: t.version },
+      publisher,
+      {
+        key: null,
+        query: '?dryRun=true',
+      },
+    );
+    expect(dry.status).toBe(200);
+    expect(await candidates(t.templateId)).toBe(0);
+  });
+
   it('shows a typed diff against the Live version', async () => {
     const org = await makeOrg(f);
     const owner = await member(org.id, ['org_admin']);
