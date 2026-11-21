@@ -553,7 +553,7 @@ export type CreatedScanningDevice = {
 export type EmailFailedEvent = {
   id: string;
   type: "email.failed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -954,7 +954,7 @@ export type OrgsUpdateParams = {
 export type PassChannelsChangedEvent = {
   id: string;
   type: "pass.channels_changed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1289,7 +1289,7 @@ export type PassImportsUndoParams = Record<string, unknown>;
 export type PassInstalledEvent = {
   id: string;
   type: "pass.installed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1306,7 +1306,7 @@ export type PassInstalledEvent = {
 export type PassIssuedEvent = {
   id: string;
   type: "pass.issued";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1326,7 +1326,7 @@ export type PassPage = {
 export type PassPrintVoidedEvent = {
   id: string;
   type: "pass.print_voided";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1341,7 +1341,7 @@ export type PassPrintVoidedEvent = {
 export type PassPrintedEvent = {
   id: string;
   type: "pass.printed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1357,7 +1357,7 @@ export type PassPrintedEvent = {
 export type PassRemovedEvent = {
   id: string;
   type: "pass.removed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1372,7 +1372,7 @@ export type PassRemovedEvent = {
 export type PassRestoredEvent = {
   id: string;
   type: "pass.restored";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1386,7 +1386,7 @@ export type PassRestoredEvent = {
 export type PassScanRefusedEvent = {
   id: string;
   type: "pass.scan_refused";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1405,7 +1405,7 @@ export type PassScanRefusedEvent = {
 export type PassScanUndoneEvent = {
   id: string;
   type: "pass.scan_undone";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1421,7 +1421,7 @@ export type PassScanUndoneEvent = {
 export type PassScannedEvent = {
   id: string;
   type: "pass.scanned";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1470,7 +1470,7 @@ export type PassSummary = {
 export type PassUninstalledEvent = {
   id: string;
   type: "pass.uninstalled";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1488,7 +1488,7 @@ export type PassUninstalledEvent = {
 export type PassUnvoidedEvent = {
   id: string;
   type: "pass.unvoided";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1502,7 +1502,7 @@ export type PassUnvoidedEvent = {
 export type PassUpdatedEvent = {
   id: string;
   type: "pass.updated";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1530,7 +1530,7 @@ export type PassVersion = {
 export type PassVoidedEvent = {
   id: string;
   type: "pass.voided";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1773,7 +1773,7 @@ export type Problem = {
 export type PushFailedEvent = {
   id: string;
   type: "push.failed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -4582,7 +4582,7 @@ export type WebhookEndpoint = {
   description: string;
   eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds: Array<string> | null;
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   status: "active" | "paused" | "disabled";
   target: "url" | "capture";
   failingSince: number | null;
@@ -4640,7 +4640,7 @@ export type WebhookEndpointsUpdateParams = {
   eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds?: Array<string> | null;
   status?: "active" | "paused";
-  apiVersion?: "2026-12-01";
+  apiVersion?: "2026-12-01" | "2026-11-20";
 };
 
 export type WebhookEvent = PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent;
@@ -4651,10 +4651,21 @@ export type WebhookPassRef = {
   templateId: string;
 };
 
+export type WebhookTestAttemptPage = {
+  items: Array<{
+    id: string;
+    ok: boolean;
+    status: number | null;
+    errorCode: string | null;
+    durationMs: number;
+    at: number;
+  }>;
+};
+
 export type WebhookTestEvent = {
   id: string;
   type: "webhook.test";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";

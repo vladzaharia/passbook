@@ -106,7 +106,7 @@ describe('payload allowlist', () => {
     expect(event).toMatchObject({
       id: r.eventId,
       type,
-      apiVersion: '2026-12-01',
+      apiVersion: '2026-11-20',
       createdAt: r.at,
       orgId: 'org1',
       mode: 'live',

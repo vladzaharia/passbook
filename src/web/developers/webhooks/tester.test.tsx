@@ -33,16 +33,40 @@ const capture = (over: Partial<WebhookCaptureDto> = {}): WebhookCaptureDto => ({
   ...over,
 });
 
-function api(captures: WebhookCaptureDto[]): TesterApi & { sent: string[] } {
+const urlEndpoint = {
+  id: 'ep2',
+  target: 'url',
+  description: '',
+  urlMasked: 'hooks.example.dev/…',
+  eventTypes: ['pass.issued'],
+  status: 'active',
+  lastStatus: 200,
+} as WebhookEndpointDto;
+
+function api(
+  captures: WebhookCaptureDto[],
+  endpoints: WebhookEndpointDto[] = [endpoint],
+): TesterApi & { sent: string[] } {
   const sent: string[] = [];
   return {
     sent,
-    endpoints: async () => [endpoint],
+    endpoints: async () => endpoints,
+    createEndpoint: async (url, eventTypes) => {
+      sent.push(`create ${url} ${eventTypes.join(',')}`);
+      return { endpoint: urlEndpoint, secret: 'whsec_once' };
+    },
+    deliveries: async () => [],
+    delivery: async () => {
+      throw new Error('none');
+    },
+    tests: async () => [
+      { id: 't1', ok: true, status: 204, errorCode: null, durationMs: 31, at: 1 },
+    ],
     ensureCapture: async () => endpoint,
     captures: async (_id, type) => captures.filter((c) => !type || c.type === type),
     sendTest: async (_id, type) => {
       sent.push(type);
-      return { ok: true, captureId: 'c1' };
+      return { ok: true, captureId: 'c1', status: 200, errorCode: null };
     },
     replay: async () => capture({ id: 'c2', trigger: 'replay' }),
     secret: async () => SECRET,
@@ -130,5 +154,35 @@ describe('Tester', () => {
     render(<Tester connect={connect} types={TYPES} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('link', { name: 'Sign in' })).toBeInTheDocument();
+  });
+
+  it('lists URL endpoints beside the capture endpoint and shows their test sends as deliveries', async () => {
+    render(<Tester connect={ready(api([capture()], [urlEndpoint, endpoint]))} types={TYPES} />);
+    await screen.findByText('Signature matches');
+    const eps = screen
+      .getAllByRole('button', { pressed: undefined })
+      .filter((b) => b.className.includes('wh-ep'));
+    expect(eps.map((b) => b.textContent)).toEqual([
+      expect.stringContaining('Capture endpoint'),
+      expect.stringContaining('hooks.example.dev/…'),
+    ]);
+    await userEvent.click(eps[1] as HTMLElement);
+    expect(await screen.findByText('Test')).toBeInTheDocument();
+    expect(screen.getAllByText('webhook.test').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('204').length).toBeGreaterThan(0);
+  });
+
+  it('adds a URL endpoint with every subscribable event and shows the secret once', async () => {
+    const fake = api([capture()]);
+    render(<Tester connect={ready(fake)} types={TYPES} />);
+    await screen.findByText('Signature matches');
+    await userEvent.click(screen.getByRole('button', { name: 'Add endpoint' }));
+    await userEvent.type(screen.getByLabelText(/^URL/), 'https://hooks.example.dev/in');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    expect(await screen.findByText('whsec_once')).toBeInTheDocument();
+    expect(screen.getByText('Shown once')).toBeInTheDocument();
+    expect(fake.sent).toContain('create https://hooks.example.dev/in pass.issued,pass.updated');
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByText('whsec_once')).toBeNull();
   });
 });

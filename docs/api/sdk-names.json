@@ -2308,5 +2308,9 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
+  },
+  "webhooks.getWebhookEndpointsByIdTests": {
+    "resource": "webhookEndpoints.tests",
+    "method": "list"
   }
 }

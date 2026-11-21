@@ -505,6 +505,7 @@
   "webhooks.getWebhookEndpointsByIdCapturesByCaptureId",
   "webhooks.getWebhookEndpointsByIdDeliveries",
   "webhooks.getWebhookEndpointsByIdDeliveriesByEventId",
+  "webhooks.getWebhookEndpointsByIdTests",
   "webhooks.patchWebhookEndpointsById",
   "webhooks.postWebhookEndpoints",
   "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay",

@@ -8352,5 +8352,35 @@
    "errorCode": "x",
    "captureId": "x"
   }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsByIdTests",
+  "call": "webhook_endpoints.tests.list",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/{id}/tests",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "ok": false,
+     "status": 0,
+     "errorCode": "x",
+     "durationMs": 0,
+     "at": 0
+    }
+   ]
+  }
  }
 ]

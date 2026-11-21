@@ -8549,6 +8549,8 @@ type WebhookEndpointsSendTestParams struct {
 
 type WebhookEndpointsSendTestResult = WebhookTestResult
 
+type WebhookEndpointsTestsListResult = WebhookTestAttemptPage
+
 type WebhookEndpointsUpdateBody = WebhookEndpointsUpdateParams
 
 type WebhookEndpointsUpdateParams struct {
@@ -8568,6 +8570,19 @@ type WebhookPassRef struct {
 	ID         string  `json:"id"`
 	ExternalID *string `json:"externalId"`
 	TemplateID string  `json:"templateId"`
+}
+
+type WebhookTestAttemptPage struct {
+	Items []WebhookTestAttemptPageItemsItem `json:"items"`
+}
+
+type WebhookTestAttemptPageItemsItem struct {
+	ID         string  `json:"id"`
+	Ok         bool    `json:"ok"`
+	Status     *int64  `json:"status"`
+	ErrorCode  *string `json:"errorCode"`
+	DurationMs int64   `json:"durationMs"`
+	At         int64   `json:"at"`
 }
 
 type WebhookTestEvent struct {

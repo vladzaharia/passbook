@@ -616,6 +616,14 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdTests",
+    "op": "GET /api/v1/webhook-endpoints/{id}/tests",
+    "change": "new operation",
+    "note": "List the recent test sends of a webhook endpoint (status, code and timing, kept 7 days), newest first."
+  },
+  {
     "key": "PATCH /api/v1/brand 200.kind: field added",
     "class": "additive",
     "operationId": "brand.patchBrand",

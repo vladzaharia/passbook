@@ -225,3 +225,38 @@
 .wh .card-h .h3 {
   margin-right: 0;
 }
+
+.wh-input {
+  min-height: 36px;
+  padding-inline: 12px;
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--wl-field, var(--pk-surface-raised));
+  color: var(--pk-text-default);
+  font: inherit;
+  width: 100%;
+}
+.wh-input:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 1px;
+}
+.wh-ep {
+  grid-template-columns: 40px minmax(0, 1fr);
+}
+.wh-ep .wh-meta {
+  grid-column: 2;
+}
+.wh-tag {
+  margin-left: 8px;
+}
+.wh-att {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 16px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.wh-att:first-child {
+  border-top: 0;
+}

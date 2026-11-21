@@ -5,12 +5,12 @@ import { AppError, ConflictError, RateLimitedError } from '../../platform/errors
 import { checkRateLimit } from '../../platform/rate-limit.ts';
 import { createSafeFetch, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import type { WebhookAccess } from './access.ts';
+import { fenceOf, type WebhookAccess } from './access.ts';
 import { openActiveSecrets } from './capture.ts';
 import { SEND_TIMEOUT_MS } from './deliver.ts';
 import { sendAllowed } from './deliver-gate.ts';
 import { bodyOf, buildEnvelope, testEnvelope } from './payload.ts';
-import { insertTestAttempt } from './repo-api.ts';
+import { insertTestAttempt, listTestAttempts } from './repo-api.ts';
 import { memoResolver } from './resolver-memo.ts';
 import { sampleRow } from './sample-events.ts';
 import { commitEndpoint, requireEndpoint, webhookGrant } from './service.ts';
@@ -116,7 +116,7 @@ export async function sendTest(
   const durationMs = Math.max(0, ctx.clock.now() - startedAt);
   const g = webhookGrant(ctx, access, 'test');
   insertTestAttempt(g, {
-    id: ctx.ids.id(),
+    id: event.id,
     endpointId,
     status,
     errorCode,
@@ -130,5 +130,19 @@ export async function sendTest(
     durationMs,
     errorCode,
     captureId,
+  };
+}
+
+const TEST_LIST_LIMIT = 20;
+
+/** The endpoint's recent test sends, newest first, for the deliveries view. */
+export async function listTests(ctx: ServiceContext, access: WebhookAccess, endpointId: string) {
+  await requireEndpoint(ctx, access, endpointId);
+  const rows = await listTestAttempts(ctx.env.DB, fenceOf(access), endpointId, TEST_LIST_LIMIT);
+  return {
+    items: rows.map((r) => ({
+      ...r,
+      ok: r.status !== null && r.status >= 200 && r.status < 300,
+    })),
   };
 }

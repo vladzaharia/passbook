@@ -200,6 +200,43 @@ export async function listAttempts(
   }));
 }
 
+export interface TestAttemptRow {
+  id: string;
+  status: number | null;
+  errorCode: string | null;
+  durationMs: number;
+  at: number;
+}
+
+/** The newest "Send test" attempts of an endpoint: status, code and timing only; nothing of the request is kept. */
+export async function listTestAttempts(
+  db: D1Database,
+  fence: FeedFence,
+  endpointId: string,
+  limit: number,
+): Promise<TestAttemptRow[]> {
+  const rows = await all<{
+    id: string;
+    status: number | null;
+    error_code: string | null;
+    duration_ms: number;
+    at: number;
+  }>(
+    db,
+    `SELECT id, status, error_code, duration_ms, at FROM webhook_attempts
+     WHERE endpoint_id = ? AND org_id = ? AND mode = ? AND event_seq IS NULL AND trigger = 'test'
+     ORDER BY at DESC, rowid DESC LIMIT ?`,
+    [endpointId, fence.orgId, fence.mode, limit],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    status: r.status,
+    errorCode: r.error_code,
+    durationMs: r.duration_ms,
+    at: r.at,
+  }));
+}
+
 /** The "Send test" attempt: no feed row, so it counts toward no delivery and no endpoint health. */
 export function insertTestAttempt(
   g: Grant,

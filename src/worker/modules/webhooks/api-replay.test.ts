@@ -103,7 +103,7 @@ describe('deliveries', () => {
       type: 'pass.issued',
       orgId: s.orgId,
       mode: 'live',
-      apiVersion: '2026-12-01',
+      apiVersion: '2026-11-20',
     });
     expect((await api.call('GET', `${s.base}/deliveries/nope`, undefined, s.admin)).status).toBe(
       404,

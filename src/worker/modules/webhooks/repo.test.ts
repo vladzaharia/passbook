@@ -33,7 +33,7 @@ const NEW = {
   description: 'Door',
   eventTypes: ['pass.issued', 'pass.scanned'],
   templateIds: null,
-  apiVersion: '2026-12-01' as const,
+  apiVersion: '2026-11-20' as const,
   createdBy: null,
   now: 1000,
 };

@@ -1,5 +1,21 @@
+import type { z } from 'zod';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
-import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
+import type { WebhookTestAttemptSchema } from '../../../shared/contracts/webhook-tests.ts';
+import type {
+  WebhookDeliveryDetailSchema,
+  WebhookDeliverySchema,
+  WebhookEndpointDto,
+} from '../../../shared/contracts/webhooks.ts';
+
+export type DeliveryDto = z.infer<typeof WebhookDeliverySchema>;
+export type DeliveryDetailDto = z.infer<typeof WebhookDeliveryDetailSchema>;
+export type TestAttemptDto = z.infer<typeof WebhookTestAttemptSchema>;
+export interface TestSent {
+  captureId: string | null;
+  ok: boolean;
+  status: number | null;
+  errorCode: string | null;
+}
 
 /** A problem+json answer. `code` is the API's stable code. */
 export class ApiProblem extends Error {
@@ -22,7 +38,15 @@ export interface TesterApi {
   /** The sandbox's capture endpoint, made if it has none. */
   ensureCapture(): Promise<WebhookEndpointDto>;
   captures(id: string, type?: string): Promise<WebhookCaptureDto[]>;
-  sendTest(id: string, type: string): Promise<{ captureId: string | null; ok: boolean }>;
+  sendTest(id: string, type: string): Promise<TestSent>;
+  /** A URL endpoint, signed with a secret that shows once. */
+  createEndpoint(
+    url: string,
+    eventTypes: string[],
+  ): Promise<{ endpoint: WebhookEndpointDto; secret: string }>;
+  deliveries(id: string): Promise<DeliveryDto[]>;
+  delivery(id: string, eventId: string): Promise<DeliveryDetailDto>;
+  tests(id: string): Promise<TestAttemptDto[]>;
   replay(id: string, captureId: string): Promise<WebhookCaptureDto>;
   secret(id: string): Promise<string>;
 }
@@ -109,8 +133,18 @@ export async function connect(
             `${base(id)}/captures?limit=50${type ? `&type=${encodeURIComponent(type)}` : ''}`,
           )
         ).items,
-      sendTest: (id, type) =>
-        call<{ captureId: string | null; ok: boolean }>('POST', `${base(id)}/test`, { type }),
+      sendTest: (id, type) => call<TestSent>('POST', `${base(id)}/test`, { type }),
+      createEndpoint: (url, eventTypes) =>
+        call<{ endpoint: WebhookEndpointDto; secret: string }>('POST', '/webhook-endpoints', {
+          url,
+          eventTypes,
+        }),
+      deliveries: async (id) =>
+        (await call<{ items: DeliveryDto[] }>('GET', `${base(id)}/deliveries?limit=30`)).items,
+      delivery: (id, eventId) =>
+        call<DeliveryDetailDto>('GET', `${base(id)}/deliveries/${encodeURIComponent(eventId)}`),
+      tests: async (id) =>
+        (await call<{ items: TestAttemptDto[] }>('GET', `${base(id)}/tests`)).items,
       replay: (id, captureId) =>
         call<WebhookCaptureDto>(
           'POST',

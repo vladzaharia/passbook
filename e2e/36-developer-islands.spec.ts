@@ -6,6 +6,25 @@ const shot = async (page: import('@playwright/test').Page, name: string) => {
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` });
 };
 
+/** Every width and theme, for the visual check. */
+const shots = async (page: import('@playwright/test').Page, name: string) => {
+  if (!SHOTS) return;
+  const before = page.viewportSize();
+  for (const [w, h] of [
+    [1440, 900],
+    [820, 1100],
+    [390, 844],
+  ] as const) {
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: `${SHOTS}/${name}-${w}-${scheme}.png`, fullPage: true });
+    }
+  }
+  if (before) await page.setViewportSize(before);
+};
+
 /** Runs after 35, which makes the builder's sandbox; this one signs in as the same person and uses it. */
 test('developer portal islands: signed out is quiet, signed in the tester, playground and search work', async ({
   page,
@@ -89,6 +108,76 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   ).toBeVisible();
   await page.waitForTimeout(500);
   await shot(page, 'webhooks-signed-in');
+  expect(errors).toEqual([]);
+
+  // D8: an unresolvable URL is refused in the portal with the API's own message, nothing is added.
+  const tester = page.locator('[data-island="webhook-tester"]');
+  await tester.getByRole('button', { name: 'Add endpoint' }).click();
+  await tester.getByLabel('URL').fill('https://hooks.example.com/passbook');
+  await tester.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(tester.getByRole('alert')).toBeVisible();
+  await shots(page, 'webhooks-add-refused');
+  await expect(tester.locator('.wh-ep')).toHaveCount(1);
+  // The sandbox has no DNS, so the success path answers from a stub: the secret shows once, then a test send is listed.
+  const endpoint = {
+    id: '0193a1b2-7c00-7000-8000-0000000000e2',
+    target: 'url',
+    description: '',
+    urlMasked: 'hooks.example.com/…',
+    eventTypes: ['pass.issued', 'pass.updated'],
+    status: 'active',
+    lastStatus: 200,
+  };
+  const json = (body: unknown, status = 200) => ({
+    status,
+    contentType: 'application/json',
+    body: JSON.stringify(body),
+  });
+  await page.route('**/api/v1/webhook-endpoints', (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill(json({ endpoint, secret: 'whsec_6f1d0c2a9b7e4d35a8c1' }, 201))
+      : route.continue(),
+  );
+  await page.route(`**/api/v1/webhook-endpoints/${endpoint.id}/**`, (route) => {
+    const url = route.request().url();
+    if (url.endsWith('/test'))
+      return route.fulfill(
+        json({ ok: true, status: 200, durationMs: 41, errorCode: null, captureId: null }),
+      );
+    if (url.endsWith('/tests'))
+      return route.fulfill(
+        json({
+          items: [
+            {
+              id: 't2',
+              ok: false,
+              status: 500,
+              errorCode: null,
+              durationMs: 88,
+              at: Date.now() - 60_000,
+            },
+            {
+              id: 't1',
+              ok: true,
+              status: 200,
+              errorCode: null,
+              durationMs: 41,
+              at: Date.now() - 5_000,
+            },
+          ],
+        }),
+      );
+    return route.fulfill(json({ items: [], nextCursor: null }));
+  });
+  await tester.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(tester.getByText('Shown once')).toBeVisible();
+  await shots(page, 'webhooks-secret');
+  await tester.getByRole('button', { name: 'Done' }).click();
+  await tester.getByRole('button', { name: 'Send test event' }).click();
+  await expect(tester.getByText('Test', { exact: true }).first()).toBeVisible();
+  await shots(page, 'webhooks-url-test');
+  await expect(tester.locator('.wh-ep')).toHaveCount(2);
+  await page.unroute('**/api/v1/webhook-endpoints');
   expect(errors).toEqual([]);
 
   // D10: the playground offers the sandbox instead of asking to sign in.

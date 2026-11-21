@@ -1,8 +1,8 @@
 import type { z } from 'zod';
 import {
   type CreateWebhookEndpointSchema,
+  LATEST_WEBHOOK_API_VERSION,
   type UpdateWebhookEndpointSchema,
-  WEBHOOK_API_VERSIONS,
   type WebhookEndpointDto,
 } from '../../../shared/contracts/webhooks.ts';
 import { authorityDenial, type Grant, grant } from '../../platform/authority.ts';
@@ -216,7 +216,7 @@ export async function makeEndpoint(
     description: input.description,
     eventTypes: input.eventTypes,
     templateIds: input.templateIds,
-    apiVersion: WEBHOOK_API_VERSIONS[WEBHOOK_API_VERSIONS.length - 1] as EndpointRow['apiVersion'],
+    apiVersion: LATEST_WEBHOOK_API_VERSION,
     createdBy: actor.type === 'user' ? actor.id : null,
     now,
   });

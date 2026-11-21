@@ -159,7 +159,7 @@ describe('capture only works in developer orgs, in Test', () => {
       run(
         kit.env.DB,
         `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, api_version, target, created_at, updated_at)
-         VALUES (?, ?, ?, 'https://capture.invalid/', '["pass.issued"]', '2026-12-01', 'capture', 1, 1)`,
+         VALUES (?, ?, ?, 'https://capture.invalid/', '["pass.issued"]', '2026-11-20', 'capture', 1, 1)`,
         [kit.f.ids.id(), orgId, mode],
       );
     await expect(insert(org.id, 'test')).rejects.toThrow(/developer org in Test/);
@@ -223,7 +223,7 @@ describe('one capture endpoint per org', () => {
       run(
         kit.env.DB,
         `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, api_version, target, created_at, updated_at)
-         VALUES ('second', ?, 'test', 'https://capture.invalid/', '["pass.issued"]', '2026-12-01', 'capture', 1, 1)`,
+         VALUES ('second', ?, 'test', 'https://capture.invalid/', '["pass.issued"]', '2026-11-20', 'capture', 1, 1)`,
         [s.orgId],
       ),
     ).rejects.toThrow(/UNIQUE/);

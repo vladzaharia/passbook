@@ -21,7 +21,7 @@ export function endpoint(over: Partial<WebhookEndpointDto> = {}): WebhookEndpoin
     description: 'Orders',
     eventTypes: ['pass.issued', 'pass.scanned'],
     templateIds: null,
-    apiVersion: '2026-12-01',
+    apiVersion: '2026-11-20',
     status: 'active',
     target: 'url',
     failingSince: null,
@@ -77,7 +77,7 @@ export const detail = (over: Record<string, unknown> = {}) => ({
   payload: {
     id: 'ev1',
     type: 'pass.scanned',
-    apiVersion: '2026-12-01',
+    apiVersion: '2026-11-20',
     createdAt: NOW - 3 * HOUR,
     orgId: ORG.id,
     mode: 'live',
