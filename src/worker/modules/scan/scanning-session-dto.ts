@@ -80,7 +80,7 @@ export async function captureConsoleSessionCountAuthority(
   };
 }
 
-type ResolvedSessionScope = {
+export type ResolvedSessionScope = {
   /** The session's admits as the DTO shows them. */
   accepts: AdmitsInput | null;
   event: ScanEventRow | null;

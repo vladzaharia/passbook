@@ -37,7 +37,7 @@ const handlers = (over: Record<string, never> = {}) => ({
 
 describe('Scanners tab', () => {
   it('lists scanners with status, accepts and a ghost Pair on the unpaired one', async () => {
-    const { container } = await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
+    const { container } = await renderApp('/admin/scanning?tab=devices&orgId=o1', {
       session: 'admin',
       memberships: [northwind],
       selectedOrg: 'o1',
@@ -58,7 +58,7 @@ describe('Scanners tab', () => {
   });
 
   it('keeps revoked scanners behind Show revoked', async () => {
-    await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
+    await renderApp('/admin/scanning?tab=devices&orgId=o1', {
       session: 'admin',
       memberships: [northwind],
       selectedOrg: 'o1',
@@ -72,7 +72,7 @@ describe('Scanners tab', () => {
 
   it('revokes with a plain confirm that says the scans stay', async () => {
     let revoked = false;
-    await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
+    await renderApp('/admin/scanning?tab=devices&orgId=o1', {
       session: 'admin',
       memberships: [northwind],
       selectedOrg: 'o1',
@@ -93,7 +93,7 @@ describe('Scanners tab', () => {
   });
 
   it('asks before pairing a paired scanner again, then shows the pairing face', async () => {
-    await renderApp('/admin/scanning?tab=scanners&orgId=o1', {
+    await renderApp('/admin/scanning?tab=devices&orgId=o1', {
       session: 'admin',
       memberships: [northwind],
       selectedOrg: 'o1',
@@ -115,26 +115,26 @@ describe('Scanners tab', () => {
   });
 
   it('offers session creation when no devices are listed', async () => {
-    await renderApp('/admin/scanning?tab=scanners', {
+    await renderApp('/admin/scanning?tab=devices', {
       session: 'admin',
       memberships: [northwind],
       selectedOrg: 'o1',
       handlers: { '/api/v1/scan-setups': none, '/api/v1/scan-events': none },
     });
     expect(await screen.findByText('No devices yet')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'New scanning session' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'New session' })).toHaveLength(1);
   });
 });
 
 describe('device creation from Devices', () => {
   it('opens the shared-session form instead of creating an independent scanner setup', async () => {
-    const { router } = await renderApp('/admin/scanning?tab=scanners&orgId=o1&new=1', {
+    const { router } = await renderApp('/admin/scanning?tab=devices&orgId=o1&new=1', {
       session: 'admin',
       memberships: [northwind],
       selectedOrg: 'o1',
       handlers: handlers(),
     });
-    const dialog = await screen.findByRole('dialog', { name: 'New scanning session' });
+    const dialog = await screen.findByRole('dialog', { name: 'New session' });
     expect(within(dialog).getByRole('tab', { name: 'Passes' })).toBeInTheDocument();
     expect(within(dialog).getByRole('tab', { name: 'Admission' })).toBeInTheDocument();
     expect(within(dialog).getByRole('tab', { name: 'Device defaults' })).toBeInTheDocument();

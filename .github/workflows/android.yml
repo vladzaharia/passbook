@@ -16,6 +16,58 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools'
+      - name: Install pinned Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Unit tests
+        working-directory: android
+        run: ./gradlew --no-daemon :app:testDebugUnitTest
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: android-unit-test-reports
+          path: android/app/build/reports/tests/
+          if-no-files-found: ignore
+
+  instrumented:
+    # Manual only: needs an emulator (API 33 matches the P400's Android 13).
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools'
+      - name: Install pinned Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@324029e2f414c084d8b15ba075288885e74aef9c # v2.34.0
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          working-directory: android
+          script: ./gradlew --no-daemon :app:connectedDebugAndroidTest
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -78,7 +130,7 @@ jobs:
           test -n "$KEYSTORE_B64"
           umask 077
           printf '%s' "$KEYSTORE_B64" | base64 --decode > "$KEYSTORE_PATH"
-      - name: Build signed APK
+      - name: Build signed APK and AAB
         env:
           PASSBOOK_ANDROID_KEYSTORE: ${{ runner.temp }}/passbook-reader-release.p12
           PASSBOOK_SIGNING_PASSWORD: ${{ secrets.ANDROID_READER_SIGNING_PASSWORD }}
@@ -89,7 +141,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" android/dist/*.apk android/dist/SHA256SUMS android/dist/signature.txt android/dist/release.json android/dist/NOTICE android/dist/kormax-LICENSE --verify-tag --prerelease --title "PassBook Reader $RELEASE_TAG" --notes-file android/RELEASE-NOTES.md
+          gh release create "$RELEASE_TAG" android/dist/*.apk android/dist/*.aab android/dist/SHA256SUMS android/dist/signature.txt android/dist/release.json android/dist/NOTICE android/dist/kormax-LICENSE --verify-tag --prerelease --title "PassBook Reader $RELEASE_TAG" --notes-file android/RELEASE-NOTES.md
+      - name: Check for Play credentials
+        id: play
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Play upload skipped::Set the PLAY_SERVICE_ACCOUNT_JSON secret to upload the AAB to the internal track."
+          fi
+      - name: Upload AAB to Play internal testing
+        if: steps.play.outputs.configured == 'true'
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: im.plrs.passbook.reader
+          releaseFiles: android/dist/*.aab
+          track: internal
+          # A Play app that has never been released accepts only draft releases; set the variable to draft until then.
+          status: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
       - name: Remove runner signing key
         if: always()
         run: rm -f "${{ runner.temp }}/passbook-reader-release.p12"

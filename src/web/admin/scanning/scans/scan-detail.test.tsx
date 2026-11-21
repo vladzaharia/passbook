@@ -55,7 +55,7 @@ function open(
 ) {
   const templates: URL[] = [];
   const releases: URL[] = [];
-  const render = renderApp('/admin/scanning?tab=scans', {
+  const render = renderApp('/admin/scanning?tab=activity', {
     session: 'admin',
     memberships: over.memberships ?? [member],
     selectedOrg: 'o1',
@@ -388,7 +388,7 @@ describe('Scan history release context', () => {
     await openScan();
     await waitFor(() => expect(state.releases).toHaveLength(1));
     await act(async () => {
-      await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2', tab: 'scans' } });
+      await router.navigate({ to: '/admin/scanning', search: { orgId: 'o2', tab: 'activity' } });
     });
     expect(await screen.findByText('No scans yet')).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'Scan' })).not.toBeInTheDocument();

@@ -30,6 +30,9 @@ public final class NfcController {
     private volatile IsoDep active;
     private volatile int generation;
     private volatile boolean enabled;
+    private List<String> lastIds = List.of();
+    private boolean lastVas;
+    private boolean lastTags;
 
     public NfcController(Activity activity, Listener listener) {
         this.activity = activity;
@@ -47,9 +50,12 @@ public final class NfcController {
 
     /** Wallet VAS and third-party tags share one reader mode; VAS goes first and 6A82 falls through to the tag. */
     public void start(List<String> identifiers, boolean vas, boolean tags) {
+        // Restarting reader mode can drop a tap in progress: skip it when nothing changed.
+        if (enabled && vas == lastVas && tags == lastTags && identifiers.equals(lastIds)) return;
         stop();
         if (!available()) return;
         enabled = true;
+        lastIds = List.copyOf(identifiers); lastVas = vas; lastTags = tags;
         int current = generation;
         Bundle extras = new Bundle();
         extras.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250);

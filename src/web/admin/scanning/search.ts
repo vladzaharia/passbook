@@ -2,15 +2,18 @@ import { z } from 'zod';
 
 export const SCANNING_TABS = [
   'sessions',
-  'scanners',
+  'devices',
   'events',
   'zones',
   'staff',
-  'scans',
+  'activity',
   'tags',
 ] as const;
 export type ScanningTab = (typeof SCANNING_TABS)[number];
 export const DEFAULT_TAB: ScanningTab = 'sessions';
+
+/** Links and bookmarks from before the slugs matched the labels. */
+const TAB_ALIASES: Record<string, ScanningTab> = { scanners: 'devices', scans: 'activity' };
 
 const id = z.string().min(1).max(64).optional().catch(undefined);
 
@@ -20,7 +23,12 @@ const id = z.string().min(1).max(64).optional().catch(undefined);
  * session form from either the Sessions or Devices tab.
  */
 export const scanningSearchSchema = z.object({
-  tab: z.enum(SCANNING_TABS).optional().catch(undefined),
+  tab: z
+    .preprocess(
+      (v) => (typeof v === 'string' ? (TAB_ALIASES[v] ?? v) : v),
+      z.enum(SCANNING_TABS).optional(),
+    )
+    .catch(undefined),
   // A hand-typed ?new=1 parses as the number 1; the palette sends the string.
   new: z
     .preprocess((v) => (v === 1 || v === '1' ? '1' : undefined), z.literal('1').optional())

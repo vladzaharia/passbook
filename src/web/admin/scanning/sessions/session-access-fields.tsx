@@ -1,10 +1,11 @@
 import { ArrowLeftRight, LogIn, LogOut, ScanLine } from 'lucide-react';
-import { Callout, DependentSettings, OptionTile, SwitchRow } from '@/web/ui/index.ts';
+import { Button, Callout, DependentSettings, OptionTile, SwitchRow } from '@/web/ui/index.ts';
+import { useScanEvents } from '../scanner-api.ts';
 import type { ScannerDraft } from '../scanners/scanner-draft.ts';
 import { ZonePicker } from '../zones/zone-picker.tsx';
 import { zoneNodes } from '../zones/zone-tree.ts';
 import { useZones } from '../zones/zones-api.ts';
-import { eventsOnly, type SessionDraft } from './draft.ts';
+import { eventsOnly, type SessionDraft, trackingGap } from './draft.ts';
 
 const DIRECTIONS = [
   { value: 'pass', label: 'Pass rules', description: 'The pass decides.', icon: ScanLine },
@@ -28,6 +29,8 @@ export function SessionAccessFields({
 }) {
   const zones = useZones(draft.orgId || undefined, false, Boolean(draft.orgId));
   const event = eventsOnly(draft);
+  const events = useScanEvents(draft.orgId || undefined, Boolean(draft.orgId));
+  const gap = trackingGap(draft, events.data?.items ?? []);
   const counted = zoneNodes(zones.data ?? []).find(
     (n) => draft.zoneIds?.includes(n.zone.id) && n.zone.occupancy !== 'off',
   )?.zone;
@@ -66,6 +69,23 @@ export function SessionAccessFields({
             />
           ))}
         </div>
+        {gap ? (
+          <Callout
+            tone="warning"
+            actionsAside
+            actions={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => set({ checkIn: { ...draft.checkIn, mode: 'in_out' } })}
+              >
+                Track in / out
+              </Button>
+            }
+          >
+            {gap} does nothing unless the session tracks in / out.
+          </Callout>
+        ) : null}
         <p className="text-xs text-fg-muted">
           A reader at a door: pick In or Out. One phone at the desk: Both.
           {counts ? ` ${counts}` : ''}

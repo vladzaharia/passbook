@@ -48,6 +48,10 @@ export function EventDialog({
   const [matchInput, setMatchInput] = useState(event?.match?.input ?? '');
   const [matchValues, setMatchValues] = useState(event?.match?.values.join(', ') ?? '');
   const check = useFormErrors({
+    name: name.trim() ? undefined : 'Enter a name.',
+    templates: selected.length ? undefined : 'Pick at least one template.',
+    opens: opens?.local ? undefined : 'Set when scanning opens.',
+    closes: closes?.local ? undefined : 'Set when scanning closes.',
     values:
       matchInput.trim() && !matchValues.trim() ? 'Enter at least one matching value.' : undefined,
   });
@@ -100,7 +104,7 @@ export function EventDialog({
     >
       <DialogContent title={event ? 'Edit event' : 'New event'} size="md">
         <Form {...check.form} className="flex flex-col gap-4" onValid={() => mutation.mutate()}>
-          <FormField label="Name">
+          <FormField label="Name" required error={check.errors.name}>
             {(p) => (
               <Input
                 {...p}
@@ -116,6 +120,8 @@ export function EventDialog({
             selected={selected}
             onChange={setSelected}
             requireCheckIn
+            error={check.errors.templates}
+            errorId="event-templates-error"
           />
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField label="Only passes where" help="Input name; optional">
@@ -141,7 +147,7 @@ export function EventDialog({
           <p className="text-xs text-fg-muted">
             Leave empty to admit every pass of these templates.
           </p>
-          <FormField label="Scanning opens">
+          <FormField label="Scanning opens" required error={check.errors.opens}>
             {(p) => (
               <DateTimeField
                 {...p}
@@ -150,21 +156,12 @@ export function EventDialog({
                   setOpens(value);
                   if (value && closes) setCloses({ ...closes, zone: value.zone });
                 }}
-                clearLabel="No opening time"
                 defaultZone={zone}
               />
             )}
           </FormField>
-          <FormField label="Scanning closes">
-            {(p) => (
-              <DateTimeField
-                {...p}
-                value={closes}
-                onChange={setCloses}
-                clearLabel="No closing time"
-                defaultZone={zone}
-              />
-            )}
+          <FormField label="Scanning closes" required error={check.errors.closes}>
+            {(p) => <DateTimeField {...p} value={closes} onChange={setCloses} defaultZone={zone} />}
           </FormField>
           <FormField label="Capacity" help="Optional">
             {(p) => (
@@ -206,11 +203,7 @@ export function EventDialog({
           {mutation.isError ? (
             <Callout tone="danger">{errorMessage(mutation.error)}</Callout>
           ) : null}
-          <Button
-            type="submit"
-            loading={mutation.isPending}
-            disabled={!name.trim() || !opens?.local || !closes?.local || !selected.length}
-          >
+          <Button type="submit" loading={mutation.isPending}>
             {event ? 'Save event' : 'Create event'}
           </Button>
         </Form>

@@ -1,23 +1,13 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import type {
-  CreateScannerSetupSchema,
-  UpdateScannerSetupSchema,
-} from '../../../shared/contracts/scan-setups.ts';
-import type { AdmitsInput } from '../../../shared/contracts/scanners.ts';
-import { classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
+import type { UpdateScannerSetupSchema } from '../../../shared/contracts/scan-setups.ts';
+import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { getUser } from '../users/repo.ts';
 import { admitsJson } from './admits.ts';
-import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
-import { createPairing } from './pairing.ts';
-import { TERMINAL_TTL_MS } from './pairing-token.ts';
 import {
   adminGrant,
   audited,
@@ -26,152 +16,59 @@ import {
   scopeTemplatesUsable,
   sessionEpoch,
 } from './repo-admin-grant.ts';
-import {
-  addScannerTemplates,
-  addSetupInsert,
-  addSetupWatch,
-  replaceScannerTemplates,
-} from './repo-admin-unguarded.ts';
+import { addSetupWatch, replaceScannerTemplates } from './repo-admin-unguarded.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
-import { addScannerInsert, addScannerPatch, scannerSlot } from './repo-scanners.ts';
+import { addScannerPatch } from './repo-scanners.ts';
 import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionForDevice } from './repo-scanning-sessions.ts';
 import { addDeviceRole, addSetupAcceptsClear, setupMeta, watchOf } from './repo-setups.ts';
-import { acceptedTemplateIds, checkAccepts, requireScannerSettings } from './scanner-validation.ts';
+import { checkAccepts, requireScannerSettings } from './scanner-validation.ts';
 import { loadScanner } from './scanner-views.ts';
-import { addEnrollment, type DeviceEnrollment } from './scanning-enrollment.ts';
+import type { DeviceEnrollment } from './scanning-enrollment.ts';
+import { newCapture, slotChecks } from './setup-capture.ts';
+import {
+  type CreateSetup,
+  issuePairing,
+  planSetup,
+  roleAllowed,
+  SETUP_CODES,
+  setupConflict,
+  setupStatements,
+} from './setup-statements.ts';
 import { setupView } from './setup-views.ts';
 import { checkWatch } from './setup-watch.ts';
 
-const SETUP_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;
-
-/** A session's device setup takes the session's admits, which may mix events and templates. */
-type Create = Omit<z.infer<typeof CreateScannerSetupSchema>, 'accepts'> & {
-  accepts?: AdmitsInput | null;
-};
 type Update = z.infer<typeof UpdateScannerSetupSchema>;
-
-function roleAllowed(kind: Create['kind'], role: Create['deviceRole']) {
-  if ((kind === 'terminal' && role !== 'scan') || (kind === 'display' && role === 'scan'))
-    throw new ValidationError('Choose a role this device supports.', [], 'SCANNER_ROLE_INVALID');
-}
-
-function conflict(error: unknown): never {
-  const info = classifyD1Error(error);
-  if (info?.kind === 'unique' && /scanners\.name|scanners_org_name/.test(info.detail))
-    throw new ConflictError('Another scanner already has that name.', 'SCANNER_NAME_TAKEN');
-  if (info?.kind === 'unique')
-    throw new ConflictError(
-      'A setup with this name or admin already exists.',
-      'SCANNER_SETUP_EXISTS',
-    );
-  throw error;
-}
 
 export async function createSetup(
   ctx: ServiceContext,
   userId: string,
   mode: Mode,
-  input: Create,
+  input: CreateSetup,
   origin: string,
   authority: TenantPassWrite,
   enrollment?: DeviceEnrollment,
   parent?: ScanningSessionRow,
 ) {
-  const { orgId, kind, deviceRole } = input;
-  if (
-    enrollment &&
-    (!parent ||
-      parent.id !== enrollment.sessionId ||
-      parent.org_id !== orgId ||
-      parent.mode !== mode)
-  )
-    throw new ConflictError(
-      'This session changed. Reload and try again.',
-      'SCANNING_SESSION_CHANGED',
-    );
-  if (!(await orgIsActive(ctx.env.DB, orgId)))
-    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  roleAllowed(kind, deviceRole);
-  if (input.adminUserId) {
-    // An admin setup is the caller's own; naming another user would expose their name and email.
-    if (input.adminUserId !== userId)
-      throw new ValidationError(
-        'An admin setup belongs to the admin who creates it.',
-        [{ path: 'adminUserId', message: 'Use your own account.' }],
-        'SCANNER_ADMIN_USER',
-      );
-    const owner = await getUser(ctx.env.DB, input.adminUserId);
-    if (owner?.status !== 'active')
-      throw new NotFoundError('Admin user not found.', 'USER_NOT_FOUND');
-    if (kind !== 'device')
-      throw new ValidationError('Admin sign-in uses a browser device.', [], 'SCANNER_ADMIN_ROLE');
-  }
-  if (!enrollment) await checkWatch(ctx, orgId, mode, deviceRole, input.watch);
-  // A device joining a session inherits its templates: archived ones already there stay usable.
-  const attached = parent ? acceptedTemplateIds(parent.accepts) : [];
-  const accepts = input.accepts
-    ? await checkAccepts(ctx, orgId, mode, input.accepts, attached)
-    : null;
-  const settings = ScannerSettingsSchema.parse({
-    ...DEFAULT_SETTINGS,
-    ...input.settings,
-    acceptAllTemplates: accepts === null,
-  });
-  if (settings.checkIn?.eventId)
-    await checkAccepts(ctx, orgId, mode, { eventId: settings.checkIn.eventId });
-  const now = ctx.clock.now();
-  const id = ctx.ids.id();
+  const capture = newCapture({ userId, authority, orgId: input.orgId, mode, origin });
+  const plan = await planSetup(ctx, input, capture, enrollment, parent, false);
   const g = adminGrant(
     ctx,
     'org_mode.scan.setup.create',
     userId,
     authority,
-    orgId,
-    [
-      scannerSlot(),
-      ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
-      ...eventsOpen([...(accepts?.eventIds ?? []), settings.checkIn?.eventId]),
-      ...scopeTemplatesUsable(accepts?.templateIds ?? [], attached),
-    ],
+    input.orgId,
+    [...slotChecks(capture), ...plan.checks],
     SETUP_CODES,
-    id,
+    plan.id,
   );
-  addScannerInsert(g, {
-    id,
-    kind,
-    deviceRole,
-    name: input.name,
-    eventId: accepts?.eventId ?? null,
-    settings: JSON.stringify(settings),
-    timeZone: input.timeZone,
-    expiresAt: kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
-    createdBy: userId,
-    now,
-  });
-  addScannerTemplates(g, id, accepts?.templateIds ?? []);
-  addSetupInsert(g, id, mode, input.adminUserId ?? null, input.watch);
-  addEnrollment(ctx, g, id, userId, input, settings, enrollment);
-  g.add(
-    audited(g, ctx, {
-      orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: 'scanner.setup_create',
-      targetType: 'scanner',
-      targetId: id,
-      detail: { kind, deviceRole, adminSession: !!input.adminUserId },
-    }),
-  );
+  const { id } = setupStatements(g, ctx, plan, capture);
   try {
     await g.commit();
   } catch (error) {
-    conflict(error);
+    setupConflict(error);
   }
-  const pairing =
-    !input.adminUserId && kind !== 'terminal'
-      ? await createPairing(ctx, userId, await loadScanner(ctx, id), origin, authority)
-      : null;
+  const pairing = await issuePairing(ctx, capture, input, id);
   return { ...(await setupView(ctx, id)), pairing };
 }
 
@@ -277,7 +174,7 @@ export async function updateSetup(
   try {
     await g.commit();
   } catch (error) {
-    conflict(error);
+    setupConflict(error);
   }
   await kickScreen(ctx, row.orgId, row.mode, id);
   return setupView(ctx, id);

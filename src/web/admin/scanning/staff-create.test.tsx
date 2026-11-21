@@ -115,10 +115,8 @@ describe('Scanning staff', () => {
     await user.click(within(form).getByRole('button', { name: 'Add staff' }));
     const reveal = await screen.findByRole('dialog', { name: "Avery's PIN" });
     expect(body).toEqual({ orgId: 'o1', name: 'Avery', role: 'desk' });
-    expect(within(reveal).getByText(/not shown again/)).toBeInTheDocument();
-    expect(within(reveal).queryByText('048219')).not.toBeInTheDocument();
-    expect(within(reveal).getByRole('button', { name: 'Done' })).toBeDisabled();
-    await user.click(within(reveal).getByRole('button', { name: 'Show PIN' }));
+    expect(within(reveal).getByText(/Shown once/)).toBeInTheDocument();
+    expect(within(reveal).getByRole('button', { name: 'Done' })).toBeEnabled();
     expect(within(reveal).getByText('048219')).toBeInTheDocument();
     expect(
       JSON.stringify(
@@ -129,7 +127,6 @@ describe('Scanning staff', () => {
       ),
     ).not.toContain('048219');
     expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
-    await user.click(within(reveal).getByRole('checkbox', { name: 'I saved the PIN' }));
     await user.click(within(reveal).getByRole('button', { name: 'Done' }));
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: "Avery's PIN" })).not.toBeInTheDocument(),

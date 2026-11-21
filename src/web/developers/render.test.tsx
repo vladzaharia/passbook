@@ -38,7 +38,7 @@ describe('the prerendered portal', () => {
 
   it('marks the console in the nav and offers sign-in in place of an empty panel', () => {
     const html = body(`${PATHS.console}.html`);
-    expect(html).toMatch(/<a href="\/developers\/console" aria-current="page">Console<\/a>/);
+    expect(html).toMatch(/<a href="\/developers\/console" aria-current="page"[^>]*>Console<\/a>/);
     expect(html).toContain('Sign in to try');
   });
 

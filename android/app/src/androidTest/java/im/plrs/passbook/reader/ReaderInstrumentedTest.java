@@ -50,9 +50,16 @@ public class ReaderInstrumentedTest {
         }
     }
 
+    @Test public void readyAndCapabilitiesAdvertiseScanAckOutsideTheSnapshot() throws Exception {
+        assertEquals(1, MainActivity.features().length());
+        assertEquals("scanAck", MainActivity.features().getString(0));
+        assertFalse(MainActivity.capabilitySnapshot("1.2.3", true, "granted", true, true, true).has("features"));
+    }
+
     @Test public void capabilitySnapshotsDoNotClaimUnsupportedReadersOrVerification() throws Exception {
         JSONObject caps = MainActivity.capabilitySnapshot("1.2.3", true, "granted", true, true, true);
-        assertEquals(8, caps.length());
+        assertEquals(9, caps.length());
+        assertTrue(caps.getBoolean("haptics"));
         assertEquals("android", caps.getString("platform"));
         assertEquals("1.2.3", caps.getString("appVersion"));
         JSONObject camera = caps.getJSONObject("camera");

@@ -28,7 +28,11 @@ function Host() {
       if (document.activeElement && document.activeElement !== document.body) return;
       const back =
         from.current?.isConnected && from.current !== document.body ? from.current : null;
-      (back ?? document.querySelector<HTMLElement>('[data-search]'))?.focus();
+      // The menubar renders two Search buttons (icon and field); only one is displayed.
+      const shown = [...document.querySelectorAll<HTMLElement>('[data-search]')].find(
+        (el) => el.getClientRects().length > 0,
+      );
+      (back ?? shown)?.focus();
     }, 30);
     return () => clearInterval(timer);
   }, [open]);

@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
@@ -21,6 +21,7 @@ import {
   SCANNING_TABS,
   type ScanningSearch,
   type ScanningTab,
+  scanningSearchSchema,
   withTab,
 } from './search.ts';
 import { useScanningSessions } from './sessions/api.ts';
@@ -35,11 +36,11 @@ const ScansTab = lazy(() => import('./scans-tab.tsx').then((m) => ({ default: m.
 
 const LABEL: Record<ScanningTab, string> = {
   sessions: 'Sessions',
-  scanners: 'Devices',
+  devices: 'Devices',
   events: 'Events',
   zones: 'Zones',
   staff: 'Staff',
-  scans: 'Activity',
+  activity: 'Activity',
   tags: 'Tags',
 };
 
@@ -54,6 +55,18 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
   const canManage = Boolean(
     scope.orgId && scope.membership?.capabilities.includes('scanning:manage'),
   );
+  // An old or unknown ?tab= is rewritten to the tab the page shows.
+  const rawTab = useLocation({ select: (l) => new URLSearchParams(l.searchStr).get('tab') });
+  const parsedTab = scanningSearchSchema.shape.tab.parse(rawTab ?? undefined);
+  const shownTab = parsedTab && parsedTab !== DEFAULT_TAB ? parsedTab : null;
+  useEffect(() => {
+    if (rawTab === null || rawTab === shownTab) return;
+    void navigate({
+      to: '.',
+      search: (prev) => ({ ...prev, tab: shownTab ?? undefined }),
+      replace: true,
+    });
+  }, [rawTab, shownTab, navigate]);
   useEffect(() => {
     if (!scope.isLoading && (scope.isError || !canManage)) setCreatingSession(undefined);
   }, [canManage, scope.isError, scope.isLoading]);
@@ -125,7 +138,7 @@ function ScopedScanningPage({
         iconStart={<Plus aria-hidden />}
         onClick={() => setCreatingSession({})}
       >
-        New scanning session
+        New session
       </Button>
     ) : null;
   const setTab = (next: string) =>
@@ -144,7 +157,7 @@ function ScopedScanningPage({
             ? noSessions
               ? undefined
               : newSession('primary')
-            : tab === 'scanners'
+            : tab === 'devices'
               ? noScanners
                 ? undefined
                 : newSession('primary')
@@ -166,7 +179,7 @@ function ScopedScanningPage({
             onDuplicate={(initial) => setCreatingSession({ initial })}
           />
         </TabsContent>
-        <TabsContent value="scanners">
+        <TabsContent value="devices">
           <ScannersTab live={live} newButton={newSession('primary')} />
         </TabsContent>
         <TabsContent value="events">
@@ -187,7 +200,7 @@ function ScopedScanningPage({
             <TagsTab key={mode} search={search} />
           </Suspense>
         </TabsContent>
-        <TabsContent value="scans">
+        <TabsContent value="activity">
           <Suspense fallback={<p role="status">Loading scans…</p>}>
             <ScansTab search={search} />
           </Suspense>

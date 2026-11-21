@@ -16,7 +16,7 @@ afterEach(() => {
 describe('scan history, filtered by pass type', () => {
   it('sends the pass type the person picks and keeps it in the address', async () => {
     const requests: URL[] = [];
-    const { router } = await renderApp('/admin/scanning?tab=scans', {
+    const { router } = await renderApp('/admin/scanning?tab=activity', {
       session: 'admin',
       memberships: [member],
       selectedOrg: 'o1',
