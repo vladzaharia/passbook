@@ -3,11 +3,15 @@ import { type Clock, systemClock } from '../../platform/clock.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { safeEqual, sha256Hex } from '../../platform/ids.ts';
-import { getScannerByPrefix, type ScannerRow, touchScanner } from './repo-device.ts';
+import {
+  DEVICE_IDLE_MS,
+  getScannerByPrefix,
+  type ScannerRow,
+  touchScanner,
+} from './repo-device.ts';
 
-const DAY = 86_400_000;
 export const TOUCH_EVERY_MS = 60_000;
-export const DEVICE_IDLE_MS = 30 * DAY;
+export { DEVICE_IDLE_MS };
 
 /** The row `resolve` already read, so the guard does not read it again. */
 const resolvedRows = new WeakMap<ScannerAuth, ScannerRow>();

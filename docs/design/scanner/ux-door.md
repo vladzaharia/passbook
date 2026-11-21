@@ -305,7 +305,7 @@ Each announcement is one sentence: headline, then sub, then holder (exact text p
 
 | Principal | How | Scope | Lifetime |
 | --- | --- | --- | --- |
-| **Paired scanner device** (the normal case) | Pairing QR link or 8-digit code | One org, one mode. Allowed templates, optional pinned event, door window, re-entry, override and offline settings (section 13) | 90 days, revocable, `last_seen_at` (PM §10.1, MA §10.2) |
+| **Paired scanner device** (the normal case) | Pairing QR link or 8-digit code | One org, one mode. Allowed templates, optional pinned event, door window, re-entry, override and offline settings (section 13) | 180 days, revocable, `last_seen_at` (PM §10.1, MA §10.2) |
 | **Platform admin** | Their own session on `/scan` | Picks an org; mode comes from the n6 switch | Their session (1 h idle, kept alive by scanning; 12 h absolute, MA §10.8). For rehearsal and setup, not shifts |
 | Holders, `user` sessions, API keys | No door access. Keys reach the scan API for POS at the desk only | | |
 

@@ -38,9 +38,8 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
-   - Groups: `OIDC_ADMIN_GROUP` and `OIDC_USER_GROUP` hold the exact names the token carries
-     (case and punctuation included), comma-separated when there are several. Pocket ID can turn a display
-     name `wallet-admins` into `wallet_admins`, so `wrangler.jsonc` lists both. Near misses grant nothing. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
+   - Groups: `wallet-admins`, `wallet-users`. Pocket ID's generated names (`wallet_admins`) match
+     too. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.

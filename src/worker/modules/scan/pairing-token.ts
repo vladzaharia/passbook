@@ -17,7 +17,7 @@ import { setupMeta } from './repo-setups.ts';
 import { nameTaken } from './scanner-name.ts';
 
 const DAY = 86_400_000;
-export const DEVICE_MAX_MS = 90 * DAY;
+export const DEVICE_MAX_MS = 180 * DAY;
 export const TERMINAL_TTL_MS = 365 * DAY;
 
 const PAIR_CODES = { config: 'SCANNER_CHANGED', lineage: 'SCANNER_CHANGED' } as const;

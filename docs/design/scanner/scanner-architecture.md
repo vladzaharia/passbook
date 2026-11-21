@@ -536,7 +536,7 @@ replaces the token. Bearer only, no cookie, no CSRF.
 | Issue | `wls_<8>_<43>`: 8-char prefix plus 32 random bytes base64url. `token_prefix` UNIQUE, `token_hash` SHA-256, compared with `safeEqual`. Cookie `__Host-wallet_scan; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=15552000`. `csrf_secret` = `ctx.ids.token(32)`, returned by `GET /scan/session`, kept in memory |
 | Resolve | by prefix, then hash. No isolate cache: revocation bites on the next request |
 | Touch | `last_seen_at`, `last_ip_prefix` at most every 60 s. "Online" in the console = seen within 2 min |
-| Expire | devices: 30 d idle, 90 d absolute. Terminals: `expires_at` set at creation (default 365 d), no idle |
+| Expire | devices: 90 d idle, sliding (each request extends `expires_at`). Terminals: `expires_at` set at creation (default 365 d), no idle |
 | Revoke | `POST /api/v1/scanners/{id}/revoke`: sets `revoked_at` and ends any staff binding; it **keeps** `token_prefix` and `token_hash`, so the old token still matches and the next request is 401 `SCANNER_REVOKED` (clearing them would answer `SCANNER_UNAUTHENTICATED` and show the pairing card, not the **Scanner removed** panel). **Pair again** reactivates the same scanner with a new token |
 | Rotate | none for devices (HttpOnly, `__Host-`, Strict; a lost rotation response would lock a door out). Terminals: Replace token |
 | Unpair | `POST /api/v1/scan/unpair` always 200, clears the cookie, clears the token if valid (audit `scanner.unpair`) |
@@ -1565,7 +1565,7 @@ raw PII nor proof material belongs in logs.
  (none) ──────────▶ not_paired ──────────────────────▶ paired ──────────▶ revoked
                       ▲   │ pairing code (10 min)        │  ▲                 │
                       │   └──── expires ──┘              │  └── pair again ───┘ (new token)
-                      └──── unpair / idle 30 d / 90 d ──┘
+                      └──── unpair / idle 30 d / 180 d ──┘
  mode: test ⇄ live (Go live / Move to Test mode), audited; a test event is detached first
  staff binding (device): none ──PIN──▶ bound ──15 min idle │ 12 h │ switch │ revoke │ disable──▶ none
 ```

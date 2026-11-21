@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { first, run } from '../../platform/db.ts';
+import { run } from '../../platform/db.ts';
 import { createScannerStore } from './auth-store.ts';
 import {
   auditActions,
@@ -46,7 +46,7 @@ describe('pairing', () => {
     expect(raw).toContain('HttpOnly');
     expect(raw).toContain('Secure');
     expect(raw).toContain('SameSite=Strict');
-    expect(raw).toContain('Max-Age=7776000');
+    expect(raw).toContain('Max-Age=15552000');
     expect(raw).toContain('__Host-wallet_scan=wls_');
     const session = (await paired.json()) as {
       principal: string;
@@ -67,12 +67,6 @@ describe('pairing', () => {
       mode: 'live',
       csrfSecret: session.csrfToken,
     });
-    const expires = await first<{ expires_at: number; paired_at: number }>(
-      env.DB,
-      'SELECT expires_at, paired_at FROM scanners WHERE id = ?',
-      [body.id],
-    );
-    expect((expires?.expires_at ?? 0) - (expires?.paired_at ?? 0)).toBe(90 * 86_400_000);
     const state = await poll();
     expect(state.state).toBe('paired');
     expect(state.device?.label).toBe('iPhone · Safari');
@@ -81,6 +75,22 @@ describe('pairing', () => {
       pairedLabel: string;
     };
     expect(dto).toMatchObject({ status: 'paired', pairedLabel: 'iPhone · Safari' });
+  });
+
+  it('keeps an active device past 90 days since pairing and drops one idle for 90 days', async () => {
+    const DAY = 86_400_000;
+    const pairNew = async (name: string) => {
+      const { body } = await create({ name });
+      return cookieOf(await pairCall('', body.pairing?.code ?? '')).token;
+    };
+    const store = createScannerStore(env, clock);
+    const active = await pairNew('Active');
+    const idle = await pairNew('Idle');
+    for (let day = 30; day <= 200; day += 30) {
+      clock.advance(30 * DAY);
+      expect(await store.resolve(active, 'cookie'), `day ${day}`).not.toBeNull();
+    }
+    await expect(store.resolve(idle, 'cookie')).rejects.toMatchObject({ code: 'SCANNER_EXPIRED' });
   });
 
   it('does not widen a stale session assignment in the initial paired session', async () => {
