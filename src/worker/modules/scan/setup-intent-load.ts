@@ -210,9 +210,9 @@ export async function loadSetupFacts(
   const eventKeys: SetupFacts['eventKeys'] = new Map();
   intent.events.forEach((e, i) => {
     if (!('fromTemplate' in e)) return;
-    (extras.get(e.fromTemplate) ?? []).forEach((x, n) =>
-      eventKeys.set(`${e.ref ?? `template-${i + 1}`}-${n + 1}`, x),
-    );
+    (extras.get(e.fromTemplate) ?? []).forEach((x, n) => {
+      eventKeys.set(`${e.ref ?? `template-${i + 1}`}-${n + 1}`, x);
+    });
   });
   for (const t of templates)
     for (const u of t.upcomingEvents ?? []) if (u.existingId) wanted.events.add(u.existingId);

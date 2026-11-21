@@ -2,7 +2,6 @@ import { type Grant, type GrantedStatement, grant } from '../../platform/authori
 import {
   type Check,
   epochIs,
-  exactlyOne,
   templateUsableSql,
 } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';

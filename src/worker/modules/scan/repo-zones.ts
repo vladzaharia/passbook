@@ -1,5 +1,5 @@
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
-import { type Check, exactlyOne } from '../../platform/authority-checks.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import { inList, maxNow, type SetValue } from '../../platform/authority-expr.ts';
 import { all, first, type SqlValue } from '../../platform/db.ts';
