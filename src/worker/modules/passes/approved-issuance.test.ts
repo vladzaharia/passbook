@@ -81,8 +81,10 @@ vi.mock('../identities/resolver.ts', async (importOriginal) => {
       const asOwn = async () => ({ ...(await base.platform()), ...ownIdentity });
       return {
         ...base,
-        forOrg: (orgId: string, identityId?: string | null) =>
-          ownIdentity && orgId === ownIdentity.orgId ? asOwn() : base.forOrg(orgId, identityId),
+        forOrg: (orgId: string, identityId: string | null | undefined, now: number) =>
+          ownIdentity && orgId === ownIdentity.orgId
+            ? asOwn()
+            : base.forOrg(orgId, identityId, now),
         byId: (id: string) => (ownIdentity && id === ownIdentity.id ? asOwn() : base.byId(id)),
         byRow: (row: { id: string }) =>
           ownIdentity && row.id === ownIdentity.id ? asOwn() : base.byId(row.id),
