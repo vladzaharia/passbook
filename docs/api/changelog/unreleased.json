@@ -93,7 +93,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"scan-setup:read\" added",
-    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
+    "note": "A key can hold scan-setup:read to read the org\u2019s managed scanner and screen setups."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
@@ -806,6 +806,14 @@
     "op": "POST /api/v1/scan/pair",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPairPreview",
+    "op": "POST /api/v1/scan/pair/preview",
+    "change": "200.sessionName: field added",
+    "note": "The pairing preview names the session the device joins."
   },
   {
     "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware: field added",
