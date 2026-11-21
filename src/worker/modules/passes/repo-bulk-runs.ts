@@ -253,3 +253,22 @@ export async function latestRun(
   );
   return row ? { ...toRecord(row), stopRequested: row.stop_requested === 1 } : null;
 }
+
+/**
+ * Whether a bulk run already queued this pass's mail. The outbox row is written in the same batch as the
+ * mail, so it is the marker: a step retried after a crash between the queueing and the cursor save finds
+ * the row and counts the pass done instead of mailing again.
+ */
+export async function mailQueuedForRun(
+  db: D1Database,
+  passId: string,
+  runId: string,
+): Promise<boolean> {
+  return (
+    (await first(
+      db,
+      "SELECT 1 AS x FROM outbox WHERE pass_id = ? AND kind = 'email' AND json_extract(payload, '$.runId') = ?",
+      [passId, runId],
+    )) !== null
+  );
+}

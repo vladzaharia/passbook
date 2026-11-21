@@ -5171,6 +5171,7 @@ class PassRemovedEvent(_Model):
 class PassRemovedEventData(_Model):
     version: int | None = None
     message: bool | None = None
+    runId: str | None = None
 
 class PassRestoredEvent(_Model):
     id: str
@@ -5365,6 +5366,7 @@ class PassVoidedEvent(_Model):
 
 class PassVoidedEventData(_Model):
     actorType: str | None = None
+    runId: str | None = None
 
 class PassesActivityListItem(_Model):
     id: str

@@ -1434,6 +1434,7 @@ export type PassRemovedEvent = {
   data: {
     version?: number;
     message?: boolean;
+    runId?: string;
   };
   sample?: true;
 };
@@ -1629,6 +1630,7 @@ export type PassVoidedEvent = {
   pass: WebhookPassRef;
   data: {
     actorType?: string | null;
+    runId?: string;
   };
   sample?: true;
 };

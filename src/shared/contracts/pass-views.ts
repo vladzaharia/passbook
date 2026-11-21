@@ -1,17 +1,51 @@
 import { z } from 'zod';
 import { IdSchema } from './common.ts';
-import { PassFilterSchema } from './pass-selection.ts';
+import { type PassFilter, PassFilterSchema } from './pass-selection.ts';
 
 // Saved views of the passes list: a name and the filter it applies. Kept per organization.
 
 export const PASS_VIEWS_MAX = 20;
+
+const isAddress = (v: string) => v.includes('@');
+
+/** True when the filter holds something that looks like an email address: `holderEmail`, `q` or a match value. */
+export function filterHasAddress(f: PassFilter): boolean {
+  return (
+    f.holderEmail !== undefined ||
+    (f.q !== undefined && isAddress(f.q)) ||
+    (f.match ?? []).some((c) =>
+      'values' in c ? c.values.some(isAddress) : 'value' in c && isAddress(c.value),
+    )
+  );
+}
+
+/** The filter with every address-looking value hidden, for an audit entry. */
+export function maskAddresses(f: PassFilter): PassFilter {
+  const hide = (v: string) => (isAddress(v) ? '[hidden]' : v);
+  return {
+    ...f,
+    ...(f.holderEmail !== undefined ? { holderEmail: '[hidden]' } : {}),
+    ...(f.q !== undefined ? { q: hide(f.q) } : {}),
+    ...(f.match
+      ? {
+          match: f.match.map((c) =>
+            'values' in c
+              ? { ...c, values: c.values.map(hide) }
+              : 'value' in c
+                ? { ...c, value: hide(c.value) }
+                : c,
+          ),
+        }
+      : {}),
+  };
+}
 
 export const PassViewSchema = z.strictObject({
   /** Chosen by the client; unique within the list. */
   id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/),
   name: z.string().trim().min(1).max(40),
   // No holder address is stored: it would outlive an erasure of the holder.
-  filter: PassFilterSchema.refine((f) => f.holderEmail === undefined, {
+  filter: PassFilterSchema.refine((f) => !filterHasAddress(f), {
     message: 'A view cannot hold an email address.',
     path: ['holderEmail'],
   }),

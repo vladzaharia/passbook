@@ -1534,5 +1534,21 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "webhook pass.removed data.runId: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.removed",
+    "op": "webhook pass.removed",
+    "change": "data.runId: field added",
+    "note": "pass.removed data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "webhook pass.voided data.runId: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.voided",
+    "op": "webhook pass.voided",
+    "change": "data.runId: field added",
+    "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
   }
 ]

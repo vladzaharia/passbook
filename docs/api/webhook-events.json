@@ -305,6 +305,10 @@
                     "type": "null"
                   }
                 ]
+              },
+              "runId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "additionalProperties": false
@@ -504,6 +508,10 @@
               },
               "message": {
                 "type": "boolean"
+              },
+              "runId": {
+                "type": "string",
+                "maxLength": 300
               }
             },
             "additionalProperties": false

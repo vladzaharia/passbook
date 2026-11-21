@@ -93,5 +93,6 @@ export async function resendEmail(
     },
     ...(authority ? { authority } : {}),
     ...(queuedFor ? { queuedFor } : {}),
+    ...(runId ? { bulkRunId: runId } : {}),
   });
 }

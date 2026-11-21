@@ -4096,8 +4096,9 @@ type PassRemovedEvent struct {
 }
 
 type PassRemovedEventData struct {
-	Version *int64 `json:"version,omitempty"`
-	Message *bool  `json:"message,omitempty"`
+	Version *int64  `json:"version,omitempty"`
+	Message *bool   `json:"message,omitempty"`
+	RunID   *string `json:"runId,omitempty"`
 }
 
 type PassRestoredEvent struct {
@@ -4321,6 +4322,7 @@ type PassVoidedEvent struct {
 
 type PassVoidedEventData struct {
 	ActorType *string `json:"actorType,omitempty"`
+	RunID     *string `json:"runId,omitempty"`
 }
 
 type PassesActivityListItem struct {

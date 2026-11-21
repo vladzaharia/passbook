@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeOrg } from '../../../../test/helpers/index.ts';
+import { maskAddresses } from '../../../shared/contracts/pass-views.ts';
 import { createApp } from '../../app.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
 import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
@@ -146,6 +147,42 @@ describe('saved views', () => {
       revision: 0,
     });
     expect(res.status).toBe(422);
+  });
+
+  it('stores no address-looking value in q or a match value either', async () => {
+    const { revision } = await read();
+    const put = (filter: unknown) =>
+      call('PUT', '/passes/views', {
+        orgId: kit.org.id,
+        items: [{ id: 'y', name: 'Y', filter }],
+        revision,
+      });
+    expect((await put({ q: 'ana@example.com' })).status).toBe(422);
+    expect(
+      (await put({ match: [{ input: 'memberName', op: 'contains', value: 'a@b.co' }] })).status,
+    ).toBe(422);
+    expect((await put({ match: [{ input: 'plan', values: ['a@b.co'] }] })).status).toBe(422);
+    expect((await put({ q: 'ana' })).status).toBe(200);
+  });
+
+  it('masks addresses in a filter for the audit', () => {
+    expect(
+      maskAddresses({
+        holderEmail: 'a@b.co',
+        q: 'x@y.co',
+        match: [
+          { input: 'm', op: 'contains', value: 'p@q.co' },
+          { input: 'plan', values: ['Monthly'] },
+        ],
+      }),
+    ).toEqual({
+      holderEmail: '[hidden]',
+      q: '[hidden]',
+      match: [
+        { input: 'm', op: 'contains', value: '[hidden]' },
+        { input: 'plan', values: ['Monthly'] },
+      ],
+    });
   });
 
   it('does not read or write another organization', async () => {

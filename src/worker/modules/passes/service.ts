@@ -259,6 +259,7 @@ async function setStatus(
     mode: result.pass.mode,
     kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
     actor,
+    ...(runWrite ? { data: { runId: runWrite.runId } } : {}),
   });
   return currentSummary(ctx, result.pass, authority);
 }

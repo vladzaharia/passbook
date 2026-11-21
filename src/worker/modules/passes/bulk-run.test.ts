@@ -16,7 +16,12 @@ import { voidPass } from './service.ts';
 import { setupTenantTestAuth, type TenantTestAuth } from './tenant-test-fixtures.ts';
 
 // Faults for the replay and revocation tests: a flag makes the Nth mail throw, another makes the read proof lie.
-const fault = vi.hoisted(() => ({ mailAt: 0, mails: [] as string[], proofLies: false }));
+const fault = vi.hoisted(() => ({
+  mailAt: 0,
+  crashAfterAt: 0,
+  mails: [] as string[],
+  proofLies: false,
+}));
 vi.mock('./pass-service-delivery.ts', async (original) => {
   const real = await original<typeof import('./pass-service-delivery.ts')>();
   return {
@@ -28,6 +33,11 @@ vi.mock('./pass-service-delivery.ts', async (original) => {
       }
       await real.resendEmail(...args);
       fault.mails.push(args[2]);
+      // A crash after the mail is queued and before the cursor is saved.
+      if (fault.crashAfterAt > 0 && fault.mails.length === fault.crashAfterAt) {
+        fault.crashAfterAt = 0;
+        throw new Error('crash');
+      }
     },
   };
 });
@@ -47,6 +57,7 @@ let app: ReturnType<typeof createApp>;
 
 beforeEach(async () => {
   fault.mailAt = 0;
+  fault.crashAfterAt = 0;
   fault.mails = [];
   fault.proofLies = false;
   kit = await setupKit();
@@ -252,6 +263,33 @@ describe('bulk runs', () => {
     expect(fault.mails).toHaveLength(3);
     expect(new Set(fault.mails).size).toBe(3);
     expect(await get(started.id)).toMatchObject({ state: 'done', done: 3 });
+  });
+
+  it('sends no second mail when a step crashes after queueing and before the cursor moves', async () => {
+    const started = (await (await start(3, 'send_email')).json()) as Run;
+    fault.crashAfterAt = 2;
+    await expect(runBulkChunk(jobCtxOf(kit), started.id)).rejects.toThrow('crash');
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    // Two mails before the crash, one after the retry: the crashed pass is not mailed again.
+    expect(fault.mails).toHaveLength(3);
+    const queued = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) AS n FROM outbox WHERE kind = 'email' AND json_extract(payload, '$.runId') = ?",
+      [started.id],
+    );
+    expect(queued?.n).toBe(3);
+    expect(await get(started.id)).toMatchObject({ state: 'done', done: 3 });
+  });
+
+  it('names the run on the per-pass events', async () => {
+    const started = (await (await start(3)).json()) as Run;
+    await runBulkChunk(jobCtxOf(kit), started.id);
+    const row = await first<{ n: number }>(
+      kit.env.DB,
+      "SELECT COUNT(*) AS n FROM pass_events WHERE kind = 'pass.voided' AND json_extract(data, '$.runId') = ?",
+      [started.id],
+    );
+    expect(row?.n).toBe(3);
   });
 
   it('skips email for a voided pass or one that moved since the snapshot', async () => {

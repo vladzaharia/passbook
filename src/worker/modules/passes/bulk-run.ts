@@ -1,5 +1,6 @@
 import type { BulkRunDto } from '../../../shared/contracts/pass-bulk-runs.ts';
 import type { PassFilter } from '../../../shared/contracts/pass-selection.ts';
+import { maskAddresses } from '../../../shared/contracts/pass-views.ts';
 import { ConflictError, NotFoundError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -126,7 +127,7 @@ export async function startBulkRun(
       runId: id,
       action: input.action,
       total: rec.total,
-      filter: { ...input.filter, ...(input.filter.holderEmail ? { holderEmail: '[hidden]' } : {}) },
+      filter: maskAddresses(input.filter),
     },
   });
   return bulkRunDto(rec, false);

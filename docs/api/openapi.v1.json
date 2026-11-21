@@ -241,6 +241,10 @@
                   "null"
                 ],
                 "maxLength": 300
+              },
+              "runId": {
+                "type": "string",
+                "maxLength": 300
               }
             }
           },
@@ -379,6 +383,10 @@
               },
               "message": {
                 "type": "boolean"
+              },
+              "runId": {
+                "type": "string",
+                "maxLength": 300
               }
             }
           },

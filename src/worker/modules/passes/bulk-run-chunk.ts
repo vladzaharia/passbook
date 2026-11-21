@@ -15,6 +15,7 @@ import {
   ACTIVE_STATES,
   type BulkRunRecord,
   holdsLock,
+  mailQueuedForRun,
   readRun,
   saveRun,
   stopFlag,
@@ -54,6 +55,8 @@ async function applyOne(
       if (pass.status !== 'active') return 'NOT_ACTIVE';
       if (pass.version !== seen) return 'PASS_CHANGED';
       if (!pass.holderEmail) return 'NO_RECIPIENT';
+      // Queued by an earlier try of this step (crash before the cursor moved): never a second mail.
+      if (await mailQueuedForRun(ctx.env.DB, passId, rec.id)) return 'done';
       // The queueing grant proves the starter; the starter is a reviewed site for a deferred actor (a workflow, no request).
       await resendEmail(
         ctx,

@@ -48,6 +48,7 @@ const kindOf = (type: string): string => (type === 'integer' ? 'number' : type);
 
 /** Input types by template, kept a minute per isolate: the ambiguity check runs on every matched list. */
 const TYPES_FOR_MS = 60_000;
+const TYPES_CACHE_MAX = 500;
 const typesCache = new Map<string, { at: number; fields: { key: string; kind: string }[] }>();
 
 /**
@@ -72,6 +73,9 @@ export async function assertMatchUnambiguous(
         key: f.key,
         kind: kindOf(f.type),
       }));
+      // Bounded: the oldest entry goes when the cache is full.
+      if (typesCache.size >= TYPES_CACHE_MAX)
+        typesCache.delete(typesCache.keys().next().value ?? '');
       typesCache.set(template_id, { at: ctx.clock.now(), fields });
     }
     for (const field of fields)
