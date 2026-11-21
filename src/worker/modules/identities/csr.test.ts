@@ -28,7 +28,7 @@ describe('generateCsr', () => {
     const out = await generateCsr(PTI);
     const request = parse(out.csrDer);
     const key = await request.getPublicKey(undefined, engine);
-    const algorithm = key.algorithm as RsaHashedKeyAlgorithm;
+    const algorithm = key.algorithm as { name: string; modulusLength: number };
     expect(algorithm.name).toBe('RSASSA-PKCS1-v1_5');
     expect(algorithm.modulusLength).toBe(2048);
     expect(out.pubkeySha256).toBe(await spkiSha256(request.subjectPublicKeyInfo));
