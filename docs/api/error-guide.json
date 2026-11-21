@@ -1871,16 +1871,16 @@
     "fix": "Fetch them with GET /api/v1/settings and send your change again.",
     "retryable": true
   },
+  "STAFF_NAME_REQUIRED": {
+    "title": "Name required",
+    "when": "Sign-in with a PIN alone is not available now: it is off for the org, paused after too many wrong PINs, or the org has more than 100 active staff.",
+    "fix": "Send staffId with the PIN.",
+    "retryable": false
+  },
   "STAFF_NAME_TAKEN": {
     "title": "Staff name taken",
     "when": "Another active staff member already has this name.",
     "fix": "Choose a different name.",
-    "retryable": false
-  },
-  "STAFF_PIN_AMBIGUOUS": {
-    "title": "PIN shared",
-    "when": "Staff sign-in without a name matched more than one active staff member, or the org has had too many wrong PINs this hour, or has more than 500 active staff.",
-    "fix": "Pick the name and enter the PIN again.",
     "retryable": false
   },
   "STAFF_REQUIRED": {

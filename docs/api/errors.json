@@ -3782,7 +3782,7 @@
       ]
     },
     {
-      "code": "STAFF_NAME_TAKEN",
+      "code": "STAFF_NAME_REQUIRED",
       "statuses": [
         409
       ],
@@ -3791,7 +3791,7 @@
       ]
     },
     {
-      "code": "STAFF_PIN_AMBIGUOUS",
+      "code": "STAFF_NAME_TAKEN",
       "statuses": [
         409
       ],
