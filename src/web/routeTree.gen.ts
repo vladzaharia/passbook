@@ -74,6 +74,7 @@ import { Route as AdminOOrgIdApiKeysKeyIdRouteImport } from './routes/admin/o/$o
 import { Route as AdminOOrgIdAuditIndexRouteImport } from './routes/admin/o/$orgId/audit/index'
 import { Route as AdminOOrgIdBlueprintsIndexRouteImport } from './routes/admin/o/$orgId/blueprints/index'
 import { Route as AdminOOrgIdBlueprintsBlueprintIdRouteImport } from './routes/admin/o/$orgId/blueprints/$blueprintId'
+import { Route as AdminOOrgIdBrandIndexRouteImport } from './routes/admin/o/$orgId/brand/index'
 import { Route as AdminOOrgIdConnectionsIndexRouteImport } from './routes/admin/o/$orgId/connections/index'
 import { Route as AdminOOrgIdConnectionsConnectionIdRouteImport } from './routes/admin/o/$orgId/connections/$connectionId'
 import { Route as AdminOOrgIdConnectionsNewRouteImport } from './routes/admin/o/$orgId/connections/new'
@@ -454,6 +455,11 @@ const AdminOOrgIdBlueprintsBlueprintIdRoute =
     path: '/blueprints/$blueprintId',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdBrandIndexRoute = AdminOOrgIdBrandIndexRouteImport.update({
+  id: '/brand/',
+  path: '/brand/',
+  getParentRoute: () => AdminOOrgIdRouteRoute,
+} as any)
 const AdminOOrgIdConnectionsIndexRoute =
   AdminOOrgIdConnectionsIndexRouteImport.update({
     id: '/connections/',
@@ -711,6 +717,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/api-keys/': typeof AdminOOrgIdApiKeysIndexRoute
   '/admin/o/$orgId/audit/': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints/': typeof AdminOOrgIdBlueprintsIndexRoute
+  '/admin/o/$orgId/brand/': typeof AdminOOrgIdBrandIndexRoute
   '/admin/o/$orgId/connections/': typeof AdminOOrgIdConnectionsIndexRoute
   '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
@@ -806,6 +813,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/api-keys': typeof AdminOOrgIdApiKeysIndexRoute
   '/admin/o/$orgId/audit': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints': typeof AdminOOrgIdBlueprintsIndexRoute
+  '/admin/o/$orgId/brand': typeof AdminOOrgIdBrandIndexRoute
   '/admin/o/$orgId/connections': typeof AdminOOrgIdConnectionsIndexRoute
   '/admin/o/$orgId/members': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages': typeof AdminOOrgIdMessagesIndexRoute
@@ -905,6 +913,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/api-keys/': typeof AdminOOrgIdApiKeysIndexRoute
   '/admin/o/$orgId/audit/': typeof AdminOOrgIdAuditIndexRoute
   '/admin/o/$orgId/blueprints/': typeof AdminOOrgIdBlueprintsIndexRoute
+  '/admin/o/$orgId/brand/': typeof AdminOOrgIdBrandIndexRoute
   '/admin/o/$orgId/connections/': typeof AdminOOrgIdConnectionsIndexRoute
   '/admin/o/$orgId/members/': typeof AdminOOrgIdMembersIndexRoute
   '/admin/o/$orgId/messages/': typeof AdminOOrgIdMessagesIndexRoute
@@ -1005,6 +1014,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/api-keys/'
     | '/admin/o/$orgId/audit/'
     | '/admin/o/$orgId/blueprints/'
+    | '/admin/o/$orgId/brand/'
     | '/admin/o/$orgId/connections/'
     | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
@@ -1100,6 +1110,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/api-keys'
     | '/admin/o/$orgId/audit'
     | '/admin/o/$orgId/blueprints'
+    | '/admin/o/$orgId/brand'
     | '/admin/o/$orgId/connections'
     | '/admin/o/$orgId/members'
     | '/admin/o/$orgId/messages'
@@ -1198,6 +1209,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/api-keys/'
     | '/admin/o/$orgId/audit/'
     | '/admin/o/$orgId/blueprints/'
+    | '/admin/o/$orgId/brand/'
     | '/admin/o/$orgId/connections/'
     | '/admin/o/$orgId/members/'
     | '/admin/o/$orgId/messages/'
@@ -1685,6 +1697,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdBlueprintsBlueprintIdRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/brand/': {
+      id: '/admin/o/$orgId/brand/'
+      path: '/brand'
+      fullPath: '/admin/o/$orgId/brand/'
+      preLoaderRoute: typeof AdminOOrgIdBrandIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/connections/': {
       id: '/admin/o/$orgId/connections/'
       path: '/connections'
@@ -1959,6 +1978,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdApiKeysIndexRoute: typeof AdminOOrgIdApiKeysIndexRoute
   AdminOOrgIdAuditIndexRoute: typeof AdminOOrgIdAuditIndexRoute
   AdminOOrgIdBlueprintsIndexRoute: typeof AdminOOrgIdBlueprintsIndexRoute
+  AdminOOrgIdBrandIndexRoute: typeof AdminOOrgIdBrandIndexRoute
   AdminOOrgIdConnectionsIndexRoute: typeof AdminOOrgIdConnectionsIndexRoute
   AdminOOrgIdMembersIndexRoute: typeof AdminOOrgIdMembersIndexRoute
   AdminOOrgIdMessagesIndexRoute: typeof AdminOOrgIdMessagesIndexRoute
@@ -2000,6 +2020,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdApiKeysIndexRoute: AdminOOrgIdApiKeysIndexRoute,
   AdminOOrgIdAuditIndexRoute: AdminOOrgIdAuditIndexRoute,
   AdminOOrgIdBlueprintsIndexRoute: AdminOOrgIdBlueprintsIndexRoute,
+  AdminOOrgIdBrandIndexRoute: AdminOOrgIdBrandIndexRoute,
   AdminOOrgIdConnectionsIndexRoute: AdminOOrgIdConnectionsIndexRoute,
   AdminOOrgIdMembersIndexRoute: AdminOOrgIdMembersIndexRoute,
   AdminOOrgIdMessagesIndexRoute: AdminOOrgIdMessagesIndexRoute,

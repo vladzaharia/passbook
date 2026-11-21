@@ -5,7 +5,13 @@ import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
-import { credential, enrolment, KEY, platformEnrolment } from './wallet-accounts-test-fixtures.ts';
+import {
+  credential,
+  enrolment,
+  KEY,
+  platformEnrolment,
+  renderOrgAccounts,
+} from './wallet-accounts-test-fixtures.ts';
 
 const READ: OrgCapability[] = ['org:read', 'integrations:read'];
 const MANAGE: OrgCapability[] = [...READ, 'integrations:manage'];
@@ -31,7 +37,7 @@ function orgHandlers(
 
 describe('organization wallet accounts', () => {
   it('shows each wallet with its gates and no axe violations', async () => {
-    const { container } = await renderApp('/admin/o/o1/wallet-accounts', {
+    const { container } = await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: orgHandlers([
         enrolment({
@@ -44,15 +50,13 @@ describe('organization wallet accounts', () => {
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
     expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
-    expect(within(google).getByRole('switch', { name: 'Google Wallet on' })).toBeEnabled();
     const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
-    expect(within(samsung).getByRole('switch')).toBeDisabled();
     expect(within(samsung).getByText('Pick a source first.')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
   it('shows the platform hold and its reason, with no way to release it', async () => {
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: orgHandlers([
         enrolment({ state: 'held', source: 'platform', hold: { at: 1, reason: 'abuse report' } }),
@@ -62,12 +66,11 @@ describe('organization wallet accounts', () => {
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
     expect(within(google).getAllByText('abuse report')).toHaveLength(1);
     expect(within(google).queryByRole('button', { name: /release|hold/i })).toBeNull();
-    expect(within(google).getByRole('switch')).toBeDisabled();
   });
 
   it('asks for a Test round trip before Live', async () => {
     setMode('live');
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: orgHandlers([
         enrolment({
@@ -82,11 +85,10 @@ describe('organization wallet accounts', () => {
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
     expect(within(google).getByText('Test round trip: Needed')).toBeInTheDocument();
     expect(within(google).getByText('Save a pass from Test mode first.')).toBeInTheDocument();
-    expect(within(google).getByRole('switch')).toBeDisabled();
   });
 
   it('is read-only without integrations:manage', async () => {
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(READ)],
       handlers: orgHandlers([
         enrolment({ state: 'off', source: 'org', prerequisites: { check: true, roundTrip: null } }),
@@ -94,7 +96,6 @@ describe('organization wallet accounts', () => {
       ]),
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
-    expect(within(google).getByRole('switch')).toBeDisabled();
     expect(
       within(google).queryByRole('button', { name: /add credentials|rotate|revoke/i }),
     ).toBeNull();
@@ -102,16 +103,16 @@ describe('organization wallet accounts', () => {
   });
 
   it('makes no wallet request without integrations:read', async () => {
-    const { fetchMock } = await renderApp('/admin/o/o1/wallet-accounts', {
+    const { fetchMock } = await renderOrgAccounts({
       memberships: [member(['org:read'])],
       handlers: orgHandlers(),
     });
-    expect(await screen.findByText(/need integrations access/)).toBeInTheDocument();
+    await screen.findByRole('button', { name: /^Google Wallet/ });
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('wallet-'))).toBe(false);
   });
 
   it('freezes a revoked enrolment and hides blockers while it is On', async () => {
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: orgHandlers(
         [
@@ -131,16 +132,14 @@ describe('organization wallet accounts', () => {
       ),
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });
-    expect(within(google).getByRole('switch')).toBeDisabled();
     for (const radio of within(google).getAllByRole('radio')) expect(radio).toBeDisabled();
     const samsung = screen.getByRole('region', { name: 'Samsung Wallet' });
-    expect(within(samsung).getByRole('switch')).toBeEnabled();
     expect(within(samsung).queryByText('The account check has not passed.')).toBeNull();
     expect(within(samsung).getByText('Account check: Needed')).toBeInTheDocument();
   });
 
   it('never shows a green check on a credential whose gate says Needed', async () => {
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: orgHandlers(
         [
@@ -161,7 +160,7 @@ describe('organization wallet accounts', () => {
   });
 
   it('shows a green check when the gate passes', async () => {
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: orgHandlers(
         [
@@ -180,35 +179,10 @@ describe('organization wallet accounts', () => {
     expect(within(google).getByText('Account check: Passed')).toBeInTheDocument();
   });
 
-  it('turns it on with the enrolment revision', async () => {
-    const user = userEvent.setup();
-    const bodies: unknown[] = [];
-    await renderApp('/admin/o/o1/wallet-accounts', {
-      memberships: [member(MANAGE)],
-      handlers: {
-        ...orgHandlers([
-          enrolment({
-            state: 'off',
-            source: 'org',
-            enrolmentRevision: 3,
-            prerequisites: { check: true, roundTrip: null },
-          }),
-          enrolment({ provider: 'samsung' }),
-        ]),
-        '/api/v1/orgs/o1/wallet-enrolments/google/enable': (_u, init) => {
-          bodies.push(JSON.parse(String(init?.body)));
-          return json(enrolment({ state: 'on', source: 'org', enrolmentRevision: 4 }));
-        },
-      },
-    });
-    await user.click(await screen.findByRole('switch', { name: 'Google Wallet on' }));
-    await waitFor(() => expect(bodies).toEqual([{ expectedRevision: 3 }]));
-  });
-
   it('saves credentials, clears the private key and never shows a secret back', async () => {
     const user = userEvent.setup();
     const saved: Record<string, unknown>[] = [];
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: {
         ...orgHandlers(),
@@ -240,7 +214,7 @@ describe('organization wallet accounts', () => {
   it('sends optional per-type Samsung cards beside the default card', async () => {
     const user = userEvent.setup();
     const saved: Record<string, unknown>[] = [];
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [member(MANAGE)],
       handlers: {
         ...orgHandlers(),

@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 
@@ -19,62 +19,9 @@ const own = {
   passCount: 0,
   createdAt: 1_600_000_000_000,
 };
-const enrolments = () =>
-  json({
-    items: (['google', 'samsung'] as const).map((provider) => ({
-      mode: 'live',
-      provider,
-      accountId: null,
-      source: null,
-      platformAvailable: false,
-      state: 'absent',
-      enrolmentRevision: 0,
-      prerequisites: { check: false, roundTrip: false },
-      hold: null,
-      issuance: { state: 'disabled', reason: 'not_released' },
-    })),
-    nextCursor: null,
-  });
 const north = membershipFixture('o1', { orgName: 'North' });
 
 describe('wallet accounts per scope', () => {
-  it('shows an organization its own Apple identity and its Google and Samsung accounts', async () => {
-    const { fetchMock } = await renderApp('/admin/o/o1/wallet-accounts', {
-      session: 'user',
-      memberships: [north],
-      handlers: {
-        '/api/v1/wallet-identities': () => json({ items: [own], nextCursor: null }),
-        '/api/v1/orgs/o1/wallet-enrolments': enrolments,
-        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [], nextCursor: null }),
-      },
-    });
-    expect(await screen.findByRole('heading', { name: 'Wallet accounts', level: 1 })).toBeVisible();
-    expect(await screen.findByText('pass.mobile.passbook.north')).toBeInTheDocument();
-    expect(screen.getByText(/Managed · Oct 1, 2027/)).toBeInTheDocument();
-    const calls = fetchMock.mock.calls.map(([url]) => new URL(String(url), 'http://localhost'));
-    const identities = calls.filter((url) => url.pathname === '/api/v1/wallet-identities');
-    expect(identities.length).toBeGreaterThan(0);
-    expect(identities.every((url) => url.searchParams.get('orgId') === 'o1')).toBe(true);
-    await waitFor(() => {
-      const providers = calls.filter((url) => url.pathname === '/api/v1/orgs/o1/wallet-enrolments');
-      expect(providers.length).toBeGreaterThan(0);
-    });
-    expect(screen.queryByText(/Platform-wide/)).toBeNull();
-  });
-
-  it('says an organization without its own identity signs with the platform identity', async () => {
-    await renderApp('/admin/o/o1/wallet-accounts', {
-      session: 'user',
-      memberships: [north],
-      handlers: {
-        '/api/v1/wallet-identities': () => json({ items: [], nextCursor: null }),
-        '/api/v1/orgs/o1/wallet-enrolments': enrolments,
-        '/api/v1/orgs/o1/wallet-credentials': () => json({ items: [], nextCursor: null }),
-      },
-    });
-    expect(await screen.findByText("Signs with PassBook's ID")).toBeInTheDocument();
-  });
-
   it('lists every identity on the platform page, which names no scope in its labels', async () => {
     await renderApp('/admin/platform/wallet-accounts', {
       session: 'admin',
@@ -128,7 +75,11 @@ describe('members per scope', () => {
     expect(
       await screen.findByRole('heading', { name: /You do not have access|does not include/ }),
     ).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/orgs/o1/'))).toBe(false);
+    expect(
+      fetchMock.mock.calls.some(
+        ([url]) => String(url).includes('/orgs/o1/') && !String(url).includes('pass-setup'),
+      ),
+    ).toBe(false);
     expect(within(document.body).queryByText('No active members.')).toBeNull();
   });
 });

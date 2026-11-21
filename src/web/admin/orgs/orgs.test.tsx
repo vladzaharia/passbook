@@ -12,12 +12,8 @@ import {
   renderApp as renderBaseApp,
   sessionFixture,
 } from '@/web/lib/test-utils.tsx';
-import { toast } from '@/web/ui/index.ts';
-import { templateSummary } from '../passes/test-fixtures.ts';
 import { orgPatch, orgToDraft, validateOrg } from './org-form.tsx';
 import { slugify } from './orgs-page.tsx';
-import { samplePass } from './pass-branding.tsx';
-import { passUpdateText } from './queries.ts';
 
 const renderApp = renderBaseApp;
 
@@ -84,48 +80,17 @@ describe('slugify', () => {
 });
 
 describe('org form helpers', () => {
-  it('validates name, accent and pass colours as a set', () => {
+  it('validates the name', () => {
     const d = orgToDraft(summary() as never);
     expect(validateOrg(d)).toEqual({});
-    expect(validateOrg({ ...d, name: ' ', accent: 'red' })).toEqual({
-      name: 'Required.',
-      accent: 'Use a 6-digit hex like #0f766e.',
-    });
-    expect(validateOrg({ ...d, background: '#000000' })).toEqual({
-      foreground: 'Set all three colours.',
-      label: 'Set all three colours.',
-    });
+    expect(validateOrg({ ...d, name: ' ' })).toEqual({ name: 'Required.' });
   });
 
-  it('does not invent template colors in an unbranded sample pass', () => {
+  it('patches the name and identity only; brand lives on Brand and channels', () => {
     const org = summary() as never;
-    const pass = samplePass(org, orgToDraft(org));
-    expect(pass.backgroundColor).toBeUndefined();
-    expect(pass.foregroundColor).toBeUndefined();
-    expect(pass.labelColor).toBeUndefined();
-  });
-
-  it('keeps support contacts and images and drops cleared fields', () => {
-    const org = summary({
-      branding: {
-        accent: '#0f766e',
-        supportEmail: 'help@acme.test',
-        icon: { sha: 'a'.repeat(64), w: 114, h: 114 },
-      },
-    }) as never;
-    const d = { ...orgToDraft(org), accent: '', identity: 'i9' };
-    expect(orgPatch(d, org)).toEqual({
-      name: 'Acme Gym',
-      defaultIdentityId: 'i9',
-      branding: { supportEmail: 'help@acme.test', icon: { sha: 'a'.repeat(64), w: 114, h: 114 } },
-    });
+    const d = { ...orgToDraft(org), identity: 'i9' };
+    expect(orgPatch(d, org)).toEqual({ name: 'Acme Gym', defaultIdentityId: 'i9' });
     expect(orgPatch({ ...d, identity: 'default' }, org).defaultIdentityId).toBeNull();
-  });
-
-  it('describes rebuild intent without promising a completed update', () => {
-    expect(passUpdateText(1)).toBe('1 active pass marked for rebuild.');
-    expect(passUpdateText(12)).toBe('12 active passes marked for rebuild.');
-    expect(passUpdateText(0)).toBeUndefined();
   });
 });
 
@@ -635,7 +600,7 @@ describe('org detail', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
-    expect(await screen.findByText('desk@acme.test')).toBeInTheDocument();
+    expect(await screen.findByText('Time zone')).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(([url]) => {
         const request = new URL(String(url), 'http://localhost');
@@ -644,7 +609,7 @@ describe('org detail', () => {
         );
       }),
     ).toBe(true);
-    expect(screen.getByRole('heading', { name: 'Pass branding' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Pass branding' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'People & service access' })).toBeNull();
     expect(screen.queryByLabelText('Accent colour')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Suspend' })).toBeNull();
@@ -685,17 +650,17 @@ describe('org detail', () => {
     expect(saved).not.toHaveProperty('defaultIdentityId');
   });
 
-  it('shows count links, the form and pass branding, accessible', async () => {
+  it('shows count links and the form, accessible', async () => {
     const { container } = await renderApp('/admin/orgs/o1', {
       session: 'admin',
       memberships: [membershipFixture('o1', { orgName: 'Acme Gym' })],
       handlers: handlers(),
     });
-    await screen.findByLabelText('Accent colour');
+    await screen.findByLabelText(/^Name/);
     expect(screen.queryByRole('button', { name: /^View / })).toBeNull();
     expect(screen.queryByLabelText('Status')).toBeNull();
-    expect(screen.getByLabelText('Accent colour')).toHaveValue('#0f766e');
-    expect(screen.getByRole('heading', { name: 'Pass branding' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Accent colour')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Pass branding' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -744,111 +709,6 @@ describe('org detail', () => {
     ).toBe(false);
   });
 
-  it('keeps saved workspace branding editable without template read access', async () => {
-    const membership = membershipFixture('o1');
-    membership.capabilities = membership.capabilities.filter((cap) => cap !== 'templates:read');
-    const branding = {
-      passColors: { background: '#112233', foreground: '#ddeeff', label: '#aaccee' },
-      logo: { sha: 'a'.repeat(64), w: 480, h: 150 },
-    };
-    let org = summary({ branding });
-    let saved: unknown;
-    const { fetchMock } = await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      memberships: [membership],
-      handlers: {
-        ...handlers(),
-        '/api/v1/orgs/o1': (_url, init) => {
-          if (init?.method === 'PATCH') {
-            saved = JSON.parse(String(init.body));
-            org = summary({ ...org, ...(saved as object) });
-          }
-          return json(org);
-        },
-      },
-    });
-    expect(
-      await screen.findByText(
-        /Template colours require template read access for this organization/,
-      ),
-    ).toHaveTextContent('Unset colours use sample defaults, not template colours.');
-    const card = screen.getByRole('group', { name: 'Acme Gym membership card, front' });
-    expect(card.style.getPropertyValue('--pc-bg')).toBe('rgb(17, 34, 51)');
-    expect(card.style.getPropertyValue('--pc-fg')).toBe('rgb(221, 238, 255)');
-    expect(card.style.getPropertyValue('--pc-label')).toBe('rgb(170, 204, 238)');
-    expect(card.querySelector('img')).toHaveAttribute(
-      'src',
-      `/api/v1/orgs/o1/branding/logo/3x?v=${'a'.repeat(12)}`,
-    );
-    expect(within(card).getByText('Maya Chen')).toBeInTheDocument();
-    const user = userEvent.setup();
-    const background = screen.getByLabelText('Background');
-    await user.clear(background);
-    await user.type(background, '#445566');
-    expect(card.style.getPropertyValue('--pc-bg')).toBe('rgb(68, 85, 102)');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() =>
-      expect(saved).toMatchObject({
-        branding: {
-          ...branding,
-          passColors: { ...branding.passColors, background: '#445566' },
-        },
-      }),
-    );
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/api/v1/templates'))).toBe(
-      false,
-    );
-  });
-
-  it('labels unbranded sample defaults when template read access is missing', async () => {
-    const membership = membershipFixture('o1');
-    membership.capabilities = membership.capabilities.filter((cap) => cap !== 'templates:read');
-    const { fetchMock } = await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      memberships: [membership],
-      handlers: handlers(),
-    });
-    expect(
-      await screen.findByText(
-        /Template colours require template read access for this organization/,
-      ),
-    ).toHaveTextContent('Unset colours use sample defaults, not template colours.');
-    const card = screen.getByRole('group', { name: 'Acme Gym membership card, front' });
-    expect(card.style.getPropertyValue('--pc-bg')).toBe('rgb(255, 255, 255)');
-    expect(screen.getByLabelText('Background')).toHaveValue('');
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/api/v1/templates'))).toBe(
-      false,
-    );
-  });
-
-  it.each([
-    { reason: 'no membership', memberships: [] },
-    {
-      reason: 'a membership without organization read',
-      memberships: [membershipFixture('o1', { capabilities: ['passes:read'] })],
-    },
-    { reason: 'a grant for another organization', memberships: [membershipFixture('o2')] },
-    {
-      reason: 'a revoked grant',
-      memberships: [membershipFixture('o1', { revokedAt: 1_800_000_000_000 })],
-    },
-  ])('does not expose workspace branding with $reason', async ({ memberships }) => {
-    const { fetchMock } = await renderBaseApp('/admin/orgs/o1?view=workspace&orgId=o1', {
-      session: 'admin',
-      memberships,
-      handlers: handlers(),
-    });
-    expect(
-      await screen.findByRole('heading', { name: /You do not have access|Organization not found/ }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Pass branding' })).toBeNull();
-    expect(
-      fetchMock.mock.calls.some(
-        ([url]) => String(url).includes('/workspace') || String(url).includes('/api/v1/templates'),
-      ),
-    ).toBe(false);
-  });
-
   it('keeps platform provisioning separate from branding when membership lookup fails', async () => {
     const { fetchMock } = await renderBaseApp('/admin/orgs/o1', {
       session: 'admin',
@@ -865,95 +725,6 @@ describe('org detail', () => {
         ([url]) => String(url).includes('/workspace') || String(url).includes('/api/v1/templates'),
       ),
     ).toBe(false);
-  });
-
-  it('does not preview a foreign template returned by the scoped list', async () => {
-    const { fetchMock, queryClient } = await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      memberships: [membershipFixture('o1')],
-      handlers: {
-        ...handlers(),
-        '/api/v1/templates': () =>
-          json({ items: [templateSummary({ id: 'foreign', orgId: 'o2' })], nextCursor: null }),
-      },
-    });
-    await waitFor(() =>
-      expect(queryClient.getQueryData(['admin', 'templates', 'for-org', 'o1'])).toBeDefined(),
-    );
-    expect(
-      await screen.findByText(/Template colours are unavailable or still loading/),
-    ).toHaveTextContent('Unset colours use sample defaults, not template colours.');
-    expect(
-      fetchMock.mock.calls.some(([url]) => String(url).includes('/api/v1/templates/previews')),
-    ).toBe(false);
-  });
-
-  it.each([
-    { name: 'organization', own: true, expected: 'own' },
-    { name: 'shared', own: false, expected: 'shared' },
-  ])('loads the $name template swatch in the viewed organization', async ({ own, expected }) => {
-    const listScopes: (string | null)[] = [];
-    const previews: { orgId: string | null; ids: string | null }[] = [];
-    const { queryClient } = await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      memberships: [membershipFixture('o1'), membershipFixture('o2')],
-      handlers: {
-        ...handlers(),
-        '/api/v1/templates': (url) => {
-          listScopes.push(url.searchParams.get('orgId'));
-          return json({
-            items: [
-              templateSummary({ id: 'foreign', orgId: 'o2' }),
-              templateSummary({ id: 'shared', orgId: null, orgName: null }),
-              ...(own ? [templateSummary({ id: 'own', orgId: 'o1' })] : []),
-            ],
-            nextCursor: null,
-          });
-        },
-        '/api/v1/templates/previews': (url) => {
-          previews.push({ orgId: url.searchParams.get('orgId'), ids: url.searchParams.get('ids') });
-          return json({
-            items: [
-              {
-                id: expected,
-                passJson: {
-                  backgroundColor: 'rgb(10, 20, 30)',
-                  foregroundColor: 'rgb(240, 241, 242)',
-                  labelColor: 'rgb(100, 110, 120)',
-                },
-                warnings: [],
-                assetBaseUrl: '/a',
-                assetNames: [],
-              },
-            ],
-            nextCursor: null,
-          });
-        },
-      },
-    });
-    const card = await screen.findByRole('group', { name: 'Acme Gym membership card, front' });
-    await waitFor(() => expect(card.style.getPropertyValue('--pc-bg')).toBe('rgb(10, 20, 30)'));
-    expect(card.style.getPropertyValue('--pc-fg')).toBe('rgb(240, 241, 242)');
-    expect(card.style.getPropertyValue('--pc-label')).toBe('rgb(100, 110, 120)');
-    expect(listScopes).toEqual(['o1']);
-    expect(previews).toEqual([{ orgId: 'o1', ids: expected }]);
-    expect(screen.queryByText(/Unset colours use sample defaults/)).toBeNull();
-
-    const restricted = membershipFixture('o1');
-    restricted.capabilities = restricted.capabilities.filter((cap) => cap !== 'templates:read');
-    await act(async () => {
-      queryClient.setQueryData(membershipsQuery.queryKey, {
-        items: [restricted, membershipFixture('o2')],
-      });
-    });
-    expect(
-      await screen.findByText(
-        /Template colours require template read access for this organization/,
-      ),
-    ).toBeInTheDocument();
-    expect(card.style.getPropertyValue('--pc-bg')).toBe('rgb(255, 255, 255)');
-    expect(listScopes).toEqual(['o1']);
-    expect(previews).toEqual([{ orgId: 'o1', ids: expected }]);
   });
 
   it('offers only usable identities', async () => {
@@ -1238,50 +1009,6 @@ describe('org detail', () => {
     expect(screen.getByLabelText(/^Name/)).toHaveValue('Acme Gym draft');
   });
 
-  it('keeps a draft when an image is removed and saves against the refreshed branding', async () => {
-    const branding = {
-      accent: '#0f766e',
-      supportEmail: 'help@acme.test',
-      logo: { sha: 'a'.repeat(64), w: 480, h: 150 },
-    };
-    let org = summary({ branding });
-    let saved: unknown;
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/orgs/o1': (_u, init) => {
-          if (init?.method === 'PATCH') {
-            saved = JSON.parse(String(init.body));
-            org = summary({ ...org, name: 'Acme Gym draft', updatedAt: org.updatedAt + 1 });
-          }
-          return json(org);
-        },
-        '/api/v1/orgs/o1/branding/logo': (_u, init) => {
-          expect(init?.method).toBe('DELETE');
-          org = summary({
-            branding: { accent: '#0f766e', supportEmail: 'help@acme.test' },
-            updatedAt: org.updatedAt + 1,
-          });
-          return json(org);
-        },
-      },
-    });
-    const ui = userEvent.setup();
-    await ui.type(await screen.findByLabelText(/^Name/), ' draft');
-    await ui.click(screen.getByRole('button', { name: 'Remove logo' }));
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Remove logo' })).toBeNull());
-    expect(screen.getByLabelText(/^Name/)).toHaveValue('Acme Gym draft');
-    await ui.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() =>
-      expect(saved).toEqual({
-        name: 'Acme Gym draft',
-        defaultIdentityId: null,
-        branding: { accent: '#0f766e', supportEmail: 'help@acme.test' },
-      }),
-    );
-  });
-
   it('retains the draft and save affordance after a failed update', async () => {
     await renderApp('/admin/orgs/o1', {
       session: 'admin',
@@ -1342,145 +1069,7 @@ describe('org detail', () => {
     await ui.clear(name);
     await ui.type(name, 'Acme 2');
     await ui.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() =>
-      expect(body).toEqual({
-        name: 'Acme 2',
-        defaultIdentityId: null,
-        branding: { accent: '#0f766e', supportEmail: 'help@acme.test' },
-      }),
-    );
-  });
-
-  it('turns the buddy on in pass emails with Save: one org setting, nothing else', async () => {
-    const puts: unknown[] = [];
-    let buddy = false;
-    const entries = () => ({
-      ...settingsEmpty,
-      items: [
-        {
-          scope: 'org:o1',
-          key: 'email.buddy',
-          value: buddy,
-          default: false,
-          updatedAt: null,
-          updatedBy: null,
-          source: 'org',
-        },
-      ],
-    });
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/settings': (_u, init) => {
-          if (init?.method === 'PUT') {
-            puts.push(JSON.parse(String(init.body)));
-            buddy = true;
-          }
-          return json(entries());
-        },
-      },
-    });
-    const ui = userEvent.setup();
-    expect(await screen.findByRole('heading', { name: 'Pass email' })).toBeInTheDocument();
-    const toggle = await screen.findByRole('switch', { name: 'Buddy in pass emails' });
-    expect(toggle).not.toBeChecked();
-    // The real email, rendered by the Worker, follows the switch before Save.
-    const frame = () => screen.getByTitle('Sample pass email') as HTMLIFrameElement;
-    expect(screen.getByText('Sample email')).toBeInTheDocument();
-    expect(frame().getAttribute('src')).toMatch(/^\/api\/v1\/orgs\/o1\/email-preview\?buddy=0&v=/);
-    await ui.click(toggle);
-    expect(frame().getAttribute('src')).toMatch(/email-preview\?buddy=1&v=/);
-    // Scripts never run in it.
-    expect(frame().getAttribute('sandbox')).toBe('allow-same-origin');
-    const bar = await screen.findByRole('region', { name: 'Unsaved changes' });
-    await ui.click(within(bar).getByRole('button', { name: 'Save' }));
-    await waitFor(() =>
-      expect(puts).toEqual([{ scope: 'org:o1', values: { 'email.buddy': true } }]),
-    );
-    expect(await screen.findByText('Saved', { selector: '[data-title]' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Buddy in pass emails' })).toBeChecked();
-  });
-
-  it('saves details, pass email and support contacts from one bar', async () => {
-    const sent: string[] = [];
-    const success = vi.spyOn(toast, 'success');
-    let org = summary();
-    const values: Record<string, unknown> = {};
-    const item = (key: string) => ({
-      scope: 'org:o1',
-      key,
-      value: values[key] ?? null,
-      default: key === 'email.buddy' ? false : null,
-      updatedAt: null,
-      updatedBy: null,
-      source: 'org',
-    });
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/orgs/o1': (_u, init) => {
-          if (init?.method === 'PATCH') {
-            sent.push('org');
-            org = summary({ name: JSON.parse(String(init.body)).name, updatedAt: 2 });
-          }
-          return json(org);
-        },
-        '/api/v1/settings': (_u, init) => {
-          if (init?.method === 'PUT') {
-            const put = JSON.parse(String(init.body)).values;
-            sent.push(...Object.keys(put));
-            Object.assign(values, put);
-          }
-          return json({
-            ...settingsEmpty,
-            items: ['email.buddy', 'support.email', 'support.url'].map(item),
-            nextCursor: null,
-          });
-        },
-      },
-    });
-    const ui = userEvent.setup();
-    const name = await screen.findByLabelText(/^Name/);
-    await ui.type(name, ' 2');
-    await ui.click(await screen.findByRole('switch', { name: 'Buddy in pass emails' }));
-    await ui.type(await screen.findByLabelText(/Support email/), 'help@acme.test');
-    expect(screen.getAllByRole('region', { name: 'Unsaved changes' })).toHaveLength(1);
-    await ui.click(screen.getByRole('button', { name: 'Save' }));
-    // Top to bottom, one after another.
-    await waitFor(() => expect(sent).toEqual(['org', 'email.buddy', 'support.email']));
-    await waitFor(() => expect(success).toHaveBeenCalledOnce());
-    expect(success).toHaveBeenCalledWith('Saved');
-    success.mockRestore();
-    await waitFor(() =>
-      expect(screen.queryByRole('region', { name: 'Unsaved changes' })).toBeNull(),
-    );
-  });
-
-  it('rejects a bad accent on Save, focusing it, without calling the API', async () => {
-    let patched = false;
-    await renderApp('/admin/orgs/o1', {
-      session: 'admin',
-      handlers: {
-        ...handlers(),
-        '/api/v1/orgs/o1': (_u, init) => {
-          if (init?.method === 'PATCH') patched = true;
-          return json(summary());
-        },
-      },
-    });
-    const ui = userEvent.setup();
-    const accent = await screen.findByLabelText('Accent colour');
-    await ui.clear(accent);
-    await ui.type(accent, 'teal');
-    // No error while typing; Save shows it, focuses the field and says how many.
-    expect(screen.queryByText('Use a 6-digit hex like #0f766e.')).toBeNull();
-    await ui.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByText('Use a 6-digit hex like #0f766e.')).toBeInTheDocument();
-    await waitFor(() => expect(document.activeElement).toBe(accent));
-    expect(await screen.findByText('1 field needs attention')).toBeInTheDocument();
-    expect(patched).toBe(false);
+    await waitFor(() => expect(body).toEqual({ name: 'Acme 2', defaultIdentityId: null }));
   });
 
   it('requires typing the slug before delete, then replaces the page in history', async () => {

@@ -64,13 +64,13 @@ describe('legacy admin URLs', () => {
     expect(go(path, { q: 'x' }, admin)).toEqual({ to, search: { q: 'x' } });
   });
 
-  it('opens an organization workspace and the reply-to confirmation in its settings', () => {
+  it('opens an organization workspace in its settings and the reply-to confirmation on Brand and channels', () => {
     expect(go('/admin/orgs/o2', { view: 'workspace', orgId: 'o2' }, two)).toEqual({
       to: '/admin/o/o2/settings',
       search: {},
     });
     expect(go('/admin/orgs/north%2Fwest', { confirmReplyTo: 't' }, admin)).toEqual({
-      to: '/admin/o/north%2Fwest/settings',
+      to: '/admin/o/north%2Fwest/brand',
       search: { confirmReplyTo: 't' },
     });
   });

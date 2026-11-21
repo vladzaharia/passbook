@@ -1,11 +1,15 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Fragment } from 'react';
+import { Fragment, lazy, Suspense } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { adminNavGroups, isActivePath } from '../../lib/nav.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { readTabScope, useRememberedScope } from '../../lib/scope-store.ts';
 import { useSession } from '../../lib/session.ts';
 import { ActiveIndicator } from '../active-indicator.tsx';
+
+const BrandCount = lazy(() =>
+  import('../../admin/brand/sidebar-count.tsx').then((m) => ({ default: m.BrandCount })),
+);
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -44,6 +48,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               >
                 <item.icon aria-hidden className={cn('size-4', active && 'text-accent-fg')} />
                 {item.label}
+                {item.section === '/brand' && shown?.kind === 'org' ? (
+                  <Suspense fallback={null}>
+                    <BrandCount orgId={shown.orgId} />
+                  </Suspense>
+                ) : null}
               </Link>
             );
           })}
