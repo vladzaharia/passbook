@@ -58,7 +58,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private final ScanGate gate = new ScanGate();
     private static final String DATAWEDGE_PROFILE = "PassBook Scanner";
     private static final String DATAWEDGE_COMMAND = "PASSBOOK_PROFILE";
-    private static final int DATAWEDGE_PROFILE_VERSION = 1;
+    private static final int DATAWEDGE_PROFILE_VERSION = 2;
     private ReaderConfig config;
     private WebSurface web;
     private NfcController nfc;
@@ -75,11 +75,20 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private boolean tagOn;
     private String oneShot;
     private final CameraPermissions cameraPermissions = new CameraPermissions();
+    private final RateLimit broadcastLimit = new RateLimit(4, 1000);
     private final BroadcastReceiver barcodeReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
-            // Any app can send these. They only ever become a bounded barcode read, as if typed.
+            // Any app can send these (the vendor service is another app, so the receiver must be exported). They only
+            // ever become a bounded, rate-limited barcode read, as if typed; registered only while resumed.
             if (!foreground || intent.getAction() == null) return;
+            if (!broadcastLimit.allow(SystemClock.elapsedRealtime())) {
+                Log.w("PassBook", "scan.broadcast_rate_limited");
+                return;
+            }
             try {
+                if (Build.VERSION.SDK_INT >= 34 && intent.getSentFromPackage() == null) {
+                    Log.i("PassBook", "scan.broadcast_unattributed");
+                }
                 if (intent.getAction().equals(config.barcodeAction())) {
                     barcode(intent.getStringExtra(config.barcodeExtra()));
                     return;
@@ -95,6 +104,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private final BroadcastReceiver dataWedgeResult = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (!DATAWEDGE_COMMAND.equals(intent.getStringExtra("COMMAND_IDENTIFIER"))) return;
+            // API 34 names the sending package; a different one is not DataWedge answering.
+            if (Build.VERSION.SDK_INT >= 34 && intent.getSentFromPackage() != null
+                && !Hardware.VENDORS.get(0).packages().contains(intent.getSentFromPackage())) return;
             if ("SUCCESS".equals(intent.getStringExtra("RESULT"))) {
                 getSharedPreferences("datawedge", MODE_PRIVATE).edit().putInt("profileVersion", DATAWEDGE_PROFILE_VERSION).apply();
                 return;
@@ -431,9 +443,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         registered = true;
     }
     /**
-     * Creates this app's own DataWedge profile once: barcode input and broadcast intent output, with no
-     * keystroke plugin so the keyboard path stays as a fallback (ScanGate drops the duplicate). The result is
-     * requested; the flag is stored only on success, so a failure retries on the next resume.
+     * Creates this app's own DataWedge profile once (version 2 updates v1): barcode input and broadcast intent
+     * output, with keystroke output off so one scan is not delivered twice. The result is requested; the flag is
+     * stored only on success, so a failure retries on the next resume.
      */
     private void configureDataWedge() {
         SharedPreferences prefs = getSharedPreferences("datawedge", MODE_PRIVATE);
@@ -445,9 +457,12 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         Bundle intentParams = new Bundle();
         intentParams.putString("intent_output_enabled", "true"); intentParams.putString("intent_action", zebra.action());
         intentParams.putString("intent_delivery", "2");
+        // The intent path is the one in use, so DataWedge must not also type the scan into the focused field.
+        Bundle keystrokeParams = new Bundle();
+        keystrokeParams.putString("keystroke_output_enabled", "false");
         ArrayList<Bundle> plugins = new ArrayList<>();
-        String[] names = {"BARCODE", "INTENT"};
-        Bundle[] params = {barcodeParams, intentParams};
+        String[] names = {"BARCODE", "INTENT", "KEYSTROKE"};
+        Bundle[] params = {barcodeParams, intentParams, keystrokeParams};
         for (int i = 0; i < names.length; i++) {
             Bundle plugin = new Bundle();
             plugin.putString("PLUGIN_NAME", names[i]); plugin.putBundle("PARAM_LIST", params[i]); plugins.add(plugin);
