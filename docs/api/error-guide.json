@@ -905,6 +905,12 @@
     "fix": "Add the note from another device or wait until tomorrow.",
     "retryable": false
   },
+  "NOTE_HELD": {
+    "title": "Pass on hold",
+    "when": "A retention or legal hold covers the pass, so its notes cannot be edited or deleted.",
+    "fix": "Ask an org admin to release the hold. Adding a note still works.",
+    "retryable": false
+  },
   "NOTE_NOT_FOUND": {
     "title": "Note not found",
     "when": "No note with this id exists on the pass.",
