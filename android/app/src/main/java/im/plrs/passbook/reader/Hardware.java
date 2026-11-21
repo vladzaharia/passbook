@@ -17,19 +17,27 @@ final class Hardware {
     private static final String[] SCANNER_WORDS = {"scanner", "barcode", "scan", "honeywell", "zebra",
         "symbol", "datalogic", "urovo", "newland", "sunmi", "chainway"};
 
-    /** A vendor scanner service with a broadcast-intent output. */
-    record Vendor(String name, List<String> packages, String action, String extra) {}
+    /**
+     * A vendor scanner service with a broadcast-intent output. {@code verified} means the action, extra and
+     * package name are all confirmed in the vendor's published documentation; others stay off unless
+     * {@link ReaderConfig#unverifiedScanners()} is set.
+     */
+    record Vendor(String name, List<String> packages, String action, String extra, boolean verified) {}
 
     static final List<Vendor> VENDORS = List.of(
+        // Zebra: the action is chosen in the DataWedge profile; the app creates one that uses this action.
         new Vendor("zebra", List.of("com.symbol.datawedge"), "im.plrs.passbook.reader.action.SCAN",
-            "com.symbol.datawedge.data_string"),
-        new Vendor("sunmi", List.of("com.sunmi.scanner"), "com.sunmi.scanner.ACTION_DATA_CODE_RECEIVED", "data"),
+            "com.symbol.datawedge.data_string", true),
+        new Vendor("sunmi", List.of("com.sunmi.scanner"), "com.sunmi.scanner.ACTION_DATA_CODE_RECEIVED", "data", true),
+        // Honeywell: the action is chosen by the app that claims the scanner (needs the DECODE permission);
+        // there is no fixed default, so this one cannot work without a claim.
         new Vendor("honeywell", List.of("com.intermec.datacollectionservice", "com.honeywell.decode.service"),
-            "com.honeywell.sample.action.BARCODE_DATA", "data"),
+            "com.honeywell.sample.action.BARCODE_DATA", "data", false),
+        // Urovo and Newland: action and extra are documented; the service package names are not confirmed.
         new Vendor("urovo", List.of("com.ubx.scanner", "com.ubx.datawedge"), "android.intent.ACTION_DECODE_DATA",
-            "barcode_string"),
+            "barcode_string", false),
         new Vendor("newland", List.of("com.nlscan.android.scan", "com.nlscan.scanservice"),
-            "nlscan.action.SCANNER_RESULT", "SCAN_BARCODE1"));
+            "nlscan.action.SCANNER_RESULT", "SCAN_BARCODE1", false));
 
     record Entry(String kind, String id, String name, boolean builtIn, Boolean connected, String state,
                  String facing, String trigger, String reason) {}
@@ -42,6 +50,11 @@ final class Hardware {
                     List<String> bluetoothNames, boolean vibrator, boolean speaker) {}
 
     private Hardware() {}
+
+    /** Same bounds as keyboard input: 1 to 2048 characters, no control characters. */
+    static boolean validBarcode(String value) {
+        return value != null && !value.isEmpty() && value.length() <= 2048 && value.chars().noneMatch(Character::isISOControl);
+    }
 
     /** Vendors whose scanner service is installed. */
     static List<Vendor> present(Set<String> installed) {

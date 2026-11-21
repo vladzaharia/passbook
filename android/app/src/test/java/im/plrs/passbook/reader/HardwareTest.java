@@ -107,4 +107,21 @@ public class HardwareTest {
         assertEquals(16, capped.size());
         for (Hardware.Entry e : capped) assertTrue(e.id().length() <= 64);
     }
+
+    @Test public void intentValuesAreBoundedLikeTypedInput() {
+        assertTrue(Hardware.validBarcode("ABC-123"));
+        assertTrue(Hardware.validBarcode("x".repeat(2048)));
+        assertFalse(Hardware.validBarcode("x".repeat(2049)));
+        assertFalse(Hardware.validBarcode(null));
+        assertFalse(Hardware.validBarcode(""));
+        assertFalse(Hardware.validBarcode("a\nb"));
+        assertFalse(Hardware.validBarcode("a\u0000b"));
+        assertFalse(Hardware.validBarcode("a\u001bb"));
+    }
+
+    @Test public void unverifiedVendorsAreFlaggedAndOnlyZebraAndSunmiAreVerified() {
+        for (Hardware.Vendor v : Hardware.VENDORS) {
+            assertEquals(v.name(), v.name().equals("zebra") || v.name().equals("sunmi"), v.verified());
+        }
+    }
 }

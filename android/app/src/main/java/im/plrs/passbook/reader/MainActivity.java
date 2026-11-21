@@ -72,13 +72,18 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private final CameraPermissions cameraPermissions = new CameraPermissions();
     private final BroadcastReceiver barcodeReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
+            // Any app can send these. They only ever become a bounded barcode read, as if typed.
             if (!foreground || intent.getAction() == null) return;
-            if (intent.getAction().equals(config.barcodeAction())) {
-                barcode(intent.getStringExtra(config.barcodeExtra()));
-                return;
-            }
-            for (Hardware.Vendor vendor : vendorsPresent()) {
-                if (vendor.action().equals(intent.getAction())) barcode(intent.getStringExtra(vendor.extra()));
+            try {
+                if (intent.getAction().equals(config.barcodeAction())) {
+                    barcode(intent.getStringExtra(config.barcodeExtra()));
+                    return;
+                }
+                for (Hardware.Vendor vendor : vendorsPresent()) {
+                    if (vendor.action().equals(intent.getAction())) barcode(intent.getStringExtra(vendor.extra()));
+                }
+            } catch (RuntimeException malformed) {
+                notice("Invalid barcode. Scan it again.");
             }
         }
     };
@@ -347,7 +352,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     }
 
     void barcode(String value) {
-        if (value == null || value.isEmpty() || value.length() > 2048 || value.chars().anyMatch(Character::isISOControl)) {
+        if (!Hardware.validBarcode(value)) {
             notice("Invalid barcode. Scan it again."); return;
         }
         JSONObject event = message("scan"); put(event, "source", "barcode"); put(event, "value", value);
@@ -382,9 +387,40 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         IntentFilter filter = new IntentFilter();
         if (!config.barcodeAction().isEmpty()) filter.addAction(config.barcodeAction());
         for (Hardware.Vendor vendor : vendors) filter.addAction(vendor.action());
+        if (vendors.stream().anyMatch(vendor -> vendor.name().equals("zebra"))) configureDataWedge();
         ContextCompat.registerReceiver(this, barcodeReceiver, filter, ContextCompat.RECEIVER_EXPORTED);
         registered = true;
     }
+    /** Creates this app's own DataWedge profile: barcode in, broadcast intent out, no keystrokes. */
+    private void configureDataWedge() {
+        Hardware.Vendor zebra = Hardware.VENDORS.get(0);
+        Bundle barcodeParams = new Bundle();
+        barcodeParams.putString("scanner_selection", "auto"); barcodeParams.putString("scanner_input_enabled", "true");
+        Bundle intentParams = new Bundle();
+        intentParams.putString("intent_output_enabled", "true"); intentParams.putString("intent_action", zebra.action());
+        intentParams.putString("intent_category", "android.intent.category.DEFAULT");
+        intentParams.putString("intent_delivery", "2");
+        Bundle keystrokeParams = new Bundle();
+        keystrokeParams.putString("keystroke_output_enabled", "false");
+        ArrayList<Bundle> plugins = new ArrayList<>();
+        String[] names = {"BARCODE", "INTENT", "KEYSTROKE"};
+        Bundle[] params = {barcodeParams, intentParams, keystrokeParams};
+        for (int i = 0; i < names.length; i++) {
+            Bundle plugin = new Bundle();
+            plugin.putString("PLUGIN_NAME", names[i]); plugin.putString("RESET_CONFIG", "true");
+            plugin.putBundle("PARAM_LIST", params[i]); plugins.add(plugin);
+        }
+        Bundle app = new Bundle();
+        app.putString("PACKAGE_NAME", getPackageName()); app.putStringArray("ACTIVITY_LIST", new String[] {"*"});
+        Bundle main = new Bundle();
+        main.putString("PROFILE_NAME", "PassBook Scanner"); main.putString("PROFILE_ENABLED", "true");
+        main.putString("CONFIG_MODE", "OVERWRITE");
+        main.putParcelableArrayList("PLUGIN_CONFIG", plugins); main.putParcelableArray("APP_LIST", new Bundle[] {app});
+        Intent request = new Intent("com.symbol.datawedge.api.ACTION").setPackage(zebra.packages().get(0));
+        request.putExtra("com.symbol.datawedge.api.SET_CONFIG", main);
+        sendBroadcast(request);
+    }
+
     private void unregisterBarcode() {
         if (registered) { unregisterReceiver(barcodeReceiver); registered = false; }
     }
@@ -454,6 +490,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         Set<String> found = new HashSet<>();
         PackageManager packages = getPackageManager();
         for (Hardware.Vendor vendor : Hardware.VENDORS) {
+            if (!vendor.verified() && !config.unverifiedScanners()) continue;
             for (String name : vendor.packages()) {
                 try { packages.getPackageInfo(name, 0); found.add(name); }
                 catch (PackageManager.NameNotFoundException ignored) { /* not installed */ }
