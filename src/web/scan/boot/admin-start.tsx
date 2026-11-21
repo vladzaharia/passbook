@@ -244,7 +244,7 @@ function AdminStartForUser({ userId, onScope, onCancel }: AdminStartProps) {
         <Callout>No organizations grant you scanning management access.</Callout>
       )}
       {org && !creating ? (
-        <FormField label="Scanning session" help="This device uses the session’s shared rules.">
+        <FormField label="Scanning session">
           {(p) => (
             <Select
               {...p}

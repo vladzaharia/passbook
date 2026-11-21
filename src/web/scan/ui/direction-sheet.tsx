@@ -42,7 +42,7 @@ export function DirectionSheet({
                   {ACCESS_COPY.direction.options[key].label}
                 </span>
               ),
-              hint: ACCESS_COPY.direction.options[key].hint,
+              hint: key === 'auto' ? ACCESS_COPY.direction.options.auto.hint : undefined,
             }))}
           />
           <p className="scan-dir-lapse">{ACCESS_COPY.direction.lapse}</p>

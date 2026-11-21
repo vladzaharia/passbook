@@ -126,7 +126,6 @@ export function InsidePanel({
               art="wallet"
               artState="empty"
               title={ACCESS_COPY.inside.emptyTitle}
-              description={fill(ACCESS_COPY.inside.empty, { place: place?.name ?? '' })}
             />
           )
         ) : (
