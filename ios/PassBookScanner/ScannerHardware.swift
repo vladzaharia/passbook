@@ -24,7 +24,20 @@ final class ScannerHardware {
             }
             keyboardObservers.append(token)
         }
+        // An external camera can come and go; the list is cached between these.
+        for name in [AVCaptureDevice.wasConnectedNotification, AVCaptureDevice.wasDisconnectedNotification] {
+            let token = NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in
+                    self?.cachedCameras = nil
+                    self?.onChange?()
+                }
+            }
+            keyboardObservers.append(token)
+        }
     }
+
+    private var cachedCameras: [HardwareMap.Camera]?
+    var tagReading: Bool { TagReader.isActive }
 
     deinit { keyboardObservers.forEach { NotificationCenter.default.removeObserver($0) } }
 
@@ -34,25 +47,28 @@ final class ScannerHardware {
             "platform": "ios",
             "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1",
             "camera": ["available": AVCaptureDevice.default(for: .video) != nil, "permission": permission(status)],
-            "keyboard": ["supported": true, "connected": NSNull(), "connectionObservable": false],
+            "keyboard": ["supported": true, "connected": keyboardConnected, "connectionObservable": true],
             "nfc": ["available": NFCReader.available, "reading": readingNFC, "formats": nfcFormats, "continuous": false],
             "vas": ["deviceSupported": PaymentCardReader.isSupported, "available": false, "reader": "proximityReader", "reason": "Wallet VAS needs Apple reader entitlement, a supported payment provider, and server verification."],
-            "externalReader": ["mode": "keyboard", "connected": NSNull()],
+            "externalReader": ["mode": "keyboard", "connected": keyboardConnected],
             "customerDisplay": ["supported": false, "available": false, "active": false],
-            "haptics": true,
+            "haptics": CHHapticEngine.capabilitiesForHardware().supportsHaptics,
             "hardware": HardwareMap.entries(hardwareInput(permission(status)))
         ]
     }
 
+    private var keyboardConnected: Bool { GCKeyboard.coalesced != nil }
+
     private func hardwareInput(_ cameraPermission: String) -> HardwareMap.Input {
         let types: [AVCaptureDevice.DeviceType] = [.builtInWideAngleCamera, .builtInUltraWideCamera,
                                                    .builtInTelephotoCamera, .external]
-        let cameras = AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: .unspecified)
+        let cameras = cachedCameras ?? AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: .unspecified)
             .devices.map { device in
                 let facing = device.deviceType == .external ? "external"
                     : device.position == .front ? "front" : device.position == .back ? "back" : "external"
                 return HardwareMap.Camera(facing: facing, name: device.localizedName)
             }
+        cachedCameras = cameras
         let keyboard = GCKeyboard.coalesced.map { $0.vendorName ?? "Keyboard" }
         return HardwareMap.Input(cameras: cameras, cameraPermission: cameraPermission, nfcAvailable: NFCReader.available,
                                  nfcReading: readingNFC, keyboardNames: keyboard.map { [$0] } ?? [],
