@@ -1,29 +1,14 @@
-import type { z } from 'zod';
-import type { ScanStaffSchema } from '../../../shared/contracts/scanners.ts';
 import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
-import { clearNamedDayStatement, lockedToday } from './repo-pin-tag.ts';
+import { clearNamedDayStatement } from './repo-pin-tag.ts';
 import { untaggedCountStatement, untaggedFlagUpdate } from './repo-pin-untagged.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
-import { dayWindowOf, PIN_MISSES_PER_STAFF_DAY } from './staff-pin-day.ts';
 import { STAFF_CODES } from './staff-statements.ts';
 
-type StaffDto = z.infer<typeof ScanStaffSchema>;
 type StaffAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
-
-/** Marks who is locked out of named sign-in for the day (50 wrong PINs): the console offers Unlock. */
-export async function withLocks(ctx: ServiceContext, items: StaffDto[]): Promise<StaffDto[]> {
-  const locked = await lockedToday(
-    ctx.env.DB,
-    items.map((p) => p.id),
-    dayWindowOf(ctx.clock.now()),
-    PIN_MISSES_PER_STAFF_DAY,
-  );
-  return items.map((p) => ({ ...p, pinLockedToday: locked.has(p.id) }));
-}
 
 /** Unlock: the person's wrong PINs of the day stop counting. Audited. */
 export async function unlockStaffPin(

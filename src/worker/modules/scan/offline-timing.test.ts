@@ -3,7 +3,7 @@ import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { all, run, stmt } from '../../platform/db.ts';
 import { makeDoor } from './access-test-fixtures.ts';
 import { kit, setupActionFixture } from './act-test-fixtures.ts';
-import { batch, batchOf, item, ticketTemplate } from './offline-test-fixtures.ts';
+import { batch, batchOf, item, rosterOf, ticketTemplate } from './offline-test-fixtures.ts';
 
 beforeAll(setupActionFixture);
 afterEach(() => kit.clock.set(TEST_NOW));
@@ -70,9 +70,36 @@ describe('the session change log', () => {
   });
 });
 
+/**
+ * The door's own date counts only for a read the list vouched for: the session goes to list mode and the
+ * list is served 40 minutes ago, before the reads below. (Any other read is taken at server time.)
+ */
+async function listed(
+  headers: Record<string, string>,
+  sessionId: string,
+  scannerId: string,
+  now: number,
+) {
+  await run(
+    kit.env.DB,
+    `UPDATE scanning_sessions SET settings = json_set(settings, '$.whenOffline', 'list', '$.offline', json('true'))
+     WHERE id = ?`,
+    [sessionId],
+  );
+  // Paired and last seen before the list was served, as on a real door (the test clock starts at pairing).
+  await run(kit.env.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [
+    now - 45 * MIN,
+    scannerId,
+  ]);
+  kit.clock.set(now - 40 * MIN);
+  const roster = await rosterOf(headers);
+  kit.clock.set(now);
+  return roster;
+}
+
 describe('hours and holds are judged as they were when the door took the read', () => {
   it('a Close now made later does not close earlier reads, and closes the ones after it', async () => {
-    const { tpl, sessionId, headers } = await door();
+    const { tpl, sessionId, scanner, headers } = await door();
     const [early, late] = [await kit.scanPass(tpl), await kit.scanPass(tpl)];
     const now = kit.clock.now();
     const hold = JSON.stringify({ state: 'closed', until: now + 60 * MIN });
@@ -81,12 +108,17 @@ describe('hours and holds are judged as they were when the door took the read', 
       now - 10 * MIN,
       sessionId,
     ]);
+    const roster = await listed(headers, sessionId, scanner.id, now);
     const [a, b] = (
       await batchOf(
-        await batch(headers, [
-          item(early.scanCode ?? '', { clientTs: now - 30 * MIN, door: 'unverified' }),
-          item(late.scanCode ?? '', { clientTs: now - 5 * MIN, door: 'unverified' }),
-        ]),
+        await batch(
+          headers,
+          [
+            item(early.scanCode ?? '', { clientTs: now - 30 * MIN, door: 'listed' }),
+            item(late.scanCode ?? '', { clientTs: now - 5 * MIN, door: 'listed' }),
+          ],
+          roster,
+        ),
       )
     ).items;
     expect(a?.outcome.kind).toBe('ok');
@@ -94,7 +126,7 @@ describe('hours and holds are judged as they were when the door took the read', 
   });
 
   it('an Open now made later does not open reads taken while the hours were closed', async () => {
-    const { tpl, sessionId, headers } = await door();
+    const { tpl, sessionId, scanner, headers } = await door();
     const [closed, open] = [await kit.scanPass(tpl), await kit.scanPass(tpl)];
     const now = kit.clock.now();
     // Closed by a hold until a manager opened it early, 10 minutes ago.
@@ -108,12 +140,17 @@ describe('hours and holds are judged as they were when the door took the read', 
       now - 10 * MIN,
       sessionId,
     ]);
+    const roster = await listed(headers, sessionId, scanner.id, now);
     const [a, b] = (
       await batchOf(
-        await batch(headers, [
-          item(closed.scanCode ?? '', { clientTs: now - 30 * MIN, door: 'unverified' }),
-          item(open.scanCode ?? '', { clientTs: now - 5 * MIN, door: 'unverified' }),
-        ]),
+        await batch(
+          headers,
+          [
+            item(closed.scanCode ?? '', { clientTs: now - 30 * MIN, door: 'listed' }),
+            item(open.scanCode ?? '', { clientTs: now - 5 * MIN, door: 'listed' }),
+          ],
+          roster,
+        ),
       )
     ).items;
     expect(a).toMatchObject({ conflict: true, outcome: { reason: 'ended' } });

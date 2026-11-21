@@ -1,9 +1,9 @@
-import { bump, read } from '../../platform/counters.ts';
+import { bump } from '../../platform/counters.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditStmt } from '../audit/repo.ts';
 import { mailPinOrgCap } from './pin-only-notice.ts';
-import { deviceDayKey, namedDayKey, orgDayKey } from './repo-pin-tag.ts';
+import { deviceDayKey, namedDayCountsStatement, namedDayKey, orgDayKey } from './repo-pin-tag.ts';
 
 /**
  * Wrong PINs for one named person per day, across every paired device and every window. The 5 in
@@ -18,23 +18,41 @@ const DAY = 24 * 3_600_000;
 
 export const dayWindowOf = (now: number) => now - (now % DAY);
 
-/** Refuse a named sign-in or approval once the person's day, or this device's, is spent. Nothing is checked. */
+const lockedError = (window: number, now: number) =>
+  new AppError('RATE_LIMITED', 429, 'Too many wrong PINs. Try again later.', {
+    headers: { 'retry-after': String(Math.ceil((window + DAY - now) / 1000)) },
+    issues: [{ path: 'pin', message: 'locked' }],
+  });
+
+/** Whether a day-counter read (see `namedDayCountsStatement`) shows the person's or the device's day spent. */
+export function assertNamedDayRows(
+  ctx: ServiceContext,
+  rows: readonly { key: string; count: number }[],
+  scannerId: string,
+  staffId: string,
+): void {
+  const count = (key: string) => rows.find((r) => r.key === key)?.count ?? 0;
+  if (
+    count(namedDayKey(staffId)) >= PIN_MISSES_PER_STAFF_DAY ||
+    count(deviceDayKey(scannerId)) >= PIN_NAMED_MISSES_PER_DEVICE_DAY
+  ) {
+    const now = ctx.clock.now();
+    throw lockedError(dayWindowOf(now), now);
+  }
+}
+
+/** Refuse a named sign-in once the person's day, or this device's, is spent. Nothing is checked. */
 export async function guardNamedDay(
   ctx: ServiceContext,
   scannerId: string,
   staffId: string,
 ): Promise<void> {
   const now = ctx.clock.now();
-  const window = dayWindowOf(now);
-  const [person, device] = await Promise.all([
-    read(ctx.env.DB, namedDayKey(staffId), window),
-    read(ctx.env.DB, deviceDayKey(scannerId), window),
-  ]);
-  if (person >= PIN_MISSES_PER_STAFF_DAY || device >= PIN_NAMED_MISSES_PER_DEVICE_DAY)
-    throw new AppError('RATE_LIMITED', 429, 'Too many wrong PINs. Try again later.', {
-      headers: { 'retry-after': String(Math.ceil((window + DAY - now) / 1000)) },
-      issues: [{ path: 'pin', message: 'locked' }],
-    });
+  const rows = await namedDayCountsStatement(ctx.env.DB, staffId, scannerId, dayWindowOf(now)).all<{
+    key: string;
+    count: number;
+  }>();
+  assertNamedDayRows(ctx, rows.results, scannerId, staffId);
 }
 
 /** Count a wrong PIN against the person it named and the org; the miss that spends either is audited. */

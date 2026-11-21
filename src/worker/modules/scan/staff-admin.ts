@@ -33,7 +33,6 @@ import {
   type StaffPage,
 } from './repo-staff-page.ts';
 import { newCapture } from './setup-capture.ts';
-import { withLocks } from './staff-admin-pins.ts';
 import { staffViews } from './staff-admin-views.ts';
 import { hashPin } from './staff-pin.ts';
 import { pinTag } from './staff-pin-hash.ts';
@@ -104,7 +103,7 @@ async function committedStaff(
 ): Promise<StaffDto> {
   try {
     const result = await staffViews(ctx, session, authority, { staffId: id, limit: 1 });
-    const [staff] = await withLocks(ctx, result.items);
+    const [staff] = result.items;
     if (staff) return staff;
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
@@ -149,7 +148,7 @@ export async function listStaff(
   const last = result.items.at(-1);
   return result.authorized
     ? {
-        items: await withLocks(ctx, result.items),
+        items: result.items,
         ...(off ? { pinOnlyOff: true } : {}),
         ...(result.hasMore && last ? { hasMore: true, nextCursor: encodeStaffCursor(last) } : {}),
       }

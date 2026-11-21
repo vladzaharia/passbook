@@ -33,8 +33,8 @@ import {
 import { ACTION_ICON } from './action-icons.ts';
 import { AUTH_ACTIONS } from './actions-auth.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
-import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
+import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';

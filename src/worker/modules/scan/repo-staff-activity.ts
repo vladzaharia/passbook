@@ -11,6 +11,7 @@ import {
   PIN_PERSON_WINDOW_MS,
   PIN_SCANNER_WINDOW_MS,
 } from './staff-pin.ts';
+import { dayWindowOf, PIN_MISSES_PER_STAFF_DAY } from './staff-pin-day.ts';
 
 /** The scanner time zones of the org and mode: day boundaries need JS `Intl`, so they are read first. */
 export async function staffTimeZones(db: D1Database, auth: ScanReadAuthority): Promise<string[]> {
@@ -67,6 +68,10 @@ export async function readStaffActivity(
                 AND c.window_start = ? AND c.count >= ?
             ))
         ) AS m_locked,
+        EXISTS (
+          SELECT 1 FROM counters d WHERE d.key = 'scan:pinday:' || st.id
+            AND d.window_start = ? AND d.count >= ?
+        ) AS m_day_locked,
         (SELECT count(*) FROM scans s
           LEFT JOIN scanners day_sc ON day_sc.id = s.scanner_id
             AND day_sc.org_id = s.org_id AND day_sc.mode = s.mode
@@ -96,6 +101,8 @@ export async function readStaffActivity(
     PIN_MISSES_PER_PERSON,
     now - (now % PIN_SCANNER_WINDOW_MS),
     PIN_MISSES_PER_SCANNER,
+    dayWindowOf(now),
+    PIN_MISSES_PER_STAFF_DAY,
     dayStartMs('UTC', now),
     ...(page.staffId === undefined ? [] : [page.staffId]),
     ...name.params,

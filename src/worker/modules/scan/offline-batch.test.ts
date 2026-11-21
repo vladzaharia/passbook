@@ -218,6 +218,11 @@ describe('syncing queued reads', () => {
     const midnight = now - (now % DAY);
     const late = midnight - 10 * 60_000;
     // The list is served before the read, as on a real door; only a listed read keeps its own date.
+    // (The test clock starts at pairing: the door was last seen before the list was served, as on a real door.)
+    await run(kit.env.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [
+      midnight - 30 * 60_000,
+      scanner.id,
+    ]);
     kit.clock.set(midnight - 20 * 60_000);
     const roster = await rosterOf(scanner.headers);
     kit.clock.set(midnight + 5 * 60_000);
@@ -346,19 +351,35 @@ describe('syncing queued reads', () => {
     ).toEqual([{ late: 0, client_ts: at }]);
   });
 
-  it('every session poll and online scan moves the floor, whatever the device says is queued', async () => {
+  it('the floor is the last request the door made before the upload, as the server stamped it', async () => {
     const { tpl, scanner, headers } = await door();
-    const floor = () =>
-      rowsOf('SELECT online_at FROM scan_offline_state WHERE scanner_id = ?', [scanner.id]);
-    await kit.get(headers, '/session?pending=3');
-    expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
-    kit.clock.advance(60_000);
-    const live = await kit.scanPass(tpl);
-    expect((await act(headers, { code: live.scanCode ?? '', method: 'camera' })).status).toBe(200);
-    expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
+    const pass = await kit.scanPass(tpl);
+    const now = kit.clock.now();
+    // Last seen 10 minutes ago (the server's own stamp): a read dated 20 minutes ago is back-dated, a read dated 8 is not.
+    await run(kit.env.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [
+      now - 10 * 60_000,
+      scanner.id,
+    ]);
+    kit.clock.set(now - 20 * 60_000);
+    const roster = await rosterOf(headers);
+    kit.clock.set(now);
+    await run(kit.env.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [
+      now - 10 * 60_000,
+      scanner.id,
+    ]);
+    const early = item(pass.scanCode ?? '', {
+      clientTs: now - 20 * 60_000 + 60_000,
+      door: 'listed',
+    });
+    await batch(headers, [early], roster);
+    expect(
+      await rowsOf('SELECT late FROM scan_offline_reads WHERE idempotency_key = ?', [
+        early.idempotencyKey,
+      ]),
+    ).toEqual([{ late: 1 }]);
   });
 
-  it('a door that sends its queue before going online keeps every listed read, one that scans online first has them taken at sync time', async () => {
+  it('a door that sends its queue first keeps every listed read; once the server has seen the door in between, the reads are taken at sync time', async () => {
     const { tpl, scanner, headers } = await door();
     const roster = await rosterOf(headers);
     kit.clock.advance(2 * 3_600_000);
@@ -378,7 +399,7 @@ describe('syncing queued reads', () => {
     const sent = await batchOf(await batch(headers, first, roster));
     expect(sent.items.map((i) => i.outcome.kind)).toEqual(['ok', 'ok', 'ok']);
     expect(await lateOf(first[0]?.idempotencyKey ?? '')).toEqual([{ late: 0 }]);
-    // Online first: the floor passes the reads, which are still admitted, at server time, marked late.
+    // The server saw the door after the reads were dated: they are still admitted, at server time, marked late.
     const second = await queued();
     const live = await kit.scanPass(tpl);
     expect((await act(headers, { code: live.scanCode ?? '', method: 'camera' })).status).toBe(200);

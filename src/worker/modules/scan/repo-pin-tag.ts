@@ -134,24 +134,18 @@ export const namedDayKey = (staffId: string) => `scan:pinday:${staffId}`;
 export const orgDayKey = (orgId: string) => `scan:pinday-org:${orgId}`;
 export const deviceDayKey = (scannerId: string) => `scan:pinday-dev:${scannerId}`;
 
-/** Which of these people are locked for the day: their counter reached `cap` in the window. */
-export async function lockedToday(
+/** The person's and the device's wrong-named-PIN counters for the day, for the check that rides another batch. */
+export const namedDayCountsStatement = (
   db: Db,
-  ids: readonly string[],
+  staffId: string,
+  scannerId: string,
   window: number,
-  cap: number,
-): Promise<Set<string>> {
-  if (ids.length === 0) return new Set();
-  const keys = ids.map(namedDayKey);
-  const rows = await all<{ key: string }>(
-    db,
-    `SELECT key FROM counters WHERE window_start = ? AND count >= ?
-       AND key IN (SELECT value FROM json_each(?))`,
-    [window, cap, JSON.stringify(keys)],
-  );
-  const hit = new Set(rows.map((r) => r.key));
-  return new Set(ids.filter((id) => hit.has(namedDayKey(id))));
-}
+) =>
+  stmt(db, 'SELECT key, count FROM counters WHERE window_start = ? AND key IN (?, ?)', [
+    window,
+    namedDayKey(staffId),
+    deviceDayKey(scannerId),
+  ]);
 
 /** An admin's PIN reset or Unlock: the person's wrong PINs of the day no longer count. */
 export const clearNamedDayStatement = (db: Db, staffId: string) =>
