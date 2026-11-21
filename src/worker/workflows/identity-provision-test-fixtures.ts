@@ -21,6 +21,7 @@ export class FakeApple {
   passTypes = new Map<string, PassTypeRef>();
   certs: (CertificateInfo & { passTypeAscId: string })[] = [];
   calls: string[] = [];
+  reported: string[] = [];
   /** Throw after the next create succeeds, as a dropped response would. */
   /** The provisioner refuses the next certificate order, permanently. */
   refuse = false;
@@ -63,6 +64,11 @@ export class FakeApple {
   async listCertificates(passTypeAscId: string): Promise<CertificateInfo[]> {
     this.calls.push('listCertificates');
     return this.certs.filter((c) => c.passTypeAscId === passTypeAscId);
+  }
+
+  async reportCertificateActive(certAscId: string): Promise<void> {
+    this.calls.push('reportCertificateActive');
+    this.reported.push(certAscId);
   }
 
   async createCertificate(passTypeAscId: string, csrDer: Uint8Array): Promise<CertificateInfo> {
