@@ -80,6 +80,8 @@ export function connectNativeReader(
   const pending = new Map<string, string>();
   /** Until the app answers `ready`, everything but `hello` speaks v1. */
   let version: 1 | 2 = 1;
+  /** The app named `scanAck` in its `features`; until then it is never sent one. */
+  let appAcks = false;
   let tagFormats = false;
   let tagSeq = 0;
   let tagPending: string | null = null;
@@ -126,6 +128,8 @@ export function connectNativeReader(
     // A message newer than the handshake is not from the app we agreed a version with.
     if (message.version > version) return;
     if (message.event === 'ready' || message.event === 'capabilities') {
+      if (Array.isArray(message.features)) appAcks = message.features.includes('scanAck');
+      else if (message.event === 'ready') appAcks = false;
       const capabilities = z.record(z.string(), z.unknown()).safeParse(message.capabilities);
       if (!capabilities.success) return;
       const display = CustomerDisplay.safeParse(capabilities.data.customerDisplay);
@@ -152,8 +156,8 @@ export function connectNativeReader(
     const parsed = Scan.safeParse(message);
     if (!parsed.success) return;
     const scan = parsed.data;
-    // Receipt, before any verdict: the app frees its gate on this, not on the result.
-    send({ op: 'scanAck', id: scan.id });
+    // Receipt, before any verdict, only to an app that advertised it: it frees its gate on this.
+    if (appAcks) send({ op: 'scanAck', id: scan.id });
     if (scan.source === 'nfc-tag') {
       // Tags need bridge v2. A v1 app never sends one, and a stray one is refused, not read.
       if (version < 2) {

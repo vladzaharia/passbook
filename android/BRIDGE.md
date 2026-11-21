@@ -144,12 +144,13 @@ A read used to hold the native gate until its verdict, so a second read during r
 | Web → app | `{version:2, op:'hello', versions:[1,2], features:['scanAck']}` |
 | Web → app | `{version:n, op:'scanAck', id:string}` |
 
+- Both sides advertise, and acks happen only when both do. The app lists `features:['scanAck']` as a top-level field of every `ready` and `capabilities` event, beside `capabilities`, never inside the snapshot (the web validates the snapshot strictly). The web sends `scanAck` only after the app advertised it, so an older app never sees the op. An older web ignores the extra event field and keeps the snapshot.
 - `features` is an optional array of names (at most 8, each at most 32 characters). Each side ignores names it does not know, so this is not a version bump: the wire stays v2 and a v1 or older app sees an extra `hello` field it ignores.
-- On every valid `scan` event the web posts `scanAck {id}` at once, before any verdict, then sends `result` as before. It sends the ack with the negotiated version.
+- On every valid `scan` event, when the app advertised `scanAck`, the web posts `scanAck {id}` at once, before any verdict, then sends `result` as before. It sends the ack with the negotiated version.
 - If the web advertised `scanAck`, the app's gate holds only until the ack, at most 2 s. After that the gate is free and the app shows "Verifier did not respond. Scan again." (no `timeout` event). The verdict is matched to its `id` later without blocking further reads. A read that arrives while the gate waits for an ack shows "Finish the current scan first."
 - If the web did not advertise it, the app keeps the old behaviour: one read holds the gate until its `result` or 15 s.
 - The web owns a read that arrives during review or while a result shows: the loop holds it (review), queues it (checking, result) or answers with a chip, and says so on screen. A read the page cannot take (not started, blocked) shows a notice and gets `result` `error`.
-- An older Android app that predates this op shows "Verifier requested an unsupported reader operation." for each ack. Update the app with the web.
+- An app that does not advertise `scanAck` gets today's behaviour: no ack, gate held until the verdict.
 
 ## Backend obligations
 

@@ -323,7 +323,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
             JSONObject ready = message("ready");
             put(ready, "nfc", nfc.available()); put(ready, "ecp", false);
             put(ready, "diagnostics", config.isLocal()); put(ready, "appVersion", BuildConfig.VERSION_NAME);
-            put(ready, "capabilities", capabilities());
+            put(ready, "capabilities", capabilities()); put(ready, "features", features());
             web.send(ready); return;
         }
         if (!foreground) return;
@@ -675,6 +675,9 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
         return array;
     }
 
+    /** Additive bridge features, a top-level event field outside the strict capability snapshot. */
+    static JSONArray features() { return new JSONArray().put("scanAck"); }
+
     static JSONObject capabilitySnapshot(String version, boolean cameraAvailable, String cameraPermission,
                                          boolean nfcSupported, boolean nfcAvailable, boolean nfcReading) {
         return capabilitySnapshot(version, cameraAvailable, cameraPermission, nfcSupported, nfcAvailable, nfcReading, false);
@@ -726,7 +729,7 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     private void reportCapabilities() {
         if (web == null || !web.isReady()) return;
         JSONObject event = message("capabilities");
-        put(event, "capabilities", capabilities());
+        put(event, "capabilities", capabilities()); put(event, "features", features());
         web.send(event);
     }
 

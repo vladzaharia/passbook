@@ -36,6 +36,7 @@ describe('native scanner adapter', () => {
 
   it('acknowledges receipt before any verdict, and keeps earlier reads pending', () => {
     const s = setup();
+    s.event({ event: 'ready', features: ['scanAck'], capabilities: {} });
     s.read.mockReturnValueOnce('input-1').mockReturnValueOnce('input-2');
     s.event({ event: 'scan', id: 'native-1', source: 'barcode', value: 'A' });
     expect(s.sent.at(-1)).toEqual({ version: 1, op: 'scanAck', id: 'native-1' });
@@ -50,6 +51,7 @@ describe('native scanner adapter', () => {
 
   it('acknowledges a scan the page refuses, then reports the error', () => {
     const s = setup();
+    s.event({ event: 'ready', features: ['scanAck'], capabilities: {} });
     s.read.mockReturnValueOnce(null as never);
     s.event({ event: 'scan', id: 'native-3', source: 'barcode', value: 'C' });
     expect(s.sent.slice(-2)).toEqual([
@@ -58,8 +60,25 @@ describe('native scanner adapter', () => {
     ]);
   });
 
+  it('sends no ack to an app that did not advertise scanAck', () => {
+    const s = setup();
+    s.event({ event: 'ready', capabilities: {} });
+    s.event({ event: 'scan', id: 'native-5', source: 'barcode', value: 'D' });
+    expect(s.sent.filter((m) => m.op === 'scanAck')).toEqual([]);
+    s.event({ event: 'ready', features: ['other'], capabilities: {} });
+    s.event({ event: 'scan', id: 'native-6', source: 'barcode', value: 'E' });
+    expect(s.sent.filter((m) => m.op === 'scanAck')).toEqual([]);
+  });
+
+  it('keeps the capability snapshot when the app sends features beside it', () => {
+    const s = setup();
+    s.event({ event: 'ready', features: ['scanAck'], capabilities: { platform: 'android' } });
+    expect(s.capabilities).toHaveBeenCalledWith({ platform: 'android' });
+  });
+
   it('does not acknowledge a malformed scan', () => {
     const s = setup();
+    s.event({ event: 'ready', features: ['scanAck'], capabilities: {} });
     s.event({ event: 'scan', id: 'native-4', source: 'barcode' });
     expect(s.sent.filter((m) => m.op === 'scanAck')).toEqual([]);
   });
