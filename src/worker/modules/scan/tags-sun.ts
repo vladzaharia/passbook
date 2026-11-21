@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import type { TagRead } from '../../../shared/contracts/nfc-tags.ts';
 import type { ScanReason } from '../../../shared/contracts/scan.ts';
 import { writeEvent } from '../../platform/analytics.ts';
-import { bump } from '../../platform/counters.ts';
+import { bump, read as readCounter } from '../../platform/counters.ts';
 import { AppError, ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
@@ -47,10 +47,33 @@ export interface SunWho {
 }
 
 const FAILED_WINDOW_MS = 600_000;
+/** Failed SUN reads a device may make per window; the next is refused until the window turns over. */
+export const SUN_FAILURES_PER_WINDOW = 10;
+
+const failKey = (who: SunWho) => `scan:tag:sunfail:${who.scanner?.id ?? who.actorKey}`;
+
+/** Refuses (429 `TAG_SUN_RATE_LIMITED`) a SUN read from a device that already failed its limit this window. Successes are not counted. */
+async function refuseSunOverLimit(ctx: ServiceContext, who: SunWho): Promise<void> {
+  const now = ctx.clock.now();
+  const start = now - (now % FAILED_WINDOW_MS);
+  if ((await readCounter(ctx.env.DB, failKey(who), start)) < SUN_FAILURES_PER_WINDOW) return;
+  ctx.log.warn('scan.tag_sun_limited', { orgId: who.orgId, code: 'TAG_SUN_RATE_LIMITED' });
+  writeEvent(
+    ctx.env,
+    { event: 'tag.sun_limited', orgId: who.orgId, mode: who.mode, outcome: 'TAG_SUN_RATE_LIMITED' },
+    ctx.log,
+  );
+  throw new AppError(
+    'TAG_SUN_RATE_LIMITED',
+    429,
+    'Too many failed tag reads. Wait a few minutes.',
+    { headers: { 'retry-after': String(Math.ceil((start + FAILED_WINDOW_MS - now) / 1000)) } },
+  );
+}
 
 /**
  * A SUN read that did not verify (unknown keyset or bad MAC): counted per device in 10-minute windows, logged as
- * `TAG_SUN_FAILED` with the count and written as an analytics event, so an alert can fire before a limiter exists.
+ * `TAG_SUN_FAILED` with the count and written as an analytics event, and capped by `refuseSunOverLimit`.
  * A refused read that merely was not fresh, or came from the other mode, is not counted.
  */
 export async function noteSunFailure(
@@ -61,11 +84,7 @@ export async function noteSunFailure(
   if (reason !== 'TAG_SUN_KEYSET' && reason !== 'TAG_SUN_VERIFY') return;
   const now = ctx.clock.now();
   const device = who.scanner?.id ?? who.actorKey;
-  const count = await bump(
-    ctx.env.DB,
-    `scan:tag:sunfail:${device}`,
-    now - (now % FAILED_WINDOW_MS),
-  );
+  const count = await bump(ctx.env.DB, failKey(who), now - (now % FAILED_WINDOW_MS));
   ctx.log.warn('scan.tag_sun_failed', {
     orgId: who.orgId,
     code: 'TAG_SUN_FAILED',
@@ -120,6 +139,7 @@ export async function verifiedSunId(
   actor: ScanActor,
   read: TagRead,
 ): Promise<{ id: TagId } | { refused: ScanReason }> {
+  await refuseSunOverLimit(ctx, actor);
   const verified = await verifySunTap(ctx, actor.orgId, actor.mode, read);
   if (verified.ok) return { id: { sun: verified.proof } };
   ctx.log.info('scan.tag_refused', { orgId: actor.orgId, code: verified.code });
@@ -161,6 +181,7 @@ export async function identifyRead(
     return { system: 'uid', ref, hint, sun: null };
   }
   if (found?.system === 'sun') {
+    await refuseSunOverLimit(ctx, scope);
     const verified = await verifySunTap(ctx, scope.orgId, scope.mode, read);
     if (!verified.ok) {
       ctx.log.info('scan.tag_refused', { orgId: scope.orgId, code: verified.code });

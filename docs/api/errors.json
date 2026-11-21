@@ -4074,6 +4074,15 @@
       ]
     },
     {
+      "code": "TAG_SUN_RATE_LIMITED",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "TAG_SUN_REPLAY",
       "statuses": [
         409

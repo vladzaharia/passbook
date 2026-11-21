@@ -16,7 +16,8 @@ export type EventName =
   | 'auth.sign_in'
   | 'scan.result'
   | 'join.refused'
-  | 'tag.sun_failed';
+  | 'tag.sun_failed'
+  | 'tag.sun_limited';
 
 export interface AnalyticsEvent {
   event: EventName;
