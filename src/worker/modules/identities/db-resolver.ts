@@ -66,7 +66,17 @@ export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<Resolve
   if (row.source === 'env') {
     if (row.id !== PLATFORM_IDENTITY_ID)
       throw new NotFoundError('Signing identity is not configured.', 'IDENTITY_NOT_CONFIGURED');
-    return { ...readEnvIdentity(env), label: row.label, nfcEnabled: row.nfc_enabled === 1 };
+    const identity = readEnvIdentity(env);
+    // Installed passes key on the row's pass type and team: never sign them as anything else.
+    if (
+      identity.passTypeIdentifier !== row.pass_type_identifier ||
+      identity.teamIdentifier !== row.team_identifier
+    )
+      throw new UnavailableError(
+        'The platform signing identity does not match its configuration.',
+        'IDENTITY_PLATFORM_ENV_MISMATCH',
+      );
+    return { ...identity, label: row.label, nfcEnabled: row.nfc_enabled === 1 };
   }
   if (!row.cert_pem) throw notFound();
   return {
@@ -85,17 +95,18 @@ export async function resolveRow(env: AppEnv, row: IdentityRow): Promise<Resolve
   };
 }
 
-/** New passes only: an identity that stopped issuing or whose certificate ended signs nothing new. */
-async function assertIssuable(env: AppEnv, id: string, now: number): Promise<void> {
+/** Why an identity cannot sign new passes, or null. */
+async function refusal(env: AppEnv, id: string, now: number): Promise<ConflictError | null> {
   const row = await getIdentityRow(env.DB, id);
-  if (!row) return;
+  if (!row) return null;
   if (row.issuing === 0)
-    throw new ConflictError('This signing identity no longer issues passes.', 'IDENTITY_RETIRED');
+    return new ConflictError('This signing identity no longer issues passes.', 'IDENTITY_RETIRED');
   if (row.not_after !== null && row.not_after <= now)
-    throw new ConflictError(
+    return new ConflictError(
       'The signing certificate has expired. Renew it before issuing passes.',
       'IDENTITY_EXPIRED',
     );
+  return null;
 }
 
 export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
@@ -116,22 +127,32 @@ export function createDbIdentityResolver(env: AppEnv): IdentityResolver {
     byId,
     byRow: (row) => resolveRow(env, row),
     async forOrg(orgId, identityId, now) {
-      const explicit = identityId ?? (await orgDefaultIdentityId(env.DB, orgId));
-      if (explicit) {
-        const identity = await byId(explicit);
-        // An org may use its own identities and global ones, never another org's.
+      // An org may use its own identities and global ones, never another org's.
+      const scoped = async (id: string) => {
+        const identity = await byId(id);
         if (identity.orgId !== null && identity.orgId !== orgId) throw notFound();
-        await assertIssuable(env, identity.id, now);
         return identity;
+      };
+      // A named identity is refused when it cannot issue; defaults fall through to the next one.
+      if (identityId) {
+        const identity = await scoped(identityId);
+        const refused = await refusal(env, identity.id, now);
+        if (refused) throw refused;
+        return identity;
+      }
+      const orgDefault = await orgDefaultIdentityId(env.DB, orgId);
+      if (orgDefault) {
+        const identity = await scoped(orgDefault);
+        if (!(await refusal(env, identity.id, now))) return identity;
       }
       const fallback = await getDefaultRow(env.DB);
       if (fallback && (fallback.org_id === null || fallback.org_id === orgId)) {
         const identity = await resolveRow(env, fallback);
-        await assertIssuable(env, identity.id, now);
-        return identity;
+        if (!(await refusal(env, identity.id, now))) return identity;
       }
       const identity = await platform();
-      await assertIssuable(env, identity.id, now);
+      const refused = await refusal(env, identity.id, now);
+      if (refused) throw refused;
       return identity;
     },
   };

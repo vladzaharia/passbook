@@ -8,7 +8,7 @@ import { PLATFORM_IDENTITY_ID, readEnvIdentity } from './env-identity.ts';
 /**
  * Upserts the env-sourced platform signing identity row (needed by passes.identity_id FK). Idempotent.
  * The pass type and team are written once, on insert: installed passes key on them, so a changed env
- * value is logged and ignored.
+ * value is logged and nothing is written or signed.
  */
 export async function ensurePlatformIdentity(env: AppEnv, now: number, log: Logger): Promise<void> {
   const identity = readEnvIdentity(env);
@@ -21,13 +21,15 @@ export async function ensurePlatformIdentity(env: AppEnv, now: number, log: Logg
     existing &&
     (existing.pass_type_identifier !== identity.passTypeIdentifier ||
       existing.team_identifier !== identity.teamIdentifier)
-  )
+  ) {
     log.error('identity.platform_env_mismatch', {
       code: 'IDENTITY_PLATFORM_ENV_MISMATCH',
       identityId: PLATFORM_IDENTITY_ID,
       rowPassType: existing.pass_type_identifier,
       envPassType: identity.passTypeIdentifier,
     });
+    return;
+  }
   const info = await certificateInfo(identity.material.certificate);
   const materialSha256 = await sha256Hex(
     JSON.stringify([identity.material.privateKey, identity.material.intermediate]),
