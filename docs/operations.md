@@ -538,6 +538,15 @@ npx wrangler d1 execute DB --remote --command "INSERT INTO status_incidents (id,
 
 `component` is `api`, `apple_push`, `email`, `webhooks`, `google`, `samsung` or NULL; `impact` is `notice`, `degraded` or `outage` (an open degraded or outage note moves the page's overall state). Resolve it with `UPDATE status_incidents SET resolved_at = ... WHERE id = ...`; it stays listed for 14 days.
 
+### Console sign-in strength
+
+The console, the developer tools and every API key mint need a Polaris ID sign-in (a passkey) or break-glass. An email link gives My passes and Account only.
+
+- `vars.OIDC_REQUIRE_AMR` (`phr`) is the ID-token `amr` a Polaris ID sign-in must carry. A sign-in made with an emailed login code (`otp`) restarts once with `prompt=login`, then fails with `PASSKEY_REQUIRED`. Empty turns the check off (a provider that sends no `amr`).
+- Migration 0169 puts every member without a Polaris ID identity in `console_email_grace` and, when it found any, sets the platform setting `auth.consoleEmailUntil` to 21 days on (ms). Until then those members' email sessions keep the console and their personal keys keep working. Move the date with the platform settings API (`auth.consoleEmailUntil`, ms), or set it to `null` to end grace now. A database with nobody in grace enforces at once.
+- A personal key stops with 403 `KEY_OWNER_NEEDS_IDP` once its owner is outside grace and has no Polaris ID identity; it works again after one Polaris ID sign-in. Service and platform keys are not affected. `api_keys.created_amr` shows how a key's creator signed in.
+- Non-admin Polaris ID sessions last 7 days idle and 30 days in all.
+
 ### Closing and purging an organization
 
 `POST /orgs/{id}/close` (a platform admin, or an org admin with `{ confirmSlug }`) sets `status` to `deleted`, `closed_at` and `purge_after` (30 days on). Passes stop updating, writes stop, every org admin is mailed. The admins and PassBook can export meanwhile (`POST /orgs/{id}/exports`, then `.../link`); the archive in R2 lives 7 days, a link 24 hours. A platform admin reopens inside the window with `POST /orgs/{id}/reopen` (the default signing identity comes back); not once a purge has started.

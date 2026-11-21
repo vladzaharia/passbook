@@ -1,6 +1,8 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { redirect } from '@tanstack/react-router';
 import type { OrgCapability, OrgMembership } from '@/shared/contracts/org-membership.ts';
+import { IDP_SIGN_IN_REQUIRED_MESSAGE } from '@/shared/copy/sign-in.ts';
+import { canUseConsole } from '@/shared/sign-in.ts';
 import { ApiError } from './errors.ts';
 import { safeNext } from './redirect.ts';
 import { parseAdminPath } from './scope.ts';
@@ -122,6 +124,13 @@ export async function requireAdminConsole(
   next: string,
 ): Promise<AuthedSession> {
   const session = await requireSession(queryClient, next);
+  // An email-link session never opens the console (outside its grace window): it answers with the Polaris ID card.
+  if (!canUseConsole(session, Date.now()))
+    throw new ApiError({
+      status: 403,
+      code: 'IDP_SIGN_IN_REQUIRED',
+      detail: IDP_SIGN_IN_REQUIRED_MESSAGE,
+    });
   if (!session.roles.includes('admin')) {
     // fetchQuery refreshes invalidated grants; an error with retained data must be retried too.
     const previous = queryClient.getQueryState(membershipsQuery.queryKey);
