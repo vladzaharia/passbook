@@ -148,7 +148,7 @@ export function Stage({ q, fix }: { q: Quickstart; fix: Fix | null }) {
     pass,
     caught,
     over,
-    renderedAt: ready ? q.doneAt : null,
+    renderedAt: ready ? q.renderedAt : null,
   });
   return (
     <>

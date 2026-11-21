@@ -145,7 +145,8 @@ developerPortalRoutes.get('/*', async (c) => {
     headers.set(
       'content-security-policy',
       developersContentSecurityPolicy({
-        turnstile: key === PATHS.console || key === PATHS.quickstart,
+        // The workbench on the home page resets a sandbox behind the same check that makes one.
+        turnstile: key === PATHS.console || key === PATHS.quickstart || key === PATHS.home,
       }),
     );
   }

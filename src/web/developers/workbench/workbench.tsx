@@ -8,6 +8,7 @@ import { Buddy } from '../../ui/art/buddy.tsx';
 import { Calls } from './calls.tsx';
 import { GoLive, Keys, Passes, Webhooks } from './cards.tsx';
 import { ago, left, type Source } from './model.ts';
+import { ReopenAction, ResetAction } from './sandbox-actions.tsx';
 import { Stats } from './stats.tsx';
 import { Track } from './track.tsx';
 
@@ -37,6 +38,8 @@ export interface WorkbenchProps {
   links?: WorkbenchLinks;
   /** The buddy waves on the first view of a visit, then sits still. */
   wave?: boolean;
+  /** A reset or reopen changed the sandbox: read the home again. */
+  onChanged?: () => void;
 }
 
 function Head({
@@ -44,11 +47,13 @@ function Head({
   now,
   links,
   wave,
+  onChanged,
 }: {
   sandbox: DeveloperHomeSandbox;
   now: number;
   links: WorkbenchLinks;
   wave: boolean;
+  onChanged: () => void;
 }) {
   const closed = sandbox.closedAt !== null;
   return (
@@ -70,10 +75,15 @@ function Head({
         </span>
       </div>
       <div className="wrap-row g2 wb-head-actions">
-        {closed ? null : (
-          <a className="btn sm" href={links.keys}>
-            New key
-          </a>
+        {closed ? (
+          <ReopenAction sandbox={sandbox} onChanged={onChanged} />
+        ) : (
+          <>
+            <a className="btn sm" href={links.keys}>
+              New key
+            </a>
+            <ResetAction onChanged={onChanged} />
+          </>
         )}
         <a className="btn sm outline" href={links.admin(sandbox.orgId)}>
           Open in Admin
@@ -116,13 +126,14 @@ export function Workbench({
   loadCalls,
   links = DEFAULT_LINKS,
   wave = false,
+  onChanged = () => undefined,
 }: WorkbenchProps) {
   if (!home.sandbox || !home.progress || !home.usage)
     return <NoSandbox home={home} links={links} />;
   const { sandbox, progress, usage, now } = home;
   return (
     <div className="wb" data-state={home.state}>
-      <Head sandbox={sandbox} now={now} links={links} wave={wave} />
+      <Head sandbox={sandbox} now={now} links={links} wave={wave} onChanged={onChanged} />
       {home.state === 'open' ? <Track progress={progress} quickstart={links.quickstart} /> : null}
       <Stats usage={usage} passLimit={sandbox.limits.passes} logs={links.logs} />
       <div className="wb-grid">

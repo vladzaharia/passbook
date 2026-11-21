@@ -7,6 +7,7 @@ import '../../ui/art/scenes/tear.css';
 import '../playground/playground.css';
 import './quickstart.css';
 import './quickstart-stage.css';
+import './quickstart-v2.css';
 import { loadSession, signedOutGate } from '../console/session.ts';
 import { disableZodCompiling } from '../playground/jitless.ts';
 import type { Island } from '../shell/islands.ts';

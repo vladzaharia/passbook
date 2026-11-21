@@ -234,3 +234,31 @@ a.wb-stat:hover {
 .wb-slot {
   min-height: 1px;
 }
+
+/* Reset and Reopen: a consequence confirm and the new key, inline in the head. */
+.wb-act {
+  display: grid;
+  gap: 8px;
+  max-width: 28rem;
+  padding: 12px 14px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-sunken);
+}
+.wb-confirm {
+  border-color: var(--pk-warning-border);
+}
+.wb-key-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.wb-key-box code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.wb .check:not([data-shown="true"]) {
+  height: 0;
+  overflow: hidden;
+}

@@ -44,6 +44,13 @@ export function WorkbenchIsland({
       (error: unknown) => setLoad({ kind: 'failed', out: error instanceof HomeError && error.out }),
     );
   }, [fetchFn]);
+  /** After a reset or reopen: the new home replaces the old one in place, with no loading flash. */
+  const refresh = useCallback(() => {
+    fetchHome(fetchFn).then(
+      (home) => setLoad({ kind: 'ready', home }),
+      () => undefined,
+    );
+  }, [fetchFn]);
   const [first] = useState(initial === undefined);
   useEffect(() => {
     if (first) read();
@@ -72,6 +79,7 @@ export function WorkbenchIsland({
       home={load.home}
       loadCalls={(source) => fetchCalls(source, fetchFn)}
       wave={wave}
+      onChanged={refresh}
       {...(links ? { links } : {})}
     />
   );

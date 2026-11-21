@@ -1,5 +1,7 @@
 import { PATHS } from '../../../shared/developers.ts';
+import { fetchHome } from '../workbench/api.ts';
 import { RUN_LIMIT, remaining, subscribe } from './budget.ts';
+import { loadClock, onClock, runTime } from './run-clock.ts';
 import { loadSession, onSession, type Session } from './session.ts';
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -36,6 +38,34 @@ export function budgetMeter(): { node: HTMLElement; paint: () => void } {
   return { node, paint };
 }
 
+/** The run clock inside the chip: ticking from the server's start until the quickstart is done, then gone. */
+function clockFor(chip: HTMLElement): void {
+  const node = el('span', 'orgchip-clock mono');
+  node.setAttribute('role', 'timer');
+  node.setAttribute('aria-label', 'Quickstart time');
+  let timer: ReturnType<typeof setInterval> | undefined;
+  const stop = onClock((c) => {
+    clearInterval(timer);
+    const paint = () => {
+      // A chip that was swapped out stops its own clock.
+      if (!node.isConnected && chip.dataset.shown === 'true') {
+        clearInterval(timer);
+        stop();
+        return;
+      }
+      const t = c ? runTime(c) : null;
+      node.textContent = t ?? '';
+      node.hidden = t === null;
+      chip.dataset.running = t === null ? 'false' : 'true';
+    };
+    paint();
+    if (c && c.doneAt === null) timer = setInterval(paint, 1000);
+  });
+  chip.append(node);
+  chip.dataset.shown = 'true';
+  void loadClock(fetchHome);
+}
+
 function chipFor(session: Session): HTMLElement | null {
   if (session.kind === 'out') return null;
   const chip = el('a', 'orgchip');
@@ -51,6 +81,7 @@ function chipFor(session: Session): HTMLElement | null {
     el('span', 'orgchip-dot', (name[0] ?? 's').toUpperCase()),
     el('span', 'orgchip-name', name),
   );
+  clockFor(chip);
   const meter = budgetMeter();
   chip.append(meter.node);
   subscribe(meter.paint);

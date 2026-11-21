@@ -47,6 +47,7 @@ export function RunBar({
         {call.state === 'ok' ? (
           <span className="row g3 wrap-row">
             <span className="stamp ok">{stamp(call.status)}</span>
+            {call.etag ? <span className="mono xs muted">ETag {call.etag}</span> : null}
             <span className="mono xs muted">{call.ms} ms</span>
             {id ? (
               <span className="mono xs muted row g1">

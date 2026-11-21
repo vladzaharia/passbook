@@ -134,3 +134,62 @@ export const stamp = (status: number): string =>
   status === 0
     ? 'NO ANSWER'
     : `${status} ${STATUS_WORD[status] ?? (status >= 500 ? 'ERROR' : 'FAILED')}`;
+
+/** The input field the quickstart ticket needs that the call's own request body does not carry. */
+function missingField(requestBody: string | null, sample: InputValues | null): string | null {
+  if (!sample) return null;
+  try {
+    const sent = (JSON.parse(requestBody ?? '') as { input?: Record<string, unknown> }).input;
+    if (!sent || typeof sent !== 'object') return null;
+    return Object.keys(sample).find((k) => !(k in sent)) ?? null;
+  } catch {
+    // No readable request body: the problem's own words stand.
+    return null;
+  }
+}
+
+/**
+ * What a failed call heard in the request log says to do. The log keeps field names but blanks values and
+ * messages, so the missing field is the one the quickstart's input has and the request's body lacks; the title is
+ * the problem's own sentence.
+ */
+export function fixOfCall(
+  entry: { status: number; code: string | null },
+  bodies: { response: string | null; request: string | null },
+  sample: InputValues | null,
+): Fix & { path: string | null } {
+  let title: string = QS_COPY.fail.generic;
+  let path: string | null = null;
+  try {
+    const p = JSON.parse(bodies.response ?? '') as {
+      detail?: unknown;
+      issues?: { path?: unknown }[];
+    };
+    if (typeof p.detail === 'string' && p.detail !== '[redacted]') title = p.detail;
+    const first = p.issues?.[0]?.path;
+    if (typeof first === 'string' && first !== '' && first !== '[redacted]') path = first;
+  } catch {
+    // No readable body (older than a day, or not JSON): the status and code still say what happened.
+  }
+  const leaf = path?.startsWith('input.')
+    ? path.slice('input.'.length)
+    : entry.status === 422 || entry.code === 'PASS_INPUT_INVALID'
+      ? missingField(bodies.request, sample)
+      : null;
+  if (leaf && !path) {
+    path = `input.${leaf}`;
+    title = QS_COPY.fail.required(leaf);
+  }
+  const value = leaf && sample ? sample[leaf] : undefined;
+  const line =
+    leaf && typeof value === 'string'
+      ? QS_COPY.fail.addField(leaf, value)
+      : path
+        ? QS_COPY.fail.checkField(path)
+        : '';
+  return { title, line, repair: false, code: entry.code ?? undefined, path };
+}
+
+/** `201 CREATED` and `3:42`-style help for a call heard from a terminal. */
+export const shortId = (id: string): string =>
+  id.length > 14 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;

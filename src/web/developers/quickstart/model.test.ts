@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { EXAMPLE_IDS } from '../model/ids.ts';
-import { createCode, firstInput, fixFor, litLines, maskKey, patchCode, stamp } from './model.ts';
+import {
+  createCode,
+  firstInput,
+  fixFor,
+  fixOfCall,
+  litLines,
+  maskKey,
+  patchCode,
+  stamp,
+} from './model.ts';
 
 const SAMPLE = {
   eventName: 'Sample Event',
@@ -94,5 +103,61 @@ describe('small helpers', () => {
   });
   it('lights the lines that name the input', () => {
     expect([...litLines('a\ninput: {\nb\nattendee: 1', ['input', 'attendee'])]).toEqual([2, 4]);
+  });
+});
+
+describe('fixOfCall', () => {
+  const sample = { eventName: 'Sample Event', ticketId: 'QS-1042' };
+  const response = JSON.stringify({
+    status: 422,
+    title: 'Validation failed',
+    detail: 'The pass input is invalid.',
+    code: 'PASS_INPUT_INVALID',
+    issues: [{ path: '', message: '[redacted]' }],
+  });
+  const sentWithout = (field: string) =>
+    JSON.stringify({
+      templateId: 'x',
+      input: Object.fromEntries(
+        Object.keys(sample)
+          .filter((k) => k !== field)
+          .map((k) => [k, '[redacted]']),
+      ),
+    });
+
+  it('finds the field the body lacks, from the log that keeps names and blanks values', () => {
+    const fix = fixOfCall(
+      { status: 422, code: 'PASS_INPUT_INVALID' },
+      { response, request: sentWithout('ticketId') },
+      sample,
+    );
+    expect(fix).toMatchObject({
+      title: 'ticketId is required.',
+      path: 'input.ticketId',
+      line: 'Add -d input[ticketId]=QS-1042 and run again.',
+      code: 'PASS_INPUT_INVALID',
+    });
+  });
+
+  it('uses a path the problem names, and survives a missing or hostile body', () => {
+    const named = JSON.stringify({ issues: [{ path: 'templateId' }] });
+    expect(
+      fixOfCall({ status: 400, code: null }, { response: named, request: null }, sample).line,
+    ).toBe('Check templateId, then run again.');
+    expect(
+      fixOfCall({ status: 500, code: null }, { response: null, request: null }, sample),
+    ).toMatchObject({
+      title: 'The request failed.',
+      line: '',
+      path: null,
+      code: undefined,
+    });
+    expect(
+      fixOfCall(
+        { status: 422, code: null },
+        { response: '[redacted]', request: '[json, not parseable]' },
+        null,
+      ).line,
+    ).toBe('');
   });
 });

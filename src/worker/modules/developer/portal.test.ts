@@ -79,13 +79,16 @@ describe('developer portal route', () => {
     expect(csp).not.toMatch(/nonce|unsafe-inline|unsafe-eval/);
   });
 
-  it('admits the Turnstile widget on the console page alone, for Create sandbox', async () => {
+  it('admits the Turnstile widget on the console, quickstart and home pages alone, for Create sandbox and Reset', async () => {
     const csp = (await call('/developers/console')).headers.get('content-security-policy') ?? '';
     expect(csp).toContain("script-src 'self' https://challenges.cloudflare.com;");
     expect(csp).toContain('frame-src https://challenges.cloudflare.com;');
     expect(csp).toContain("require-trusted-types-for 'script'");
     expect(csp).toContain('trusted-types passbook-turnstile;');
-    for (const path of ['/developers', '/developers/reference/passes']) {
+    const home = (await call('/developers')).headers.get('content-security-policy') ?? '';
+    expect(home).toContain("script-src 'self' https://challenges.cloudflare.com;");
+    expect(home).toContain('trusted-types passbook-turnstile;');
+    for (const path of ['/developers/reference/passes', '/developers/logs']) {
       const other = (await call(path)).headers.get('content-security-policy') ?? '';
       expect(other, path).not.toContain('cloudflare');
       expect(other, path).toContain("frame-src 'none'");
