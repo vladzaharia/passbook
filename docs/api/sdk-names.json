@@ -325,6 +325,12 @@
     "sdk": false,
     "reason": "Developer portal access: a signed-in person in a browser, not an integration."
   },
+  "developer.getHome": {
+    "resource": "developer.home",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal workbench: a signed-in person in a browser, not an integration."
+  },
   "developer.getLog": {
     "resource": "developer.requestLogs",
     "method": "retrieve",

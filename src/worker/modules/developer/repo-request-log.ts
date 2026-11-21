@@ -112,6 +112,10 @@ export interface LogFilter {
   code?: string;
   path?: string;
   method?: string;
+  /** `key`: a key's own calls (`via` null); `try`: Run here. */
+  source?: 'key' | 'try' | 'all';
+  /** Rows newer than this id (UUIDv7, so newer sorts higher). */
+  after?: string;
 }
 
 function where(orgId: string, f: LogFilter, now: number, cursor?: string) {
@@ -129,6 +133,9 @@ function where(orgId: string, f: LogFilter, now: number, cursor?: string) {
     const hundred = Number(f.status[0]) * 100;
     add('status >= ? AND status < ?', hundred, hundred + 100);
   } else if (f.status) add('status = ?', Number(f.status));
+  if (f.source === 'key') add('via IS NULL');
+  else if (f.source === 'try') add("via = 'try'");
+  if (f.after) add('id > ?', f.after);
   if (cursor) add('id < ?', cursor);
   return { sql: sql.join(' AND '), params };
 }
