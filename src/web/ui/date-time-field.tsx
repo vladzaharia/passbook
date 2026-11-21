@@ -17,8 +17,8 @@ export interface DateTimeFieldProps {
   id?: string;
   value: DateTimeValue | null;
   onChange: (value: DateTimeValue | null) => void;
-  /** "No date" or "Never expires": checked hides the controls and sets null. */
-  clearLabel: string;
+  /** "No date" or "Never expires": checked hides the controls and sets null. Without it the field is required. */
+  clearLabel?: string;
   /** Used when the clear box is unchecked. */
   defaultZone: string;
   'aria-describedby'?: string;
@@ -76,13 +76,15 @@ export function DateTimeField({
           ) : null}
         </>
       ) : null}
-      <CheckboxField
-        label={clearLabel}
-        checked={value === null}
-        onCheckedChange={(checked) =>
-          onChange(checked === true ? null : { local: '', zone: defaultZone })
-        }
-      />
+      {clearLabel ? (
+        <CheckboxField
+          label={clearLabel}
+          checked={value === null}
+          onCheckedChange={(checked) =>
+            onChange(checked === true ? null : { local: '', zone: defaultZone })
+          }
+        />
+      ) : null}
     </div>
   );
 }
