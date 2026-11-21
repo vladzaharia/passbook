@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PassListStatusSchema } from '@/shared/contracts/passes.ts';
+import { PassListStatusSchema } from '@/shared/contracts/pass-list-status.ts';
 
 /** Unknown or malformed values fall away instead of breaking the page. */
 const opt = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined);

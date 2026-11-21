@@ -4,6 +4,7 @@ import { InputMatchSchema } from './broadcasts.ts';
 import { EffectiveChannelsSchema } from './channels.ts';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
+import { PassListStatusSchema } from './pass-list-status.ts';
 import { PassStampsSchema } from './pass-stamps.ts';
 import { PassTermSchema } from './pass-term.ts';
 import { CREATE_PASS_DOCS } from './passes-docs.ts';
@@ -13,7 +14,7 @@ import { ValidationIssueSchema } from './templates.ts';
 
 export const PassStatusSchema = z.enum(['active', 'voided']);
 /** List filter: the two statuses, plus passes removed from Wallet (which also read as voided). */
-export const PassListStatusSchema = z.enum(['active', 'voided', 'removed']);
+export { PassListStatusSchema };
 export const FieldSourceSchema = z.enum(['manual', 'connection', 'import']);
 /** Why a version was published, beside its cause. Free text in the database, closed here. */
 export const PassSourceSchema = z.enum([
