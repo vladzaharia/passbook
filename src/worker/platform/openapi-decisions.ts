@@ -34,6 +34,8 @@ const IDEMPOTENT = [
   'post /api/v1/orgs/{orgId}/identities/apple',
   'post /api/v1/scanning-sessions/setup',
   'post /api/v1/templates/{id}/release',
+  'post /api/v1/pass-imports',
+  'post /api/v1/pass-imports/{id}/commit',
   'post /api/v1/templates/{id}/review-requests',
 ];
 

@@ -35,6 +35,21 @@ describe('validateManifest', () => {
     expect(validateManifest(base, { allowPattern: true })).toEqual([]);
   });
 
+  it('rejects an input named with a leading "$"', () => {
+    const m = {
+      ...base,
+      inputs: {
+        ...base.inputs,
+        properties: { ...base.inputs.properties, $raw: { type: 'string' } },
+      },
+    } as TemplateManifest;
+    const issues = validateManifest(m, { allowPattern: true }).filter(
+      (i) => i.code === 'INPUT_RESERVED',
+    );
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain('"$raw"');
+  });
+
   it('rejects ReDoS-prone keywords unless baked', () => {
     expect(codes(base)).toEqual(['SCHEMA_KEYWORD']);
     expect(codes(base, { allowPattern: true })).toEqual([]);

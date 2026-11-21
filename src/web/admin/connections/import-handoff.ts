@@ -42,7 +42,8 @@ export function handOffToConnection(imp: PassImportDto): void {
     url: store()?.getItem(LINK(imp.id)) ?? '',
     idColumn: plan.externalId ? leafOf(plan.externalId.from) : '',
     holderEmailField: plan.holderEmail?.from ?? '',
-    mapping: plan.mapping,
+    // A joined column has no row in this editor yet (I5); the connection keeps what it can read.
+    mapping: plan.mapping as Mapping,
   };
   store()?.setItem(HANDOFF, JSON.stringify(prefill));
   // The link now travels in the handoff only, which the wizard clears on reading.

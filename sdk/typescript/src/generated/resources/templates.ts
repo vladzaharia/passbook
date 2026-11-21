@@ -128,6 +128,11 @@ export class TemplatesResource {
     return this.core.request({ method: 'GET', path: `/api/v1/templates/${encodeURIComponent(id)}/package`, raw: true }, options);
   }
 
+  /** A sample import file: the template field labels and one valid row `GET /api/v1/templates/{id}/sample.csv` */
+  downloadSample(id: string, options?: RequestOptions): Promise<Response> {
+    return this.core.request({ method: 'GET', path: `/api/v1/templates/${encodeURIComponent(id)}/sample.csv`, raw: true }, options);
+  }
+
   /** List templates `GET /api/v1/templates` */
   list(query?: TemplatesListQuery, options?: RequestOptions): PagePromise<TemplatesListResult> {
     return this.core.paginate({ method: 'GET', path: '/api/v1/templates', query }, 'cursor', options);

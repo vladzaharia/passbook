@@ -27,6 +27,7 @@ export async function claimRemovalTrusted(
        removal_claim_status = status, removal_claim_object_key = object_key,
        removal_claim_link_generation = link_generation
      WHERE id = ? AND removed_at IS NULL AND ${snapshotSql} AND lifecycle_generation = ?
+       AND (? = 0 OR NOT EXISTS (SELECT 1 FROM scans s WHERE s.pass_id = passes.id))
      RETURNING lifecycle_generation AS generation`,
     [
       state.at,
@@ -35,6 +36,7 @@ export async function claimRemovalTrusted(
       passId,
       ...snapshotParams(guard.pass),
       guard.generation,
+      guard.fence?.noScans ? 1 : 0,
     ],
   );
   return row?.generation ?? null;

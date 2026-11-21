@@ -28,6 +28,7 @@ export interface ImportRowRecord {
   result: 'created' | 'updated' | 'unchanged' | null;
   code: string | null;
   emailed: number;
+  before: string | null;
 }
 
 /** Rows per grant, and per statement (a guarded insert binds at most 40 values: 8 columns, 4 rows). */
@@ -77,7 +78,7 @@ export async function insertRows(
 }
 
 const SELECT = `SELECT row_no, action, pass_id, expected_version, external_id, holder_email, input,
-  problems, state, result, code, emailed FROM pass_import_rows`;
+  problems, state, result, code, emailed, before FROM pass_import_rows`;
 
 /** One page by row number: 100 and one more to know whether another page follows. */
 export function pageRows(
@@ -100,10 +101,12 @@ export function problemRows(
   db: D1Database,
   importId: string,
   limit: number,
-): Promise<Pick<ImportRowRecord, 'row_no' | 'problems'>[]> {
+): Promise<
+  Pick<ImportRowRecord, 'row_no' | 'problems' | 'input' | 'external_id' | 'holder_email'>[]
+> {
   return all(
     db,
-    `SELECT row_no, problems FROM pass_import_rows
+    `SELECT row_no, problems, input, external_id, holder_email FROM pass_import_rows
      WHERE import_id = ? AND problems IS NOT NULL
      ORDER BY CASE action WHEN 'error' THEN 0 ELSE 1 END, row_no LIMIT ?`,
     [importId, limit],
@@ -134,6 +137,21 @@ export function previewRows(
      WHERE import_id = ? AND action IN ('create', 'update') ORDER BY row_no LIMIT ?`,
     [importId, limit],
   );
+}
+
+/** Rows with errors, by what they would do once fixed: those that found a pass would update it. */
+export async function errorIntents(
+  db: D1Database,
+  importId: string,
+): Promise<{ create: number; update: number }> {
+  const row = await first<{ n: number; found: number | null }>(
+    db,
+    `SELECT count(*) AS n, sum(pass_id IS NOT NULL) AS found FROM pass_import_rows
+     WHERE import_id = ? AND action = 'error' AND input IS NOT NULL`,
+    [importId],
+  );
+  const update = row?.found ?? 0;
+  return { create: (row?.n ?? 0) - update, update };
 }
 
 export async function emailableCount(db: D1Database, importId: string): Promise<number> {
@@ -169,4 +187,32 @@ export async function createdRowNumbers(db: D1Database, importId: string): Promi
     [importId],
   );
   return rows.map((r) => r.row_no);
+}
+
+/** The draft's counts as its rows stand now, for a re-check that rewrote only some of them. */
+export async function rowCounts(
+  db: D1Database,
+  importId: string,
+): Promise<{
+  rows: number;
+  create: number;
+  update: number;
+  unchanged: number;
+  errors: number;
+  warnings: number;
+}> {
+  const rows = await all<{ action: string; n: number }>(
+    db,
+    'SELECT action, count(*) AS n FROM pass_import_rows WHERE import_id = ? GROUP BY action',
+    [importId],
+  );
+  const n = (a: string) => rows.find((r) => r.action === a)?.n ?? 0;
+  return {
+    rows: rows.reduce((t, r) => t + r.n, 0),
+    create: n('create'),
+    update: n('update'),
+    unchanged: n('unchanged'),
+    errors: n('error'),
+    warnings: (await problemTotals(db, importId)).warnings,
+  };
 }

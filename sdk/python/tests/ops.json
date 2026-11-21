@@ -2742,7 +2742,7 @@
    }
   },
   "binary": false,
-  "idempotent": false,
+  "idempotent": true,
   "raw": false,
   "cursor": null,
   "result": {
@@ -2823,6 +2823,139 @@
    "committedAt": 0,
    "finishedAt": 0,
    "expiresAt": 0
+  }
+ },
+ {
+  "id": "pass-imports.getPassImportsMappings",
+  "call": "pass_imports.mappings.list",
+  "http": "GET",
+  "path": "/api/v1/pass-imports/mappings",
+  "pathParams": [],
+  "query": [
+   {
+    "name": "templateId",
+    "py": "template_id",
+    "value": "x"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "saved": [
+    {
+     "name": "x",
+     "columns": [
+      "x"
+     ],
+     "plan": {
+      "mapping": {},
+      "holderEmail": {
+       "from": "x"
+      },
+      "externalId": {
+       "from": "x"
+      },
+      "match": "externalId"
+     },
+     "savedAt": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "pass-imports.putPassImportsMappings",
+  "call": "pass_imports.mappings.save",
+  "http": "PUT",
+  "path": "/api/v1/pass-imports/mappings",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "name": "x",
+   "columns": [
+    "x"
+   ],
+   "plan": {
+    "mapping": {},
+    "holderEmail": {
+     "from": "x"
+    },
+    "externalId": {
+     "from": "x"
+    },
+    "match": "externalId"
+   },
+   "templateId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "saved": [
+    {
+     "name": "x",
+     "columns": [
+      "x"
+     ],
+     "plan": {
+      "mapping": {},
+      "holderEmail": {
+       "from": "x"
+      },
+      "externalId": {
+       "from": "x"
+      },
+      "match": "externalId"
+     },
+     "savedAt": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "pass-imports.deletePassImportsMappings",
+  "call": "pass_imports.mappings.delete",
+  "http": "DELETE",
+  "path": "/api/v1/pass-imports/mappings",
+  "pathParams": [],
+  "query": [
+   {
+    "name": "templateId",
+    "py": "template_id",
+    "value": "x"
+   },
+   {
+    "name": "name",
+    "py": "name",
+    "value": "x"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "saved": [
+    {
+     "name": "x",
+     "columns": [
+      "x"
+     ],
+     "plan": {
+      "mapping": {},
+      "holderEmail": {
+       "from": "x"
+      },
+      "externalId": {
+       "from": "x"
+      },
+      "match": "externalId"
+     },
+     "savedAt": 0
+    }
+   ]
   }
  },
  {
@@ -3067,7 +3200,7 @@
   "query": [],
   "body": {},
   "binary": false,
-  "idempotent": false,
+  "idempotent": true,
   "raw": false,
   "cursor": null,
   "result": {
@@ -3244,6 +3377,38 @@
     }
    ],
    "nextCursor": null
+  }
+ },
+ {
+  "id": "pass-imports.postPassImportsByIdUndo",
+  "call": "pass_imports.undo",
+  "http": "POST",
+  "path": "/api/v1/pass-imports/{id}/undo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "state": "running",
+   "removed": 0,
+   "restored": 0,
+   "keptTotal": 0,
+   "kept": [
+    {
+     "passId": "x",
+     "code": "x"
+    }
+   ],
+   "emailsCancelled": 0
   }
  },
  {
@@ -7110,6 +7275,24 @@
     "next": "design"
    }
   }
+ },
+ {
+  "id": "templates.getTemplatesByIdSampleCsv",
+  "call": "templates.download_sample",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/sample.csv",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
  },
  {
   "id": "templates.postTemplatesByIdScanSetup",

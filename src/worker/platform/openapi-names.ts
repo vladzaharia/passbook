@@ -10,6 +10,10 @@ import {
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import {
+  PassImportUndoResultSchema,
+  SavedImportMappingsResultSchema,
+} from '../../shared/contracts/pass-imports.ts';
+import {
   PassDetailSchema,
   PassDeviceSchema,
   PassListSchema,
@@ -127,6 +131,8 @@ const names = {
   Org: OrgSchema,
   OrgSummary: OrgSummarySchema,
   OrgBranding: OrgBrandingSchema,
+  PassImportMappings: SavedImportMappingsResultSchema,
+  PassImportUndo: PassImportUndoResultSchema,
   PassSummary: PassSummarySchema,
   PassDetail: PassDetailSchema,
   PassVersion: PassVersionSchema,

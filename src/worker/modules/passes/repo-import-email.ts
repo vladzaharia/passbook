@@ -1,7 +1,8 @@
-import { inList } from '../../platform/authority-expr.ts';
+import { inList, lt, orNull } from '../../platform/authority-expr.ts';
 import { all } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
+import { UNDO_DONE } from './repo-import-undo.ts';
 import { importGrant } from './repo-imports.ts';
 
 const ENDED = ['done', 'failed', 'stale', 'expired'];
@@ -9,6 +10,8 @@ const ENDED = ['done', 'failed', 'stale', 'expired'];
 export interface EmailRow {
   row_no: number;
   pass_id: string;
+  holder_email: string;
+  mail_pending_at: number | null;
 }
 
 /** Created rows of live passes with an address and no mail yet, in file order after `after`. */
@@ -18,14 +21,16 @@ export function emailCandidates(
   orgId: string,
   after: number,
   limit: number,
+  /** A claim older than this was left by a step that died. */
+  staleBefore: number,
 ): Promise<EmailRow[]> {
   return all<EmailRow>(
     db,
-    `SELECT r.row_no, r.pass_id FROM pass_import_rows r JOIN passes p ON p.id = r.pass_id
+    `SELECT r.row_no, r.pass_id, r.holder_email, r.mail_pending_at FROM pass_import_rows r JOIN passes p ON p.id = r.pass_id
      WHERE r.import_id = ? AND r.result = 'created' AND r.emailed = 0 AND r.holder_email IS NOT NULL
-       AND p.org_id = ? AND p.removed_at IS NULL AND r.row_no > ?
+       AND p.org_id = ? AND p.removed_at IS NULL AND (r.mail_pending_at IS NULL OR r.mail_pending_at < ?) AND r.row_no > ?
      ORDER BY r.row_no LIMIT ?`,
-    [importId, orgId, after, limit],
+    [importId, orgId, staleBefore, after, limit],
   );
 }
 
@@ -38,11 +43,21 @@ export async function claimRows(
   authority: TenantPassWrite,
   id: string,
   rows: readonly number[],
+  staleBefore: number,
 ): Promise<number[]> {
   if (rows.length === 0) return [];
-  const g = importGrant(ctx, authority, id, { state: inList(ENDED) });
+  const g = importGrant(ctx, authority, id, {
+    state: inList(ENDED),
+    reverted: inList([0, UNDO_DONE]),
+  });
   const claim = g.joined('pass_import_rows', {
-    where: { import_id: id, result: 'created', emailed: 0, row_no: inList([...rows]) },
+    where: {
+      import_id: id,
+      result: 'created',
+      emailed: 0,
+      mail_pending_at: orNull(lt(staleBefore)),
+      row_no: inList([...rows]),
+    },
     set: { emailed: 1 },
     returning: ['row_no'],
   });
@@ -73,7 +88,7 @@ export async function recordEmailRest(
   authority: TenantPassWrite,
   id: string,
   notEmailed: number,
-  detail: { sent: number; skipped: number },
+  detail: { sent: number; skipped: number; alreadyQueued: number },
 ): Promise<void> {
   const g = importGrant(ctx, authority, id, { state: inList(ENDED) });
   g.update('pass_imports', { where: { id }, require: 'one', set: { not_emailed: notEmailed } });
