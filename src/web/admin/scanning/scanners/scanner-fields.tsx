@@ -56,11 +56,7 @@ export function ScannerFields({ draft, onChange, errors, mode }: ScannerFieldsPr
     <div className="@container grid min-w-0 gap-6">
       <section className="grid min-w-0 gap-4">
         <div className="grid min-w-0 gap-4">
-          <FormField
-            label="Name"
-            required
-            error={errors.name}
-          >
+          <FormField label="Name" required error={errors.name}>
             {(p) => (
               <Input
                 {...p}

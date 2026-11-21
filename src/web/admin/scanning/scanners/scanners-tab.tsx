@@ -76,13 +76,7 @@ export function ScannersTab({ live, newButton }: { live: Pages; newButton: React
         fetching={live.isFetching && !live.isFetchingNextPage}
         data={rows}
         getRowId={(s) => s.id}
-        empty={
-          <EmptyState
-            art="phone"
-            title="No devices yet"
-            action={newButton}
-          />
-        }
+        empty={<EmptyState art="phone" title="No devices yet" action={newButton} />}
         footer={
           <div className="flex flex-wrap items-center justify-between gap-3">
             <LoadMore query={live} shown={liveRows.length} noun={['device', 'devices']} scoped />

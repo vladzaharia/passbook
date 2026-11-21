@@ -51,10 +51,7 @@ export function SessionsTab({
     return (
       <div>
         <SetupChecklist onNew={canManage ? onNew : undefined} />
-        <EmptyState
-          art="scanner"
-          title="No scanning sessions"
-        />
+        <EmptyState art="scanner" title="No scanning sessions" />
       </div>
     );
   const online = items.reduce((n, s) => n + s.onlineCount, 0);

@@ -117,12 +117,7 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
     },
   ];
   if (!allowed || !orgId) {
-    return (
-      <EmptyState
-        art="activity"
-        title="Select an organization"
-      />
-    );
+    return <EmptyState art="activity" title="Select an organization" />;
   }
   if (query.isError && !query.isFetchNextPageError) {
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;

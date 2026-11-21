@@ -211,7 +211,7 @@ function AdminStartForUser({ userId, onScope, onCancel }: AdminStartProps) {
     }
   }
   return (
-    <BootCard title="Scan as Admin" line="Join a scanning session with your account.">
+    <BootCard title="Scan as Admin">
       {loadingOrgs || orgs.isError || memberships.length > 0 ? (
         <FormField label="Organization">
           {(p) => (

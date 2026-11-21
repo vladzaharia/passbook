@@ -47,12 +47,7 @@ type StaffDialog =
 export function StaffTab() {
   const { orgId, membership } = useOrgScope();
   if (!orgId) {
-    return (
-      <EmptyState
-        art="people"
-        title="Select an organization"
-      />
-    );
+    return <EmptyState art="people" title="Select an organization" />;
   }
   // Changing organizations closes all dialogs, including any one-time PIN reveal.
   const canManage = membership?.capabilities.includes('scanning:manage') ?? false;

@@ -79,13 +79,7 @@ export function KeysetsView({
         columns={columns}
         getRowId={(k) => k.id}
         loading={query.isPending}
-        empty={
-          <EmptyState
-            art="badge"
-            title={KEYSET_COPY.empty.title}
-            action={add}
-          />
-        }
+        empty={<EmptyState art="badge" title={KEYSET_COPY.empty.title} action={add} />}
       />
       {open ? (
         <KeysetSheet

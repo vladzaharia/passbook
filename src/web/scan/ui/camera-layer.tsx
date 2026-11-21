@@ -99,7 +99,7 @@ export function CameraLayer({
                 : status === 'unavailable'
                   ? 'Could not open the camera. Close other camera apps and try again.'
                   : reader
-                    ? 'Scan a pass, or look someone up.'
+                    ? null
                     : 'Start scanning to open the camera.'}
           </span>
           {onRetry &&
