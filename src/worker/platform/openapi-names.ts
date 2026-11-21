@@ -10,6 +10,10 @@ import {
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
 import {
+  PassImportUndoResultSchema,
+  SavedImportMappingsResultSchema,
+} from '../../shared/contracts/pass-imports.ts';
+import {
   PassDetailSchema,
   PassDeviceSchema,
   PassListSchema,
@@ -62,6 +66,9 @@ import {
 import {
   ReleaseResponseSchema,
   ReleaseTemplateSchema,
+  ReviewResultSchema,
+  ReviewTemplateSchema,
+  TemplateReviewListSchema,
 } from '../../shared/contracts/template-release-flow.ts';
 import {
   TemplateDetailSchema,
@@ -124,6 +131,8 @@ const names = {
   Org: OrgSchema,
   OrgSummary: OrgSummarySchema,
   OrgBranding: OrgBrandingSchema,
+  PassImportMappings: SavedImportMappingsResultSchema,
+  PassImportUndo: PassImportUndoResultSchema,
   PassSummary: PassSummarySchema,
   PassDetail: PassDetailSchema,
   PassVersion: PassVersionSchema,
@@ -156,6 +165,9 @@ const names = {
   ScanSetupAnswer: ScanSetupAnswerSchema,
   ReleaseTemplate: ReleaseTemplateSchema,
   ReleaseResponse: ReleaseResponseSchema,
+  ReviewTemplate: ReviewTemplateSchema,
+  ReviewResult: ReviewResultSchema,
+  TemplateReviewList: TemplateReviewListSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

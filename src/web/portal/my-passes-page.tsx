@@ -1,12 +1,14 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { type CSSProperties, type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import type { MyPassListSchema } from '../../shared/contracts/me.ts';
 import { MY_PASSES_BUNDLE_PATH, MY_PASSES_BUNDLE_SIZE } from '../../shared/contracts/me.ts';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { canAddToWallet } from '../../shared/device.ts';
+import { useMediaQuery } from '../lib/media.ts';
 import { useArrival } from '../lib/motion.ts';
+import { useDocumentTitle } from '../lib/route-focus.tsx';
 import {
   AppleWalletBadge,
   Buddy,
@@ -21,38 +23,34 @@ import {
 } from '../ui/index.ts';
 import { myPassesQuery } from './api.ts';
 import { browserDevice } from './device.ts';
-import { PassTile } from './pass-tile.tsx';
-import type { MyPass } from './pass-view.ts';
+import { MyPassesStack, type StackItem } from './my-passes-stack.tsx';
+import { PassDetailPage } from './pass-detail-page.tsx';
+import { PassNotices } from './pass-notices.tsx';
+import { type MyPass, toView } from './pass-view.ts';
 import { useRemovalStatus } from './removal-status.ts';
+import { pickWithTransition, stackNavigation } from './stack-motion.ts';
+import { frontOf, groupPasses } from './stack-order.ts';
+import { StackPanel } from './stack-panel.tsx';
 import { AddLine } from './wallet-actions.tsx';
 import './portal.css';
 
-// The buddy's room over the first tile (44 px and the 24 px gap above), skeleton included.
-const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
-const GRID_ROOM = `wl-buddy-room [--wl-buddy-room:2.75rem] ${GRID}`;
+/** Master-detail from here: the stack beside the front pass's page. */
+export const STACK_WIDE = '(min-width: 768px)';
+
+/** Still the holder's: not voided, not removed from Wallet. */
+const stillOn = (p: MyPass) => p.status !== 'voided' && p.removedAt === null;
 
 /**
  * What the list's buddy acts out (motion-and-expression.md, The buddy). Passes to add: it aims at
  * the bundle badge above it (nudge) or, with one and no bundle, lifts a pass and drops it into its
  * pocket (tuck). Every live pass has a registration: it counts its own, happy. Only voided: a sigh.
  */
-/** Still the holder's to add: not voided, not removed from Wallet. */
-const isLive = (p: MyPass) => p.status !== 'voided' && p.removedAt === null;
-
 export function listAct(passes: readonly MyPass[]): { mood?: WalletMood; scene: BuddyScene } {
-  const live = passes.filter(isLive);
+  const live = passes.filter(stillOn);
   const out = live.filter((p) => !p.inWallet).length;
   if (live.length === 0) return { mood: 'sad', scene: 'beat' };
   if (out === 0) return { mood: 'happy', scene: 'count' };
   return { scene: out > 1 ? 'nudge' : 'tuck' };
-}
-
-/** Seated on the first tile's top edge at its start, under the bundle badge; a new act re-enters. */
-function ListBuddy({ passes }: { passes: readonly MyPass[] }) {
-  const { mood, scene } = listAct(passes);
-  return (
-    <Buddy key={scene} size="sm" at="start" mood={mood} scene={scene} className="wl-list-buddy" />
-  );
 }
 
 type BundleInfo = (typeof MyPassListSchema._output)['bundle'];
@@ -81,58 +79,98 @@ function AddAllLinks({ bundle }: { bundle: NonNullable<BundleInfo> }) {
   );
 }
 
-function PassGrid({
-  passes,
-  dealt,
-  lead,
-}: {
-  passes: readonly MyPass[];
-  dealt: boolean;
-  /** The first tile carries the list's buddy. */
-  lead: boolean;
-}) {
+/** /passes/:id wide: the pass is the page's h1, so My passes is a way back, set as the title. */
+function SelectedTitle({ actions }: { actions: ReactNode }) {
+  useDocumentTitle('My passes');
   return (
-    <ul className={lead ? GRID_ROOM : GRID}>
-      {passes.map((pass, i) => (
-        <li
-          key={pass.id}
-          className="row-span-2 grid min-w-0 grid-rows-subgrid"
-          style={{ '--i': i } as CSSProperties}
-        >
-          <PassTile
-            pass={pass}
-            dealt={dealt}
-            buddy={lead && i === 0 ? <ListBuddy passes={passes} /> : undefined}
-          />
-        </li>
-      ))}
-    </ul>
+    <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <p className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong">
+        <Link to="/" className="rounded-sm underline-offset-4 hover:underline">
+          My passes
+        </Link>
+      </p>
+      {actions}
+    </header>
   );
 }
 
-export function MyPassesPage() {
+/**
+ * My passes as Wallet's stack (PassStack): the front pass full size with its row, the rest as
+ * peeks, then Test and Voided and expired. From 768 px the front pass's page sits beside it, and
+ * /passes/:id is this page with that pass in front (`selectedId`).
+ */
+export function MyPassesPage({ selectedId }: { selectedId?: string }) {
   const query = useInfiniteQuery(myPassesQuery);
-  const passes = query.data?.pages.flatMap((p) => p.items) ?? [];
-  const pending = query.data?.pages[0]?.pendingRemovals;
+  const pages = query.data?.pages;
+  const passes = useMemo(() => pages?.flatMap((p) => p.items) ?? [], [pages]);
+  const pending = pages?.[0]?.pendingRemovals;
   useRemovalStatus(pending);
-  const pendingRemovals = pending?.length ?? 0;
-  const reissueRequired = query.data?.pages[0]?.reissueRequired ?? [];
   const dealt = useArrival(query.isPending);
-  const live = passes.filter(isLive);
-  const off = passes.filter((p) => !isLive(p));
-  const bundle = query.data?.pages[0]?.bundle ?? null;
+  const bundle = pages?.[0]?.bundle ?? null;
   const addable = bundle?.count ?? 0;
   const [device] = useState(browserDevice);
+  const wide = useMediaQuery(STACK_WIDE);
+  const navigate = useNavigate();
+  const [picked, setPicked] = useState<string | null>(null);
+  const [raise, setRaise] = useState(false);
+  const nameRef = useRef<HTMLAnchorElement>(null);
+  const focusFront = useRef(false);
+
+  const items = useMemo<StackItem[]>(
+    () => passes.map((pass) => ({ pass, view: toView(pass) })),
+    [passes],
+  );
+  const groups = useMemo(() => groupPasses(items), [items]);
+  const want = selectedId ?? picked;
+  const front = items.find((i) => i.pass.id === want) ?? frontOf(groups, Date.now());
+  const act = listAct(passes);
+
+  // A peek came forward: its name link takes the focus the peek had.
+  useEffect(() => {
+    if (!focusFront.current) return;
+    focusFront.current = false;
+    nameRef.current?.focus({ preventScroll: true });
+  });
+
+  // A pass the loaded list does not hold (a later page, or not the holder's): its own page.
+  if (selectedId && query.isSuccess && !items.some((i) => i.pass.id === selectedId)) {
+    return <PassDetailPage passId={selectedId} />;
+  }
+
+  const pick = (id: string) => {
+    if (wide) {
+      void navigate({
+        to: '/passes/$passId',
+        params: { passId: id },
+        viewTransition: stackNavigation(),
+      });
+      return;
+    }
+    focusFront.current = true;
+    const morphed = pickWithTransition(() => setPicked(id));
+    setRaise(!morphed);
+  };
+
+  const bundleRow =
+    canAddToWallet(device.device) && ((bundle && addable > 1) || device.inApp) ? (
+      // No card and no title: the badge says what it adds; Apple's line only in an app's
+      // web view, which cannot add. A computer gets Show QR on the front pass instead.
+      <div className="wl-bundle flex flex-wrap items-center gap-x-4 gap-y-2">
+        {bundle && addable > 1 ? <AddAllLinks bundle={bundle} /> : null}
+        <AddLine />
+      </div>
+    ) : null;
 
   let body: ReactNode;
   if (query.isPending) {
     body = (
-      // A flex box like the list's, so the grid's margin adds to the header's instead of collapsing.
+      // A flex box like the list's, so the room's margin adds to the header's, never collapses.
       <div className="flex flex-col">
-        <div className={GRID_ROOM} aria-busy="true">
-          <Skeleton className="h-[34rem]" />
-          <Skeleton className="h-[34rem] max-sm:hidden" />
-          <Skeleton className="h-[34rem] max-lg:hidden" />
+        <div
+          className="wl-buddy-room w-full max-w-[22rem] [--wl-buddy-room:3.5rem] max-md:mx-auto"
+          aria-busy="true"
+        >
+          <Skeleton className="aspect-[320/460] w-full rounded-xl" />
         </div>
       </div>
     );
@@ -155,74 +193,38 @@ export function MyPassesPage() {
     );
   } else {
     body = (
-      <div className="wl-passes flex flex-col gap-6">
-        {canAddToWallet(device.device) && ((bundle && addable > 1) || device.inApp) ? (
-          // No card and no title: the badge says what it adds; Apple's line only in an app's
-          // web view, which cannot add. A computer gets Show QR on each tile instead.
-          <div className="wl-bundle flex flex-wrap items-center gap-x-4 gap-y-2">
-            {bundle && addable > 1 ? <AddAllLinks bundle={bundle} /> : null}
-            <AddLine />
-          </div>
-        ) : null}
-        <div className="flex flex-col gap-8">
-          <PassGrid passes={live} dealt={dealt} lead />
-          {off.length > 0 ? (
-            <section aria-labelledby="ended-title" className="flex flex-col gap-4">
-              {live.length > 0 ? (
-                <h2 id="ended-title" className="text-sm font-semibold text-fg-strong">
-                  {HOLDER_COPY.endedTitle}
-                </h2>
-              ) : null}
-              <PassGrid passes={off} dealt={dealt} lead={live.length === 0} />
-            </section>
-          ) : null}
+      <div className="wl-passes wl-mp" data-wide={(wide && front !== null) || undefined}>
+        <div className="wl-mp-side">
+          {wide ? null : bundleRow}
+          <MyPassesStack
+            groups={groups}
+            front={front}
+            dealt={dealt}
+            raise={raise}
+            nameRef={nameRef}
+            onPick={pick}
+            buddy={<Buddy key={act.scene} size="sm" at="end" {...act} className="wl-list-buddy" />}
+            selected={wide && selectedId === front?.pass.id}
+            {...(selectedId
+              ? { onFrontRemoved: () => void navigate({ to: '/', replace: true }) }
+              : {})}
+          />
           <LoadMore query={query} />
         </div>
+        {wide && front ? <StackPanel seed={front.pass} level={selectedId ? 1 : 2} /> : null}
       </div>
     );
   }
 
+  const actions = wide ? bundleRow : null;
   return (
     <>
-      <PageHeader title="My passes" />
-      {pendingRemovals > 0 ? (
-        <p
-          role="status"
-          className="mt-6 rounded-xl border border-border bg-surface-raised p-4 text-sm text-fg-muted"
-        >
-          {HOLDER_COPY.removalPending(pendingRemovals)} {HOLDER_COPY.removalPendingLine}
-        </p>
-      ) : null}
-      {reissueRequired.length > 0 ? (
-        <section
-          className="mt-6 rounded-xl border border-border bg-surface-raised p-4"
-          aria-labelledby="reissue-title"
-        >
-          <h2 id="reissue-title" className="text-sm font-semibold text-fg-strong">
-            {HOLDER_COPY.reissueTitle}
-          </h2>
-          <ul className="mt-2 space-y-2 text-sm text-fg-muted">
-            {reissueRequired.map((item) => {
-              const href = item.support?.email ? `mailto:${item.support.email}` : item.support?.url;
-              return (
-                <li key={item.passId}>
-                  {HOLDER_COPY.reissueLine(item.title ?? 'A pass', item.orgName)}{' '}
-                  {href ? (
-                    <a
-                      href={href}
-                      className="font-medium text-accent-fg underline-offset-4 hover:underline"
-                    >
-                      {HOLDER_COPY.contact(item.orgName)}
-                    </a>
-                  ) : (
-                    HOLDER_COPY.reissueAsk(item.orgName)
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : null}
+      {selectedId ? (
+        <SelectedTitle actions={actions} />
+      ) : (
+        <PageHeader title="My passes" actions={actions ?? undefined} />
+      )}
+      <PassNotices pending={pending?.length ?? 0} reissue={pages?.[0]?.reissueRequired ?? []} />
       {body}
     </>
   );

@@ -91,6 +91,7 @@ test.describe('platform administrator', () => {
         slug,
         name: `Platform only ${slug}`,
         preset: 'legacy',
+        addMe: false,
       });
       const memberships = await api.get<{ items: OrgMembership[] }>('/api/v1/orgs/memberships/me');
       expect(memberships.items.some((membership) => membership.orgId === org.id)).toBe(false);

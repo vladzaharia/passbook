@@ -2,7 +2,7 @@ import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import type { Personalization, TemplateManifest } from '../../../passkit/types.ts';
 import type { Logger } from '../../platform/log.ts';
 import { type CheckedRow, isError } from './import-check.ts';
-import { IMPORT_TEXT, type ImportProblem, problem } from './import-messages.ts';
+import { IMPORT_TEXT, type ImportProblem, labelOf, problem } from './import-messages.ts';
 import type { ImportPlan } from './import-plan.ts';
 import { connectionNames, type ExistingPass, livePassesBy } from './repo-import-lookup.ts';
 
@@ -67,7 +67,7 @@ export async function planRows(
       scope.orgId,
       scope.mode,
       column,
-      clean.flatMap((r) => keyOf(r) ?? []),
+      rows.flatMap((r) => keyOf(r) ?? []),
     )) {
       const key = p[column];
       if (key !== null) found.set(key, [...(found.get(key) ?? []), p]);
@@ -85,10 +85,9 @@ export async function planRows(
   const names = connectionIds.length
     ? await connectionNames(db, scope.orgId, connectionIds)
     : new Map<string, string>();
-  const props = (manifest.inputs.properties ?? {}) as Record<string, { title?: unknown }>;
+  const props = (manifest.inputs.properties ?? {}) as Record<string, Record<string, unknown>>;
   const defaults = applyDefaults(manifest, {});
-  const label = (k: string) =>
-    typeof props[k]?.title === 'string' ? (props[k].title as string) : k;
+  const label = (k: string) => labelOf(props[k], k);
   const keyLabel = plan.match === 'email' ? 'email' : 'External ID';
 
   return rows.map((r): PlannedRow => {
@@ -112,10 +111,15 @@ export async function planRows(
       return planned(r.problems.some(isError) ? 'error' : 'create');
     };
 
-    if (r.problems.some(isError) || r.input === null) return planned('error');
     const key = plan.match === 'none' ? null : keyOf(r);
     const matches = key === null ? [] : (found.get(key) ?? []);
     const [p] = matches;
+    // An error row keeps the one pass it would have updated, so the check can count it by intent.
+    if (r.problems.some(isError) || r.input === null)
+      return planned(
+        'error',
+        matches.length === 1 && p?.template_id === scope.templateId ? p : undefined,
+      );
     if (!p) return create(r.input);
     if (matches.length > 1)
       return refuse('IMPORT_MATCH_AMBIGUOUS', IMPORT_TEXT.ambiguous(keyLabel));

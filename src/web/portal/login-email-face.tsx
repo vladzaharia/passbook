@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { type FormEvent, type Ref, useEffect, useState } from 'react';
+import { LOGIN_OPERATOR_COPY } from '@/shared/copy/login-reasons.ts';
 import { INVALID_EMAIL } from '@/shared/copy/sign-in.ts';
 import { strictEmail } from '@/shared/email.ts';
 import { isApiError } from '../lib/errors.ts';
@@ -21,6 +22,8 @@ export interface EmailFaceProps {
   next: string | null;
   /** One line from ?reason=, shown until something goes wrong. */
   notice: string | null;
+  /** Admin or Developers is next: the account button leads, email sits under it for pass holders. */
+  operator?: boolean;
   request: MagicRequest;
   scene: SceneActions;
   emailRef: Ref<HTMLInputElement>;
@@ -46,6 +49,7 @@ export function EmailFace({
   magic,
   next,
   notice,
+  operator = false,
   request,
   scene,
   emailRef,
@@ -92,6 +96,59 @@ export function EmailFace({
 
   const callout = error ?? (request.challengeFailed ? { message: CHALLENGE_FAILED } : null);
   const busy = request.phase !== 'idle';
+  const divider = (
+    <div className="flex items-center gap-3 text-xs text-fg-muted" aria-hidden>
+      <span className="h-px flex-1 bg-border" />
+      or
+      <span className="h-px flex-1 bg-border" />
+    </div>
+  );
+  const form = magic ? (
+    <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+      <FormField label="Email" error={fieldError}>
+        {(control) => (
+          <Input
+            {...control}
+            ref={emailRef}
+            type="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoFocus={!operator}
+            placeholder="name@example.com"
+            value={email}
+            onBlur={() => scene.gaze(null)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              const v = e.target.value.trim();
+              const valid = isEmail(v);
+              // A shown error goes as soon as the address is valid.
+              if (valid) setFieldError(undefined);
+              scene.setLetter(valid ? v.charAt(0).toUpperCase() : null);
+              scene.gaze(caretX(e.target, e.target.value.length));
+            }}
+          />
+        )}
+      </FormField>
+      <Button
+        type="submit"
+        variant={operator ? 'outline' : 'primary'}
+        className="w-full"
+        loading={busy}
+        disabled={waitLeft > 0}
+        iconEnd={busy || waitLeft > 0 ? null : <ArrowRight aria-hidden />}
+      >
+        {request.phase === 'checking'
+          ? 'Checking…'
+          : waitLeft > 0
+            ? `Try again in ${waitLeft}s`
+            : standalone
+              ? 'Email me a code'
+              : 'Email me a sign-in link'}
+      </Button>
+    </form>
+  ) : null;
+
   return (
     <div className="flex flex-1 flex-col justify-center gap-6">
       {callout ? (
@@ -101,58 +158,24 @@ export function EmailFace({
       ) : notice ? (
         <Callout>{notice}</Callout>
       ) : null}
-      {magic ? (
-        <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-          <FormField label="Email" error={fieldError}>
-            {(control) => (
-              <Input
-                {...control}
-                ref={emailRef}
-                type="email"
-                autoComplete="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                autoFocus
-                placeholder="name@example.com"
-                value={email}
-                onBlur={() => scene.gaze(null)}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  const v = e.target.value.trim();
-                  const valid = isEmail(v);
-                  // A shown error goes as soon as the address is valid.
-                  if (valid) setFieldError(undefined);
-                  scene.setLetter(valid ? v.charAt(0).toUpperCase() : null);
-                  scene.gaze(caretX(e.target, e.target.value.length));
-                }}
-              />
-            )}
-          </FormField>
-          <Button
-            type="submit"
-            className="w-full"
-            loading={busy}
-            disabled={waitLeft > 0}
-            iconEnd={busy || waitLeft > 0 ? null : <ArrowRight aria-hidden />}
-          >
-            {request.phase === 'checking'
-              ? 'Checking…'
-              : waitLeft > 0
-                ? `Try again in ${waitLeft}s`
-                : standalone
-                  ? 'Email me a code'
-                  : 'Email me a sign-in link'}
-          </Button>
-        </form>
-      ) : null}
-      {magic && oidc ? (
-        <div className="flex items-center gap-3 text-xs text-fg-muted" aria-hidden>
-          <span className="h-px flex-1 bg-border" />
-          or
-          <span className="h-px flex-1 bg-border" />
-        </div>
-      ) : null}
-      {oidc ? <AccountButton next={next} primary={!magic} /> : null}
+      {operator ? (
+        <>
+          {oidc ? <AccountButton next={next} primary /> : null}
+          {magic && oidc ? divider : null}
+          {magic ? (
+            <p className="-mb-2 text-center text-sm text-fg-muted">
+              {LOGIN_OPERATOR_COPY.holderLine}
+            </p>
+          ) : null}
+          {form}
+        </>
+      ) : (
+        <>
+          {form}
+          {magic && oidc ? divider : null}
+          {oidc ? <AccountButton next={next} primary={!magic} /> : null}
+        </>
+      )}
     </div>
   );
 }

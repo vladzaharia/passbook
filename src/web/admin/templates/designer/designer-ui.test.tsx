@@ -293,7 +293,7 @@ describe('designer', () => {
     await user.type(await screen.findByLabelText('Logo text'), '!');
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     expect(s.posts.filter((p) => !p.dryRun)).toHaveLength(1);
     expect(s.posts.filter((p) => !p.dryRun)[0]).not.toHaveProperty('activate');
     expect(screen.queryByRole('button', { name: 'Activate' })).toBeNull();
@@ -313,7 +313,7 @@ describe('designer', () => {
     fireEvent.change(await scanHeader(), { target: { value: 'Hello' } });
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     const saved = s.posts.filter((p) => !p.dryRun);
     expect(saved).toHaveLength(1);
     expect(saved[0]).not.toHaveProperty('activate');
@@ -572,7 +572,25 @@ describe('designer', () => {
     );
   });
 
-  it('saves an inactive version and links to the release review', async () => {
+  it('names the next release step in the header, from the template state', async () => {
+    const s = setup({
+      template: {
+        release: {
+          live: { version: VERSION, at: 1, by: null },
+          test: null,
+          draft: { version: 'ffeeddccbbaa9988', at: 2 },
+          review: { state: 'none' },
+          alone: true,
+          next: 'release',
+        },
+      },
+    });
+    await open(s);
+    const link = await screen.findByRole('link', { name: 'Release v2' });
+    expect(link).toHaveAttribute('href', `/admin/templates/tpl1?orgId=${ORG.id}`);
+  });
+
+  it('saves an inactive version without activating it', async () => {
     const user = userEvent.setup();
     const s = setup();
     await open(s);
@@ -580,13 +598,9 @@ describe('designer', () => {
     await screen.findByText('Ready to save.');
     await waitFor(() => expect(screen.queryByText('Checking')).toBeNull());
     await user.click(await screen.findByRole('button', { name: 'Save version' }));
-    expect(await screen.findByText(/Version saved\./)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     expect(s.posts.filter((p) => !p.dryRun)).toHaveLength(1);
     expect(s.posts.filter((p) => !p.dryRun)[0]).not.toHaveProperty('activate');
-    expect(screen.getByRole('link', { name: 'Review release' })).toHaveAttribute(
-      'href',
-      `/admin/templates/tpl1?tab=versions&orgId=${ORG.id}`,
-    );
     expect(screen.queryByRole('button', { name: 'Activate' })).toBeNull();
     expect(s.activations).toEqual([]);
   });
@@ -622,7 +636,7 @@ describe('designer', () => {
     await user.type(await screen.findByLabelText('Logo text'), '!');
     await screen.findByText('Ready to save.');
     await user.click(await screen.findByRole('button', { name: 'Save version' }));
-    await screen.findByText(/Version saved\./);
+    await screen.findByText(/^Saved v\d+$/);
     active = 'feedfacefeedface';
     await act(async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'templates', 'detail', 'tpl1'] });
@@ -816,13 +830,12 @@ describe('designer', () => {
     await user.click(screen.getByRole('radio', { name: 'Pass' }));
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     expect(s.posts.filter((p) => !p.dryRun)).toMatchObject([
       {
         manifest: { scan: { display: { header: { title: 'Hello' } } } },
       },
     ]);
-    expect(screen.getByRole('link', { name: 'Review release' })).toBeInTheDocument();
     expect(s.posts.filter((p) => !p.dryRun)[0]).not.toHaveProperty('expectedActiveVersion');
   });
 
@@ -835,7 +848,7 @@ describe('designer', () => {
     fireEvent.change(await screen.findByLabelText('Result title'), { target: { value: 'Hello' } });
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     expect(s.posts.filter((p) => !p.dryRun)).toMatchObject([
       {
         manifest: {
@@ -855,7 +868,7 @@ describe('designer', () => {
     fireEvent.change(await scanHeader(), { target: { value: 'Hello' } });
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    await screen.findByText(/Version saved\. Existing releases/);
+    await screen.findByText(/^Saved v\d+$/);
     fireEvent.change(screen.getByLabelText('Result title'), { target: { value: 'Hello again' } });
     await readyToSave();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save version' })).toBeEnabled());
@@ -883,7 +896,7 @@ describe('designer', () => {
     await waitFor(() => expect(s.posts.filter((p) => !p.dryRun)).toHaveLength(1));
     fireEvent.change(screen.getByLabelText('Result title'), { target: { value: 'Hello again' } });
     gate.resolve();
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     expect(screen.getByLabelText('Result title')).toHaveValue('Hello again');
     await waitFor(
       () =>
@@ -906,7 +919,7 @@ describe('designer', () => {
     fireEvent.change(await scanHeader(), { target: { value: 'Hello' } });
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     const saved = s.posts.filter((p) => !p.dryRun);
     expect(saved).toMatchObject([
       {
@@ -915,7 +928,6 @@ describe('designer', () => {
       },
     ]);
     expect(saved[0]).not.toHaveProperty('expectedActiveVersion');
-    expect(screen.getByRole('link', { name: 'Review release' })).toBeInTheDocument();
   });
 
   it('blocks invalid scan edits even after switching to Pass', async () => {
@@ -967,7 +979,7 @@ describe('designer', () => {
     expect(s.posts.every((p) => p.dryRun)).toBe(true);
     expect(screen.queryByText(/Save again/)).toBeNull();
     gate.resolve();
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
   });
 
   it('sends a scan screen save through release review, not activation', async () => {
@@ -977,10 +989,9 @@ describe('designer', () => {
     fireEvent.change(await scanHeader(), { target: { value: 'Hello' } });
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    expect(await screen.findByText(/Version saved\. Existing releases/)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved v\d+$/)).toBeInTheDocument();
     expect(s.posts.filter((p) => !p.dryRun)).toHaveLength(1);
     expect(s.posts.filter((p) => !p.dryRun)[0]).not.toHaveProperty('activate');
-    expect(screen.getByRole('link', { name: 'Review release' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Activate' })).toBeNull();
   });
 

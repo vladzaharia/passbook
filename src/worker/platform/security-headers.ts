@@ -45,17 +45,29 @@ export function developersContentSecurityPolicy(options: { turnstile?: boolean }
     "frame-ancestors 'none'",
     "require-trusted-types-for 'script'",
     // The one policy the console page makes, for the Turnstile script address; no other page may make any.
-    options.turnstile ? 'trusted-types passbook-turnstile' : "trusted-types 'none'",
+    options.turnstile ? `trusted-types ${TURNSTILE_POLICY}` : "trusted-types 'none'",
     'upgrade-insecure-requests',
   ].join('; ');
 }
 
 /** The Turnstile widget (join page only): its script and its challenge frame. */
 export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+/** The Trusted Types policy the widget loaders create (src/web/lib/turnstile-script.ts, public/join.js). */
+export const TURNSTILE_POLICY = 'passbook-turnstile';
+/** The policy for a same-origin worker script address (src/web/lib/trusted-worker-url.ts, src/shared/pass-offline.ts). */
+export const WORKER_POLICY = 'passbook-worker';
+
+/**
+ * Trusted Types: script may not reach a DOM sink with a string. Each page makes only the policies it
+ * needs; the Turnstile loader, and the worker script address of /scan and the pass page's offline save.
+ */
+function trustedTypesPolicy(names: string[]): string {
+  return `trusted-types ${names.length ? names.join(' ') : "'none'"}`;
+}
 
 export function contentSecurityPolicy(
   nonce?: string,
-  options: { scan?: boolean; turnstile?: boolean } = {},
+  options: { scan?: boolean; turnstile?: boolean; offline?: boolean } = {},
 ): string {
   const n = nonce ? ` 'nonce-${nonce}'` : '';
   const wasm = options.scan ? " 'wasm-unsafe-eval'" : '';
@@ -75,6 +87,11 @@ export function contentSecurityPolicy(
     "form-action 'self'",
     "base-uri 'none'",
     "frame-ancestors 'none'",
+    "require-trusted-types-for 'script'",
+    trustedTypesPolicy([
+      ...(options.turnstile ? [TURNSTILE_POLICY] : []),
+      ...(options.scan || options.offline ? [WORKER_POLICY] : []),
+    ]),
     'upgrade-insecure-requests',
   ].join('; ');
 }
@@ -88,6 +105,8 @@ const NO_REFERRER_PREFIXES = ['/p/', '/b/', '/auth/', '/scan'];
 export const REFERRER_ORIGIN_ONLY = 'strict-origin';
 const ORIGIN_ONLY_PREFIXES = ['/j/'];
 const TURNSTILE_PREFIXES = ['/j/'];
+/** Pass and bundle pages: the barcode page registers a worker to save the pass for offline. */
+const OFFLINE_PREFIXES = ['/p/', '/b/'];
 const NO_STORE_PREFIXES = ['/api/', '/auth/'];
 
 const passedThrough = new WeakSet<Response>();
@@ -115,6 +134,7 @@ export const securityHeaders = createMiddleware<AppBindings>(async (c, next) => 
     'content-security-policy',
     contentSecurityPolicy(c.var.nonce, {
       turnstile: TURNSTILE_PREFIXES.some((p) => path.startsWith(p)),
+      offline: OFFLINE_PREFIXES.some((p) => path.startsWith(p)),
     }),
   );
   set('strict-transport-security', HSTS);

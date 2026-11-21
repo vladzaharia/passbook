@@ -2,117 +2,181 @@ import { useState } from 'react';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { errorMessage } from '../../../lib/errors.ts';
-import {
-  Button,
-  Callout,
-  Card,
-  CardBody,
-  CardHeader,
-  ErrorState,
-  FormField,
-  Select,
-  Skeleton,
-  SwitchRow,
-} from '../../../ui/index.ts';
-import type { MappingRow, TargetField } from '../../mapping/mapping.ts';
-import { MappingEditor, targetsOf } from '../../mapping/mapping-editor.tsx';
+import { useMediaQuery } from '../../../lib/media.ts';
+import { useSession } from '../../../lib/session.ts';
+import { Callout, Card, CardHeader, ErrorState, Skeleton, Wizard } from '../../../ui/index.ts';
 import { useTemplate } from '../../templates/api.ts';
-import { describeSchema, flatFields } from '../schema-form/index.ts';
 import { useCheckImport } from './api.ts';
-import { type Match, PINNED, planOfRows, rowsOfImport, sourcesOf } from './plan-rows.ts';
-
-const MATCHES = [
-  { value: 'externalId', label: C.match.byExternalId },
-  { value: 'email', label: C.match.byEmail },
-  { value: 'none', label: C.match.byNone },
-] as const;
+import { useSavedMappings, useSaveMapping } from './api-run.ts';
+import { MatchSettings, type MatchSettingsValue, RowCard } from './match-aside.tsx';
+import {
+  type MatchRow,
+  type MatchState,
+  planOfState,
+  setColumns,
+  shownRows,
+  stateOfImport,
+} from './match-model.ts';
+import { MatchRowView } from './match-rows.tsx';
+import { MatchSummary, SavedPicker, UnusedColumns, valuesLeft } from './match-summary.tsx';
+import { IMPORT_STEPS, STEP } from './steps.ts';
 
 function MatchForm({
   imp,
   orgId,
-  targets,
+  schema,
   onChecked,
+  onStep,
 }: {
   imp: PassImportDto;
   orgId: string;
-  targets: readonly TargetField[];
+  schema: unknown;
   onChecked: () => void;
+  onStep: (step: number) => void;
 }) {
+  const session = useSession();
+  const wide = useMediaQuery('(min-width: 1024px)');
   const check = useCheckImport(imp.id, orgId);
-  const [rows, setRows] = useState<MappingRow[]>(() => rowsOfImport(imp, targets));
-  const [match, setMatch] = useState<Match>(imp.plan?.match ?? 'externalId');
-  const [keepManual, setKeepManual] = useState(imp.plan?.keepManual ?? false);
-  const [save, setSave] = useState(imp.plan?.save ?? true);
+  const saved = useSavedMappings(imp.templateId, orgId);
+  const save = useSaveMapping(imp.templateId, orgId);
+  const [state, setState] = useState<MatchState>(() => stateOfImport(imp, schema));
+  const [settings, setSettings] = useState<MatchSettingsValue>({
+    save: imp.plan?.save ?? true,
+    name: '',
+    keepManual: imp.plan?.keepManual ?? false,
+  });
   const [shown, setShown] = useState(false);
-  const result = planOfRows(rows, { match, keepManual, save });
+  const result = planOfState(state, { ...settings, overrides: imp.plan?.overrides });
+  const left = valuesLeft(state);
+
+  const setRow = (row: MatchRow) =>
+    setState((s) => ({ ...s, rows: s.rows.map((r) => (r.key === row.key ? row : r)) }));
+
+  function use(rowKey: string, pointer: string) {
+    const row = state.rows.find((r) => r.key === rowKey);
+    if (!row) return;
+    setState((s) => ({
+      ...s,
+      rows: s.rows.map((r) => (r.key === rowKey ? setColumns(r, [pointer], imp.columns) : r)),
+      unused: s.unused.filter((u) => u.pointer !== pointer),
+    }));
+  }
+
+  function pick(name: string) {
+    const hit = saved.data?.saved.find((s) => s.name === name);
+    if (!hit) return;
+    setState(stateOfImport({ ...imp, plan: hit.plan }, schema));
+    setSettings((s) => ({ ...s, name: hit.name }));
+  }
 
   function submit() {
     setShown(true);
-    if (result.plan) check.mutate({ plan: result.plan }, { onSuccess: onChecked });
+    const plan = result.plan;
+    if (!plan) return false;
+    check.mutate(
+      { plan },
+      {
+        onSuccess: () => {
+          // A name makes it a saved mapping; the unnamed last plan is saved by the check itself.
+          if (settings.save && settings.name.trim())
+            save.mutate({
+              name: settings.name.trim(),
+              columns: imp.columns.map((c) => c.label),
+              plan,
+            });
+          onChecked();
+        },
+      },
+    );
+    return undefined;
   }
 
+  const aside = (
+    <div className="flex flex-col gap-6">
+      <RowCard imp={imp} orgId={orgId} principalId={session.authed?.user.id} state={state} />
+      <MatchSettings
+        state={state}
+        value={settings}
+        onState={setState}
+        onValue={setSettings}
+        matchError={shown ? result.matchError : undefined}
+      />
+    </div>
+  );
+
   return (
-    <Card>
-      <CardHeader title={C.match.title} />
-      <CardBody className="flex flex-col gap-6">
-        {imp.errorCode && !check.isError ? (
-          <Callout tone="warning">{errorText(imp.errorCode)}</Callout>
-        ) : null}
-        <MappingEditor
-          rows={rows}
-          onChange={setRows}
-          targets={targets}
-          pinned={PINNED}
-          simple
-          sources={sourcesOf(imp)}
-          sourceNoun={C.match.column}
-          errors={shown ? result.errors : {}}
-          disabled={check.isPending}
+    <Wizard
+      steps={IMPORT_STEPS}
+      current={STEP.match}
+      onStep={onStep}
+      onCancel={() => onStep(STEP.source)}
+      onBack={() => onStep(STEP.source)}
+      onNext={submit}
+      nextLabel={C.match.checkRows(imp.counts?.rows ?? null)}
+      busy={check.isPending}
+      asideLabel={C.match.rowCard}
+      asideQuiet
+      aside={aside}
+    >
+      <Card>
+        <CardHeader
+          title={C.match.title}
+          actions={<SavedPicker saved={saved.data?.saved ?? []} onPick={pick} />}
         />
-        <div className="flex flex-col gap-4 sm:max-w-md">
-          <FormField label={C.match.findBy} error={shown ? result.matchError : undefined}>
-            {(c) => (
-              <Select
-                {...c}
-                value={match}
-                onValueChange={(v) => setMatch(v as Match)}
-                options={MATCHES}
-              />
-            )}
-          </FormField>
-          {match === 'none' ? null : (
-            <SwitchRow
-              label={C.match.keepManual}
-              help={C.match.keepManualHelp}
-              checked={keepManual}
-              onCheckedChange={setKeepManual}
+        {imp.errorCode && !check.isError ? (
+          <Callout tone="warning" className="m-4">
+            {errorText(imp.errorCode)}
+          </Callout>
+        ) : null}
+        <MatchSummary state={state} columns={imp.columns.length} />
+        <ul className="@container wl-stagger border-t border-border">
+          {shownRows(state).map((row, i) => (
+            <MatchRowView
+              key={row.key}
+              row={row}
+              columns={imp.columns}
+              state={state}
+              index={i}
+              error={shown ? result.errors[row.key] : undefined}
+              onRow={setRow}
             />
-          )}
-          <SwitchRow label={C.match.save} checked={save} onCheckedChange={setSave} />
-        </div>
-        {check.isError ? <Callout tone="danger">{errorMessage(check.error)}</Callout> : null}
-        <div>
-          <Button loading={check.isPending} onClick={submit}>
-            {check.isPending ? C.match.checking : C.match.submit}
-          </Button>
-        </div>
-      </CardBody>
-    </Card>
+          ))}
+        </ul>
+        <UnusedColumns state={state} onUse={use} />
+      </Card>
+      {wide ? null : (
+        <Card>
+          <div className="p-4">
+            <MatchSettings
+              state={state}
+              value={settings}
+              onState={setState}
+              onValue={setSettings}
+              matchError={shown ? result.matchError : undefined}
+            />
+          </div>
+        </Card>
+      )}
+      {left > 0 ? <p className="text-xs text-fg-muted">{C.match.valuesLeft(left)}</p> : null}
+      {check.isError ? <Callout tone="danger">{errorMessage(check.error)}</Callout> : null}
+    </Wizard>
   );
 }
 
 const errorText = (code: string) =>
   code === 'IMPORT_COLUMN_MISSING' ? C.savedColumns : C.checkUnfinished;
 
-/** Pick the column for each field, how passes are found, and run the check. */
+/** Match the file's columns to the template's fields, then check. */
 export function MatchStep({
   imp,
   orgId,
   onChecked,
+  onStep,
 }: {
   imp: PassImportDto;
   orgId: string;
   onChecked: () => void;
+  onStep: (step: number) => void;
 }) {
   const template = useTemplate(imp.templateId, orgId);
   if (template.isError)
@@ -124,6 +188,13 @@ export function MatchStep({
       />
     );
   if (!template.data) return <Skeleton className="h-64" />;
-  const targets = targetsOf(flatFields(describeSchema(template.data.inputSchema)));
-  return <MatchForm imp={imp} orgId={orgId} targets={targets} onChecked={onChecked} />;
+  return (
+    <MatchForm
+      imp={imp}
+      orgId={orgId}
+      schema={template.data.inputSchema}
+      onChecked={onChecked}
+      onStep={onStep}
+    />
+  );
 }

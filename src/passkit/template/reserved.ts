@@ -10,16 +10,25 @@ const BLOCK_VALUES = ['stamps', 'counters'] as const;
 /** `pass` names the server scope in expressions, so an input cannot use it. */
 export function reservedInputIssues(manifest: TemplateManifest): ValidationIssue[] {
   const properties = manifest.inputs?.properties;
-  if (!properties || typeof properties !== 'object' || !Object.hasOwn(properties, 'pass'))
-    return [];
-  return [
-    {
+  if (!properties || typeof properties !== 'object') return [];
+  const issues: ValidationIssue[] = [];
+  if (Object.hasOwn(properties, 'pass'))
+    issues.push({
       severity: 'error',
       code: 'INPUT_RESERVED',
       message: '"pass" is reserved for server values; rename the input.',
       path: 'inputs.properties.pass',
-    },
-  ];
+    });
+  // A leading "$" is the server's: imports keep the cells they could not read under `$raw` beside the inputs.
+  for (const name of Object.keys(properties))
+    if (name.startsWith('$'))
+      issues.push({
+        severity: 'error',
+        code: 'INPUT_RESERVED',
+        message: `"${name}" starts with "$", which is reserved for server values; rename the input.`,
+        path: `inputs.properties.${name}`,
+      });
+  return issues;
 }
 
 /** The `pass.<name>` references in an expression that are not server values. */

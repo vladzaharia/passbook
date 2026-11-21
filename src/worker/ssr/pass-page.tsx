@@ -25,7 +25,6 @@ import addCss from '../../web/portal/add/add.css?raw';
 import { passHeading } from '../../web/portal/add/heading.ts';
 import type { EndedSignIn } from '../../web/portal/ended-card.tsx';
 import { HolderHeading } from '../../web/portal/holder-heading.tsx';
-import { PortalLink } from '../../web/portal/holder-parts.tsx';
 import holderPassCss from '../../web/portal/holder-pass.css?raw';
 import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
 import { PassDetails } from '../../web/portal/pass-details.tsx';
@@ -88,7 +87,8 @@ export interface PassPageProps {
   printHref?: string;
   /** The absolute URL of this page: the add QR encodes it. */
   publicUrl: string;
-  /** The holder's page in the portal (sign-in first when needed). */
+  /** The holder's page in the portal (sign-in first when needed): a row of the other ways, only
+   * with a holder email (resend). */
   portalHref: string;
   voided: boolean;
   /** The org removed the pass from Wallet; its note, if it wrote one. */
@@ -130,11 +130,7 @@ function PassBody(props: PassPageProps) {
       <OrgBar orgName={props.orgName} brand={props.brand} />
       <TestRibbon mode={props.mode} what="pass" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <HolderHeading
-          heading={headingOf(props)}
-          bare
-          actions={<PortalLink href={props.portalHref} />}
-        />
+        <HolderHeading heading={headingOf(props)} bare />
         <HolderPassView
           pass={
             <PassCardStage
@@ -160,7 +156,7 @@ function PassBody(props: PassPageProps) {
           publicUrl={props.publicUrl}
           support={props.support}
           endedOn={props.endedOn ?? null}
-          {...(props.resend ? { resend: props.resend } : {})}
+          {...(props.resend ? { resend: props.resend, portalHref: props.portalHref } : {})}
           {...(props.signin ? { signin: props.signin } : {})}
           {...(props.notice ? { notice: props.notice } : {})}
           details={

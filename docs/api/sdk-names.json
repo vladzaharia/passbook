@@ -343,6 +343,12 @@
     "sdk": false,
     "reason": "Developer portal rail: a signed-in person in a browser, not an integration."
   },
+  "developer.getResolve": {
+    "resource": "developer.search",
+    "method": "resolve",
+    "sdk": false,
+    "reason": "Developer portal search: a signed-in person in a browser, not an integration."
+  },
   "developer.getSandbox": {
     "resource": "developer.sandbox",
     "method": "retrieve",
@@ -757,13 +763,13 @@
     "resource": "nfc.enrollments",
     "method": "create"
   },
-  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
-    "resource": "nfc.tags",
-    "method": "assign"
-  },
   "nfc-tags.postNfcPassesByPassIdTags": {
     "resource": "nfc.tags",
     "method": "rebind"
+  },
+  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
+    "resource": "nfc.tags",
+    "method": "assign"
   },
   "nfc-tags.postNfcTagTypes": {
     "resource": "nfc.tagTypes",
@@ -921,6 +927,10 @@
     "resource": "passImports",
     "method": "delete"
   },
+  "pass-imports.deletePassImportsMappings": {
+    "resource": "passImports.mappings",
+    "method": "delete"
+  },
   "pass-imports.getPassImports": {
     "resource": "passImports",
     "method": "list"
@@ -939,6 +949,10 @@
   },
   "pass-imports.getPassImportsByIdRows": {
     "resource": "passImports.rows",
+    "method": "list"
+  },
+  "pass-imports.getPassImportsMappings": {
+    "resource": "passImports.mappings",
     "method": "list"
   },
   "pass-imports.postPassImports": {
@@ -960,6 +974,14 @@
   "pass-imports.postPassImportsByIdRemoveCreated": {
     "resource": "passImports",
     "method": "removeCreated"
+  },
+  "pass-imports.postPassImportsByIdUndo": {
+    "resource": "passImports",
+    "method": "undo"
+  },
+  "pass-imports.putPassImportsMappings": {
+    "resource": "passImports.mappings",
+    "method": "save"
   },
   "passes.deletePassesById": {
     "resource": "passes",
@@ -1803,15 +1825,15 @@
     "resource": "scanningSessions",
     "method": "overrideHours"
   },
-  "scanners.postScanningSessionsSetup": {
-    "resource": "scanningSessions",
-    "method": "setup"
-  },
   "scanners.postScanningSessionsJoin": {
     "resource": "scanningSessions",
     "method": "join",
     "sdk": false,
     "reason": "Binds the calling browser or the signed-in admin as a scanner device."
+  },
+  "scanners.postScanningSessionsSetup": {
+    "resource": "scanningSessions",
+    "method": "setup"
   },
   "scans.getScans": {
     "resource": "scans",
@@ -1907,6 +1929,10 @@
     "resource": "templates.releases",
     "method": "retrieveImpact"
   },
+  "templates.getTemplatesByIdSampleCsv": {
+    "resource": "templates",
+    "method": "downloadSample"
+  },
   "templates.getTemplatesByIdStampsImpact": {
     "resource": "templates",
     "method": "retrieveStampsImpact"
@@ -1963,17 +1989,21 @@
     "resource": "templates",
     "method": "preview"
   },
-  "templates.postTemplatesByIdReleases": {
-    "resource": "templates.releases",
-    "method": "create"
-  },
   "templates.postTemplatesByIdRelease": {
     "resource": "templates.releases",
     "method": "release"
   },
-  "templates.postTemplatesByIdReviewRequests": {
+  "templates.postTemplatesByIdReleases": {
+    "resource": "templates.releases",
+    "method": "create"
+  },
+  "templates.postTemplatesByIdReview": {
     "resource": "templates.reviews",
-    "method": "request"
+    "method": "approve"
+  },
+  "templates.getTemplateReviews": {
+    "resource": "templates.reviews",
+    "method": "list"
   },
   "templates.postTemplatesByIdReleasesRollback": {
     "resource": "templates.releases",
@@ -1982,6 +2012,10 @@
   "templates.postTemplatesByIdRestore": {
     "resource": "templates",
     "method": "restore"
+  },
+  "templates.postTemplatesByIdReviewRequests": {
+    "resource": "templates.reviews",
+    "method": "request"
   },
   "templates.postTemplatesByIdScanSetup": {
     "resource": "templates",
@@ -2231,18 +2265,6 @@
     "resource": "webhookEndpoints.captures",
     "method": "retrieve"
   },
-  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
-    "resource": "webhookEndpoints.captures",
-    "method": "replay"
-  },
-  "webhooks.postWebhookEndpointsByIdCapturesSecret": {
-    "resource": "webhookEndpoints.captures",
-    "method": "revealSecret"
-  },
-  "webhooks.postWebhookEndpointsCapture": {
-    "resource": "webhookEndpoints",
-    "method": "ensureCapture"
-  },
   "webhooks.getWebhookEndpointsByIdDeliveries": {
     "resource": "webhookEndpoints.deliveries",
     "method": "list"
@@ -2258,6 +2280,14 @@
   "webhooks.postWebhookEndpoints": {
     "resource": "webhookEndpoints",
     "method": "create"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
+    "resource": "webhookEndpoints.captures",
+    "method": "replay"
+  },
+  "webhooks.postWebhookEndpointsByIdCapturesSecret": {
+    "resource": "webhookEndpoints.captures",
+    "method": "revealSecret"
   },
   "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay": {
     "resource": "webhookEndpoints.deliveries",
@@ -2275,10 +2305,8 @@
     "resource": "webhookEndpoints",
     "method": "sendTest"
   },
-  "developer.getResolve": {
-    "resource": "developer.search",
-    "method": "resolve",
-    "sdk": false,
-    "reason": "Developer portal search: a signed-in person in a browser, not an integration."
+  "webhooks.postWebhookEndpointsCapture": {
+    "resource": "webhookEndpoints",
+    "method": "ensureCapture"
   }
 }

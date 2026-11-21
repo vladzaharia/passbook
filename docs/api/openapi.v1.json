@@ -3409,6 +3409,374 @@
         ],
         "additionalProperties": false
       },
+      "ReviewResult": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "approved": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "live",
+                "test"
+              ]
+            }
+          },
+          "release": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "modes": {
+                "type": "object",
+                "properties": {
+                  "test": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "released",
+                          "kept",
+                          "current",
+                          "review_requested"
+                        ]
+                      },
+                      "releaseId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "approvalKind": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "peer",
+                          "sole",
+                          "test",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "releaseId",
+                      "generation",
+                      "approvalKind"
+                    ]
+                  },
+                  "live": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "released",
+                          "kept",
+                          "current",
+                          "review_requested"
+                        ]
+                      },
+                      "releaseId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "approvalKind": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "peer",
+                          "sole",
+                          "test",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "releaseId",
+                      "generation",
+                      "approvalKind"
+                    ]
+                  }
+                }
+              },
+              "state": {
+                "type": "object",
+                "properties": {
+                  "live": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "by": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "by"
+                    ]
+                  },
+                  "test": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "following",
+                          "ahead"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "state"
+                    ]
+                  },
+                  "draft": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at"
+                    ]
+                  },
+                  "review": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "none"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "open",
+                              "approved"
+                            ]
+                          },
+                          "version": {
+                            "type": "string"
+                          },
+                          "by": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "version",
+                          "by",
+                          "at"
+                        ]
+                      }
+                    ]
+                  },
+                  "alone": {
+                    "type": "boolean"
+                  },
+                  "next": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "design",
+                      "try",
+                      "release",
+                      "request_review",
+                      "review",
+                      "wait",
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "live",
+                  "test",
+                  "draft",
+                  "review",
+                  "alone",
+                  "next"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "modes",
+              "state"
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "approved",
+          "release"
+        ]
+      },
+      "ReviewTemplate": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "release": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "TemplateReviewList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "templateId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "templateName": {
+                  "type": "string"
+                },
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "version": {
+                  "type": "string"
+                },
+                "requestedBy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "requestedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "templateId",
+                "templateName",
+                "orgId",
+                "version",
+                "requestedBy",
+                "requestedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "PassPage": {
         "type": "object",
         "properties": {
@@ -4515,6 +4883,267 @@
           "actorId",
           "createdAt",
           "purged"
+        ]
+      },
+      "PassImportMappings": {
+        "type": "object",
+        "properties": {
+          "saved": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "columns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "maxItems": 100
+                },
+                "plan": {
+                  "type": "object",
+                  "properties": {
+                    "mapping": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "from": {
+                            "type": "string",
+                            "maxLength": 500
+                          },
+                          "transform": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "enum",
+                                  "bool-status",
+                                  "date",
+                                  "constant",
+                                  "trim",
+                                  "upper",
+                                  "lower",
+                                  "join"
+                                ]
+                              },
+                              "options": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "from"
+                        ]
+                      }
+                    },
+                    "holderEmail": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "transform": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "enum",
+                                "bool-status",
+                                "date",
+                                "constant",
+                                "trim",
+                                "upper",
+                                "lower",
+                                "join"
+                              ]
+                            },
+                            "options": {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "from"
+                      ]
+                    },
+                    "externalId": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "transform": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "enum",
+                                "bool-status",
+                                "date",
+                                "constant",
+                                "trim",
+                                "upper",
+                                "lower",
+                                "join"
+                              ]
+                            },
+                            "options": {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "from"
+                      ]
+                    },
+                    "match": {
+                      "type": "string",
+                      "enum": [
+                        "externalId",
+                        "email",
+                        "none"
+                      ]
+                    },
+                    "keepManual": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "save": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "overrides": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "maxLength": 2000
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "mapping",
+                    "holderEmail",
+                    "externalId",
+                    "match"
+                  ],
+                  "additionalProperties": false
+                },
+                "savedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "name",
+                "columns",
+                "plan",
+                "savedAt"
+              ]
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "saved"
+        ]
+      },
+      "PassImportUndo": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "done",
+              "failed"
+            ]
+          },
+          "removed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "restored": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "keptTotal": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "kept": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "passId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "code": {
+                  "type": "string",
+                  "maxLength": 64
+                }
+              },
+              "required": [
+                "passId",
+                "code"
+              ]
+            },
+            "maxItems": 100
+          },
+          "emailsCancelled": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unrevertable": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "state",
+          "removed",
+          "restored",
+          "keptTotal",
+          "kept",
+          "emailsCancelled"
         ]
       },
       "CapturedEmailPage": {
@@ -17301,6 +17930,9 @@
               "trial",
               "standard"
             ]
+          },
+          "addMe": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -19217,6 +19849,198 @@
           }
         }
       },
+      "PassImportsMappingsSaveParams": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "maxItems": 100
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "mapping": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "transform": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "enum",
+                            "bool-status",
+                            "date",
+                            "constant",
+                            "trim",
+                            "upper",
+                            "lower",
+                            "join"
+                          ]
+                        },
+                        "options": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "from"
+                  ]
+                }
+              },
+              "holderEmail": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "transform": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "enum",
+                          "bool-status",
+                          "date",
+                          "constant",
+                          "trim",
+                          "upper",
+                          "lower",
+                          "join"
+                        ]
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  }
+                },
+                "required": [
+                  "from"
+                ]
+              },
+              "externalId": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "transform": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "enum",
+                          "bool-status",
+                          "date",
+                          "constant",
+                          "trim",
+                          "upper",
+                          "lower",
+                          "join"
+                        ]
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  }
+                },
+                "required": [
+                  "from"
+                ]
+              },
+              "match": {
+                "type": "string",
+                "enum": [
+                  "externalId",
+                  "email",
+                  "none"
+                ]
+              },
+              "keepManual": {
+                "type": "boolean",
+                "default": false
+              },
+              "save": {
+                "type": "boolean",
+                "default": true
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            },
+            "required": [
+              "mapping",
+              "holderEmail",
+              "externalId",
+              "match"
+            ],
+            "additionalProperties": false
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "name",
+          "columns",
+          "plan",
+          "templateId"
+        ]
+      },
+      "PassImportsUndoParams": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
       "PassImportsCreateParams": {
         "type": "object",
         "properties": {
@@ -19301,7 +20125,8 @@
                             "constant",
                             "trim",
                             "upper",
-                            "lower"
+                            "lower",
+                            "join"
                           ]
                         },
                         "options": {
@@ -19341,7 +20166,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19380,7 +20206,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19412,6 +20239,16 @@
               "save": {
                 "type": "boolean",
                 "default": true
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
               }
             },
             "required": [
@@ -19421,6 +20258,12 @@
               "match"
             ],
             "additionalProperties": false
+          },
+          "mapping": {
+            "type": "string",
+            "enum": [
+              "auto"
+            ]
           }
         },
         "required": [
@@ -19456,7 +20299,8 @@
                             "constant",
                             "trim",
                             "upper",
-                            "lower"
+                            "lower",
+                            "join"
                           ]
                         },
                         "options": {
@@ -19496,7 +20340,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19535,7 +20380,8 @@
                           "constant",
                           "trim",
                           "upper",
-                          "lower"
+                          "lower",
+                          "join"
                         ]
                       },
                       "options": {
@@ -19567,6 +20413,16 @@
               "save": {
                 "type": "boolean",
                 "default": true
+              },
+              "overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
               }
             },
             "required": [
@@ -19591,7 +20447,47 @@
             "default": false
           },
           "email": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "send": {
+                    "type": "string",
+                    "enum": [
+                      "now"
+                    ]
+                  }
+                },
+                "required": [
+                  "send"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "send": {
+                    "type": "string",
+                    "enum": [
+                      "held"
+                    ]
+                  },
+                  "holdMs": {
+                    "type": "integer",
+                    "minimum": 60000,
+                    "maximum": 3600000,
+                    "default": 300000
+                  }
+                },
+                "required": [
+                  "send"
+                ],
+                "additionalProperties": false
+              }
+            ],
             "default": false
           }
         },
@@ -43352,6 +44248,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -43488,6 +44385,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -43701,6 +44599,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -43932,6 +44831,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44053,6 +44953,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44252,6 +45153,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44569,6 +45471,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44734,6 +45637,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44853,6 +45757,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44981,6 +45886,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45102,6 +46008,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45223,6 +46130,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45418,6 +46326,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45564,6 +46473,130 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/templates/{id}/sample.csv": {
+      "get": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "A sample import file: the template field labels and one valid row",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.getTemplatesByIdSampleCsv",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "downloadSample"
+        },
+        "description": "Downloads a sample import file for the template: one column per field, labelled as in the pass form, and Holder email, with one valid row. Importing it with mapping auto maps every column and checks without errors.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45854,6 +46887,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46008,6 +47042,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46538,6 +47573,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47188,6 +48224,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47398,6 +48435,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47679,6 +48717,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47845,6 +48884,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47972,6 +49012,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48253,6 +49294,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48441,6 +49483,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48552,6 +49595,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48663,6 +49707,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48784,6 +49829,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49139,6 +50185,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49439,6 +50486,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49735,6 +50783,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49917,6 +50966,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -50400,6 +51450,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -50670,6 +51721,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51048,6 +52100,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51314,6 +52367,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51490,6 +52544,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51624,7 +52679,7 @@
           "resource": "templates.reviews",
           "method": "request"
         },
-        "description": "Create or reuse the Test and Live candidates of a saved version without approving them, so another reviewer can approve. Reviewers are told when notification ships. Send `Idempotency-Key`.",
+        "description": "Create or reuse the Test and Live candidates of a saved version without approving them, and email the org's other reviewers. A newer request replaces an older open one. Send `Idempotency-Key`.",
         "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
@@ -51673,6 +52728,312 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/templates/{id}/review": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:review"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Approve a requested template version in Test and Live, and release it when asked",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewTemplate"
+              },
+              "example": {
+                "version": "4",
+                "release": true,
+                "note": "Looks right."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResult"
+                },
+                "example": {
+                  "version": "4",
+                  "approved": [
+                    "test",
+                    "live"
+                  ],
+                  "release": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.postTemplatesByIdReview",
+        "x-sdk": {
+          "resource": "templates.reviews",
+          "method": "approve"
+        },
+        "description": "Approve a requested version in Test and Live as a peer. A Test key approves Test only. Set `release` to also release it when you can publish. You cannot approve your own work.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/template-reviews": {
+      "get": {
+        "summary": "List template versions waiting for review",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open"
+              ],
+              "default": "open"
+            },
+            "required": false,
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateReviewList"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "templateId": "0197a3e4-5c1b-7d2e-9f10-2b6a8c4d5e6f",
+                      "templateName": "Member card",
+                      "orgId": "0197a3e4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                      "version": "4",
+                      "requestedBy": "Ada Example",
+                      "requestedAt": 1764086400000
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.getTemplateReviews",
+        "x-sdk": {
+          "resource": "templates.reviews",
+          "method": "list"
+        },
+        "description": "Versions waiting for a review in an organization: the newest version of each template, with your own requests left out. Newest request first.",
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51938,11 +53299,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -52189,11 +53556,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -52411,11 +53784,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -52570,11 +53949,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -52810,11 +54195,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -52967,11 +54358,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -53138,11 +54535,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -53309,11 +54712,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -53471,11 +54880,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -53634,11 +55049,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -53791,11 +55212,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -53980,11 +55407,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -54141,11 +55574,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -54319,11 +55758,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -54527,11 +55972,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -54717,11 +56168,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -54881,11 +56338,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -55066,11 +56529,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -55259,11 +56728,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -55452,11 +56927,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -55635,11 +57116,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -55774,11 +57261,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -55955,11 +57448,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -56307,11 +57806,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -56668,11 +58173,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -56824,11 +58335,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -56980,11 +58497,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -57158,11 +58681,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -57309,11 +58838,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -57607,11 +59142,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -58199,11 +59740,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -58800,11 +60347,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -58980,11 +60533,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -59166,11 +60725,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -59315,11 +60880,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -59516,11 +61087,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -59721,11 +61298,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -59927,11 +61510,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -60066,11 +61655,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -60205,11 +61800,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -60353,11 +61954,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -60667,11 +62274,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -60972,11 +62585,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -61156,11 +62775,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -61327,11 +62952,817 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_NEEDS_TEMPLATE",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/pass-imports/mappings": {
+      "get": {
+        "summary": "A template's saved column mappings",
+        "tags": [
+          "pass-imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "templateId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassImportMappings"
+                },
+                "example": {
+                  "saved": [
+                    {
+                      "name": "Gym export",
+                      "columns": [
+                        "Member #",
+                        "Name",
+                        "Holder email"
+                      ],
+                      "savedAt": 1790000000000,
+                      "plan": {
+                        "mapping": {
+                          "memberName": {
+                            "from": "/Name"
+                          }
+                        },
+                        "holderEmail": {
+                          "from": "/Holder email"
+                        },
+                        "externalId": {
+                          "from": "/Member #"
+                        },
+                        "match": "externalId",
+                        "keepManual": false,
+                        "save": true
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "pass-imports.getPassImportsMappings",
+        "x-sdk": {
+          "resource": "passImports.mappings",
+          "method": "list"
+        },
+        "description": "Lists a template's saved column mappings. A mapping is picked for a new file when at least 80% of its columns are in the file's headers.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_NEEDS_TEMPLATE",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      },
+      "put": {
+        "summary": "Save a named column mapping for a template; the same name replaces it",
+        "tags": [
+          "pass-imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassImportsMappingsSaveParams"
+              },
+              "example": {
+                "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
+                "name": "Gym export",
+                "columns": [
+                  "Member #",
+                  "Name",
+                  "Holder email"
+                ],
+                "plan": {
+                  "mapping": {
+                    "memberName": {
+                      "from": "/Name"
+                    }
+                  },
+                  "holderEmail": {
+                    "from": "/Holder email"
+                  },
+                  "externalId": {
+                    "from": "/Member #"
+                  },
+                  "match": "externalId",
+                  "keepManual": false,
+                  "save": true
+                }
+              },
+              "examples": {
+                "Match by member number": {
+                  "summary": "Match by member number",
+                  "value": {
+                    "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
+                    "name": "Gym export",
+                    "columns": [
+                      "Member #",
+                      "Name",
+                      "Holder email"
+                    ],
+                    "plan": {
+                      "mapping": {
+                        "memberName": {
+                          "from": "/Name"
+                        }
+                      },
+                      "holderEmail": {
+                        "from": "/Holder email"
+                      },
+                      "externalId": {
+                        "from": "/Member #"
+                      },
+                      "match": "externalId",
+                      "keepManual": false,
+                      "save": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassImportMappings"
+                },
+                "example": {
+                  "saved": [
+                    {
+                      "name": "Gym export",
+                      "columns": [
+                        "Member #",
+                        "Name",
+                        "Holder email"
+                      ],
+                      "savedAt": 1790000000000,
+                      "plan": {
+                        "mapping": {
+                          "memberName": {
+                            "from": "/Name"
+                          }
+                        },
+                        "holderEmail": {
+                          "from": "/Holder email"
+                        },
+                        "externalId": {
+                          "from": "/Member #"
+                        },
+                        "match": "externalId",
+                        "keepManual": false,
+                        "save": true
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "pass-imports.putPassImportsMappings",
+        "x-sdk": {
+          "resource": "passImports.mappings",
+          "method": "save"
+        },
+        "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_NEEDS_TEMPLATE",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      },
+      "delete": {
+        "summary": "Delete a saved column mapping by name",
+        "tags": [
+          "pass-imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "templateId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "required": true,
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassImportMappings"
+                },
+                "example": {
+                  "saved": []
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "pass-imports.deletePassImportsMappings",
+        "x-sdk": {
+          "resource": "passImports.mappings",
+          "method": "delete"
+        },
+        "description": "Deletes a saved column mapping by name. A name that is not saved changes nothing.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_NEEDS_TEMPLATE",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/pass-imports/{id}/undo": {
+      "post": {
+        "summary": "Undo an ended import: remove the passes it made and restore the ones it changed, unless edited since",
+        "tags": [
+          "pass-imports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassImportsUndoParams"
+              },
+              "example": {},
+              "examples": {
+                "Undo the import": {
+                  "summary": "Undo the import",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassImportUndo"
+                },
+                "example": {
+                  "state": "running",
+                  "removed": 0,
+                  "restored": 0,
+                  "keptTotal": 0,
+                  "kept": [],
+                  "emailsCancelled": 3
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "pass-imports.postPassImportsByIdUndo",
+        "x-sdk": {
+          "resource": "passImports",
+          "method": "undo"
+        },
+        "description": "Undoes an ended import for 24 hours after it ends, as a background run. Passes it created are removed unless they were edited or scanned since. Passes it updated get their earlier values back while still at the version the import wrote. Anything else is kept and listed in `kept`. Held emails are cancelled; emails already sent are not recalled. Asking again returns the same run. Poll GET /pass-imports/{id} for `undo`.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -61404,6 +63835,9 @@
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
         "requestBody": {
@@ -61537,7 +63971,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -61577,7 +64012,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -61616,7 +64052,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -61648,6 +64085,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -61689,6 +64136,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }
@@ -61754,6 +64209,20 @@
                               "null"
                             ],
                             "maxLength": 64
+                          },
+                          "label": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
+                          },
+                          "value": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
                           },
                           "code": {
                             "type": "string",
@@ -62133,6 +64602,13 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "undo": {
+                      "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -62221,11 +64697,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -62443,7 +64925,8 @@
                                             "constant",
                                             "trim",
                                             "upper",
-                                            "lower"
+                                            "lower",
+                                            "join"
                                           ]
                                         },
                                         "options": {
@@ -62483,7 +64966,8 @@
                                           "constant",
                                           "trim",
                                           "upper",
-                                          "lower"
+                                          "lower",
+                                          "join"
                                         ]
                                       },
                                       "options": {
@@ -62522,7 +65006,8 @@
                                           "constant",
                                           "trim",
                                           "upper",
-                                          "lower"
+                                          "lower",
+                                          "join"
                                         ]
                                       },
                                       "options": {
@@ -62554,6 +65039,16 @@
                               "save": {
                                 "type": "boolean",
                                 "default": true
+                              },
+                              "overrides": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "type": "string",
+                                    "maxLength": 2000
+                                  }
+                                }
                               }
                             },
                             "required": [
@@ -62595,6 +65090,14 @@
                                 "minimum": 0
                               },
                               "emailable": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "errorsCreate": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "errorsUpdate": {
                                 "type": "integer",
                                 "minimum": 0
                               }
@@ -62660,6 +65163,20 @@
                                     "null"
                                   ],
                                   "maxLength": 64
+                                },
+                                "label": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 200
+                                },
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 200
                                 },
                                 "code": {
                                   "type": "string",
@@ -63039,6 +65556,13 @@
                               "null"
                             ],
                             "minimum": 0
+                          },
+                          "undo": {
+                            "$ref": "#/components/schemas/PassImportUndo"
+                          },
+                          "unrevertable": {
+                            "type": "integer",
+                            "minimum": 0
                           }
                         },
                         "required": [
@@ -63140,11 +65664,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -63349,7 +65879,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -63389,7 +65920,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -63428,7 +65960,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -63460,6 +65993,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -63501,6 +66044,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }
@@ -63566,6 +66117,20 @@
                               "null"
                             ],
                             "maxLength": 64
+                          },
+                          "label": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
+                          },
+                          "value": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
                           },
                           "code": {
                             "type": "string",
@@ -63945,6 +66510,13 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "undo": {
+                      "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -64033,11 +66605,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -64199,11 +66777,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -64419,7 +67003,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -64459,7 +67044,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -64498,7 +67084,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -64530,6 +67117,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -64571,6 +67168,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }
@@ -64636,6 +67241,20 @@
                               "null"
                             ],
                             "maxLength": 64
+                          },
+                          "label": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
+                          },
+                          "value": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
                           },
                           "code": {
                             "type": "string",
@@ -65015,6 +67634,13 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "undo": {
+                      "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -65103,11 +67729,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -65190,6 +67822,9 @@
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
         "requestBody": {
@@ -65323,7 +67958,8 @@
                                       "constant",
                                       "trim",
                                       "upper",
-                                      "lower"
+                                      "lower",
+                                      "join"
                                     ]
                                   },
                                   "options": {
@@ -65363,7 +67999,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -65402,7 +68039,8 @@
                                     "constant",
                                     "trim",
                                     "upper",
-                                    "lower"
+                                    "lower",
+                                    "join"
                                   ]
                                 },
                                 "options": {
@@ -65434,6 +68072,16 @@
                         "save": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 2000
+                            }
+                          }
                         }
                       },
                       "required": [
@@ -65475,6 +68123,14 @@
                           "minimum": 0
                         },
                         "emailable": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsCreate": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "errorsUpdate": {
                           "type": "integer",
                           "minimum": 0
                         }
@@ -65540,6 +68196,20 @@
                               "null"
                             ],
                             "maxLength": 64
+                          },
+                          "label": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
+                          },
+                          "value": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 200
                           },
                           "code": {
                             "type": "string",
@@ -65919,6 +68589,13 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "undo": {
+                      "$ref": "#/components/schemas/PassImportUndo"
+                    },
+                    "unrevertable": {
+                      "type": "integer",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -66007,11 +68684,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -66327,11 +69010,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -66477,11 +69166,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -66627,11 +69322,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -66826,11 +69527,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
           "MATCH_NEEDS_TEMPLATE",
@@ -66886,7 +69593,7 @@
     },
     "/api/v1/pass-imports/{id}/email-rest": {
       "post": {
-        "summary": "Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice",
+        "summary": "Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice",
         "tags": [
           "pass-imports"
         ],
@@ -66936,6 +69643,10 @@
                       "minimum": 0
                     },
                     "skipped": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "alreadyQueued": {
                       "type": "integer",
                       "minimum": 0
                     },
@@ -67012,11 +69723,17 @@
           "IMPORT_HAS_ERRORS",
           "IMPORT_HEADER_TOO_LONG",
           "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
           "IMPORT_NOT_FOUND",
           "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
           "IMPORT_PLAN_INVALID",
           "IMPORT_ROW_UNRESERVED",
           "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
@@ -96501,6 +99218,9 @@
                         "approvedTemplates": {
                           "type": "integer"
                         },
+                        "releasedTemplates": {
+                          "type": "integer"
+                        },
                         "walletPasses": {
                           "type": "integer"
                         },
@@ -96524,6 +99244,7 @@
                         "assignedTemplates",
                         "passes",
                         "approvedTemplates",
+                        "releasedTemplates",
                         "walletPasses",
                         "passEmailsSent",
                         "latestPassId",
@@ -97088,6 +99809,9 @@
                         "approvedTemplates": {
                           "type": "integer"
                         },
+                        "releasedTemplates": {
+                          "type": "integer"
+                        },
                         "walletPasses": {
                           "type": "integer"
                         },
@@ -97111,6 +99835,7 @@
                         "assignedTemplates",
                         "passes",
                         "approvedTemplates",
+                        "releasedTemplates",
                         "walletPasses",
                         "passEmailsSent",
                         "latestPassId",

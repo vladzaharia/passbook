@@ -5,6 +5,7 @@ import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
 import { finished, PLAN } from '../passes/import/import-test-fixtures.ts';
 import { CONNECTOR, ORG, templateDetail, templateSummary } from '../passes/test-fixtures.ts';
 import {
+  connectionMappingOf,
   handOffToConnection,
   rememberImportLink,
   takeConnectionPrefill,
@@ -71,6 +72,26 @@ describe('import to connection handoff', () => {
       idColumn: 'a/b',
       holderEmailField: '',
     });
+  });
+
+  it('leaves a joined input out of the connection mapping and names it', () => {
+    const plan = {
+      ...PLAN,
+      mapping: {
+        name: {
+          from: '/First',
+          transform: { kind: 'join' as const, options: { with: ['/Last'] } },
+        },
+        tier: { from: '/Tier', transform: { kind: 'upper' as const } },
+        city: { from: '/City' },
+      },
+    };
+    expect(connectionMappingOf(plan.mapping)).toEqual({
+      mapping: { tier: { from: '/Tier', transform: { kind: 'upper' } }, city: { from: '/City' } },
+      joined: ['name'],
+    });
+    handOffToConnection(imp({ plan }));
+    expect(takeConnectionPrefill()).toMatchObject({ joined: ['name'] });
   });
 
   it('hands nothing over for an import without a plan', () => {

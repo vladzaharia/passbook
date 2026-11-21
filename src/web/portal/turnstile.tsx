@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { TURNSTILE_ACTION } from '../../shared/turnstile.ts';
 import { useTheme } from '../lib/theme.tsx';
-
-const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+import { turnstileScriptUrl } from '../lib/turnstile-script.ts';
 
 interface TurnstileApi {
   render(el: HTMLElement, options: Record<string, unknown>): string;
@@ -22,7 +21,7 @@ function loadTurnstile(): Promise<TurnstileApi> {
   if (window.turnstile) return Promise.resolve(window.turnstile);
   scriptPromise ??= new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = SCRIPT_SRC;
+    script.src = turnstileScriptUrl();
     script.async = true;
     script.onload = () =>
       window.turnstile ? resolve(window.turnstile) : reject(new Error('turnstile missing'));

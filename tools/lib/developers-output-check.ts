@@ -9,9 +9,10 @@ export interface BuiltFile {
 
 /** Most HTML a page may weigh (UTF-8 bytes). */
 export const PAGE_BUDGET = 300 * 1024;
-/** Pages over the budget on purpose. passes is 43 operations; it shrinks only by splitting per operation. */
+/** Pages over the budget on purpose: passes (43 operations) and templates (releases, reviews and samples) shrink only by splitting per operation. */
 export const PAGE_BUDGET_OVERRIDES: Record<string, number> = {
   '/developers/reference/passes': 600 * 1024,
+  '/developers/reference/templates': 360 * 1024,
 };
 
 export function outputFailures(files: BuiltFile[], cliPublished = false): string[] {

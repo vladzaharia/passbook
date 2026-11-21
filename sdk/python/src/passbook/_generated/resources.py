@@ -739,6 +739,38 @@ class OrgsResource:
         self.entitlements = OrgsEntitlementsResource(core)
 
 
+class PassImportsMappingsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def delete(
+        self,
+        *,
+        template_id: str,
+        name: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassImportsMappingsDeleteResult:
+        """Delete a saved column mapping by name `DELETE /api/v1/pass-imports/mappings`"""
+        return self._core.request("DELETE", "/api/v1/pass-imports/mappings", query={"templateId": template_id, "name": name}, result=m.PassImportsMappingsDeleteResult, **opts)
+
+    def list(
+        self,
+        *,
+        template_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassImportsMappingsListResult:
+        """A template's saved column mappings `GET /api/v1/pass-imports/mappings`"""
+        return self._core.request("GET", "/api/v1/pass-imports/mappings", query={"templateId": template_id}, result=m.PassImportsMappingsListResult, **opts)
+
+    def save(
+        self,
+        body: m.PassImportsMappingsSaveBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassImportsMappingsSaveResult:
+        """Save a named column mapping for a template; the same name replaces it `PUT /api/v1/pass-imports/mappings`"""
+        return self._core.request("PUT", "/api/v1/pass-imports/mappings", body=body, result=m.PassImportsMappingsSaveResult, **opts)
+
+
 class PassImportsRowsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -758,6 +790,7 @@ class PassImportsRowsResource:
 class PassImportsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.mappings = PassImportsMappingsResource(core)
         self.rows = PassImportsRowsResource(core)
 
     def check(
@@ -776,7 +809,7 @@ class PassImportsResource:
         **opts: _Unpack[RequestOptions],
     ) -> m.PassImportsCommitResult:
         """Apply the checked rows: create the new passes and update the matched ones `POST /api/v1/pass-imports/{id}/commit`"""
-        return self._core.request("POST", f"/api/v1/pass-imports/{_p(id)}/commit", body=body, result=m.PassImportsCommitResult, **opts)
+        return self._core.request("POST", f"/api/v1/pass-imports/{_p(id)}/commit", body=body, idempotent=True, result=m.PassImportsCommitResult, **opts)
 
     def create(
         self,
@@ -784,7 +817,7 @@ class PassImportsResource:
         **opts: _Unpack[RequestOptions],
     ) -> m.PassImportsCreateResult:
         """Start an import from a file or a sheet link; checks it when a plan is known `POST /api/v1/pass-imports`"""
-        return self._core.request("POST", "/api/v1/pass-imports", body=body, result=m.PassImportsCreateResult, **opts)
+        return self._core.request("POST", "/api/v1/pass-imports", body=body, idempotent=True, result=m.PassImportsCreateResult, **opts)
 
     def delete(
         self,
@@ -834,8 +867,17 @@ class PassImportsResource:
         body: m.PassImportsSendEmailsBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.PassImportsSendEmailsResult:
-        """Email the created passes that were not emailed, 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`"""
+        """Send now the mail of created passes not emailed (also held mail, ahead of its wait), 50 a call; a repeat emails nobody twice `POST /api/v1/pass-imports/{id}/email-rest`"""
         return self._core.request("POST", f"/api/v1/pass-imports/{_p(id)}/email-rest", body=body, result=m.PassImportsSendEmailsResult, **opts)
+
+    def undo(
+        self,
+        id: str,
+        body: m.PassImportsUndoBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassImportsUndoResult:
+        """Undo an ended import: remove the passes it made and restore the ones it changed, unless edited since `POST /api/v1/pass-imports/{id}/undo`"""
+        return self._core.request("POST", f"/api/v1/pass-imports/{_p(id)}/undo", body=body, result=m.PassImportsUndoResult, **opts)
 
 
 class PassesAssetsResource:
@@ -1473,6 +1515,42 @@ class ScansResource:
         return self._core.paginate("GET", "/api/v1/scans", query={"cursor": cursor, "limit": limit, "q": q, "scannerId": scanner_id, "staffId": staff_id, "eventId": event_id, "templateId": template_id, "passId": pass_id, "outcome": outcome, "reason": reason, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before}, result=m.ScansListResult, cursor_param="cursor", **opts)
 
 
+class TemplatesReviewsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def approve(
+        self,
+        id: str,
+        body: m.TemplatesReviewsApproveBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesReviewsApproveResult:
+        """Approve a requested template version in Test and Live, and release it when asked `POST /api/v1/templates/{id}/review`"""
+        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/review", body=body, result=m.TemplatesReviewsApproveResult, **opts)
+
+    def list(
+        self,
+        *,
+        state: _Literal["open"] | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.TemplatesReviewsListItem]:
+        """List template versions waiting for review `GET /api/v1/template-reviews`"""
+        return self._core.paginate("GET", "/api/v1/template-reviews", query={"state": state, "cursor": cursor, "limit": limit}, result=m.TemplatesReviewsListResult, cursor_param="cursor", **opts)
+
+    def request(
+        self,
+        id: str,
+        body: m.TemplatesReviewsRequestBody | _Dict[str, _Any],
+        *,
+        dry_run: _Literal["0", "1", "true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesReviewsRequestResult:
+        """Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`"""
+        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/review-requests", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.TemplatesReviewsRequestResult, **opts)
+
+
 class TemplatesCandidatesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1579,22 +1657,6 @@ class TemplatesReleasesResource:
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/releases/impact", query={"mode": mode, "provider": provider, "version": version}, result=m.TemplatesReleasesRetrieveImpactResult, **opts)
 
 
-class TemplatesReviewsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def request(
-        self,
-        id: str,
-        body: m.TemplatesReviewsRequestBody | _Dict[str, _Any],
-        *,
-        dry_run: _Literal["0", "1", "true", "false"] | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.TemplatesReviewsRequestResult:
-        """Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`"""
-        return self._core.request("POST", f"/api/v1/templates/{_p(id)}/review-requests", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.TemplatesReviewsRequestResult, **opts)
-
-
 class TemplatesVersionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1624,10 +1686,10 @@ class TemplatesVersionsResource:
 class TemplatesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.reviews = TemplatesReviewsResource(core)
         self.candidates = TemplatesCandidatesResource(core)
         self.channels = TemplatesChannelsResource(core)
         self.releases = TemplatesReleasesResource(core)
-        self.reviews = TemplatesReviewsResource(core)
         self.versions = TemplatesVersionsResource(core)
 
     def download_package(
@@ -1637,6 +1699,14 @@ class TemplatesResource:
     ) -> httpx.Response:
         """The active version or unpublished draft as an uploadable zip `GET /api/v1/templates/{id}/package`"""
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/package", raw=True, **opts)
+
+    def download_sample(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> httpx.Response:
+        """A sample import file: the template field labels and one valid row `GET /api/v1/templates/{id}/sample.csv`"""
+        return self._core.request("GET", f"/api/v1/templates/{_p(id)}/sample.csv", raw=True, **opts)
 
     def list(
         self,

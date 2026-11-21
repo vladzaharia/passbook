@@ -16,10 +16,11 @@ import {
   Callout,
   SaveBar,
   SegmentedControl,
+  toast,
   UnsavedChangesDialog,
   useUnsavedChangesGuard,
 } from '../../../ui/index.ts';
-import type { Template } from '../versions.ts';
+import { type Template, versionNumber } from '../versions.ts';
 import { useDesignCheck } from './api.ts';
 import type { Op } from './apply.ts';
 import { DesignerProvider } from './context.tsx';
@@ -41,7 +42,6 @@ import {
   validSelection,
 } from './reducer.ts';
 import { useSaveFlow } from './save-flow.ts';
-import { SavedCallout } from './saved-callout.tsx';
 import { ScanMode } from './scan/scan-mode.tsx';
 import { DesignerStage } from './stage.tsx';
 import { useStampsPreview } from './stamp-preview.ts';
@@ -66,7 +66,6 @@ export interface ReadOnlyDesign {
 
 export interface DesignerProps {
   template: Template;
-  canPublish: boolean;
   selectedOrg: string | undefined;
   /** Where drafts of this template are kept (person, organisation, template). */
   draftKey: string;
@@ -84,7 +83,6 @@ export interface DesignerProps {
 
 export function Designer({
   template,
-  canPublish,
   selectedOrg,
   draftKey,
   base,
@@ -198,6 +196,7 @@ export function Designer({
     checking: () => live.current.checking,
     dispatch,
     onSaved: (v) => {
+      toast.success(`Saved v${versionNumber(template, v) ?? template.versions.length + 1}`);
       setVersion(v);
       setRestored(false);
     },
@@ -229,6 +228,7 @@ export function Designer({
           name={name}
           orgId={selectedOrg}
           create={create}
+          template={template}
           undoRedo={
             phone || readOnly
               ? null
@@ -266,7 +266,6 @@ export function Designer({
             Restored your unsaved draft.
           </Callout>
         ) : null}
-        {flow.saved ? <SavedCallout templateId={templateId} canPublish={canPublish} /> : null}
         {mode === 'scan' ? (
           <ScanMode
             templateId={templateId}

@@ -1,3 +1,4 @@
+import { PATHS } from '../../../shared/developers.ts';
 import { RUN_LIMIT, remaining, subscribe } from './budget.ts';
 import { loadSession, onSession, type Session } from './session.ts';
 
@@ -38,7 +39,7 @@ export function budgetMeter(): { node: HTMLElement; paint: () => void } {
 function chipFor(session: Session): HTMLElement | null {
   if (session.kind === 'out') return null;
   const chip = el('a', 'orgchip');
-  chip.href = '/developers/console';
+  chip.href = PATHS.reference;
   if (session.kind !== 'ready') {
     chip.className = 'btn outline sm';
     chip.textContent = session.kind === 'closed' ? 'Sandbox closed' : 'Create sandbox';

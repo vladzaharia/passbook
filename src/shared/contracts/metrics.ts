@@ -59,10 +59,13 @@ export const MetricsOverviewSchema = z.object({
     orgs: z.number().int(),
     /** Templates assigned to an organization. */
     assignedTemplates: z.number().int(),
+    /** Test and Live passes. */
     passes: z.number().int(),
     /** Templates with an approved release in this mode. */
     approvedTemplates: z.number().int(),
-    /** Passes registered on at least one device: in a Wallet. */
+    /** Templates with a Live release. */
+    releasedTemplates: z.number().int(),
+    /** Test and Live passes registered on at least one device: in a Wallet. */
     walletPasses: z.number().int(),
     /** Pass emails the outbox delivered. */
     passEmailsSent: z.number().int(),
