@@ -1,10 +1,11 @@
 import { Send } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TAG_COPY } from '@/shared/copy/tags.ts';
-import { ApiError } from '@/web/lib/errors.ts';
+import { ApiError, errorMessage } from '@/web/lib/errors.ts';
 import { useMode } from '@/web/lib/mode.ts';
-import { Button, Callout, Dialog, DialogContent, toast } from '@/web/ui/index.ts';
+import { Button, Callout, Dialog, DialogContent, SegmentedControl, toast } from '@/web/ui/index.ts';
 import { useTag, useTagMutations } from './api.ts';
+import { type AssignMethod, SparePanel, TypePanel } from './assign-manual.tsx';
 import {
   type Enrollment,
   useCancelEnrollment,
@@ -57,6 +58,10 @@ export function AddTagDialog({
   const [scannerId, setScannerId] = useState<string>();
   const [phase, setPhase] = useState<Phase>({ at: 'pick' });
   const [name, setName] = useState('');
+  const [method, setMethod] = useState<AssignMethod>('scanner');
+  const [typed, setTyped] = useState('');
+  const [typedError, setTypedError] = useState<string>();
+  const [spareId, setSpareId] = useState<string>();
   const create = useCreateEnrollment(target.passId);
   const cancel = useCancelEnrollment(target.passId);
   const mut = useTagMutations();
@@ -82,6 +87,18 @@ export function AddTagDialog({
     }
   }, [status, onOpenChange]);
 
+  async function assign() {
+    const binding = scope === 'person' ? 'user' : 'pass';
+    const pick = method === 'type' ? { id: typed.trim() } : { tagId: spareId ?? '' };
+    try {
+      await mut.assign.mutateAsync({ passId: target.passId, binding, ...pick });
+      toast.success(D.done);
+      onOpenChange(false);
+    } catch (cause) {
+      if (method === 'type') setTypedError(errorMessage(tagErrorText(cause)));
+      else toast.error(tagErrorText(cause), 'Could not assign the tag');
+    }
+  }
   async function send(chosen = scannerId, label = scannerName) {
     if (!chosen) return;
     try {
@@ -148,7 +165,31 @@ export function AddTagDialog({
             onChange={setScope}
           />
         )}
-        <ScannerPicker orgId={target.orgId} mode={mode} value={scannerId} onChange={onScanner} />
+        <SegmentedControl
+          block
+          label={TAG_COPY.assign}
+          value={method}
+          onValueChange={setMethod}
+          options={(['scanner', 'type', 'spare'] as const).map((value) => ({
+            value,
+            label: TAG_COPY.assignShort[value],
+            title: TAG_COPY.assignMenu[value],
+          }))}
+        />
+        {method === 'scanner' ? (
+          <ScannerPicker orgId={target.orgId} mode={mode} value={scannerId} onChange={onScanner} />
+        ) : method === 'type' ? (
+          <TypePanel
+            value={typed}
+            error={typedError}
+            onChange={(v) => {
+              setTyped(v);
+              setTypedError(undefined);
+            }}
+          />
+        ) : (
+          <SparePanel orgId={target.orgId} value={spareId} onChange={setSpareId} />
+        )}
       </div>
     );
     footer = (
@@ -156,14 +197,24 @@ export function AddTagDialog({
         <Button variant="outline" onClick={() => close(false)}>
           Cancel
         </Button>
-        <Button
-          loading={busy}
-          disabled={!scannerId}
-          iconStart={<Send aria-hidden />}
-          onClick={() => void send()}
-        >
-          {D.send}
-        </Button>
+        {method === 'scanner' ? (
+          <Button
+            loading={busy}
+            disabled={!scannerId}
+            iconStart={<Send aria-hidden />}
+            onClick={() => void send()}
+          >
+            {D.send}
+          </Button>
+        ) : (
+          <Button
+            loading={mut.assign.isPending}
+            disabled={method === 'type' ? typed.trim() === '' : !spareId}
+            onClick={() => void assign()}
+          >
+            {D.assign}
+          </Button>
+        )}
       </>
     );
   } else if (voided) {
