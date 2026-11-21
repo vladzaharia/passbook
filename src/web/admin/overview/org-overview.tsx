@@ -126,7 +126,9 @@ export function OrgOverviewPage({
   const shownRange = activity.isPlaceholderData ? (data?.range ?? range) : range;
   const countScope = JSON.stringify(['org', principal ?? null, orgId ?? null, mode]);
   const canOperate = caps.includes('passes:operate');
-  const checklist = setup.data !== undefined && !setupDone(setup.data.setup);
+  // A sandbox is set up by the quickstart and never holds a wallet pass: nothing to walk through.
+  const checklist =
+    setup.data !== undefined && !setupDone(setup.data.setup) && !membership?.testOnly;
   const picker = (
     <Select
       aria-label="Range"

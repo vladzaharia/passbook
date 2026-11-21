@@ -49,6 +49,8 @@ export const OrgMembershipSchema = z.object({
   orgSlug: z.string(),
   /** The org is a personal org. Its owner sees it named "Personal" in their own list. */
   personal: z.boolean().default(false),
+  /** A developer sandbox: it never holds Live, so the console opens it in Test. */
+  testOnly: z.boolean().optional(),
   userId: IdSchema,
   roles: OrgRolesSchema,
   capabilities: z.array(OrgCapabilitySchema),

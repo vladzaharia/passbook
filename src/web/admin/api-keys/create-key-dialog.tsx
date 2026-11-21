@@ -17,7 +17,7 @@ import {
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
 import { KindFields, SHORT_EXPIRY } from './key-kind-fields.tsx';
-import { type ApiKey, useCreateKey } from './queries.ts';
+import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
 import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
 
 const DAY = 86_400_000;
@@ -301,7 +301,8 @@ export function CreateKeyDialog({
               {kind === 'personal' && orgId !== null ? 'Type: personal, acts as you.' : null}
             </span>
             <span className="block">
-              Permissions: {role ? ROLE_LABELS[role] : scopes.join(', ')}
+              Permissions:{' '}
+              {role ? ROLE_LABELS[role] : scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ')}
             </span>
             {ipAllow.length ? (
               <span className="block">Allowed IPs: {ipAllow.join(', ')}</span>

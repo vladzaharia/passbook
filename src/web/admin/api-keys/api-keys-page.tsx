@@ -17,7 +17,7 @@ import {
 import './api-keys.css';
 import { CreateKeyDialog } from './create-key-dialog.tsx';
 import { keyColumns } from './key-columns.tsx';
-import { type ApiKey, useApiKeyPages, useRevokeKey } from './queries.ts';
+import { type ApiKey, SCOPE_LABEL, useApiKeyPages, useRevokeKey } from './queries.ts';
 import { useKeyAccess } from './use-key-access.ts';
 
 export { keyState } from './queries.ts';
@@ -197,7 +197,9 @@ function ScopedApiKeys({
               </span>
               <span className="mt-3 block">Organization: {orgName}</span>
               <span className="block">Mode: {revoking.mode === 'test' ? 'Test' : 'Live'}</span>
-              <span className="block">Permissions: {revoking.scopes.join(', ')}</span>
+              <span className="block">
+                Permissions: {revoking.scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ')}
+              </span>
               <span className="block">Expires: {formatDay(revoking.expiresAt, 'Never')}</span>
               <span className="block">
                 Last used: {formatDay(revoking.lastUsedAt, 'No use recorded')} · Consumer impact is

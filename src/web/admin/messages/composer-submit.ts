@@ -8,7 +8,7 @@ import { membershipsQuery, sessionQuery } from '../../lib/session.ts';
 import { toast } from '../../ui/index.ts';
 import { useBroadcastActions } from './api.ts';
 import { bodyOf, type ComposerState } from './composer-state.ts';
-import { SCOPE_CHANGED } from './labels.ts';
+import { SCOPE_CHANGED, SENDING_TOAST } from './labels.ts';
 
 export type SendMode = 'draft' | 'now' | 'schedule';
 
@@ -92,7 +92,7 @@ export function useComposerSubmit(
       }
     } else made = await actions.create.mutateAsync(body);
     if (made.orgId !== orgId || !guarded()) return;
-    if (mode === 'now') toast.info('Sending');
+    if (mode === 'now') toast.info('Sending', SENDING_TOAST);
     else toast.success(mode === 'draft' ? 'Draft saved' : 'Scheduled');
     setSentId(made.id);
   };
