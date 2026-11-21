@@ -52,6 +52,7 @@ export function EndpointFields({
         {(f) => (
           <Input
             {...f}
+            data-draft
             type="url"
             inputMode="url"
             autoComplete="off"
@@ -70,6 +71,7 @@ export function EndpointFields({
         {(f) => (
           <Input
             {...f}
+            data-draft
             maxLength={120}
             disabled={disabled}
             value={value.description}

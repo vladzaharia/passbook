@@ -6,7 +6,7 @@ import { oidcSignIn } from './test-oidc.ts';
 import { harness, ISSUER, type Jar, ORIGIN, type TestHarness } from './test-support.ts';
 
 const METADATA_URL = `${ORIGIN}/auth/oidc/client-metadata.json`;
-const member = { sub: 'sub-cimd', email: 'cimd@example.test', groups: ['wallet-users'] };
+const member = { sub: 'sub-cimd', email: 'cimd@example.test', groups: ['wallet_users'] };
 
 let h: TestHarness;
 beforeEach(async () => {

@@ -246,8 +246,11 @@ describe('settings api', () => {
     });
     expect(body.oidc).toEqual({
       issuer: appEnv.OIDC_ISSUER,
+      platformAdminGroup: appEnv.OIDC_PLATFORM_ADMIN_GROUP || null,
       adminGroup: appEnv.OIDC_ADMIN_GROUP || null,
+      developerGroup: appEnv.OIDC_DEVELOPER_GROUP || null,
       userGroup: appEnv.OIDC_USER_GROUP || null,
+      consoleGroupRequired: false,
     });
     expect(body.released).toEqual({
       google: walletProviderEnabled('google'),
@@ -260,8 +263,11 @@ describe('settings api', () => {
     expect(put.status).toBe(200);
     expect(((await put.json()) as List).oidc).toEqual({
       issuer: appEnv.OIDC_ISSUER,
+      platformAdminGroup: appEnv.OIDC_PLATFORM_ADMIN_GROUP || null,
       adminGroup: appEnv.OIDC_ADMIN_GROUP || null,
+      developerGroup: appEnv.OIDC_DEVELOPER_GROUP || null,
       userGroup: appEnv.OIDC_USER_GROUP || null,
+      consoleGroupRequired: false,
     });
     const ctx = createServiceContext(appEnv);
     expect((await getPlatformSettings(ctx))['retention.auditDays']).toBe(400);
