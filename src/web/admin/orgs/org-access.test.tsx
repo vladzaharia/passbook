@@ -127,6 +127,34 @@ describe('organization people and service access', () => {
     expect(screen.getByRole('heading', { name: 'Members', level: 1 })).toBeInTheDocument();
   });
 
+  it('offers no invite form or revoke on a personal org, and both on an ordinary one', async () => {
+    const own = membership({ userId: 'u1', userName: 'Pat', userEmail: 'pat@example.test' });
+    const members = {
+      '/api/v1/orgs/o1/memberships': () => json({ items: [own], nextCursor: null }),
+    };
+    await renderApp('/admin/o/o1/members', {
+      session: 'admin',
+      memberships: [membershipFixture('o1', { personal: true })],
+      handlers: handlers(members),
+    });
+    expect(await screen.findByText('Pat')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Revoke membership/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Send invitation|Invite/ })).toBeNull();
+  });
+
+  it('keeps invite and revoke on an ordinary org', async () => {
+    const own = membership({ userId: 'u2', userName: 'Pat', userEmail: 'pat@example.test' });
+    await renderApp('/admin/o/o1/members', {
+      session: 'admin',
+      handlers: handlers({
+        '/api/v1/orgs/o1/memberships': () => json({ items: [own], nextCursor: null }),
+      }),
+    });
+    expect(
+      await screen.findByRole('button', { name: /Revoke membership for Pat/ }),
+    ).toBeInTheDocument();
+  });
+
   it('shows people management to a member with members:manage independently of org edits', async () => {
     const { fetchMock } = await renderBaseApp('/admin/o/o1/members', {
       session: 'user',

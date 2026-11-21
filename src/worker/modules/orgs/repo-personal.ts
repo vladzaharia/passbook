@@ -30,6 +30,14 @@ export function personalOrgIdOf(db: D1Database, userId: string) {
   return first<{ id: string }>(db, 'SELECT id FROM orgs WHERE personal_user_id = ?', [userId]);
 }
 
+export async function isPersonalOrg(db: D1Database, orgId: string): Promise<boolean> {
+  return (
+    (await first(db, 'SELECT 1 AS x FROM orgs WHERE id = ? AND personal_user_id IS NOT NULL', [
+      orgId,
+    ])) !== null
+  );
+}
+
 /** Owner ids and names of personal orgs, for the platform directory. */
 export async function personalOwners(db: D1Database, userIds: string[]) {
   if (userIds.length === 0) return new Map<string, string | null>();
