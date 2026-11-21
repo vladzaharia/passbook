@@ -86,7 +86,7 @@ export async function preview(
         ...resolved,
         passJson: withBackContacts(resolved.passJson, {
           contact: null,
-          passService: baseUrl(ctx.env),
+          passService: null,
         }),
       };
   try {

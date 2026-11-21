@@ -4,7 +4,6 @@ import type {
   SaveVersionResponseSchema,
   SaveVersionSchema,
 } from '../../../shared/contracts/index.ts';
-import { baseUrl } from '../../platform/env.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { withBackContacts } from '../passes/contacts.ts';
@@ -90,7 +89,7 @@ export async function checkVersion(
   );
   const built = withBackContacts(preview.passJson, {
     contact: null,
-    passService: baseUrl(ctx.env),
+    passService: null,
   }) as unknown as Record<string, unknown>;
   return {
     analysis,

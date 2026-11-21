@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { saveOrgSettings } from '../../../../test/helpers/index.ts';
 import { platformSupportEmail } from '../../platform/support.ts';
-import { backContactsFor, passServiceText, withBackContacts } from '../passes/contacts.ts';
+import { backContactsFor, withBackContacts } from '../passes/contacts.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { supportContacts } from './service.ts';
 
@@ -21,13 +21,7 @@ describe('PassBook support', () => {
     }
   });
 
-  it('names PassBook and its site in the pass-service slot', async () => {
-    expect(passServiceText(kit.env)).toBe(
-      'PassBook · support@passbook.mobile\nhttps://passbook.mobile',
-    );
-    expect(passServiceText({ ...kit.env, SUPPORT_EMAIL: '' } as typeof kit.env)).toBe(
-      'https://passbook.mobile',
-    );
+  it('never fills the pass-service slot with the platform address or site', async () => {
     const contacts = await backContactsFor(kit.ctx, kit.org.id, {});
     const pass = withBackContacts(
       {
@@ -35,7 +29,8 @@ describe('PassBook support', () => {
       } as never,
       contacts,
     );
-    expect(JSON.stringify(pass)).toContain('support@passbook.mobile');
+    expect(JSON.stringify(pass)).not.toContain('passbook.mobile');
+    expect(JSON.stringify(pass)).not.toContain('pass-service');
   });
 
   it('falls back to PassBook support only when the org has none', async () => {
