@@ -26646,7 +26646,8 @@
                             "enum": [
                               "admin",
                               "user",
-                              "developer"
+                              "developer",
+                              "console"
                             ]
                           }
                         },
@@ -89450,7 +89451,8 @@
                               "enum": [
                                 "admin",
                                 "user",
-                                "developer"
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -89604,7 +89606,8 @@
                         "enum": [
                           "admin",
                           "user",
-                          "developer"
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -89727,7 +89730,8 @@
                               "enum": [
                                 "admin",
                                 "user",
-                                "developer"
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -89976,7 +89980,8 @@
                         "enum": [
                           "admin",
                           "user",
-                          "developer"
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -90111,7 +90116,8 @@
                         "enum": [
                           "admin",
                           "user",
-                          "developer"
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -90234,7 +90240,8 @@
                               "enum": [
                                 "admin",
                                 "user",
-                                "developer"
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -90483,7 +90490,8 @@
                         "enum": [
                           "admin",
                           "user",
-                          "developer"
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -90606,7 +90614,8 @@
                               "enum": [
                                 "admin",
                                 "user",
-                                "developer"
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -90855,7 +90864,8 @@
                         "enum": [
                           "admin",
                           "user",
-                          "developer"
+                          "developer",
+                          "console"
                         ]
                       }
                     },
@@ -90978,7 +90988,8 @@
                               "enum": [
                                 "admin",
                                 "user",
-                                "developer"
+                                "developer",
+                                "console"
                               ]
                             }
                           },
@@ -92801,7 +92812,19 @@
                         "issuer": {
                           "type": "string"
                         },
+                        "platformAdminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "adminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "developerGroup": {
                           "type": [
                             "string",
                             "null"
@@ -92812,12 +92835,18 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "consoleGroupRequired": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "issuer",
+                        "platformAdminGroup",
                         "adminGroup",
-                        "userGroup"
+                        "developerGroup",
+                        "userGroup",
+                        "consoleGroupRequired"
                       ]
                     },
                     "released": {
@@ -92984,7 +93013,19 @@
                         "issuer": {
                           "type": "string"
                         },
+                        "platformAdminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "adminGroup": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "developerGroup": {
                           "type": [
                             "string",
                             "null"
@@ -92995,12 +93036,18 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "consoleGroupRequired": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "issuer",
+                        "platformAdminGroup",
                         "adminGroup",
-                        "userGroup"
+                        "developerGroup",
+                        "userGroup",
+                        "consoleGroupRequired"
                       ]
                     },
                     "released": {

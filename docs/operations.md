@@ -38,8 +38,20 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
-   - Groups: `wallet-admins`, `wallet-users`. Pocket ID's generated names (`wallet_admins`) match
-     too. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
+   - Groups, matched by exact, case-sensitive name from the claim: `OIDC_PLATFORM_ADMIN_GROUP`
+     (`wallet-admins`: every org and the platform scope, developer features included),
+     `OIDC_ADMIN_GROUP` (`wallet-org-admins`: may use the org console; which orgs is PassBook
+     membership), `OIDC_DEVELOPER_GROUP` (`passbook-developers`) and `OIDC_USER_GROUP`
+     (`wallet-users`). If Pocket ID puts a normalised name in the claim (`wallet_admins`), set the
+     variable to that name. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
+   - Turning on the admin group requirement (`OIDC_CONSOLE_GROUP_REQUIRED`, default `"false"`):
+     1. In Pocket ID create `wallet-org-admins` and add everyone who uses an org console. Platform
+        admins need no other group.
+     2. Add `wallet-org-admins` to the PassBook client's allowed groups.
+     3. Set `OIDC_CONSOLE_GROUP_REQUIRED` to `"true"` in `wrangler.jsonc` and deploy. Org console
+        routes then answer `403 CONSOLE_ACCESS_REQUIRED` to a session without the group or the
+        platform admin role. Sessions made before the change lack the role until the next sign-in.
+     Settings → Polaris ID shows the group names and whether the requirement is on.
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.

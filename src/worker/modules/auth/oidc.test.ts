@@ -66,7 +66,7 @@ describe('oidc sign-in', () => {
       csrfToken: string;
     };
     expect(body.authenticated).toBe(true);
-    expect(body.roles).toEqual(['admin', 'user', 'developer']);
+    expect(body.roles).toEqual(['admin', 'user', 'developer', 'console']);
     const sid = jar.get('__Host-wallet_sid') ?? '';
     const rows = await all<{ id_hash: string; roles: string }>(
       h.env.DB,
@@ -88,15 +88,14 @@ describe('oidc sign-in', () => {
     expect(((await session(jar)) as { roles: string[] }).roles).toEqual(['user']);
   });
 
-  it('signs in with the group name Pocket ID generates (wallet_admins)', async () => {
+  it('matches the group name exactly, so a normalised claim needs the variable set to it', async () => {
+    const refused = await oidcSignIn(h, new Map(), person(['wallet_admins']));
+    expect(refused.res.status).toBe(303);
+    h.restore();
+    h = await harness({ OIDC_PLATFORM_ADMIN_GROUP: 'wallet_admins' });
     const jar: Jar = new Map();
-    const { res } = await oidcSignIn(h, jar, person(['wallet_admins']));
-    expect(res.status).toBe(302);
-    expect(((await session(jar)) as { roles: string[] }).roles).toEqual([
-      'admin',
-      'user',
-      'developer',
-    ]);
+    expect((await oidcSignIn(h, jar, person(['wallet_admins']))).res.status).toBe(302);
+    expect(((await session(jar)) as { roles: string[] }).roles).toContain('admin');
   });
 
   it('refuses users in neither group and creates nothing', async () => {
@@ -168,7 +167,7 @@ describe('oidc sign-in', () => {
     });
     const body = (await session(jar)) as { user: { id: string }; roles: string[] };
     expect(body.user.id).toBe(id1);
-    expect(body.roles).toEqual(['admin', 'user', 'developer']);
+    expect(body.roles).toEqual(['admin', 'user', 'developer', 'console']);
     const row = await first<{ groups: string }>(
       h.env.DB,
       'SELECT groups FROM auth_identities WHERE subject = ?',

@@ -60,29 +60,27 @@ export interface SignInResult {
 }
 
 /**
- * Pocket ID fills a group's claim name from its display name (`passbook-developers` typed there can
- * arrive as `passbook_developers`). A claim matches a configured name exactly, case included, or its
- * underscore form. Unset group variables grant nothing.
+ * A claim matches a configured group name exactly, case included. If Pocket ID normalises a group's
+ * name in the claim (`passbook_developers`), set the variable to that name. Unset variables grant nothing.
  *
- * Platform admins get everything, developer included. The admin group only opens the console (which
- * org is in-app membership), so it carries `user` alone.
+ * Platform admins get everything. The admin group carries `console` (it opens the console where
+ * `OIDC_CONSOLE_GROUP_REQUIRED` is on; which orgs is in-app membership).
  */
 export function rolesFromGroups(env: object, groups: readonly string[]): Role[] {
   const has = (variable: string) => {
     const name = envString(env, variable);
-    if (!name) return false;
-    const underscored = name.replace(/[^A-Za-z0-9_]/g, '_');
-    return groups.some((group) => group === name || group === underscored);
+    return !!name && groups.includes(name);
   };
   const platform = has('OIDC_PLATFORM_ADMIN_GROUP');
   const developer = platform || has('OIDC_DEVELOPER_GROUP');
-  const known = platform || developer || has('OIDC_ADMIN_GROUP') || has('OIDC_USER_GROUP');
-  if (!known) return [];
-  return [
-    ...(platform ? (['admin'] as const) : []),
-    'user',
-    ...(developer ? (['developer'] as const) : []),
-  ];
+  const console = platform || has('OIDC_ADMIN_GROUP');
+  if (!(console || developer || has('OIDC_USER_GROUP'))) return [];
+  const roles: Role[] = [];
+  if (platform) roles.push('admin');
+  roles.push('user');
+  if (developer) roles.push('developer');
+  if (console) roles.push('console');
+  return roles;
 }
 
 export async function startSession(

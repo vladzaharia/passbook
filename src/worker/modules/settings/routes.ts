@@ -51,8 +51,11 @@ async function scopeAuthority(
 function oidcInfo(c: Context<AppBindings>) {
   return {
     issuer: c.env.OIDC_ISSUER,
+    platformAdminGroup: c.env.OIDC_PLATFORM_ADMIN_GROUP || null,
     adminGroup: c.env.OIDC_ADMIN_GROUP || null,
+    developerGroup: c.env.OIDC_DEVELOPER_GROUP || null,
     userGroup: c.env.OIDC_USER_GROUP || null,
+    consoleGroupRequired: c.env.OIDC_CONSOLE_GROUP_REQUIRED === 'true',
   };
 }
 

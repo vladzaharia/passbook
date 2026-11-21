@@ -45,6 +45,10 @@ export function needsPocketId(
 export const hasDeveloperAccess = (roles: readonly string[]): boolean =>
   roles.includes('admin') || roles.includes('developer');
 
+/** Console access by group: the admin group (`console`), or a platform admin. */
+export const hasConsoleGroup = (roles: readonly string[]): boolean =>
+  roles.includes('admin') || roles.includes('console');
+
 export function canUseSpace(space: Space, access: SpaceAccess): boolean {
   if (space === 'passes' || space === 'account') return true;
   if (needsPocketId(space, access.amr, access.consoleUntil)) return false;

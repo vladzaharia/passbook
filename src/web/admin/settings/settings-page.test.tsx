@@ -34,7 +34,14 @@ const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
       updatedBy: saved.includes(key) ? 'u1' : null,
       source: saved.includes(key) ? 'org' : 'default',
     })),
-    oidc: { issuer: 'https://id.plrs.im', adminGroup: 'wallet-admins', userGroup: null },
+    oidc: {
+      issuer: 'https://id.plrs.im',
+      platformAdminGroup: 'wallet-admins',
+      adminGroup: null,
+      developerGroup: null,
+      userGroup: null,
+      consoleGroupRequired: false,
+    },
     released: { google: false, samsung: false },
   };
 };
@@ -135,7 +142,14 @@ describe('settings page', () => {
         '/api/v1/settings': () =>
           json({
             ...entries(),
-            oidc: { issuer: 'https://id.staging.test', adminGroup: null, userGroup: null },
+            oidc: {
+              issuer: 'https://id.staging.test',
+              platformAdminGroup: null,
+              adminGroup: null,
+              developerGroup: null,
+              userGroup: null,
+              consoleGroupRequired: false,
+            },
           }),
       },
     });

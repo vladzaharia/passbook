@@ -88,12 +88,28 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.deleteUsersByIdEmailsByEmail",
+    "op": "DELETE /api/v1/users/{id}/emails/{email}",
+    "change": "200.lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.deleteUsersByIdEmailsByEmail",
     "op": "DELETE /api/v1/users/{id}/emails/{email}",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.deleteUsersByIdEmailsByEmail",
+    "op": "DELETE /api/v1/users/{id}/emails/{email}",
+    "change": "200.sessions[].roles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
     "key": "DELETE /api/v1/users/{id}/emails/{email} 200.sessions[].roles[]: enum value \"developer\" added",
@@ -416,12 +432,44 @@
     "note": "An email-link session still inside the console grace window reports when it ends; null otherwise."
   },
   {
+    "key": "GET /api/v1/session 200|0.roles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "session.getSession",
+    "op": "GET /api/v1/session",
+    "change": "200|0.roles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
     "key": "GET /api/v1/session 200|0.roles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "session.getSession",
     "op": "GET /api/v1/session",
     "change": "200|0.roles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "GET /api/v1/settings 200.oidc.consoleGroupRequired: field added",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.oidc.consoleGroupRequired: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "GET /api/v1/settings 200.oidc.developerGroup: field added",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.oidc.developerGroup: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "GET /api/v1/settings 200.oidc.platformAdminGroup: field added",
+    "class": "additive",
+    "operationId": "settings.getSettings",
+    "op": "GET /api/v1/settings",
+    "change": "200.oidc.platformAdminGroup: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
     "key": "GET /api/v1/templates/{id} 200.release: field added",
@@ -432,6 +480,14 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.getUsers",
+    "op": "GET /api/v1/users",
+    "change": "200.items[].lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.getUsers",
@@ -440,12 +496,28 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/users/{id} 200.lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.getUsersById",
+    "op": "GET /api/v1/users/{id}",
+    "change": "200.lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
     "key": "GET /api/v1/users/{id} 200.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.getUsersById",
     "op": "GET /api/v1/users/{id}",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.getUsersById",
+    "op": "GET /api/v1/users/{id}",
+    "change": "200.sessions[].roles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
     "key": "GET /api/v1/users/{id} 200.sessions[].roles[]: enum value \"developer\" added",
@@ -590,6 +662,14 @@
     "op": "PATCH /api/v1/templates/{id}",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "PATCH /api/v1/users/{id} 200.lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.patchUsersById",
+    "op": "PATCH /api/v1/users/{id}",
+    "change": "200.lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
     "key": "PATCH /api/v1/users/{id} 200.lastRoles[]: enum value \"developer\" added",
@@ -976,12 +1056,28 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmails",
+    "op": "POST /api/v1/users/{id}/emails",
+    "change": "202.lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
     "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.postUsersByIdEmails",
     "op": "POST /api/v1/users/{id}/emails",
     "change": "202.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmails",
+    "op": "POST /api/v1/users/{id}/emails",
+    "change": "202.sessions[].roles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
     "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"developer\" added",
@@ -992,12 +1088,28 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
+    "change": "200.lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"developer\" added",
     "class": "notable",
     "operationId": "users.postUsersByIdEmailsByEmailPrimary",
     "op": "POST /api/v1/users/{id}/emails/{email}/primary",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
+    "change": "200.sessions[].roles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
   },
   {
     "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"developer\" added",
@@ -1110,6 +1222,30 @@
     "op": "PUT /api/v1/platform/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.consoleGroupRequired: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.developerGroup: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.developerGroup: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.platformAdminGroup: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.platformAdminGroup: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
     "key": "PUT /api/v1/templates/{id}/manifest 200.release: field added",

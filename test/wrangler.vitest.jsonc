@@ -14,6 +14,7 @@
     "OIDC_PLATFORM_ADMIN_GROUP": "wallet-admins",
     "OIDC_ADMIN_GROUP": "wallet-org-admins",
     "OIDC_DEVELOPER_GROUP": "passbook-developers",
+    "OIDC_CONSOLE_GROUP_REQUIRED": "false",
     "OIDC_USER_GROUP": "wallet-users",
     "PLATFORM_PASS_TYPE_ID": "pass.im.plrs.wallet",
     "PLATFORM_TEAM_ID": "48H7CLBV8Y",

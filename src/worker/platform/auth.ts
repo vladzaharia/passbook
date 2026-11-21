@@ -9,7 +9,7 @@ import {
   type RoleSchema,
 } from '../../shared/contracts/common.ts';
 import type { SignInAmr, SignInLevel } from '../../shared/sign-in.ts';
-import { hasDeveloperAccess } from '../../shared/spaces.ts';
+import { hasConsoleGroup, hasDeveloperAccess } from '../../shared/spaces.ts';
 import {
   authorityUnproven,
   capabilityState,
@@ -280,6 +280,17 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       throw new ForbiddenError(
         "You don't have developer access. Ask an administrator.",
         'DEVELOPER_ACCESS_REQUIRED',
+      );
+    }
+    if (
+      sessionKind === 'tenant' &&
+      c.env.OIDC_CONSOLE_GROUP_REQUIRED === 'true' &&
+      !hasConsoleGroup(session.roles)
+    ) {
+      reportDenied(c, 'FORBIDDEN', session);
+      throw new ForbiddenError(
+        "You don't have console access. Ask an administrator.",
+        'CONSOLE_ACCESS_REQUIRED',
       );
     }
     if (sessionKind === 'admin') requireAdminRole(c, session);

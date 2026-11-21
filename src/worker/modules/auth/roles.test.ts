@@ -10,33 +10,39 @@ const env = {
 
 describe('rolesFromGroups', () => {
   it('maps each configured group to its roles', () => {
-    expect(rolesFromGroups(env, ['wallet-admins'])).toEqual(['admin', 'user', 'developer']);
-    expect(rolesFromGroups(env, ['wallet-org-admins'])).toEqual(['user']);
+    expect(rolesFromGroups(env, ['wallet-admins'])).toEqual([
+      'admin',
+      'user',
+      'developer',
+      'console',
+    ]);
+    expect(rolesFromGroups(env, ['wallet-org-admins'])).toEqual(['user', 'console']);
     expect(rolesFromGroups(env, ['passbook-developers'])).toEqual(['user', 'developer']);
     expect(rolesFromGroups(env, ['wallet-users'])).toEqual(['user']);
   });
 
-  it('combines groups, platform admin implying developer', () => {
+  it('combines groups, platform admin implying developer and console', () => {
     expect(rolesFromGroups(env, ['wallet-users', 'passbook-developers'])).toEqual([
       'user',
       'developer',
     ]);
-    expect(rolesFromGroups(env, ['passbook-developers', 'wallet-admins'])).toEqual([
-      'admin',
+    expect(rolesFromGroups(env, ['passbook-developers', 'wallet-org-admins'])).toEqual([
       'user',
       'developer',
+      'console',
     ]);
   });
 
-  it("accepts the underscore form Pocket ID can give a group's claim name", () => {
-    expect(rolesFromGroups(env, ['passbook_developers'])).toEqual(['user', 'developer']);
-    expect(rolesFromGroups(env, ['wallet_admins'])).toEqual(['admin', 'user', 'developer']);
-  });
-
-  it('matches names exactly, case included', () => {
-    expect(rolesFromGroups(env, ['Passbook-Developers', 'PASSBOOK_DEVELOPERS'])).toEqual([]);
-    expect(rolesFromGroups(env, ['Wallet Admins', 'wallet-admin', 'walletadmins'])).toEqual([]);
-    expect(rolesFromGroups(env, ['passbook-developers ', 'passbook-developer'])).toEqual([]);
+  it('matches names exactly: no case folding, no normalised form, no trimming', () => {
+    expect(rolesFromGroups(env, ['passbook_developers'])).toEqual([]);
+    expect(rolesFromGroups(env, ['wallet_admins', 'Wallet Admins', 'wallet_users'])).toEqual([]);
+    expect(rolesFromGroups(env, ['Passbook-Developers', 'passbook-developers '])).toEqual([]);
+    expect(rolesFromGroups(env, ['wallet-admin', 'walletadmins', 'passbook-developer'])).toEqual(
+      [],
+    );
+    expect(
+      rolesFromGroups({ OIDC_DEVELOPER_GROUP: 'passbook_developers' }, ['passbook_developers']),
+    ).toEqual(['user', 'developer']);
   });
 
   it('grants nothing for unset variables', () => {
