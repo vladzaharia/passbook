@@ -128,6 +128,14 @@ test('the portal saves the same door view, and an ended pass page drops the copy
   await sheet.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByText('On this phone · Works offline')).toBeVisible();
   await shoot(page, 'portal-saved', 'light');
+  await ctx.addCookies([{ name: 'wallet-theme', value: 'dark', url: BASE }]);
+  await page.goto(`/passes/${pass.id}`);
+  await page.getByRole('button', { name: 'Remove from this phone' }).click();
+  await page.getByRole('link', { name: 'Save to this phone' }).first().click();
+  await expect(sheet).toBeVisible();
+  await shoot(page, 'portal-sheet', 'dark', false);
+  await sheet.getByRole('button', { name: 'Done' }).click();
+  await shoot(page, 'portal-saved', 'dark');
   const regs = await page.evaluate(async () =>
     (await navigator.serviceWorker.getRegistrations()).map((r) => new URL(r.scope).pathname),
   );
@@ -138,7 +146,7 @@ test('the portal saves the same door view, and an ended pass page drops the copy
   await page.goto(pagePath);
   await expect(page.getByText('This pass was voided', { exact: false })).toBeVisible();
   await expect.poll(() => page.evaluate(async () => (await caches.keys()).length)).toBe(0);
-  await shoot(page, 'ended', 'light');
+  await shoot(page, 'ended', 'dark');
   await ctx.close();
   await admin.dispose();
 });
