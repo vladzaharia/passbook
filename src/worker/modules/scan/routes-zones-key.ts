@@ -19,7 +19,8 @@ import { archiveZone, createZone, listZones, updateZone } from './zones.ts';
 type Router = ReturnType<typeof createRouter>;
 const TAG = 'scan-zones';
 const FEATURE = 'scanning.devices' as const;
-const READ = { scope: 'scan-setup:read', capability: 'scanning:read', feature: FEATURE } as const;
+/** No `capability` or `feature`: a caller outside the org gets an empty page, so the handler does not always prove either. */
+const READ = { scope: 'scan-setup:read' } as const;
 const WRITE = { scope: 'scanning:write', capability: 'scanning:manage', feature: FEATURE } as const;
 
 const noOrg = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');

@@ -127352,7 +127352,6 @@
             "session": []
           }
         ],
-        "x-feature": "scanning.devices",
         "summary": "List zones",
         "tags": [
           "scan-zones"
