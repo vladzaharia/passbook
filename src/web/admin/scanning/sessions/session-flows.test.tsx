@@ -82,6 +82,25 @@ describe('session configuration flows', () => {
     await waitFor(() => expect(saved).toMatchObject({ status: 'active' }));
   });
 
+  it('shows an ended session’s devices as stopped, not online', async () => {
+    const s = setup();
+    await renderApp('/admin/scanning/sessions/session-1?orgId=o1', {
+      session: 'admin',
+      memberships: [northwind],
+      selectedOrg: 'o1',
+      handlers: {
+        ...s.handlers,
+        '/api/v1/scanning-sessions/session-1': () =>
+          json({ ...managedSession, status: 'ended', onlineCount: 1 }),
+      },
+    });
+    const device = await screen.findByTestId('session-device');
+    expect(within(device).getByText('Stopped')).toBeInTheDocument();
+    expect(within(device).queryByText('Online')).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+ online/)).not.toBeInTheDocument();
+    expect(screen.getByText(/^Stopped ·/)).toBeInTheDocument();
+  });
+
   it('duplicates into the page’s organization with no Organization select', async () => {
     const s = setup();
     await renderApp('/admin/scanning/sessions/session-1?orgId=o1', {
