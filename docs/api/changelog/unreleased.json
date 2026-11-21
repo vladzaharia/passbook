@@ -376,6 +376,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs/{orgId}/pass-setup new operation",
+    "class": "additive",
+    "operationId": "pass-setup.getOrgsByOrgIdPassSetup",
+    "op": "GET /api/v1/orgs/{orgId}/pass-setup",
+    "change": "new operation",
+    "note": "Read an organization's brand, channels and accounts in one call, with the chain of levels that stops each channel. Needs org:read or brand:manage."
+  },
+  {
     "key": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/managed new operation",
     "class": "additive",
     "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged",
@@ -712,6 +720,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/orgs/{orgId}/pass-setup new operation",
+    "class": "additive",
+    "operationId": "pass-setup.patchOrgsByOrgIdPassSetup",
+    "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
+    "change": "new operation",
+    "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -934,6 +950,14 @@
     "op": "POST /api/v1/orgs/{id}/status",
     "change": "200.personalOwner: field added",
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
+    "class": "additive",
+    "operationId": "pass-setup.postOrgsByOrgIdBrandAssets",
+    "op": "POST /api/v1/orgs/{orgId}/brand-assets",
+    "change": "new operation",
+    "note": "Stage a logo, icon or web logo PNG; it answers the sha and version a pass-setup save names. Unused uploads are deleted later. Needs org:write or brand:manage."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",

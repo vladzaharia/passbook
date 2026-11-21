@@ -414,6 +414,15 @@
       ]
     },
     {
+      "code": "BRAND_ASSET_NOT_FOUND",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "BRAND_IMAGE_NOT_FOUND",
       "statuses": [
         404
@@ -2225,9 +2234,19 @@
       "modules": [
         "broadcasts",
         "connections",
+        "orgs",
         "platform",
         "scan",
         "templates"
+      ]
+    },
+    {
+      "code": "MODE_LIVE_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {
@@ -2468,6 +2487,7 @@
         403
       ],
       "modules": [
+        "orgs",
         "passes",
         "platform"
       ]
@@ -2759,6 +2779,24 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "PASS_SETUP_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "PASS_SETUP_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {

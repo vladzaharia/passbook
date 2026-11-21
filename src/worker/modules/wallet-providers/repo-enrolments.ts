@@ -137,7 +137,7 @@ export interface EnrolmentStep {
     checkId?: string;
     roundTrip?: RoundTrip;
     reason?: string;
-    actor: { type: 'user' | 'platform' | 'system'; id: string | null };
+    actor: { type: 'user' | 'platform' | 'system' | 'api_key'; id: string | null };
     /** The stamp `enabled_at`, `revoked_at` or `platform_hold_at` repeats; within 5 s of the database clock. */
     createdAt?: number;
   };
@@ -147,12 +147,8 @@ export interface EnrolmentStep {
   after?: (g: Grant) => void;
 }
 
-/** The event and the account update of one enrolment step, in the grant's batch. Throws the mapped refusal. */
-export async function commitEnrolmentStep(
-  ctx: ServiceContext,
-  g: Grant,
-  step: EnrolmentStep,
-): Promise<void> {
+/** Adds the event and the account update of one enrolment step to the grant, without committing it. */
+export function addEnrolmentStep(ctx: ServiceContext, g: Grant, step: EnrolmentStep): void {
   const now = ctx.clock.now();
   const e = step.event;
   if (step.isNew)
@@ -215,6 +211,15 @@ export async function commitEnrolmentStep(
     ),
   );
   step.after?.(g);
+}
+
+/** The event and the account update of one enrolment step, in the grant's batch. Throws the mapped refusal. */
+export async function commitEnrolmentStep(
+  ctx: ServiceContext,
+  g: Grant,
+  step: EnrolmentStep,
+): Promise<void> {
+  addEnrolmentStep(ctx, g, step);
   try {
     await g.commit();
   } catch (error) {

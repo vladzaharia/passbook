@@ -110,6 +110,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'org.entitlements_update': a('Organization features changed', SlidersHorizontal, 'info'),
   'org.export': a('Organization export started', I.download, 'info'),
   'org.export_link': a('Organization export link made', I.download, 'info'),
+  'org.pass_setup_update': a('Brand and channels updated', I.edit, 'info'),
   'org.purge': a('Organization data removed', I.delete, 'danger'),
   'org.reactivate': a('Organization reactivated', Play, 'success'),
   'org.reopen': a('Organization reopened', Play, 'success'),

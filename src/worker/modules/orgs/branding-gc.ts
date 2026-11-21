@@ -1,9 +1,10 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type BrandingSlot, brandingKey, webLogoKey } from './branding-files.ts';
 import {
+  claimBrandingKey,
   currentBranding,
-  dropBrandingKey,
   dueBrandingKeys,
+  isBrandingKeyQueued,
   queueBrandingKeys,
 } from './repo-branding-gc.ts';
 
@@ -73,26 +74,29 @@ export async function collectSupersededBranding(
 
 /** Daily cron: deletes queued objects past the grace period that the org's branding still doesn't use. */
 export async function sweepBrandingGc(ctx: ServiceContext): Promise<void> {
-  const due = await dueBrandingKeys(
-    ctx.env.DB,
-    ctx.clock.now() - BRANDING_GC_GRACE_MS,
-    SWEEP_BATCH,
-  );
-  const branding = new Map<string, Stored | null>();
+  const cutoff = ctx.clock.now() - BRANDING_GC_GRACE_MS;
+  const due = await dueBrandingKeys(ctx.env.DB, cutoff, SWEEP_BATCH);
   for (const { orgId, key } of due) {
     try {
-      if (!branding.has(orgId)) {
-        const json = await currentBranding(ctx.env.DB, orgId);
-        branding.set(orgId, json === null ? {} : parse(json));
-      }
-      const current = branding.get(orgId);
+      // Claimed first, read after: a save that names the key from here on queues it again, and is seen below.
+      if (!(await claimBrandingKey(ctx.env.DB, orgId, key, cutoff))) continue;
+      const json = await currentBranding(ctx.env.DB, orgId);
+      const current = json === null ? {} : parse(json);
       if (!current) {
-        // Unreadable current branding: keep the row and the object.
+        // Unreadable current branding: keep the object, and the row for the next sweep.
         ctx.log.error('branding.gc_skipped', { orgId, code: 'BRANDING_GC_UNREADABLE' });
+        await queueBrandingKeys(ctx.env.DB, orgId, [key], ctx.clock.now());
         continue;
       }
-      if (!keysOf(orgId, current).includes(key)) await ctx.env.BUCKET.delete(key);
-      await dropBrandingKey(ctx.env.DB, orgId, key);
+      if (keysOf(orgId, current).includes(key)) continue;
+      if (await isBrandingKeyQueued(ctx.env.DB, orgId, key)) continue;
+      try {
+        await ctx.env.BUCKET.delete(key);
+      } catch (error) {
+        // The row was claimed: put it back so the next sweep tries again.
+        await queueBrandingKeys(ctx.env.DB, orgId, [key], ctx.clock.now());
+        throw error;
+      }
     } catch (error) {
       ctx.log.error('branding.gc_failed', { orgId, code: 'BRANDING_GC_FAILED', error });
     }

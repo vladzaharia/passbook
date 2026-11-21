@@ -18,7 +18,7 @@ import { CHANNEL_COPY } from '../../../shared/copy/channels.ts';
 import { entitlementsOf, isEntitled } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
-import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
+import { getOrgSettings, getPlatformSettings, type OrgSettings } from '../settings/service.ts';
 import { walletProviderDisabledReason } from '../wallet-providers/provider-policy.ts';
 import { passReplaceable } from './replaceable.ts';
 import * as repo from './repo.ts';
@@ -28,14 +28,16 @@ import { openWindows, splitWindows } from './windows.ts';
 type Per<T> = Partial<Record<Channel, T>>;
 
 /** Platform and org levels: the same for every template of the org. */
-async function levels(
+export async function levels(
   ctx: ServiceContext,
   orgId: string,
   mode: Mode,
+  /** The org's settings when the caller already has them, or a change not yet saved. */
+  settings?: OrgSettings,
 ): Promise<Pick<ChannelInputs, 'platform' | 'entitlement' | 'org'>> {
   const [platformSettings, org, entitlements] = await Promise.all([
     getPlatformSettings(ctx),
-    getOrgSettings(ctx, orgId),
+    settings ?? getOrgSettings(ctx, orgId),
     entitlementsOf(ctx, orgId),
   ]);
   const platform: Per<ChannelReason> = {};

@@ -25,7 +25,12 @@ const DAY = 86_400_000;
 
 export type ReplyToState = 'none' | 'pending' | 'confirmed';
 
-async function sendLink(ctx: ServiceContext, orgId: string, address: string): Promise<void> {
+async function sendLink(
+  ctx: ServiceContext,
+  orgId: string,
+  address: string,
+  send = true,
+): Promise<void> {
   const now = ctx.clock.now();
   const token = ctx.ids.token(32);
   await putPendingReplyTo(
@@ -36,6 +41,7 @@ async function sendLink(ctx: ServiceContext, orgId: string, address: string): Pr
     now + LINK_TTL_MS,
     now,
   );
+  if (!send) return;
   await assertNotPreviewOnly(ctx.env.DB, orgId);
   const org = await getOrg(ctx.env.DB, orgId);
   const email = renderReplyToConfirm({
@@ -68,6 +74,17 @@ export async function syncReplyTo(
   }
   const row = await getReplyTo(ctx.env.DB, orgId);
   if (row?.address === next) return;
+  // A new address is mailed a link, at most DAILY_LINKS times a day for the org: past that it waits, and Resend
+  // sends later. A key that changes the address in a loop cannot make PassBook mail strangers.
+  const now = ctx.clock.now();
+  const window = now - (now % DAY);
+  const key = `reply-to-confirm:${orgId}`;
+  if ((await readCounter(ctx.env.DB, key, window)) >= DAILY_LINKS) {
+    ctx.log.warn('reply_to.confirm_capped', { orgId, code: 'REPLY_TO_CONFIRM_CAPPED' });
+    await sendLink(ctx, orgId, next, false);
+    return;
+  }
+  await bumpCounter(ctx.env.DB, key, window);
   await sendLink(ctx, orgId, next);
 }
 
