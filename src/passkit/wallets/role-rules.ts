@@ -117,13 +117,21 @@ function personOf(...tags: string[]) {
 const inGroup = (input: RoleInput, group: ViewField['group']) =>
   input.fields.filter((f) => f.group === group);
 
+/** A money field's text carries its currency (`25 USD`), as the body modules already show it. */
+const withCurrency = (field: ViewField): string => {
+  const shown = field.text.trim();
+  return field.currencyCode !== undefined && Number.isFinite(Number(shown))
+    ? `${shown} ${field.currencyCode}`
+    : shown;
+};
+
 /** The first field of a group with a value, as text. */
 const firstOf =
   (group: ViewField['group'], only?: PassStyle) =>
   (input: RoleInput): Hit | undefined => {
     if (only && input.style !== only) return undefined;
     const field = inGroup(input, group).find((f) => f.text.trim() !== '');
-    return field ? text(field.text.trim(), field) : undefined;
+    return field ? text(withCurrency(field), field) : undefined;
   };
 
 function venueAddress(input: RoleInput): Hit | undefined {

@@ -1020,7 +1020,7 @@ exports[`fidelityReport over every starter and baked template > starter-stamp-ca
 exports[`fidelityReport over every starter and baked template > starter-store-card 1`] = `
 {
   "compilerRevision": 1,
-  "hash": "3e0711cb91c2c59dcb34e8563bdbcd1645e100dc1b4133585ff2e26e86c3f609",
+  "hash": "23ba74ee6f3af11b58da68b6fe17a33936076fff105a7e48296332a16575e505",
   "items": [
     {
       "capability": "relevance.beacons",
@@ -1044,7 +1044,7 @@ exports[`fidelityReport over every starter and baked template > starter-store-ca
       "capability": "text.length",
       "chosen": false,
       "group": "look",
-      "message": "May be shortened to 4 characters.",
+      "message": "Shortened to 4 characters.",
       "path": "title",
       "severity": "difference",
       "support": "difference",

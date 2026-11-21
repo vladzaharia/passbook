@@ -20,12 +20,22 @@ function Chipped({ text }: { text: string }) {
 }
 
 /** Highlighted code as elements: the same token classes as the prerendered pages, without innerHTML. */
-export function CodeView({ code, lang, label }: { code: string; lang: Lang; label: string }) {
+export function CodeView({
+  code,
+  lang,
+  label,
+  num,
+}: {
+  code: string;
+  lang: Lang;
+  label: string;
+  num?: boolean;
+}) {
   const lines = highlightTokens(code, lang);
   return (
     // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable code region
     <section className="region" tabIndex={0} aria-label={label}>
-      <pre className="src">
+      <pre className={`src${num ? ' num' : ''}`}>
         <code>
           {lines.map((toks, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: lines are positional

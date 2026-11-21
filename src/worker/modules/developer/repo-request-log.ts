@@ -163,8 +163,9 @@ export const getLog = (db: D1Database, orgId: string, id: string, now: number) =
        CASE WHEN ${readable(now)} THEN 1 ELSE 0 END AS has_bodies,
        CASE WHEN ${readable(now)} THEN request_body END AS request_body,
        CASE WHEN ${readable(now)} THEN response_body END AS response_body
-     FROM request_log WHERE org_id = ? AND id = ? AND at >= ?`,
-    [orgId, id, now - LOG_META_MS],
+     FROM request_log WHERE org_id = ? AND (id = ? OR request_id = ? COLLATE NOCASE) AND at >= ?
+     ORDER BY id = ? DESC, id DESC LIMIT 1`,
+    [orgId, id, id, now - LOG_META_MS, id],
   );
 
 export const callsSince = async (db: D1Database, orgId: string, since: number) =>

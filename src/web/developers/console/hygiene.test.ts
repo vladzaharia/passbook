@@ -17,6 +17,12 @@ const files = [
   ...sources(join(dev, 'ui')),
   ...sources(join(dev, 'shell')),
 ];
+const islandFiles = [
+  ...files,
+  ...['webhooks', 'playground', 'logs', 'quickstart', 'search'].flatMap((d) =>
+    sources(join(dev, d)),
+  ),
+];
 const text = (f: string) => readFileSync(f, 'utf8');
 
 describe('the page never stores, shows or addresses the try token', () => {
@@ -37,7 +43,7 @@ describe('the page never stores, shows or addresses the try token', () => {
     expect(send).toContain('authorization: `Bearer ${bearer}`');
   });
   it('no island code writes markup: no innerHTML, outerHTML, insertAdjacentHTML, document.write or eval', () => {
-    for (const f of files) {
+    for (const f of islandFiles) {
       if (f.endsWith('ui/code.tsx')) continue; // build-time pages only (prerender), not shipped in the island
       expect(text(f), f).not.toMatch(
         /\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML\(|document\.write\(|dangerouslySetInnerHTML=|new Function\(|\beval\(/,

@@ -51,6 +51,7 @@ import {
 import { NotFoundView } from './pages/not-found.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
+import type { BlueprintPreviews } from './playground/model.ts';
 import { PlaygroundPage } from './playground/page.tsx';
 import { QuickstartSide, QuickstartView } from './quickstart/page.tsx';
 
@@ -105,6 +106,7 @@ export function renderSite(
   origin: string,
   assets: string,
   guideInputs: GuideInputs = { docs: [], examples: [] },
+  previews?: BlueprintPreviews,
 ): OutFile[] {
   const out: OutFile[] = [];
   const base = `${DEV_COPY.brand} · PassBook`;
@@ -264,13 +266,13 @@ export function renderSite(
     title: `${DEV_COPY.slots.playground.title} · ${base}`,
     description: 'Edit a pass and watch Apple, Google, Samsung and paper change.',
     twin: appTwins.playground(),
-    body: html(<PlaygroundPage site={site} />),
+    body: html(<PlaygroundPage site={site} previews={previews} />),
   });
   page(
     PATHS.console,
     DEV_COPY.console.title,
     DEV_COPY.console.line,
-    'reference',
+    'console',
     <ConsoleView />,
     undefined,
     false,
