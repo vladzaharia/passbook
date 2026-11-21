@@ -7,6 +7,7 @@ import { isFound } from './items.ts';
 import { TestPad } from './test-pad.tsx';
 import type { HardwareAction, HardwareItem } from './types.ts';
 import './hardware.css';
+import './hardware-panel.css';
 
 function Guide({ steps }: { steps: readonly GuideStep[] }) {
   if (!steps.length) return null;
