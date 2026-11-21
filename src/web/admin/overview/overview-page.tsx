@@ -89,9 +89,9 @@ function GovernanceSummary({
   filtered: boolean;
 }) {
   return (
-    <section aria-label="Platform directories" className="grid gap-3 md:grid-cols-3">
+    <section aria-label="Platform directories" className="grid items-start gap-3 md:grid-cols-3">
       <Card>
-        <CardBody className="flex h-full flex-col items-start gap-2">
+        <CardBody className="flex flex-col items-start gap-2">
           <h2 className="text-sm font-semibold text-fg-strong">
             Organizations{filtered ? ' · filtered' : ''}
           </h2>
@@ -104,23 +104,23 @@ function GovernanceSummary({
               formatCount(organizations)
             )}
           </p>
-          <Button asChild variant="link" className="mt-auto">
+          <Button asChild variant="link">
             <Link to="/admin/platform/orgs">View organizations</Link>
           </Button>
         </CardBody>
       </Card>
       <Card>
-        <CardBody className="flex h-full flex-col items-start gap-2">
+        <CardBody className="flex flex-col items-start gap-2">
           <h2 className="text-sm font-semibold text-fg-strong">Users</h2>
-          <Button asChild variant="link" className="mt-auto">
+          <Button asChild variant="link">
             <Link to="/admin/platform/users">View users</Link>
           </Button>
         </CardBody>
       </Card>
       <Card>
-        <CardBody className="flex h-full flex-col items-start gap-2">
+        <CardBody className="flex flex-col items-start gap-2">
           <h2 className="text-sm font-semibold text-fg-strong">Wallet accounts</h2>
-          <Button asChild variant="link" className="mt-auto">
+          <Button asChild variant="link">
             <Link to="/admin/platform/wallet-accounts">View wallet accounts</Link>
           </Button>
         </CardBody>
