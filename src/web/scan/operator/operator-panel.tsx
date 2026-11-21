@@ -68,9 +68,6 @@ export function OperatorPanel({
           <h2 className="text-lg font-semibold">
             {session.workspace?.session.name ?? 'Check-in desk'}
           </h2>
-          <p className="mt-1 text-sm text-fg-muted">
-            Look up passes, check in by code, and review activity.
-          </p>
         </div>
       </header>
       <section className="scan-operator-lookup" aria-label="Find a pass">

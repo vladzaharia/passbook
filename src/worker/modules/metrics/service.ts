@@ -193,13 +193,14 @@ export async function getOverview(
   // Platform directory filters expose aggregates, never tenant-specific detail.
   const platformDirectory = audience === 'platform' && Boolean(query.orgId || query.templateId);
 
-  const [totals, loaded, recent, setup] = await Promise.all([
+  const [totals, loaded, recent, setup, directory] = await Promise.all([
     repo.passTotals(ctx.env.DB, scope),
     load(ctx, w, scope, now),
     platformDirectory
       ? Promise.resolve([])
       : repo.recentAudit(ctx.env.DB, scope, 10, audience === 'tenant'),
     repo.setupCounts(ctx.env.DB, scope, audience === 'tenant' ? mode : 'live', !platformDirectory),
+    audience === 'platform' ? repo.directoryCounts(ctx.env.DB, query.orgId) : undefined,
   ]);
   const series = Object.fromEntries(
     SERIES_KEYS.map((k) => [k, fill(loaded.rows[k], start, end, range.bucketMs)]),
@@ -234,6 +235,7 @@ export async function getOverview(
     },
     series,
     setup: { ...setup, scanners: 0 },
+    ...(directory ? { directory } : {}),
     live: [],
     recent: recent.map((r) => ({
       at: r.at,

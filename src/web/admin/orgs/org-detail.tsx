@@ -230,9 +230,6 @@ export function OrgDetailPage({
                   </Button>
                 }
               />
-              <CardBody className="text-sm text-fg-muted">
-                Signing identities are managed under Identities.
-              </CardBody>
             </Card>
             <HoldsCard scope="platform" orgId={org.id} canManage />
             <ReceiptsCard scope="platform" orgId={org.id} />

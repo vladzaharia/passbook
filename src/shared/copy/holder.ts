@@ -48,11 +48,9 @@ export const HOLDER_COPY = {
   bestForDevice: 'Best for this device',
   otherWays: 'Other ways',
   browserTitle: 'Show a barcode in your browser',
-  browserLine: 'For readers that scan a screen.',
   showBarcode: 'Show barcode',
   /** The paper channel: a link to the print page. */
   printTitle: 'Print your ticket',
-  printLine: 'For entry on paper.',
   print: 'Print',
   /** Every channel is off for this pass. */
   noTicket: (org: string) => `No ticket available. Contact ${org || 'the organizer'}.`,

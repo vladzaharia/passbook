@@ -35,7 +35,7 @@ export function WalletNotes({ previews }: { previews: WalletPreviews }) {
             </section>
           ))
         ) : (
-          <p className="muted sm">Reading what each wallet shows.</p>
+          <p className="muted sm">Reading…</p>
         )}
         <p className="sm apple-note">
           <CheckCircle2 aria-hidden="true" className="ok-t" /> <span className="strong">Apple</span>{' '}

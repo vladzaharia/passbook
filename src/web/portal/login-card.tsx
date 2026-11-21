@@ -129,17 +129,7 @@ export function LoginCard({ next, notice, methods, front, scene }: LoginCardProp
         data-turning={sizing.turning || undefined}
         style={sizing.height ? { height: sizing.height } : undefined}
       >
-        <Face
-          side="email"
-          faceRef={sizing.email}
-          hidden={face !== 'email'}
-          title="Sign in"
-          lede={
-            methods?.oidc && !methods.magic
-              ? 'Continue with your organization to access your account.'
-              : undefined
-          }
-        >
+        <Face side="email" faceRef={sizing.email} hidden={face !== 'email'} title="Sign in">
           {front ??
             (methods ? (
               <EmailFace

@@ -177,9 +177,6 @@ export function SessionDetail({
               >
                 Devices <Badge>{s.deviceCount}</Badge>
               </h2>
-              <p className="mt-1 text-sm text-fg-muted">
-                Scanners and displays using this session’s rules.
-              </p>
             </div>
             {s.devices.some((d) => d.revoked) ? (
               <CheckboxField

@@ -124,7 +124,6 @@ export function StampsSection() {
   if (!view)
     return (
       <div className="grid gap-3">
-        <p className="text-sm text-fg-muted">Fill the strip with stamps toward a reward.</p>
         <div>
           <Button loading={busy} disabled={readOnly} onClick={() => void loadArt(true)}>
             Add stamps

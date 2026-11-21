@@ -8,7 +8,6 @@ import { SIGN_IN } from './layout.tsx';
 export function LogsView() {
   return (
     <>
-      <div className="eyebrow">Sandbox</div>
       <h1 className="h1 page-h">{LOGS_COPY.title}</h1>
       <p className="lede muted mt2 prose">{LOGS_COPY.lede}</p>
       <div className="logs-grid mt6">

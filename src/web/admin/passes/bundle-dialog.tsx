@@ -161,7 +161,7 @@ export function BundleDialog({
       <DialogContent
         size="md"
         title={made ? made.bundle.name : 'Share as bundle'}
-        description={made ? undefined : `${plural(passIds.length)} behind one link.`}
+        description={made ? undefined : plural(passIds.length)}
         footer={
           made ? (
             <Button onClick={close}>Done</Button>
