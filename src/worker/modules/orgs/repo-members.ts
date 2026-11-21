@@ -7,6 +7,7 @@ export interface MembershipRow {
   org_id: string;
   org_name: string;
   org_slug: string;
+  personal_user_id: string | null;
   user_id: string;
   user_name: string | null;
   /** Null for an account whose primary email is the no-verified-email placeholder. */
@@ -25,7 +26,7 @@ export interface InvitationRow {
   revoked_at: number | null;
   accepted_at: number | null;
 }
-const membershipSelect = `SELECT m.*, o.name AS org_name, o.slug AS org_slug, u.name AS user_name, ${knownEmailSql('u.primary_email')} AS user_email FROM org_memberships m
+const membershipSelect = `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, u.name AS user_name, ${knownEmailSql('u.primary_email')} AS user_email FROM org_memberships m
  JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id`;
 /**
  * SQL for "this principal may bypass membership as a platform admin". The service passes
@@ -79,7 +80,7 @@ export function orgMembers(
   const f = adminFence(admin);
   return all<MembershipRow>(
     db,
-    `SELECT m.*, o.name AS org_name, o.slug AS org_slug, u.name AS user_name,
+    `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, u.name AS user_name,
        CASE WHEN (${f.sql}) THEN ${knownEmailSql('u.primary_email')}
          ELSE COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') END AS user_email
      FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id

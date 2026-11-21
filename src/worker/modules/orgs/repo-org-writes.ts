@@ -107,7 +107,7 @@ const adminPrincipal = (admin: OrgAdmin) =>
  */
 export async function insertOrgAsAdmin(
   ctx: ServiceContext,
-  row: Omit<OrgRow, 'config_revision'>,
+  row: Omit<OrgRow, 'config_revision' | 'personal_user_id'>,
   admin: OrgAdmin,
   preset: EntitlementPreset,
 ): Promise<void> {

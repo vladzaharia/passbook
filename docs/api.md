@@ -202,7 +202,8 @@ Select the platform with `orgId=null` in GET or DELETE queries and `"orgId": nul
 select a tenant by its explicit org ID.
 
 Platform `GET /orgs`, `GET /orgs/{id}` and `POST /orgs/{id}/status` return directory and
-lifecycle fields only: `id`, `slug`, `name`, `status`, `createdAt`, `counts` and `countsCapped`.
+lifecycle fields only: `id`, `slug`, `name`, `status`, `personal`, `personalOwner`, `createdAt`, `counts` and `countsCapped`.
+Every platform admin gets one personal org on OIDC sign-in (`personal: true`; `personalOwner` is the user, platform views only). Its owner sees it named "Personal" in `GET /orgs/memberships/me`; the stored name is the owner's. The slug prefix `personal-` is reserved (`400 ORG_SLUG_RESERVED`).
 `GET /orgs/{id}/workspace` returns the full tenant organization summary and requires `org:read`
 membership. Organization updates, branding and organization-settings writes require `org:manage`;
 organization-settings reads require `org:read`.

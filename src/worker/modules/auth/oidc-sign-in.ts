@@ -2,6 +2,7 @@ import { strictEmail } from '../../../shared/email.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { attachWaitingPassesForEmail } from '../holders/service-attach.ts';
+import { ensurePersonalOrg } from '../orgs/personal.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { createUserForProvenEmail, releaseClaimOtherThan } from './account-claims.ts';
 import { withinCaps, withinDailyCap, withinIpCap, withinSubjectCap } from './magic-caps.ts';
@@ -122,6 +123,9 @@ export async function signInOidc(
   }
 
   const result = await startSession(ctx, user.id, roles, 'oidc', claims.name ?? null, sign);
+  // Every platform admin has one personal org; a failure to make it never fails the sign-in.
+  if (roles.includes('admin'))
+    await ensurePersonalOrg(ctx, { userId: user.id, sessionId: result.session.idHash });
   if (claims.emailVerified === true && verified) {
     await attachWaitingPassesForEmail(ctx, user.id, email);
   }
