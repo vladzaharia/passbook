@@ -61,7 +61,7 @@ const COMMON = [
   'IDEMPOTENCY_KEY_REUSED',
   'RATE_LIMITED',
 ];
-const SHOWN = 8;
+const SHOWN = 16;
 
 function ErrorTable({ rows, known }: { rows: ErrorRow[]; known: Set<string> }) {
   return (
@@ -107,7 +107,7 @@ function OpErrors({ op, site }: { op: OpView; site: Site }) {
       <ErrorTable rows={rows.slice(0, SHOWN)} known={known} />
       {rows.length > SHOWN ? (
         <details className="op-errors mt4">
-          <summary>{rows.length - SHOWN} more</summary>
+          <summary>{rows.length - SHOWN} more codes</summary>
           <ErrorTable rows={rows.slice(SHOWN)} known={known} />
         </details>
       ) : null}
