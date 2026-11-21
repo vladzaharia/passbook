@@ -48,6 +48,21 @@ public record ReaderConfig(String verifierUrl, List<String> passTypeIds, String 
         } catch (java.net.URISyntaxException exception) { return ""; }
     }
 
+    /** PassBook's own hosts: the production origins and their subdomains. */
+    public static boolean isPassBookHost(String url) {
+        String origin = originOf(url);
+        if (origin.isEmpty()) return false;
+        String host = origin.substring("https://".length()).replaceFirst(":\\d+$", "");
+        return host.equals("passbook.mobile") || host.endsWith(".passbook.mobile")
+            || host.equals("wallet.plrs.im") || host.endsWith(".wallet.plrs.im");
+    }
+
+    /** In-app navigation: the configured origin, the bundled page and PassBook hosts. Everything else leaves the app. */
+    public static boolean allowsNavigation(String url, String configuredOrigin) {
+        String origin = originOf(url);
+        return !origin.isEmpty() && (origin.equals(configuredOrigin) || origin.equals(LOCAL_ORIGIN) || isPassBookHost(url));
+    }
+
     private static void validateUrl(String value) {
         if (value.length() > 2048 || originOf(value).isEmpty() || value.contains("#")) {
             invalid("Enter an HTTPS verifier URL without a fragment or credentials.");

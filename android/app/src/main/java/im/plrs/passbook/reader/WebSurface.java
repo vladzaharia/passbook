@@ -26,6 +26,8 @@ public final class WebSurface {
         void command(JSONObject message);
         void notice(String message);
         void camera(PermissionRequest request);
+        /** A link tap to somewhere other than PassBook: hand it to the browser. */
+        default void external(Uri url) {}
         default void cameraCancelled(PermissionRequest request) {}
     }
     public final WebView view;
@@ -61,11 +63,15 @@ public final class WebSurface {
                 invalidate();
             }
             @Override public boolean shouldOverrideUrlLoading(WebView web, WebResourceRequest request) {
-                // HTTPS identity-provider redirects may complete in the same cookie jar; only
-                // the configured verifier origin gets a native bridge or camera access.
-                boolean allowed = !ReaderConfig.originOf(request.getUrl().toString()).isEmpty();
-                if (!allowed && request.isForMainFrame()) listener.notice("Only HTTPS navigation is supported.");
-                return !allowed;
+                // Only the configured origin and PassBook hosts load here, and only the configured origin gets
+                // the native bridge or camera. A link elsewhere opens in the browser; blocked frames just stop.
+                if (ReaderConfig.allowsNavigation(request.getUrl().toString(), config == null ? "" : config.origin())) return false;
+                if (request.isForMainFrame()) {
+                    String scheme = request.getUrl().getScheme();
+                    if ("https".equalsIgnoreCase(scheme)) listener.external(request.getUrl());
+                    else listener.notice("Only HTTPS navigation is supported.");
+                }
+                return true;
             }
             @Override public void onReceivedError(WebView web, WebResourceRequest request,
                                                    android.webkit.WebResourceError error) {

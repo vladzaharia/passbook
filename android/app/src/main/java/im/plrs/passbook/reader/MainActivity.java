@@ -254,6 +254,10 @@ public final class MainActivity extends Activity implements WebSurface.Listener,
     @Override public void reset() {
         cameraPermissions.cancel(); gate.reset(); handler.removeCallbacks(expiry); endOneShot(); vasOn = true; tagOn = false; nfc.stop();
     }
+    @Override public void external(android.net.Uri url) {
+        try { startActivity(new Intent(Intent.ACTION_VIEW, url).addCategory(Intent.CATEGORY_BROWSABLE)); }
+        catch (android.content.ActivityNotFoundException none) { notice("No browser to open that link."); }
+    }
     @Override public void notice(String text) { status.setTextColor(0xff34415d); status.setText(text); }
 
     private void endOneShot() { oneShot = null; handler.removeCallbacks(oneShotExpiry); }
