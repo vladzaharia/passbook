@@ -187,6 +187,7 @@ function Body({
           )
         }
         asideLabel="Door"
+        asideQuiet
         onCancel={() => void navigate({ to: '/admin/o/$orgId/scanning', params: { orgId } })}
         onBack={step > 0 ? () => go(stepAfter(draft, step, -1)) : undefined}
         onNext={next}

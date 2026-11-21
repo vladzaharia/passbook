@@ -24,6 +24,8 @@ export interface WizardProps {
   aside?: ReactNode;
   /** The stage's visible label and landmark name. */
   asideLabel?: string;
+  /** Name the stage for screen readers only. */
+  asideQuiet?: boolean;
   /**
    * Cancel only navigates away: the page's useUnsavedChangesGuard asks once when there is unsaved
    * input, like any other way out.
@@ -208,6 +210,7 @@ export function Wizard({
   skipped,
   aside,
   asideLabel = 'Preview',
+  asideQuiet,
   children,
   onNext,
   ...bar
@@ -250,7 +253,11 @@ export function Wizard({
     <div data-staged={staged || undefined} className="wl-wizard flex min-w-0 flex-col gap-6 pb-24">
       <Stepper steps={steps} current={current} onStep={onStep} skipped={skipped} />
       {body}
-      {staged ? <WizardStage label={asideLabel}>{aside}</WizardStage> : null}
+      {staged ? (
+        <WizardStage label={asideLabel} quiet={asideQuiet}>
+          {aside}
+        </WizardStage>
+      ) : null}
       <WizardBar {...bar} onNext={next} />
     </div>
   );
