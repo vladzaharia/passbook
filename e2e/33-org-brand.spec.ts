@@ -156,7 +156,7 @@ test('admin sets the brand from Brand and channels', async ({ browser }) => {
   const brand = page.getByRole('region', { name: 'Brand', exact: true });
   await expect(brand.getByRole('radio', { name: /None/ })).toBeDisabled();
   await brand.getByRole('radio', { name: /Small/ }).check();
-  await page.getByRole('button', { name: 'Review' }).click();
+  await page.getByRole('button', { name: 'Review', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('PassBook mark')).toBeVisible();
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
