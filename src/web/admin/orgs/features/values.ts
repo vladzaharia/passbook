@@ -30,7 +30,10 @@ export const FEATURE_GROUPS: readonly { title: string; keys: readonly Entitlemen
       'members',
     ],
   },
-  { title: 'Brand and identity', keys: ['brand.mark', 'domains', 'identity.own'] },
+  {
+    title: 'Brand and identity',
+    keys: ['brand.mark', 'domains', 'identity.own', 'identity.managed'],
+  },
 ];
 
 /** How a value reads: On and Off, a level's name, a count or No limit, a list's entries. */
