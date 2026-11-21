@@ -35,8 +35,8 @@ import { type HoursFields, openAt } from './session-hours.ts';
 /**
  * Clock drift between a door and the server, around its last clean contact. The floor is a server time and a
  * read's date is the door's clock, so a door running behind would lose honest reads around the contact.
- * The same bound as a future date (`CLIENT_TS_SLACK_MS`) is what the server already tolerates; a read refused
- * by the floor logs how far before it was dated.
+ * The same bound as a future date (`CLIENT_TS_SLACK_MS`) is what the server already tolerates; a read taken
+ * at server time because of the floor logs how far before it was dated.
  */
 const ONLINE_SLACK_MS = CLIENT_TS_SLACK_MS;
 
@@ -82,6 +82,18 @@ async function doorOf(
   if (!safeEqualBytes(enc.encode(want), enc.encode(roster.sig)))
     return { door: 'unverified', expired: false };
   return { door: 'listed', expired: item.clientTs > roster.validUntil };
+}
+
+/** When the list the request carries was cut, if this server signed it; else 0. */
+async function signedRosterAsOf(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  roster: Request['roster'],
+): Promise<number> {
+  if (!roster) return 0;
+  const want = await rosterSig(ctx, actor, roster.asOf, roster.validUntil);
+  const enc = new TextEncoder();
+  return safeEqualBytes(enc.encode(want), enc.encode(roster.sig)) ? roster.asOf : 0;
 }
 
 interface StateAt {
@@ -161,6 +173,8 @@ const endedOutcome = (at: number): ScanOutcome => ({
  *  - Stop refuses the whole batch.
  *  - A read stamped over 5 minutes ahead is clamped to now; one older than the roster's life is
  *    recorded as `ended` and changes nothing.
+ *  - A read dated before the later of the door's last online contact and its list's `asOf` was made
+ *    when the door could not have been offline: it is taken at server time and recorded `late`.
  *  - An upload repeated whole or in part returns the first answers.
  */
 export async function syncBatch(
@@ -177,9 +191,12 @@ export async function syncBatch(
   const sessionId = scopeSessionId(actor);
   const changes = sessionId ? await sessionChanges(ctx.env.DB, sessionId) : [];
   const onlineAt = actor.scanner ? await onlineAtOf(ctx.env.DB, actor.scanner.id) : 0;
+  const floor = Math.max(onlineAt, await signedRosterAsOf(ctx, actor, request.roster));
   for (const { item, index } of order) {
     const { door, expired } = await doorOf(ctx, actor, item, request.roster);
-    const clientTs = item.clientTs > now + CLIENT_TS_SLACK_MS ? now : item.clientTs;
+    // A date before the door's last contact or its list is no honest read: it is taken at server time.
+    const late = door !== 'refused' && item.clientTs < floor - ONLINE_SLACK_MS;
+    const clientTs = late || item.clientTs > now + CLIENT_TS_SLACK_MS ? now : item.clientTs;
     let outcome: ScanOutcome;
     let scanId: string | null = null;
     const taken =
@@ -216,11 +233,11 @@ export async function syncBatch(
           door,
         );
     }
-    if (onlineAt && clientTs < onlineAt - ONLINE_SLACK_MS && door !== 'refused')
+    if (late)
       ctx.log.info('scan.batch.read_before_contact', {
         orgId: actor.orgId,
         code: 'READ_BEFORE_CONTACT',
-        gapMs: onlineAt - clientTs,
+        gapMs: floor - item.clientTs,
       });
     const conflict = door !== 'refused' && outcome.kind !== 'ok';
     await recordOfflineRead(ctx.env.DB, {
@@ -236,6 +253,7 @@ export async function syncBatch(
       outcome: outcome.kind === 'ok' || outcome.kind === 'heads_up' ? outcome.kind : 'refused',
       reason: outcome.reason,
       conflict,
+      late,
       clientTs: item.clientTs,
       recordedTs: outcome.at ?? clientTs,
       syncedAt: now,
