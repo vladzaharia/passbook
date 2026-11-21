@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first, run, stmt } from '../../platform/db.ts';
+import type { BroadcastRow } from './repo.ts';
 
 /** The templates of the chosen passes of this org and mode, and how many of the ids exist there (500 ids a query). */
 export async function chosenPassTemplates(
@@ -110,3 +111,11 @@ export const addTargets = (db: D1Database, broadcastId: string, ids: readonly st
     'INSERT OR IGNORE INTO broadcast_targets (broadcast_id, pass_id) SELECT ?, value FROM json_each(?)',
     [broadcastId, JSON.stringify(ids)],
   );
+
+/** Marks the snapshot of a run's target rows complete (after its last page). */
+export const markSnapshot = (db: D1Database, id: string, at: number) =>
+  run(db, 'UPDATE broadcasts SET snapshot_at = ? WHERE id = ?', [at, id]);
+
+/** The run that already resumes this one, if any. */
+export const resumedBy = (db: D1Database, parentId: string) =>
+  first<BroadcastRow>(db, 'SELECT * FROM broadcasts WHERE retry_of = ?', [parentId]);

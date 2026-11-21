@@ -5,7 +5,7 @@ import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { setPassStatus } from '../passes/service.ts';
+import { setPassStatus } from '../passes/service-status.ts';
 import { actorOf } from './actor.ts';
 import { atValues } from './change-ops.ts';
 import {

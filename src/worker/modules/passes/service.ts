@@ -25,6 +25,7 @@ import { softDeletePassGranted } from './repo-pass-grants.ts';
 import { captureConnectionTransferPending, connectionForPass } from './repo-read-connection.ts';
 import { getPass, pendingPushId } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
+import { setPassStatus } from './service-status.ts';
 import { stampMovePlan } from './stamps-keep.ts';
 
 /** Workstream d owns this module; e, f and others call these. Keep the signatures. */
@@ -221,65 +222,6 @@ export async function updatePass(
     (await getPass(ctx.env.DB, passId, options.scope)) ?? result.pass,
     options.authority,
   );
-}
-
-/** What a run that voids or restores many passes adds to the one status write (change runs). */
-export interface StatusExtras {
-  extraChecks?: readonly Check[];
-  source?: PassSource;
-  notify?: boolean;
-  expectedVersion?: number;
-  /** Throws when the pass is no longer the one the run read; re-run on every retry. */
-  guard?: (current: Pass) => void;
-}
-
-/** The void or restore of one pass with everything it owns: its events, its audit row and its print PDFs. */
-export async function setPassStatus(
-  ctx: ServiceContext,
-  actor: Actor,
-  passId: string,
-  status: 'active' | 'voided',
-  scope: ScopeArg,
-  authority?: TenantPassWrite,
-  extras: StatusExtras = {},
-) {
-  const current = await getPassForWrite(ctx.env.DB, passId, scope);
-  if (current.removedAt !== null)
-    throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
-  const result = await publishPass(ctx, {
-    passId,
-    orgScope: scope,
-    cause: causeOf(actor),
-    actor,
-    ...(authority ? { authority } : {}),
-    ...(extras.extraChecks ? { extraChecks: extras.extraChecks } : {}),
-    ...(extras.source ? { source: extras.source } : {}),
-    ...(extras.notify === undefined ? {} : { notify: extras.notify }),
-    ...(extras.expectedVersion === undefined ? {} : { expectedVersion: extras.expectedVersion }),
-    ...(extras.extraChecks ? { dispatch: false } : {}),
-    mutate: (cur) => {
-      extras.guard?.(cur);
-      return { status };
-    },
-  });
-  // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.
-  if (status === 'voided') await dropPrintPdfs(ctx, result.pass);
-  await recordAudit(ctx, {
-    orgId: result.pass.orgId,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: status === 'voided' ? 'pass.void' : 'pass.unvoid',
-    targetType: 'pass',
-    targetId: passId,
-  });
-  await recordPassEvent(ctx, {
-    orgId: result.pass.orgId,
-    passId,
-    mode: result.pass.mode,
-    kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
-    actor,
-  });
-  return result;
 }
 
 async function setStatus(

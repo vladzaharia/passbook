@@ -30,9 +30,13 @@ import {
   requireWritableBroadcast,
 } from './guards.ts';
 import * as repo from './repo.ts';
-import { resumedBy } from './repo.ts';
 import { DAY_LIMIT_KEY, manualBroadcastsToday } from './repo-day-limit.ts';
-import { chosenTargetsStmts, resumableCount, resumeTargetsStmt } from './repo-selection.ts';
+import {
+  chosenTargetsStmts,
+  resumableCount,
+  resumedBy,
+  resumeTargetsStmt,
+} from './repo-selection.ts';
 import { launchBroadcast } from './start.ts';
 import type { StoredBroadcastTarget } from './stored-target.ts';
 

@@ -4,7 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo.ts';
-import { setPassStatus } from '../passes/service.ts';
+import { setPassStatus } from '../passes/service-status.ts';
 import { releaseMovePlan, type StampMove } from '../passes/stamps-keep.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { actorOf } from './actor.ts';

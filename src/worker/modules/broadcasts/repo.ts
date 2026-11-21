@@ -44,9 +44,7 @@ export interface BroadcastRow {
   window_key: string | null;
   /** A stop was asked for: the run ends after its chunk. */
   stop_at: number | null;
-  /** The run this one resumes (one resume per run). */
   retry_of: string | null;
-  /** When the run's snapshot of target rows reached its last page. */
   snapshot_at: number | null;
   /** The workflow instance when not `broadcast-<id>` (a restarted undo). */
   instance: string | null;
@@ -276,14 +274,6 @@ export const sendingSince = (db: D1Database, before: number, limit: number) =>
      ORDER BY COALESCE(checked_at, started_at) LIMIT ?`,
     [before, limit],
   );
-
-/** Marks the snapshot of a run's target rows complete (after its last page). */
-export const markSnapshot = (db: D1Database, id: string, at: number) =>
-  run(db, 'UPDATE broadcasts SET snapshot_at = ? WHERE id = ?', [at, id]);
-
-/** The run that already resumes this one, if any. */
-export const resumedBy = (db: D1Database, parentId: string) =>
-  first<BroadcastRow>(db, 'SELECT * FROM broadcasts WHERE retry_of = ?', [parentId]);
 
 export const markChecked = (db: D1Database, id: string, at: number) =>
   run(db, `UPDATE broadcasts SET checked_at = ? WHERE id = ? AND state = 'sending'`, [at, id]);

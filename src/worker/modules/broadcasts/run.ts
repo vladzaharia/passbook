@@ -17,12 +17,11 @@ import {
   countItems,
   getBroadcast,
   insertBroadcastStmt,
-  markSnapshot,
   setTargeted,
 } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
 import { countRevertable } from './repo-items.ts';
-import { importTemplate } from './repo-selection.ts';
+import { importTemplate, markSnapshot } from './repo-selection.ts';
 import { countTargeted } from './repo-target.ts';
 import { StoredBroadcastTargetSchema } from './stored-target.ts';
 

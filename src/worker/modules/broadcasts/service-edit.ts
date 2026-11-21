@@ -25,7 +25,7 @@ import {
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { listItems } from './repo-items.ts';
-import { chosenTargetsStmts, resumableCount } from './repo-selection.ts';
+import { chosenTargetsStmts, resumableCount, resumedBy } from './repo-selection.ts';
 import { childOf } from './repo-undo.ts';
 import { getBroadcastDto, insertBroadcast } from './service.ts';
 import { launchBroadcast } from './start.ts';
@@ -192,7 +192,7 @@ async function resumeChange(
 ): Promise<BroadcastDto> {
   if (row.parent_id !== null || row.error_code === 'SELECTION_CHANGED')
     throw new ConflictError('Make this change again from the passes.', 'BROADCAST_NOT_RETRYABLE');
-  if (await repo.resumedBy(ctx.env.DB, row.id))
+  if (await resumedBy(ctx.env.DB, row.id))
     throw new ConflictError('This change was already resumed.', 'BROADCAST_NOT_RETRYABLE');
   // A step that died between a pass's write and its item is settled first, so the remainder is exact.
   await settlePending(ctx, row);
