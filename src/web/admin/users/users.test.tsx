@@ -45,7 +45,7 @@ const detail = (over: Record<string, unknown> = {}) => ({
       subject: 's1',
       emailClaim: 'ada@example.com',
       emailVerified: true,
-      groups: ['wallet-users'],
+      groups: ['wallet_users'],
       lastUsedAt: null,
     },
   ],
@@ -57,7 +57,17 @@ const detail = (over: Record<string, unknown> = {}) => ({
 });
 
 const settings = () =>
-  json({ items: [], oidc: { issuer: 'https://id.example', adminGroup: null, userGroup: null } });
+  json({
+    items: [],
+    oidc: {
+      issuer: 'https://id.example',
+      platformAdminGroup: null,
+      adminGroup: null,
+      developerGroup: null,
+      userGroup: null,
+      consoleGroupRequired: false,
+    },
+  });
 
 describe('parseUsersSearch', () => {
   it('drops blanks and unknown statuses', () => {
@@ -207,7 +217,7 @@ describe('user detail', () => {
       await screen.findByRole('heading', { level: 1, name: 'Ada Lovelace' }),
     ).toBeInTheDocument();
     expect(screen.getByText('ada@work.example')).toBeInTheDocument();
-    expect(screen.getByText('wallet-users')).toBeInTheDocument();
+    expect(screen.getByText('wallet_users')).toBeInTheDocument();
     expect(screen.getByText('Safari on iOS')).toBeInTheDocument();
     expect(screen.queryByText(/Mozilla/)).toBeNull();
     expect(screen.getByRole('link', { name: 'Find passes' })).toHaveAttribute(

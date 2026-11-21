@@ -36,7 +36,7 @@ const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
     })),
     oidc: {
       issuer: 'https://id.plrs.im',
-      platformAdminGroup: 'wallet-admins',
+      platformAdminGroup: 'wallet_admins',
       adminGroup: null,
       developerGroup: null,
       userGroup: null,
@@ -80,7 +80,7 @@ describe('settings page', () => {
     expect(screen.getByRole('switch', { name: 'Magic-link sign-in' })).toBeChecked();
     expect(screen.getByRole('heading', { name: 'Access and sign-in' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Polaris ID/ })).toBeInTheDocument();
-    expect(await screen.findByText('wallet-admins')).toBeInTheDocument();
+    expect(await screen.findByText('wallet_admins')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 

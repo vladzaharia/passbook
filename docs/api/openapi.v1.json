@@ -26669,6 +26669,9 @@
                           ],
                           "minimum": 0
                         },
+                        "consoleGroupRequired": {
+                          "type": "boolean"
+                        },
                         "expiresAt": {
                           "type": "integer",
                           "minimum": 0

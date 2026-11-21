@@ -12,47 +12,47 @@ const oidc = await createMockOidc({
     sub: 'e2e-admin',
     email: 'admin@example.test',
     name: 'E2E Admin',
-    groups: ['wallet-admins', 'wallet-users'],
+    groups: ['wallet_admins', 'wallet_users'],
   },
 });
 oidc.addUser({
   sub: 'e2e-admin',
   email: 'admin@example.test',
   name: 'E2E Admin',
-  groups: ['wallet-admins', 'wallet-users'],
+  groups: ['wallet_admins', 'wallet_users'],
 });
 oidc.addUser({
   sub: 'e2e-user',
   email: 'user@example.test',
   name: 'E2E User',
-  groups: ['wallet-users'],
+  groups: ['wallet_users'],
 });
 oidc.addUser({
   sub: 'e2e-reviewer',
   email: 'reviewer@example.test',
   name: 'E2E Template Reviewer',
-  groups: ['wallet-users'],
+  groups: ['wallet_users'],
 });
 // Never granted a membership by any spec, so "no memberships" holds whatever else runs.
 oidc.addUser({
   sub: 'e2e-loner',
   email: 'loner@example.test',
   name: 'E2E Loner',
-  groups: ['wallet-users'],
+  groups: ['wallet_users'],
 });
 // The developer quickstart's builder: makes the one sandbox a person gets, so no other spec signs in as them.
 oidc.addUser({
   sub: 'e2e-builder',
   email: 'builder@example.test',
   name: 'E2E Builder',
-  groups: ['wallet-users'],
+  groups: ['wallet_users'],
 });
 // In the developer group but no organization: gets Developers and no Admin.
 oidc.addUser({
   sub: 'e2e-developer',
   email: 'developer@example.test',
   name: 'E2E Developer',
-  groups: ['wallet-users', 'passbook-developers'],
+  groups: ['wallet_users', 'passbook_developers'],
 });
 oidc.addUser({ sub: 'e2e-nobody', email: 'nobody@example.test', name: 'No Groups', groups: [] });
 

@@ -54,7 +54,7 @@ describe('oidc sign-in', () => {
   it('signs an admin in and stores only hashes', async () => {
     await setTrust(true);
     const jar: Jar = new Map();
-    const user = person(['wallet-admins']);
+    const user = person(['wallet_admins']);
     const { res, start } = await oidcSignIn(h, jar, user);
     expect(start.status).toBe(302);
     expect(start.headers.get('location')).toContain('code_challenge_method=S256');
@@ -84,18 +84,13 @@ describe('oidc sign-in', () => {
 
   it('maps the user group to the user role only', async () => {
     const jar: Jar = new Map();
-    await oidcSignIn(h, jar, person(['wallet-users']));
+    await oidcSignIn(h, jar, person(['wallet_users']));
     expect(((await session(jar)) as { roles: string[] }).roles).toEqual(['user']);
   });
 
-  it('matches the group name exactly, so a normalised claim needs the variable set to it', async () => {
-    const refused = await oidcSignIn(h, new Map(), person(['wallet_admins']));
+  it('matches the group name exactly: a hyphenated claim is not the underscore name', async () => {
+    const refused = await oidcSignIn(h, new Map(), person(['wallet-admins']));
     expect(refused.res.status).toBe(303);
-    h.restore();
-    h = await harness({ OIDC_PLATFORM_ADMIN_GROUP: 'wallet_admins' });
-    const jar: Jar = new Map();
-    expect((await oidcSignIn(h, jar, person(['wallet_admins']))).res.status).toBe(302);
-    expect(((await session(jar)) as { roles: string[] }).roles).toContain('admin');
   });
 
   it('refuses users in neither group and creates nothing', async () => {
@@ -128,15 +123,15 @@ describe('oidc sign-in', () => {
     h.restore();
     h = await harness({ OIDC_PLATFORM_ADMIN_GROUP: '' });
     const jar: Jar = new Map();
-    expect((await oidcSignIn(h, jar, person(['wallet-admins']))).res.status).toBe(303);
-    expect((await oidcSignIn(h, jar, person(['wallet-admins', 'wallet-users']))).res.status).toBe(
+    expect((await oidcSignIn(h, jar, person(['wallet_admins']))).res.status).toBe(303);
+    expect((await oidcSignIn(h, jar, person(['wallet_admins', 'wallet_users']))).res.status).toBe(
       302,
     );
     expect(((await session(jar)) as { roles: string[] }).roles).toEqual(['user']);
     h.restore();
     h = await harness({ OIDC_PLATFORM_ADMIN_GROUP: '', OIDC_USER_GROUP: '' });
     expect(
-      (await oidcSignIn(h, new Map(), person(['wallet-users', 'wallet-admins']))).res.status,
+      (await oidcSignIn(h, new Map(), person(['wallet_users', 'wallet_admins']))).res.status,
     ).toBe(303);
   });
 
@@ -145,7 +140,7 @@ describe('oidc sign-in', () => {
     const f = fixtures(h.env);
     const existing = await makeUser(f);
     const jar: Jar = new Map();
-    await oidcSignIn(h, jar, person(['wallet-users'], { email: existing.primaryEmail }));
+    await oidcSignIn(h, jar, person(['wallet_users'], { email: existing.primaryEmail }));
     const body = (await session(jar)) as { user: { id: string } };
     expect(body.user.id).toBe(existing.id);
     const identities = await all(h.env.DB, 'SELECT 1 FROM auth_identities WHERE user_id = ?', [
@@ -155,7 +150,7 @@ describe('oidc sign-in', () => {
   });
 
   it('keys identity on subject, not email', async () => {
-    const user = person(['wallet-users']);
+    const user = person(['wallet_users']);
     const first1 = new Map() as Jar;
     await oidcSignIn(h, first1, user);
     const id1 = ((await session(first1)) as { user: { id: string } }).user.id;
@@ -163,7 +158,7 @@ describe('oidc sign-in', () => {
     await oidcSignIn(h, jar, {
       ...user,
       email: `changed-${uniq()}@example.test`,
-      groups: ['wallet-admins'],
+      groups: ['wallet_admins'],
     });
     const body = (await session(jar)) as { user: { id: string }; roles: string[] };
     expect(body.user.id).toBe(id1);
@@ -173,14 +168,14 @@ describe('oidc sign-in', () => {
       'SELECT groups FROM auth_identities WHERE subject = ?',
       [user.sub],
     );
-    expect(JSON.parse(row?.groups ?? '[]')).toEqual(['wallet-admins']);
+    expect(JSON.parse(row?.groups ?? '[]')).toEqual(['wallet_admins']);
   });
 
   it('does not take an email owned by another account for an existing identity', async () => {
     const f = fixtures(h.env);
     const owner = await makeUser(f);
     const jar: Jar = new Map();
-    const user = person(['wallet-users']);
+    const user = person(['wallet_users']);
     await oidcSignIn(h, jar, user);
     const again: Jar = new Map();
     await oidcSignIn(h, again, { ...user, email: owner.primaryEmail });
@@ -199,7 +194,7 @@ describe('oidc sign-in', () => {
     h = await harness({
       EVENTS: { writeDataPoint: (p: { blobs: string[] }) => points.push(p) } as never,
     });
-    const user = person(['wallet-users']);
+    const user = person(['wallet_users']);
     const pass = await waitingPass(user.email);
     const jar: Jar = new Map();
     await oidcSignIn(h, jar, user);
@@ -248,7 +243,7 @@ describe('oidc sign-in', () => {
       const f = fixtures(h.env);
       const existing = await makeUser(f);
       const jar: Jar = new Map();
-      const user = person(['wallet-users'], { email: existing.primaryEmail });
+      const user = person(['wallet_users'], { email: existing.primaryEmail });
       const { res } = await oidcSignIn(h, jar, user);
       expect(res.status).toBe(403);
       expect(await res.text()).toContain('Check your email');
@@ -291,7 +286,7 @@ describe('oidc sign-in', () => {
     });
 
     it('proves a new subject by mail and creates nothing from the claim', async () => {
-      const user = person(['wallet-users']);
+      const user = person(['wallet_users']);
       const { res } = await oidcSignIn(h, new Map(), user);
       expect(res.status).toBe(403);
       expect(await res.text()).toContain('Check your email');
@@ -315,7 +310,7 @@ describe('oidc sign-in', () => {
       const existing = await makeUser(fixtures(h.env));
       const ctx = createServiceContext(h.env, { clock: h.clock });
       for (const email of [existing.primaryEmail, `unclaimed-${uniq()}@example.test`]) {
-        const user = person(['wallet-users'], { email });
+        const user = person(['wallet_users'], { email });
         const claims = {
           ...user,
           emailVerified: claim,
@@ -340,7 +335,7 @@ describe('oidc sign-in', () => {
 
   it('allows an existing identity to sign in without attaching passes from an unverified claim', async () => {
     await setTrust(true);
-    const user = person(['wallet-users']);
+    const user = person(['wallet_users']);
     const firstJar: Jar = new Map();
     expect((await oidcSignIn(h, firstJar, user)).res.status).toBe(302);
     const id = ((await session(firstJar)) as { user: { id: string } }).user.id;
@@ -378,7 +373,7 @@ describe('oidc sign-in', () => {
         subject,
         emailClaim: existing.primaryEmail,
         emailVerified: false,
-        groups: ['wallet-users'],
+        groups: ['wallet_users'],
       },
       { ipPrefix: null, userAgent: null },
     );
@@ -397,7 +392,7 @@ describe('oidc sign-in', () => {
       const existing = await makeUser(fixtures(h.env));
       const jar: Jar = new Map();
       const user = {
-        ...person(['wallet-users'], { email: existing.primaryEmail }),
+        ...person(['wallet_users'], { email: existing.primaryEmail }),
         emailVerified: false,
       };
       const { res } = await oidcSignIn(h, jar, user);
@@ -414,7 +409,7 @@ describe('oidc sign-in', () => {
       await setTrust(true);
       const existing = await makeUser(fixtures(h.env));
       const user = {
-        ...person(['wallet-users'], { email: existing.primaryEmail }),
+        ...person(['wallet_users'], { email: existing.primaryEmail }),
         emailVerified: true,
       };
       const { res } = await oidcSignIn(h, new Map(), user);
@@ -437,7 +432,7 @@ describe('oidc sign-in', () => {
       await setTrust(true);
       const f1 = fixtures(h.env);
       const org = await makeOrg(f1);
-      const user = { ...person(['wallet-users']), emailVerified: false };
+      const user = { ...person(['wallet_users']), emailVerified: false };
       const pass = await makePass(f1, {
         orgId: org.id,
         template: makeTemplate().resolved,
@@ -461,7 +456,7 @@ describe('oidc sign-in', () => {
   });
 
   it('refuses disabled users and rejects their live sessions', async () => {
-    const user = person(['wallet-users']);
+    const user = person(['wallet_users']);
     const jar: Jar = new Map();
     await oidcSignIn(h, jar, user);
     const userId = ((await session(jar)) as { user: { id: string } }).user.id;
@@ -473,7 +468,7 @@ describe('oidc sign-in', () => {
   });
 
   it('rotates the session on login', async () => {
-    const user = person(['wallet-users']);
+    const user = person(['wallet_users']);
     const jar: Jar = new Map();
     await oidcSignIn(h, jar, user);
     const old = jar.get('__Host-wallet_sid');
@@ -486,7 +481,7 @@ describe('oidc sign-in', () => {
 
   describe('next', () => {
     it('returns to a same-origin path', async () => {
-      const { res } = await oidcSignIn(h, new Map(), person(['wallet-users']), {
+      const { res } = await oidcSignIn(h, new Map(), person(['wallet_users']), {
         next: '/passes/1?a=b',
       });
       expect(res.headers.get('location')).toBe('/passes/1?a=b');
@@ -495,7 +490,7 @@ describe('oidc sign-in', () => {
     it.each(['https://evil.example/', '//evil.example', '/\\evil.example', 'javascript:alert(1)'])(
       'drops %s',
       async (next) => {
-        const { res } = await oidcSignIn(h, new Map(), person(['wallet-users']), { next });
+        const { res } = await oidcSignIn(h, new Map(), person(['wallet_users']), { next });
         expect(res.headers.get('location')).toBe('/');
       },
     );
@@ -504,7 +499,7 @@ describe('oidc sign-in', () => {
   describe('callback checks', () => {
     it('rejects a wrong state', async () => {
       const jar: Jar = new Map();
-      const { res } = await oidcSignIn(h, jar, person(['wallet-users']), {
+      const { res } = await oidcSignIn(h, jar, person(['wallet_users']), {
         tamperCallback: (u) => u.searchParams.set('state', 'forged'),
       });
       expect(res.status).toBe(400);
@@ -512,7 +507,7 @@ describe('oidc sign-in', () => {
     });
 
     it('rejects a callback without the binding cookie and keeps the flow', async () => {
-      const user = person(['wallet-users']);
+      const user = person(['wallet_users']);
       const jar: Jar = new Map();
       const { start, callback } = await oidcSignIn(h, jar, user);
       expect(start.status).toBe(302);
@@ -539,7 +534,7 @@ describe('oidc sign-in', () => {
     });
 
     it('consumes the flow: replaying the callback fails', async () => {
-      const user = person(['wallet-users']);
+      const user = person(['wallet_users']);
       const jar: Jar = new Map();
       const { callback } = await oidcSignIn(h, jar, user);
       const flowCookie = new Map([['__Host-wallet_oidc', 'x']]);
@@ -551,7 +546,7 @@ describe('oidc sign-in', () => {
 
     it('rejects a nonce that differs from the flow', async () => {
       const jar: Jar = new Map();
-      const { res } = await oidcSignIn(h, jar, person(['wallet-users']), {
+      const { res } = await oidcSignIn(h, jar, person(['wallet_users']), {
         tamper: (u) => u.searchParams.set('nonce', 'attacker-nonce'),
       });
       expect(res.status).toBe(400);
@@ -559,29 +554,29 @@ describe('oidc sign-in', () => {
     });
 
     it('rejects a mismatched or missing iss', async () => {
-      const a = await oidcSignIn(h, new Map(), person(['wallet-users']), {
+      const a = await oidcSignIn(h, new Map(), person(['wallet_users']), {
         tamperCallback: (u) => u.searchParams.set('iss', 'https://evil.example'),
       });
       expect(a.res.status).toBe(400);
-      const b = await oidcSignIn(h, new Map(), person(['wallet-users']), {
+      const b = await oidcSignIn(h, new Map(), person(['wallet_users']), {
         tamperCallback: (u) => u.searchParams.delete('iss'),
       });
       expect(b.res.status).toBe(400);
     });
 
     it('rejects an error response and a missing code', async () => {
-      const a = await oidcSignIn(h, new Map(), person(['wallet-users']), {
+      const a = await oidcSignIn(h, new Map(), person(['wallet_users']), {
         tamperCallback: (u) => u.searchParams.set('error', 'access_denied'),
       });
       expect(a.res.status).toBe(400);
-      const b = await oidcSignIn(h, new Map(), person(['wallet-users']), {
+      const b = await oidcSignIn(h, new Map(), person(['wallet_users']), {
         tamperCallback: (u) => u.searchParams.delete('code'),
       });
       expect(b.res.status).toBe(400);
     });
 
     it('rejects a PKCE failure at the provider', async () => {
-      const res = await oidcSignIn(h, new Map(), person(['wallet-users']), {
+      const res = await oidcSignIn(h, new Map(), person(['wallet_users']), {
         tamperCallback: (u) => u.searchParams.set('code', 'code-unknown'),
       });
       expect(res.res.status).toBe(400);
@@ -607,7 +602,7 @@ describe('oidc sign-in', () => {
   describe('logout', () => {
     it('revokes the session and leaves through end_session_endpoint', async () => {
       const jar: Jar = new Map();
-      await oidcSignIn(h, jar, person(['wallet-users']));
+      await oidcSignIn(h, jar, person(['wallet_users']));
       const stale = new Map(jar);
       const res = await h.call('/auth/logout', {
         method: 'POST',
@@ -623,7 +618,7 @@ describe('oidc sign-in', () => {
 
     it('redirects to /login for form posts', async () => {
       const jar: Jar = new Map();
-      await oidcSignIn(h, jar, person(['wallet-users']));
+      await oidcSignIn(h, jar, person(['wallet_users']));
       const res = await h.call('/auth/logout', { method: 'POST', cookies: jar });
       expect(res.status).toBe(303);
       expect(res.headers.get('location')).toContain('/api/oidc/end-session');

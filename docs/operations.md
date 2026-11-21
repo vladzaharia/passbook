@@ -38,19 +38,26 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
-   - Groups, matched by exact, case-sensitive name from the claim: `OIDC_PLATFORM_ADMIN_GROUP`
-     (`wallet-admins`: every org and the platform scope, developer features included),
-     `OIDC_ADMIN_GROUP` (`wallet-org-admins`: may use the org console; which orgs is PassBook
-     membership), `OIDC_DEVELOPER_GROUP` (`passbook-developers`) and `OIDC_USER_GROUP`
-     (`wallet-users`). If Pocket ID puts a normalised name in the claim (`wallet_admins`), set the
-     variable to that name. A refused sign-in logs the groups it received (`auth.oidc_no_access`).
+   - Groups: the `OIDC_*_GROUP` vars hold the values Pocket ID sends in the `groups` claim, not the
+     display names. Pocket ID derives them from the display name (lowercase, other characters to
+     `_`): `Wallet Admins` or `wallet-admins` arrives as `wallet_admins`. Matching is exact and
+     case-sensitive, and a test fails any var that is not `[a-z0-9_]`. `OIDC_PLATFORM_ADMIN_GROUP`
+     (`wallet_admins`: every org and the platform scope, developer features included),
+     `OIDC_ADMIN_GROUP` (`wallet_org_admins`: may use the org console; which orgs is PassBook
+     membership), `OIDC_DEVELOPER_GROUP` (`passbook_developers`) and `OIDC_USER_GROUP`
+     (`wallet_users`). Check the real values in the logs of a refused sign-in
+     (`auth.oidc_no_access` lists the groups it received) before a deploy that changes them.
    - Turning on the admin group requirement (`OIDC_CONSOLE_GROUP_REQUIRED`, default `"false"`):
-     1. In Pocket ID create `wallet-org-admins` and add everyone who uses an org console. Platform
-        admins need no other group.
-     2. Add `wallet-org-admins` to the PassBook client's allowed groups.
-     3. Set `OIDC_CONSOLE_GROUP_REQUIRED` to `"true"` in `wrangler.jsonc` and deploy. Org console
-        routes then answer `403 CONSOLE_ACCESS_REQUIRED` to a session without the group or the
-        platform admin role. Sessions made before the change lack the role until the next sign-in.
+     1. In Pocket ID create `wallet_org_admins` (display name `wallet-org-admins`) and add everyone
+        who uses an org console, including every current org member. Platform admins need no
+        other group.
+     2. Add the group to the PassBook client's allowed groups.
+     3. Set `OIDC_CONSOLE_GROUP_REQUIRED` to `"true"` in `wrangler.jsonc` and deploy. Console
+        routes (org routes, members and invitations, audit, metrics, scan administration) then
+        answer `403 CONSOLE_ACCESS_REQUIRED` to a Polaris ID session without the group or the
+        platform admin role, and the Admin menu item is hidden. Sessions made before the change
+        lack the role until the next sign-in: members sign out and in. Email-link sessions in the
+        console grace window are not affected and end with the grace. API keys keep working.
      Settings → Polaris ID shows the group names and whether the requirement is on.
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
@@ -122,7 +129,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    [Cutover](#cutover-from-schema-0024), which is complete.
 10. **First admin**: a new database has no memberships. Run
     `node tools/bootstrap-tenancy.ts --owner <your email> --apply` locally, or the printed remote
-    commands, after signing in once. Then sign in through Pocket ID as a `wallet-admins` member
+    commands, after signing in once. Then sign in through Pocket ID as a `wallet_admins` member
     (or break-glass if Pocket ID is down). Check Status: every component should be verified or
     configured.
 11. **Device acceptance test** (a real iPhone)
@@ -320,7 +327,7 @@ Owner steps:
    first; the custom domain creates its own. The deploy applies `migrations/0008_passes.sql`,
    which moves stored web service URLs off wallet.plrs.im (no pass was on a device).
 3. **First sign-in** through Pocket ID creates a new client: set its allowed groups
-   (`wallet-admins`, `wallet-users`) and its logo as in [Go-live](#go-live-checklist) step 1. User
+   (`wallet_admins`, `wallet_users`) and its logo as in [Go-live](#go-live-checklist) step 1. User
    ids (`sub`) do not change, so linked accounts carry over; everyone consents once.
 4. If passes existed, rebuild their files: Identities → the platform identity → Re-sign.
 

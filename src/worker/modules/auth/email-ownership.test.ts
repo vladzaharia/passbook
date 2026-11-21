@@ -28,7 +28,7 @@ const person = (email: string) => ({
   sub: `sub-${uniq()}`,
   email,
   name: 'Person',
-  groups: ['wallet-users'],
+  groups: ['wallet_users'],
 });
 
 const setTrust = (on: boolean | null) => setOidcTrust(h.env.DB, on);
@@ -213,7 +213,7 @@ describe('positive controls', () => {
         subject,
         emailClaim: owner.primaryEmail,
         emailVerified: true,
-        groups: ['wallet-users'],
+        groups: ['wallet_users'],
       },
       sign,
     );
@@ -229,7 +229,7 @@ describe('positive controls', () => {
   it('after the proof the browser goes back through Pocket ID and signs in with group roles', async () => {
     const email = `admin-${uniq()}@example.test`;
     const jar: Jar = new Map();
-    const admin = { ...person(email), groups: ['wallet-admins'] };
+    const admin = { ...person(email), groups: ['wallet_admins'] };
     expect((await oidcSignIn(h, jar, admin)).res.status).toBe(403);
     const consumed = await consumeProof(jar);
     expect(consumed.status).toBe(303);
@@ -510,7 +510,7 @@ describe('identity links are audited once', () => {
       subject: `once-${uniq()}`,
       emailClaim: owner.primaryEmail,
       emailVerified: true,
-      groups: ['wallet-users'],
+      groups: ['wallet_users'],
     };
     await linkIdentityByMail(ctx(), owner.primaryEmail, pending, sign);
     await linkIdentityByMail(ctx(), owner.primaryEmail, pending, sign);

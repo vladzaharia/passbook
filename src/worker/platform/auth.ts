@@ -9,7 +9,6 @@ import {
   type RoleSchema,
 } from '../../shared/contracts/common.ts';
 import type { SignInAmr, SignInLevel } from '../../shared/sign-in.ts';
-import { hasConsoleGroup, hasDeveloperAccess } from '../../shared/spaces.ts';
 import {
   authorityUnproven,
   capabilityState,
@@ -27,7 +26,12 @@ import { enforceRateLimit } from './rate-limit.ts';
 import type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
 import type { ScannerAuth } from './scanner-auth.ts';
 import { serviceContext } from './service-context.ts';
-import { assertSignIn, declareSignIn } from './sign-in-guard.ts';
+import {
+  assertConsoleGroup,
+  assertDeveloper,
+  assertSignIn,
+  declareSignIn,
+} from './sign-in-guard.ts';
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
@@ -167,6 +171,18 @@ knownGuards.add(requireSession);
 knownGuards.add(requireStrictSession);
 knownGuards.add(requireHolderSession);
 
+/** `requireSession`, and the admin group where it is required: org console routes that take no scope. */
+export const requireConsoleSession: MiddlewareHandler<AppBindings> = declareSignIn(
+  createMiddleware<AppBindings>(async (c, next) => {
+    const session = await sessionOrThrow(c, 'idp');
+    assertConsoleGroup(c, session);
+    await csrfGuard(c, session);
+    await next();
+  }),
+  'idp',
+);
+knownGuards.add(requireConsoleSession);
+
 /** Cookie session with the admin role. */
 export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
   const session = await sessionOrThrow(c, 'idp');
@@ -275,24 +291,8 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       return next();
     }
     const session = await sessionOrThrow(c, level);
-    if (developer && !hasDeveloperAccess(session.roles)) {
-      reportDenied(c, 'FORBIDDEN', session);
-      throw new ForbiddenError(
-        "You don't have developer access. Ask an administrator.",
-        'DEVELOPER_ACCESS_REQUIRED',
-      );
-    }
-    if (
-      sessionKind === 'tenant' &&
-      c.env.OIDC_CONSOLE_GROUP_REQUIRED === 'true' &&
-      !hasConsoleGroup(session.roles)
-    ) {
-      reportDenied(c, 'FORBIDDEN', session);
-      throw new ForbiddenError(
-        "You don't have console access. Ask an administrator.",
-        'CONSOLE_ACCESS_REQUIRED',
-      );
-    }
+    if (developer) assertDeveloper(c, session);
+    if (sessionKind === 'tenant') assertConsoleGroup(c, session);
     if (sessionKind === 'admin') requireAdminRole(c, session);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };

@@ -155,8 +155,8 @@ Org names and the sender name reject controls, line separators and bidi marks at
 - Break-glass: delete `BREAKGLASS_TOKEN_SHA256` while unneeded, or put Cloudflare Access or a WAF IP rule in front of `/auth/breakglass*`. Keep `.secrets/breakglass-token` offline.
 - After deploy, open the status page: `ratelimits` shows every `RL_*` present; `turnstile` and `breakglass` read as expected.
 - GitHub: default workflow permissions read-only, Dependabot alerts and security updates on, `main` protected with the `ci` check required.
-- Admin offboarding: remove the user from `wallet-admins` in Pocket ID and revoke their sessions (Admin > Users > Revoke sessions). The role snapshot lasts up to 1 h idle and 12 h absolute.
-- Offboarding also revokes organization memberships: each org's Members list, or `DELETE /api/v1/orgs/{id}/memberships/{membershipId}` (`org_admin`, or a platform admin acting as one). A removed `wallet-admins` group does not remove a membership, and a member keeps tenant access until revoked. Revoke the person's API keys and pending invitations in the same pass.
+- Admin offboarding: remove the user from `wallet_admins` in Pocket ID and revoke their sessions (Admin > Users > Revoke sessions). The role snapshot lasts up to 1 h idle and 12 h absolute.
+- Offboarding also revokes organization memberships: each org's Members list, or `DELETE /api/v1/orgs/{id}/memberships/{membershipId}` (`org_admin`, or a platform admin acting as one). A removed `wallet_admins` group does not remove a membership, and a member keeps tenant access until revoked. Revoke the person's API keys and pending invitations in the same pass.
 - Deploy and apply new D1 migrations yourself. Agents never deploy or use `--remote`.
 
 ## Dev advisories

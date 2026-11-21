@@ -9,12 +9,14 @@ export type SignInMethod = 'oidc' | 'magic_link' | 'breakglass';
 
 export interface SpaceAccess {
   amr: SignInMethod;
-  /** The session's roles. `developer` comes from the Pocket ID group `passbook-developers`. */
+  /** The session's roles. `developer` comes from the Pocket ID group `passbook_developers`. */
   roles: readonly string[];
   /** The person has an active membership in at least one organization. */
   orgMember: boolean;
   /** An email session's console grace end (ms), when it has one. */
   consoleUntil?: number | null;
+  /** The platform requires the admin group (`console` role) for Admin: Polaris ID sessions only. */
+  consoleGroupRequired?: boolean;
 }
 
 /** The order the account menu lists them in. */
@@ -54,5 +56,7 @@ export function canUseSpace(space: Space, access: SpaceAccess): boolean {
   if (needsPocketId(space, access.amr, access.consoleUntil)) return false;
   const admin = access.roles.includes('admin');
   if (space === 'developers') return access.amr === 'oidc' && hasDeveloperAccess(access.roles);
+  if (access.consoleGroupRequired && access.amr === 'oidc' && !hasConsoleGroup(access.roles))
+    return false;
   return admin || access.orgMember;
 }

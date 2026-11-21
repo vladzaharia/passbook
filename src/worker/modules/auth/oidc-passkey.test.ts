@@ -13,7 +13,7 @@ const person = (amr?: string[]) => {
     sub: `pk-${id}`,
     email: `pk${id}@example.test`,
     name: 'Person',
-    groups: ['wallet-users'],
+    groups: ['wallet_users'],
     ...(amr ? { amr } : {}),
   };
 };

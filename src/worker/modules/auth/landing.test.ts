@@ -32,16 +32,16 @@ afterEach(() => h.restore());
 
 describe('landing after Polaris ID', () => {
   it('sends admins to the console and holders to My passes when there is no next', async () => {
-    const admin = await oidcSignIn(h, new Map(), person(['wallet-admins']));
+    const admin = await oidcSignIn(h, new Map(), person(['wallet_admins']));
     expect(admin.res.headers.get('location')).toBe('/admin');
-    const holder = await oidcSignIn(h, new Map(), person(['wallet-users']));
+    const holder = await oidcSignIn(h, new Map(), person(['wallet_users']));
     expect(holder.res.headers.get('location')).toBe('/');
-    const asked = await oidcSignIn(h, new Map(), person(['wallet-admins']), { next: '/' });
+    const asked = await oidcSignIn(h, new Map(), person(['wallet_admins']), { next: '/' });
     expect(asked.res.headers.get('location')).toBe('/');
   });
 
   it('sends org members to the console, still honouring next', async () => {
-    const who = person(['wallet-users']);
+    const who = person(['wallet_users']);
     const jar = new Map();
     await oidcSignIn(h, jar, who);
     const { user } = await session(jar);
@@ -66,7 +66,7 @@ describe('landing after Polaris ID', () => {
   });
 
   it('keeps next on the way back from a cancelled sign-in', async () => {
-    const { res } = await oidcSignIn(h, new Map(), person(['wallet-users']), {
+    const { res } = await oidcSignIn(h, new Map(), person(['wallet_users']), {
       next: '/passes/3',
       tamperCallback: (u) => u.searchParams.set('error', 'access_denied'),
     });
@@ -106,7 +106,7 @@ describe('sign out', () => {
   });
 
   it('everywhere: needs the CSRF token, revokes every session, still leaves via Pocket ID', async () => {
-    const user = person(['wallet-users']);
+    const user = person(['wallet_users']);
     const here: Jar = new Map();
     const there: Jar = new Map();
     await oidcSignIn(h, here, user);
