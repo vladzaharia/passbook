@@ -30,6 +30,7 @@ import {
   requireWritableBroadcast,
 } from './guards.ts';
 import * as repo from './repo.ts';
+import { resumedBy } from './repo.ts';
 import { DAY_LIMIT_KEY, manualBroadcastsToday } from './repo-day-limit.ts';
 import { chosenTargetsStmts, resumableCount, resumeTargetsStmt } from './repo-selection.ts';
 import { launchBroadcast } from './start.ts';
@@ -115,6 +116,7 @@ export async function insertBroadcast(
         notify: body.notify ?? body.kind === 'message',
         at: body.send === 'draft' ? null : at,
         clearAfter: body.clearAfter ?? null,
+        ...(resume ? { retryOf: resume.parentId } : {}),
         actor: { type: actor.type, id: actor.id },
         now,
       },
@@ -143,8 +145,12 @@ export async function insertBroadcast(
         ]
       : []),
   ]);
-  if ((inserted?.meta.changes ?? 0) !== 1)
+  if ((inserted?.meta.changes ?? 0) !== 1) {
+    // The unique index on retry_of: another resume of this run won.
+    if (resume && (await resumedBy(ctx.env.DB, resume.parentId)))
+      throw new ConflictError('This change was already resumed.', 'BROADCAST_NOT_RETRYABLE');
     throw await insertRefusal(ctx, body.orgId, mode, now, body.kind);
+  }
   onInserted?.();
   await recordAudit(ctx, {
     orgId: body.orgId,

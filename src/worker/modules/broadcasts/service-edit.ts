@@ -10,6 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
+import { settlePending } from './change-intent.ts';
 import { limitChanges } from './change-limit.ts';
 import { prepareTarget, storedTargetOf } from './change-target.ts';
 import {
@@ -191,6 +192,10 @@ async function resumeChange(
 ): Promise<BroadcastDto> {
   if (row.parent_id !== null || row.error_code === 'SELECTION_CHANGED')
     throw new ConflictError('Make this change again from the passes.', 'BROADCAST_NOT_RETRYABLE');
+  if (await repo.resumedBy(ctx.env.DB, row.id))
+    throw new ConflictError('This change was already resumed.', 'BROADCAST_NOT_RETRYABLE');
+  // A step that died between a pass's write and its item is settled first, so the remainder is exact.
+  await settlePending(ctx, row);
   if ((await resumableCount(ctx.env.DB, row.id, row.org_id, row.mode)).all === 0)
     throw new ConflictError(
       'This change never took its passes. Make it again.',

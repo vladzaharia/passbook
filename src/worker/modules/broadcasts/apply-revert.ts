@@ -5,6 +5,7 @@ import { dispatchSafely } from '../delivery/issuance-intent.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
+import { setPassStatus } from '../passes/service.ts';
 import { actorOf } from './actor.ts';
 import { atValues } from './change-ops.ts';
 import {
@@ -66,28 +67,30 @@ async function revertVoid(
   }
   if (pass.version !== version) return { ...base, outcome: 'unchanged' };
   try {
-    await publishPass(ctx, {
+    await setPassStatus(
+      ctx,
+      actorOf(undo),
       passId,
-      orgScope: undo.org_id,
-      cause: undo.created_by_type === 'api_key' ? 'api' : 'admin',
-      source: 'schedule',
-      actor: actorOf(undo),
-      dispatch: false,
-      notify: false,
-      expectedVersion: version,
-      extraChecks: [creatorLive(undo, ctx.clock.now())],
-      mutate: (current) => {
-        if (
-          current.orgId !== undo.org_id ||
-          current.mode !== undo.mode ||
-          current.status !== 'voided' ||
-          current.removedAt !== null ||
-          current.version !== version
-        )
-          throw changed();
-        return { status: 'active' };
+      'active',
+      { orgId: undo.org_id, mode: undo.mode, principal: 'session' },
+      undefined,
+      {
+        extraChecks: [creatorLive(undo, ctx.clock.now())],
+        source: 'schedule',
+        notify: false,
+        expectedVersion: version,
+        guard: (current) => {
+          if (
+            current.orgId !== undo.org_id ||
+            current.mode !== undo.mode ||
+            current.status !== 'voided' ||
+            current.removedAt !== null ||
+            current.version !== version
+          )
+            throw changed();
+        },
       },
-    });
+    );
     await recordPassEvent(ctx, {
       orgId: undo.org_id,
       passId,

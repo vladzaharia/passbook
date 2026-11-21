@@ -111,3 +111,20 @@ export function revertItems(
     [parentId, orgId, mode, cursor ?? '', limit],
   );
 }
+
+/** Whether pass version `version` is a `schedule` write by this actor: a run's own write, not someone else's. */
+export async function versionBy(
+  db: D1Database,
+  passId: string,
+  version: number,
+  actorType: string | null,
+  actorId: string | null,
+): Promise<boolean> {
+  const row = await first<{ one: number }>(
+    db,
+    `SELECT 1 AS one FROM pass_versions WHERE pass_id = ? AND version = ? AND source = 'schedule'
+       AND actor_type IS ? AND actor_id IS ?`,
+    [passId, version, actorType, actorId],
+  );
+  return row !== null;
+}

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
@@ -27,6 +27,20 @@ describe('void runs', () => {
     const done = await voidRun([a.id, b.id, c.id], { expectCount: 3 });
     expect(done).toMatchObject({ state: 'sent', counts: { updated: 3 } });
     expect(await state(a.id)).toBe('voided');
+    // The platform's own void: its event, its audit row.
+    const kinds = await all<{ kind: string }>(
+      ck.kit.env.DB,
+      'SELECT kind FROM pass_events WHERE pass_id = ?',
+      [a.id],
+    );
+    expect(kinds.map((k) => k.kind)).toContain('pass.voided');
+    expect(
+      await first(
+        ck.kit.env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'pass.void' AND target_id = ?",
+        [a.id],
+      ),
+    ).not.toBeNull();
     const items = await ck.items(done.id);
     expect(JSON.parse(items[0]?.before ?? '{}')).toMatchObject({
       action: 'void',

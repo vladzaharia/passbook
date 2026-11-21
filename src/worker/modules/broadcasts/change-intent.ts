@@ -3,7 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { atValues } from './change-ops.ts';
 import { type BroadcastRow, clearIntent, insertItems, pendingIntents } from './repo.ts';
-import { hasVersionFrom } from './repo-items.ts';
+import { versionBy } from './repo-items.ts';
 
 /** What a change was about to do to one pass: its touched values before and after, and the pass version it read. */
 export interface Intent {
@@ -28,16 +28,26 @@ export async function settlePending(ctx: ServiceContext, row: BroadcastRow): Pro
     for (const r of rows) {
       const intent = JSON.parse(r.intent) as Intent;
       const pass = await getPass(db, r.pass_id, row.org_id);
+      // Only this run's own write counts: the pass version after the intent's is a `schedule` write by
+      // the run's creator. Someone else's void or edit is not ours, even if it left the same values.
+      const ours =
+        pass !== null &&
+        (await versionBy(
+          db,
+          r.pass_id,
+          intent.version + 1,
+          row.created_by_type,
+          row.created_by_id,
+        ));
       const landed =
         pass !== null &&
         pass.mode === row.mode &&
         (intent.action === 'void'
-          ? pass.status === 'voided' && pass.version > intent.version
+          ? pass.status === 'voided' && pass.version === intent.version + 1 && ours
           : intent.action === 'design'
             ? pass.templateVersion === intent.to.templateVersion
-            : atValues(pass.personalization, intent.to) ||
-              (pass.version > intent.version &&
-                (await hasVersionFrom(db, r.pass_id, 'schedule', row.started_at ?? 0))));
+            : atValues(pass.personalization, intent.to) &&
+              (pass.version === intent.version || (pass.version > intent.version && ours)));
       if (landed && pass) {
         const { version: _read, ...before } = intent;
         await insertItems(db, row.id, [

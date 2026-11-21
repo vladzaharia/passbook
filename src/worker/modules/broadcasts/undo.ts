@@ -10,6 +10,7 @@ import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { Actor } from '../passes/service.ts';
+import { settlePending } from './change-intent.ts';
 import { assertCanChange, type BroadcastScope, requireWritableBroadcast } from './guards.ts';
 import * as repo from './repo.ts';
 import { countRevertable } from './repo-items.ts';
@@ -103,6 +104,7 @@ export async function undoBroadcast(
       'A change can be undone for 24 hours after it ends.',
       'BROADCAST_UNDO_EXPIRED',
     );
+  await settlePending(ctx, parent);
   const childId = ctx.ids.id();
   const stored = JSON.parse(parent.target) as { templateIds: string[] };
   const [inserted] = await batch(db, [

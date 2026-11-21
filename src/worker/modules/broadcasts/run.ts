@@ -8,6 +8,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishRun } from '../../platform/workflow-runs.ts';
 import { actorOf, failInvalidTarget, safeTargetFilter } from './apply.ts';
+import { settlePending } from './change-intent.ts';
 import { snapshotTargets } from './change-snapshot.ts';
 import { countsOf } from './dto.ts';
 import {
@@ -16,11 +17,12 @@ import {
   countItems,
   getBroadcast,
   insertBroadcastStmt,
+  markSnapshot,
   setTargeted,
 } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
 import { countRevertable } from './repo-items.ts';
-import { hasTargets, importTemplate } from './repo-selection.ts';
+import { importTemplate } from './repo-selection.ts';
 import { countTargeted } from './repo-target.ts';
 import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
@@ -68,8 +70,11 @@ export async function startedBroadcast(
       const imp = await importTemplate(ctx.env.DB, stored.importId, row.org_id, row.mode);
       if (!imp?.ended) return refuse('IMPORT_NOT_ENDED');
     }
-    if (!(await hasTargets(ctx.env.DB, broadcastId)) && !(await snapshotTargets(ctx, row)))
-      return refuse('MATCH_TOO_BROAD');
+    // A start that died partway redoes the snapshot (adding is idempotent); done only after its last page.
+    if (row.snapshot_at === null) {
+      if (!(await snapshotTargets(ctx, row))) return refuse('MATCH_TOO_BROAD');
+      await markSnapshot(ctx.env.DB, broadcastId, ctx.clock.now());
+    }
   }
   const targeted = stored.revertOf
     ? await countRevertable(ctx.env.DB, stored.revertOf, row.org_id, row.mode)
@@ -127,6 +132,8 @@ export async function finishBroadcast(
 ): Promise<BroadcastState> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
   if (!row) return 'failed';
+  // Whatever ended the run, a pass written whose item was not recorded is settled first.
+  if (row.kind === 'change') await settlePending(ctx, row);
   const counts = countsOf(row, await countItems(ctx.env.DB, [broadcastId], row.org_id, row.mode));
   // A stop asked for while sending ends the run as cancelled, after its last chunk.
   const stopped = !errorCode && row.stop_at !== null;

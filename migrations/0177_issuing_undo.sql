@@ -40,3 +40,8 @@ CREATE INDEX broadcast_targets_intent ON broadcast_targets (broadcast_id, pass_i
 INSERT OR IGNORE INTO org_entitlement_overrides (org_id, key, value, note, expires_at, updated_at, updated_by)
   SELECT org_id, 'passes.changesPerDay', value, note, expires_at, updated_at, updated_by
   FROM org_entitlement_overrides WHERE key = 'messages.perDay';
+-- One resume per change run (a second retry of the same run is refused by this index), and the mark that a
+-- run's snapshot of target rows reached its last page (a start that died halfway continues it).
+ALTER TABLE broadcasts ADD COLUMN retry_of TEXT;
+CREATE UNIQUE INDEX broadcasts_retry_of ON broadcasts (retry_of) WHERE retry_of IS NOT NULL;
+ALTER TABLE broadcasts ADD COLUMN snapshot_at INTEGER;

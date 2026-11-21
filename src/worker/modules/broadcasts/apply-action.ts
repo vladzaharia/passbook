@@ -4,12 +4,12 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo.ts';
+import { setPassStatus } from '../passes/service.ts';
 import { releaseMovePlan, type StampMove } from '../passes/stamps-keep.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { actorOf } from './actor.ts';
 import { type BroadcastRow, type ItemRow, setIntent } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
-import { hasVersionFrom } from './repo-items.ts';
 
 /** The approved design each template moves to, read once per chunk, with its stamp plan. */
 export type DesignCache = Map<
@@ -84,34 +84,50 @@ export async function applyAction(
     ),
   );
   try {
-    const result = await publishPass(ctx, {
-      passId: pass.id,
-      orgScope: row.org_id,
-      cause: row.created_by_type === 'api_key' ? 'api' : 'admin',
-      source: 'schedule',
-      actor: actorOf(row),
-      dispatch: false,
-      // A void shows as void; a design move tells holders only when the run says so.
-      notify: action === 'design' && row.notify === 1,
-      extraChecks: [creatorLive(row, ctx.clock.now())],
-      ...(target ? { expectedRelease: { id: target.id, generation: target.generation } } : {}),
-      mutate: (current) => {
-        if (
-          current.orgId !== row.org_id ||
-          current.mode !== row.mode ||
-          current.status !== 'active' ||
-          current.removedAt !== null
-        )
-          throw changed();
-        if (!target) return { status: 'voided' };
-        seen.from = current.templateVersion;
-        return { templateVersion: target.version, ...target.move(current) };
-      },
-    });
-    if (!result.changed) {
-      const written = await hasVersionFrom(ctx.env.DB, pass.id, 'schedule', row.started_at ?? 0);
-      return { ...base, outcome: written ? 'updated' : 'unchanged' };
-    }
+    const stillOurs = (current: Pass) => {
+      if (
+        current.orgId !== row.org_id ||
+        current.mode !== row.mode ||
+        current.status !== 'active' ||
+        current.removedAt !== null
+      )
+        throw changed();
+    };
+    // A void is the platform's own void (events, audit row, print PDFs) with the run's creator proved in its write.
+    const result = target
+      ? await publishPass(ctx, {
+          passId: pass.id,
+          orgScope: row.org_id,
+          cause: row.created_by_type === 'api_key' ? 'api' : 'admin',
+          source: 'schedule',
+          actor: actorOf(row),
+          dispatch: false,
+          // A design move tells holders only when the run says so.
+          notify: row.notify === 1,
+          extraChecks: [creatorLive(row, ctx.clock.now())],
+          expectedRelease: { id: target.id, generation: target.generation },
+          mutate: (current) => {
+            stillOurs(current);
+            seen.from = current.templateVersion;
+            return { templateVersion: target.version, ...target.move(current) };
+          },
+        })
+      : await setPassStatus(
+          ctx,
+          actorOf(row),
+          pass.id,
+          'voided',
+          { orgId: row.org_id, mode: row.mode, principal: 'session' },
+          undefined,
+          {
+            extraChecks: [creatorLive(row, ctx.clock.now())],
+            source: 'schedule',
+            notify: false,
+            guard: stillOurs,
+          },
+        );
+    // A build identical to the old one stores the version with no new pass version and no push.
+    if (!result.changed) return { ...base, outcome: 'unchanged' };
     await recordPassEvent(ctx, {
       orgId: row.org_id,
       passId: pass.id,

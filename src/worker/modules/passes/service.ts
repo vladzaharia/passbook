@@ -1,4 +1,6 @@
 import type { Personalization } from '../../../passkit/types.ts';
+import type { PassSource } from '../../../shared/contracts/passes.ts';
+import type { Check } from '../../platform/authority-checks.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
@@ -18,6 +20,7 @@ import {
   listPasses,
   softDeletePass,
 } from './repo.ts';
+import type { Pass } from './repo-map.ts';
 import { softDeletePassGranted } from './repo-pass-grants.ts';
 import { captureConnectionTransferPending, connectionForPass } from './repo-read-connection.ts';
 import { getPass, pendingPushId } from './repo-read-pass.ts';
@@ -220,13 +223,25 @@ export async function updatePass(
   );
 }
 
-async function setStatus(
+/** What a run that voids or restores many passes adds to the one status write (change runs). */
+export interface StatusExtras {
+  extraChecks?: readonly Check[];
+  source?: PassSource;
+  notify?: boolean;
+  expectedVersion?: number;
+  /** Throws when the pass is no longer the one the run read; re-run on every retry. */
+  guard?: (current: Pass) => void;
+}
+
+/** The void or restore of one pass with everything it owns: its events, its audit row and its print PDFs. */
+export async function setPassStatus(
   ctx: ServiceContext,
   actor: Actor,
   passId: string,
   status: 'active' | 'voided',
   scope: ScopeArg,
   authority?: TenantPassWrite,
+  extras: StatusExtras = {},
 ) {
   const current = await getPassForWrite(ctx.env.DB, passId, scope);
   if (current.removedAt !== null)
@@ -237,7 +252,15 @@ async function setStatus(
     cause: causeOf(actor),
     actor,
     ...(authority ? { authority } : {}),
-    mutate: () => ({ status }),
+    ...(extras.extraChecks ? { extraChecks: extras.extraChecks } : {}),
+    ...(extras.source ? { source: extras.source } : {}),
+    ...(extras.notify === undefined ? {} : { notify: extras.notify }),
+    ...(extras.expectedVersion === undefined ? {} : { expectedVersion: extras.expectedVersion }),
+    ...(extras.extraChecks ? { dispatch: false } : {}),
+    mutate: (cur) => {
+      extras.guard?.(cur);
+      return { status };
+    },
   });
   // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.
   if (status === 'voided') await dropPrintPdfs(ctx, result.pass);
@@ -256,6 +279,18 @@ async function setStatus(
     kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
     actor,
   });
+  return result;
+}
+
+async function setStatus(
+  ctx: ServiceContext,
+  actor: Actor,
+  passId: string,
+  status: 'active' | 'voided',
+  scope: ScopeArg,
+  authority?: TenantPassWrite,
+) {
+  const result = await setPassStatus(ctx, actor, passId, status, scope, authority);
   return currentSummary(ctx, result.pass, authority);
 }
 

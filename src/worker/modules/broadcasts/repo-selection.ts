@@ -110,11 +110,3 @@ export const addTargets = (db: D1Database, broadcastId: string, ids: readonly st
     'INSERT OR IGNORE INTO broadcast_targets (broadcast_id, pass_id) SELECT ?, value FROM json_each(?)',
     [broadcastId, JSON.stringify(ids)],
   );
-
-/** Whether the run has any target rows yet. */
-export const hasTargets = async (db: D1Database, broadcastId: string) =>
-  (await first<{ one: number }>(
-    db,
-    'SELECT 1 AS one FROM broadcast_targets WHERE broadcast_id = ? LIMIT 1',
-    [broadcastId],
-  )) !== null;

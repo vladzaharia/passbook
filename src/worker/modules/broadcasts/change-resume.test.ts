@@ -3,9 +3,12 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { recordPassEvent } from '../events/record.ts';
+import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { applyChunk } from './apply.ts';
 import { type ChangeKit, changeKit } from './change-fixtures.ts';
+import { settlePending } from './change-intent.ts';
+import { finishBroadcast } from './run.ts';
 
 vi.mock('../events/record.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../events/record.ts')>();
@@ -317,5 +320,91 @@ describe('migration 0177', () => {
       "DELETE FROM org_entitlement_overrides WHERE org_id = ? AND key IN ('messages.perDay', 'passes.changesPerDay')",
       [ck.kit.org.id],
     );
+  });
+});
+
+describe('one resume per run', () => {
+  it('a second or a concurrent retry is refused and every pass gets the add once', async () => {
+    const passes = await three();
+    const id = await create(passes.map((p) => p.id));
+    await applyChunk(jobCtxOf(ck.kit), id, null, 1);
+    await ck.post(`/broadcasts/${id}/stop`);
+    await ck.runNext();
+    const [a, b] = await Promise.all([
+      ck.post(`/broadcasts/${id}/retry?expectCount=2`),
+      ck.post(`/broadcasts/${id}/retry?expectCount=2`),
+    ]);
+    expect([a.status, b.status].sort()).toEqual([201, 409]);
+    await expectProblem(
+      await ck.post(`/broadcasts/${id}/retry?expectCount=2`),
+      409,
+      'BROADCAST_NOT_RETRYABLE',
+    );
+    await ck.runNext();
+    for (const pass of passes) expect(await points(pass.id)).toBe(15);
+  });
+});
+
+describe('a fault after the write on every attempt', () => {
+  it('fails the run, then resume and undo are both exact', async () => {
+    const passes = await three();
+    const id = await create(passes.map((p) => p.id));
+    const crash = vi.mocked(recordPassEvent);
+    const real = crash.getMockImplementation();
+    crash.mockImplementation(async (ctx, event) => {
+      if (event.kind === 'schedule.applied') throw new Error('always down');
+      return real?.(ctx, event) as never;
+    });
+    await expect(applyChunk(jobCtxOf(ck.kit), id, null)).rejects.toThrow('always down');
+    await expect(applyChunk(jobCtxOf(ck.kit), id, null)).rejects.toThrow('always down');
+    crash.mockImplementation(real as never);
+    expect(await points(passes[0]?.id ?? '')).toBe(15);
+    await finishBroadcast(jobCtxOf(ck.kit), `broadcast-${id}`, id, 'BROADCAST_FAILED');
+    expect((await ck.items(id)).map((i) => i.outcome)).toEqual(['updated', 'updated']);
+    const res = await ck.post(`/broadcasts/${id}/retry?expectCount=1`);
+    expect(res.status).toBe(201);
+    await ck.runNext();
+    for (const pass of passes) expect(await points(pass.id)).toBe(15);
+    const undo = await ck.post(`/broadcasts/${id}/undo`);
+    expect(undo.status).toBe(200);
+    await ck.runNext();
+    expect(await points(passes[0]?.id ?? '')).toBe(10);
+  });
+});
+
+describe("settling only this run's own write", () => {
+  it('a void by someone else leaves no item', async () => {
+    const [a] = await three();
+    const id = await create([a?.id ?? ''], { patch: { $void: true }, send: 'draft' });
+    const row = await first<{ version: number }>(
+      ck.kit.env.DB,
+      'SELECT version FROM passes WHERE id = ?',
+      [a?.id ?? ''],
+    );
+    await run(ck.kit.env.DB, 'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ?', [
+      JSON.stringify({
+        action: 'void',
+        from: { status: 'active' },
+        to: { status: 'voided' },
+        version: row?.version,
+      }),
+      id,
+    ]);
+    await publishPass(jobCtxOf(ck.kit), {
+      passId: a?.id ?? '',
+      cause: 'admin',
+      actor: { type: 'user', id: 'someone-else' },
+      mutate: () => ({ status: 'voided' }),
+    });
+    const stored = await first<never>(ck.kit.env.DB, 'SELECT * FROM broadcasts WHERE id = ?', [id]);
+    await settlePending(jobCtxOf(ck.kit), stored as never);
+    expect(await ck.items(id)).toEqual([]);
+    expect(
+      await all(
+        ck.kit.env.DB,
+        'SELECT 1 FROM broadcast_targets WHERE broadcast_id = ? AND intent IS NOT NULL',
+        [id],
+      ),
+    ).toEqual([]);
   });
 });
