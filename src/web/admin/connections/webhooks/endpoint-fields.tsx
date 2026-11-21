@@ -50,9 +50,7 @@ export function EndpointFields({
         label="URL"
         required={!disabled}
         error={errors.url}
-        help={
-          errors.url ? undefined : (urlHelp ?? 'https only. PassBook posts signed events here.')
-        }
+        help={errors.url ? undefined : (urlHelp ?? 'https only.')}
       >
         {(f) => (
           <Input
@@ -71,7 +69,7 @@ export function EndpointFields({
           />
         )}
       </FormField>
-      <FormField label="Description" help="Optional. Shown in lists and audit.">
+      <FormField label="Description" help="Shown in lists and audit.">
         {(f) => (
           <Input
             {...f}

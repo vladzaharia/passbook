@@ -85,7 +85,6 @@ export function TestSend({
           <h3 id="test-send-title" className="text-sm font-medium text-fg-strong">
             Test event
           </h3>
-          <p className="text-xs text-fg-muted">One signed webhook.test to this endpoint only.</p>
         </div>
         {canManage ? (
           <Button

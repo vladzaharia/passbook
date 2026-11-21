@@ -165,10 +165,7 @@ export function LifecycleFields({
             )}
           </FormField>
         </DependentSettings>
-        <FormField
-          label="Holder email"
-          help="Field that holds the holder's email, for example /email."
-        >
+        <FormField label="Holder email">
           {(c) => (
             <Input
               {...c}

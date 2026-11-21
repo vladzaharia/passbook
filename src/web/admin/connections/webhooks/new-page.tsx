@@ -97,11 +97,7 @@ export function NewWebhookPage() {
     return (
       <>
         <PageHeader title="Add endpoint" breadcrumbs={crumbs} />
-        <EmptyState
-          art="building"
-          title="Choose an organization"
-          description="Choose an organization in the top bar to add a webhook."
-        />
+        <EmptyState art="building" title="Choose an organization" />
       </>
     );
 
