@@ -23,10 +23,23 @@ import { type DeniedEvent, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
 import { enforceRateLimit } from './rate-limit.ts';
-import type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
+import {
+  isRead,
+  neededScope,
+  type RouteAuth,
+  type ScopeRule,
+  sessionKindOf,
+} from './route-auth-spec.ts';
 import type { ScannerAuth } from './scanner-auth.ts';
 import { serviceContext } from './service-context.ts';
-import { assertSignIn, declareSignIn } from './sign-in-guard.ts';
+import {
+  assertConsoleGroup,
+  assertDeveloper,
+  assertSignIn,
+  assertStepUp,
+  declareSignIn,
+  declareStepUp,
+} from './sign-in-guard.ts';
 
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
@@ -48,6 +61,8 @@ export interface SessionAuth {
   amr: Amr;
   /** An email session still inside the console grace window: when it ends (ms). Null otherwise. */
   consoleUntil?: number | null;
+  /** When the sign-in was last proven (ms); null for an email link or a provider that sent no `auth_time`. */
+  authTime?: number | null;
   /**
    * Stores resolve 'live'. Admin guards replace it from the x-passbook-mode header; holder routes
    * never read it (holders see all their passes).
@@ -166,6 +181,18 @@ knownGuards.add(requireSession);
 knownGuards.add(requireStrictSession);
 knownGuards.add(requireHolderSession);
 
+/** `requireSession`, and the admin group where it is required: org console routes that take no scope. */
+export const requireConsoleSession: MiddlewareHandler<AppBindings> = declareSignIn(
+  createMiddleware<AppBindings>(async (c, next) => {
+    const session = await sessionOrThrow(c, 'idp');
+    assertConsoleGroup(c, session);
+    await csrfGuard(c, session);
+    await next();
+  }),
+  'idp',
+);
+knownGuards.add(requireConsoleSession);
+
 /** Cookie session with the admin role. */
 export const requireAdmin: MiddlewareHandler<AppBindings> = createMiddleware(async (c, next) => {
   const session = await sessionOrThrow(c, 'idp');
@@ -194,31 +221,9 @@ function requireAdminRole(c: Context<AppBindings>, session: SessionAuth): void {
   throw new ForbiddenError('Admin access is required.');
 }
 
-/** Reads (GET, HEAD) need `read`, everything else `write`. */
-export function methodScope(scopes: { read: ApiScope; write: ApiScope }): ScopeRule {
-  return scopes;
-}
-
 export type { RouteAuth, ScopeRule } from './route-auth-spec.ts';
+export { methodScope } from './route-auth-spec.ts';
 export { authorityUnproven, proveCapability, verifiedScopeOf };
-
-const isRead = (c: Context) => c.req.method === 'GET' || c.req.method === 'HEAD';
-
-/** The scope the key must hold, or null when none of several matches. Named scopes give a named refusal. */
-function neededScope(rule: ScopeRule, c: Context, held: readonly ApiScope[]): ApiScope | null {
-  if (typeof rule === 'string') return rule;
-  if (Array.isArray(rule)) return rule.find((candidate) => held.includes(candidate)) ?? null;
-  const split = rule as { read: ApiScope; write: ApiScope };
-  return isRead(c) ? split.read : split.write;
-}
-
-type SessionKind = 'plain' | 'tenant' | 'admin';
-
-function sessionKindOf(auth: RouteAuth): SessionKind {
-  if ('platform' in auth) return 'admin';
-  if ('human' in auth) return auth.requestMode ? 'tenant' : 'plain';
-  return auth.session === 'admin' ? 'admin' : 'tenant';
-}
 
 /**
  * The single place a route's `auth` is evaluated.
@@ -237,7 +242,9 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const feature = 'platform' in auth ? undefined : auth.feature;
   const tillKey = 'scope' in auth && auth.tillKey === true;
   const limited = 'scope' in auth && auth.templateScoped ? ({ limited: 'ok' } as const) : undefined;
+  const developer = 'human' in auth && auth.developer === true;
   const sessionKind = sessionKindOf(auth);
+  const stepUp = auth.stepUp;
   const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
@@ -273,7 +280,11 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       return next();
     }
     const session = await sessionOrThrow(c, level);
+    if (developer) assertDeveloper(c, session);
+    if (sessionKind === 'tenant') assertConsoleGroup(c, session);
     if (sessionKind === 'admin') requireAdminRole(c, session);
+    // After the role check: a person who could not do this anyway is not sent through a passkey prompt.
+    if (stepUp) assertStepUp(c, session, stepUp.maxAgeSec);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };
       if (capability) capabilityState.set(principal, { capability, proven: false });
@@ -284,6 +295,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     return next();
   });
   knownGuards.add(guard);
+  if (stepUp) declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: false });
   return declareSignIn(guard, level);
 }
 

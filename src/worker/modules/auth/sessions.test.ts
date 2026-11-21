@@ -40,6 +40,33 @@ async function open(
   return { user, session, store, ctx };
 }
 
+describe('auth_time on the session', () => {
+  async function authTimeOf(claimed?: number) {
+    const user = await makeUser(fixtures(h.env));
+    const ctx = createServiceContext(h.env, { clock });
+    const session = await createSession(ctx, {
+      userId: user.id,
+      roles: ['user'],
+      amr: 'oidc',
+      ipPrefix: null,
+      userAgent: null,
+      ...(claimed === undefined ? {} : { authTime: claimed }),
+    });
+    return (await createSessionStore(h.env, clock).resolve(session.cookieValue))?.authTime;
+  }
+
+  it('reaches the guard as the provider claimed it', async () => {
+    expect(await authTimeOf(clock.now() - MIN)).toBe(clock.now() - MIN);
+  });
+
+  it('is null when absent, not positive or further ahead than the skew', async () => {
+    expect(await authTimeOf()).toBeNull();
+    expect(await authTimeOf(0)).toBeNull();
+    expect(await authTimeOf(-5)).toBeNull();
+    expect(await authTimeOf(clock.now() + 10 * MIN)).toBeNull();
+  });
+});
+
 describe('session store', () => {
   it('resolves a fresh session and stores only the hash', async () => {
     const { user, session, store } = await open(['user']);

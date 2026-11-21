@@ -34,7 +34,14 @@ const entries = (over: Record<string, unknown> = {}, saved: string[] = []) => {
       updatedBy: saved.includes(key) ? 'u1' : null,
       source: saved.includes(key) ? 'org' : 'default',
     })),
-    oidc: { issuer: 'https://id.plrs.im', adminGroup: 'wallet-admins', userGroup: null },
+    oidc: {
+      issuer: 'https://id.plrs.im',
+      platformAdminGroup: 'wallet_admins',
+      adminGroup: null,
+      developerGroup: null,
+      userGroup: null,
+      consoleGroupRequired: false,
+    },
     released: { google: false, samsung: false },
   };
 };
@@ -73,7 +80,7 @@ describe('settings page', () => {
     expect(screen.getByRole('switch', { name: 'Magic-link sign-in' })).toBeChecked();
     expect(screen.getByRole('heading', { name: 'Access and sign-in' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Polaris ID/ })).toBeInTheDocument();
-    expect(await screen.findByText('wallet-admins')).toBeInTheDocument();
+    expect(await screen.findByText('wallet_admins')).toBeInTheDocument();
     expect((await axe(container)).violations).toEqual([]);
   });
 
@@ -135,7 +142,14 @@ describe('settings page', () => {
         '/api/v1/settings': () =>
           json({
             ...entries(),
-            oidc: { issuer: 'https://id.staging.test', adminGroup: null, userGroup: null },
+            oidc: {
+              issuer: 'https://id.staging.test',
+              platformAdminGroup: null,
+              adminGroup: null,
+              developerGroup: null,
+              userGroup: null,
+              consoleGroupRequired: false,
+            },
           }),
       },
     });

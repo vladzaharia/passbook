@@ -9,8 +9,12 @@ export async function landingFor(
   userId: string,
   roles: readonly Role[],
   next?: string | null,
+  /** A Polaris ID sign-in: with the admin group required, a member without it lands on My passes. */
+  oidc = false,
 ): Promise<string> {
   if (safeNext(next) || roles.includes('admin')) return homeFor(roles, next);
+  if (oidc && ctx.env.OIDC_CONSOLE_GROUP_REQUIRED === 'true' && !roles.includes('console'))
+    return homeFor(roles, next);
   const memberships = await myMemberships(ctx.env.DB, userId);
   return memberships.length > 0 ? '/admin' : homeFor(roles, next);
 }
