@@ -125,8 +125,15 @@ export function FirstSync({
       {preview?.ok && c ? (
         <>
           <p className="text-xs text-fg-muted">
-            {preview.records} records read. Nothing is written.
+            {preview.records} records from the last {preview.window.days} days
+            {preview.window.excluded ? `, ${preview.window.excluded} older left out` : ''}. Nothing
+            is written.
           </p>
+          {preview.releaseBlocked ? (
+            <Callout tone="warning">
+              {preview.counts.waiting} new passes wait for an approved template release.
+            </Callout>
+          ) : null}
           <CheckTiles
             counts={{
               rows: preview.records,
