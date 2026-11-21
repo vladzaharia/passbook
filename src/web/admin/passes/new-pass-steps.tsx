@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router';
 import { type CSSProperties, type ReactNode, useId } from 'react';
-import { NO_RELEASE_COPY } from '@/shared/copy/new-pass.ts';
 import { cn } from '../../lib/cn.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { useMediaQuery } from '../../lib/media.ts';
