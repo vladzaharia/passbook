@@ -166,7 +166,7 @@ async function presentationHtml(res: Response, secrets: string[]): Promise<strin
   expect(html).toContain('<title>Barcode · ');
   expect(html).toContain('<meta property="og:title" content="Barcode">');
   // No page links a manifest: a shortcut opens the saved door view in the browser, not as an app.
-  expect(html.match(/rel=["']?manifest/gi) ?? []).toEqual([]);
+  expect(html.match(/rel=["']?manifest\b/gi) ?? []).toEqual([]);
   return html;
 }
 
