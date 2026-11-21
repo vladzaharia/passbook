@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import migration from '../../../../migrations/0160_identities_managed.sql?raw';
 import { deviceToken, fakeAuth } from '../../../../test/helpers/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
@@ -15,7 +15,9 @@ import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { updatePass } from '../passes/service.ts';
-import { ensurePlatformIdentity } from './repo.ts';
+import { identityComponent } from '../status/checks-identity.ts';
+import { resetEnvMismatchLog } from './db-resolver.ts';
+import { ensurePlatformIdentity, getIdentityRow } from './repo.ts';
 import { createIdentityResolver } from './resolver.ts';
 
 const KEK_V1 = btoa(String.fromCharCode(...new Uint8Array(32).fill(7)));
@@ -286,6 +288,101 @@ describe('identity guards, hardened', () => {
         kit.org.id,
       ]);
     }
+  });
+});
+
+describe('identity guards, second round', () => {
+  it('refuses an expired org default instead of falling through, and falls through only a retired one', async () => {
+    const kit = await setupKit({ clockStart: Date.now() });
+    const own = await sharedIdentity(kit, 'pass.com.acme.lapsed');
+    const resolver = createIdentityResolver(kit.env);
+    await run(kit.env.DB, 'UPDATE orgs SET default_identity_id = ? WHERE id = ?', [
+      own.id,
+      kit.org.id,
+    ]);
+    await run(kit.env.DB, 'UPDATE signing_identities SET not_after = ? WHERE id = ?', [
+      kit.clock.now() - 1,
+      own.id,
+    ]);
+    try {
+      await expect(resolver.forOrg(kit.org.id, null, kit.clock.now())).rejects.toMatchObject({
+        code: 'IDENTITY_EXPIRED',
+      });
+      await expect(kit.pass()).rejects.toMatchObject({ code: 'IDENTITY_EXPIRED' });
+    } finally {
+      await run(kit.env.DB, 'UPDATE orgs SET default_identity_id = NULL WHERE id = ?', [
+        kit.org.id,
+      ]);
+    }
+  });
+
+  it('logs every 50th refused sign and reports the mismatch live in the status component', async () => {
+    const kit = await setupKit({ clockStart: Date.now() });
+    const changed = {
+      ...kit.env,
+      PLATFORM_PASS_TYPE_ID: 'pass.mobile.passbook.wallet',
+    } as typeof kit.env;
+    resetEnvMismatchLog();
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const resolver = createIdentityResolver(changed);
+      for (let n = 0; n < 51; n++) await resolver.platform().catch(() => undefined);
+      const lines = spy.mock.calls
+        .map((c) => String(c[0]))
+        .filter((l) => l.includes('identity.platform_env_mismatch'));
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toContain('IDENTITY_PLATFORM_ENV_MISMATCH');
+    } finally {
+      spy.mockRestore();
+    }
+    const row = await getIdentityRow(kit.env.DB, 'platform');
+    if (!row) throw new Error('missing platform row');
+    expect(identityComponent({ ...kit.ctx, env: kit.env }, row, null).detail ?? '').not.toContain(
+      'differs',
+    );
+    const bad = identityComponent({ ...kit.ctx, env: changed }, row, { ok: true } as never);
+    expect(bad.state).toBe('failing');
+    expect(bad.detail).toContain('differs');
+  });
+
+  it('never writes the same active certificate twice', async () => {
+    const kit = await setupKit({ clockStart: Date.now() });
+    const shared = await sharedIdentity(kit, 'pass.com.acme.idem');
+    const sha = await first<{ cert_sha256: string }>(
+      kit.env.DB,
+      'SELECT cert_sha256 FROM signing_identities WHERE id = ?',
+      [shared.id],
+    );
+    const count = async (hash: string) =>
+      (
+        await first<{ n: number }>(
+          kit.env.DB,
+          'SELECT count(*) AS n FROM identity_certificates WHERE identity_id = ? AND cert_sha256 = ?',
+          [shared.id, hash],
+        )
+      )?.n;
+    // A provisioner writes its own active row for the next certificate, then points the identity at it.
+    await run(
+      kit.env.DB,
+      "UPDATE identity_certificates SET state = 'superseded' WHERE identity_id = ?",
+      [shared.id],
+    );
+    await run(
+      kit.env.DB,
+      "INSERT INTO identity_certificates (id, identity_id, cert_sha256, origin, state, created_at) VALUES ('p3-row', ?, 'next-sha', 'csr', 'active', 1)",
+      [shared.id],
+    );
+    await run(kit.env.DB, 'UPDATE signing_identities SET cert_sha256 = ? WHERE id = ?', [
+      'next-sha',
+      shared.id,
+    ]);
+    expect(await count('next-sha')).toBe(1);
+    await run(kit.env.DB, 'UPDATE signing_identities SET cert_sha256 = ? WHERE id = ?', [
+      'next-sha',
+      shared.id,
+    ]);
+    expect(await count('next-sha')).toBe(1);
+    expect(await count(sha?.cert_sha256 ?? '')).toBe(1);
   });
 });
 

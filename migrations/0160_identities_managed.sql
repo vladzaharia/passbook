@@ -54,8 +54,12 @@ SELECT 'backfill-' || id, id, credential_id, cert_sha256, not_before, not_after,
 FROM signing_identities WHERE cert_sha256 IS NOT NULL;
 
 -- Every later certificate (upload, rotation, env change) lands in the history in the same statement.
+-- Both are idempotent: a row for this certificate already written as active (by a provisioner that
+-- records its own history) is never duplicated.
 CREATE TRIGGER identity_certificates_on_insert AFTER INSERT ON signing_identities
 WHEN NEW.cert_sha256 IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM identity_certificates
+    WHERE identity_id = NEW.id AND cert_sha256 = NEW.cert_sha256 AND state = 'active')
 BEGIN
   INSERT INTO identity_certificates
     (id, identity_id, credential_id, cert_sha256, not_before, not_after, origin, state, created_at, activated_at)
@@ -66,6 +70,8 @@ END;
 
 CREATE TRIGGER identity_certificates_on_rotate AFTER UPDATE OF cert_sha256 ON signing_identities
 WHEN NEW.cert_sha256 IS NOT NULL AND NEW.cert_sha256 IS NOT OLD.cert_sha256
+  AND NOT EXISTS (SELECT 1 FROM identity_certificates
+    WHERE identity_id = NEW.id AND cert_sha256 = NEW.cert_sha256 AND state = 'active')
 BEGIN
   UPDATE identity_certificates
     SET state = 'superseded', ended_at = CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)
