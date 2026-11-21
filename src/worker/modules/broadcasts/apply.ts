@@ -12,6 +12,7 @@ import type { Pass } from '../passes/repo.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { budgetOutcomes, providerBudgets } from '../wallet-providers/notify-budget.ts';
 import { actorOf } from './actor.ts';
+import type { DesignCache } from './apply-action.ts';
 import { applyChange, type ChangePlan, type FieldCache, planOf } from './apply-change.ts';
 import { endIfRevoked, revertChunk } from './apply-revert.ts';
 import {
@@ -67,7 +68,7 @@ async function applyOne(
   row: BroadcastRow,
   cache: MessagingInputs,
   passId: string,
-  change: { plan: ChangePlan; fields: FieldCache },
+  change: { plan: ChangePlan; fields: FieldCache; designs: DesignCache },
 ): Promise<ItemRow | 'deferred' | null> {
   const base = { passId, silent: false };
   const rule = ruleRun(row);
@@ -80,7 +81,8 @@ async function applyOne(
     pass.removedAt !== null
   )
     return null;
-  if (row.kind === 'change') return applyChange(ctx, row, change.plan, change.fields, pass);
+  if (row.kind === 'change')
+    return applyChange(ctx, row, change.plan, change.fields, pass, change.designs);
   let claimed = false;
   try {
     const patch = JSON.parse(row.patch) as Record<string, Json>;
@@ -242,7 +244,11 @@ export async function applyChunk(
   const page = await targetPage(ctx.env.DB, filter, ctx.clock.now());
   const done = await handledPassIds(ctx.env.DB, broadcastId, page.ids);
   const cache: MessagingInputs = new Map();
-  const change = { plan: planOf(row), fields: new Map() as FieldCache };
+  const change = {
+    plan: planOf(row),
+    fields: new Map() as FieldCache,
+    designs: new Map() as DesignCache,
+  };
   let updated = 0;
   let deferred = 0;
   for (const passId of page.ids) {

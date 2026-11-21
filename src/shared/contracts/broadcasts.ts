@@ -221,6 +221,8 @@ export const BroadcastListQuerySchema = PageQuerySchema.extend({
   state: BroadcastStateSchema.optional(),
   /** `manual` (default) leaves out the runs of automatic messages; `rule` is those alone. */
   origin: z.enum(['manual', 'rule']).default('manual'),
+  /** Only messages, or only field changes (the console's Messages list hides changes by default). */
+  kind: BroadcastKindSchema.optional(),
 });
 export const BroadcastListSchema = pageOf(BroadcastSchema);
 

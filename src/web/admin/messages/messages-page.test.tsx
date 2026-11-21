@@ -221,4 +221,22 @@ describe('Messages in Test mode', () => {
     expect(await screen.findByRole('heading', { name: 'Doors open late' })).toBeInTheDocument();
     expect(screen.getByText('Test')).toBeInTheDocument();
   });
+
+  it('lists messages only, and field changes behind the Show filter', async () => {
+    const kinds: (string | null)[] = [];
+    const handlers = {
+      '/api/v1/broadcasts': (url: URL) => {
+        kinds.push(url.searchParams.get('kind'));
+        return json({ items: [], nextCursor: null });
+      },
+    };
+    await renderApp('/admin/o/o1/messages', { session: 'admin', ...orgAccess, handlers });
+    await waitFor(() => expect(kinds).toContain('message'));
+    await renderApp('/admin/o/o1/messages?kind=change', {
+      session: 'admin',
+      ...orgAccess,
+      handlers,
+    });
+    await waitFor(() => expect(kinds).toContain('change'));
+  });
 });

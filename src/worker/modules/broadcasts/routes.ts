@@ -104,6 +104,7 @@ register(
         mode: modeOf(auth),
         state: q.state,
         origin: q.origin,
+        kind: q.kind,
         cursor: q.cursor,
         limit: q.limit,
       }),

@@ -150,6 +150,7 @@ export interface BroadcastListFilter {
   state?: BroadcastState | undefined;
   /** Default `manual`: leaves out the runs of automatic messages. */
   origin?: 'manual' | 'rule' | undefined;
+  kind?: BroadcastKind | undefined;
   /** Only the runs of this automatic message. */
   ruleId?: string | undefined;
   cursor?: string | undefined;
@@ -165,6 +166,10 @@ export async function listBroadcasts(
   if (f.state) {
     where.push('state = ?');
     params.push(f.state);
+  }
+  if (f.kind) {
+    where.push('kind = ?');
+    params.push(f.kind);
   }
   where.push(f.origin === 'rule' ? 'rule_id IS NOT NULL' : 'rule_id IS NULL');
   if (f.ruleId) {

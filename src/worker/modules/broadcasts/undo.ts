@@ -3,6 +3,7 @@ import type { BroadcastDto } from '../../../shared/contracts/broadcasts.ts';
 import {
   type BroadcastUndoResultSchema,
   CHANGE_RUN_UNDO_MS,
+  changeActionOf,
 } from '../../../shared/contracts/broadcasts-change.ts';
 import { batch } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
@@ -59,6 +60,11 @@ export async function undoBroadcast(
   assertCanChange(scope, 'change');
   if (parent.kind !== 'change' || parent.parent_id !== null)
     throw new ConflictError('Only a change can be undone.', 'BROADCAST_NOT_UNDOABLE');
+  if (changeActionOf(JSON.parse(parent.patch)) === 'design')
+    throw new ConflictError(
+      'A move to the latest design cannot be undone. Roll the template back instead.',
+      'BROADCAST_NOT_UNDOABLE',
+    );
   const now = ctx.clock.now();
   const db = ctx.env.DB;
   const existing = await childOf(db, id, parent.org_id, parent.mode);

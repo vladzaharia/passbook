@@ -63,7 +63,7 @@ export async function insertBroadcast(
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   if (input.at !== undefined) checkTime(ctx, input.at);
   const body = await prepareTarget(ctx, mode, input);
-  await checkTemplates(ctx, body);
+  await checkTemplates(ctx, body, mode);
   const now = ctx.clock.now();
   const id = ctx.ids.id();
   const at = body.send === 'schedule' ? (body.at ?? now) : now;

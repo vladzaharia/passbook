@@ -91,6 +91,7 @@ export const itemsWithBefore = (db: D1Database, broadcastId: string) =>
 export interface RevertItem {
   pass_id: string;
   before: string | null;
+  version: number | null;
 }
 
 /** A change run's updated items after `cursor`, by pass id, for its undo. The run is read inside the undo's org and mode. */
@@ -104,7 +105,7 @@ export function revertItems(
 ): Promise<RevertItem[]> {
   return all<RevertItem>(
     db,
-    `SELECT i.pass_id, i.before FROM broadcast_items i JOIN broadcasts b ON b.id = i.broadcast_id
+    `SELECT i.pass_id, i.before, i.version FROM broadcast_items i JOIN broadcasts b ON b.id = i.broadcast_id
      WHERE i.broadcast_id = ? AND b.org_id = ? AND b.mode = ?
        AND (i.outcome = 'updated' OR i.before IS NOT NULL) AND i.pass_id > ? ORDER BY i.pass_id LIMIT ?`,
     [parentId, orgId, mode, cursor ?? '', limit],

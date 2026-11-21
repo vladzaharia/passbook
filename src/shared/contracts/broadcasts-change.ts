@@ -51,6 +51,15 @@ export const PatchOpsSchema = z
 
 const OP_KEYS = ['set', 'clear', 'shift', 'add'];
 
+/** A run that does one thing to every pass instead of setting inputs: `{ "$void": true }` or `{ "$design": true }` (latest design). */
+export type ChangeAction = 'void' | 'design';
+
+/** The action a patch names, or null for a patch of inputs. Input names never start with `$`. */
+export function changeActionOf(patch: Readonly<Record<string, Json>>): ChangeAction | null {
+  if (patch.$void === true) return 'void';
+  return patch.$design === true ? 'design' : null;
+}
+
 /**
  * A change's patch as one op per input. A value that is an object with one key `set`, `clear`, `shift`
  * or `add` is that op; any other value is a plain `set`, so a patch from before ops still reads.
@@ -62,6 +71,7 @@ export function changeOpsOf(patch: Readonly<Record<string, Json>>): {
   const ops: Record<string, PatchOp> = {};
   const issues: { key: string; message: string }[] = [];
   for (const [key, value] of Object.entries(patch)) {
+    if (key.startsWith('$')) continue;
     const keys =
       typeof value === 'object' && value !== null && !Array.isArray(value)
         ? Object.keys(value)
@@ -96,6 +106,20 @@ export const CreateBroadcastBodySchema = z
     if (body.kind === 'message') {
       if (!target.templateIds) issue(['target'], 'A message targets templates.');
       if (body.message !== undefined) issue(['message'], 'A message sets its text in the patch.');
+      return;
+    }
+    const dollar = Object.keys(body.patch).filter((k) => k.startsWith('$'));
+    if (dollar.length > 0) {
+      if (
+        dollar.length !== 1 ||
+        Object.keys(body.patch).length !== 1 ||
+        !changeActionOf(body.patch)
+      )
+        issue(
+          ['patch'],
+          'Void or use the latest design on their own: {"$void": true} or {"$design": true}.',
+        );
+      if (body.message !== undefined) issue(['message'], 'This change has no lock-screen text.');
       return;
     }
     for (const bad of changeOpsOf(body.patch).issues) issue(['patch', bad.key], bad.message);

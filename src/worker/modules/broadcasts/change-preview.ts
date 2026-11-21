@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import {
   type ChangePreviewBodySchema,
   type ChangeRunPreviewSchema,
+  changeActionOf,
   changeOpsOf,
 } from '../../../shared/contracts/broadcasts-change.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
@@ -10,6 +11,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
 import { getPlatformSettings } from '../settings/service.ts';
+import { activeRelease } from '../templates/releases.ts';
 import { targetFilter } from './apply.ts';
 import { resolveOps } from './change-ops.ts';
 import { prepareTarget, storedTargetOf } from './change-target.ts';
@@ -62,12 +64,41 @@ export async function previewChange(
   };
   if (!body.patch || counts.targeted === 0) return out;
   const { ops } = changeOpsOf(body.patch);
+  const action = changeActionOf(body.patch);
+  const designs = new Map<string, string | null>();
   const rows = await targetRows(ctx.env.DB, filter, now, SAMPLED);
   const schemas = new Map<string, unknown>();
   const blocked = new Map<string, number>();
   let unchanged = 0;
   let changing = 0;
   for (const pass of rows) {
+    if (action) {
+      let latest: string | null = null;
+      if (action === 'design') {
+        if (!designs.has(pass.templateId))
+          designs.set(
+            pass.templateId,
+            (await activeRelease(ctx, pass.templateId, pass.orgId, pass.mode, 'apple'))?.version ??
+              null,
+          );
+        latest = designs.get(pass.templateId) ?? null;
+        if (!latest) blocked.set('NO_RELEASE', (blocked.get('NO_RELEASE') ?? 0) + 1);
+        else if (latest === pass.templateVersion) unchanged++;
+      }
+      if (action === 'void' || (latest && latest !== pass.templateVersion)) {
+        changing++;
+        if (out.samples.length < SAMPLES)
+          out.samples.push({
+            passId: pass.id,
+            title: pass.displayTitle,
+            changes:
+              action === 'void'
+                ? [{ key: 'status', label: 'Status', from: 'Active', to: 'Voided' }]
+                : [{ key: 'design', label: 'Design', from: pass.templateVersion, to: latest }],
+          });
+      }
+      continue;
+    }
     const key = `${pass.templateId}@${pass.templateVersion}`;
     if (!schemas.has(key))
       schemas.set(
@@ -92,7 +123,7 @@ export async function previewChange(
   const scaled = (n: number) => Math.round(n * scale);
   const willChange = scaled(changing);
   const silent =
-    (body.notify ?? true)
+    action !== 'void' && (body.notify ?? true)
       ? Math.min(willChange, Math.round((willChange * counts.overBudget) / counts.targeted))
       : willChange;
   return {

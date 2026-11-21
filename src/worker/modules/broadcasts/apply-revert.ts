@@ -14,6 +14,8 @@ import { hasVersionFrom, revertItems } from './repo-items.ts';
 const REVERT_CHUNK = 10;
 
 interface Touched {
+  /** Set on a void: the undo makes the pass active again. */
+  action?: 'void';
   from: Record<string, Json>;
   to: Record<string, Json>;
 }
@@ -40,14 +42,74 @@ const changed = () =>
  * edit keeps the pass (and a pass edited elsewhere keeps its other inputs). Silent: no change message
  * fires. The write re-proves the undo's asker and fences on the pass itself.
  */
+/**
+ * Un-voids a pass the run voided, only while it is still voided at the version the run wrote
+ * (any later write keeps it), and silently.
+ */
+async function revertVoid(
+  ctx: ServiceContext,
+  undo: BroadcastRow,
+  passId: string,
+  version: number | null,
+): Promise<ItemRow> {
+  const base = { passId, silent: false };
+  const pass = await getPass(ctx.env.DB, passId, undo.org_id);
+  if (!pass || pass.mode !== undo.mode || pass.removedAt !== null || version === null)
+    return { ...base, outcome: 'unchanged' };
+  if (pass.status === 'active') {
+    const done = await hasVersionFrom(ctx.env.DB, passId, 'schedule', undo.started_at ?? 0);
+    return { ...base, outcome: done ? 'updated' : 'unchanged' };
+  }
+  if (pass.version !== version) return { ...base, outcome: 'unchanged' };
+  try {
+    await publishPass(ctx, {
+      passId,
+      orgScope: undo.org_id,
+      cause: undo.created_by_type === 'api_key' ? 'api' : 'admin',
+      source: 'schedule',
+      actor: actorOf(undo),
+      dispatch: false,
+      notify: false,
+      expectedVersion: version,
+      extraChecks: [creatorLive(undo, ctx.clock.now())],
+      mutate: (current) => {
+        if (
+          current.orgId !== undo.org_id ||
+          current.mode !== undo.mode ||
+          current.status !== 'voided' ||
+          current.removedAt !== null ||
+          current.version !== version
+        )
+          throw changed();
+        return { status: 'active' };
+      },
+    });
+    await recordPassEvent(ctx, {
+      orgId: undo.org_id,
+      passId,
+      mode: undo.mode,
+      kind: 'schedule.applied',
+      actor: actorOf(undo),
+      data: { broadcastId: undo.id, notified: false, overBudget: false },
+    });
+    return { ...base, outcome: 'updated' };
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error;
+    ctx.log.warn('broadcast.pass_failed', { broadcastId: undo.id, passId, code: error.code });
+    return { ...base, outcome: error.code === 'BROADCAST_PASS_CHANGED' ? 'unchanged' : 'failed' };
+  }
+}
+
 async function revertOne(
   ctx: ServiceContext,
   undo: BroadcastRow,
   passId: string,
   before: string | null,
+  version: number | null,
 ): Promise<ItemRow> {
   const base = { passId, silent: false };
   const touched = touchedOf(before);
+  if (touched?.action === 'void') return revertVoid(ctx, undo, passId, version);
   const pass = await getPass(ctx.env.DB, passId, undo.org_id);
   if (
     !touched ||
@@ -147,7 +209,7 @@ export async function revertChunk(
   let restored = 0;
   for (const item of items) {
     if (done.has(item.pass_id)) continue;
-    const result = await revertOne(ctx, undo, item.pass_id, item.before);
+    const result = await revertOne(ctx, undo, item.pass_id, item.before, item.version);
     if (result.outcome === 'failed' && (await endIfRevoked(ctx, undo))) return { nextCursor: null };
     await insertItems(ctx.env.DB, undo.id, [result]);
     if (result.outcome === 'updated') restored++;

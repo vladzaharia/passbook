@@ -52,7 +52,7 @@ export async function updateBroadcast(
     );
   if (input.at !== undefined) checkTime(ctx, input.at);
   const body = await prepareTarget(ctx, row.mode, input);
-  await checkTemplates(ctx, body);
+  await checkTemplates(ctx, body, row.mode);
   const now = ctx.clock.now();
   const [edited] = await batch(ctx.env.DB, [
     repo.updateBroadcastStmt(

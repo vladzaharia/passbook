@@ -1,5 +1,9 @@
 import type { PatchOp } from '../../../shared/contracts/broadcasts-change.ts';
-import { changeOpsOf } from '../../../shared/contracts/broadcasts-change.ts';
+import {
+  type ChangeAction,
+  changeActionOf,
+  changeOpsOf,
+} from '../../../shared/contracts/broadcasts-change.ts';
 import type { Json } from '../../../shared/contracts/common.ts';
 import { formatValue } from '../../../shared/issuing/diff.ts';
 import { type InputField, inputFields } from '../../../shared/issuing/fields.ts';
@@ -11,6 +15,7 @@ import { publishPass } from '../passes/publish.ts';
 import type { Pass } from '../passes/repo.ts';
 import { budgetOutcomes, providerBudgets } from '../wallet-providers/notify-budget.ts';
 import { actorOf } from './actor.ts';
+import { applyAction, type DesignCache } from './apply-action.ts';
 import { fillTokens, resolveOps } from './change-ops.ts';
 import type { BroadcastRow, ItemRow } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
@@ -20,6 +25,8 @@ import { StoredBroadcastTargetSchema } from './stored-target.ts';
 /** A change run read once per chunk: the ops, and the text with its tokens. */
 export interface ChangePlan {
   ops: Record<string, PatchOp>;
+  /** Void or latest design, instead of ops. */
+  action: ChangeAction | null;
   text: string | undefined;
   notify: boolean;
 }
@@ -28,13 +35,14 @@ export const planOf = (row: BroadcastRow): ChangePlan =>
   row.kind === 'change'
     ? {
         ops: changeOpsOf(JSON.parse(row.patch) as Record<string, Json>).ops,
+        action: changeActionOf(JSON.parse(row.patch) as Record<string, Json>),
         text:
           row.notify === 1
             ? StoredBroadcastTargetSchema.parse(JSON.parse(row.target)).message
             : undefined,
         notify: row.notify === 1,
       }
-    : { ops: {}, text: undefined, notify: false };
+    : { ops: {}, action: null, text: undefined, notify: false };
 
 interface TemplateFields {
   fields: InputField[];
@@ -90,7 +98,9 @@ export async function applyChange(
   plan: ChangePlan,
   cache: FieldCache,
   pass: Pass,
+  designs: DesignCache,
 ): Promise<ItemRow> {
+  if (plan.action) return applyAction(ctx, row, plan.action, designs, pass);
   const base = { passId: pass.id, silent: false };
   const template = await fieldsOf(ctx, cache, pass);
   const first = resolveOps(plan.ops, pass.personalization);
