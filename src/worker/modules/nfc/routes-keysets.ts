@@ -18,6 +18,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, tenantAuthorityOf } from '../passes/http.ts';
 import { importTags } from './import.ts';
@@ -63,6 +64,8 @@ async function managing(c: C, id: string) {
  * Keys are write-only: only the response that generates them carries them.
  */
 export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void {
+  // A new key version replaces what authenticates every tag of the keyset: a recent sign-in.
+  nfcRoutes.post('/keysets/:id/rotate', requireStepUp(STEP_UP_SECONDS));
   register(
     nfcRoutes,
     TAG,

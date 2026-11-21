@@ -1,6 +1,7 @@
 import { CircleCheck, XCircle } from 'lucide-react';
 import { Toaster as Sonner, toast as sonner } from 'sonner';
 import { errorMessage } from '../lib/errors.ts';
+import { isStepUp } from '../lib/step-up.ts';
 import { useTheme } from '../lib/theme.tsx';
 import { BuddyFace } from './art/face.tsx';
 import { useBuddyOnScreen } from './art/presence.ts';
@@ -72,7 +73,10 @@ export const toast = {
    * the line under it is the error's own sentence (errorMessage). A string is that sentence.
    */
   error: (error: unknown, title: string) =>
-    sonner.error(title, { description: errorMessage(error), duration: Infinity }),
+    // A step-up has its own dialog: one message, not two.
+    isStepUp(error)
+      ? undefined
+      : sonner.error(title, { description: errorMessage(error), duration: Infinity }),
   /** A success with one follow-up ("View run"). */
   action: (message: string, action: { label: string; onClick: () => void }) =>
     sonner.success(message, { duration: UNDO_MS, action }),

@@ -2,10 +2,12 @@ import { z } from 'zod';
 import {
   CreateDeveloperSandboxSchema,
   CreatedDeveloperSandboxSchema,
+  DeveloperAccessSchema,
   DeveloperSandboxSchema,
   OkSchema,
   TryTokenSchema,
 } from '../../../shared/contracts/index.ts';
+import { hasDeveloperAccess } from '../../../shared/spaces.ts';
 import { TURNSTILE_SANDBOX_ACTION } from '../../../shared/turnstile.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
@@ -25,11 +27,35 @@ register(
   developerRoutes,
   'developer',
   {
+    method: 'get',
+    path: '/access',
+    summary:
+      'Whether you have developer access: yes, none, or an email sign-in that needs Polaris ID',
+    operationId: 'developer.getAccess',
+    auth: { human: true, signIn: 'any' },
+    response: DeveloperAccessSchema,
+  },
+  async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    c.header('cache-control', 'no-store');
+    if (auth.amr === 'magic_link')
+      return c.json({ access: 'email' as const, signInUrl: '/auth/oidc/start?next=/developers' });
+    return c.json({
+      access: hasDeveloperAccess(auth.roles) ? ('yes' as const) : ('none' as const),
+    });
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
     method: 'post',
     path: '/sandbox',
     summary: 'Make your developer sandbox: a test organization whose passes are previews',
     operationId: 'developer.postSandbox',
-    auth: { human: true, signIn: 'strict' },
+    auth: { human: true, signIn: 'strict', developer: true },
     body: CreateDeveloperSandboxSchema,
     status: 201,
     response: CreatedDeveloperSandboxSchema,
@@ -65,7 +91,7 @@ register(
     path: '/sandbox',
     summary: 'Your developer sandbox, or null, and the site key for the check that makes one',
     operationId: 'developer.getSandbox',
-    auth: { human: true },
+    auth: { human: true, developer: true },
     response: z.object({
       sandbox: DeveloperSandboxSchema.nullable(),
       turnstileSiteKey: z.string(),
@@ -89,7 +115,7 @@ register(
     path: '/sandbox',
     summary: 'Close your developer sandbox: its keys stop and it goes read-only',
     operationId: 'developer.deleteSandbox',
-    auth: { human: true, signIn: 'strict' },
+    auth: { human: true, signIn: 'strict', developer: true },
     response: DeveloperSandboxSchema,
   },
   async (c) => {
@@ -107,7 +133,7 @@ register(
     path: '/try-token',
     summary: 'A 15-minute token for Try it: your sandbox key, Test only, ends with this session',
     operationId: 'developer.postTryToken',
-    auth: { human: true, signIn: 'strict' },
+    auth: { human: true, signIn: 'strict', developer: true },
     status: 201,
     response: TryTokenSchema,
   },
@@ -127,7 +153,7 @@ register(
     path: '/try-token',
     summary: 'End every Try it token of your sandbox',
     operationId: 'developer.deleteTryToken',
-    auth: { human: true, signIn: 'strict' },
+    auth: { human: true, signIn: 'strict', developer: true },
     response: OkSchema,
   },
   async (c) => {

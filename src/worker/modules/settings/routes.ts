@@ -15,6 +15,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
+import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { confirmReplyTo, replyToStatus, resendReplyTo, syncReplyTo } from '../delivery/reply-to.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
@@ -28,6 +29,19 @@ const ScopedSettingsListSchema = SettingsListSchema.extend({
 
 export const settingsRoutes = createRouter();
 guard(settingsRoutes, requireTenantSession);
+// A platform sign-in or account-linking setting (auth.*, oidc.*) reopens or loosens who gets in.
+settingsRoutes.put(
+  '/',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const { scope, values } = await peekBody(c);
+    return (
+      scope === 'platform' &&
+      typeof values === 'object' &&
+      values !== null &&
+      Object.keys(values).some((key) => key.startsWith('auth.') || key.startsWith('oidc.'))
+    );
+  }),
+);
 
 async function scopeAuthority(
   c: Context<AppBindings>,
@@ -51,8 +65,11 @@ async function scopeAuthority(
 function oidcInfo(c: Context<AppBindings>) {
   return {
     issuer: c.env.OIDC_ISSUER,
+    platformAdminGroup: c.env.OIDC_PLATFORM_ADMIN_GROUP || null,
     adminGroup: c.env.OIDC_ADMIN_GROUP || null,
+    developerGroup: c.env.OIDC_DEVELOPER_GROUP || null,
     userGroup: c.env.OIDC_USER_GROUP || null,
+    consoleGroupRequired: c.env.OIDC_CONSOLE_GROUP_REQUIRED === 'true',
   };
 }
 

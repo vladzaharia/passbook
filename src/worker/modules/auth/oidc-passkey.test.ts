@@ -13,7 +13,7 @@ const person = (amr?: string[]) => {
     sub: `pk-${id}`,
     email: `pk${id}@example.test`,
     name: 'Person',
-    groups: ['wallet-users'],
+    groups: ['wallet_users'],
     ...(amr ? { amr } : {}),
   };
 };
@@ -52,6 +52,80 @@ describe('Polaris ID needs a passkey', () => {
     const row = await lastSession();
     expect(row?.amr).toBe('oidc');
     expect(row?.auth_time).toBe(Math.floor(h.clock.now() / 1000) * 1000);
+  });
+
+  it("never lets another account's re-authentication refresh the first session", async () => {
+    await setup();
+    const jar: Jar = new Map();
+    const first_ = await oidcSignIn(h, jar, person(['phr']));
+    expect(first_.res.status).toBe(302);
+    const before = await h.env.DB.prepare(
+      'SELECT id_hash, user_id, auth_time, revoked_at FROM sessions ORDER BY created_at DESC, rowid DESC LIMIT 1',
+    ).first<{ id_hash: string; user_id: string; auth_time: number; revoked_at: number | null }>();
+    h.clock.advance(5 * 60_000);
+    // The same browser, still holding the first cookie, signs in as someone else.
+    const second = await oidcSignIn(h, jar, person(['phr']));
+    expect(second.res.status).toBe(302);
+    const mine = (
+      await h.env.DB.prepare('SELECT id_hash, auth_time FROM sessions WHERE user_id = ?')
+        .bind(before?.user_id)
+        .all<{ id_hash: string; auth_time: number }>()
+    ).results;
+    // The first user still has exactly their one session, with the auth_time it started with.
+    expect(mine).toEqual([{ id_hash: before?.id_hash, auth_time: before?.auth_time }]);
+    const latest = await lastSession();
+    expect(latest?.auth_time).not.toBe(before?.auth_time);
+  });
+
+  describe('a step-up round trip', () => {
+    const STEP_UP = '/auth/oidc/start?prompt=login&max_age=0&next=%2Fadmin%2Fapi-keys';
+
+    async function startStepUp(jar: Jar, user: ReturnType<typeof person>) {
+      h.oidc.addUser(user);
+      const start = await h.call(STEP_UP, { cookies: jar });
+      expect(new URL(start.headers.get('location') ?? '').searchParams.get('max_age')).toBe('0');
+      absorb(jar, start);
+      return start;
+    }
+
+    it('signs in when the provider authenticated again', async () => {
+      await setup();
+      const jar: Jar = new Map();
+      const user = person(['phr']);
+      const start = await startStepUp(jar, user);
+      const { out } = await followToProvider(start, jar, user);
+      expect(out.status).toBe(302);
+      expect(out.headers.get('location')).toBe('/admin/api-keys');
+    });
+
+    it('refuses with STEP_UP_NOT_FRESH when auth_time is from before the flow, and signs nobody in', async () => {
+      await setup();
+      const jar: Jar = new Map();
+      const user = person(['phr']);
+      const start = await startStepUp(jar, user);
+      const before = await first<{ n: number }>(h.env.DB, 'SELECT count(*) AS n FROM sessions');
+      // The provider answers from its old sign-in: an auth_time well before the flow started.
+      h.clock.advance(-10 * 60_000);
+      const { out } = await followToProvider(start, jar, user);
+      expect(out.status).toBe(403);
+      expect(await out.text()).toContain('didn&#39;t ask you to sign in again');
+      expect(jar.get('__Host-wallet_sid')).toBeUndefined();
+      expect((await first<{ n: number }>(h.env.DB, 'SELECT count(*) AS n FROM sessions'))?.n).toBe(
+        before?.n,
+      );
+    });
+
+    it('does not hold an ordinary sign-in to it', async () => {
+      await setup();
+      const jar: Jar = new Map();
+      const user = person(['phr']);
+      h.oidc.addUser(user);
+      const start = await h.call('/auth/oidc/start', { cookies: jar });
+      absorb(jar, start);
+      h.clock.advance(-10 * 60_000);
+      const { out } = await followToProvider(start, jar, user);
+      expect(out.status).toBe(302);
+    });
   });
 
   it('restarts once with prompt=login when the sign-in used a login code', async () => {
