@@ -10,6 +10,7 @@ import { COUPON_BAND } from '../../../passkit/template/paper-geometry.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
 import type { Issued } from '../../../web/paper/ticket-text.ts';
+import { needsFallback } from './pdf-coverage.ts';
 import { drawCardBack, drawCardFront } from './pdf-draw-card.ts';
 import { drawFull } from './pdf-draw-full.ts';
 import { drawCoupon, drawPermit } from './pdf-draw-small.ts';
@@ -77,7 +78,7 @@ export async function renderPdf(
   options: RenderOptions,
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create({ updateMetadata: false });
-  const fonts = await embedFonts(doc, options.assets);
+  const fonts = await embedFonts(doc, options.assets, needsFallback(sheets.map((s) => s.content)));
   const state = { lossy: false };
   const embedded = new Map<string, PdfPicture | undefined>();
   let distinct = 0;

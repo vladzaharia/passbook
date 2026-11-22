@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:test';
+import { PDFDict, PDFDocument, PDFName } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
 import { PAPER_SPECS, type PaperSize } from '../../../passkit/template/paper.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
@@ -104,15 +105,44 @@ describe('text', () => {
     });
     expect(lossy).toBe(0);
     expect(await pdfText(quiet)).toContain('full');
-    const tones = await renderPdf(
-      [sheet('admission', 'a4', { content: { holder: 'Nguyễn Thị Hương' } })],
-      {
+    const lost = await renderPdf([sheet('admission', 'a4', { content: { holder: '李雷' } })], {
+      assets: env.ASSETS,
+      onLossy: () => lossy++,
+    });
+    expect(lossy).toBe(1);
+    expect(await pdfText(lost)).toContain('??');
+  });
+
+  it.each(['Nguyễn Thị Hương', 'Phạm Quỳnh Ánh', 'Αλέξανδρος Παπαδόπουλος', 'Ελένη Κωνσταντίνου'])(
+    'draws %s as itself through the Noto Sans fallback',
+    async (name) => {
+      let lossy = 0;
+      const bytes = await renderPdf([sheet('admission', 'a4', { content: { holder: name } })], {
         assets: env.ASSETS,
         onLossy: () => lossy++,
-      },
-    );
-    expect(lossy).toBe(1);
-    expect(await pdfText(tones)).toContain('Nguyen Thi Huong');
+      });
+      expect(lossy).toBe(0);
+      const text = (await pdfText(bytes)).replace(/\s+/g, ' ');
+      expect(text).toContain(name);
+      expect(text).not.toContain('?');
+    },
+  );
+
+  it('embeds Noto Sans only when a character needs it', async () => {
+    const plain = await renderPdf([sheet('admission', 'a4')], { assets: env.ASSETS });
+    const viet = await renderPdf([sheet('admission', 'a4', { content: { holder: 'Nguyễn' } })], {
+      assets: env.ASSETS,
+    });
+    const hasNoto = async (b: Uint8Array) => {
+      const doc = await PDFDocument.load(b, { updateMetadata: false });
+      return doc.context
+        .enumerateIndirectObjects()
+        .some(
+          ([, o]) => o instanceof PDFDict && `${o.get(PDFName.of('BaseFont'))}`.includes('Noto'),
+        );
+    };
+    expect(await hasNoto(plain)).toBe(false);
+    expect(await hasNoto(viet)).toBe(true);
   });
 
   it('says once when characters the fonts lack were replaced', async () => {
