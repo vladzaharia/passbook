@@ -91,7 +91,7 @@ function columns(
           count={row.original.passCount}
           to="/admin/passes"
           search={{ templateId: row.original.id }}
-          aria-label={`${row.original.passCount} passes from ${row.original.name}`}
+          aria-label={`${row.original.passCount} ${row.original.passCount === 1 ? 'pass' : 'passes'} from ${row.original.name}`}
         />
       ),
     },

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import type { WebhookEndpointDto } from '@/shared/contracts/webhooks.ts';
 import { STATE_COPY } from '@/shared/copy/states.ts';
+import { pluralize } from '@/web/lib/format.ts';
 import { useMode } from '../../../lib/mode.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
@@ -65,7 +66,7 @@ export function WebhooksTab() {
           <span className="block max-w-56 truncate" title={eventsLine(e)}>
             {e.eventTypes.length === 1
               ? EVENT_LABEL[e.eventTypes[0] as never]
-              : `${e.eventTypes.length} events`}
+              : pluralize(e.eventTypes.length, 'event')}
           </span>
         ),
       },

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { formatTime } from '../../lib/format.ts';
+import { formatTime, pluralize } from '../../lib/format.ts';
 import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { Button } from '../../ui/button.tsx';
@@ -161,7 +161,10 @@ export function ShiftSheet({
               {summary ? <Handover summary={summary} timeZone={timeZone} /> : null}
               <p className="text-sm">This device stays paired.</p>
               {pending ? (
-                <p role="status">{pending} scans need confirmation. Keep this shift open.</p>
+                <p role="status">
+                  {pluralize(pending, 'scan')} {pending === 1 ? 'needs' : 'need'} confirmation. Keep
+                  this shift open.
+                </p>
               ) : null}
               <Button onClick={onClose}>Keep scanning</Button>
               <Button variant="danger" disabled={pending > 0} onClick={onEnd}>

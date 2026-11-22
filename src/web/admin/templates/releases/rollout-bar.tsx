@@ -35,7 +35,7 @@ export function RolloutBar({
         aria-valuemin={0}
         aria-valuemax={total}
         aria-valuenow={value}
-        aria-valuetext={`${formatCount(value)} of ${formatCount(total)} passes`}
+        aria-valuetext={`${formatCount(value)} of ${formatCount(total)} ${total === 1 ? 'pass' : 'passes'}`}
         className="flex h-1.5 w-full gap-px overflow-hidden rounded-full bg-surface-sunken"
       >
         {shown.map((s) => (

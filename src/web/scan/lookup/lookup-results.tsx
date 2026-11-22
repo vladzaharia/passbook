@@ -2,6 +2,7 @@ import { ChevronRight, Search, UserRound } from 'lucide-react';
 import type { z } from 'zod';
 import type { ScanLookupResultSchema } from '../../../shared/contracts/scan-session.ts';
 import { SCAN_TRAY_COPY } from '../../../shared/copy/scan-tray.ts';
+import { pluralize } from '../../lib/format.ts';
 
 export function LookupResults({
   result,
@@ -20,7 +21,7 @@ export function LookupResults({
   return (
     <div className="scan-lookup-results" aria-busy={busy}>
       <p className="sr-only" role="status">
-        {busy ? 'Searching…' : result ? `${result.items.length} results.` : ''}
+        {busy ? 'Searching…' : result ? `${pluralize(result.items.length, 'result')}.` : ''}
       </p>
       {result?.items.map((row) => {
         const states = [
