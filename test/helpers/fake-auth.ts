@@ -1,3 +1,4 @@
+import { CREDENTIAL_SCOPES } from '../../src/shared/contracts/api-keys.ts';
 import type { Mode } from '../../src/shared/contracts/common.ts';
 import type {
   Amr,
@@ -101,7 +102,9 @@ async function seedApiKey(
         clock.now(),
         key.auth.orgId === null ? 'platform' : 'service',
         // A credential scope counts only on a key that expires within 91 days.
-        key.auth.scopes.includes('scanning:admin') ? clock.now() + 30 * 86_400_000 : null,
+        key.auth.scopes.some((s) => (CREDENTIAL_SCOPES as readonly string[]).includes(s))
+          ? clock.now() + 30 * 86_400_000
+          : null,
       ],
     );
   await (key.auth.orgId === null ? withoutTrigger(db, 'api_keys_kind_rules', insert) : insert());

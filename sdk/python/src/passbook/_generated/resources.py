@@ -704,6 +704,81 @@ class MessageRulesResource:
         return self._core.request("PUT", f"/api/v1/message-rules/{_p(id)}", body=body, result=m.MessageRulesUpdateResult, **opts)
 
 
+class NfcKeysetsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        body: m.NfcKeysetsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsCreateResult:
+        """Create a tag keyset `POST /api/v1/nfc/keysets`"""
+        return self._core.request("POST", "/api/v1/nfc/keysets", body=body, result=m.NfcKeysetsCreateResult, **opts)
+
+    def disable(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsDisableResult:
+        """Disable a keyset `POST /api/v1/nfc/keysets/{id}/disable`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/disable", result=m.NfcKeysetsDisableResult, **opts)
+
+    def import_tags(
+        self,
+        id: str,
+        body: m.NfcKeysetsImportTagsBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsImportTagsResult:
+        """Import supplier-personalised tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/import", body=body, result=m.NfcKeysetsImportTagsResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.NfcKeysetsListItem]:
+        """List tag keysets `GET /api/v1/nfc/keysets`"""
+        return self._core.paginate("GET", "/api/v1/nfc/keysets", query={"cursor": cursor}, result=m.NfcKeysetsListResult, cursor_param="cursor", **opts)
+
+    def reenroll(
+        self,
+        id: str,
+        body: m.NfcKeysetsReenrollBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsReenrollResult:
+        """Move the tags of a keyset to another keyset `POST /api/v1/nfc/keysets/{id}/reenrol`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/reenrol", body=body, result=m.NfcKeysetsReenrollResult, **opts)
+
+    def retire_key(
+        self,
+        id: str,
+        version: int,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsRetireKeyResult:
+        """Retire an old key version `POST /api/v1/nfc/keysets/{id}/keys/{version}/retire`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/keys/{_p(version)}/retire", result=m.NfcKeysetsRetireKeyResult, **opts)
+
+    def revoke_key(
+        self,
+        id: str,
+        version: int,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsRevokeKeyResult:
+        """Revoke a key version: tags on it must be written again `POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/keys/{_p(version)}/revoke", result=m.NfcKeysetsRevokeKeyResult, **opts)
+
+    def rotate(
+        self,
+        id: str,
+        body: m.NfcKeysetsRotateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsRotateResult:
+        """Rotate a keyset to a new key version `POST /api/v1/nfc/keysets/{id}/rotate`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/rotate", body=body, result=m.NfcKeysetsRotateResult, **opts)
+
+
 class NfcTagTypesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -748,6 +823,7 @@ class NfcTagTypesResource:
 class NfcResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.keysets = NfcKeysetsResource(core)
         self.tag_types = NfcTagTypesResource(core)
 
 
@@ -1612,6 +1688,47 @@ class ScanSetupsResource:
         return self._core.request("GET", f"/api/v1/scan-setups/{_p(id)}", result=m.ScanSetupsRetrieveResult, **opts)
 
 
+class ScanStaffResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        body: m.ScanStaffCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanStaffCreateResult:
+        """Create a staff member and reveal their PIN once `POST /api/v1/scan-staff`"""
+        return self._core.request("POST", "/api/v1/scan-staff", body=body, result=m.ScanStaffCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        q: str | None = None,
+        limit: int | None = None,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanStaff]:
+        """List an organization’s staff `GET /api/v1/scan-staff`"""
+        return self._core.paginate("GET", "/api/v1/scan-staff", query={"q": q, "limit": limit, "cursor": cursor}, result=m.ScanStaffListResult, cursor_param="cursor", **opts)
+
+    def reset_pin(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanStaffResetPinResult:
+        """Replace a staff PIN and reveal it once `POST /api/v1/scan-staff/{id}/reset-pin`"""
+        return self._core.request("POST", f"/api/v1/scan-staff/{_p(id)}/reset-pin", result=m.ScanStaffResetPinResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanStaffUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanStaffUpdateResult:
+        """Update or disable a staff member `PATCH /api/v1/scan-staff/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-staff/{_p(id)}", body=body, result=m.ScanStaffUpdateResult, **opts)
+
+
 class ScanZonesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1705,9 +1822,41 @@ class TerminalResource:
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
 
+class ScannersPairingResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        *,
+        restore: _Literal["true"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersPairingCreateResult:
+        """A new pairing code (replaces any live one) `POST /api/v1/scanners/{id}/pairing`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/pairing", query={"restore": restore}, result=m.ScannersPairingCreateResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersPairingRetrieveResult:
+        """Poll a pairing `GET /api/v1/scanners/{id}/pairing`"""
+        return self._core.request("GET", f"/api/v1/scanners/{_p(id)}/pairing", result=m.ScannersPairingRetrieveResult, **opts)
+
+
 class ScannersResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.pairing = ScannersPairingResource(core)
+
+    def create(
+        self,
+        body: m.ScannersCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersCreateResult:
+        """Create a scanner (a device comes with a pairing code) `POST /api/v1/scanners`"""
+        return self._core.request("POST", "/api/v1/scanners", body=body, result=m.ScannersCreateResult, **opts)
 
     def revoke(
         self,
@@ -1716,6 +1865,16 @@ class ScannersResource:
     ) -> m.ScannersRevokeResult:
         """Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`"""
         return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/revoke", result=m.ScannersRevokeResult, **opts)
+
+    def rotate_token(
+        self,
+        id: str,
+        *,
+        restore: _Literal["true"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersRotateTokenResult:
+        """A till token, shown once (replaces the old one) `POST /api/v1/scanners/{id}/token`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/token", query={"restore": restore}, result=m.ScannersRotateTokenResult, **opts)
 
     def set_mode(
         self,
@@ -1739,6 +1898,15 @@ class ScannersResource:
 class ScanningSessionsDevicesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+
+    def create(
+        self,
+        id: str,
+        body: m.ScanningSessionsDevicesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsDevicesCreateResult:
+        """Add a device to a scanning session `POST /api/v1/scanning-sessions/{id}/devices`"""
+        return self._core.request("POST", f"/api/v1/scanning-sessions/{_p(id)}/devices", body=body, result=m.ScanningSessionsDevicesCreateResult, **opts)
 
     def update(
         self,
@@ -2439,6 +2607,7 @@ class Resources:
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)
+        self.scan_staff = ScanStaffResource(core)
         self.scan_zones = ScanZonesResource(core)
         self.terminal = TerminalResource(core)
         self.scanners = ScannersResource(core)
