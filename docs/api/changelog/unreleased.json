@@ -848,6 +848,22 @@
     "note": "The reviewer inbox: versions waiting for a peer, newest version only, your own requests left out."
   },
   {
+    "key": "GET /api/v1/templates 200.items[].openReview: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplates",
+    "op": "GET /api/v1/templates",
+    "change": "200.items[].openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
+  },
+  {
+    "key": "GET /api/v1/templates/{id} 200.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesById",
+    "op": "GET /api/v1/templates/{id}",
+    "change": "200.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
+  },
+  {
     "key": "GET /api/v1/templates/{id} 200.release: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesById",
@@ -1238,6 +1254,14 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/templates/{id} 200.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.patchTemplatesById",
+    "op": "PATCH /api/v1/templates/{id}",
+    "change": "200.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
   },
   {
     "key": "PATCH /api/v1/templates/{id} 200.release: field added",
@@ -2256,6 +2280,14 @@
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
   },
   {
+    "key": "POST /api/v1/templates/{id}/archive 200.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdArchive",
+    "op": "POST /api/v1/templates/{id}/archive",
+    "change": "200.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/archive 200.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdArchive",
@@ -2278,6 +2310,14 @@
     "op": "POST /api/v1/templates/{id}/channels/reset-passes",
     "change": "new operation",
     "note": "Resets passes with their own channel choice to the template, a page per call; repeat while remaining is above 0."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/clone 201.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdClone",
+    "op": "POST /api/v1/templates/{id}/clone",
+    "change": "201.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
   },
   {
     "key": "POST /api/v1/templates/{id}/clone 201.release: field added",
@@ -2310,6 +2350,14 @@
     "op": "POST /api/v1/templates/{id}/release",
     "change": "new operation",
     "note": "Releases a saved version to Test and Live in one call, with dryRun to preview. Test follows Live; Idempotency-Key is required."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/restore 200.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdRestore",
+    "op": "POST /api/v1/templates/{id}/restore",
+    "change": "200.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
   },
   {
     "key": "POST /api/v1/templates/{id}/restore 200.release: field added",
@@ -2352,6 +2400,14 @@
     "note": "A key bound to another org finds no such org, as on every scanning route."
   },
   {
+    "key": "POST /api/v1/templates/{id}/share 200.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdShare",
+    "op": "POST /api/v1/templates/{id}/share",
+    "change": "200.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/share 200.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdShare",
@@ -2366,6 +2422,14 @@
     "op": "POST /api/v1/templates/{id}/share",
     "change": "200.versions[].report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use 201.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUse",
+    "op": "POST /api/v1/templates/{id}/use",
+    "change": "201.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
   },
   {
     "key": "POST /api/v1/templates/{id}/use 201.release: field added",
@@ -2392,6 +2456,14 @@
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
+    "key": "POST /api/v1/templates/{id}/use/check 200.template.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUseCheck",
+    "op": "POST /api/v1/templates/{id}/use/check",
+    "change": "200.template.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
+  },
+  {
     "key": "POST /api/v1/templates/{id}/use/check 200.template.release: field added",
     "class": "additive",
     "operationId": "templates.postTemplatesByIdUseCheck",
@@ -2414,6 +2486,14 @@
     "op": "POST /api/v1/templates/{id}/versions",
     "change": "200.report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/versions 200.template.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdVersions",
+    "op": "POST /api/v1/templates/{id}/versions",
+    "change": "200.template.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
   },
   {
     "key": "POST /api/v1/templates/{id}/versions 200.template.release: field added",
@@ -2678,6 +2758,14 @@
     "op": "PUT /api/v1/templates/{id}/channels",
     "change": "200.overrides: field added",
     "note": "overrides counts the template's passes with their own choice, per channel."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/manifest 200.openReview: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdManifest",
+    "op": "PUT /api/v1/templates/{id}/manifest",
+    "change": "200.openReview: field added",
+    "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
   },
   {
     "key": "PUT /api/v1/templates/{id}/manifest 200.release: field added",

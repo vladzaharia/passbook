@@ -4,6 +4,7 @@ import type { Mode } from '@/shared/contracts/common.ts';
 import { isApiError } from '../../../lib/errors.ts';
 import { prefersReducedMotion } from '../../../lib/motion.ts';
 import { Button, Callout, Dialog, DialogContent, Skeleton, toast } from '../../../ui/index.ts';
+import { FirstRelease } from './first-release.tsx';
 import { useReleasePlan, useReviewFlow } from './flow-api.ts';
 import { PlanSummary } from './plan-summary.tsx';
 import './release-strip.css';
@@ -43,6 +44,7 @@ export default function ReviewDialog({
   const [error, setError] = useState<{ message: string; gone: boolean }>();
   const busy = review.isPending || done;
   const modes = MODES.filter((m) => plan.data?.modes[m]);
+  const first = plan.data?.fromVersion === null;
 
   useEffect(() => {
     if (!done) return;
@@ -114,7 +116,13 @@ export default function ReviewDialog({
                   ) : null;
                 })}
               </ul>
-              <PlanSummary plan={plan.data} templateId={templateId} orgId={orgId} />
+              <FirstRelease
+                templateId={templateId}
+                orgId={orgId}
+                version={version}
+                enabled={first}
+              />
+              <PlanSummary plan={plan.data} templateId={templateId} orgId={orgId} diff={!first} />
             </>
           ) : (
             <p className="text-sm text-fg-muted">Changes are not available to you.</p>

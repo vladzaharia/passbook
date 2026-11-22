@@ -4806,6 +4806,10 @@
               "name"
             ]
           },
+          "openReview": {
+            "type": "boolean",
+            "default": false
+          },
           "passCount": {
             "type": "integer"
           },
@@ -4952,6 +4956,10 @@
               "id",
               "name"
             ]
+          },
+          "openReview": {
+            "type": "boolean",
+            "default": false
           },
           "passCount": {
             "type": "integer"
@@ -58439,9 +58447,41 @@
               },
               "example": {
                 "version": "4",
-                "modes": [
-                  "test"
-                ]
+                "expected": {
+                  "live": 2,
+                  "test": 3
+                }
+              },
+              "examples": {
+                "Try in Test": {
+                  "summary": "Try in Test",
+                  "value": {
+                    "version": "4",
+                    "modes": [
+                      "test"
+                    ]
+                  }
+                },
+                "Release to Test and Live": {
+                  "summary": "Release to Test and Live",
+                  "value": {
+                    "version": "4",
+                    "expected": {
+                      "live": 2,
+                      "test": 3
+                    }
+                  }
+                },
+                "Preview with dryRun=true": {
+                  "summary": "Preview with dryRun=true",
+                  "value": {
+                    "version": "4",
+                    "modes": [
+                      "test",
+                      "live"
+                    ]
+                  }
+                }
               }
             }
           }
@@ -58460,12 +58500,22 @@
                     "test": {
                       "outcome": "released",
                       "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
-                      "generation": 3,
+                      "generation": 4,
                       "approvalKind": "test"
+                    },
+                    "live": {
+                      "outcome": "released",
+                      "releaseId": "0193a1b2-7c00-7000-8000-0000000000e1",
+                      "generation": 3,
+                      "approvalKind": "sole"
                     }
                   },
                   "state": {
-                    "live": null,
+                    "live": {
+                      "version": "4",
+                      "at": 1764086400000,
+                      "by": "Ada Example"
+                    },
                     "test": {
                       "version": "4",
                       "at": 1764086400000,
@@ -58498,7 +58548,7 @@
           "resource": "templates.releases",
           "method": "release"
         },
-        "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`. A Test key may name only `test`; a Live key cannot release.",
+        "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`: the same key and body replays the stored answer with `Idempotent-Replayed: true`. `expected` is the generation each head must still be at, `0` before a first release. A Test key may name only `test`; a Live key cannot release.",
         "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
@@ -58650,21 +58700,27 @@
                   },
                   "state": {
                     "live": {
-                      "version": "4",
-                      "at": 1764086400000,
+                      "version": "3",
+                      "at": 1764000000000,
                       "by": "Ada Example"
                     },
                     "test": {
-                      "version": "4",
-                      "at": 1764086400000,
+                      "version": "3",
+                      "at": 1764000000000,
                       "state": "following"
                     },
-                    "draft": null,
-                    "review": {
-                      "state": "none"
+                    "draft": {
+                      "version": "4",
+                      "at": 1764086400000
                     },
-                    "alone": true,
-                    "next": null
+                    "review": {
+                      "state": "open",
+                      "version": "4",
+                      "by": "Ada Example",
+                      "at": 1764086400000
+                    },
+                    "alone": false,
+                    "next": "wait"
                   }
                 }
               }
@@ -58793,6 +58849,22 @@
                 "version": "4",
                 "release": true,
                 "note": "Looks right."
+              },
+              "examples": {
+                "Approve only": {
+                  "summary": "Approve only",
+                  "value": {
+                    "version": "4"
+                  }
+                },
+                "Approve and release": {
+                  "summary": "Approve and release",
+                  "value": {
+                    "version": "4",
+                    "release": true,
+                    "note": "Looks right."
+                  }
+                }
               }
             }
           }
@@ -58811,7 +58883,41 @@
                     "test",
                     "live"
                   ],
-                  "release": null
+                  "release": {
+                    "version": "4",
+                    "modes": {
+                      "test": {
+                        "outcome": "released",
+                        "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                        "generation": 4,
+                        "approvalKind": "peer"
+                      },
+                      "live": {
+                        "outcome": "released",
+                        "releaseId": "0193a1b2-7c00-7000-8000-0000000000e1",
+                        "generation": 3,
+                        "approvalKind": "peer"
+                      }
+                    },
+                    "state": {
+                      "live": {
+                        "version": "4",
+                        "at": 1764086400000,
+                        "by": "Grace Reviewer"
+                      },
+                      "test": {
+                        "version": "4",
+                        "at": 1764086400000,
+                        "state": "following"
+                      },
+                      "draft": null,
+                      "review": {
+                        "state": "none"
+                      },
+                      "alone": false,
+                      "next": null
+                    }
+                  }
                 }
               }
             }

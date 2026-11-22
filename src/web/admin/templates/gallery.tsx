@@ -85,9 +85,10 @@ export function TemplateOrgMark({ template }: { template: TemplateSummaryDto }) 
   );
 }
 
-/** The badge a tile carries: Draft before a first release, else Archived or Built-in. */
+/** The badge a tile carries: Needs review while a review is open, Draft before a first release, else Archived or Built-in. */
 function TileBadge({ template }: { template: TemplateSummaryDto }) {
   const { draft } = useTemplateStill(template);
+  if (template.openReview) return <Badge tone="accent">Needs review</Badge>;
   if (draft) return <Badge>Draft</Badge>;
   // Built-in names a template that ships with PassBook; an uploaded one needs no badge.
   if (template.status === 'archived' || template.origin === 'baked')

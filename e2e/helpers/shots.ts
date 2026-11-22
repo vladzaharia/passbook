@@ -1,7 +1,8 @@
+import { mkdirSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 
-/** Set D12_SHOTS to a folder to take every width and theme of a state; unset, a no-op. */
-const DIR = process.env.D12_SHOTS;
+/** Set D12_SHOTS (or SHOTS_DIR) to a folder to take every width and theme of a state; unset, a no-op. */
+const DIR = process.env.D12_SHOTS ?? process.env.SHOTS_DIR;
 
 const VIEWS = [
   [1440, 900],
@@ -12,6 +13,7 @@ const VIEWS = [
 /** `view`: also the 1440 window as the reader sees it (a sticky column scrolls inside it, which a full-page shot cannot show). */
 export async function shots(page: Page, name: string, view = false) {
   if (!DIR) return;
+  mkdirSync(DIR, { recursive: true });
   const before = page.viewportSize();
   for (const [width, height] of VIEWS) {
     for (const scheme of ['light', 'dark'] as const) {
@@ -29,3 +31,5 @@ export async function shots(page: Page, name: string, view = false) {
   await page.emulateMedia({ colorScheme: 'light' });
   if (before) await page.setViewportSize(before);
 }
+
+export const shoot = shots;

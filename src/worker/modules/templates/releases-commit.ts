@@ -16,6 +16,7 @@ import {
   type CandidateRow,
   getLatestRelease,
   getRelease,
+  versionPlace,
 } from './repo-releases.ts';
 import { assertStampsFit } from './stamps.ts';
 
@@ -44,6 +45,8 @@ export async function commitRelease(
     description: version.manifest.description ?? null,
     styles: stylesOf(version.passJson),
   };
+  // The version's place by age, as the console names it ("v3"): the audit trail reads it without a lookup.
+  const place = await versionPlace(db, candidate.templateId, version.createdAt);
   const now = ctx.clock.now();
   const id = ctx.ids.id();
   const ownsTemplate = scope.mode === 'live' && template?.orgId === candidate.orgId;
@@ -70,6 +73,8 @@ export async function commitRelease(
       candidateHash: candidate.candidateHash,
       mode: scope.mode,
       provider: scope.provider,
+      version: candidate.version,
+      ...(place > 0 ? { versionNumber: place } : {}),
       generation: expectedGeneration + 1,
       targetReleaseId,
       ...(reason === null ? {} : { reason }),

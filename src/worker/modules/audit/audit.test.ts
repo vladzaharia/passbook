@@ -58,6 +58,13 @@ describe('redaction', () => {
     }
   });
 
+  it('keeps a release’s version number in a tenant’s view', () => {
+    expect(redactForRead({ mode: 'live', versionNumber: 3 }, true)).toEqual({
+      mode: 'live',
+      versionNumber: 3,
+    });
+  });
+
   it('replaces oversized detail and diffs only changed fields', () => {
     const big = Object.fromEntries(
       Array.from({ length: 200 }, (_, i) => [`k${i}`, 'v'.repeat(100)]),

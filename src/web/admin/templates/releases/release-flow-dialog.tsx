@@ -13,8 +13,7 @@ import {
   Skeleton,
   toast,
 } from '../../../ui/index.ts';
-import { PassPreview } from '../../passes/pass-preview.tsx';
-import { useTemplatePreview } from '../api.ts';
+import { FirstRelease } from './first-release.tsx';
 import { useReleaseFlow, useReleasePlan } from './flow-api.ts';
 import { PlanSummary } from './plan-summary.tsx';
 import './release-strip.css';
@@ -81,7 +80,6 @@ export default function ReleaseFlowDialog({
   const plan = useReleasePlan(templateId, orgId, version, MODES);
   const flow = useReleaseFlow(templateId, orgId);
   const first = plan.data?.fromVersion === null;
-  const preview = useTemplatePreview(first ? templateId : '', orgId, version);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string>();
   const modes = MODES.filter((m) => plan.data?.modes[m]);
@@ -148,23 +146,7 @@ export default function ReleaseFlowDialog({
                 ) : null;
               })}
             </ul>
-            {first ? (
-              <div className="grid justify-items-center gap-2">
-                {preview.data ? (
-                  <div className="w-44">
-                    <PassPreview
-                      passJson={preview.data.passJson}
-                      assetBaseUrl={preview.data.assetBaseUrl}
-                      assetNames={preview.data.assetNames}
-                      still
-                    />
-                  </div>
-                ) : (
-                  <Skeleton className="h-56 w-44 rounded-xl" />
-                )}
-                <p className="text-sm font-medium text-fg-strong">First release</p>
-              </div>
-            ) : null}
+            <FirstRelease templateId={templateId} orgId={orgId} version={version} enabled={first} />
             <PlanSummary plan={plan.data} templateId={templateId} orgId={orgId} diff={!first} />
             {error ? <Callout tone="danger">{error}</Callout> : null}
           </div>

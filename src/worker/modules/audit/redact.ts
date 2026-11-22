@@ -154,6 +154,7 @@ const TENANT_DETAIL_KEYS: Record<string, true> = {
   truncated: true,
   userId: true,
   version: true,
+  versionNumber: true,
   via: true,
 };
 

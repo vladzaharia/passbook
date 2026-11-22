@@ -198,7 +198,7 @@ export function orgSetupChecks(f: SetupFacts, now: number): SetupCheck[] {
 }
 
 /** The to-do count: warnings and errors. Suggestions (info) never count. */
-export const todoCount = (checks: readonly SetupCheck[]): number =>
+export const todoCount = (checks: readonly Pick<SetupCheck, 'level'>[]): number =>
   checks.filter((c) => c.level !== 'info').length;
 
 /** The checks a pass of `templateId` shows: those naming it, and those about every template. */
