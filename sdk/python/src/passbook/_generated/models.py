@@ -8490,6 +8490,7 @@ class TemplateDetail(_Model):
     group: str | None = None
     aliases: _List[str] | None = None
     fromBlueprint: _Dict[str, _Any] | None = None
+    openReview: bool | None = None
     passCount: int
     createdAt: int
     updatedAt: int
@@ -8621,6 +8622,7 @@ class TemplateSummary(_Model):
     group: str | None = None
     aliases: _List[str] | None = None
     fromBlueprint: _Dict[str, _Any] | None = None
+    openReview: bool | None = None
     passCount: int
     createdAt: int
     updatedAt: int

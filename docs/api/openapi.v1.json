@@ -4806,6 +4806,10 @@
               "name"
             ]
           },
+          "openReview": {
+            "type": "boolean",
+            "default": false
+          },
           "passCount": {
             "type": "integer"
           },
@@ -4952,6 +4956,10 @@
               "id",
               "name"
             ]
+          },
+          "openReview": {
+            "type": "boolean",
+            "default": false
           },
           "passCount": {
             "type": "integer"

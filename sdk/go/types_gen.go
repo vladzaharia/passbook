@@ -8026,6 +8026,7 @@ type TemplateDetail struct {
 	Group                 *string                      `json:"group,omitempty"`
 	Aliases               []string                     `json:"aliases,omitempty"`
 	FromBlueprint         map[string]any               `json:"fromBlueprint,omitempty"`
+	OpenReview            *bool                        `json:"openReview,omitempty"`
 	PassCount             int64                        `json:"passCount"`
 	CreatedAt             int64                        `json:"createdAt"`
 	UpdatedAt             int64                        `json:"updatedAt"`
@@ -8164,6 +8165,7 @@ type TemplateSummary struct {
 	Group         *string        `json:"group,omitempty"`
 	Aliases       []string       `json:"aliases,omitempty"`
 	FromBlueprint map[string]any `json:"fromBlueprint,omitempty"`
+	OpenReview    *bool          `json:"openReview,omitempty"`
 	PassCount     int64          `json:"passCount"`
 	CreatedAt     int64          `json:"createdAt"`
 	UpdatedAt     int64          `json:"updatedAt"`

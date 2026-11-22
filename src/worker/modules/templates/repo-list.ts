@@ -1,6 +1,7 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, containsMatch, first } from '../../platform/db.ts';
 import { TEMPLATE_COLUMNS, type TemplateRow, type TemplateSql, templateRow } from './repo.ts';
+import { OPEN_REVIEW_SQL } from './repo-reviews.ts';
 import { templateVisibleSql, visibleBinds } from './repo-visibility.ts';
 
 export interface ListFilter {
@@ -55,6 +56,8 @@ export interface ListedTemplate extends TemplateRow {
   group: string | null;
   aliases: string[];
   fromBlueprint: { id: string; name: string } | null;
+  /** A Live review request for the newest version is waiting for a peer. */
+  openReview: boolean;
 }
 
 export async function listTemplates(db: D1Database, f: ListFilter): Promise<ListedTemplate[]> {
@@ -96,6 +99,7 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
       grp: unknown;
       aliases: unknown;
       from_name: string | null;
+      open_review: number;
     }
   >(
     db,
@@ -110,7 +114,8 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
          WHERE v.template_id = t.id AND v.version = t.active_version) AS grp,
        (SELECT json_extract(v.manifest, '$.display.aliases') FROM template_versions v
          WHERE v.template_id = t.id AND v.version = t.active_version) AS aliases,
-       (SELECT b.name FROM templates b WHERE b.id = t.source_blueprint) AS from_name
+       (SELECT b.name FROM templates b WHERE b.id = t.source_blueprint) AS from_name,
+       ${OPEN_REVIEW_SQL} AS open_review
      FROM templates t WHERE ${where.join(' AND ')}
      ORDER BY t.created_at DESC, t.id DESC LIMIT ?`,
     [f.mode ?? 'live', ...(f.passOrgId === undefined ? [] : [f.passOrgId]), ...params, f.limit],
@@ -124,5 +129,6 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     aliases: aliasList(r.aliases),
     fromBlueprint:
       r.source_blueprint && r.from_name ? { id: r.source_blueprint, name: r.from_name } : null,
+    openReview: r.open_review === 1,
   }));
 }
