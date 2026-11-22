@@ -6,6 +6,7 @@ import type {
 import { loadKekRing } from '../../platform/crypto.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordAudit } from '../audit/service.ts';
 import { type ImportProblem, parseImportCsv } from './import-csv.ts';
 import { openVersion, sealTagKey } from './keyset-seal.ts';
 import { commitKeyset, conflict, keysetIn, scopeOf } from './keysets.ts';
@@ -17,7 +18,7 @@ import {
   rekeyGrant,
 } from './repo-import.ts';
 import { keyVersionsOf, versionEnvelopes } from './repo-keysets.ts';
-import type { KeysetAuthority } from './repo-keysets-write.ts';
+import { type KeysetAuthority, keysetActorId } from './repo-keysets-write.ts';
 import { bytesToHex, hexToBytes } from './sun.ts';
 import { tagRef } from './tag-ref.ts';
 
@@ -101,6 +102,7 @@ export async function importTags(
       const { grant, writes } = replace
         ? (({ grant, updates }) => ({ grant, writes: updates }))(rekeyGrant(ctx, a, target, tags))
         : (({ grant, inserts }) => ({ grant, writes: inserts }))(importGrant(ctx, a, target, tags));
+      const before = added;
       const results = await commitKeyset(grant, a).catch((error: unknown) => {
         if (added > 0 && error instanceof AppError)
           throw conflict(
@@ -109,7 +111,22 @@ export async function importTags(
           );
         throw error;
       });
-      added += writes.filter((s) => (results[grant.indexOf(s)]?.results?.length ?? 0) === 1).length;
+      const done = writes.map((s) => (results[grant.indexOf(s)]?.results?.length ?? 0) === 1);
+      added += done.filter(Boolean).length;
+      if (replace)
+        await recordAudit(ctx, {
+          orgId: a.orgId,
+          actorType: a.kind === 'api_key' ? 'api_key' : 'user',
+          actorId: keysetActorId(a),
+          ...(a.ip ? { ipPrefix: a.ip } : {}),
+          action: 'tag_keyset.rekeyed',
+          targetType: 'tag_keyset',
+          targetId: keyset.id,
+          detail: {
+            count: added - before,
+            tagIds: tags.filter((_, n) => done[n]).map((t) => t.tagId),
+          },
+        });
     }
   }
   problems.sort((x, y) => x.line - y.line);

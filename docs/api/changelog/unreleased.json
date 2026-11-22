@@ -2178,7 +2178,7 @@
     "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
     "op": "POST /api/v1/nfc/keysets/{id}/import",
     "change": "body.replace: optional input field added",
-    "note": "replace: true swaps the key of tags already on the keyset after a leak; counters and bindings stay."
+    "note": "replace: true swaps keys of tags on the keyset; a console session needs a recent sign-in (not a dry run)."
   },
   {
     "key": "POST /api/v1/nfc/keysets/{id}/import callable by nfc:keys key",

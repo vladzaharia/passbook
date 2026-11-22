@@ -28,13 +28,14 @@ export async function auditPassRead(
       targetId: passId,
       detail: { count },
     },
-    `NOT EXISTS (SELECT 1 FROM audit_log WHERE org_id = ? AND actor_type = ? AND actor_id IS ? AND target_id = ?
-       AND action IN ('scan.history.read', 'scan.note.read') AND at > ?)`,
+    `NOT EXISTS (SELECT 1 FROM audit_log WHERE org_id = ? AND actor_type = ? AND actor_id IS ? AND target_type = 'pass' AND target_id = ?
+       AND action = ? AND at > ?)`,
     [
       actor.orgId,
       actor.actor.type,
       actor.actor.id ?? null,
       passId,
+      action,
       ctx.clock.now() - READ_WINDOW_MS,
     ],
   ).run();

@@ -128841,6 +128841,10 @@
           "method": "importTags"
         },
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
@@ -128856,6 +128860,7 @@
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

@@ -151,7 +151,7 @@ describe('changing and deleting notes', () => {
 });
 
 describe('reads are audited and bounded', () => {
-  it('history and notes reads leave one row with a count and no content; a later page does not', async () => {
+  it('history and notes reads each leave one row with a count and no content; a later page does not', async () => {
     const pass = await kit.scanPass(templateId);
     const dana = await device('desk', 'Dana Q.');
     await add(pass.id, dana.headers, 'Secret remark');
@@ -160,12 +160,12 @@ describe('reads are audited and bounded', () => {
     await kit.get(dana.headers, `/passes/${pass.id}/history?cursor=1_x`);
     const rows = await all<{ action: string; detail: string }>(
       kit.env.DB,
-      "SELECT action, detail FROM audit_log WHERE target_id = ? AND action IN ('scan.history.read', 'scan.note.read')",
+      "SELECT action, detail FROM audit_log WHERE target_id = ? AND action IN ('scan.history.read', 'scan.note.read') ORDER BY id",
       [pass.id],
     );
-    expect(rows.map((r) => r.action)).toEqual(['scan.note.read']);
+    expect(rows.map((r) => r.action)).toEqual(['scan.note.read', 'scan.history.read']);
     expect(JSON.stringify(rows)).not.toContain('Secret');
-    expect(JSON.parse(rows[0]?.detail ?? '{}')).toHaveProperty('count');
+    for (const r of rows) expect(JSON.parse(r.detail)).toHaveProperty('count');
   });
 
   it('reads of two passes, or after the window, each leave a row', async () => {

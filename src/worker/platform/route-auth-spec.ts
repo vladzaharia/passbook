@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
 import type { OrgCapability } from '../../shared/contracts/org-membership.ts';
 import type { PlatformScope } from './api-scopes.ts';
+import type { AppBindings } from './context.ts';
 import type { FeatureRule } from './feature-guard.ts';
 
 type ApiScope = z.infer<typeof ApiScopeSchema>;
@@ -17,6 +18,8 @@ export type ScopeRule = ApiScope | readonly ApiScope[] | { read: ApiScope; write
 /** A session must have signed in within `maxAgeSec`, else 403 STEP_UP_REQUIRED. Keys are never asked. */
 export interface StepUp {
   maxAgeSec: number;
+  /** Ask only the requests it accepts (it may read the body); omitted, every session request is asked. */
+  when?: (c: Context<AppBindings>) => boolean | Promise<boolean>;
 }
 
 export type RouteAuth =

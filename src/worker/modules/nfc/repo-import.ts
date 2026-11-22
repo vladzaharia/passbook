@@ -149,7 +149,7 @@ export function rekeyGrant(
         'keyset_id',
       ),
     ],
-    ['nfc_tags', 'nfc_tag_sun'],
+    ['nfc_tag_sun'],
   );
   const updates = tags.map((t) =>
     g.joined('nfc_tag_sun', {
@@ -170,7 +170,7 @@ export function rekeyGrant(
     a,
     keysetId: keyset.id,
     action: 'tag_keyset.rekey',
-    detail: { attempted: tags.length, version: keyset.version },
+    detail: { attempted: tags.length, version: keyset.version, tagIds: tags.map((t) => t.tagId) },
   });
   return { grant: g, updates };
 }
