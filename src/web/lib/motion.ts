@@ -175,6 +175,11 @@ export function useCountUp(value: number, ms = 600): number {
 const minted = new Set<string>();
 /** Marks a pass as just created so its detail page mints the card on arrival. */
 export const markMinted = (id: string) => void minted.add(id);
+/** Whether a pass is marked, without taking the mark: the page that will mint it reads it later. */
+export function usePeekMinted(id: string): boolean {
+  const [fresh] = useState(() => minted.has(id));
+  return fresh;
+}
 /** True once for a pass marked by markMinted. */
 export function useMintedOnArrival(id: string): boolean {
   const [fresh] = useState(() => minted.has(id));

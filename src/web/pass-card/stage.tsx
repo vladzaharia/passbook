@@ -135,6 +135,7 @@ export function PassCardStage({
       data-tilt={(tilt && !dim) || undefined}
       data-enter={enter ? (dim ? 'quiet' : '') : undefined}
       data-glow={glow ? undefined : 'off'}
+      data-light={isDarkBackground(c.background) ? undefined : ''}
       data-dim={dim || undefined}
       data-single={both ? undefined : ''}
       style={style}

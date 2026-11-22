@@ -108,7 +108,12 @@ export function RunDone({
           size="sm"
         />
       ) : null}
-      <Celebrate when={celebrated.current} />
+      <Celebrate
+        when={celebrated.current}
+        at={buddy ? 'buddy' : 'center'}
+        delay={buddy ? 440 : 0}
+        size={buddy ? 'lg' : 'sm'}
+      />
       <CardBody className="flex flex-col gap-5 p-6">
         <p className="flex items-center gap-2 text-base font-semibold text-fg-strong">
           <span

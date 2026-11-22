@@ -81,7 +81,7 @@ export function BlueprintTile({
       <div
         className={cn(
           'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-4 py-3',
-          rise && 'wl-rise [animation-delay:calc(min(var(--i),6)*60ms+160ms)]',
+          rise && 'wl-rise [--wl-delay:calc(min(var(--i),6)*60ms+160ms)]',
         )}
       >
         <BlueprintGlyph icon={blueprintGlyph(b)} />

@@ -10,11 +10,9 @@ import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import { sessionQuery } from '../../../lib/session.ts';
 import {
   Badge,
-  Buddy,
   Card,
   CardBody,
   CardHeader,
-  Celebrate,
   KeyValue,
   PageHeader,
   StatusPill,
@@ -48,6 +46,7 @@ import { HeaderActionsView } from './header-actions.tsx';
 import { type Notice, NotifyPreview, orgLine } from './notify-preview.tsx';
 import { PassHold } from './pass-hold.tsx';
 import { PassTabs } from './pass-tabs.tsx';
+import { StageBuddy } from './stage-buddy.tsx';
 import { useStageMotion } from './stage-state.ts';
 
 const devices = (n: number) =>
@@ -134,7 +133,6 @@ export function LoadedPassDetail({
   );
   const stage = (size: 'column' | 'card' | 'sheet') => (
     <div className="relative">
-      {size === 'sheet' ? null : <Celebrate when={created.mark?.first === true} />}
       <ChannelStage
         size={size}
         source={channelSource}
@@ -151,6 +149,7 @@ export function LoadedPassDetail({
             assetBaseUrl={source.assetBaseUrl}
             assetNames={source.assetNames}
             transitionName={size === 'sheet' ? undefined : `pass-${p.id}`}
+            celebrate={size !== 'sheet' && created.mark?.first === true}
             enter={deal && picked === undefined && size !== 'sheet'}
             mint={picked === undefined && !draft ? motion.mint : undefined}
             settle={motion.settle}
@@ -167,27 +166,7 @@ export function LoadedPassDetail({
             seat
             // Just created, the buddy falls onto the Front / Details control and waves at the pass;
             // just voided, it sheds a tear. It stays there, in every layout.
-            beside={
-              motion.stamp ? (
-                <Buddy
-                  key="tear"
-                  size="sm"
-                  at="end"
-                  mood="sad"
-                  scene="tear"
-                  className="wl-pass-buddy"
-                />
-              ) : minted ? (
-                <Buddy
-                  key="wave"
-                  size="sm"
-                  at="end"
-                  mood="happy"
-                  scene="wave"
-                  className="wl-pass-buddy"
-                />
-              ) : undefined
-            }
+            beside={<StageBuddy stamp={motion.stamp} minted={minted} />}
           />
         }
       />
@@ -219,68 +198,77 @@ export function LoadedPassDetail({
         }
         actions={<HeaderActionsView runner={runner} />}
       />
-      <Card className="mb-6 min-w-0">
-        <CardHeader title="Pass context" />
-        <CardBody className="grid gap-3">
-          <KeyValue
-            items={[
-              ...(template.data ? [{ label: 'Template', value: template.data.name }] : []),
-              { label: 'Last updated', value: formatDateTime(p.modifiedAt) },
-            ]}
-          />
-          <TechnicalDetails
-            items={[
-              { label: 'Serial number', value: p.serial, copy: true },
-              { label: 'Template revision', value: p.templateVersion, copy: true },
-            ]}
-          />
-          <PassHold passId={p.id} orgId={p.orgId} />
-        </CardBody>
-      </Card>
-      <div className="mb-6 flex flex-col gap-3 empty:hidden">
-        {p.reissueRequired ? <ReissueRequiredCallout pass={p} canOperate={!readOnly} /> : null}
-        {foreign ? <ModeMismatchCallout pass={p} /> : null}
-        {removed ? (
-          <RemovedCallout pass={p} tab={tab} />
-        ) : voided ? (
-          <VoidedCallout pass={p} stamp={motion.stamp} />
-        ) : null}
-        {created.shown && !voided ? (
-          <PassCreatedCallout
-            pass={p}
-            sent={created.mark?.sent === true}
-            runner={runner}
-            canOperate={canOperate}
-            canEdit={!readOnly}
-            onDismiss={created.dismiss}
-            onSend={() => {
-              if (readOnly) return;
-              const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-              if (!before?.authenticated) return;
-              const userId = before.user.id;
-              void actions.resendEmail
-                .mutateAsync({ key: newKey() })
-                .then(() => {
-                  const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-                  if (!current?.authenticated || current.user.id !== userId) return;
-                  toast.info(`Email queued to ${p.holderEmail}`);
-                  const afterToast = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-                  if (!afterToast?.authenticated || afterToast.user.id !== userId) return;
-                  created.dismiss();
-                })
-                .catch((error: unknown) => {
-                  const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
-                  if (!current?.authenticated || current.user.id !== userId) return;
-                  reportEmailError(error);
-                });
-            }}
-          />
-        ) : null}
-        <PassWarnings pass={p} />
-      </div>
       <PreviewLayout
         title={entityLabel(p.title, 'Pass')}
         stage={stage}
+        inline={minted || motion.stamp}
+        lead={
+          <>
+            <Card className="min-w-0">
+              <CardHeader title="Pass context" />
+              <CardBody className="grid gap-3">
+                <KeyValue
+                  items={[
+                    ...(template.data ? [{ label: 'Template', value: template.data.name }] : []),
+                    { label: 'Last updated', value: formatDateTime(p.modifiedAt) },
+                  ]}
+                />
+                <TechnicalDetails
+                  items={[
+                    { label: 'Serial number', value: p.serial, copy: true },
+                    { label: 'Template revision', value: p.templateVersion, copy: true },
+                  ]}
+                />
+                <PassHold passId={p.id} orgId={p.orgId} />
+              </CardBody>
+            </Card>
+            <div className="flex flex-col gap-3 empty:hidden">
+              {p.reissueRequired ? (
+                <ReissueRequiredCallout pass={p} canOperate={!readOnly} />
+              ) : null}
+              {foreign ? <ModeMismatchCallout pass={p} /> : null}
+              {removed ? (
+                <RemovedCallout pass={p} tab={tab} />
+              ) : voided ? (
+                <VoidedCallout pass={p} stamp={motion.stamp} />
+              ) : null}
+              {created.shown && !voided ? (
+                <PassCreatedCallout
+                  pass={p}
+                  sent={created.mark?.sent === true}
+                  runner={runner}
+                  canOperate={canOperate}
+                  canEdit={!readOnly}
+                  onDismiss={created.dismiss}
+                  onSend={() => {
+                    if (readOnly) return;
+                    const before = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+                    if (!before?.authenticated) return;
+                    const userId = before.user.id;
+                    void actions.resendEmail
+                      .mutateAsync({ key: newKey() })
+                      .then(() => {
+                        const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+                        if (!current?.authenticated || current.user.id !== userId) return;
+                        toast.info(`Email queued to ${p.holderEmail}`);
+                        const afterToast = client.getQueryData<SessionResponse>(
+                          sessionQuery.queryKey,
+                        );
+                        if (!afterToast?.authenticated || afterToast.user.id !== userId) return;
+                        created.dismiss();
+                      })
+                      .catch((error: unknown) => {
+                        const current = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
+                        if (!current?.authenticated || current.user.id !== userId) return;
+                        reportEmailError(error);
+                      });
+                  }}
+                />
+              ) : null}
+              <PassWarnings pass={p} />
+            </div>
+          </>
+        }
         still={
           <PassPreview
             passJson={p.passJson}

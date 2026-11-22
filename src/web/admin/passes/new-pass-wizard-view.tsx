@@ -83,14 +83,10 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
   // Do not render the old draft under a newly confirmed scope while its state is reset.
   if (!scope.isLoading && selectedOrg !== scope.orgId)
     return <SkeletonRows label="Updating organization scope" />;
-  const aside = (
-    <StagePreview
-      state={live}
-      name={name}
-      transitionName={createdId ? `pass-${createdId}` : undefined}
-    />
-  );
-  const showPass = <ShowPassRow state={live} title={name ?? 'Pass'} />;
+  // The card the wizard shows is the one the pass's page opens with: the same name morphs it.
+  const vt = createdId ? `pass-${createdId}` : undefined;
+  const aside = <StagePreview state={live} name={name} transitionName={vt} />;
+  const showPass = <ShowPassRow state={live} title={name ?? 'Pass'} transitionName={vt} />;
 
   return (
     <>
