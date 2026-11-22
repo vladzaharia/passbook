@@ -26,8 +26,8 @@ export const SCAN_TAG_COPY = {
   assigningTo: 'Assigning to {name}',
   lendingTo: 'Lending to {name}',
   confirm: {
-    name: 'Name',
-    namePlaceholder: 'Name, optional',
+    name: 'Name (optional)',
+    namePlaceholder: 'Blue fob',
     forms: ['Card', 'Fob', 'Sticker', 'Wristband'],
     moveOwn: [
       'It works with {pass} now. Assigning moves it.',

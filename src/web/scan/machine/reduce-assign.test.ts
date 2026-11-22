@@ -663,3 +663,83 @@ describe('a person scope the binder may not use', () => {
     });
   });
 });
+
+describe('the Manager approval of a pass picked by id', () => {
+  const failEvent = (key: string, over: Record<string, unknown>) =>
+    ({ type: 'assign.failed', key, code: null, status: 0, network: false, ...over }) as const;
+  /** Picked, PIN asked, PIN given: the approval waits in memory for the bind. */
+  const approvedPreview = () => {
+    const t = tagged();
+    const r = run(t.state, [300, passReadEvent()]);
+    const first = assignCmd(r.cmds, 'assign.bind');
+    const asked = step(
+      r.state,
+      failEvent(first.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    const ok = step(asked.state, { type: 'assign.approve', staffId: 'm1', pin: '123456' }, at(500));
+    const cmd = assignCmd(ok.cmds, 'assign.bind');
+    const done = step(
+      ok.state,
+      { type: 'assign.previewed', key: cmd.key, result: bindResultOf() },
+      at(600),
+    );
+    return { ...done, cmd };
+  };
+  it('rides the one bind, so the confirm step does not ask again', () => {
+    const p = approvedPreview();
+    expect(assignOf(p.state)).toMatchObject({
+      step: 'confirm',
+      pin: null,
+      approved: { staffId: 'm1', pin: '123456' },
+    });
+    const b = step(p.state, { type: 'assign.bind' }, at(700));
+    expect(assignCmd(b.cmds, 'assign.bind').body).toMatchObject({
+      preview: false,
+      approval: { staffId: 'm1', pin: '123456' },
+    });
+  });
+  it('is wiped after the bind, and a retry never carries it', () => {
+    const p = approvedPreview();
+    const b = step(p.state, { type: 'assign.bind' }, at(700));
+    const a = assignOf(b.state);
+    expect(a?.approved).toBeNull();
+    expect(JSON.stringify(a?.retry)).not.toContain('123456');
+  });
+  it('is wiped by Back and by a refusal, and gone with a cancel', () => {
+    const p = approvedPreview();
+    expect(assignOf(step(p.state, { type: 'assign.back' }, at(700)).state)?.approved).toBeNull();
+    const b = step(p.state, { type: 'assign.bind' }, at(700));
+    const key = assignCmd(b.cmds, 'assign.bind').key;
+    const refused = step(
+      b.state,
+      failEvent(key, { code: 'TAG_PASS_VOIDED', status: 409 }),
+      at(800),
+    );
+    expect(assignOf(refused.state)?.approved).toBeNull();
+    expect(assignOf(step(p.state, { type: 'assign.cancel' }, at(900)).state)).toBeNull();
+  });
+  it('an approved preview refused with a banner closes the PIN sheet and keeps no approval (LOW-7)', () => {
+    const t = tagged();
+    const r = run(t.state, [300, passReadEvent()]);
+    const first = assignCmd(r.cmds, 'assign.bind');
+    const asked = step(
+      r.state,
+      failEvent(first.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    const ok = step(asked.state, { type: 'assign.approve', pin: '123456' }, at(500));
+    const cmd = assignCmd(ok.cmds, 'assign.bind');
+    const f = step(
+      ok.state,
+      failEvent(cmd.key, { code: 'TAG_PASS_NOT_ACCEPTED', status: 403 }),
+      at(600),
+    );
+    expect(assignOf(f.state)).toMatchObject({
+      step: 'pass',
+      banner: 'not_accepted',
+      pin: null,
+      approved: null,
+    });
+  });
+});

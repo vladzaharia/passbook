@@ -187,7 +187,7 @@ export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out 
     );
   if (!a || a.key !== ev.key || !a.busy) return same(s);
   const busy = a.busy;
-  const idle: AssignState = { ...a, busy: null, key: null };
+  const idle: AssignState = { ...a, busy: null, key: null, approved: null };
   const code = ev.code ?? '';
   const web = a.tag?.read.source === 'webnfc';
   const error = (e: AssignError, step: AssignState['step'] = 'error'): Out =>
@@ -220,7 +220,7 @@ export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out 
     });
   const banner = PASS_BANNERS[code];
   if (banner && busy === 'preview')
-    return commit(s, { ...idle, step: 'pass', card: null, banner }, env, [
+    return commit(s, { ...idle, step: 'pass', card: null, banner, pin: null }, env, [
       { c: 'sound', tone: 'refused' },
       { c: 'beat', beat: 'shake' },
     ]);

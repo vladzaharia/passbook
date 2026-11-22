@@ -47,11 +47,15 @@ function bindBody(
 export function bind(s: MachineState, ev: Of<'assign.bind'>, env: Env): Out {
   const a = s.assign;
   if (a?.step !== 'confirm' || a.busy) return same(s);
-  const body = bindBody(a, ev.move === true);
+  const body = bindBody(a, ev.move === true, a.approved ?? undefined);
   if (!body) return same(s);
   const key = env.id();
-  const cmd: AssignCmd = { c: 'assign.bind', key, body };
-  return put(s, { ...a, key, busy: 'bind', retry: cmd, pin: null }, env, [send(cmd)]);
+  // The approval rides this one bind and is not kept for a retry.
+  const { approval: _approval, ...kept } = body;
+  const retry: AssignCmd = { c: 'assign.bind', key, body: kept };
+  return put(s, { ...a, key, busy: 'bind', retry, pin: null, approved: null }, env, [
+    send({ c: 'assign.bind', key, body }),
+  ]);
 }
 
 export function pin(s: MachineState, ev: Of<'assign.pin'>, env: Env): Out {
@@ -74,7 +78,8 @@ export function approve(s: MachineState, ev: Of<'assign.approve'>, env: Env): Ou
   const { approval: _pin, ...kept } = body;
   // A pass picked by id asks for the PIN at the preview: the same preview again, with the approval.
   const busy = last.body.preview ? 'preview' : 'bind';
-  return put(s, { ...a, key, busy, retry: { c: 'assign.bind', key, body: kept } }, env, [
+  const approved = last.body.preview ? (body.approval ?? null) : null;
+  return put(s, { ...a, key, busy, approved, retry: { c: 'assign.bind', key, body: kept } }, env, [
     send({ c: 'assign.bind', key, body }),
   ]);
 }
