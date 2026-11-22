@@ -21,5 +21,6 @@ export const TAG_KEY_ACTIONS = {
   'tag_keyset.reenrol': a('Tags moved to new keys', ArrowRightLeft, 'warning'),
   'tag_keyset.disable': a('Tag keys disabled', ShieldX, 'danger'),
   'tag_keyset.import': a('Tags imported', ImagePlus, 'success'),
-  'tag_keyset.rekey': a('Tag keys replaced', ACTION_ICON.rotate, 'warning'),
+  'tag_keyset.rekey': a('Tag key replace started', ACTION_ICON.rotate, 'warning'),
+  'tag_keyset.rekeyed': a('Tag keys replaced', ACTION_ICON.rotate, 'warning'),
 };
