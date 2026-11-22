@@ -184,8 +184,14 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     [EXAMPLE_IDS.passId]: pass.id,
     [EXAMPLE_IDS.identityId]: PLATFORM_IDENTITY_ID,
   };
+  // A rule anchors on a date input of the template, which a placeholder name is not.
   const swap = (text: string) =>
-    text.replace(/0193a1b2-7c00-7000-8000-0000000000[a-e]1/g, (m) => real[m] ?? m);
+    text
+      .replace(/0193a1b2-7c00-7000-8000-0000000000[a-e]1/g, (m) => real[m] ?? m)
+      .replace(
+        /("anchor"\s*:\s*\{\s*"kind"\s*:\s*"input"\s*,\s*"input"\s*:\s*)"Example"/g,
+        '$1"startsAt"',
+      );
   const calls: Call[] = [];
   const fetchLike = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
     const url = new URL(swap(String(input instanceof Request ? input.url : input)));

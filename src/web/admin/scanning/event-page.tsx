@@ -112,6 +112,8 @@ function EventDetail({
     return () => window.clearTimeout(timer);
   }, [event.opensAt]);
   const upcoming = event.status === 'live' && event.opensAt > now;
+  // The scanner opens an event that is running: not one that has ended or not yet begun.
+  const running = event.status === 'live' && !upcoming && event.closesAt > now;
   const [dialog, setDialog] = useState<'edit' | 'assign' | 'archive' | null>(null);
   const templates = useOrgTemplates(event.orgId);
   const sessions = useScanningSessions(event.orgId);
@@ -153,13 +155,15 @@ function EventDetail({
               <Button variant="secondary" onClick={() => setDialog('edit')}>
                 Edit event
               </Button>
-              <Button asChild>
-                <a
-                  href={`/scan?orgId=${encodeURIComponent(event.orgId)}&eventId=${encodeURIComponent(event.id)}&timeZone=${encodeURIComponent(event.timeZone)}`}
-                >
-                  Open scanner
-                </a>
-              </Button>
+              {running ? (
+                <Button asChild>
+                  <a
+                    href={`/scan?orgId=${encodeURIComponent(event.orgId)}&eventId=${encodeURIComponent(event.id)}&timeZone=${encodeURIComponent(event.timeZone)}`}
+                  >
+                    Open scanner
+                  </a>
+                </Button>
+              ) : null}
             </>
           ) : undefined
         }

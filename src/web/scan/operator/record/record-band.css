@@ -159,3 +159,17 @@
     }
   }
 }
+
+/* Phone width: the time and Undo take their own row, so the verdict text has the same width before and after they mount. */
+@media (max-width: 599px) {
+  .op-band {
+    flex-wrap: wrap;
+  }
+  .op-band-text {
+    flex: 1 1 calc(100% - 52px);
+  }
+  .op-band-when,
+  .op-band-undo {
+    margin-inline-start: 44px;
+  }
+}

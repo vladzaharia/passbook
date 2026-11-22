@@ -1,3 +1,5 @@
+import { disableZodCompiling } from '../playground/jitless.ts';
+
 export interface Island {
   mount(el: HTMLElement): void | Promise<void>;
 }
@@ -28,7 +30,14 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   'api-rail': async () => (await import('../logs/entry.ts')).railIsland,
 };
 
+const HOLD_UNTIL_MOUNTED = (el: HTMLElement) =>
+  el.dataset.island === 'account' ||
+  el.dataset.island === 'quickstart' ||
+  (el.dataset.island === 'run' && el.dataset.mode === 'console');
+
 export function mountIslands(root: ParentNode = document): void {
+  // Any island may load zod: its parser probe would log a Trusted Types violation (keys, webhooks, logs, console).
+  disableZodCompiling();
   const pending = [...root.querySelectorAll<HTMLElement>('[data-island]')].filter(
     (el) => el.dataset.island && ISLANDS[el.dataset.island],
   );
@@ -39,10 +48,25 @@ export function mountIslands(root: ParentNode = document): void {
         if (!entry.isIntersecting) continue;
         observer.unobserve(entry.target);
         const el = entry.target as HTMLElement;
-        void ISLANDS[el.dataset.island ?? '']?.().then((island) => island.mount(el));
+        void (async () => {
+          try {
+            const island = await ISLANDS[el.dataset.island ?? '']?.();
+            await island?.mount(el);
+          } catch (error) {
+            // Not silent, and not an unhandled rejection: the page's error handler gets it.
+            reportError(error);
+          } finally {
+            // Mounted or not, the static markup shows again if the island never replaced it.
+            delete el.dataset.hydrating;
+          }
+        })();
       }
     },
     { rootMargin: '200px' },
   );
-  for (const el of pending) observer.observe(el);
+  for (const el of pending) {
+    // The static markup reads signed out: hide it until the session is known, so a signed-in page never flashes it.
+    if (HOLD_UNTIL_MOUNTED(el)) el.dataset.hydrating = '';
+    observer.observe(el);
+  }
 }

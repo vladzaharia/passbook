@@ -146,6 +146,17 @@ export async function probeHardware(env: ProbeEnv): Promise<Probe> {
   };
 }
 
+type PolicyDoc = Document & { permissionsPolicy?: { allowsFeature(name: string): boolean } };
+
+/** False when the page's Permissions-Policy blocks a feature: calling it would log a violation. */
+function allowed(feature: string): boolean {
+  try {
+    return (document as PolicyDoc).permissionsPolicy?.allowsFeature(feature) ?? true;
+  } catch {
+    return true;
+  }
+}
+
 /** The browser's own environment. */
 export function browserProbeEnv(canBuzz: boolean): ProbeEnv {
   const nav = navigator as Navigator & Partial<Omit<ProbeEnv, 'canBuzz' | 'screen'>>;
@@ -153,10 +164,10 @@ export function browserProbeEnv(canBuzz: boolean): ProbeEnv {
   return {
     mediaDevices: nav.mediaDevices,
     permissions: nav.permissions,
-    usb: nav.usb,
-    hid: nav.hid,
-    serial: nav.serial,
-    bluetooth: nav.bluetooth,
+    usb: allowed('usb') ? nav.usb : undefined,
+    hid: allowed('hid') ? nav.hid : undefined,
+    serial: allowed('serial') ? nav.serial : undefined,
+    bluetooth: allowed('bluetooth') ? nav.bluetooth : undefined,
     getBattery: nav.getBattery?.bind(nav),
     screen: window.screen as Screen & { isExtended?: boolean },
     getScreenDetails: win.getScreenDetails?.bind(win),

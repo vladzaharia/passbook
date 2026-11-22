@@ -43,6 +43,7 @@ import {
 } from './service.ts';
 import { listBroadcastItems, retryBroadcast, updateBroadcast } from './service-edit.ts';
 import { tellHoldersKey } from './tell-key.ts';
+import { unsupportedFilter } from './unsupported-filter.ts';
 
 type Ctx = Parameters<typeof authOf>[0];
 
@@ -126,6 +127,8 @@ register(
   {
     method: 'post',
     path: '/',
+    codes: ['BROADCAST_UNSUPPORTED_FILTER'],
+    invalid: unsupportedFilter,
     summary: 'Save, send or schedule a message or change (Idempotency-Key)',
     body: CreateBroadcastBodySchema,
     status: 201,
@@ -177,6 +180,8 @@ register(
   {
     method: 'post',
     path: '/preview',
+    codes: ['BROADCAST_UNSUPPORTED_FILTER'],
+    invalid: unsupportedFilter,
     summary: 'Count the passes a target matches',
     body: ChangePreviewBodySchema,
     response: ChangeRunPreviewSchema,
@@ -255,6 +260,8 @@ register(
   {
     method: 'patch',
     path: '/{id}',
+    codes: ['BROADCAST_UNSUPPORTED_FILTER'],
+    invalid: unsupportedFilter,
     summary: 'Edit a draft or a scheduled message that has not started',
     params: IdParamSchema,
     body: UpdateBroadcastBodySchema,

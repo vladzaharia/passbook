@@ -64,6 +64,19 @@ describe('organization audit log', () => {
     expect(screen.getByRole('combobox', { name: /^Action/ })).toBeInTheDocument();
   });
 
+  it('asks for a first page of 25', async () => {
+    const { fetchMock } = await renderApp('/admin/audit', {
+      session: 'user',
+      memberships: [member(['org:read', 'audit:read'])],
+      selectedOrg: 'o1',
+      handlers,
+    });
+    await screen.findAllByText('Pass 2');
+    expect(
+      calls(fetchMock).some((u) => u.startsWith('/api/v1/audit?') && u.includes('limit=25')),
+    ).toBe(true);
+  });
+
   it('filters by action on the server', async () => {
     const user = userEvent.setup();
     const { fetchMock } = await renderApp('/admin/audit', {

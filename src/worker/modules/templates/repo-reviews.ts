@@ -28,6 +28,19 @@ const OPEN = `FROM template_candidates c
       AND a.kind = 'peer' AND a.candidate_hash = c.candidate_hash
       AND a.reviewer_id != c.author_id AND a.reviewer_id IS NOT c.version_author_id)`;
 
+/** Whether template alias `t` has a Live candidate waiting for a peer: the list's `openReview`. Revisions are constants. */
+export const OPEN_REVIEW_SQL = `EXISTS (SELECT 1 FROM template_candidates c
+  WHERE c.template_id = t.id AND c.org_id = t.org_id AND c.mode = 'live' AND c.provider = 'apple'
+    AND t.status = 'active' AND t.origin = 'uploaded'
+    AND c.adapter_revision = ${Number(APPLE_ADAPTER_REVISION)}
+    AND c.audience_policy_revision = ${Number(AUDIENCE_POLICY_REVISION)}
+    AND c.version = (SELECT v.version FROM template_versions v WHERE v.template_id = c.template_id
+      ORDER BY v.created_at DESC, v.version DESC LIMIT 1)
+    AND NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id AND r.source = 'approved')
+    AND NOT EXISTS (SELECT 1 FROM template_approvals a WHERE a.candidate_id = c.id
+      AND a.kind = 'peer' AND a.candidate_hash = c.candidate_hash
+      AND a.reviewer_id != c.author_id AND a.reviewer_id IS NOT c.version_author_id))`;
+
 /** Open requests the caller did not write, oldest request per template, newest first. */
 export async function listOpenReviews(
   db: D1Database,

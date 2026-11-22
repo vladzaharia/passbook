@@ -48,6 +48,18 @@ describe('requireSession', () => {
     });
   });
 
+  it('names the pass email on a signed-out pass link, and nothing on other pages', async () => {
+    const pass = await requireSession(clientWith('anon'), '/passes/1').catch((e: unknown) => e);
+    expect((pass as { options: { search: unknown } }).options.search).toEqual({
+      next: '/passes/1',
+      reason: 'pass',
+    });
+    const account = await requireSession(clientWith('anon'), '/account').catch((e: unknown) => e);
+    expect((account as { options: { search: unknown } }).options.search).toEqual({
+      next: '/account',
+    });
+  });
+
   it('drops an off-site next and home, so signing in picks the landing', async () => {
     for (const next of ['//evil.com', '/']) {
       const error = await requireSession(clientWith('anon'), next).catch((e: unknown) => e);

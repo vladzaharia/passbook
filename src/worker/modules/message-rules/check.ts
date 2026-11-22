@@ -6,6 +6,7 @@ import { safeTargetFilter } from '../broadcasts/apply.ts';
 import { creatorLive } from '../broadcasts/repo-creator.ts';
 import { insertRuleRunStmt } from '../broadcasts/repo-rule-run.ts';
 import { countTargeted } from '../broadcasts/repo-target.ts';
+import { TemplateUnreleasedError } from '../broadcasts/target-release.ts';
 import {
   getRule,
   pauseWithCode,
@@ -89,9 +90,23 @@ export async function checkRule(
   const templateIds = JSON.parse(row.template_ids) as string[];
   let kind: Awaited<ReturnType<typeof checkRuleTemplates>>;
   try {
-    kind = await checkRuleTemplates(ctx, row.org_id, templateIds, rule.anchor, rule.offset);
+    kind = await checkRuleTemplates(
+      ctx,
+      row.org_id,
+      row.mode,
+      templateIds,
+      rule.anchor,
+      rule.offset,
+      true,
+    );
   } catch (error) {
     if (!(error instanceof AppError) || error.status >= 500) throw error;
+    // No release in the mode and no active passes: nothing is due yet, and the rule keeps its place.
+    if (error instanceof TemplateUnreleasedError) {
+      ctx.log.info('message_rule.no_template', { ruleId: row.id, code: error.code });
+      await setNextCheck(db, row.id, version, Math.max(nextCheckAt(rule, now), now + 1000));
+      return;
+    }
     ctx.log.warn('message_rule.paused', {
       ruleId: row.id,
       orgId: row.org_id,

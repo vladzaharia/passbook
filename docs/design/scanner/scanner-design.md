@@ -178,7 +178,7 @@ card layer; everything else is a sheet.
 | Desk panel (`ready`, review, Manager PIN) | the card without a band; camera dims and keeps decoding | same | header on top, template panel and system input side by side |
 | Amount keypad | dock tray (the dock grows; the buddy peeks over it) | beside the panel | beside the panel |
 | Last scan | dock strip; tap opens **Recent** (20) as a sheet | same | dock strip as a 460 px group; same sheet |
-| Lookup | full-height sheet from **Look up** | sheet, `max-h 80dvh` | side sheet at the start, 400 px, over the dimmed camera |
+| Lookup | full-height sheet from **Look up** | sheet, `max-h 80dvh` | side sheet at the end (right, like every other scanner drawer), 400 px, over the dimmed camera |
 | Staff sign-in, Scan as admin | bottom sheet | dialog `md` | dialog (`lg` for sign-in: list and keypad side by side) |
 | Shift summary, Start, Pair, blocking panels | a card on the card layer, the camera off behind it | same | same |
 | Menu | action sheet | dropdown | dropdown |

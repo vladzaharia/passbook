@@ -59,7 +59,7 @@
   height: 40px;
   border-radius: 20px;
   background: color-mix(in oklab, var(--sd-accent) 16%, var(--scan-card));
-  color: var(--sd-accent);
+  color: color-mix(in oklab, var(--sd-accent) 70%, var(--sd-strong));
   font: 650 15px / 1 var(--pk-font-sans);
 }
 .scan-pin-name,
@@ -165,12 +165,19 @@
   }
 }
 .scan-pin-note {
+  display: flex;
   flex: none;
-  min-height: 20px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 22px;
   margin: 0;
   color: var(--sd-muted);
-  font: 500 15px / 20px var(--pk-font-sans);
+  font: 600 16px / 22px var(--pk-font-sans);
   text-align: center;
+}
+.scan-pin-note svg {
+  flex: none;
 }
 .scan-pin-note[data-invalid] {
   color: var(--scan-pin-error);

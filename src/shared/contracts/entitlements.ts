@@ -85,7 +85,7 @@ export const ENTITLEMENTS = {
   'scanning.devices': limit(null, 2, 20, 0),
   'join.perDay': limit(null, 100, 1000, 0),
   'messages.perDay': limit(null, 3, 20, 0),
-  'passes.changesPerDay': limit(null, 3, 20, 0),
+  'passes.changesPerDay': limit(null, 3, 20, 10),
   'passes.live': limit(null, 100, 5000, 0),
   'passes.test': limit(null, 50, 500, 500),
   templates: limit(null, 3, 25, 10),

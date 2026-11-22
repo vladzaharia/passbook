@@ -49,6 +49,18 @@ export function ReferenceIndex({ site }: { site: Site }) {
   );
 }
 
+/** The catalog is long: a group per first letter, each closed until opened. */
+function errorGroups(errors: Site['errors']): { letter: string; items: Site['errors'] }[] {
+  const groups: { letter: string; items: Site['errors'] }[] = [];
+  for (const e of errors) {
+    const letter = e.code.charAt(0).toUpperCase();
+    const last = groups[groups.length - 1];
+    if (last && last.letter === letter) last.items.push(e);
+    else groups.push({ letter, items: [e] });
+  }
+  return groups;
+}
+
 export function ErrorsIndex({ site }: { site: Site }) {
   return (
     <>
@@ -58,27 +70,37 @@ export function ErrorsIndex({ site }: { site: Site }) {
           The catalog is empty. Each operation lists its codes once they are published.
         </p>
       ) : (
-        <div className="table-wrap mt8">
-          <table className="errs">
-            <thead>
-              <tr>
-                <th scope="col">Code</th>
-                <th scope="col">Status</th>
-                <th scope="col">Fix</th>
-              </tr>
-            </thead>
-            <tbody>
-              {site.errors.map((e) => (
-                <tr key={e.code}>
-                  <td className="mono">
-                    <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a>
-                  </td>
-                  <td className="mono">{e.status ?? ''}</td>
-                  <td>{e.fix || e.title}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt8">
+          {errorGroups(site.errors).map((g) => (
+            <details key={g.letter} className="errs-group" id={`errors-${g.letter}`}>
+              <summary>
+                <span className="strong">{g.letter}</span>
+                <span className="muted sm">{g.items.length}</span>
+              </summary>
+              <div className="table-wrap">
+                <table className="errs">
+                  <thead>
+                    <tr>
+                      <th scope="col">Code</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Fix</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.items.map((e) => (
+                      <tr key={e.code}>
+                        <td className="mono">
+                          <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a>
+                        </td>
+                        <td className="mono">{e.status ?? ''}</td>
+                        <td>{e.fix || e.title}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          ))}
         </div>
       )}
     </>

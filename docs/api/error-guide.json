@@ -389,6 +389,12 @@
     "fix": "Use a field label as the form shows it, or remove the token.",
     "retryable": false
   },
+  "BROADCAST_UNSUPPORTED_FILTER": {
+    "title": "Unsupported target filter",
+    "when": "The target has a key it does not define, such as status, holderEmail, externalId, connectionId or templateId. The key is refused, never dropped, so a run cannot reach more passes than you asked for.",
+    "fix": "Remove the key and filter by templateIds, onDevice, holderState, q, scan or match. To change passes by a filter the target lacks, list the passes with it and send their ids as passIds; a message takes templates only.",
+    "retryable": false
+  },
   "BULK_RUN_ACTIVE": {
     "title": "Bulk run active",
     "when": "Another bulk run on these passes is still in progress.",

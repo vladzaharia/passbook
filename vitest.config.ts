@@ -6,6 +6,8 @@ const alias = { '@': new URL('./src', import.meta.url).pathname };
 const timeout = process.argv.includes('--coverage') ? 90_000 : 30_000;
 
 export default defineConfig({
+  // Not under node_modules, which worktrees share (see vite.config.ts).
+  cacheDir: new URL('./.cache/vite', import.meta.url).pathname,
   resolve: { alias },
   test: {
     projects: [

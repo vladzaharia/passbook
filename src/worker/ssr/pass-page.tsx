@@ -26,6 +26,7 @@ import addCss from '../../web/portal/add/add.css?raw';
 import { passHeading } from '../../web/portal/add/heading.ts';
 import type { EndedSignIn } from '../../web/portal/ended-card.tsx';
 import { HolderHeading } from '../../web/portal/holder-heading.tsx';
+import holderOthersCss from '../../web/portal/holder-others.css?raw';
 import holderPassCss from '../../web/portal/holder-pass.css?raw';
 import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
 import { PassDetails } from '../../web/portal/pass-details.tsx';
@@ -54,7 +55,7 @@ import { THEME_CSS } from './theme.ts';
  * script, pressing the badge dips the card in CSS (the portal sets `dip`).
  */
 const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear, tuck].join('\n');
-export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${savePhoneCss}\n${addCss}\n${RIBBON_CSS}
+export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${holderOthersCss}\n${savePhoneCss}\n${addCss}\n${RIBBON_CSS}
 ${ORG_SHELL_CSS}
 body{padding:0}
 @media (prefers-reduced-motion:no-preference){.wl-holder:has([data-awb]:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}}`;

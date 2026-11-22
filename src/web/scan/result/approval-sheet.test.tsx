@@ -33,7 +33,9 @@ describe('Use manager code', () => {
     render(<ResultCard outcome={needs()} desk={d} />);
     fireEvent.click(screen.getByRole('button', { name: 'Use manager code' }));
     expect(screen.getByText('Manager code')).toBeVisible();
-    expect(screen.getByText('Add stamp needs a manager.')).toBeVisible();
+    expect(
+      screen.getByText('Add stamp needs a manager.', { selector: '.scan-approval-verb' }),
+    ).toBeVisible();
     expect(screen.queryByText('Manager')).toBeNull();
     const go = screen.getByRole('button', { name: 'Continue' });
     expect(go).toBeDisabled();

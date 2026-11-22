@@ -146,7 +146,9 @@ export { useChangeCount } from './change-count.ts';
  * The number to show while counting to `value`: from 0 on mount, from the shown number on change,
  * 600 ms ease-out. Without a layout engine (tests) or with reduced motion it is `value`.
  */
-export function useCountUp(value: number, ms = 600): number {
+export function useCountUp(raw: number, ms = 600): number {
+  // A count is never below 0: a net figure that dips under it (more out than in) shows as 0, never a minus.
+  const value = Math.max(0, raw);
   const [shown, setShown] = useState(value);
   const last = useRef(0);
   useLayoutEffect(() => {
@@ -160,7 +162,7 @@ export function useCountUp(value: number, ms = 600): number {
     let frame = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / ms);
-      const n = Math.round(from + (value - from) * (1 - (1 - t) ** 3));
+      const n = Math.max(0, Math.round(from + (value - from) * (1 - (1 - t) ** 3)));
       last.current = n;
       setShown(n);
       if (t < 1) frame = requestAnimationFrame(tick);
@@ -175,6 +177,11 @@ export function useCountUp(value: number, ms = 600): number {
 const minted = new Set<string>();
 /** Marks a pass as just created so its detail page mints the card on arrival. */
 export const markMinted = (id: string) => void minted.add(id);
+/** Whether a pass is marked, without taking the mark: the page that will mint it reads it later. */
+export function usePeekMinted(id: string): boolean {
+  const [fresh] = useState(() => minted.has(id));
+  return fresh;
+}
 /** True once for a pass marked by markMinted. */
 export function useMintedOnArrival(id: string): boolean {
   const [fresh] = useState(() => minted.has(id));

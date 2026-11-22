@@ -24,4 +24,27 @@ describe('breakingChanges', () => {
     const gone = doc({ type: 'object', properties: {} });
     expect(breakingChanges(doc(inline), gone)).toEqual(['GET /a 200.x: field removed']);
   });
+
+  it('reports a request object that now refuses unknown keys', () => {
+    const post = (schema: unknown): Doc => ({
+      paths: {
+        '/a': {
+          post: {
+            operationId: 'a.postA',
+            requestBody: { content: { 'application/json': { schema } } },
+            responses: {},
+          },
+        },
+      },
+    });
+    const open = { type: 'object', properties: { t: { type: 'object', properties: {} } } };
+    const closed = {
+      type: 'object',
+      properties: { t: { type: 'object', properties: {}, additionalProperties: false } },
+    };
+    expect(breakingChanges(post(open), post(closed))).toEqual([
+      'POST /a body.t: unknown keys now refused',
+    ]);
+    expect(breakingChanges(post(closed), post(closed))).toEqual([]);
+  });
 });

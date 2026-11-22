@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import type { ScanApi } from '../../api/scan-api.ts';
 import { DisplayPanels } from '../../display/display-panels.tsx';
 import type { Draft, ScanOutcome } from '../../machine/types.ts';
@@ -88,6 +89,12 @@ export function RecordBody({
   const d = displayOf(o);
   const denied = deniedOf(o);
   const notes = notesOf(o, eventNote);
+  // Phone width folds Notes and History into two tabs; wider, both show and the tabs are hidden.
+  const [tab, setTab] = useState<'notes' | 'history'>('notes');
+  const noteSignal = person?.noteSignal;
+  useEffect(() => {
+    if (noteSignal) setTab('notes');
+  }, [noteSignal]);
   const facts = denied ? factsOf(o, timeZone) : [];
   const picker = o.kind === 'ready' && o.card && desk?.picker ? desk.picker : null;
   const left =
@@ -100,7 +107,7 @@ export function RecordBody({
     Boolean(o.bundle ?? o.card?.bundle ?? o.group) || Boolean(o.card?.passView) || Boolean(person);
   if (!left && !right) return null;
   return (
-    <div className="op-rec-body" data-cols={left && right ? 2 : 1}>
+    <div className="op-rec-body" data-cols={left && right ? 2 : 1} data-tab={tab}>
       {left ? (
         <div className="op-col">
           {picker && o.card && desk ? (
@@ -128,13 +135,31 @@ export function RecordBody({
             </div>
           ) : null}
           {person?.desk ? (
-            <Notes
-              api={person.api}
-              passId={person.passId}
-              openSignal={person.noteSignal}
-              manager={person.manager}
-              onAdded={person.onNoteAdded}
-            />
+            <div role="tablist" className="op-rec-tabs" aria-label={OPERATOR_COPY.record.tabs}>
+              {(['notes', 'history'] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === id}
+                  className="op-rec-tab"
+                  onClick={() => setTab(id)}
+                >
+                  {OPERATOR_COPY[id].heading}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {person?.desk ? (
+            <div data-pane="notes">
+              <Notes
+                api={person.api}
+                passId={person.passId}
+                openSignal={person.noteSignal}
+                manager={person.manager}
+                onAdded={person.onNoteAdded}
+              />
+            </div>
           ) : null}
         </div>
       ) : null}
@@ -142,14 +167,16 @@ export function RecordBody({
         <div className="op-col">
           <FamilyBlock outcome={o} />
           {person ? (
-            <History
-              api={person.api}
-              passId={person.passId}
-              zone={person.zone}
-              now={person.now}
-              refresh={person.refresh}
-              changes={person.desk}
-            />
+            <div data-pane="history">
+              <History
+                api={person.api}
+                passId={person.passId}
+                zone={person.zone}
+                now={person.now}
+                refresh={person.refresh}
+                changes={person.desk}
+              />
+            </div>
           ) : null}
           {o.card ? (
             <div className="op-rec-pass">

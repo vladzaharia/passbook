@@ -101,7 +101,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Page | Layout |
 | --- | --- |
 | List, Settings | Full main width |
-| Detail with pass preview (pass, template) | ≥1024: preview column + tabs (16rem to 1279, 20rem from 1280). 640–1023: horizontal summary card (pass 180px, holder, quick actions; the header carries status and version) above the tabs. <640: compact row (64px still, title, `Show pass` opens the stage in a bottom sheet) |
+| Detail with pass preview (pass, template) | ≥1024: preview column + tabs (16rem to 1279, 20rem from 1280). 640–1023: horizontal summary card (pass 180px, holder, quick actions; the header carries status and version) above the tabs. <640: compact row (64px still, title, `Show pass` opens the stage in a bottom sheet); after a create or a void the stage replaces the row, so the mint, sparks, wave and tear play in view |
 | Detail (org, user, identity, connection, status) | `TwoPane`: main column + 20rem aside at ≥1280 (summary, counts, danger actions); stacked below |
 | Wizard (new pass, new connection) | Full width, Stepper on top, same width on every step; aside (live preview or summary) at ≥1024; `WizardBar` sticky at the bottom |
 | Upload template | Full width; drop zone and fields left, checklist and report right at ≥1024 |
@@ -367,7 +367,10 @@ Action icons (`src/web/lib/action-icons.ts`):
   | `toast.action(msg, { label, onClick })` | One follow-up (`View run`) |
   | `toast.dismiss(id)` | The offer no longer applies |
 
-  Toasts clear the SaveBar; on phones they move to the top while a sheet is open. Success wears
+  Toasts never cover the form in use or the SaveBar. From 1024 px they sit bottom right above the
+  SaveBar (`--wl-bottom-bar`); below 1024 px, where the page is one column, they sit under the top
+  bar, so they clear a bottom sheet and the controls at the foot of the screen. The scanner
+  screens keep the bottom. Success wears
   the buddy's face, unless a page buddy is in view (one buddy per view, `ui/art/presence.ts`):
   then a check.
 - **Copy**: `CopyButton` for a value on screen, `copyText(value, what)` (`lib/clipboard.ts`) from
@@ -493,7 +496,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
 | Next steps | `Checklist title steps onDismiss`; `Celebrate when` (milestones only) |
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
-| Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
+| Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; a control under 44 px grows to a real 44 px box under `pointer-coarse` (`size-11`, `min-h-11`): the box itself, not a `::before` hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
 | Badge | `AppleWalletBadge href label? locale? onClick?` (the black art on every ground) |
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |

@@ -3,6 +3,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { apiAs, BASE, createPass, uid } from './helpers/api.ts';
 import { ANDROID_CHROME } from './helpers/devices.ts';
 import { signInHolder } from './helpers/holder.ts';
+import { modalOpen } from './helpers/holder-agents.ts';
 import { readSeed } from './helpers/seed.ts';
 
 // SHOTS=<dir> also writes the screens (390, 820, 1440 × light, dark) for a visual check.
@@ -16,12 +17,14 @@ const SIZES = [
 async function shoot(page: Page, name: string, theme: string, fullPage = true) {
   if (!SHOTS) return;
   mkdirSync(SHOTS, { recursive: true });
-  for (const [label, size] of SIZES) {
-    await page.setViewportSize(size);
+  // An open sheet stays as it is: one shot at the current width, no resize under it.
+  const modal = await modalOpen(page);
+  for (const [label, size] of modal ? SIZES.slice(0, 1) : SIZES) {
+    if (!modal) await page.setViewportSize(size);
     await page.waitForTimeout(150);
     await page.screenshot({ path: `${SHOTS}/${name}-${label}-${theme}.png`, fullPage });
   }
-  await page.setViewportSize({ width: 390, height: 844 });
+  if (!modal) await page.setViewportSize({ width: 390, height: 844 });
 }
 
 test('save to this phone: save, sheet, door view offline, remove', async ({ browser }) => {
@@ -124,6 +127,8 @@ test('the portal saves the same door view, and an ended pass page drops the copy
   const page = await ctx.newPage();
   await signInHolder(page, email);
   await page.goto(`/passes/${pass.id}`);
+  // Before the save script wires the host, the lead is a plain link to the door view: wait for it.
+  await expect(page.locator('[data-save-phone][data-save-ready]').first()).toBeAttached();
   await page.getByRole('link', { name: 'Save to this phone' }).first().click();
   const sheet = page.getByRole('dialog', { name: 'Add to Home screen' });
   await expect(sheet).toBeVisible();

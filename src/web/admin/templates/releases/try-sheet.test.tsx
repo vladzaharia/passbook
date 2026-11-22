@@ -50,6 +50,7 @@ async function open(devices: () => Response) {
       '/api/v1/templates/tpl1/releases': () =>
         json(templateReleaseList({ mode: 'test', version: DRAFT, id: 'r1' })),
       '/api/v1/passes': (url, init) => {
+        if (init?.method !== 'POST') return json({ items: [], nextCursor: null });
         calls.push({ url, init });
         return json(
           passDetail({ id: 'p1', publicUrl: 'https://x.test/p/1', downloadUrl: '/d/1' }),

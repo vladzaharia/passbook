@@ -48,7 +48,8 @@ type Summary = z.infer<typeof TemplateSummarySchema>;
 type Detail = z.infer<typeof TemplateDetailSchema>;
 type VersionDetail = z.infer<typeof TemplateVersionDetailSchema>;
 
-type Lineage = Pick<Summary, 'icon' | 'group' | 'aliases' | 'fromBlueprint'>;
+type Lineage = Pick<Summary, 'icon' | 'group' | 'aliases' | 'fromBlueprint'> &
+  Partial<Pick<Summary, 'openReview'>>;
 
 export function summaryOf(
   row: TemplateRow,
@@ -73,6 +74,7 @@ export function summaryOf(
     group: lineage.group,
     aliases: lineage.aliases,
     fromBlueprint: lineage.fromBlueprint,
+    openReview: lineage.openReview ?? false,
     passCount,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

@@ -42,9 +42,9 @@ export function InviteForm({ pending, onInvite }: { pending: boolean; onInvite: 
     <Form
       {...check.form}
       onValid={save}
-      className="flex flex-col gap-3 border-t border-border pt-3"
+      className="flex max-w-md flex-col gap-3 border-t border-border pt-3"
     >
-      <h4 className="text-sm font-semibold text-fg-strong">Invite a member</h4>
+      <h3 className="text-sm font-semibold text-fg-strong">Invite a member</h3>
       <FormField label="Email" error={check.errors.email}>
         {(props) => (
           <Input
@@ -59,10 +59,10 @@ export function InviteForm({ pending, onInvite }: { pending: boolean; onInvite: 
         )}
       </FormField>
       <fieldset
-        className="flex flex-col gap-2"
+        className="grid gap-2 sm:grid-cols-2"
         aria-describedby={check.errors.roles ? ERROR_ID : undefined}
       >
-        <legend className="mb-2 text-sm font-medium">Roles</legend>
+        <legend className="mb-2 text-sm font-medium sm:col-span-2">Roles</legend>
         {ROLES.map((role, index) => (
           <CheckboxField
             key={role}
@@ -77,7 +77,7 @@ export function InviteForm({ pending, onInvite }: { pending: boolean; onInvite: 
           />
         ))}
         {check.errors.roles ? (
-          <p id={ERROR_ID} className="text-xs text-danger">
+          <p id={ERROR_ID} className="text-xs text-danger sm:col-span-2">
             {check.errors.roles}
           </p>
         ) : null}

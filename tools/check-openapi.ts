@@ -3,7 +3,8 @@
 // src/worker/platform/openapi-snapshot.test.ts still pins the snapshot to the live document.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { hasNewVersion, type Versions } from './lib/changelog.ts';
+import { hasNewVersion, type Versions, versionedBreaks } from './lib/changelog.ts';
+import { readPending } from './lib/changelog-files.ts';
 import { showAt } from './lib/git-show.ts';
 import { breakingChanges, type Doc } from './lib/openapi-diff.ts';
 import { coverage, FLAGS, ratchetFailures, type SdkNames } from './lib/openapi-ratchet.ts';
@@ -27,7 +28,8 @@ const failures = ratchetFailures({
 });
 if (prev) {
   // A breaking change ships only with a new dated PassBook-Version (docs/api/versions.json) that carries a migration note.
-  const broken = breakingChanges(prev, next);
+  // A breaking change the changelog marks `unversioned` (a safety fix) needs no version; any other does.
+  const broken = versionedBreaks(breakingChanges(prev, next), readPending(root));
   const versions = read<Versions>('docs/api/versions.json');
   if (
     broken.length &&

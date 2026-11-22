@@ -259,3 +259,21 @@ export function formatZoneAbbr(ms: number, timeZone: string): string {
       .find((p) => p.type === 'timeZoneName')?.value ?? ''
   );
 }
+
+/** `rgb(20,26,43)` or `#14dd2b` as `#141A2B`; anything else (a name) as it came. */
+export function formatColor(css: string): string {
+  const m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(css.trim());
+  if (!m) return css.startsWith('#') ? css.toUpperCase() : css;
+  return `#${[m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/;
+
+/** A bare ISO date or date-time as a day (Jan 1, 2026); any other text as it came. */
+export function formatMaybeDate(text: string): string {
+  if (!ISO_DATE.test(text)) return text;
+  // A date or a Z time names a UTC day: the zone of the reader must not move it.
+  return /(?:Z|^\d{4}-\d{2}-\d{2})$/.test(text)
+    ? UTC_DAY.format(Date.parse(text))
+    : formatDay(Date.parse(text));
+}

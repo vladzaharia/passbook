@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useDocumentTitle } from '../lib/route-focus.tsx';
 import { useScopeCrumb } from '../lib/scope-context.ts';
-import { TOUCH_HIT } from './button.tsx';
 
 export interface Crumb {
   label: string;
@@ -26,10 +25,7 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
                 <Link
                   to={item.to}
                   search={item.search}
-                  className={cn(
-                    'relative inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline',
-                    TOUCH_HIT,
-                  )}
+                  className="inline-flex min-h-6 items-center rounded-sm hover:text-fg-strong hover:underline pointer-coarse:min-h-11"
                 >
                   {item.label}
                 </Link>

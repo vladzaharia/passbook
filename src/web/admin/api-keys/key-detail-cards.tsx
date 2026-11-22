@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { actionOf } from '@/web/lib/actions.ts';
 import { formatDateTime, formatDay } from '@/web/lib/format.ts';
+import { CopyButton } from '@/web/ui/copy-button.tsx';
 import {
   Badge,
   Card,
@@ -33,7 +34,16 @@ export function AccessCard({
   orgName: string;
 }) {
   const items: KeyValueItem[] = [
-    { label: 'Key', value: keyPrefix(k), mono: true },
+    {
+      label: 'Key',
+      value: (
+        <span className="flex min-w-0 items-center gap-1">
+          <span className="min-w-0 break-all">{keyPrefix(k)}</span>
+          <CopyButton value={keyPrefix(k)} label="Copy key" />
+        </span>
+      ),
+      mono: true,
+    },
     { label: 'Organization', value: k.orgId === null ? 'Platform' : orgName },
     { label: 'Mode', value: k.mode === 'test' ? 'Test' : 'Live' },
     {
@@ -150,6 +160,7 @@ export function ChildrenCard({
   error: unknown;
   onRetry: () => void;
 }) {
+  if (!loading && !error && !rows?.length) return null;
   return (
     <Card>
       <CardHeader title="Child keys" />
@@ -157,11 +168,9 @@ export function ChildrenCard({
         <SkeletonRows label="Loading child keys" />
       ) : error ? (
         <ErrorState inline subject="child keys" error={error} onRetry={onRetry} />
-      ) : !rows?.length ? (
-        <Empty>No child keys</Empty>
       ) : (
         <ul className="divide-y divide-border">
-          {rows.map((child) => {
+          {(rows ?? []).map((child) => {
             const state = keyState(child, now);
             return (
               <li

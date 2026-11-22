@@ -161,7 +161,9 @@ function BrandForm({
           <span>
             {view.passCount === 0
               ? COPY.page.noPasses
-              : scanLine(COPY.page.passes, { n: view.passCount })}
+              : view.passCount === 1
+                ? COPY.page.passesOne
+                : scanLine(COPY.page.passes, { n: view.passCount })}
           </span>
         }
         actions={

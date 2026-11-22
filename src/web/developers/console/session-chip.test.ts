@@ -56,8 +56,11 @@ describe('the session lookup', () => {
     });
     expect(await load()).toEqual({ kind: 'none', csrf: 'csrf-1', siteKey: '' });
     vi.resetModules();
+  });
+
+  it('is failed, not empty, when the sandbox read errors', async () => {
     route({ '/api/v1/session': json(authed), '/api/v1/developer/sandbox': json({}, 500) });
-    expect(await load()).toEqual({ kind: 'none', csrf: 'csrf-1', siteKey: '' });
+    expect(await load()).toEqual({ kind: 'failed', csrf: 'csrf-1' });
   });
 
   it('reads a closed sandbox and a ready one, and asks the server once per page', async () => {

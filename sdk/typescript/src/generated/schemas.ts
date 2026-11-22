@@ -4852,6 +4852,7 @@ export type TemplateDetail = {
     id: string;
     name: string;
   } | null;
+  openReview?: boolean;
   passCount: number;
   createdAt: number;
   updatedAt: number;
@@ -5024,6 +5025,7 @@ export type TemplateSummary = {
     id: string;
     name: string;
   } | null;
+  openReview?: boolean;
   passCount: number;
   createdAt: number;
   updatedAt: number;

@@ -27,6 +27,7 @@ import { runBroadcast } from '../../workflows/broadcast.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { approveAppleRelease } from '../passes/apple-release-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { startDueBroadcasts } from './start.ts';
 import { type BroadcastKit, broadcastKit } from './test-kit.ts';
@@ -78,6 +79,13 @@ async function member(orgId: string, role: OrgRole = 'org_admin'): Promise<Membe
 beforeEach(async () => {
   kit = await broadcastKit();
   otherOrg = (await makeOrg(kit.fx, { name: 'Another tenant' })).id;
+  for (const mode of ['live', 'test'] as const)
+    await approveAppleRelease(kit, {
+      templateId: kit.messaging.id,
+      version: (await kit.registry.resolve(kit.messaging.id)).version,
+      orgId: otherOrg,
+      mode,
+    });
   manager = await member(kit.org.id);
   app = createApp({
     stores: {

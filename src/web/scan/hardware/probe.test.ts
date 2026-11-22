@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  browserProbeEnv,
   facingOf,
   type ProbeEnv,
   probeHardware,
@@ -176,5 +177,24 @@ describe('hardware enumeration', () => {
     await vi.advanceTimersByTimeAsync(WATCH_DEBOUNCE_MS);
     expect(onChange).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
+  });
+});
+
+describe('browserProbeEnv', () => {
+  it('leaves out a peripheral API the page policy blocks, so it is never called', () => {
+    const doc = document as unknown as { permissionsPolicy?: unknown };
+    const nav = navigator as unknown as { usb?: unknown; hid?: unknown };
+    nav.usb = { getDevices: vi.fn() };
+    nav.hid = { getDevices: vi.fn() };
+    doc.permissionsPolicy = { allowsFeature: (name: string) => name !== 'usb' };
+    try {
+      const e = browserProbeEnv(false);
+      expect(e.usb).toBeUndefined();
+      expect(e.hid).toBeDefined();
+    } finally {
+      doc.permissionsPolicy = undefined;
+      nav.usb = undefined;
+      nav.hid = undefined;
+    }
   });
 });

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import type {
   DeveloperHome,
@@ -8,7 +9,7 @@ import { Buddy } from '../../ui/art/buddy.tsx';
 import { Calls } from './calls.tsx';
 import { GoLive, Keys, Passes, Webhooks } from './cards.tsx';
 import { ago, left, type Source } from './model.ts';
-import { ReopenAction, ResetAction } from './sandbox-actions.tsx';
+import { NewKey, ReopenAction, ResetAction, type Reveal } from './sandbox-actions.tsx';
 import { Stats } from './stats.tsx';
 import { Track } from './track.tsx';
 
@@ -56,6 +57,9 @@ function Head({
   onChanged: () => void;
 }) {
   const closed = sandbox.closedAt !== null;
+  // Below the buttons: the reset confirm goes in `slot`; a new key is held here so a refresh of the home keeps it.
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const [reveal, setReveal] = useState<Reveal | null>(null);
   return (
     <header className="card wb-head">
       <Buddy
@@ -76,13 +80,13 @@ function Head({
       </div>
       <div className="wrap-row g2 wb-head-actions">
         {closed ? (
-          <ReopenAction sandbox={sandbox} onChanged={onChanged} />
+          <ReopenAction sandbox={sandbox} onChanged={onChanged} onKey={setReveal} />
         ) : (
           <>
             <a className="btn sm" href={`${links.keys}#new`}>
               New key
             </a>
-            <ResetAction onChanged={onChanged} />
+            <ResetAction onChanged={onChanged} onKey={setReveal} panel={slot} />
           </>
         )}
         <a className="btn sm outline" href={links.admin(sandbox.orgId)}>
@@ -96,6 +100,12 @@ function Head({
             ? `Reopen within ${left(sandbox.reopenUntil, now)}.`
             : 'It can no longer reopen.'}
         </p>
+      ) : null}
+      <div ref={setSlot} className="wb-act-slot" />
+      {reveal ? (
+        <div className="wb-act-slot">
+          <NewKey done secret={reveal.secret} line={reveal.line} onClose={() => setReveal(null)} />
+        </div>
       ) : null}
     </header>
   );

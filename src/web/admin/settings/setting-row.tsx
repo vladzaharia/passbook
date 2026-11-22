@@ -127,15 +127,22 @@ export function SettingRow({
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
         {meta}
         {browserZone ? (
-          <Button type="button" variant="ghost" size="sm" onClick={() => onChange(browserZone)}>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="px-0"
+            onClick={() => onChange(browserZone)}
+          >
             Use {browserZone}
           </Button>
         ) : null}
         {onReset ? (
           <Button
             type="button"
-            variant="ghost"
+            variant="link"
             size="sm"
+            className="px-0"
             onClick={onReset}
             aria-label={
               inherits ? `Use default for ${field.label}` : `Reset ${field.label} to default`
@@ -177,6 +184,8 @@ export function SettingRow({
     <div
       className={cn(
         'flex min-w-0 flex-col gap-1',
+        // An inherited default reads as a value, not a disabled field.
+        placeholder && '[&_input::placeholder]:text-fg',
         !flat && (field.kind === 'int' ? 'items-end' : 'md:items-end'),
       )}
     >
@@ -205,7 +214,7 @@ export function SettingRow({
   );
   if (flat) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex max-w-md flex-col gap-2">
         <Label htmlFor={id}>{field.label}</Label>
         {control}
         {error ? null : help}

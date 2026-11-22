@@ -10,7 +10,13 @@ export const ChangeSelectionSchema = z.discriminatedUnion('kind', [
     ids: z.array(z.string()).min(1).max(CHANGE_RUN_MAX_PASS_IDS),
     templateIds: z.array(z.string()).min(1).max(20),
   }),
-  z.object({ kind: z.literal('import'), importId: z.string(), templateIds: z.array(z.string()) }),
+  z.object({
+    kind: z.literal('import'),
+    importId: z.string(),
+    templateIds: z.array(z.string()),
+    /** The passes the import made or changed, when its counts are known. */
+    count: z.number().int().nonnegative().optional(),
+  }),
   z.object({ kind: z.literal('template'), templateId: z.string() }),
   /** Every pass the list's filter matches (Select all N matching), with the count the person saw. */
   z.object({

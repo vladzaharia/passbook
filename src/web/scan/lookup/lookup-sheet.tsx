@@ -10,7 +10,7 @@ export function LookupSheet({ onClose, ...props }: LookupPanelProps & { onClose:
   return (
     <Sheet open={props.open} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
-        side="left"
+        side="right"
         title="Look up"
         className="scan-lookup-sheet"
         onOpenAutoFocus={(event) => event.preventDefault()}

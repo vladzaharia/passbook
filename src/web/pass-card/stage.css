@@ -9,8 +9,30 @@
   --pc-tilt: var(--wl-tilt, 7deg);
   --pc-radius: calc(100cqw * 14 / 320);
   --pc-spring: var(
-    --wl-ease-spring,
-    linear(0, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 1.017 20.5%, 1.043 24.5%, 1.007 36%, 1)
+    --wl-ease-card,
+    linear(
+      0,
+      0.052 5%,
+      0.173 10%,
+      0.325 15%,
+      0.482 20%,
+      0.625 25%,
+      0.748 30%,
+      0.846 35%,
+      0.92 40%,
+      0.972 45%,
+      1.006 50%,
+      1.026 55%,
+      1.036 60%,
+      1.038 65%,
+      1.036 70%,
+      1.031 75%,
+      1.026 80%,
+      1.02 85%,
+      1.014 90%,
+      1.009 95%,
+      1
+    )
   );
   position: relative;
   isolation: isolate;
@@ -207,4 +229,17 @@
   mix-blend-mode: overlay;
   opacity: 0;
   transform: translateX(-110%);
+}
+/* Overlay vanishes on a light pass (white stays white), so it multiplies foil colour in instead. */
+.pc-stage[data-light] .pc-sheen::before {
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--wl-foil-1, #2dd4bf) 55%, transparent) 42%,
+    rgb(0 0 0 / 0.1) 50%,
+    color-mix(in srgb, var(--wl-foil-2, #9a5cff) 50%, transparent) 58%,
+    color-mix(in srgb, var(--wl-foil-3, #ffc24d) 45%, transparent) 64%,
+    transparent 72%
+  );
+  mix-blend-mode: multiply;
 }

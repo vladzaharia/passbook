@@ -14,6 +14,8 @@ export type Session =
   | { kind: 'out' }
   | { kind: 'none'; csrf: string; siteKey: string }
   | { kind: 'closed'; csrf: string }
+  /** The sandbox could not be read (a server error): not the same as having none. */
+  | { kind: 'failed'; csrf: string }
   /** `siteKey`: the check that finishes a sandbox's setup again (the quickstart's repair). */
   | { kind: 'ready'; csrf: string; sandbox: Sandbox; siteKey: string };
 
@@ -57,7 +59,7 @@ async function read(): Promise<Session> {
   if (res.status === 401) return { kind: 'out' };
   const body = await json(res);
   const box = body.sandbox as Record<string, unknown> | null | undefined;
-  if (!res.ok) return { kind: 'none', csrf, siteKey: '' };
+  if (!res.ok) return { kind: 'failed', csrf };
   if (!box)
     return {
       kind: 'none',

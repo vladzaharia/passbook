@@ -18,6 +18,10 @@ export interface BroadcastKit extends Kit {
   messaging: { id: string };
   /** A template without a message field. */
   plain: { id: string };
+  /** A new messaging template released in `modes` only; `makePass` refuses a mode it is not released in. */
+  releasedIn(modes: Mode[]): Promise<{ id: string }>;
+  /** A template whose Live release is v1 and whose Test release is v2; v2 adds the input `gate2` and a message field. */
+  versioned(): Promise<{ id: string }>;
   makePass(input?: {
     orgId?: string;
     templateId?: string;
@@ -30,7 +34,7 @@ export interface BroadcastKit extends Kit {
   }): Promise<Pass>;
 }
 
-const manifest = (messaging: boolean): TemplateManifest => ({
+const manifest = (messaging: boolean, extra = false): TemplateManifest => ({
   schema: 1,
   name: messaging ? 'Messaging template' : 'Plain template',
   inputs: {
@@ -45,6 +49,7 @@ const manifest = (messaging: boolean): TemplateManifest => ({
       visits: { type: 'integer', minimum: 0 },
       expires: { type: 'string', format: 'date', title: 'Expires' },
       points: { type: 'integer', minimum: 0, title: 'Points' },
+      ...(extra ? { gate2: { type: 'string', maxLength: 20 } } : {}),
     },
   },
   sample: { memberName: 'Alex Morgan' },
@@ -193,15 +198,59 @@ export async function broadcastKit(): Promise<BroadcastKit> {
   const messaging = await add(true);
   const plain = await add(false);
   const releases = new Map<string, Promise<TemplateRelease>>();
+  const restricted = new Map<string, Set<Mode>>();
+  // A broadcast resolves its templates through the mode's release: the two fixtures have one in each mode.
+  for (const { id: templateId } of [messaging, plain])
+    for (const mode of ['live', 'test'] as const) {
+      const version = (await kit.registry.resolve(templateId)).version;
+      releases.set(
+        JSON.stringify([templateId, kit.org.id, mode]),
+        approveAppleRelease(kit, { templateId, version, orgId: kit.org.id, mode }),
+      );
+    }
+  await Promise.all(releases.values());
   return {
     ...kit,
     broadcast,
     messaging,
     plain,
+    releasedIn: async (modes) => {
+      const created = await add(true);
+      const version = (await kit.registry.resolve(created.id)).version;
+      for (const mode of modes) {
+        releases.set(
+          JSON.stringify([created.id, kit.org.id, mode]),
+          approveAppleRelease(kit, { templateId: created.id, version, orgId: kit.org.id, mode }),
+        );
+        await releases.get(JSON.stringify([created.id, kit.org.id, mode]));
+      }
+      restricted.set(created.id, new Set(modes));
+      return created;
+    },
+    versioned: async () => {
+      const id = `tpl-versioned-${kit.fx.ids.token(4)}`;
+      for (const [version, messaging, extra, mode] of [
+        ['v1', false, false, 'live'],
+        ['v2', true, true, 'test'],
+      ] as const) {
+        const resolved = kit.registry.add({
+          id,
+          version,
+          manifest: manifest(messaging, extra),
+          passJson: passJson(messaging),
+          assets: { 'icon.png': TINY_PNG },
+        });
+        await persistTemplate(kit.fx, resolved, { registry: kit.registry });
+        await approveAppleRelease(kit, { templateId: id, version, orgId: kit.org.id, mode });
+      }
+      return { id };
+    },
     makePass: async (input = {}) => {
       const orgId = input.orgId ?? kit.org.id;
       const mode = input.mode ?? 'live';
       const templateId = input.templateId ?? messaging.id;
+      if (restricted.get(templateId) && !restricted.get(templateId)?.has(mode))
+        throw new Error(`Template ${templateId} has no ${mode} release.`);
       const version = (await kit.registry.resolve(templateId)).version;
       const key = JSON.stringify([templateId, orgId, mode]);
       let approval = releases.get(key);

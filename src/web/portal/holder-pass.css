@@ -72,88 +72,6 @@
   height: 3rem;
   object-fit: contain;
 }
-/* The other ways (wallet-choice.tsx): one quiet list under the lead, hairlines between rows, no
-   label. A row is a whole link (or the resend form's button), its hover tint past the text edge. */
-.wl-others {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.wl-others > li + li {
-  border-top: 1px solid var(--pk-border-subtle);
-}
-.wl-others form {
-  margin: 0;
-}
-.wl-other {
-  display: flex;
-  width: calc(100% + 1.5rem);
-  min-height: 3rem;
-  align-items: center;
-  gap: 0.75rem;
-  margin-inline: -0.75rem;
-  padding: 0.5rem 0.75rem;
-  border: 0;
-  border-radius: var(--pk-radius-md);
-  background: none;
-  color: var(--pk-text-default);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: start;
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    background-color var(--wl-dur-hover) var(--wl-ease-move),
-    color var(--wl-dur-hover) var(--wl-ease-move);
-}
-.wl-other:hover {
-  background: var(--pk-state-hover-tint);
-  color: var(--pk-text-strong);
-}
-.wl-other:focus-visible {
-  outline: 2px solid var(--pk-focus);
-  outline-offset: -2px;
-}
-.wl-other > svg,
-.wl-other-text > svg {
-  width: 1.125rem;
-  height: 1.125rem;
-  flex: none;
-  color: var(--pk-text-muted);
-}
-.wl-other-go {
-  margin-inline-start: auto;
-  transition: translate var(--wl-dur-hover) var(--wl-ease-move);
-}
-.wl-other:hover .wl-other-go {
-  translate: 2px 0;
-}
-.wl-other-text {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-block: 0.875rem;
-  color: var(--pk-text-muted);
-  font-size: 0.875rem;
-}
-.wl-other-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding-block: 0.75rem;
-}
-.wl-other-badges .wl-native-badge img {
-  height: 2.5rem;
-}
-.wl-other-status {
-  margin: 0;
-  padding-bottom: 0.75rem;
-  color: var(--pk-text-muted);
-  font-size: 0.875rem;
-}
 /* An ended pass keeps its fields behind "Details" (a native disclosure: no script on /p). */
 .wl-ended-details > summary {
   display: flex;
@@ -185,6 +103,14 @@
 .wl-ended-details[open] > summary {
   margin-bottom: 0.5rem;
 }
+/* The scan-to-add card hands a pass from a desktop to a phone: on a phone or a touch screen a
+   person cannot scan their own screen, so it goes. */
+@media (max-width: 767.98px), (pointer: coarse) {
+  .wl-holder-add > .wl-hero-scan,
+  .wl-holder-add:has(> .wl-hero-scan:only-child) {
+    display: none;
+  }
+}
 /* The iPhone adding, or a pass that cannot be added: the card of the badge or the notice first,
    the pass under it. */
 @media (max-width: 1023.98px) {
@@ -209,6 +135,10 @@
     position: sticky;
     top: 5rem;
     align-self: start;
+  }
+  /* The lead's card keeps 4 rem above it for the buddy: the pass starts level with the card. */
+  .wl-holder:has(.wl-holder-add .wl-hero > [data-buddy]) > .wl-holder-pass {
+    margin-top: 4rem;
   }
 }
 

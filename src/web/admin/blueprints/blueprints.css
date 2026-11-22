@@ -61,6 +61,11 @@
 .bp-tile:has(a:focus-visible) .bp-stage::before {
   opacity: 1;
 }
+@media (max-width: 39.99rem) {
+  .bp-stage:not([data-size="lg"]) {
+    padding: 1rem 1rem 0;
+  }
+}
 .bp-stage[data-size="lg"] {
   padding: 1.5rem 1rem;
   border: 1px solid var(--pk-border-subtle);

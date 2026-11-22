@@ -233,7 +233,7 @@ describe('Checkbox, Switch, RadioGroup', () => {
 
   it('switch thumb stretches while pressed, only with motion allowed', () => {
     render(<Switch aria-label="On" />);
-    const thumb = screen.getByRole('switch').firstElementChild;
+    const thumb = screen.getByRole('switch').lastElementChild;
     expect(thumb?.className).toMatch(/motion-safe:group-enabled:group-active:scale-x-125/);
     expect(thumb?.className).toMatch(/data-\[state=checked\]:origin-right/);
   });

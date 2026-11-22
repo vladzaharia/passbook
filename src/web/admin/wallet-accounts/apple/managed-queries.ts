@@ -87,7 +87,12 @@ export function useStartManagedIdentity(orgId: string) {
         { headers: { 'idempotency-key': key.current.key } },
       );
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: KEY }),
+        // The Brand page reads the run from its own view.
+        client.invalidateQueries({ queryKey: ['orgs', 'pass-setup', orgId] }),
+      ]),
   });
 }
 

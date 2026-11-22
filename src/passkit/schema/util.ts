@@ -78,6 +78,17 @@ const NON_URL = new Set([
   'businessChatIdentifier',
 ]);
 
+/** A dev server's address: localhost, a .localhost name or a loopback IP. An http URL there is not a deployment mistake. */
+export function isLoopbackUrl(url: URL): boolean {
+  const host = url.hostname.replace(/^\[|\]$/g, '');
+  return (
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host === '::1' ||
+    /^127(\.\d{1,3}){3}$/.test(host)
+  );
+}
+
 /** URL-valued keys: must parse, and should be https. Contact keys hold an email or phone number. */
 export function checkUrlValue(
   ctx: ValidationContext,
@@ -95,7 +106,10 @@ export function checkUrlValue(
     ctx.error('URL', `${key} must be a valid URL.`, path);
     return;
   }
-  if (!['https:', 'tel:', 'mailto:'].includes(url.protocol))
+  if (
+    !['https:', 'tel:', 'mailto:'].includes(url.protocol) &&
+    !(url.protocol === 'http:' && isLoopbackUrl(url))
+  )
     ctx.warn('URL_SCHEME', `${key} should use https.`, path, { name: key });
 }
 

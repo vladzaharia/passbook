@@ -119,3 +119,23 @@ export const markSnapshot = (db: D1Database, id: string, at: number) =>
 /** The run that already resumes this one, if any. */
 export const resumedBy = (db: D1Database, parentId: string) =>
   first<BroadcastRow>(db, 'SELECT * FROM broadcasts WHERE retry_of = ?', [parentId]);
+
+/** The newest version of a template (by its own creation time) that an active pass of the org holds in the mode, or null. */
+export async function heldTemplateVersion(
+  db: D1Database,
+  orgId: string,
+  templateId: string,
+  mode: Mode,
+): Promise<string | null> {
+  const row = await first<{ version: string }>(
+    db,
+    `SELECT v.version FROM template_versions v
+     WHERE v.template_id = ?1 AND EXISTS (
+       SELECT 1 FROM passes p
+       WHERE p.org_id = ?2 AND p.template_id = ?1 AND p.template_version = v.version AND p.mode = ?3
+         AND p.status = 'active' AND p.deleted_at IS NULL AND p.removed_at IS NULL)
+     ORDER BY v.created_at DESC, v.version DESC LIMIT 1`,
+    [templateId, orgId, mode],
+  );
+  return row?.version ?? null;
+}

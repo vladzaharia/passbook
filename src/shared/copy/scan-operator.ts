@@ -56,7 +56,6 @@ export const OPERATOR_COPY = {
     none: 'No matches',
     noneHint: 'Check the spelling, or use the full email.',
     walkIn: 'Add a walk-in',
-    clears: 'Esc clears',
     voided: 'Voided',
     removed: 'Removed',
     expired: 'Expired',
@@ -114,6 +113,7 @@ export const OPERATOR_COPY = {
   },
   record: {
     preview: 'Found by name. Nothing changed yet.',
+    tabs: 'Notes and history',
     choose: 'Choose an action',
     saved: 'Saved offline',
     opening: 'Opening',

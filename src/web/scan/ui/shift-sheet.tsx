@@ -10,7 +10,7 @@ import type { ScanApi } from '../api/scan-api.ts';
 import type { Counts, ScanState } from '../machine/types.ts';
 import type { QueueView } from '../offline/queue-view.ts';
 import { OfflineStatus } from './offline-status.tsx';
-import { Handover, type Scope, Totals } from './shift-parts.tsx';
+import { Handover, type Scope, shiftCount, shiftYou, Totals } from './shift-parts.tsx';
 import { ShiftTray } from './shift-tray.tsx';
 
 export function ShiftSheet({
@@ -66,6 +66,7 @@ export function ShiftSheet({
     [focus],
   );
   const summary = query.data;
+  const hero = shiftCount(counts ?? null);
   const timeZone = summary?.timeZone ?? null;
   const phone = useMediaQuery(PHONE);
   const scopeNode = sessionTotals ? (
@@ -126,7 +127,32 @@ export function ShiftSheet({
         <div className="flex flex-col gap-5 p-5">
           <Buddy scene="scan" pose="count" size="lg" mood="happy" />
           <p className="text-sm text-fg-muted">Since {formatTime(since, timeZone ?? undefined)}</p>
+          {hero ? (
+            <section aria-label="This shift" data-testid="shift-count">
+              <p className="flex items-baseline gap-2">
+                <strong className="text-4xl font-bold tabular-nums">{hero.n}</strong>
+                <span className="text-fg-muted">{hero.caption}</span>
+              </p>
+              {hero.pct !== null ? (
+                <div
+                  role="img"
+                  aria-label={`${hero.pct}%`}
+                  className="mt-2 h-2.5 overflow-hidden rounded-full bg-surface-sunken"
+                >
+                  <i
+                    className="block h-full rounded-full bg-accent"
+                    style={{ width: `${hero.pct}%` }}
+                  />
+                </div>
+              ) : null}
+            </section>
+          ) : null}
           {scopeNode}
+          {summary ? (
+            <p className="font-semibold" data-testid="shift-you">
+              {shiftYou(summary)}
+            </p>
+          ) : null}
           {offlineNode}
           {errorNode}
           {summary ? <Totals summary={summary} timeZone={timeZone} /> : null}
@@ -137,11 +163,9 @@ export function ShiftSheet({
               {pending ? (
                 <p role="status">{pending} scans need confirmation. Keep this shift open.</p>
               ) : null}
-              <Button disabled={pending > 0} onClick={onEnd}>
+              <Button onClick={onClose}>Keep scanning</Button>
+              <Button variant="danger" disabled={pending > 0} onClick={onEnd}>
                 End shift
-              </Button>
-              <Button variant="secondary" onClick={onClose}>
-                Keep scanning
               </Button>
             </>
           ) : null}

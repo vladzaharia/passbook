@@ -90,12 +90,13 @@ export const DEV_COPY = {
     },
     guides: {
       title: 'Guides',
-      line: 'Ten recipes. Each runs in your sandbox and ends at a test preview.',
+      line: 'Each recipe runs in your sandbox and ends at a test preview.',
     },
   },
   notFound: {
     title: 'Page not found',
-    line: 'Nothing lives at this address. Press ⌘K to search the docs, or start from one of these.',
+    line: 'Nothing lives at this address.',
+    home: 'Home',
   },
   guides: {
     title: 'Guides',
@@ -123,16 +124,40 @@ export const DEV_GUIDES = [
     tone: 'amber',
   },
   { id: 'bulk-import', title: 'Bulk import', line: 'A CSV to passes', tone: 'blue' },
+  {
+    id: 'import-auto-map',
+    title: 'Import with auto mapping',
+    line: 'Map a CSV from the template',
+    tone: 'blue',
+  },
+  {
+    id: 'change-many-passes',
+    title: 'Change many passes',
+    line: 'Preview, run, undo',
+    tone: 'violet',
+  },
   { id: 'react-to-events', title: 'React to events', line: 'Webhooks or polling', tone: 'teal' },
   { id: 'nfc', title: 'NFC', line: 'Tags and bindings', tone: 'violet' },
   { id: 'pass-lifecycle', title: 'Pass lifecycle', line: 'Void, remove, delete', tone: 'amber' },
   { id: 'test-mode', title: 'Test mode', line: 'Inbox, reset, purge', tone: 'blue' },
   { id: 'go-live', title: 'Go live', line: 'The checklist', tone: 'teal' },
+  {
+    id: 'release-a-template',
+    title: 'Release a template',
+    line: 'Try, review, release',
+    tone: 'blue',
+  },
   { id: 'partner-apps', title: 'Partner apps', line: 'Installations', tone: 'violet' },
   {
     id: 'scan-setup',
     title: 'Set up scanning in one call',
     line: 'Doors, staff, devices',
     tone: 'amber',
+  },
+  {
+    id: 'org-setup',
+    title: 'Set up an organization in one call',
+    line: 'Brand, support, channels',
+    tone: 'teal',
   },
 ] as const;

@@ -118,6 +118,8 @@ export interface LogFilter {
   method?: string;
   /** `key`: a key's own calls (`via` null); `try`: Run here. */
   source?: 'key' | 'try' | 'all';
+  /** `hide`: leave out the portal's own background reads. */
+  portal?: 'show' | 'hide';
   /** Rows newer than this id (UUIDv7, so newer sorts higher). */
   after?: string;
 }
@@ -139,6 +141,7 @@ function where(orgId: string, f: LogFilter, now: number, cursor?: string) {
   } else if (f.status) add('status = ?', Number(f.status));
   if (f.source === 'key') add('via IS NULL');
   else if (f.source === 'try') add("via = 'try'");
+  if (f.portal === 'hide') add("(client IS NULL OR client <> 'portal')");
   if (f.after) add('id > ?', f.after);
   if (cursor) add('id < ?', cursor);
   return { sql: sql.join(' AND '), params };

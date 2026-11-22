@@ -427,6 +427,7 @@ describe('the developer preset', () => {
       expect(JSON.parse(value), key).toEqual(want[key as keyof typeof want]);
     expect(want).toMatchObject({
       'passes.test': 500,
+      'passes.changesPerDay': 10,
       'passes.live': 0,
       templates: 10,
       'webhooks.endpoints': 3,
@@ -552,6 +553,46 @@ describe('sandbox limits', () => {
     expect(problem.detail).toBe(sandboxQuota('Test passes', 1, 1));
     expect(SANDBOX_QUOTA_COPY).toContain('{feature}');
     expect(SANDBOX_PREVIEW_ONLY_COPY).toMatch(/never added to a wallet/);
+  });
+});
+
+describe('change runs in a sandbox', () => {
+  it('starts a change, and refuses one past the daily quota', async () => {
+    const s = await sandboxOf();
+    const detail = await send('GET', `/templates/${s.made.templateId}`, s.key);
+    const manifest = (
+      (await detail.json()) as {
+        manifest: { sample?: Record<string, unknown> };
+      }
+    ).manifest;
+    const [input, value] = Object.entries(manifest.sample ?? {})[0] ?? [];
+    expect(input).toBeTruthy();
+    const issued = await send('POST', '/passes', s.key, {
+      templateId: s.made.templateId,
+      input: manifest.sample ?? {},
+      externalId: 'change-1',
+    });
+    expect(issued.status, await issued.clone().text()).toBe(201);
+    const start = (n: number) =>
+      send('POST', '/broadcasts', s.key, {
+        orgId: s.made.orgId,
+        kind: 'change',
+        send: 'draft',
+        name: `Change ${n}`,
+        target: { templateIds: [s.made.templateId] },
+        patch: { [input as string]: { set: `${String(value)} ${n}` } },
+      });
+    const first = await start(1);
+    expect(first.status, await first.clone().text()).toBe(201);
+    await run(
+      kit.env.DB,
+      `INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at)
+       VALUES (?, 'passes.changesPerDay', '1', ?)`,
+      [s.made.orgId, kit.clock.now()],
+    );
+    const refused = await start(2);
+    await expectProblem(refused, 403, 'SANDBOX_QUOTA');
+    expect(await refused.json()).toMatchObject({ feature: 'passes.changesPerDay', limit: 1 });
   });
 });
 

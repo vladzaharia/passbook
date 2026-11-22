@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
+import { todoCount } from '@/shared/org-setup-checks.ts';
 import { api } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
 
@@ -9,7 +10,7 @@ const CountSchema = z.object({
 });
 
 /**
- * The sidebar's to-do count: warn and error checks, never info (the rule of todoCount). Its key
+ * The sidebar's to-do count, by the one rule everything shares (todoCount). Its key
  * extends the page's, so a save that reloads the page reloads the count.
  */
 function useBrandTodoCount(orgId: string): number {
@@ -23,7 +24,7 @@ function useBrandTodoCount(orgId: string): number {
     retry: false,
     staleTime: 60_000,
   });
-  return query.data?.checks.filter((c) => c.level !== 'info').length ?? 0;
+  return query.data ? todoCount(query.data.checks) : 0;
 }
 
 /** The count pill on the sidebar's Brand and channels item; its own chunk, so the entry stays small. */

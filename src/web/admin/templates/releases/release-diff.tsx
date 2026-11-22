@@ -3,7 +3,7 @@ import type {
   ReleaseDiffGroup,
   ReleaseDiffValue,
 } from '@/shared/contracts/template-release-flow.ts';
-import { formatCount, formatDay } from '../../../lib/format.ts';
+import { formatColor, formatCount, formatDay, formatMaybeDate } from '../../../lib/format.ts';
 import { Badge } from '../../../ui/index.ts';
 
 const GROUP = {
@@ -32,7 +32,7 @@ function Value({
           className="size-3.5 rounded-full border border-border"
           style={{ background: value.color }}
         />
-        <code className="font-mono text-xs">{value.color}</code>
+        <code className="font-mono text-xs">{formatColor(value.color)}</code>
       </span>
     );
   if (value.type === 'image')
@@ -43,7 +43,11 @@ function Value({
         className={`h-7 max-w-24 rounded border border-border bg-[#5b6472] object-contain p-0.5 ${struck ? 'opacity-60' : ''}`}
       />
     );
-  return <span className={cls}>{value.type === 'date' ? formatDay(value.at) : value.text}</span>;
+  return (
+    <span className={cls}>
+      {value.type === 'date' ? formatDay(value.at) : formatMaybeDate(value.text)}
+    </span>
+  );
 }
 
 /** Grouped, typed changes: swatches, thumbnails, Added and Removed. */
@@ -54,7 +58,15 @@ export function ReleaseDiff({
   groups: readonly ReleaseDiffGroup[];
   image: (v: Extract<ReleaseDiffValue, { type: 'image' }>) => string;
 }) {
-  const shown = groups.filter((g) => g.rows.length > 0);
+  // An added field with no value says nothing: the pass shows nothing there either.
+  const shown = groups
+    .map((g) => ({
+      ...g,
+      rows: g.rows.filter(
+        (r) => !(r.kind === 'added' && r.to?.type === 'text' && r.to.text === ''),
+      ),
+    }))
+    .filter((g) => g.rows.length > 0);
   if (!shown.length) return <p className="text-sm text-fg-muted">No visible changes.</p>;
   return (
     <div className="grid gap-4">

@@ -297,6 +297,33 @@ describe('review requests', () => {
   });
 });
 
+describe('templates list', () => {
+  const openFlag = async (org: OrgRow, templateId: string, by: Actor) => {
+    const res = await app.request(
+      `${ORIGIN}/api/v1/templates?orgId=${org.id}`,
+      { headers: { ...by.headers, ...originUnlessKey(by.headers, ORIGIN) } },
+      env,
+    );
+    expect(res.status, await res.clone().text()).toBe(200);
+    const body = (await res.json()) as { items: { id: string; openReview: boolean }[] };
+    return body.items.find((i) => i.id === templateId)?.openReview;
+  };
+
+  it('flags openReview while a review is waiting, and clears it once a peer approves', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const reviewer = await member(org.id, ['template_reviewer']);
+    const t = await uploaded('Flag Flow', org, owner);
+    expect(await openFlag(org, t.templateId, owner)).toBe(false);
+    await request(t.templateId, org, t.version, owner);
+    expect(await openFlag(org, t.templateId, owner)).toBe(true);
+    await ok(
+      await send(`/${t.templateId}/review`, { orgId: org.id, version: t.version }, reviewer),
+    );
+    expect(await openFlag(org, t.templateId, owner)).toBe(false);
+  });
+});
+
 describe('review', () => {
   it('approves both modes as a peer and releases when asked', async () => {
     const org = await makeOrg(f);
@@ -328,6 +355,29 @@ describe('review', () => {
     );
     expect(JSON.parse(audited[0]?.detail ?? '{}')).toMatchObject({ note: 'Looks right.' });
     expect(await inbox(org, reviewer)).toEqual([]);
+  });
+
+  it('records the version and its number on each release audit row', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const reviewer = await member(org.id, ['template_reviewer', 'template_publisher']);
+    const t = await uploaded('Audit Version', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    await ok(
+      await send(
+        `/${t.templateId}/review`,
+        { orgId: org.id, version: t.version, release: true },
+        reviewer,
+      ),
+    );
+    const rows = await all<{ detail: string }>(
+      env.DB,
+      "SELECT detail FROM audit_log WHERE target_id = ? AND action = 'template.release'",
+      [t.templateId],
+    );
+    expect(rows).toHaveLength(2);
+    for (const row of rows)
+      expect(JSON.parse(row.detail)).toMatchObject({ version: t.version, versionNumber: 1 });
   });
 
   it('refuses a version nobody asked to review', async () => {

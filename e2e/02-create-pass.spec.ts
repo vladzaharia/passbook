@@ -41,7 +41,7 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
   await expect
     .poll(() => new URL(page.url()).pathname)
     .toBe(`/admin/o/${encodeURIComponent(orgId)}/passes/new`);
-  await page.getByRole('button', { name: 'Next' }).click();
+  // Choosing the organization lands on Template; Next stays off until a template is chosen.
   await page.getByText('Blue Entrance', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 

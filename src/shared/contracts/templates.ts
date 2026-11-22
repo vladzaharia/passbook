@@ -62,6 +62,8 @@ export const TemplateSummarySchema = z.object({
   aliases: z.array(z.string()).default([]),
   /** The blueprint this template was made from. */
   fromBlueprint: z.object({ id: IdSchema, name: z.string() }).nullable().default(null),
+  /** A Live review request for the newest version is waiting for a peer (an uploaded template only). */
+  openReview: z.boolean().default(false),
   passCount: z.number().int(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,

@@ -1,7 +1,7 @@
 import type { RouteConfig } from '@hono/zod-openapi';
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { Context, MiddlewareHandler } from 'hono';
-import type { ZodType, z } from 'zod';
+import type { ZodError, ZodType, z } from 'zod';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { scopeExercises } from './api-scopes.ts';
 import { authorityUnproven, type RouteAuth, requireCaller } from './auth.ts';
@@ -52,6 +52,8 @@ export interface RouteSpec {
    * from the handler's call graph by `npm run gen`). Read by that tool, not at runtime.
    */
   codes?: readonly string[];
+  /** Names a validation failure of this route's request with its own error; undefined keeps the generic 422. */
+  invalid?: (error: ZodError) => AppError | undefined;
 }
 
 const publicHandlers = new WeakSet<object>();
@@ -85,17 +87,20 @@ function checkDeclaration(spec: RouteSpec): void {
   }
 }
 
+/** The router's hook for a failed validation: the ZodError reaches the error handler (422). */
+const throwInvalid = (
+  result: { success: true; data: unknown } | { success: false; error: ZodError },
+): void => {
+  if (!result.success) throw result.error;
+};
+
 /**
  * Router whose validation failures surface as problem+json (422). Request bodies are capped at
  * DEFAULT_BODY_BYTES; a module with larger uploads passes `{ bodyLimit: false }` and applies
  * `defaultBodyLimit(pathOfTheUpload)` plus its own cap.
  */
 export function createRouter(options: { bodyLimit?: boolean } = {}): OpenAPIHono<AppBindings> {
-  const router = new OpenAPIHono<AppBindings>({
-    defaultHook: (result) => {
-      if (!result.success) throw result.error;
-    },
-  });
+  const router = new OpenAPIHono<AppBindings>({ defaultHook: throwInvalid });
   if (options.bodyLimit !== false) router.use('*', defaultBodyLimit());
   return router;
 }
@@ -188,7 +193,20 @@ export function register<S extends RouteSpec>(
     return response;
   };
   if (spec.public) publicHandlers.add(checked);
-  router.openapi(createRoute(config), checked as never);
+  const { invalid } = spec;
+  router.openapi(
+    createRoute(config),
+    checked as never,
+    invalid
+      ? (result) => {
+          if (!result.success) {
+            const named = invalid(result.error);
+            if (named) throw named;
+          }
+          throwInvalid(result);
+        }
+      : undefined,
+  );
 }
 
 /** Applies a middleware to every route of a router. */

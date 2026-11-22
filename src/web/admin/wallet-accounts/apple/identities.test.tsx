@@ -175,7 +175,9 @@ describe('identities list', () => {
         ]),
       },
     });
-    const banner = (await screen.findByText(title)).closest('div[class*="rounded-lg"]');
+    const banner = (await screen.findByText(new RegExp(`^${title}, `))).closest(
+      'div[class*="rounded-lg"]',
+    );
     // Red (role alert) through 7 days; amber (no alert role) from 8 to 30.
     expect(banner?.getAttribute('role') ?? undefined).toBe(role);
   });

@@ -85,9 +85,10 @@ export function TemplateOrgMark({ template }: { template: TemplateSummaryDto }) 
   );
 }
 
-/** The badge a tile carries: Draft before a first release, else Archived or Built-in. */
+/** The badge a tile carries: Needs review while a review is open, Draft before a first release, else Archived or Built-in. */
 function TileBadge({ template }: { template: TemplateSummaryDto }) {
   const { draft } = useTemplateStill(template);
+  if (template.openReview) return <Badge tone="accent">Needs review</Badge>;
   if (draft) return <Badge>Draft</Badge>;
   // Built-in names a template that ships with PassBook; an uploaded one needs no badge.
   if (template.status === 'archived' || template.origin === 'baked')
@@ -161,7 +162,7 @@ export function TemplateGallery({
           <div
             className={cn(
               'flex min-w-0 items-center gap-3 border-t border-border px-4 py-3',
-              arrival === 'rise' && 'wl-rise [animation-delay:calc(min(var(--i),6)*60ms+160ms)]',
+              arrival === 'rise' && 'wl-rise [--wl-delay:calc(min(var(--i),6)*60ms+160ms)]',
             )}
           >
             {t.orgId ? (
@@ -174,7 +175,7 @@ export function TemplateGallery({
                 to="/admin/templates/$templateId"
                 params={{ templateId: t.id }}
                 search={{ orgId }}
-                className="block truncate text-sm font-medium text-fg-strong after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                className="block truncate text-sm font-medium text-fg-strong pointer-coarse:-my-3 pointer-coarse:py-3 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
               >
                 {displayName(t)}
               </Link>

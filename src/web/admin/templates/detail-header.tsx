@@ -14,6 +14,7 @@ import {
   PageHeader,
   StatusPill,
 } from '../../ui/index.ts';
+import { TemplateOtherModeCount } from '../passes/other-mode-hint.tsx';
 import { originLabel } from './gallery.tsx';
 import { isPrimary, nextAction } from './releases/next-action.ts';
 import { ReleasePrimary } from './releases/release-primary.tsx';
@@ -112,6 +113,7 @@ export function TemplateDetailHeader({
           <span>
             {t.passCount} {t.passCount === 1 ? 'pass' : 'passes'}
           </span>
+          <TemplateOtherModeCount orgId={scopeOrgId} templateId={t.id} />
         </>
       }
       actions={

@@ -5,10 +5,10 @@ import type {
   RequestLogQuerySchema,
 } from '../../../shared/contracts/developer.ts';
 import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
-import { PATHS } from '../../../shared/developers.ts';
 import { fill, getJson, h } from './dom.ts';
 import { clock, flavour, prettyBody } from './format.ts';
 import { builderLink, type OpIndex } from './ops.ts';
+import { clearState, showFailed, showNoSandbox } from './state.tsx';
 
 type Filters = Partial<z.input<typeof RequestLogQuerySchema>>;
 const API = '/api/v1/developer/logs';
@@ -128,9 +128,6 @@ type Page = {
   capped: 'hour' | 'total' | null;
 };
 
-const notice = (text: string, action?: HTMLElement) =>
-  h('div', { class: 'card card-b' }, h('p', { class: 'muted' }, text), action);
-
 /** The hash without its `#`; one that does not decode (`#%E0`) is no hash. */
 function decodeHash(raw: string): string {
   try {
@@ -146,15 +143,9 @@ export async function mountLogs(el: HTMLElement, ops: Promise<OpIndex>): Promise
   const first = await getJson<Page>(API);
   // Signed out: the prerendered state, with its sign-in link, stays.
   if (first.status === 401) return;
-  if (first.status === 404)
-    return fill(
-      el,
-      notice(
-        LOGS_COPY.noSandbox,
-        h('a', { class: 'btn outline sm mt4', href: PATHS.quickstart }, 'Quickstart'),
-      ),
-    );
-  if (!first.body) return fill(el, notice(LOGS_COPY.failed));
+  if (first.status === 404) return showNoSandbox(el, false);
+  if (!first.body) return showFailed(el, () => void mountLogs(el, ops));
+  clearState(el);
 
   const status = select('status', LOGS_COPY.filters.anyStatus, LOGS_COPY.statusOptions);
   const method = select(

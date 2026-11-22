@@ -83,7 +83,7 @@ export function PassesListPage({
     runId ?? (current.data && current.data.id !== dismissed ? current.data.id : undefined);
   const count = list.data?.pages[0]?.count ?? rows.length;
   const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
-  const truth = !list.isPending && !filtered && rows.length === 0;
+  const truth = !list.isPending && !list.isError && !filtered && rows.length === 0;
 
   // A new filter, scope or mode is a new list: the selection does not carry over.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on the query key only
@@ -226,71 +226,72 @@ export function PassesListPage({
         />
       ) : null}
       <PassListContext.Provider value={context}>
-        {list.isError ? (
-          <ErrorState error={list.error} onRetry={() => void list.refetch()} />
-        ) : (
-          <DataTable
-            caption="Passes"
-            columns={columns}
-            data={rows}
-            getRowId={(r) => r.id}
-            loading={list.isPending}
-            fetching={list.isFetching && !list.isFetchingNextPage}
-            virtualHeight={rows.length > VIRTUALIZE_ABOVE ? 640 : undefined}
-            filtered={filtered}
-            toolbar={
-              <>
-                <PassFindToolbar
-                  search={search}
-                  orgId={orgId}
-                  templates={templates.data?.items ?? []}
-                  canOperate={canOperate}
-                  onChange={onSearch}
+        <DataTable
+          caption="Passes"
+          columns={columns}
+          data={rows}
+          getRowId={(r) => r.id}
+          loading={list.isPending}
+          error={
+            list.isError ? (
+              <ErrorState error={list.error} onRetry={() => void list.refetch()} />
+            ) : undefined
+          }
+          fetching={list.isFetching && !list.isFetchingNextPage}
+          virtualHeight={rows.length > VIRTUALIZE_ABOVE ? 640 : undefined}
+          filtered={filtered}
+          toolbar={
+            <>
+              <PassFindToolbar
+                search={search}
+                orgId={orgId}
+                templates={templates.data?.items ?? []}
+                canOperate={canOperate}
+                onChange={onSearch}
+              />
+              {canOperate && !allSelected && rows.length > 0 ? (
+                <SelectAllPhone onSelect={toggleAll} />
+              ) : null}
+              {canOperate && allSelected ? (
+                <SelectAllBanner
+                  count={count}
+                  shown={rows.length}
+                  all={allMatching}
+                  onAll={() => setAllMatching(true)}
+                  onClear={() => {
+                    setAllMatching(false);
+                    setSelected(new Set());
+                  }}
                 />
-                {canOperate && !allSelected && rows.length > 0 ? (
-                  <SelectAllPhone onSelect={toggleAll} />
-                ) : null}
-                {canOperate && allSelected ? (
-                  <SelectAllBanner
-                    count={count}
-                    shown={rows.length}
-                    all={allMatching}
-                    onAll={() => setAllMatching(true)}
-                    onClear={() => {
-                      setAllMatching(false);
-                      setSelected(new Set());
-                    }}
-                  />
-                ) : null}
-              </>
-            }
-            empty={
-              <EmptyState
-                art="passes"
-                title="No passes yet"
-                description={
-                  <OtherModeHint orgId={orgId} hidden={Boolean(scope.membership?.testOnly)} />
-                }
-                action={
-                  canOperate ? (
-                    <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
-                      {create('primary')}
-                    </div>
-                  ) : undefined
-                }
-              />
-            }
-            emptyFiltered={<FilteredEmpty entity="pass" onClear={() => onSearch(CLEARED)} />}
-            footer={
-              <LoadMore
-                query={list}
-                shown={rows.length || undefined}
-                noun={['pass', 'passes']}
-                scoped
-              />
-            }
-          />
-        )}
+              ) : null}
+            </>
+          }
+          empty={
+            <EmptyState
+              art="passes"
+              title="No passes yet"
+              description={
+                <OtherModeHint orgId={orgId} hidden={Boolean(scope.membership?.testOnly)} />
+              }
+              action={
+                canOperate ? (
+                  <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">
+                    {create('primary')}
+                  </div>
+                ) : undefined
+              }
+            />
+          }
+          emptyFiltered={<FilteredEmpty entity="pass" onClear={() => onSearch(CLEARED)} />}
+          footer={
+            <LoadMore
+              query={list}
+              shown={rows.length || undefined}
+              noun={['pass', 'passes']}
+              scoped
+            />
+          }
+        />
       </PassListContext.Provider>
       <SelectionBar
         picked={rows.filter((r) => selected.has(r.id))}

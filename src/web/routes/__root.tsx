@@ -4,6 +4,7 @@ import { isAdminPath, isKnownPortalPath, isPublicPath, requireSession } from '..
 import { RouteAnnouncer, SkipLink } from '../lib/route-focus.tsx';
 import type { RouterContext } from '../lib/router-context.ts';
 import { useSession } from '../lib/session.ts';
+import { Skeleton } from '../ui/index.ts';
 import { BareLayout } from '../ui/layout/bare-layout.tsx';
 import { StandaloneError } from '../ui/layout/error-pages.tsx';
 import { PortalLayout } from '../ui/layout/portal-layout.tsx';
@@ -39,6 +40,19 @@ function RootComponent() {
   );
 }
 
+/**
+ * Held while the session is fetched: a neutral page, never a blank one or the anonymous state of
+ * the page behind it. Only past 150 ms, so a quick answer shows no flash.
+ */
+export function RootPending() {
+  return (
+    <div role="status" aria-busy className="grid min-h-dvh place-items-center bg-surface-page p-6">
+      <span className="sr-only">Loading</span>
+      <Skeleton className="aspect-[320/460] w-full max-w-[22rem] rounded-xl" />
+    </div>
+  );
+}
+
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context, location }) => {
     if (isAdminPath(location.pathname) || isPublicPath(location.pathname)) return;
@@ -47,5 +61,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     await requireSession(context.queryClient, location.href);
   },
   component: RootComponent,
+  pendingComponent: RootPending,
+  pendingMs: 150,
   errorComponent: StandaloneError,
 });

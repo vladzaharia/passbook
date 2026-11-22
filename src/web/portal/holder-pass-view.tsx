@@ -21,6 +21,7 @@ import { Help, type HolderSupport, SendAgain } from './holder-parts.tsx';
 import { doorPathOf, SaveMount, SaveSheet } from './save-phone.tsx';
 import { OtherWays, WalletLead } from './wallet-choice.tsx';
 import './holder-pass.css';
+import './holder-others.css';
 
 export type { HolderSupport } from './holder-parts.tsx';
 

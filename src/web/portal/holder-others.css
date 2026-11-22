@@ -1,0 +1,87 @@
+/* The other ways list (wallet-choice.tsx), split from holder-pass.css; imported beside it. */
+/* The other ways (wallet-choice.tsx): one quiet list under the lead, hairlines between rows, no
+   label. A row is a whole link (or the resend form's button), its hover tint past the text edge. */
+.wl-others {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+  list-style: none;
+}
+.wl-others > li + li {
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.wl-others form {
+  margin: 0;
+}
+.wl-other {
+  display: flex;
+  width: calc(100% + 1.5rem);
+  min-height: 3rem;
+  align-items: center;
+  gap: 0.75rem;
+  margin-inline: -0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: var(--pk-radius-md);
+  background: none;
+  color: var(--pk-text-default);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--wl-dur-hover) var(--wl-ease-move),
+    color var(--wl-dur-hover) var(--wl-ease-move);
+}
+.wl-other:hover {
+  background: var(--pk-state-hover-tint);
+  color: var(--pk-text-strong);
+}
+.wl-other:focus-visible {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: -2px;
+}
+.wl-other > svg,
+.wl-other-text > svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  color: var(--pk-text-muted);
+}
+.wl-other-go {
+  margin-inline-start: auto;
+  transition: translate var(--wl-dur-hover) var(--wl-ease-move);
+}
+.wl-other:hover .wl-other-go {
+  translate: 2px 0;
+}
+.wl-other-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.875rem;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}
+.wl-other-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-block: 0.75rem;
+}
+.wl-other-badges .wl-native-badge img {
+  height: 2.5rem;
+}
+.wl-other-status {
+  margin: 0;
+  padding-bottom: 0.75rem;
+  color: var(--pk-text-muted);
+  font-size: 0.875rem;
+}

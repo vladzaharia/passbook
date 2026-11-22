@@ -29,6 +29,7 @@ const SHEETS = [
   'src/web/ui/art/wallet-states.css',
   'src/web/ui/art/scenes/tuck.css',
   'src/web/portal/holder-pass.css',
+  'src/web/portal/holder-others.css',
   'src/web/portal/save-phone.css',
   'src/web/portal/add/add.css',
 ]
