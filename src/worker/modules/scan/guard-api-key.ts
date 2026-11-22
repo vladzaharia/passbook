@@ -11,6 +11,7 @@ import {
   UnauthenticatedError,
   ValidationError,
 } from '../../platform/errors.ts';
+import { checkRateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { scannerExpired } from './auth-store.ts';
@@ -76,7 +77,11 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
   if (sandboxKey && named === SANDBOX_TERMINAL_ALIAS) {
     // A sandbox made before its terminal existed gets it on first use.
     let id = await sandboxTerminalIdOf(db, key.orgId, serviceContext(c).clock.now());
-    if (id === null) {
+    // The scan rate limits come after this guard, so the write has its own: 30 attempts a minute per key.
+    if (
+      id === null &&
+      (await checkRateLimit(c.env, 'RL_SCAN_PAIR', `sandbox-terminal:${key.keyId}`))
+    ) {
       await ensureSandboxTerminal(serviceContext(c), key, key.orgId);
       id = await sandboxTerminalIdOf(db, key.orgId, serviceContext(c).clock.now());
     }

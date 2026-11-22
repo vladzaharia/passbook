@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { fakeRateLimiter, makeOrg, makeSession, makeUser } from '../../../../test/helpers/index.ts';
+import {
+  fakeRateLimiter,
+  makeOrg,
+  makeSession,
+  makeUser,
+  withoutTrigger,
+} from '../../../../test/helpers/index.ts';
 import { CreatedDeveloperSandboxSchema } from '../../../shared/contracts/developer.ts';
 import { SANDBOX_TERMINAL_NAME } from '../../../shared/copy/developer.ts';
 import { createApp } from '../../app.ts';
@@ -258,5 +264,22 @@ describe('the sandbox test terminal', () => {
     expect((await call(headers, '/actions', { ...read(pass.id), actionId: 'auto' })).status).toBe(
       404,
     );
+  });
+
+  it('refuses a sandbox key that no longer holds passes:write', async () => {
+    const s = await sandbox();
+    const pass = await s.pass();
+    const headers = { ...s.key, 'x-passbook-device': s.terminal.id };
+    expect((await call(headers, '/resolve', read(pass.id))).status).toBe(200);
+    await withoutTrigger(kit.env.DB, 'api_keys_identity_immutable', () =>
+      run(
+        kit.env.DB,
+        `UPDATE api_keys SET scopes = (SELECT json_group_array(j.value) FROM json_each(api_keys.scopes) j
+           WHERE j.value <> 'passes:write') WHERE id = ?`,
+        [s.made.key?.id],
+      ),
+    );
+    const res = await call(headers, '/resolve', read(pass.id));
+    expect([res.status, await codeOf(res)]).toEqual([403, 'MISSING_SCOPE']);
   });
 });

@@ -1,17 +1,29 @@
 import { SANDBOX_TEMPLATE_NAME, SANDBOX_TERMINAL_NAME } from '../../../shared/copy/developer.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
+import { grant } from '../../platform/authority.ts';
 import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
+import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
-import { adminGrant, audited, createdByOf, templatesUsable } from './repo-admin-grant.ts';
+import {
+  audited,
+  createdByOf,
+  modeFreeAuthorityOf,
+  type ScanPurpose,
+  templatesUsable,
+} from './repo-admin-grant.ts';
 import { addScannerTemplates } from './repo-admin-unguarded.ts';
 import { orgAccessRevisionOf } from './repo-api-key.ts';
 import { addScannerInsert, addScannerRevoke } from './repo-scanners.ts';
 import { SCANNER_CODES } from './scanners.ts';
 
+const PURPOSE: ScanPurpose = 'org_mode.scan.scanner.create';
 const TERMINAL_TABLES = ['scanners', 'scanner_templates', 'developer_sandboxes'];
+
+const LOG_WINDOW_MS = 60_000;
+const lastFailure = new Map<string, number>();
 
 type Held = { id: string; expires_at: number | null };
 
@@ -84,20 +96,25 @@ export async function ensureSandboxTerminal(
         ])
       )?.id ?? null;
     const who = await authorityOf(ctx, caller, orgId);
-    if (templateId === null || who === null) return;
+    if (templateId === null || who === null) {
+      ctx.log.warn('developer.sandbox_terminal_skipped', {
+        orgId,
+        code: templateId === null ? 'SANDBOX_TEMPLATE_MISSING' : 'SANDBOX_KEY_SCOPE_MISSING',
+      });
+      return;
+    }
     const { authority, actorId } = who;
     const id = ctx.ids.id();
-    const g = adminGrant(
-      ctx,
-      'org_mode.scan.scanner.create',
-      actorId,
-      authority,
-      orgId,
-      [...templatesUsable([templateId])],
-      SCANNER_CODES,
-      id,
-      TERMINAL_TABLES,
-    );
+    // Per mode, never live-only: the grant is built without the live-only refusals (they cannot occur here).
+    const admin = modeFreeAuthorityOf(authority, actorId, orgId, PURPOSE);
+    const g = grant(ctx, {
+      purpose: PURPOSE,
+      principal: tenantPrincipal(admin),
+      checks: [...capabilityChecks(admin), ...templatesUsable([templateId])],
+      tables: TERMINAL_TABLES,
+      codes: SCANNER_CODES,
+      target: id,
+    });
     // One that is expired (or not the one the sandbox names) still holds the name: it goes in the same grant.
     if (held) addScannerRevoke(g, held.id, now);
     addScannerInsert(g, {
@@ -135,10 +152,15 @@ export async function ensureSandboxTerminal(
       if (!winner || winner.id === held?.id) throw error;
     }
   } catch (error) {
-    ctx.log.error('developer.sandbox_terminal_failed', {
-      orgId,
-      code: 'SANDBOX_TERMINAL_FAILED',
-      error,
-    });
+    // A grant that keeps failing is logged once per caller and window, not on every call.
+    const who = caller.kind === 'api_key' ? caller.keyId : orgId;
+    if (now - (lastFailure.get(who) ?? -LOG_WINDOW_MS) >= LOG_WINDOW_MS) {
+      lastFailure.set(who, now);
+      ctx.log.error('developer.sandbox_terminal_failed', {
+        orgId,
+        code: 'SANDBOX_TERMINAL_FAILED',
+        error,
+      });
+    }
   }
 }
