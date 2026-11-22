@@ -129,7 +129,7 @@ export const requireStepUp = (
         auth?.kind === 'session'
           ? auth
           : auth?.kind === 'api_key' && auth.via === 'try'
-            ? { authTime: auth.sessionAuthTime ?? null, amr: 'oidc' as const }
+            ? { authTime: auth.sessionAuthTime ?? null, amr: auth.sessionAmr ?? ('oidc' as const) }
             : null;
       if (person && (!when || (await when(c)))) assertStepUp(c, person, maxAgeSec);
       await next();

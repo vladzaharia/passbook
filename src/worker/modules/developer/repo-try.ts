@@ -1,3 +1,4 @@
+import type { Amr } from '../../platform/auth.ts';
 import { first } from '../../platform/db.ts';
 import { consoleSessionSql } from '../../platform/repo-session-strength-sql.ts';
 import { RESOLVED_KEY_COLUMNS, type ResolvedKeyRow } from '../api-keys/repo.ts';
@@ -31,9 +32,9 @@ export const tryTokenKeyRow = (
   claims: { keyId: string; sessionIdHash: string; generation: number },
   now: number,
 ) =>
-  first<ResolvedKeyRow & { session_auth_time: number | null }>(
+  first<ResolvedKeyRow & { session_auth_time: number | null; session_amr: Amr }>(
     db,
-    `SELECT ${RESOLVED_KEY_COLUMNS}, s.auth_time AS session_auth_time
+    `SELECT ${RESOLVED_KEY_COLUMNS}, s.auth_time AS session_auth_time, s.amr AS session_amr
      FROM api_keys k
      JOIN orgs o ON o.id = k.org_id AND o.kind = 'developer'
      JOIN developer_sandboxes d ON d.org_id = k.org_id AND d.closed_at IS NULL AND d.try_generation = ?3

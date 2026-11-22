@@ -98,6 +98,7 @@ export async function resolveTryToken(
   if (auth) {
     auth.via = 'try';
     auth.sessionAuthTime = row.session_auth_time;
+    auth.sessionAmr = row.session_amr;
   }
   return auth;
 }

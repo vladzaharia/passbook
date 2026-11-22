@@ -1,5 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
+import { makeSession } from '../../../../test/helpers/index.ts';
+import { first } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import { signTryToken, TRY_TOKEN_TTL_MS } from './try-token.ts';
 import { fromPage, ORIGIN, tryKit } from './try-token-test-fixtures.ts';
 
 let t: Awaited<ReturnType<typeof tryKit>>;
@@ -56,5 +60,43 @@ describe('a try token stands for its session: step-up applies', () => {
     // Reads and non-sensitive changes stay open.
     expect(await status('GET', '/webhook-endpoints')).toBe(200);
     expect(await status('PATCH', `/webhook-endpoints/${id}`, { description: 'x' })).toBe(200);
+  });
+
+  it('sends a break-glass session to break-glass, not Polaris ID', async () => {
+    const d = await t.developer();
+    const bg = await makeSession(t.kit.f, {
+      userId: d.user.id,
+      roles: ['user', 'developer'],
+      amr: 'breakglass',
+      authTime: t.kit.clock.now() - STALE_MS,
+    });
+    const cookie = bg.headers.cookie ?? '';
+    const row = await first<{ try_generation: number }>(
+      t.kit.env.DB,
+      'SELECT try_generation FROM developer_sandboxes WHERE user_id = ?',
+      [d.user.id],
+    );
+    const token = await signTryToken(t.kit.env, {
+      keyId: d.key.id,
+      sessionIdHash: await sha256Hex(cookie.split('=').slice(1).join('=')),
+      generation: row?.try_generation ?? 0,
+      expiresAt: t.kit.clock.now() + TRY_TOKEN_TTL_MS,
+    });
+    const res = await t.app.request(
+      `${ORIGIN}/api/v1/webhook-endpoints`,
+      {
+        method: 'POST',
+        headers: {
+          ...fromPage({ ...bg.headers, ...d.browser, cookie }, token),
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(HOOK),
+      },
+      t.kit.env,
+    );
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { code?: string; signInUrl?: string };
+    expect(body.code).toBe('STEP_UP_REQUIRED');
+    expect(body.signInUrl).toContain('/auth/breakglass');
   });
 });
