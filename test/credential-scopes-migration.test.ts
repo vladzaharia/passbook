@@ -20,7 +20,7 @@ describe('credential scopes out of presets migration', () => {
     const org = await makeOrg(f);
     const scopes = ['scanning:write', 'scanning:admin', 'passes:read'];
     const kept = ['scanning:write', 'passes:read'];
-    const soon = Date.now() + 30 * 86_400_000;
+    const soon = f.clock.now() + 30 * 86_400_000;
     const preset = await makeApiKey(f, {
       orgId: org.id,
       scopes,
@@ -31,7 +31,7 @@ describe('credential scopes out of presets migration', () => {
     const long = await makeApiKey(f, {
       orgId: org.id,
       scopes,
-      expiresAt: Date.now() + 200 * 86_400_000,
+      expiresAt: f.clock.now() + 200 * 86_400_000,
     });
     const named = await makeApiKey(f, { orgId: org.id, scopes, expiresAt: soon });
     const revoked = await makeApiKey(f, { orgId: org.id, scopes, roles: ['org_admin'] });

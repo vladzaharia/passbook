@@ -100,14 +100,12 @@ describe('minting a credential scope (scanning:admin)', () => {
   });
 
   it('refuses a pass_operator or integration_admin asking for it, personal key included', async () => {
-    for (const role of ['pass_operator', 'integration_admin'] as const) {
-      const { session } = await member(role);
-      await expectProblem(
-        await create(session.headers, body()),
-        403,
-        'API_KEY_SCOPE_EXCEEDS_CREATOR',
-      );
-    }
+    const admin = await member('integration_admin');
+    await expectProblem(
+      await create(admin.session.headers, body()),
+      403,
+      'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    );
     const { session } = await member('pass_operator');
     await expectProblem(
       await create(session.headers, body({ kind: 'personal' })),

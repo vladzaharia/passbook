@@ -94,7 +94,6 @@ describe('redaction', () => {
         pairingCode: 'PC-1',
         hmacKeyVersion: 2,
         keysetId: 'ks',
-        secretCount: 4,
       }),
     );
     for (const secret of ['h1', 'p1', 's1', 'PC-1']) expect(out).not.toContain(secret);
