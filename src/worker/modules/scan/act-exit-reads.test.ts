@@ -145,3 +145,25 @@ describe('OC4 on a zone-only Both desk', () => {
     expect(await placeRow(pass.id, gym)).toMatchObject({ state: 'out' });
   });
 });
+
+describe('OC4 on a value-first scanner', () => {
+  it('Check out commits even when the default action is a value action', async () => {
+    const tpl = await kit.scanTemplate('Punch', {
+      actions: [
+        { id: 'stamp', label: 'Add stamp', kind: 'add', input: 'stamps' },
+        { id: 'enter', label: 'Check in', kind: 'check_in' },
+      ],
+    });
+    const scanner = await kit.scanner({
+      templateIds: [tpl],
+      settings: { checkIn: { mode: 'in_out' }, direction: 'both' },
+    });
+    const pass = await kit.scanPass(tpl);
+    const at = async (over: Record<string, unknown>) =>
+      out(await act(scanner.headers, codeOf(pass), over));
+    expect((await at({ actionId: 'enter' })).kind).toBe('ok');
+    await void_(pass);
+    const exit = await at({ actionId: 'auto', direction: 'out' });
+    expect(exit).toMatchObject({ kind: 'ok', checkIn: { direction: 'out' } });
+  });
+});

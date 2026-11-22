@@ -198,8 +198,8 @@ export function pickAction(
   exit = false,
 ): ResolvedScanAction | 'choose' | undefined {
   if (id === 'auto') {
-    if (actor.settings.flow !== 'choose') return defaultAction(actor, scan) ?? undefined;
-    return exit ? scan.actions.find((a) => a.kind === 'check_in') : 'choose';
+    if (exit) return scan.actions.find((a) => a.kind === 'check_in');
+    return actor.settings.flow === 'choose' ? 'choose' : (defaultAction(actor, scan) ?? undefined);
   }
   return scan.actions.find((a) => a.id === id);
 }
