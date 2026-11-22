@@ -979,8 +979,7 @@ describe('public page fencing', () => {
       // The public page has already captured its snapshot; this is offerPassSnapshot's pass-id read.
       DB: beforeFirstRead(
         nativeKit.env.DB,
-        (sql) =>
-          sql.includes('WHERE id = ? AND deleted_at IS NULL AND test_data_quarantined = 0'),
+        (sql) => sql.includes('WHERE id = ? AND deleted_at IS NULL AND test_data_quarantined = 0'),
         change,
       ),
     };
