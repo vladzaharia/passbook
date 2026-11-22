@@ -766,7 +766,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"passes.bulkApply", "POST", "/api/v1/passes/bulk", true,
-		`{"action":"void","ids":["x"]}`, `{"done":0,"skipped":[{"id":"x","code":"x"}]}`,
+		`{"action":"void"}`, `{"done":0,"skipped":[{"id":"x","code":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
 			var b PassesBulkApplyBody
 			if err := json.Unmarshal(body, &b); err != nil {
@@ -812,6 +812,38 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"bulkRuns.start", "POST", "/api/v1/passes/bulk-runs", false,
+		`{"action":"void","selection":{"filter":{},"expectCount":0}}`, `{"id":"x","orgId":"x","action":"void","state":"queued","total":0,"done":0,"skipped":0,"skippedBy":{},"stopRequested":false,"createdAt":0,"finishedAt":0,"code":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b BulkRunsStartBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.BulkRuns.Start(ctx, &b)
+		},
+	},
+	{
+		"bulkRuns.current", "GET", "/api/v1/passes/bulk-runs/current", false,
+		"", `{}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.BulkRuns.Current(ctx)
+		},
+	},
+	{
+		"bulkRuns.retrieve", "GET", "/api/v1/passes/bulk-runs/id1", false,
+		"", `{"id":"x","orgId":"x","action":"void","state":"queued","total":0,"done":0,"skipped":0,"skippedBy":{},"stopRequested":false,"createdAt":0,"finishedAt":0,"code":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.BulkRuns.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"bulkRuns.stop", "POST", "/api/v1/passes/bulk-runs/id1/stop", false,
+		"", `{"id":"x","orgId":"x","action":"void","state":"queued","total":0,"done":0,"skipped":0,"skippedBy":{},"stopRequested":false,"createdAt":0,"finishedAt":0,"code":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.BulkRuns.Stop(ctx, "id1")
+		},
+	},
+	{
 		"passes.bulkUpdateChannels", "POST", "/api/v1/passes/bulk/channels", false,
 		`{"action":"on","channels":["mobile"],"ids":["x"]}`, `{"done":0,"skipped":[{"id":"x","code":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -831,6 +863,24 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.Passes.MatchPhotos(ctx, &b)
+		},
+	},
+	{
+		"passViews.list", "GET", "/api/v1/passes/views", false,
+		"", `{"items":[{"id":"x","name":"x","filter":{}}],"revision":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.PassViews.List(ctx)
+		},
+	},
+	{
+		"passViews.replace", "PUT", "/api/v1/passes/views", false,
+		`{"items":[{"id":"x","name":"x","filter":{}}],"revision":0}`, `{"items":[{"id":"x","name":"x","filter":{}}],"revision":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassViewsReplaceBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.PassViews.Replace(ctx, &b)
 		},
 	},
 	{

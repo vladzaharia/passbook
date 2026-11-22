@@ -3,6 +3,7 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
+import type { RunWrite } from './bulk-write.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
 import { assertExternalIdFree, externalIdUpdateGuard } from './external-id.ts';
@@ -37,7 +38,7 @@ export async function listPassSummaries(
   query: Parameters<typeof listPasses>[1],
 ) {
   const page = await listPasses(ctx.env.DB, query);
-  return { items: page.items.map(toSummary), nextCursor: page.nextCursor };
+  return { items: page.items.map((p) => toSummary(p, query.match)), nextCursor: page.nextCursor };
 }
 
 export interface PassPatch {
@@ -226,8 +227,11 @@ async function setStatus(
   status: 'active' | 'voided',
   scope: ScopeArg,
   authority?: TenantPassWrite,
+  runWrite?: RunWrite,
 ) {
-  const result = await setPassStatus(ctx, actor, passId, status, scope, authority);
+  const result = await setPassStatus(ctx, actor, passId, status, scope, authority, {
+    ...(runWrite ? { runWrite } : {}),
+  });
   return currentSummary(ctx, result.pass, authority);
 }
 
@@ -237,7 +241,8 @@ export const voidPass = (
   id: string,
   scope: ScopeArg,
   authority?: TenantPassWrite,
-) => setStatus(ctx, actor, id, 'voided', scope, authority);
+  runWrite?: RunWrite,
+) => setStatus(ctx, actor, id, 'voided', scope, authority, runWrite);
 export const unvoidPass = (
   ctx: ServiceContext,
   actor: Actor,

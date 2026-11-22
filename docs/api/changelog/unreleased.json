@@ -480,6 +480,54 @@
     "note": "Lists a template's saved column mappings."
   },
   {
+    "key": "GET /api/v1/passes 200.count: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.count: field added",
+    "note": "count is the number of passes the filters match, when count=true."
+  },
+  {
+    "key": "GET /api/v1/passes 200.items[].matched: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "GET /api/v1/passes optional parameter query:count added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "optional parameter query:count added",
+    "note": "count=true adds the number of passes the filters match."
+  },
+  {
+    "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesBulkRunsById",
+    "op": "GET /api/v1/passes/bulk-runs/{id}",
+    "change": "new operation",
+    "note": "GET /passes/bulk-runs/{id} reports a bulk run's progress."
+  },
+  {
+    "key": "GET /api/v1/passes/bulk-runs/current new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesBulkRunsCurrent",
+    "op": "GET /api/v1/passes/bulk-runs/current",
+    "change": "new operation",
+    "note": "GET /passes/bulk-runs/current reports the organization's running bulk run, or the last one to end within the hour."
+  },
+  {
+    "key": "GET /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesViews",
+    "op": "GET /api/v1/passes/views",
+    "change": "new operation",
+    "note": "GET /passes/views lists the saved views of the passes list."
+  },
+  {
     "key": "GET /api/v1/platform/apple-calls new operation",
     "class": "additive",
     "operationId": "wallet-identities.getPlatformAppleCalls",
@@ -1320,6 +1368,54 @@
     "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
   },
   {
+    "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/restore 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-runs new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkRuns",
+    "op": "POST /api/v1/passes/bulk-runs",
+    "change": "new operation",
+    "note": "POST /passes/bulk-runs voids, emails or removes every pass a filter matches, in the background. expectCount must equal the count, or 409 SELECTION_CHANGED."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-runs/{id}/stop new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkRunsByIdStop",
+    "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
+    "change": "new operation",
+    "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
+  },
+  {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
     "class": "additive",
     "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
@@ -1672,6 +1768,14 @@
     "note": "Saves a named column mapping for a template; the same name replaces it."
   },
   {
+    "key": "PUT /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.putPassesViews",
+    "op": "PUT /api/v1/passes/views",
+    "change": "new operation",
+    "note": "PUT /passes/views replaces the saved views (at most 20)."
+  },
+  {
     "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
     "class": "notable",
     "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
@@ -1726,5 +1830,21 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "webhook pass.removed data.runId: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.removed",
+    "op": "webhook pass.removed",
+    "change": "data.runId: field added",
+    "note": "pass.removed data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "webhook pass.voided data.runId: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.voided",
+    "op": "webhook pass.voided",
+    "change": "data.runId: field added",
+    "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
   }
 ]

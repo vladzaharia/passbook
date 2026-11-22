@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ImagePlus, Plus, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { PassFilter } from '@/shared/contracts/pass-selection.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import { formatDay } from '../../lib/format.ts';
 import { useMode } from '../../lib/mode.ts';
@@ -20,10 +21,16 @@ import {
 } from '../../ui/index.ts';
 import { useTemplates } from '../templates/api.ts';
 import { usePassList } from './api.ts';
-import { canChangePasses, leaveSelection } from './change/selection.ts';
+import { BulkRunCard } from './bulk-run-card.tsx';
+import { canChangePasses, filterSelection, leaveSelection } from './change/selection.ts';
 import { downloadText, toCsv } from './csv.ts';
+import { useCurrentBulkRun } from './find-api.ts';
+import { useFindFields } from './find-fields.ts';
+import { allChips, chipFilter, toPassFilter } from './find-query.ts';
+import { SelectAllBanner, SelectAllPhone } from './find-select.tsx';
+import { PassFindToolbar } from './find-toolbar.tsx';
 import { PassListContext, passColumns } from './list-columns.tsx';
-import { CLEARED, type ListSearch, PassListFilters } from './list-filters.tsx';
+import { CLEARED, type ListSearch } from './list-filters.tsx';
 import { OtherModeHint } from './other-mode-hint.tsx';
 import { SelectionBar } from './selection-bar.tsx';
 import './passes.css';
@@ -53,8 +60,11 @@ export function PassesListPage({
       scope.membership?.capabilities.includes('passes:operate'),
   );
   const mode = useMode();
-  const list = usePassList({ ...search, orgId });
+  const chips = useMemo(() => allChips(search), [search]);
+  const list = usePassList({ ...search, ...chipFilter(chips), orgId });
   const templates = useTemplates({ orgId });
+  const fields = useFindFields(templates.data?.items ?? [], search.templateId, orgId);
+  const fieldLabels = useMemo(() => new Map(fields.map((f) => [f.key, f.label])), [fields]);
   const orgs = useOrgOptions(!orgId);
   const rows = useMemo(
     () =>
@@ -65,12 +75,22 @@ export function PassesListPage({
     [canRead, list.data, orgId],
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [allMatching, setAllMatching] = useState(false);
+  const [runId, setRunId] = useState<string>();
+  const [dismissed, setDismissed] = useState<string>();
+  const current = useCurrentBulkRun(orgId, canOperate);
+  const shownRun =
+    runId ?? (current.data && current.data.id !== dismissed ? current.data.id : undefined);
+  const count = list.data?.pages[0]?.count ?? rows.length;
   const filtered = Object.values(search).some((v) => v !== undefined && v !== '');
   const truth = !list.isPending && !filtered && rows.length === 0;
 
   // A new filter, scope or mode is a new list: the selection does not carry over.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on the query key only
-  useEffect(() => setSelected(new Set()), [orgId, mode, JSON.stringify(search)]);
+  useEffect(() => {
+    setSelected(new Set());
+    setAllMatching(false);
+  }, [orgId, mode, JSON.stringify(search)]);
 
   const templateNames = useMemo(
     () => new Map((templates.data?.items ?? []).map((t) => [t.id, t.name])),
@@ -102,10 +122,10 @@ export function PassesListPage({
     [],
   );
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
-  const toggleAll = useCallback(
-    () => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id))),
-    [allSelected, rows],
-  );
+  const toggleAll = useCallback(() => {
+    setAllMatching(false);
+    setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)));
+  }, [allSelected, rows]);
 
   const bundleOrgId = useMemo(() => {
     const orgs = new Set(rows.filter((r) => selected.has(r.id)).map((r) => r.orgId));
@@ -114,12 +134,13 @@ export function PassesListPage({
   const navigate = useNavigate();
   const openChange =
     orgId && canChangePasses(scope.membership?.capabilities)
-      ? (passes: PassSummaryDto[]) => {
-          leaveSelection(orgId, {
-            kind: 'ids',
-            ids: passes.map((p) => p.id),
-            templateIds: [...new Set(passes.map((p) => p.templateId))],
-          });
+      ? (passes: PassSummaryDto[], all?: { filter: PassFilter; count: number }) => {
+          const templateIds = [...new Set(passes.map((p) => p.templateId))];
+          const chosen = all
+            ? filterSelection(all.filter, templateIds, all.count)
+            : ({ kind: 'ids', ids: passes.map((p) => p.id), templateIds } as const);
+          if (!chosen) return;
+          leaveSelection(orgId, chosen);
           void navigate({ href: orgPath(orgId, '/passes/change') });
         }
       : undefined;
@@ -136,6 +157,7 @@ export function PassesListPage({
       allSelected,
       onToggle: toggle,
       onToggleAll: toggleAll,
+      find: { chips, labels: fieldLabels },
     }),
     [
       orgId,
@@ -148,6 +170,8 @@ export function PassesListPage({
       allSelected,
       toggle,
       toggleAll,
+      chips,
+      fieldLabels,
     ],
   );
 
@@ -189,8 +213,18 @@ export function PassesListPage({
   );
 
   return (
-    <div className={selected.size > 0 ? 'pb-20' : undefined}>
+    <div className={selected.size > 0 || allMatching ? 'pb-20' : undefined}>
       <PageHeader title="Passes" actions={canOperate && !truth ? create('primary') : undefined} />
+      {shownRun ? (
+        <BulkRunCard
+          id={shownRun}
+          orgId={orgId}
+          onDismiss={() => {
+            setDismissed(shownRun);
+            setRunId(undefined);
+          }}
+        />
+      ) : null}
       <PassListContext.Provider value={context}>
         {list.isError ? (
           <ErrorState error={list.error} onRetry={() => void list.refetch()} />
@@ -205,12 +239,30 @@ export function PassesListPage({
             virtualHeight={rows.length > VIRTUALIZE_ABOVE ? 640 : undefined}
             filtered={filtered}
             toolbar={
-              <PassListFilters
-                search={search}
-                orgId={orgId}
-                templates={templates.data?.items ?? []}
-                onChange={onSearch}
-              />
+              <>
+                <PassFindToolbar
+                  search={search}
+                  orgId={orgId}
+                  templates={templates.data?.items ?? []}
+                  canOperate={canOperate}
+                  onChange={onSearch}
+                />
+                {canOperate && !allSelected && rows.length > 0 ? (
+                  <SelectAllPhone onSelect={toggleAll} />
+                ) : null}
+                {canOperate && allSelected ? (
+                  <SelectAllBanner
+                    count={count}
+                    shown={rows.length}
+                    all={allMatching}
+                    onAll={() => setAllMatching(true)}
+                    onClear={() => {
+                      setAllMatching(false);
+                      setSelected(new Set());
+                    }}
+                  />
+                ) : null}
+              </>
             }
             empty={
               <EmptyState
@@ -245,9 +297,14 @@ export function PassesListPage({
         orgId={orgId}
         canOperate={canOperate}
         bundleOrgId={bundleOrgId}
-        onClear={() => setSelected(new Set())}
+        onClear={() => {
+          setAllMatching(false);
+          setSelected(new Set());
+        }}
         onExport={exportCsv}
         onChange={openChange}
+        onRun={setRunId}
+        all={allMatching ? { filter: toPassFilter({ ...search, chips }), count } : undefined}
       />
     </div>
   );

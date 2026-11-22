@@ -11,10 +11,13 @@ import { BroadcastSchema } from '../../shared/contracts/broadcasts.ts';
 import { BroadcastUndoResultSchema } from '../../shared/contracts/broadcasts-change.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
+import { BulkRunSchema, CurrentBulkRunSchema } from '../../shared/contracts/pass-bulk-runs.ts';
 import {
   PassImportUndoResultSchema,
   SavedImportMappingsResultSchema,
 } from '../../shared/contracts/pass-imports.ts';
+import { PassFilterSchema } from '../../shared/contracts/pass-selection.ts';
+import { PassViewListSchema } from '../../shared/contracts/pass-views.ts';
 import {
   PassDetailSchema,
   PassDeviceSchema,
@@ -142,6 +145,10 @@ const names = {
   PassVersion: PassVersionSchema,
   PassDevice: PassDeviceSchema,
   PassPage: PassListSchema,
+  PassViews: PassViewListSchema,
+  BulkRun: BulkRunSchema,
+  CurrentBulkRun: CurrentBulkRunSchema,
+  PassFilter: PassFilterSchema,
   ApiKeyCurrent: ApiKeyMeSchema,
   ApiKeyMinted: MintedApiKeySchema,
   ApiKeyRotation: RotatedApiKeySchema,

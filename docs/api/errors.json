@@ -621,6 +621,33 @@
       ]
     },
     {
+      "code": "BULK_RUN_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_START",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "BUNDLE_DUPLICATE_PASS",
       "statuses": [
         422
@@ -2236,7 +2263,25 @@
       ]
     },
     {
+      "code": "MATCH_AMBIGUOUS_FIELD",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "MATCH_NEEDS_TEMPLATE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MATCH_TOO_BROAD",
       "statuses": [
         422
       ],
@@ -2720,6 +2765,15 @@
       ],
       "modules": [
         "sign-in"
+      ]
+    },
+    {
+      "code": "PASS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -4277,7 +4331,17 @@
         409
       ],
       "modules": [
-        "broadcasts"
+        "broadcasts",
+        "passes"
+      ]
+    },
+    {
+      "code": "SELECTION_USE_RUN",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -5437,6 +5501,15 @@
       "code": "VERSION_PURGED",
       "statuses": [
         410
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "VIEWS_CHANGED",
+      "statuses": [
+        409
       ],
       "modules": [
         "passes"

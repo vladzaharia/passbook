@@ -118,9 +118,9 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   },
   'src/worker/modules/passes/repo-remove-compensate.ts': {
     reason:
-      "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority; routes take the grants in repo-remove.ts",
+      "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority: fixtures and service tests, and the deferred runs (pass import undo, bulk run remove), whose claim carries the starter's proof in the same UPDATE; routes take the grants in repo-remove.ts",
     writes: [
-      'passes:6628032c669d',
+      'passes:cce4dbd784ee',
       'passes:d03344a9a7dc',
       'passes:dbb5af80fe98',
       'passes:ec2d184a0290',

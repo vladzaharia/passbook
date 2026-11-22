@@ -241,6 +241,10 @@
                   "null"
                 ],
                 "maxLength": 300
+              },
+              "runId": {
+                "type": "string",
+                "maxLength": 300
               }
             }
           },
@@ -379,6 +383,10 @@
               },
               "message": {
                 "type": "boolean"
+              },
+              "runId": {
+                "type": "string",
+                "maxLength": 300
               }
             }
           },
@@ -3791,6 +3799,9 @@
               "string",
               "null"
             ]
+          },
+          "count": {
+            "type": "integer"
           }
         },
         "required": [
@@ -3838,6 +3849,24 @@
               "string",
               "null"
             ]
+          },
+          "matched": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "input",
+                "value"
+              ]
+            }
           },
           "externalId": {
             "type": [
@@ -3947,6 +3976,327 @@
           "createdAt"
         ]
       },
+      "PassViews": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{1,40}$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                },
+                "filter": {
+                  "$ref": "#/components/schemas/PassFilter"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "filter"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 20
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "revision"
+        ]
+      },
+      "PassFilter": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "connectionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "importId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "voided",
+              "removed"
+            ]
+          },
+          "holderEmail": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "holderState": {
+            "type": "string",
+            "enum": [
+              "unassigned",
+              "waiting",
+              "owned"
+            ]
+          },
+          "onDevice": {
+            "type": "boolean"
+          },
+          "q": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "scan": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "checkedIn": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "checkedIn"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "noScanDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 730
+                  }
+                },
+                "required": [
+                  "noScanDays"
+                ]
+              }
+            ]
+          },
+          "match": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "input": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "minItems": 1,
+                      "maxItems": 20
+                    }
+                  },
+                  "required": [
+                    "input",
+                    "values"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "input": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "min": {
+                      "type": "number"
+                    },
+                    "max": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "input"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "input": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "from": {
+                      "type": "string",
+                      "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
+                    },
+                    "to": {
+                      "type": "string",
+                      "pattern": "^(?:19|2\\d)\\d{2}-\\d{2}-\\d{2}$"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "required": [
+                    "input",
+                    "timeZone"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "input": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "startsWith",
+                        "contains"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    }
+                  },
+                  "required": [
+                    "input",
+                    "op",
+                    "value"
+                  ]
+                }
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 5
+          }
+        },
+        "additionalProperties": false
+      },
+      "BulkRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "void",
+              "send_email",
+              "remove"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "done",
+              "stopped",
+              "failed"
+            ]
+          },
+          "total": {
+            "type": "integer"
+          },
+          "done": {
+            "type": "integer"
+          },
+          "skipped": {
+            "type": "integer"
+          },
+          "skippedBy": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "stopRequested": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "finishedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "action",
+          "state",
+          "total",
+          "done",
+          "skipped",
+          "skippedBy",
+          "stopRequested",
+          "createdAt",
+          "finishedAt",
+          "code"
+        ]
+      },
+      "CurrentBulkRun": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/BulkRun"
+          }
+        }
+      },
       "PassDetail": {
         "type": "object",
         "properties": {
@@ -3987,6 +4337,24 @@
               "string",
               "null"
             ]
+          },
+          "matched": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "input",
+                "value"
+              ]
+            }
           },
           "externalId": {
             "type": [
@@ -19730,6 +20098,96 @@
           "input"
         ]
       },
+      "PassViewsReplaceParams": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{1,40}$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                },
+                "filter": {
+                  "$ref": "#/components/schemas/PassFilter"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "filter"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 20
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "items",
+          "revision"
+        ]
+      },
+      "BulkRunsStartParams": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "void",
+              "send_email",
+              "remove"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "selection": {
+            "type": "object",
+            "properties": {
+              "filter": {
+                "$ref": "#/components/schemas/PassFilter"
+              },
+              "expectCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20000
+              }
+            },
+            "required": [
+              "filter",
+              "expectCount"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "action",
+          "selection"
+        ],
+        "additionalProperties": false
+      },
       "PassesUpdateParams": {
         "type": "object",
         "properties": {
@@ -19974,6 +20432,11 @@
             "type": "string",
             "maxLength": 200
           },
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
           "ids": {
             "type": "array",
             "items": {
@@ -19984,15 +20447,50 @@
             "minItems": 1,
             "maxItems": 100
           },
-          "orgId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
+          "selection": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "minItems": 1,
+                    "maxItems": 100
+                  }
+                },
+                "required": [
+                  "ids"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "filter": {
+                    "$ref": "#/components/schemas/PassFilter"
+                  },
+                  "expectCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20000
+                  }
+                },
+                "required": [
+                  "filter",
+                  "expectCount"
+                ],
+                "additionalProperties": false
+              }
+            ]
           }
         },
         "required": [
-          "action",
-          "ids"
+          "action"
         ]
       },
       "PassesBulkReissueParams": {
@@ -53698,6 +54196,18 @@
           {
             "schema": {
               "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "count",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "maxLength": 512
             },
             "required": false,
@@ -53772,7 +54282,7 @@
           "resource": "passes",
           "method": "list"
         },
-        "description": "Lists passes, newest first. Filter by template, status, holder email or `externalId`; page with `cursor`.",
+        "description": "Lists passes, newest first. Filter by template, status, holder email, `externalId` or inputs with `match`; page with `cursor`. `count=true` adds the number of matches.",
         "security": [
           {
             "apiKey": [
@@ -53791,6 +54301,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -53828,7 +54341,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -53843,6 +54358,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -53859,6 +54375,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -53875,6 +54393,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -54048,6 +54567,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54085,7 +54607,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -54100,6 +54624,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -54116,6 +54641,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54132,6 +54659,1072 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/views": {
+      "get": {
+        "summary": "List the saved views of the passes list",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassViews"
+                },
+                "example": {
+                  "items": [],
+                  "revision": 0
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.getPassesViews",
+        "x-sdk": {
+          "resource": "passViews",
+          "method": "list"
+        },
+        "description": "The saved views of the passes list.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CHANGED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "VIEWS_CHANGED",
+          "WORKFLOW_START"
+        ]
+      },
+      "put": {
+        "summary": "Replace the saved views of the passes list",
+        "tags": [
+          "passes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassViewsReplaceParams"
+              },
+              "example": {
+                "items": [],
+                "revision": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassViews"
+                },
+                "example": {
+                  "items": [],
+                  "revision": 1
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.putPassesViews",
+        "x-sdk": {
+          "resource": "passViews",
+          "method": "replace"
+        },
+        "description": "Replaces the saved views (at most 20) of an organization and mode. Send the `revision` you read; a stale one answers 409 `VIEWS_CHANGED`. A view cannot hold a holder email.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CHANGED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "VIEWS_CHANGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/bulk-runs": {
+      "post": {
+        "summary": "Void, email or remove every pass a filter matches, in the background",
+        "tags": [
+          "passes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkRunsStartParams"
+              },
+              "example": {
+                "action": "void",
+                "selection": {
+                  "filter": {
+                    "status": "active"
+                  },
+                  "expectCount": 442
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRun"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "action": "void",
+                  "state": "running",
+                  "total": 442,
+                  "done": 124,
+                  "skipped": 0,
+                  "skippedBy": {},
+                  "stopRequested": false,
+                  "createdAt": 1764000000000,
+                  "finishedAt": null,
+                  "code": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesBulkRuns",
+        "x-sdk": {
+          "resource": "bulkRuns",
+          "method": "start"
+        },
+        "description": "Voids, emails or removes every pass a filter matches, in the background. The matching passes are fixed when the run starts; `expectCount` must equal the count then, or it answers 409 `SELECTION_CHANGED`. One run at a time per organization and mode.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CHANGED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "VIEWS_CHANGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/bulk-runs/current": {
+      "get": {
+        "summary": "Get the organization's running bulk run, or the last one that ended within the hour",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentBulkRun"
+                },
+                "example": {
+                  "run": {
+                    "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                    "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                    "action": "void",
+                    "state": "running",
+                    "total": 442,
+                    "done": 124,
+                    "skipped": 0,
+                    "skippedBy": {},
+                    "stopRequested": false,
+                    "createdAt": 1764000000000,
+                    "finishedAt": null,
+                    "code": null
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.getPassesBulkRunsCurrent",
+        "x-sdk": {
+          "resource": "bulkRuns",
+          "method": "current"
+        },
+        "description": "The organization's running bulk run, or the last one that ended within the hour; run is absent when there is none.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CHANGED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "VIEWS_CHANGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/bulk-runs/{id}": {
+      "get": {
+        "summary": "Get the progress of a bulk run",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRun"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "action": "void",
+                  "state": "running",
+                  "total": 442,
+                  "done": 124,
+                  "skipped": 0,
+                  "skippedBy": {},
+                  "stopRequested": false,
+                  "createdAt": 1764000000000,
+                  "finishedAt": null,
+                  "code": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.getPassesBulkRunsById",
+        "x-sdk": {
+          "resource": "bulkRuns",
+          "method": "retrieve"
+        },
+        "description": "The progress of a bulk run.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CHANGED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "VIEWS_CHANGED",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/passes/bulk-runs/{id}/stop": {
+      "post": {
+        "summary": "Stop a bulk run after its current chunk",
+        "tags": [
+          "passes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRun"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+                  "action": "void",
+                  "state": "running",
+                  "total": 442,
+                  "done": 124,
+                  "skipped": 0,
+                  "skippedBy": {},
+                  "stopRequested": true,
+                  "createdAt": 1764000000000,
+                  "finishedAt": null,
+                  "code": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "passes.postPassesBulkRunsByIdStop",
+        "x-sdk": {
+          "resource": "bulkRuns",
+          "method": "stop"
+        },
+        "description": "Stops a running bulk run after its current chunk. Passes already handled stay handled.",
+        "security": [
+          {
+            "apiKey": [
+              "passes:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ASSET_DIMENSIONS",
+          "ASSET_NOT_FOUND",
+          "ASSET_NOT_PNG",
+          "ASSET_SIZE",
+          "ASSET_SLOT",
+          "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
+          "BUNDLE_TOO_LARGE",
+          "CONNECTION_ORG",
+          "CONNECTION_TRANSFER_PENDING",
+          "CREATE_STALE",
+          "CREDENTIAL_REF_KEYSET_CONFIG_UNAVAILABLE",
+          "CREDENTIAL_REF_KEYSET_UNAVAILABLE",
+          "DELIVERY_STALE",
+          "DEVICE_TOKEN_UNAVAILABLE",
+          "EMAIL_INVALID",
+          "EXTERNAL_ID_TAKEN",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IF_MATCH_INVALID",
+          "IMPORT_BUSY",
+          "IMPORT_COLUMN_MISSING",
+          "IMPORT_EXPIRED",
+          "IMPORT_FILE_GONE",
+          "IMPORT_HAS_ERRORS",
+          "IMPORT_HEADER_TOO_LONG",
+          "IMPORT_ID_TAKEN",
+          "IMPORT_MAPPINGS_FULL",
+          "IMPORT_NOT_FOUND",
+          "IMPORT_PASS_CHANGED",
+          "IMPORT_PASS_GONE",
+          "IMPORT_PLAN_INVALID",
+          "IMPORT_ROW_UNRESERVED",
+          "IMPORT_STATE",
+          "IMPORT_UNDONE",
+          "IMPORT_UNDO_EXPIRED",
+          "IMPORT_UNDO_NO_BEFORE",
+          "IMPORT_UNDO_RUNNING",
+          "INVALID_API_KEY",
+          "INVALID_INPUT",
+          "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
+          "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
+          "MEMBER_PHOTO_CHANGED",
+          "MEMBER_PHOTO_DIMENSIONS",
+          "MEMBER_PHOTO_ENCODING",
+          "MEMBER_PHOTO_NOT_FOUND",
+          "MEMBER_PHOTO_STYLE",
+          "MISSING_SCOPE",
+          "MODE_MISMATCH",
+          "NEW_CODE_UNSUPPORTED",
+          "NOT_FOUND",
+          "NO_RECIPIENT",
+          "ORG_ACCESS_CHANGED",
+          "ORG_FORBIDDEN",
+          "ORG_MIXED",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "PASS_CHANGED",
+          "PASS_CONFLICT",
+          "PASS_CONNECTION_MISMATCH",
+          "PASS_FILE_MISSING",
+          "PASS_INPUT_INVALID",
+          "PASS_INVALID",
+          "PASS_NOT_ACTIVE",
+          "PASS_NOT_FOUND",
+          "PASS_REF_TAKEN",
+          "PASS_REISSUE_REQUIRED",
+          "PASS_REMOVED",
+          "PASS_TRANSFER_NOT_FOUND",
+          "PASS_TRANSFER_PENDING",
+          "RATE_LIMITED",
+          "RECIPIENT_NOT_HOLDER",
+          "SCAN_EVENT_NOT_FOUND",
+          "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
+          "SERIAL_TAKEN",
+          "SESSION_REQUIRED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_CARD_FULL",
+          "STAMPS_NONE",
+          "STAMPS_NO_REWARD",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TERM_MANAGED",
+          "TERM_NONE",
+          "TERM_NOT_STARTED",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "VERSION_NOT_FOUND",
+          "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -54276,6 +55869,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54313,7 +55909,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -54329,6 +55927,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -54345,6 +55944,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54361,6 +55962,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -54441,6 +56043,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54478,7 +56083,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -54494,6 +56101,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -54510,6 +56118,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54526,6 +56136,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -54687,6 +56298,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54724,7 +56338,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -54740,6 +56356,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -54756,6 +56373,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54773,6 +56392,7 @@
           "VERSION_CONFLICT",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -54850,6 +56470,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -54887,7 +56510,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -54903,6 +56528,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -54919,6 +56545,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -54935,6 +56563,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -55027,6 +56656,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55064,7 +56696,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -55080,6 +56714,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -55096,6 +56731,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55112,6 +56749,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -55204,6 +56842,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55241,7 +56882,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -55257,6 +56900,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -55273,6 +56917,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55289,6 +56935,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -55372,6 +57019,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55409,7 +57059,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -55425,6 +57077,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -55441,6 +57094,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55457,6 +57112,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -55541,6 +57197,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55578,7 +57237,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -55594,6 +57255,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -55610,6 +57272,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55626,6 +57290,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -55704,6 +57369,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55741,7 +57409,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -55757,6 +57427,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -55773,6 +57444,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55789,6 +57462,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -55899,6 +57573,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -55936,7 +57613,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -55952,6 +57631,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -55968,6 +57648,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -55984,6 +57666,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -56066,6 +57749,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56103,7 +57789,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -56119,6 +57807,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -56135,6 +57824,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56151,6 +57842,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -56250,6 +57942,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56287,7 +57982,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -56303,6 +58000,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -56319,6 +58017,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56335,6 +58035,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -56464,6 +58165,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56501,7 +58205,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -56517,6 +58223,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -56533,6 +58240,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56549,6 +58258,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -56660,6 +58370,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56697,7 +58410,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -56713,6 +58428,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -56729,6 +58445,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56745,6 +58463,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -56830,6 +58549,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -56867,7 +58589,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -56883,6 +58607,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -56899,6 +58624,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -56915,6 +58642,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -57021,6 +58749,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57058,7 +58789,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -57074,6 +58807,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -57090,6 +58824,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57106,6 +58842,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -57220,6 +58957,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57257,7 +58997,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -57273,6 +59015,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -57289,6 +59032,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57305,6 +59050,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -57419,6 +59165,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57456,7 +59205,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -57472,6 +59223,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -57488,6 +59240,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57504,6 +59258,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -57608,6 +59363,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57645,7 +59403,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -57661,6 +59421,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -57677,6 +59438,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57693,6 +59456,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -57753,6 +59517,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57790,7 +59557,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -57806,6 +59575,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -57822,6 +59592,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -57838,6 +59610,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -57940,6 +59713,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -57977,7 +59753,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -57992,6 +59770,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -58008,6 +59787,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -58024,6 +59805,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -58298,6 +60080,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -58335,7 +60120,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -58351,6 +60138,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -58367,6 +60155,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -58383,6 +60173,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -58665,6 +60456,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -58702,7 +60496,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -58718,6 +60514,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -58734,6 +60531,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -58750,6 +60549,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -58827,6 +60627,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -58864,7 +60667,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -58880,6 +60685,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -58896,6 +60702,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -58912,6 +60720,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -58989,6 +60798,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -59026,7 +60838,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -59042,6 +60856,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -59058,6 +60873,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -59074,13 +60891,14 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
     },
     "/api/v1/passes/bulk": {
       "post": {
-        "summary": "Void, email or remove up to 100 passes of one org (Idempotency-Key for email)",
+        "summary": "Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email)",
         "tags": [
           "passes"
         ],
@@ -59090,6 +60908,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PassesBulkApplyParams"
+              },
+              "example": {
+                "action": "void",
+                "ids": [
+                  "0193a1b2-7c00-7000-8000-0000000000c1"
+                ]
               }
             }
           }
@@ -59130,6 +60954,10 @@
                     "done",
                     "skipped"
                   ]
+                },
+                "example": {
+                  "done": 1,
+                  "skipped": []
                 }
               }
             }
@@ -59150,6 +60978,7 @@
           "resource": "passes",
           "method": "bulkApply"
         },
+        "description": "Voids, emails or removes up to 100 passes: send `ids`, or a `selection` with a filter and the `expectCount` you saw (any other count answers 409 SELECTION_CHANGED). Above 100 passes use POST /passes/bulk-runs.",
         "security": [
           {
             "apiKey": [
@@ -59173,6 +61002,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -59210,7 +61042,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -59225,6 +61059,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -59241,6 +61076,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -59257,6 +61094,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -59330,6 +61168,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -59367,7 +61208,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -59382,6 +61225,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -59398,6 +61242,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -59414,6 +61260,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -59634,6 +61481,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -59671,7 +61521,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -59686,6 +61538,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -59702,6 +61555,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -59718,6 +61573,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -60232,6 +62088,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -60269,7 +62128,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -60285,6 +62146,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -60301,6 +62163,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60317,6 +62181,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -60839,6 +62704,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -60876,7 +62744,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -60892,6 +62762,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -60908,6 +62779,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -60924,6 +62797,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -61025,6 +62899,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61062,7 +62939,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -61077,6 +62956,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -61093,6 +62973,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61109,6 +62991,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -61217,6 +63100,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61254,7 +63140,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -61270,6 +63158,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -61286,6 +63175,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61302,6 +63193,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -61372,6 +63264,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61409,7 +63304,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -61425,6 +63322,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -61441,6 +63339,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61457,6 +63357,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -61579,6 +63480,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61616,7 +63520,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -61632,6 +63538,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -61648,6 +63555,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61664,6 +63573,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -61790,6 +63700,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -61827,7 +63740,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -61843,6 +63758,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -61859,6 +63775,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -61875,6 +63793,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -62002,6 +63921,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -62039,7 +63961,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -62055,6 +63979,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -62071,6 +63996,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -62087,6 +64014,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -62147,6 +64075,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -62184,7 +64115,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -62200,6 +64133,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -62216,6 +64150,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -62232,6 +64168,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -62292,6 +64229,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -62329,7 +64269,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -62345,6 +64287,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -62361,6 +64304,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -62377,6 +64322,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -62446,6 +64392,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -62483,7 +64432,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -62499,6 +64450,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -62515,6 +64467,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -62531,6 +64485,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -62766,6 +64721,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -62803,7 +64761,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -62819,6 +64779,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -62835,6 +64796,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -62851,6 +64814,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -63077,6 +65041,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -63114,7 +65081,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -63130,6 +65099,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -63146,6 +65116,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -63162,6 +65134,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -63267,6 +65240,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -63304,7 +65280,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -63320,6 +65298,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -63336,6 +65315,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -63352,6 +65333,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -63444,6 +65426,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -63481,7 +65466,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -63497,6 +65484,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -63513,6 +65501,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -63529,6 +65519,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -63637,6 +65628,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -63674,7 +65668,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -63689,6 +65685,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -63705,6 +65702,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -63721,6 +65720,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -63882,6 +65882,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -63919,7 +65922,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -63934,6 +65939,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -63950,6 +65956,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -63966,6 +65974,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -64056,6 +66065,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -64093,7 +66105,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -64108,6 +66122,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -64124,6 +66139,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -64140,6 +66157,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -64244,6 +66262,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -64281,7 +66302,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -64297,6 +66320,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -64313,6 +66337,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -64329,6 +66355,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -65189,6 +67216,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -65226,7 +67256,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -65241,6 +67273,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -65257,6 +67290,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -65273,6 +67308,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -66156,6 +68192,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -66193,7 +68232,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -66208,6 +68249,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -66224,6 +68266,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -66240,6 +68284,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -67097,6 +69142,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -67134,7 +69182,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -67150,6 +69200,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -67166,6 +69217,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -67182,6 +69235,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       },
@@ -67269,6 +69323,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -67306,7 +69363,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -67322,6 +69381,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -67338,6 +69398,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -67354,6 +69416,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -68221,6 +70284,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -68258,7 +70324,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -68274,6 +70342,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -68290,6 +70359,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -68306,6 +70377,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -69176,6 +71248,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -69213,7 +71288,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -69229,6 +71306,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -69245,6 +71323,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -69261,6 +71341,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -69502,6 +71583,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -69539,7 +71623,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -69555,6 +71641,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -69571,6 +71658,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -69587,6 +71676,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -69658,6 +71748,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -69695,7 +71788,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -69711,6 +71806,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -69727,6 +71823,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -69743,6 +71841,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -69814,6 +71913,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -69851,7 +71953,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -69867,6 +71971,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -69883,6 +71988,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -69899,6 +72006,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -70019,6 +72127,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -70055,7 +72166,9 @@
           "IMPORT_UNDO_RUNNING",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -70070,6 +72183,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -70086,6 +72200,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -70102,6 +72218,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }
@@ -70215,6 +72332,9 @@
           "ASSET_SIZE",
           "ASSET_SLOT",
           "BULK_RUN_ACTIVE",
+          "BULK_RUN_ENDED",
+          "BULK_RUN_NOT_FOUND",
+          "BULK_RUN_START",
           "BUNDLE_TOO_LARGE",
           "CONNECTION_ORG",
           "CONNECTION_TRANSFER_PENDING",
@@ -70252,7 +72372,9 @@
           "INVALID_API_KEY",
           "INVALID_INPUT",
           "JOIN_NOT_READY",
+          "MATCH_AMBIGUOUS_FIELD",
           "MATCH_NEEDS_TEMPLATE",
+          "MATCH_TOO_BROAD",
           "MEMBER_PHOTO_CHANGED",
           "MEMBER_PHOTO_DIMENSIONS",
           "MEMBER_PHOTO_ENCODING",
@@ -70268,6 +72390,7 @@
           "ORG_MIXED",
           "ORG_NOT_FOUND",
           "ORG_REQUIRED",
+          "PASS_CHANGED",
           "PASS_CONFLICT",
           "PASS_CONNECTION_MISMATCH",
           "PASS_FILE_MISSING",
@@ -70284,6 +72407,8 @@
           "RECIPIENT_NOT_HOLDER",
           "SCAN_EVENT_NOT_FOUND",
           "SCAN_WINDOW_INVALID",
+          "SELECTION_CHANGED",
+          "SELECTION_USE_RUN",
           "SERIAL_TAKEN",
           "SESSION_REQUIRED",
           "STAMPS_ABOVE_MAX",
@@ -70300,6 +72425,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED",
+          "VIEWS_CHANGED",
           "WORKFLOW_START"
         ]
       }

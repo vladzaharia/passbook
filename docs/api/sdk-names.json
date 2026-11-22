@@ -2316,5 +2316,29 @@
   "broadcasts.postBroadcastsByIdStop": {
     "resource": "broadcasts",
     "method": "stop"
+  },
+  "passes.getPassesViews": {
+    "resource": "passViews",
+    "method": "list"
+  },
+  "passes.putPassesViews": {
+    "resource": "passViews",
+    "method": "replace"
+  },
+  "passes.postPassesBulkRuns": {
+    "resource": "bulkRuns",
+    "method": "start"
+  },
+  "passes.getPassesBulkRunsById": {
+    "resource": "bulkRuns",
+    "method": "retrieve"
+  },
+  "passes.postPassesBulkRunsByIdStop": {
+    "resource": "bulkRuns",
+    "method": "stop"
+  },
+  "passes.getPassesBulkRunsCurrent": {
+    "resource": "bulkRuns",
+    "method": "current"
   }
 }

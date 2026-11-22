@@ -700,6 +700,43 @@ type BroadcastsUpdateParamsTargetScan2 struct {
 
 type BroadcastsUpdateResult = Broadcast
 
+type BulkRun struct {
+	ID            string           `json:"id"`
+	OrgID         string           `json:"orgId"`
+	Action        string           `json:"action"`
+	State         string           `json:"state"`
+	Total         int64            `json:"total"`
+	Done          int64            `json:"done"`
+	Skipped       int64            `json:"skipped"`
+	SkippedBy     map[string]int64 `json:"skippedBy"`
+	StopRequested bool             `json:"stopRequested"`
+	CreatedAt     int64            `json:"createdAt"`
+	FinishedAt    *int64           `json:"finishedAt"`
+	Code          *string          `json:"code"`
+}
+
+type BulkRunsCurrentResult = CurrentBulkRun
+
+type BulkRunsRetrieveResult = BulkRun
+
+type BulkRunsStartBody = BulkRunsStartParams
+
+type BulkRunsStartParams struct {
+	Action    string                       `json:"action"`
+	Message   *string                      `json:"message,omitempty"`
+	OrgID     *string                      `json:"orgId,omitempty"`
+	Selection BulkRunsStartParamsSelection `json:"selection"`
+}
+
+type BulkRunsStartParamsSelection struct {
+	Filter      PassFilter `json:"filter"`
+	ExpectCount int64      `json:"expectCount"`
+}
+
+type BulkRunsStartResult = BulkRun
+
+type BulkRunsStopResult = BulkRun
+
 type BundlesCreateBody = BundlesCreateParams
 
 type BundlesCreateParams struct {
@@ -1564,6 +1601,10 @@ type CreatedScanningDeviceOverrides struct {
 	Direction *string `json:"direction,omitempty"`
 	Lookup    *bool   `json:"lookup,omitempty"`
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+}
+
+type CurrentBulkRun struct {
+	Run *BulkRun `json:"run,omitempty"`
 }
 
 type DeliveriesListQuery struct {
@@ -2619,6 +2660,7 @@ type PassDetail struct {
 	Serial           string                           `json:"serial"`
 	Title            *string                          `json:"title"`
 	Subtitle         *string                          `json:"subtitle"`
+	Matched          []PassDetailMatchedItem          `json:"matched,omitempty"`
 	ExternalID       *string                          `json:"externalId"`
 	Status           string                           `json:"status"`
 	Mode             *string                          `json:"mode,omitempty"`
@@ -2737,6 +2779,11 @@ type PassDetailEmail struct {
 	Cap     *string `json:"cap,omitempty"`
 }
 
+type PassDetailMatchedItem struct {
+	Input string `json:"input"`
+	Value string `json:"value"`
+}
+
 type PassDetailPushBudget struct {
 	Used     int64  `json:"used"`
 	Limit    int64  `json:"limit"`
@@ -2764,6 +2811,53 @@ type PassDevice struct {
 	Device    string         `json:"device"`
 	CreatedAt int64          `json:"createdAt"`
 	LastPush  map[string]any `json:"lastPush"`
+}
+
+type PassFilter struct {
+	TemplateID   *string `json:"templateId,omitempty"`
+	ConnectionID *string `json:"connectionId,omitempty"`
+	ImportID     *string `json:"importId,omitempty"`
+	Status       *string `json:"status,omitempty"`
+	HolderEmail  *string `json:"holderEmail,omitempty"`
+	HolderState  *string `json:"holderState,omitempty"`
+	OnDevice     *bool   `json:"onDevice,omitempty"`
+	Q            *string `json:"q,omitempty"`
+	ExternalID   *string `json:"externalId,omitempty"`
+	Scan         any     `json:"scan,omitempty"`
+	Match        []any   `json:"match,omitempty"`
+}
+
+type PassFilterMatchItem1 struct {
+	Input  string   `json:"input"`
+	Values []string `json:"values"`
+}
+
+type PassFilterMatchItem2 struct {
+	Input string   `json:"input"`
+	Min   *float64 `json:"min,omitempty"`
+	Max   *float64 `json:"max,omitempty"`
+}
+
+type PassFilterMatchItem3 struct {
+	Input    string  `json:"input"`
+	From     *string `json:"from,omitempty"`
+	To       *string `json:"to,omitempty"`
+	TimeZone string  `json:"timeZone"`
+}
+
+type PassFilterMatchItem4 struct {
+	Input string `json:"input"`
+	Op    string `json:"op"`
+	Value string `json:"value"`
+}
+
+type PassFilterScan1 struct {
+	EventID   string `json:"eventId"`
+	CheckedIn bool   `json:"checkedIn"`
+}
+
+type PassFilterScan2 struct {
+	NoScanDays int64 `json:"noScanDays"`
 }
 
 type PassImportMappings struct {
@@ -3510,6 +3604,7 @@ type PassIssuedEventData struct {
 type PassPage struct {
 	Items      []PassSummary `json:"items"`
 	NextCursor *string       `json:"nextCursor"`
+	Count      *int64        `json:"count,omitempty"`
 }
 
 type PassPrintVoidedEvent struct {
@@ -3560,8 +3655,9 @@ type PassRemovedEvent struct {
 }
 
 type PassRemovedEventData struct {
-	Version *int64 `json:"version,omitempty"`
-	Message *bool  `json:"message,omitempty"`
+	Version *int64  `json:"version,omitempty"`
+	Message *bool   `json:"message,omitempty"`
+	RunID   *string `json:"runId,omitempty"`
 }
 
 type PassRestoredEvent struct {
@@ -3646,28 +3742,34 @@ type PassScannedEventData struct {
 }
 
 type PassSummary struct {
-	ID              string  `json:"id"`
-	OrgID           string  `json:"orgId"`
-	TemplateID      string  `json:"templateId"`
-	TemplateVersion string  `json:"templateVersion"`
-	IdentityID      string  `json:"identityId"`
-	Serial          string  `json:"serial"`
-	Title           *string `json:"title"`
-	Subtitle        *string `json:"subtitle"`
-	ExternalID      *string `json:"externalId"`
-	Status          string  `json:"status"`
-	Mode            *string `json:"mode,omitempty"`
-	Version         int64   `json:"version"`
-	ConnectionID    *string `json:"connectionId"`
-	ExternalRef     *string `json:"externalRef,omitempty"`
-	SyncErrorCode   *string `json:"syncErrorCode"`
-	HolderEmail     *string `json:"holderEmail"`
-	HolderState     string  `json:"holderState"`
-	OwnerUserID     *string `json:"ownerUserId"`
-	DeviceCount     *int64  `json:"deviceCount,omitempty"`
-	RemovedAt       *int64  `json:"removedAt,omitempty"`
-	ModifiedAt      int64   `json:"modifiedAt"`
-	CreatedAt       int64   `json:"createdAt"`
+	ID              string                   `json:"id"`
+	OrgID           string                   `json:"orgId"`
+	TemplateID      string                   `json:"templateId"`
+	TemplateVersion string                   `json:"templateVersion"`
+	IdentityID      string                   `json:"identityId"`
+	Serial          string                   `json:"serial"`
+	Title           *string                  `json:"title"`
+	Subtitle        *string                  `json:"subtitle"`
+	Matched         []PassSummaryMatchedItem `json:"matched,omitempty"`
+	ExternalID      *string                  `json:"externalId"`
+	Status          string                   `json:"status"`
+	Mode            *string                  `json:"mode,omitempty"`
+	Version         int64                    `json:"version"`
+	ConnectionID    *string                  `json:"connectionId"`
+	ExternalRef     *string                  `json:"externalRef,omitempty"`
+	SyncErrorCode   *string                  `json:"syncErrorCode"`
+	HolderEmail     *string                  `json:"holderEmail"`
+	HolderState     string                   `json:"holderState"`
+	OwnerUserID     *string                  `json:"ownerUserId"`
+	DeviceCount     *int64                   `json:"deviceCount,omitempty"`
+	RemovedAt       *int64                   `json:"removedAt,omitempty"`
+	ModifiedAt      int64                    `json:"modifiedAt"`
+	CreatedAt       int64                    `json:"createdAt"`
+}
+
+type PassSummaryMatchedItem struct {
+	Input string `json:"input"`
+	Value string `json:"value"`
 }
 
 type PassUninstalledEvent struct {
@@ -3736,6 +3838,35 @@ type PassVersion struct {
 	Purged          bool    `json:"purged"`
 }
 
+type PassViews struct {
+	Items    []PassViewsItemsItem `json:"items"`
+	Revision int64                `json:"revision"`
+}
+
+type PassViewsItemsItem struct {
+	ID     string     `json:"id"`
+	Name   string     `json:"name"`
+	Filter PassFilter `json:"filter"`
+}
+
+type PassViewsListResult = PassViews
+
+type PassViewsReplaceBody = PassViewsReplaceParams
+
+type PassViewsReplaceParams struct {
+	Items    []PassViewsReplaceParamsItemsItem `json:"items"`
+	Revision int64                             `json:"revision"`
+	OrgID    *string                           `json:"orgId,omitempty"`
+}
+
+type PassViewsReplaceParamsItemsItem struct {
+	ID     string     `json:"id"`
+	Name   string     `json:"name"`
+	Filter PassFilter `json:"filter"`
+}
+
+type PassViewsReplaceResult = PassViews
+
 type PassVoidedEvent struct {
 	ID         string              `json:"id"`
 	Type       string              `json:"type"`
@@ -3750,6 +3881,7 @@ type PassVoidedEvent struct {
 
 type PassVoidedEventData struct {
 	ActorType *string `json:"actorType,omitempty"`
+	RunID     *string `json:"runId,omitempty"`
 }
 
 type PassesActivityListItem struct {
@@ -3800,10 +3932,20 @@ type PassesAssetsUploadResult struct {
 type PassesBulkApplyBody = PassesBulkApplyParams
 
 type PassesBulkApplyParams struct {
-	Action  string   `json:"action"`
-	Message *string  `json:"message,omitempty"`
-	Ids     []string `json:"ids"`
-	OrgID   *string  `json:"orgId,omitempty"`
+	Action    string   `json:"action"`
+	Message   *string  `json:"message,omitempty"`
+	OrgID     *string  `json:"orgId,omitempty"`
+	Ids       []string `json:"ids,omitempty"`
+	Selection any      `json:"selection,omitempty"`
+}
+
+type PassesBulkApplyParamsSelection1 struct {
+	Ids []string `json:"ids"`
+}
+
+type PassesBulkApplyParamsSelection2 struct {
+	Filter      PassFilter `json:"filter"`
+	ExpectCount int64      `json:"expectCount"`
 }
 
 type PassesBulkApplyResult struct {
@@ -4232,6 +4374,7 @@ type PassesListQuery struct {
 	ExternalID   *string `json:"externalId,omitempty"`
 	Scan         *string `json:"scan,omitempty"`
 	Match        *string `json:"match,omitempty"`
+	Count        *string `json:"count,omitempty"`
 	Cursor       *string `json:"cursor,omitempty"`
 	Limit        *int64  `json:"limit,omitempty"`
 }

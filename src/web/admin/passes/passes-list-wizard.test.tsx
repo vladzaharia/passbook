@@ -157,11 +157,12 @@ describe('passes list', () => {
         },
       }),
     });
-    await user.type(await screen.findByRole('searchbox', { name: 'Search passes' }), 'sam');
+    await user.type(await screen.findByRole('combobox', { name: 'Find passes' }), 'sam');
+    await user.click(await screen.findByRole('option', { name: /in any field/ }));
     await waitFor(() => expect((router.state.location.search as { q?: string }).q).toBe('sam'));
     await waitFor(() => expect(seen.some((u) => u.searchParams.get('q') === 'sam')).toBe(true));
     expect(seen.every((url) => url.searchParams.get('orgId') === ORG.id)).toBe(true);
-    // One request per pause, not per keystroke.
+    // One request for the chip, none per keystroke.
     expect(seen.filter((u) => u.searchParams.has('q')).length).toBe(1);
   });
 
@@ -355,7 +356,8 @@ describe('passes list', () => {
     });
     await user.click(await screen.findByRole('checkbox', { name: 'Select Sam Jones' }));
     expect(screen.getByRole('region', { name: 'Selection' })).toBeInTheDocument();
-    await user.type(screen.getByRole('searchbox', { name: 'Search passes' }), 'sam');
+    await user.type(screen.getByRole('combobox', { name: 'Find passes' }), 'sam');
+    await user.click(await screen.findByRole('option', { name: /in any field/ }));
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Selection' })).toBeNull());
   });
 
@@ -366,7 +368,7 @@ describe('passes list', () => {
       handlers: baseHandlers({ '/api/v1/passes': empty }),
     });
     await screen.findByText('No passes yet');
-    expect(screen.queryByRole('searchbox')).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Find passes' })).toBeNull();
     const creates = screen.getAllByRole('link', { name: 'New pass' });
     // The empty state holds the only action; the header has none.
     expect(creates).toHaveLength(1);

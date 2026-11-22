@@ -5,6 +5,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { dropPrintPdfs } from '../prints/pdf-drop.ts';
+import { pinnedStatus, type RunWrite } from './bulk-write.ts';
 import type { TenantPassWrite } from './http.ts';
 import { getPassForWrite } from './pass-access.ts';
 import { publishPass } from './publish.ts';
@@ -23,6 +24,8 @@ export interface StatusExtras {
   expectedVersion?: number;
   /** Throws when the pass is no longer the one the run read; re-run on every retry. */
   guard?: (current: Pass) => void;
+  /** A bulk run's pins and id (find-and-act runs): the pass must still be at the run's version. */
+  runWrite?: RunWrite;
 }
 
 /** The void or restore of one pass with everything it owns: its events, its audit row and its print PDFs. */
@@ -38,21 +41,24 @@ export async function setPassStatus(
   const current = await getPassForWrite(ctx.env.DB, passId, scope);
   if (current.removedAt !== null)
     throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
+  const run = extras.runWrite;
+  const checks = [...(extras.extraChecks ?? []), ...(run?.checks ?? [])];
+  const pin = pinnedStatus(run, status);
   const result = await publishPass(ctx, {
     passId,
     orgScope: scope,
     cause: causeOf(actor),
     actor,
     ...(authority ? { authority } : {}),
-    ...(extras.extraChecks ? { extraChecks: extras.extraChecks } : {}),
+    ...(checks.length > 0 ? { extraChecks: checks } : {}),
     ...(extras.source ? { source: extras.source } : {}),
     ...(extras.sourceRef ? { sourceRef: extras.sourceRef } : {}),
     ...(extras.notify === undefined ? {} : { notify: extras.notify }),
     ...(extras.expectedVersion === undefined ? {} : { expectedVersion: extras.expectedVersion }),
-    ...(extras.extraChecks ? { dispatch: false } : {}),
+    ...(checks.length > 0 ? { dispatch: false } : {}),
     mutate: (cur) => {
       extras.guard?.(cur);
-      return { status };
+      return pin(cur);
     },
   });
   // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.
@@ -64,6 +70,7 @@ export async function setPassStatus(
     action: status === 'voided' ? 'pass.void' : 'pass.unvoid',
     targetType: 'pass',
     targetId: passId,
+    ...(run ? { detail: { runId: run.runId } } : {}),
   });
   await recordPassEvent(ctx, {
     orgId: result.pass.orgId,
@@ -71,6 +78,7 @@ export async function setPassStatus(
     mode: result.pass.mode,
     kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
     actor,
+    ...(run ? { data: { runId: run.runId } } : {}),
   });
   return result;
 }

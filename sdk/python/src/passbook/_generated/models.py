@@ -113,6 +113,14 @@ __all__ = [
     "BroadcastsUpdateParamsTargetScan1",
     "BroadcastsUpdateParamsTargetScan2",
     "BroadcastsUpdateResult",
+    "BulkRun",
+    "BulkRunsCurrentResult",
+    "BulkRunsRetrieveResult",
+    "BulkRunsStartBody",
+    "BulkRunsStartParams",
+    "BulkRunsStartParamsSelection",
+    "BulkRunsStartResult",
+    "BulkRunsStopResult",
     "BundlesCreateBody",
     "BundlesCreateParams",
     "BundlesCreateResult",
@@ -228,6 +236,7 @@ __all__ = [
     "CreatedScannerAccepts3",
     "CreatedScanningDevice",
     "CreatedScanningDeviceOverrides",
+    "CurrentBulkRun",
     "DeliveriesListResult",
     "DeliveriesListResultItemsItem",
     "EmailFailedEvent",
@@ -396,10 +405,18 @@ __all__ = [
     "PassDetailChannelsSamsung",
     "PassDetailDeliveriesItem",
     "PassDetailEmail",
+    "PassDetailMatchedItem",
     "PassDetailPushBudget",
     "PassDetailTemplateWarningsItem",
     "PassDetailWarningsItem",
     "PassDevice",
+    "PassFilter",
+    "PassFilterMatchItem1",
+    "PassFilterMatchItem2",
+    "PassFilterMatchItem3",
+    "PassFilterMatchItem4",
+    "PassFilterScan1",
+    "PassFilterScan2",
     "PassImportMappings",
     "PassImportMappingsSavedItem",
     "PassImportMappingsSavedItemPlan",
@@ -525,6 +542,7 @@ __all__ = [
     "PassScannedEvent",
     "PassScannedEventData",
     "PassSummary",
+    "PassSummaryMatchedItem",
     "PassUninstalledEvent",
     "PassUninstalledEventData",
     "PassUnvoidedEvent",
@@ -532,6 +550,13 @@ __all__ = [
     "PassUpdatedEvent",
     "PassUpdatedEventData",
     "PassVersion",
+    "PassViews",
+    "PassViewsItemsItem",
+    "PassViewsListResult",
+    "PassViewsReplaceBody",
+    "PassViewsReplaceParams",
+    "PassViewsReplaceParamsItemsItem",
+    "PassViewsReplaceResult",
     "PassVoidedEvent",
     "PassVoidedEventData",
     "PassesActivityListItem",
@@ -544,6 +569,8 @@ __all__ = [
     "PassesAssetsUploadResult",
     "PassesBulkApplyBody",
     "PassesBulkApplyParams",
+    "PassesBulkApplyParamsSelection1",
+    "PassesBulkApplyParamsSelection2",
     "PassesBulkApplyResult",
     "PassesBulkApplyResultSkippedItem",
     "PassesBulkReissueBody",
@@ -1722,6 +1749,30 @@ class BroadcastsUpdateParamsTargetScan1(_Model):
 class BroadcastsUpdateParamsTargetScan2(_Model):
     noScanDays: int
 
+class BulkRun(_Model):
+    id: str
+    orgId: str
+    action: _Literal["void", "send_email", "remove"] | str
+    state: _Literal["queued", "running", "done", "stopped", "failed"] | str
+    total: int
+    done: int
+    skipped: int
+    skippedBy: _Dict[str, int]
+    stopRequested: bool
+    createdAt: int
+    finishedAt: int | None
+    code: str | None
+
+class BulkRunsStartParams(_Model):
+    action: _Literal["void", "send_email", "remove"] | str
+    message: str | None = None
+    orgId: str | None = None
+    selection: BulkRunsStartParamsSelection
+
+class BulkRunsStartParamsSelection(_Model):
+    filter: PassFilter
+    expectCount: int
+
 class BundlesCreateParams(_Model):
     orgId: str
     passIds: _List[str]
@@ -2623,6 +2674,9 @@ class CreatedScanningDeviceOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+
+class CurrentBulkRun(_Model):
+    run: BulkRun | None = None
 
 class DeliveriesListResult(_Model):
     items: _List[DeliveriesListResultItemsItem]
@@ -3572,6 +3626,7 @@ class PassDetail(_Model):
     serial: str
     title: str | None
     subtitle: str | None
+    matched: _List[PassDetailMatchedItem] | None = None
     externalId: str | None
     status: _Literal["active", "voided"] | str
     mode: _Literal["live", "test"] | str | None = None
@@ -3679,6 +3734,10 @@ class PassDetailEmail(_Model):
     outcome: _Literal["queued", "deferred", "limited_org", "limited_recipient", "cancelled", "none"] | str
     cap: _Literal["org", "recipient"] | str | None = None
 
+class PassDetailMatchedItem(_Model):
+    input: str
+    value: str
+
 class PassDetailPushBudget(_Model):
     used: int
     limit: int
@@ -3703,6 +3762,46 @@ class PassDevice(_Model):
     device: str
     createdAt: int
     lastPush: _Dict[str, _Any] | None
+
+class PassFilter(_Model):
+    templateId: str | None = None
+    connectionId: str | None = None
+    importId: str | None = None
+    status: _Literal["active", "voided", "removed"] | str | None = None
+    holderEmail: str | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
+    onDevice: bool | None = None
+    q: str | None = None
+    externalId: str | None = None
+    scan: PassFilterScan1 | PassFilterScan2 | None = None
+    match: _List[PassFilterMatchItem1 | PassFilterMatchItem2 | PassFilterMatchItem3 | PassFilterMatchItem4] | None = None
+
+class PassFilterMatchItem1(_Model):
+    input: str
+    values: _List[str]
+
+class PassFilterMatchItem2(_Model):
+    input: str
+    min: float | None = None
+    max: float | None = None
+
+class PassFilterMatchItem3(_Model):
+    input: str
+    from_: str | None = _Field(default=None, alias="from")
+    to: str | None = None
+    timeZone: str
+
+class PassFilterMatchItem4(_Model):
+    input: str
+    op: _Literal["startsWith", "contains"] | str
+    value: str
+
+class PassFilterScan1(_Model):
+    eventId: str
+    checkedIn: bool
+
+class PassFilterScan2(_Model):
+    noScanDays: int
 
 class PassImportMappings(_Model):
     saved: _List[PassImportMappingsSavedItem]
@@ -4438,6 +4537,7 @@ class PassIssuedEventData(_Model):
 class PassPage(_Model):
     items: _List[PassSummary]
     nextCursor: str | None
+    count: int | None = None
 
 class PassPrintVoidedEvent(_Model):
     id: str
@@ -4484,6 +4584,7 @@ class PassRemovedEvent(_Model):
 class PassRemovedEventData(_Model):
     version: int | None = None
     message: bool | None = None
+    runId: str | None = None
 
 class PassRestoredEvent(_Model):
     id: str
@@ -4567,6 +4668,7 @@ class PassSummary(_Model):
     serial: str
     title: str | None
     subtitle: str | None
+    matched: _List[PassSummaryMatchedItem] | None = None
     externalId: str | None
     status: _Literal["active", "voided"] | str
     mode: _Literal["live", "test"] | str | None = None
@@ -4581,6 +4683,10 @@ class PassSummary(_Model):
     removedAt: int | None = None
     modifiedAt: int
     createdAt: int
+
+class PassSummaryMatchedItem(_Model):
+    input: str
+    value: str
 
 class PassUninstalledEvent(_Model):
     id: str
@@ -4641,6 +4747,25 @@ class PassVersion(_Model):
     createdAt: int
     purged: bool
 
+class PassViews(_Model):
+    items: _List[PassViewsItemsItem]
+    revision: int
+
+class PassViewsItemsItem(_Model):
+    id: str
+    name: str
+    filter: PassFilter
+
+class PassViewsReplaceParams(_Model):
+    items: _List[PassViewsReplaceParamsItemsItem]
+    revision: int
+    orgId: str | None = None
+
+class PassViewsReplaceParamsItemsItem(_Model):
+    id: str
+    name: str
+    filter: PassFilter
+
 class PassVoidedEvent(_Model):
     id: str
     type: _Literal["pass.voided"]
@@ -4654,6 +4779,7 @@ class PassVoidedEvent(_Model):
 
 class PassVoidedEventData(_Model):
     actorType: str | None = None
+    runId: str | None = None
 
 class PassesActivityListItem(_Model):
     id: str
@@ -4715,8 +4841,16 @@ class PassesAssetsUploadResult(_Model):
 class PassesBulkApplyParams(_Model):
     action: _Literal["void", "send_email", "remove"] | str
     message: str | None = None
-    ids: _List[str]
     orgId: str | None = None
+    ids: _List[str] | None = None
+    selection: PassesBulkApplyParamsSelection1 | PassesBulkApplyParamsSelection2 | None = None
+
+class PassesBulkApplyParamsSelection1(_Model):
+    ids: _List[str]
+
+class PassesBulkApplyParamsSelection2(_Model):
+    filter: PassFilter
+    expectCount: int
 
 class PassesBulkApplyResult(_Model):
     done: int
@@ -8483,6 +8617,16 @@ BroadcastsUpdateBody = BroadcastsUpdateParams
 
 BroadcastsUpdateResult = Broadcast
 
+BulkRunsCurrentResult = CurrentBulkRun
+
+BulkRunsRetrieveResult = BulkRun
+
+BulkRunsStartBody = BulkRunsStartParams
+
+BulkRunsStartResult = BulkRun
+
+BulkRunsStopResult = BulkRun
+
 BundlesCreateBody = BundlesCreateParams
 
 BundlesSendEmailBody = BundlesSendEmailParams
@@ -8552,6 +8696,12 @@ PassImportsSendEmailsBody = PassImportsSendEmailsParams
 PassImportsUndoBody = PassImportsUndoParams
 
 PassImportsUndoResult = PassImportUndo
+
+PassViewsListResult = PassViews
+
+PassViewsReplaceBody = PassViewsReplaceParams
+
+PassViewsReplaceResult = PassViews
 
 PassesBulkApplyBody = PassesBulkApplyParams
 
