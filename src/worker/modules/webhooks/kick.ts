@@ -58,7 +58,8 @@ export async function kickAfterWrite(ctx: ServiceContext): Promise<void> {
   if (trailing) return;
   trailing = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, wait + 25));
+    const pause = wait + 25;
+    await (ctx.clock.sleep?.(pause) ?? new Promise((resolve) => setTimeout(resolve, pause)));
   } finally {
     trailing = false;
   }

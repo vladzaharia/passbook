@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../app.ts';
 import {
   endpointWithSecret,
@@ -20,7 +20,10 @@ beforeEach(async () => {
   net = stubNet();
   await reset(rig);
 });
-afterEach(() => net.restore());
+afterEach(() => {
+  net.restore();
+  vi.restoreAllMocks();
+});
 
 /** A request through the real app, with the background work it started awaited. */
 async function request(method: string, path: string) {
@@ -96,10 +99,16 @@ describe('the kick', () => {
       .bind(ep)
       .run();
     rig.kit.clock.advance(500);
-    const both = Promise.all([kickAfterWrite(rig.ctx), kickAfterWrite(rig.ctx)]);
-    rig.kit.clock.advance(600);
-    await both;
+    // The wait is the clock's sleep: here it moves the test clock on and returns at once.
+    const sleeps: number[] = [];
+    vi.spyOn(rig.kit.clock, 'sleep').mockImplementation(async (ms) => {
+      sleeps.push(ms);
+      rig.kit.clock.advance(ms);
+    });
+    await Promise.all([kickAfterWrite(rig.ctx), kickAfterWrite(rig.ctx)]);
     expect(rig.hooks.sent).toHaveLength(2);
+    // Once, for the rest of the window, though two writes asked.
+    expect(sleeps).toEqual([525]);
   });
 
   it('never throws when the queue is down; the lane is released for the sweep', async () => {
