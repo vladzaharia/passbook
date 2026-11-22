@@ -31,12 +31,13 @@ describe('apple-provisioner allowlist', () => {
       ascId: 'PT1',
       identifier: PTI,
       name: 'Henrys (PassBook)',
+      outcome: 'created',
     });
     expect(seen[0]?.path).toBe('/v1/passTypeIds');
     expect(seen[0]?.body).toEqual({
       data: { type: 'passTypeIds', attributes: { identifier: PTI, name: 'Henrys (PassBook)' } },
     });
-    await api.createPassType('henrys', 'Henrys (PassBook)');
+    expect((await api.createPassType('henrys', 'Henrys (PassBook)')).outcome).toBe('existing');
     expect(seen).toHaveLength(1);
   });
 
@@ -46,7 +47,10 @@ describe('apple-provisioner allowlist', () => {
         ? { status: 409, body: { errors: [{ code: 'ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE' }] } }
         : { body: { data: [passTypeBody('PT9', PTI).data] } },
     );
-    expect((await api.createPassType('henrys', 'Henrys (PassBook)')).ascId).toBe('PT9');
+    expect(await api.createPassType('henrys', 'Henrys (PassBook)')).toMatchObject({
+      ascId: 'PT9',
+      outcome: 'adopted',
+    });
   });
 
   it.each(['Wallet', 'wallet', 'a', 'has-hyphen', 'dotted.name', 'x'.repeat(31), 'admin'])(

@@ -1,6 +1,10 @@
 import { vi } from 'vitest';
 import { makeOrg } from '../../../test/helpers/index.ts';
-import type { CertificateInfo, PassTypeRef } from '../../../workers/apple-provisioner/src/types.ts';
+import type {
+  CertificateInfo,
+  CreatedPassType,
+  PassTypeRef,
+} from '../../../workers/apple-provisioner/src/types.ts';
 import {
   createFakeWwdr,
   type FakeWwdr,
@@ -25,6 +29,8 @@ export class FakeApple {
   /** Throw after the next create succeeds, as a dropped response would. */
   /** The provisioner refuses the next certificate order, permanently. */
   refuse = false;
+  /** Answer createPassType with this identifier instead of the requested one. */
+  wrongIdentifier: string | null = null;
   dropNext: 'createPassType' | 'createCertificate' | null = null;
 
   readonly ca: FakeWwdr;
@@ -50,15 +56,15 @@ export class FakeApple {
     return this.passTypes.get(identifier) ?? null;
   }
 
-  async createPassType(handle: string, name: string): Promise<PassTypeRef> {
+  async createPassType(handle: string, name: string): Promise<CreatedPassType> {
     this.calls.push('createPassType');
-    const identifier = `pass.mobile.passbook.${handle}`;
+    const identifier = this.wrongIdentifier ?? `pass.mobile.passbook.${handle}`;
     const held = this.passTypes.get(identifier);
-    if (held) return held;
+    if (held) return { ...held, outcome: 'existing' };
     const ref = { ascId: `asc-pt-${handle}`, identifier, name };
     this.passTypes.set(identifier, ref);
     this.drop('createPassType');
-    return ref;
+    return { ...ref, outcome: 'created' };
   }
 
   async listCertificates(passTypeAscId: string): Promise<CertificateInfo[]> {
