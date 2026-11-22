@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { googleCompiler } from '../../../passkit/wallets/google/compilers.ts';
 import type { CompileResult } from '../../../passkit/wallets/types.ts';
 import { getVersion } from '../templates/repo.ts';
-import { classProbes, withClassRule } from './projection-class-rule.ts';
+import { classProbes, MAX_PROBE_COMPILES, withClassRule } from './projection-class-rule.ts';
 import { computeProjectionPins } from './projection-pins.ts';
 import { installV2Env, setup } from './projection-v2-test-fixtures.ts';
 
@@ -149,5 +149,20 @@ describe('the class field rule, input by input', () => {
       },
     );
     expect(bracket.blocked).toBeUndefined();
+  });
+
+  it('blocks the inputs past the compile bound as unchecked, and stays safe', () => {
+    const names = Array.from({ length: MAX_PROBE_COMPILES + 6 }, (_, i) => `f${i}`);
+    const properties = Object.fromEntries(names.map((n) => [n, { type: 'string' }]));
+    const sample = Object.fromEntries(names.map((n) => [n, 'v']));
+    let compiles = 0;
+    const result = run(schema(properties), sample as never, () => {
+      compiles += 1;
+      return { fixed: true };
+    });
+    // One compile for the base view, then no more than the bound.
+    expect(compiles).toBeLessThanOrEqual(MAX_PROBE_COMPILES + 1);
+    expect(result.blocked?.code).toBe('CLASS_FIELDS_VARY');
+    expect(result.blocked?.message).toContain('could not be checked');
   });
 });
