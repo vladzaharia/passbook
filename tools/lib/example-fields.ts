@@ -67,6 +67,8 @@ const RULES: Rule[] = [
     /\.endpoints\[\d+\]\.url$/,
     'https://bookings.northwind.example.com/hooks/passbook',
   ],
+  // No provider is released, so no pass offers a Google or Samsung save (wallet-providers/offers.ts).
+  [ANY, /\.walletOffers$/, []],
   // Google and Samsung issuance is gated until the platform releases them (contracts/wallet-providers.ts).
   [ANY, /\.(walletIssuance\.\w+|issuance)$/, { state: 'disabled', reason: 'not_released' }],
   // A Google Wallet issuer id is a long number (wallet-providers); a finished provisioning run is on its last step.

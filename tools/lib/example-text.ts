@@ -114,8 +114,8 @@ export const SENTENCES: Record<Family, Record<string, readonly string[]>> = {
     text: ['31 Dec 2026', '31 Jan 2027', 'Day pass has a new design.'],
   },
   imports: {
-    // passes/import-messages.ts: a row's first problem.
-    message: ['Email is not valid.'],
+    // passes/import-messages.ts: a row's first problem, and a warning a check writes.
+    message: ['Email is not valid.', 'Name was edited in PassBook; the edit is kept.'],
   },
   connections: {
     // connectors/csv-url: what a test read.

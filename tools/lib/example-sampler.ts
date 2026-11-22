@@ -629,12 +629,14 @@ export function sample(
     case 'object':
       return object(ctx, s, key, path, subKind, depth, isObj(seed) ? seed : undefined);
     default:
-      // A field with no declared type: a scalar for a setting, a small real object for an audit detail.
+      // A field with no declared type holds a value: the template input it names, a setting's value, or nothing.
       return key === 'detail'
         ? { externalId: 'booking_8841' }
-        : /^(value|default)$/.test(key)
-          ? 'standard'
-          : {};
+        : key in TEMPLATE.sample
+          ? TEMPLATE.sample[key as keyof typeof TEMPLATE.sample]
+          : /^(value|default)$/.test(key)
+            ? 'standard'
+            : null;
   }
 }
 

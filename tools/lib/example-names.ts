@@ -123,7 +123,10 @@ const RULES: [RegExp, string][] = [
   [/^(broadcasts?)$/, 'broadcast'],
   [/^(presets?)$/, 'preset'],
   [/^(recipes?|connectors?)$/, 'recipe'],
-  [/^(changes?|rows|samples?|issues?|link|nameinputs|generated|columns?|fields?)$/, 'field'],
+  [
+    /^(changes?|rows|samples?|issues?|problems?|link|nameinputs|generated|columns?|fields?)$/,
+    'field',
+  ],
   [/^(liveorgs?|orgs?|organizations?|brand)$/, 'org'],
   [/^(counts|stats)$/, 'stat'],
   [/^(apple|google|samsung|identity)$/, 'identity'],

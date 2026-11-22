@@ -116,6 +116,19 @@ export function examplesOf(doc: Doc): Example[] {
   return out;
 }
 
+/** A schema that says nothing about its value: any JSON, so `{}` there stands in for a value. */
+const UNTYPED_KEYS = [
+  'type',
+  'properties',
+  'items',
+  'additionalProperties',
+  'oneOf',
+  'anyOf',
+  'allOf',
+];
+const untyped = (s: Json): boolean =>
+  [...UNTYPED_KEYS, 'enum', 'const', '$ref'].every((k) => s[k] === undefined);
+
 interface Leaf {
   path: string;
   key: string;
@@ -146,11 +159,13 @@ function* walk(
   if (value && typeof value === 'object') {
     const props = obj(s.properties);
     const entries = Object.entries(value as Json);
-    // An empty object is filler only where the schema requires something in it; a sparse record ({} overrides) is not.
+    // An empty object is filler where the schema requires something in it, or where a value belongs (an untyped
+    // field: a template input, a before or after); a sparse record ({} overrides) or an empty map is not.
     if (
       !entries.length &&
-      Object.keys(props).length &&
-      (s.required as unknown[] | undefined)?.length
+      ((Object.keys(props).length && (s.required as unknown[] | undefined)?.length) ||
+        // value, default, detail and data have their own rule (invariantFailures); the root is the example itself.
+        (untyped(s) && path !== '' && !/^(value|default|detail|data)$/.test(key)))
     )
       yield { path, key, value, schema: s };
     const alts = [...((s.oneOf as unknown[]) ?? []), ...((s.anyOf as unknown[]) ?? [])];
@@ -187,7 +202,12 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
       const at = leaf.path;
       const v = leaf.value;
       if (v && typeof v === 'object') {
-        bad('an empty {} where the schema has properties', at);
+        bad(
+          untyped(leaf.schema)
+            ? 'an empty {} where a value belongs'
+            : 'an empty {} where the schema has properties',
+          at,
+        );
         continue;
       }
       if (typeof v === 'string') {
@@ -303,6 +323,7 @@ function objectFailures(value: unknown, at: string, op = ''): string[] {
 
 const START = /^(.*?)(From|Start|Starts|Opens|Since)(At)?$/i;
 const END = /^(.*?)(Until|End|Ends|Closes|Before)(At)?$/i;
+const CLAIM_HOLD_MS = 5 * 60_000;
 const FINAL_STATES = /^(delivered|succeeded|sent|done|completed|finished|ok|paired|healthy)$/;
 const GONE_AT =
   /^(closedAt|revokedAt|disabledAt|removedAt|deletedAt|archivedAt|failingSince|retireAt)$/;
@@ -330,12 +351,13 @@ function invariantFailures(o: Json, at: string): string[] {
     for (const [k, v] of entries)
       if (GONE_AT.test(k) && v !== null && v !== undefined)
         out.push(`${at}: ${k} is set on an active record`);
-  // A finished record keeps the time its last attempt was due, never one after it finished.
-  if (FINAL_STATES.test(state) && num(o.nextAt) !== undefined && num(o.finishedAt) !== undefined)
-    if ((o.nextAt as number) > (o.finishedAt as number))
-      out.push(`${at}: nextAt is after finishedAt on a ${state} record`);
-  if (FINAL_STATES.test(state) && num(o.nextAt) !== undefined && o.finishedAt === undefined)
-    out.push(`${at}: nextAt is set on a ${state} record`);
+  // A finished delivery keeps only the hold its last claim parked, 5 minutes past that attempt
+  // (webhooks/schedule.ts CLAIM_HOLD_MS); a nextAt beyond it, or with no attempt, schedules another try.
+  if (FINAL_STATES.test(state) && num(o.nextAt) !== undefined) {
+    const last = num(o.lastAttemptAt);
+    if (last === undefined || (o.nextAt as number) > last + CLAIM_HOLD_MS)
+      out.push(`${at}: nextAt schedules another attempt on a ${state} record`);
+  }
   if (state === 'delivered' && 'lastStatus' in o && o.lastStatus === null)
     out.push(`${at}: a delivered record has no lastStatus`);
   if (state === 'delivered' && (num(o.replays) ?? 0) > 5)

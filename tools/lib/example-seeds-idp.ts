@@ -231,7 +231,19 @@ export const IDP_SEEDS: Record<string, unknown> = {
     active: false,
     passCount: 0,
   },
-  'templates.postTemplatesByIdUseCheck request': { orgId: IDS.org, name: TEMPLATE.name },
+  'templates.postTemplatesByIdUseCheck request': {
+    orgId: IDS.org,
+    name: TEMPLATE.name,
+    version: {
+      manifest: TEMPLATE_VERSION.manifest,
+      assets: TEMPLATE_VERSION.assets.map((a) => ({ name: a.name, sha1: a.sha1 })),
+    },
+    baseVersion: '3',
+  },
+  'pass-setup.patchOrgsByOrgIdPassSetup response': {
+    dryRun: false,
+    diff: [{ field: 'brand.accent', before: '#e8b400', after: '#ffc400' }],
+  },
   'templates.putTemplatesByIdChannels request': {
     channels: { paper: 'off' },
     revision: 3,

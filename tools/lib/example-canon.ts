@@ -248,7 +248,8 @@ export const DELIVERY = {
   externalId: 'booking_8841',
   state: 'delivered',
   attempts: 1,
-  nextAt: issued,
+  // The claim parks the next try 5 minutes out (webhooks/schedule.ts CLAIM_HOLD_MS); delivery leaves it there.
+  nextAt: issued + 5 * MIN,
   lastStatus: 200,
   lastError: null,
   lastAttemptAt: issued,
@@ -688,7 +689,7 @@ export const VISITOR = {
   hasEmail: true,
 };
 
-/** The import's rows, as committed: Ada and Grace created, Alan's pass updated (example-world.ts IMPORT). */
+/** The import's rows, as committed: Ada and Grace created, Alan updated, Mei unchanged, Chris left out. */
 export const IMPORT_ROWS = {
   items: [
     {
@@ -724,6 +725,28 @@ export const IMPORT_ROWS = {
       message: null,
       emailed: false,
       changes: [{ key: 'validUntil', label: 'Valid until', from: '2026-12-31', to: '2027-01-15' }],
+    },
+    {
+      row: 5,
+      action: 'unchanged',
+      state: 'done',
+      result: 'unchanged',
+      passId: uuid('pass-mei'),
+      externalId: 'NW-1004',
+      code: null,
+      message: null,
+      emailed: false,
+    },
+    {
+      row: 6,
+      action: 'error',
+      state: 'skipped',
+      result: null,
+      passId: null,
+      externalId: 'NW-1005',
+      code: 'EMAIL_INVALID',
+      message: 'Email is not valid.',
+      emailed: false,
     },
   ],
   nextCursor: null,

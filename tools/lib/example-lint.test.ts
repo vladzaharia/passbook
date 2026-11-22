@@ -59,6 +59,12 @@ describe('exampleFailures', () => {
     expect(run({ meta: {} }, { properties: { meta: { type: 'object' } } })).toEqual([]);
     const sparse = { properties: { overrides: { type: 'object', properties: { paper: {} } } } };
     expect(run({ overrides: {} }, sparse)).toEqual([]);
+    // An untyped field holds a value; an empty map is fine.
+    const data = { properties: { fields: { type: 'object', additionalProperties: {} } } };
+    expect(run({ fields: { tier: {} } }, data)).toEqual([
+      'a.getA response.fields.tier: an empty {} where a value belongs',
+    ]);
+    expect(run({ fields: {} }, data)).toEqual([]);
   });
 
   it('rejects truncated and non-v7 UUIDs in id fields', () => {
@@ -202,7 +208,16 @@ describe('exampleFailures', () => {
       [{ status: 'active', closedAt: 1795521600000 }, 'closedAt is set on an active record'],
       [
         { state: 'delivered', nextAt: 1795521600000, lastStatus: 200 },
-        'nextAt is set on a delivered record',
+        'nextAt schedules another attempt on a delivered record',
+      ],
+      [
+        {
+          state: 'delivered',
+          nextAt: 1795522500000,
+          lastAttemptAt: 1795521600000,
+          lastStatus: 200,
+        },
+        'nextAt schedules another attempt on a delivered record',
       ],
       [{ state: 'delivered', lastStatus: null }, 'a delivered record has no lastStatus'],
       [{ state: 'delivered', replays: 30 }, 'replays 30 is too many for one delivery'],

@@ -162,12 +162,12 @@ export const SEEDS: Record<string, unknown> = {
   ...IDP_SEEDS,
   'pass-imports.postPassImports response': READY,
   'pass-imports.postPassImportsByIdCheck response': READY,
-  'pass-imports.postPassImportsByIdCommit request': { skipInvalid: false, email: true },
+  'pass-imports.postPassImportsByIdCommit request': { skipInvalid: true, email: true },
   'pass-imports.postPassImportsByIdCommit response': {
     ...IMPORT,
     state: 'committing',
     finishedAt: null,
-    progress: { ...IMPORT.progress, done: 1, created: 1, updated: 0 },
+    progress: { ...IMPORT.progress, done: 1, created: 1, updated: 0, unchanged: 0, skipped: 0 },
   },
   'passes.getPasses response': { items: [PASS], nextCursor: 'c1.4812', count: 128 },
   'passes.getPassesViews response': { items: VIEWS, revision: 3 },
@@ -551,7 +551,8 @@ export const SEEDS: Record<string, unknown> = {
     notified: 121,
     silent: 7,
   },
-  'broadcasts.patchBroadcastsById request': { message: BROADCAST.message },
+  'broadcasts.patchBroadcastsById request': { patch: {}, message: BROADCAST.message },
+  'pass-imports.postPassImportsByIdCheck request': { plan: IMPORT_PLAN },
   'broadcasts.patchBroadcastsById response': DRAFT,
   'broadcasts.postBroadcastsByIdSend request': { at: HOLIDAY_SEND },
   'broadcasts.postBroadcastsByIdSend response': { ...DRAFT, state: 'scheduled', at: HOLIDAY_SEND },
@@ -728,7 +729,7 @@ export const SEEDS: Record<string, unknown> = {
   // The first page of the rest: no cursor yet.
   'pass-imports.postPassImportsByIdEmailRest request': { cursor: null },
   'pass-imports.postPassImportsByIdEmailRest response': {
-    sent: 0,
+    sent: 1,
     skipped: 1,
     alreadyQueued: 2,
     nextCursor: null,
@@ -842,9 +843,17 @@ export const SEEDS: Record<string, unknown> = {
     dryRun: false,
   },
   'webhooks.postWebhookEndpointsByIdReplay response': { queued: 3 },
+  // Both providers are dark: no instance, no operation, no holder report (wallet-providers/status.ts).
   'wallet-providers.getWalletProvidersPassesById response': {
     credentialGeneration: 1,
-    providers: [],
+    providers: ['google', 'samsung'].map((provider) => ({
+      provider,
+      lifecycle: 'absent',
+      desiredOperation: null,
+      priorGenerationRetirementPending: false,
+      installation: 'unknown',
+      issuance: { state: 'disabled', reason: 'not_released' },
+    })),
   },
   'roll-calls.postRollCalls response': {
     ...ROLL_CALL,

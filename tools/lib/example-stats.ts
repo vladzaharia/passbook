@@ -31,8 +31,8 @@ const WEEK_TOTALS = {
   pushes: 920,
   pushFailures: 4,
   emails: 23,
-  emailFailures: 0,
-  emailUnknown: 0,
+  emailFailures: 1,
+  emailUnknown: 2,
   syncRuns: 672,
   signIns: 9,
   scans: 994,
@@ -154,7 +154,10 @@ export const CALL = {
   responseBody: '{"items":[],"nextCursor":null}',
   bodiesExpireAt: T.recent + 7 * DAY,
 };
-const HOURS = Array.from({ length: 24 }, (_, i) => (i >= 14 && i <= 20 ? 3 : i >= 9 ? 1 : 0));
+/** The developer's day, by local hour of the last 24: work from 08:00 to 22:00, busiest after lunch. */
+const HOURS = Array.from({ length: 24 }, (_, i) =>
+  i >= 13 && i <= 18 ? 4 : i >= 8 && i <= 21 ? 2 : 0,
+);
 export const DEVELOPER_HOME = {
   now: T.now,
   state: 'open',
@@ -173,7 +176,7 @@ export const DEVELOPER_HOME = {
   },
   usage: {
     calls24h: 38,
-    errors24h: 2,
+    errors24h: 5,
     captures24h: 6,
     passes: 9,
     series: {

@@ -274,7 +274,7 @@ export const TEMPLATE_DETAIL = {
 
 /** The CSV every import example uploads, and the plan that maps it onto the template. */
 export const MEMBERS_CSV =
-  'Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\n';
+  'Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n';
 export const IMPORT_PLAN = {
   mapping: {
     name: { from: '/Name' },
@@ -309,18 +309,19 @@ export const IMPORT = {
     { pointer: '/Name', label: 'Name', samples: ['Ada Example', 'Grace Okafor'] },
     { pointer: '/Tier', label: 'Tier', samples: ['Day pass'] },
     { pointer: '/Valid until', label: 'Valid until', samples: ['2026-12-31', '2027-01-15'] },
-    { pointer: '/Member ID', label: 'Member ID', samples: ['NW-1001', 'NW-1002'] },
+    { pointer: '/Member ID', label: 'Member ID', samples: ['NW-1001', 'NW-1002', 'NW-1003'] },
   ],
   plan: IMPORT_PLAN,
+  // Five rows: two new members, Alan's later end date, Mei unchanged, and Chris with an email that will not send.
   counts: {
-    rows: 3,
+    rows: 5,
     create: 2,
     update: 1,
-    unchanged: 0,
-    errors: 0,
-    warnings: 0,
+    unchanged: 1,
+    errors: 1,
+    warnings: 1,
     emailable: 2,
-    errorsCreate: 0,
+    errorsCreate: 1,
     errorsUpdate: 0,
   },
   previews: [
@@ -339,19 +340,46 @@ export const IMPORT = {
       action: 'update',
       input: { name: 'Alan Reyes', tier: 'Day pass', validUntil: '2027-01-15' },
     },
+    {
+      row: 5,
+      action: 'unchanged',
+      input: { name: 'Mei Tanaka', tier: 'Day pass', validUntil: '2026-12-31' },
+    },
   ],
-  problems: [],
-  problemTotals: { errors: 0, warnings: 0 },
+  problems: [
+    {
+      row: 6,
+      column: 'Holder email',
+      field: 'holderEmail',
+      label: 'Holder email',
+      value: 'chris.example.com',
+      code: 'EMAIL_INVALID',
+      message: 'Email is not valid.',
+      severity: 'error',
+    },
+    {
+      row: 4,
+      column: 'Name',
+      field: 'name',
+      label: 'Name',
+      value: 'Alan Reyes',
+      code: 'IMPORT_MANUAL_KEPT',
+      message: 'Name was edited in PassBook; the edit is kept.',
+      severity: 'warning',
+    },
+  ],
+  problemTotals: { errors: 1, warnings: 1 },
   problemsTruncated: false,
   emailBudget: 500,
   email: true,
+  // Committed with skipInvalid: Chris's row is left out, the other four applied.
   progress: {
-    done: 3,
+    done: 4,
     created: 2,
     updated: 1,
-    unchanged: 0,
+    unchanged: 1,
     failed: 0,
-    skipped: 0,
+    skipped: 1,
     notEmailed: 0,
     removed: 0,
   },
