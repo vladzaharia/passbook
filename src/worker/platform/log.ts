@@ -9,17 +9,25 @@ export interface Logger {
   child(base: LogData): Logger;
 }
 
+/** Anchored where a loose match would hide an operational field (`unknownKey`, `cooldownKey`, `ownKey` counts, `pinSetAt`). */
 const SENSITIVE_KEY =
-  /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download|scan[-_]?code|barcode)/i;
+  /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download|scan[-_]?code|barcode|pair(?:ing)?[-_]?code$|[a-zA-Z]hmac[-_]?key$|[a-zA-Z]private[-_]?key$|[a-zA-Z]secret$|(?:^|[^a-zA-Z])(?:file|meta|aes|hmac)[-_]?keys?(?![a-z])|[a-z](?:File|Meta|Aes|Hmac)Keys?$|^keys$|key[-_]?material)|^pairing$/i;
 
-/** Capability URLs: /p/, /b/, /j/ and /preview/ values, ?t= and ?sig= values, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`) and try tokens (`pbtry_`), PEM blocks. */
-const VALUE_PATTERNS: [RegExp, string][] = [
-  [/(\/(?:[pbj]|preview)\/)[A-Za-z0-9_.-]{16,}/g, '$1[redacted]'],
-  [/([?&](?:t|token|code|key|state|sig|exp)=)[^&\s]+/gi, '$1[redacted]'],
+/** Staff and unlock PINs (`pin`, `newPIN`, `staffPins`, `pinHash`, `STAFF_PIN`). Kept apart so `pinSetAt`, `pinOnly`, `pinMacVersion`, `staffPinId`, `shipping` and `mapping` stay readable. */
+const PIN_KEY =
+  /(?:^|[^a-zA-Z])[pP]in(?:[-_]?[hH]ash|[-_]?[cC]ode|s)?$|[a-z]Pin(?:Hash|Code|s)?$|(?:^|_)PINS?(?:_HASH)?$|[a-z]PINS?$/;
+
+/** Capability URLs: /p/, /b/, /j/, /t/, /w/ and /preview/ values, `?t=`, `?sig=`, `?p=`, `?m=` and `#pair=` values, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`), scanner tokens (`wls_`), try tokens (`pbtry_`), webhook secrets (`whsec_`), JWTs, PEM blocks. Shared with the developer request log. */
+export const VALUE_PATTERNS: [RegExp, string][] = [
+  [/(\/(?:preview|p|b|j|t|w|w\/i)\/)[A-Za-z0-9_.~-]{12,}/g, '$1[redacted]'],
+  [/([?&](?:t|token|code|key|state|sig|exp|p|m)=)[^&\s"]+/gi, '$1[redacted]'],
+  [/#pair=[^&\s"]+/g, '#pair=[redacted]'],
   [/(ApplePass|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, '$1 [redacted]'],
-  [/(wlt|pbp|pbo)_[A-Za-z0-9_-]+/g, '$1_[redacted]'],
+  [/(wlt|wls|pbp|pbo)_[A-Za-z0-9_-]+/g, '$1_[redacted]'],
   [/pbtry_[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?/g, 'pbtry_[redacted]'],
   [/pb_(?:live|test)_[A-Za-z0-9_-]+/g, 'pb_[redacted]'],
+  [/whsec_[\w-]+/g, 'whsec_[redacted]'],
+  [/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, '[redacted jwt]'],
   [/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, '[redacted pem]'],
   [/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[redacted email]'],
 ];
@@ -75,7 +83,10 @@ export function redact(value: unknown, depth = 0, options: RedactOptions = {}): 
     return value.slice(0, 50).map((item) => redact(item, depth + 1, options));
   const out: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value)) {
-    out[key] = SENSITIVE_KEY.test(key) ? '[redacted]' : redact(item, depth + 1, options);
+    out[key] =
+      SENSITIVE_KEY.test(key) || PIN_KEY.test(key)
+        ? '[redacted]'
+        : redact(item, depth + 1, options);
   }
   return out;
 }

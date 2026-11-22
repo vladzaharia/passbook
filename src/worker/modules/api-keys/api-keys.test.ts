@@ -97,7 +97,12 @@ describe('the scanning:admin scope', () => {
   it('is minted for a live key of one organization only', async () => {
     const org = await makeOrg(f());
     const live = await create(
-      { name: 'live admin', scopes: ['scanning:admin'], orgId: org.id },
+      {
+        name: 'live admin',
+        scopes: ['scanning:admin'],
+        orgId: org.id,
+        expiresAt: h.clock.now() + 30 * 86_400_000,
+      },
       org.id,
     );
     expect(live.res.status).toBe(201);

@@ -235,6 +235,20 @@ describe('restricted keys', () => {
   });
 });
 
+describe('role tokens', () => {
+  it('mints an org_admin role token in test mode, with no credential scope', async () => {
+    const { session } = await member('org_admin');
+    const res = await create(
+      { ...session.headers, 'x-passbook-mode': 'test' },
+      { ...keyBody(org.id), scopes: [], roles: ['org_admin'], mode: 'test' },
+    );
+    expect(res.status).toBe(201);
+    const key = (await res.json()) as CreatedKey & { scopes: string[] };
+    expect(key.scopes).toContain('scanning:write');
+    expect(key.scopes).not.toContain('scanning:admin');
+  });
+});
+
 describe('rate tier', () => {
   it("charges the key's own tier binding, and follows the environment default when unset", async () => {
     const high = fakeRateLimiter({ limit: 100 });

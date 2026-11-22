@@ -102,9 +102,9 @@ const DYNAMIC_WRITE = [
 ];
 /** Builder internals: the statement token, its factory and the batch's private prepare. */
 const BUILDER_INTERNAL = /\b(?:BUILDER|newGrantedStatement|prepareOf|registerPrepare)\b/;
-/** Columns that may change outside a grant: session idle slide, scanner and key last-use stamps (`contact_at`: the server's stamp of a device's last request). */
+/** Columns that may change outside a grant: session idle slide, scanner and key last-use stamps (`contact_at`: the server's stamp of a device's last request that is not an upload; `contact_prev_at`, `online_since`: its reconnect grace). */
 const STAMP_ONLY =
-  /^(?:\s*(?:last_seen_at|contact_at|last_ip_prefix|staff_seen_at|idle_expires_at|last_used_at)\s*=\s*[^,]+,?)+\s*$/is;
+  /^(?:\s*(?:last_seen_at|contact_at|contact_prev_at|online_since|last_ip_prefix|staff_seen_at|idle_expires_at|last_used_at)\s*=\s*[^,]+,?)+\s*$/is;
 /** Files that name `mode` in a builder call on purpose. Each needs the reason. */
 const TENANT_KEY_ALLOWLIST: Record<string, string> = {
   'src/worker/modules/retention/repo-floors.ts':

@@ -32,3 +32,25 @@ export function copyScanEpochs(from: ScanActor, to: ScanActor): void {
   const epochs = scanEpochsOf(from);
   if (epochs) setScanEpochs(to, structuredClone(epochs));
 }
+
+/** The scanner's config epoch as captured with the actor, else 0: it moves on settings, event, role, time zone, templates and the session binding, never on a staff bind. */
+export const configEpochOf = (actor: ScanActor): number =>
+  scanEpochsOf(actor)?.scanner?.config ?? 0;
+
+/** The scanner's credential epoch as captured with the actor, else 0: a pairing moves it. */
+export const credentialEpochOfActor = (actor: ScanActor): number =>
+  scanEpochsOf(actor)?.scanner?.credential ?? 0;
+
+/** A 53-bit integer hash of a string (cyrb53): a revision that cannot cancel out like a sum. */
+export function hash53(text: string): number {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}

@@ -53,6 +53,14 @@ describe('draft patch', () => {
     expect(patch?.brand).toEqual({ logo: { sha: SHA }, icon: null });
   });
 
+  it('sends the version an upload answered, which differs from the sha when an @2x was staged', () => {
+    const VERSION = 'c'.repeat(64);
+    const staged = { sha: SHA, version: VERSION, w: 480, h: 150, url: 'blob:x' };
+    expect(draftPatch(ready(), { images: { logo: staged } })?.brand).toEqual({
+      logo: { sha: SHA, version: VERSION },
+    });
+  });
+
   it('keeps the web logo on the logo until another is chosen', () => {
     expect(draftPatch(ready(), { sameAsLogo: false })?.brand).toEqual({ webLogoSameAsLogo: false });
   });
