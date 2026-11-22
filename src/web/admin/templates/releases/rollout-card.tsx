@@ -6,15 +6,7 @@ import { formatCount } from '../../../lib/format.ts';
 import { useMode } from '../../../lib/mode.ts';
 import type { useOrgScope } from '../../../lib/org-filter.tsx';
 import { Buddy } from '../../../ui/art/index.ts';
-import {
-  Badge,
-  Button,
-  ErrorState,
-  ListRow,
-  ListRows,
-  ProgressBar,
-  Skeleton,
-} from '../../../ui/index.ts';
+import { Badge, Button, ErrorState, ListRow, ListRows, ProgressBar } from '../../../ui/index.ts';
 import { vOf } from '../versions.ts';
 import { PlanSummary } from './plan-summary.tsx';
 import { useRollout } from './rollout-api.ts';
@@ -77,13 +69,8 @@ function RolloutBody({
         onRetry={() => rollout.refetch()}
       />,
     );
-  if (!rollout.data)
-    return wrap(
-      <div role="status" aria-busy>
-        <span className="sr-only">Loading rollout</span>
-        <Skeleton className="h-20 w-full" />
-      </div>,
-    );
+  // No placeholder: most templates have no rollout, and a block that vanishes shifts the page.
+  if (!rollout.data) return null;
   const r = rollout.data;
   // Done and nothing left to tell: the card has nothing more to say.
   if (!r.releaseVersion || r.total === 0 || (r.remaining === 0 && !r.tell)) return null;

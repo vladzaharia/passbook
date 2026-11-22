@@ -19,6 +19,8 @@ export interface ComposerState {
   q: string;
   scanKind: 'any' | 'checkedIn' | 'notCheckedIn' | 'noScan30' | 'noScan90';
   scanEventId: string;
+  /** Only passes on this template version: set on a draft made through the API; the composer keeps it. */
+  version: string;
   message: string;
   /** Clear the current message instead of writing one. */
   clearing: boolean;
@@ -39,6 +41,7 @@ export const INITIAL: ComposerState = {
   q: '',
   scanKind: 'any',
   scanEventId: '',
+  version: '',
   message: '',
   clearing: false,
   notify: true,
@@ -65,6 +68,9 @@ export function targetOf(s: ComposerState): BroadcastTarget | undefined {
           ? { scan: { noScanDays: 90 as const } }
           : {}),
     ...(s.q.trim() ? { q: s.q.trim() } : {}),
+    ...(s.version && s.kind === 'message' && s.templateIds.length === 1
+      ? { version: s.version }
+      : {}),
   };
 }
 
@@ -122,6 +128,7 @@ export function stateOfBroadcast(b: BroadcastDto): ComposerState {
           ? 'noScan30'
           : 'noScan90',
     scanEventId: b.target.scan && 'eventId' in b.target.scan ? b.target.scan.eventId : '',
+    version: b.target.version ?? '',
     notify: b.notify,
     clear,
   };

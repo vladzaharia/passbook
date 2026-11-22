@@ -23,13 +23,21 @@ export function RolloutBanner({
     Boolean(scope.orgId && scope.membership),
   );
   const r = rollout.data;
+  const canTell = scope.membership?.capabilities.includes('messages:manage') ?? false;
   const waiting = r ? r.remaining - r.failedCount : 0;
-  if (!r?.releaseVersion || r.total === 0 || (waiting === 0 && !r.tell)) return null;
+  const offer = canTell && r?.tell != null;
+  // Nothing in flight, nothing left behind, nothing to offer: no banner.
+  if (!r?.releaseVersion || r.total === 0 || (waiting === 0 && r.failedCount === 0 && !offer))
+    return null;
   const version = vOf(template, r.releaseVersion);
+  const left =
+    r.failedCount > 0
+      ? `${formatCount(r.failedCount)} ${r.failedCount === 1 ? "pass can't" : "passes can't"} move to ${version}${r.stalled ? ': the rebuild did not start' : ''}`
+      : null;
   const text =
     waiting > 0
-      ? `Updating passes to ${version}: ${formatCount(r.onRelease)} of ${formatCount(r.total)}`
-      : `${version} is on every pass. You can tell holders.`;
+      ? `Updating passes to ${version}: ${formatCount(r.onRelease)} of ${formatCount(r.total)}${left ? ` · ${left}` : ''}`
+      : (left ?? `${version} is on every pass. You can tell holders.`);
   const view = () =>
     void navigate({ to: '.', search: { tab: 'versions' }, replace: true }).then(() =>
       requestAnimationFrame(() =>
@@ -37,10 +45,7 @@ export function RolloutBanner({
       ),
     );
   return (
-    <div
-      role="status"
-      className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface-sunken px-4 py-2 text-sm"
-    >
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface-sunken px-4 py-2 text-sm">
       <span>{text}</span>
       <Button size="sm" variant="outline" onClick={view}>
         View
