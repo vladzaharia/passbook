@@ -104,6 +104,12 @@ interface Execution {
   finish<T>(operation: () => Promise<T>): Promise<T>;
 }
 
+// Every type's collections (google-wallet.md section 1); nothing else on the host is reachable.
+const GOOGLE_CLASS_PATH =
+  /^\/walletobjects\/v1\/(?:generic|eventTicket|loyalty|giftCard|offer)Class(?:\/[^/]+)?$/;
+const GOOGLE_OBJECT_PATH =
+  /^\/walletobjects\/v1\/(?:generic|eventTicket|loyalty|giftCard|offer)Object(?:\/[^/]+)?$/;
+
 export function runtimeExecution(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
@@ -131,10 +137,8 @@ export function runtimeExecution(
       const validGoogle =
         provider === 'google' &&
         url.origin === 'https://walletobjects.googleapis.com' &&
-        ((capture.stage === 'google-class' &&
-          /^\/walletobjects\/v1\/genericClass(?:\/[^/]+)?$/.test(url.pathname)) ||
-          (capture.stage === 'google-object' &&
-            /^\/walletobjects\/v1\/genericObject(?:\/[^/]+)?$/.test(url.pathname)));
+        ((capture.stage === 'google-class' && GOOGLE_CLASS_PATH.test(url.pathname)) ||
+          (capture.stage === 'google-object' && GOOGLE_OBJECT_PATH.test(url.pathname)));
       const validSamsung =
         provider === 'samsung' &&
         capture.stage === 'samsung-update' &&
@@ -144,7 +148,7 @@ export function runtimeExecution(
         (!validGoogle && !validSamsung) ||
         url.search ||
         url.hash ||
-        (method !== 'GET' && method !== 'POST' && method !== 'PATCH') ||
+        (method !== 'GET' && method !== 'POST' && method !== 'PATCH' && method !== 'PUT') ||
         typeof capture.sink !== 'function'
       )
         throw new WalletRuntimeError('provider_failure');
@@ -164,7 +168,7 @@ export function runtimeExecution(
       return await captureRuntimeResponse(
         response,
         capture.stage,
-        method as 'GET' | 'POST' | 'PATCH',
+        method as 'GET' | 'POST' | 'PATCH' | 'PUT',
         (value) => capture.sink(value),
       );
     } catch {
@@ -206,7 +210,8 @@ export async function assertWalletRuntimeAccount(
   ctx = snapshotWalletCredentialContext(ctx);
   const scope = copyRuntimeScope(input);
   if (provider !== 'google' && provider !== 'samsung') throw runtimeAccountUnavailable();
-  if (provider === 'google') await runtimeGoogleAccount(ctx, scope);
+  const issuance = { kind: 'issuance' } as const;
+  if (provider === 'google') await runtimeGoogleAccount(ctx, scope, issuance);
   else await runtimeSamsungAccount(ctx, scope);
-  await current(ctx, scope, provider);
+  await current(ctx, scope, provider, provider === 'google' ? issuance : undefined);
 }

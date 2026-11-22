@@ -109,6 +109,9 @@ export async function handleGoogleCallback(
       passId: binding.passId,
       credentialGeneration: binding.credentialGeneration,
       channelEpoch: binding.channelEpoch,
+      ...(binding.classType === undefined
+        ? {}
+        : { type: binding.classType, classKey: binding.classKey }),
     });
     if (event.classId !== expected.classId || event.objectId !== expected.objectId)
       throw rejected();
