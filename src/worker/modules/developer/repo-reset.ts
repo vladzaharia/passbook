@@ -152,16 +152,6 @@ export const resetsClaimedSince = async (
     )
   )?.n ?? 0;
 
-/** When the track last started: the stamp a restart must pass. */
-export const trackStartedAt = async (db: D1Database, orgId: string) =>
-  (
-    await first<{ t: number }>(
-      db,
-      'SELECT COALESCE(track_started_at, created_at) AS t FROM developer_sandboxes WHERE org_id = ?',
-      [orgId],
-    )
-  )?.t ?? 0;
-
 /** A closed org's window: when it purges, and whether the purge has started. */
 export const reopenWindow = (db: D1Database, orgId: string) =>
   first<{ purge_after: number | null; purge_started_at: number | null }>(

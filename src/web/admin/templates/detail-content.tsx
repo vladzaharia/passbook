@@ -101,7 +101,6 @@ export function TemplateDetailContent({
   const life = useTemplateLifecycle(t, canPublish);
   const state = t.release;
   const draftHash = state?.draft?.version ?? '';
-  const draftName = draftHash ? vOf(t, draftHash) : '';
   const controls = useReleaseControls(t.id, scope.orgId, (hash) => vOf(t, hash), {
     canPublish,
     requestedBy: state?.review.state === 'open' ? state.review.by : null,
@@ -127,7 +126,6 @@ export function TemplateDetailContent({
   const [duplicate, setDuplicate] = useState(false);
   const [changingOrg, setChangingOrg] = useState(false);
   const canAssign = canAuthor && isAdmin;
-  const baked = t.origin === 'baked';
   const archived = t.status === 'archived';
   // Hashes stay in the Versions tab; versions show by number. The live version and the newest
   // inactive one are separate things, and an upload names the version it just made.
@@ -197,7 +195,7 @@ export function TemplateDetailContent({
         onChangeOrg={canAssign ? () => setChangingOrg(true) : undefined}
         onScanPasses={scanning.canScan ? scanning.scan : undefined}
         scanPending={scanning.pending}
-        draftName={draftName}
+        draftName={draftHash ? vOf(t, draftHash) : ''}
         onTry={() => void controls.tryVersion(draftHash)}
         onRelease={() => controls.release(draftHash)}
         onReview={() => void navigate({ to: '.', search: { review: draftHash } })}
@@ -298,7 +296,7 @@ export function TemplateDetailContent({
             ) : null}
           </TabsContent>
           <TabsContent value="manifest">
-            {baked || !canEdit ? (
+            {t.origin === 'baked' || !canEdit ? (
               <JsonViewer value={t.manifest} label="Manifest" maxHeight="max-h-[32rem]" />
             ) : (
               <ManifestEditor key={t.activeVersion ?? ''} template={t} />

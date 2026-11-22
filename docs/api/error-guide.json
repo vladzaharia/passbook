@@ -1067,6 +1067,12 @@
     "fix": "Fix the inputs named in issues; GET /api/v1/templates/{id}/input-schema lists them.",
     "retryable": false
   },
+  "INVALID_SETTING": {
+    "title": "Setting not accepted",
+    "when": "A setting value is outside what the setting allows.",
+    "fix": "Read the problem's issues for the setting and value, correct it, then send the request again.",
+    "retryable": false
+  },
   "INVITATION_INVALID": {
     "title": "Invitation invalid",
     "when": "The invitation token is wrong, used or expired.",
