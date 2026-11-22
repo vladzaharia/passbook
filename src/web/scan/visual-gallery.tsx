@@ -12,6 +12,7 @@ import { FIXTURE_NOW, fixtureOutcome } from './machine/fixture-data.test-support
 import type { ScanOutcome } from './machine/types.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
+import { RoleUnlock } from './role/unlock-sheet.tsx';
 import { MenuTrigger } from './ui/capsule.tsx';
 import { CountChip } from './ui/chips.tsx';
 import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
@@ -110,7 +111,14 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
     const timer = window.setTimeout(() => VisualSocket.instances.at(-1)?.publish(row), 40);
     return () => window.clearTimeout(timer);
   }, [installed, status]);
-  return <LiveScreen session={session} refetch={async () => undefined} />;
+  return (
+    <>
+      <LiveScreen session={session} refetch={async () => undefined} />
+      {session.scanner?.deviceRole === 'customer' ? (
+        <RoleUnlock api={{} as ScanApi} refetch={async () => undefined} />
+      ) : null}
+    </>
+  );
 }
 
 /** The wall monitor with a busy hall: `count` and `capacity` come from the URL. */

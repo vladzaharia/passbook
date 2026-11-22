@@ -179,8 +179,8 @@
   height: 14px;
 }
 .op-rc-btn[data-kind="safe"] {
-  border-color: color-mix(in oklab, var(--scan-ok) 55%, var(--pk-border-strong));
-  color: var(--scan-ok);
+  border-color: color-mix(in oklab, var(--pk-success) 55%, var(--pk-border-strong));
+  color: var(--pk-success);
 }
 .op-rc-btn[data-kind="safe"][aria-pressed="true"] {
   background: var(--scan-ok);
@@ -204,5 +204,5 @@
   justify-content: center;
 }
 .op-list-scroll[data-stale] {
-  opacity: 0.7;
+  filter: saturate(0.5);
 }

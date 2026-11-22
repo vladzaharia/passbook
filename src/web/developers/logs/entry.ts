@@ -25,14 +25,12 @@ export const railIsland: Island = {
     const session = await loadSession();
     if (session.kind === 'out') return;
     if (session.kind === 'ready') return mountRail(el);
+    // Without a sandbox the log's own empty card says so; the rail would say it twice.
+    if (session.kind === 'none' || session.kind === 'closed') return el.remove();
     fill(
       el,
       h('h3', { class: 'h3' }, RAIL_COPY.title),
-      h(
-        'p',
-        { class: 'sm muted' },
-        session.kind === 'failed' ? RAIL_COPY.failed : RAIL_COPY.noSandbox,
-      ),
+      h('p', { class: 'sm muted' }, RAIL_COPY.failed),
     );
   },
 };

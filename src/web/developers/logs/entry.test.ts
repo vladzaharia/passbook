@@ -28,16 +28,18 @@ async function mountBoth(session: Session) {
 }
 
 describe('the logs islands are gated on the session', () => {
-  it('draws the no-sandbox card and rail line, and calls nothing', async () => {
+  it('says "No sandbox yet" once: the card stays, the rail goes, and nothing is called', async () => {
     const { list, rail, fetchMock } = await mountBoth({ kind: 'none', csrf: 'c', siteKey: '' });
     expect(list.textContent).toContain(LOGS_COPY.noSandbox);
     expect(list.querySelector('a.btn')?.textContent).toBe(LOGS_COPY.create);
-    expect(rail.textContent).toContain(RAIL_COPY.noSandbox);
+    expect(rail.isConnected).toBe(false);
+    expect(document.body.textContent?.match(/No sandbox yet/g)).toHaveLength(1);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('says a closed sandbox is closed, with no Create link', async () => {
-    const { list } = await mountBoth({ kind: 'closed', csrf: 'c' });
+    const { list, rail } = await mountBoth({ kind: 'closed', csrf: 'c' });
+    expect(rail.isConnected).toBe(false);
     expect(list.textContent).toContain(LOGS_COPY.closed);
     expect(list.querySelector('a.btn')).toBeNull();
   });

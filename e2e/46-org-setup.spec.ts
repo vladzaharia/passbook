@@ -275,9 +275,10 @@ test('a new pass fixes a missing logo in place', async ({ page }) => {
   await api.dispose();
 
   await page.goto(`/admin/o/${encodeURIComponent(org.id)}/passes/new`);
-  await page.getByText('Gym pass', { exact: true }).first().click();
+  await page.getByRole('radio', { name: /Gym pass/ }).click({ force: true });
   await shoot(page, 'o10-5-new-pass');
   const next = page.getByRole('button', { name: 'Next' });
+  await expect(next).toBeEnabled();
   await next.click();
   await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Maya Chen');
   await page.getByRole('textbox', { name: 'ID', exact: true }).fill(uid('ID').toUpperCase());

@@ -7,6 +7,7 @@ import type { CameraChoice } from '../ui/scan-menu.tsx';
 import { panelRows } from './guide.ts';
 import { HardwarePanel } from './hardware-panel.tsx';
 import { HardwarePill } from './hardware-pill.tsx';
+import { featureAllowed } from './probe.ts';
 import { createSerialScanners, type SerialLike } from './serial-scanners.ts';
 import type { TestRead } from './test-pad.tsx';
 import type { HardwareAction, HardwareItem } from './types.ts';
@@ -131,7 +132,9 @@ export function ScanHardware({
   // Made inside the effect: StrictMode's second mount needs a live instance, not a stopped one.
   useEffect(() => {
     const next = createSerialScanners(
-      (navigator as Navigator & { serial?: SerialLike }).serial,
+      featureAllowed('serial')
+        ? (navigator as Navigator & { serial?: SerialLike }).serial
+        : undefined,
       (code) => {
         if (testingNow.current) setTestRead({ code, gap: null });
         else runtime.emit({ method: 'wedge', code });

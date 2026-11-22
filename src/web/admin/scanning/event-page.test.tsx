@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
@@ -60,6 +60,23 @@ describe('Event detail Open scanner', () => {
     await open(over);
     expect(await screen.findByRole('button', { name: 'Edit event' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open scanner' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer Add to a session once the event has ended', async () => {
+    const now = Date.now();
+    await open({ status: 'live', opensAt: now - 7_200_000, closesAt: now - 60_000 });
+    expect(await screen.findByRole('button', { name: 'Edit event' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add to a session' })).not.toBeInTheDocument();
+    cleanup();
+    await open({ status: 'ended' });
+    expect(await screen.findByRole('button', { name: 'Edit event' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add to a session' })).not.toBeInTheDocument();
+  });
+
+  it('keeps Add to a session for a running event', async () => {
+    const now = Date.now();
+    await open({ status: 'live', opensAt: now - 60_000, closesAt: now + 3_600_000 });
+    expect(await screen.findByRole('button', { name: 'Add to a session' })).toBeInTheDocument();
   });
 });
 
