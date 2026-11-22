@@ -121,6 +121,7 @@ export interface SetupRequest {
   method: string;
   path: string;
   origin: string;
+  ip?: string | null;
 }
 
 /**
@@ -162,7 +163,11 @@ export async function applyScanSetup(
           errors.map(checkIssue),
           'SCAN_SETUP_CHECKS_FAILED',
         );
-      fresh = await applySetupPlan(ctx, actorId, authority, plan, facts, { origin, settle });
+      fresh = await applySetupPlan(ctx, actorId, authority, plan, facts, {
+        origin,
+        settle,
+        ...(request.ip ? { ip: request.ip } : {}),
+      });
       return { status: 200, body: redacted(fresh) };
     },
   ).catch((error: unknown) => {

@@ -40,6 +40,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const mode = modeOf(c.var.auth);
+    // A key is bound to its own org: readableScanningPage answers a platform key 404, as every scanning list does.
     const page = await readableScanningPage(
       ctx,
       authOf(c),

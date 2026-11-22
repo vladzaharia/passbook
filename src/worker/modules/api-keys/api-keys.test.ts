@@ -110,13 +110,13 @@ describe('the scanning:admin scope', () => {
       { name: 'test admin', scopes: ['scanning:admin'], orgId: org.id, mode: 'test' },
       org.id,
     );
-    await expectProblem(test.res, 422, 'API_KEY_SCANNING_ADMIN_LIVE_ORG');
+    await expectProblem(test.res, 422, 'API_KEY_CREDENTIAL_LIVE_ORG');
     const platform = await create({
       name: 'platform admin',
       scopes: ['scanning:admin'],
       orgId: null,
     });
-    await expectProblem(platform.res, 422, 'API_KEY_SCANNING_ADMIN_LIVE_ORG');
+    await expectProblem(platform.res, 422, 'API_KEY_CREDENTIAL_LIVE_ORG');
   });
 });
 
