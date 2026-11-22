@@ -12,22 +12,42 @@ const tagPath = (id: string) => `${NFC}/tags/${encodeURIComponent(id)}`;
 
 export const tagKeys = {
   all: ['tags'] as const,
-  list: (orgId: string, mode: string, state: string, q: string) =>
-    ['tags', 'list', orgId, mode, state, q] as const,
+  list: (orgId: string, mode: string, state: string, q: string, fit = '') =>
+    ['tags', 'list', orgId, mode, state, q, fit] as const,
   detail: (id: string) => ['tags', 'detail', id] as const,
   pass: (passId: string, mode: string) => ['tags', 'pass', passId, mode] as const,
 };
 
 /** The org's tags, newest first, `state` and `q` filtered on the server. */
-export function useTagList(orgId: string, state: string | undefined, q: string | undefined) {
+export function useTagList(
+  orgId: string,
+  state: string | undefined,
+  q: string | undefined,
+  /** With `spare`: only the tags this pass's policy takes. */
+  fit?: { passId: string; binding: 'pass' | 'user' },
+) {
   const mode = useMode();
   return useInfiniteQuery(
     listQuery({
-      queryKey: tagKeys.list(orgId, mode, state ?? '', q ?? ''),
+      queryKey: tagKeys.list(
+        orgId,
+        mode,
+        state ?? '',
+        q ?? '',
+        fit ? `${fit.passId}:${fit.binding}` : '',
+      ),
       initialPageParam: undefined as string | undefined,
       queryFn: ({ pageParam, signal }: { pageParam: string | undefined; signal: AbortSignal }) =>
         api.get(`${NFC}/tags`, TagListSchema, {
-          query: { orgId, status: state, q, cursor: pageParam, limit: 50 },
+          query: {
+            orgId,
+            status: state,
+            q,
+            passId: fit?.passId,
+            binding: fit?.binding,
+            cursor: pageParam,
+            limit: 50,
+          },
           signal,
         }),
       getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
